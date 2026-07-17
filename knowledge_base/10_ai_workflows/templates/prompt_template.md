@@ -3,7 +3,7 @@
 <!--
 Use this template to structure temporary prompts before they become permanent workflows.
 A temporary prompt is an experimental interaction pattern being tested in real operational use.
-Prompts may be promoted to permanent WF-XXXX workflows after satisfying the Three-Use Rule
+Prompts may be promoted to permanent WF-XXX workflows after satisfying the Three-Use Rule
 defined in knowledge_base/10_ai_workflows/README.md.
 
 Instructions:
@@ -137,5 +137,5 @@ If this prompt reaches three successful uses, review the following before propos
 [ ] The operational need is ongoing, not a one-time event
 
 If all items are checked, create a workflow proposal using templates/workflow_template.md
-and assign the next available WF-XXXX identifier.
+and assign the next available WF-XXX identifier.
 -->

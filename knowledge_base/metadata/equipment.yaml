@@ -181,3 +181,20 @@ equipment:
     last_confirmed_on: "2026-06-29"
     software_expected: home_assistant
     notes: "Un documento lo reportaba configurado y otro pendiente; verificar presencia, versión y configuración."
+
+  - id: EQ-0011
+    legacy_key: autoclave_all_american
+    name: All American (autoclave de esterilización)
+    category: sterilization
+    status: on_site_uncommissioned
+    last_confirmed_status: on_site
+    last_confirmed_on: "2026-07-10"
+    last_confirmed_location: home_rnd_lab_garage
+    model_status: verification_required
+    reported_capacity_liters: 44
+    official_capacity_status: verification_required
+    commissioning: pending
+    cycle_validation: pending
+    source: "Presencia física confirmada por el propietario el 2026-07-10."
+    document: 05_equipment/autoclaves.md
+    notes: "Confirmar placa y capacidad nominal. No usar como proceso validado hasta completar banco de pruebas y validación para una carga definida."

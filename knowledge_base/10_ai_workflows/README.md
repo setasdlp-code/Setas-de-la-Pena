@@ -1,5 +1,5 @@
 # AI Workflow Library — Setas de la Peña Knowledge System
-*Version 1.2*
+*Version 1.1*
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Describe repeatable, structured interactions between human operators and AI assi
 
 A workflow may be invoked by any of the following:
 
-- **Workflow ID** — `WF-0001`
+- **Workflow ID** — `WF-001`
 - **Official Title** — `End of Day Assistant`
 - **Registered Alias** — `Daily Review`, `End of Day`, `Cierre del Día`
 
@@ -64,7 +64,7 @@ Improvisation is not permitted during workflow execution. If a workflow does not
 
 | ID | Title | Purpose | Status | Version | Owner |
 |----|-------|---------|--------|---------|-------|
-| WF-0001 | End of Day Assistant | Structured daily close: log events, generate summary, flag issues | Active | 1.0 | Sebastián Pinzón |
+| WF-001 | End of Day Assistant | Structured daily close: log events, generate summary, flag issues | Active | 1.0 | Sebastián Pinzón |
 
 ---
 
@@ -127,7 +127,7 @@ Workflow Proposal
        ↓
 Review
        ↓
-WF-XXXX Created
+WF-XXX Created
        ↓
 Revision
        ↓
@@ -142,7 +142,7 @@ Archive (if obsolete)
 
 **Workflow Proposal** — The operator proposes a new workflow, referencing the temporary prompt and its documented uses.
 
-**Review** — The proposed workflow is reviewed against the governance principles. It receives a WF-XXXX identifier only if it passes review.
+**Review** — The proposed workflow is reviewed against the governance principles. It receives a WF-XXX identifier only if it passes review.
 
 **Operational Use** — The workflow enters active use. It is referenced in daily operations by its ID.
 
@@ -154,7 +154,7 @@ Archive (if obsolete)
 
 ## Workflow Quality Checklist
 
-Every workflow in this library must satisfy the following before being assigned a WF-XXXX identifier:
+Every workflow in this library must satisfy the following before being assigned a WF-XXX identifier:
 
 - ✓ Clear purpose — one sentence that describes what the workflow accomplishes
 - ✓ Defined inputs — what the operator must provide before invocation
@@ -171,7 +171,7 @@ Every workflow in this library must satisfy the following before being assigned 
 
 Obsolete workflows are archived rather than deleted. The `archive/` directory preserves the complete history of workflows that are no longer in active use. Archived workflows:
 
-- Retain their original WF-XXXX identifier
+- Retain their original WF-XXX identifier
 - Are marked with status `Archived` and an archive date in their frontmatter
 - Remain readable for historical reference
 - May be restored to active status if operational conditions change

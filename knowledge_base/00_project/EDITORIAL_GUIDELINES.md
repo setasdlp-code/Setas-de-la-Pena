@@ -1,12 +1,12 @@
 ---
 title: Editorial Guidelines
-document_id: STD-0003
-version: 1.1
+document_id: GOV-001
+version: 1.2
 status: canonical
 authority: editorial
 load_priority: on_request
 owner: Setas de la Peña
-last_updated: 2026-06-29
+last_updated: 2026-07-09
 ---
 
 # Editorial Guidelines
@@ -59,25 +59,7 @@ An edit that does not serve at least one of these objectives is rejected.
 
 ## 4. Repository Hierarchy
 
-The knowledge base enforces a strict precedence order. When documents conflict, resolution is determined by this hierarchy:
-
-```
-SETAS_DE_LA_PENA_CANON.md
-        ↓
-Formal Decisions (DECISIONS.md)
-        ↓
-Standard Operating Procedures (SOPs)
-        ↓
-Operational Documents (CURRENT_OPERATIONS.md, procedures)
-        ↓
-Lessons Learned (LESSONS_LEARNED.md)
-        ↓
-Research Summaries (Literature database, field findings)
-        ↓
-External Literature (Tier 1–3 citations)
-```
-
-A document at higher precedence supersedes any document at lower precedence. A conflict between documents at the same level is flagged as a documentation inconsistency and resolved through the decision process defined in CANON Section 16.
+The knowledge base enforces a strict precedence order, defined in full in `SETAS_DE_LA_PENA_CANON.md` Section 14 — the single source of truth for document precedence. Section 14.1 (Normative Authority) resolves conflicts between documents. Section 14.2 (Operational State) describes current reality and never overrides Normative Authority, however recent it is. This document does not restate that order; editors resolve precedence questions by consulting CANON Section 14 directly.
 
 ### 4.1 Editorial Authority
 
@@ -121,7 +103,7 @@ The guideline is: **change as little as possible**. An edit that modifies 200 wo
 
 ### 5.4 Preference for References
 
-Avoid duplicating information. When a concept is defined in Document A and referenced in Document B, Document B should cite Document A rather than repeat the definition. Internal links use the syntax: `[[document_name]]` or `See: document_name.md`.
+Avoid duplicating information. When a concept is defined in Document A and referenced in Document B, Document B should cite Document A rather than repeat the definition. Internal links use the syntax: `[[document_name]]` or `See: document_name.md`. See `CROSS_REFERENCE_STANDARD.md` for the full standard: canonical-home determination, reference syntax, and synchronization with `INDEX.yaml`.
 
 ### 5.5 Consistency as Prerequisite
 
@@ -187,7 +169,7 @@ Each document type has a defined scope and responsibility. Content outside this 
 | **Formal Decisions** | Decisions made; rationale; measurement results; architectural direction | `DECISIONS.md` |
 | **SOPs** | How a specific procedure is performed | `02_substrates/pasteurization.md` |
 | **Species Profiles** | Stable biological parameters per species | `01_species/pleurotus_djamor.md` |
-| **Substrate Docs** | Substrate composition, preparation, validation | `02_substrates/masters_mix.md` |
+| **Substrate Docs** | Substrate composition, preparation, validation | `02_substrates/substrate_library.md` |
 | **Equipment Specs** | Equipment description, installation, operation | `05_equipment/environmental_control.md` |
 | **Facility Blueprints** | Physical infrastructure; modules; layout | `04_facility/master_blueprint.md` |
 | **Operations SOPs** | Batch procedures; quality control; tracking | `06_operations/batch_tracking.md` |
@@ -368,8 +350,8 @@ The goal of every edit is to leave the knowledge base in a more reliable, more m
 
 ---
 
-*Document version: 1.1*
-*Effective date: 2026-06-29*
+*Document version: 1.2*
+*Effective date: 2026-07-09*
 *Next scheduled review: 2026-12-29*
 *Authority: Knowledge Governance Architect — Setas de la Peña*
 *This document may only be revised through the decision process defined in CANON Section 16.*

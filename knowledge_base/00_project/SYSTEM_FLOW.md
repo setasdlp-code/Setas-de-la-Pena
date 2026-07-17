@@ -1,11 +1,12 @@
 ---
 title: System Flow
-document_id: DOC-0004
-version: 1.0
+document_id: SYS-001
+version: 1.1
 status: canonical
 authority: architectural
 load_priority: always
 owner: Setas de la Peña
+last_reviewed: 2026-07-09
 ---
 
 # System Flow
@@ -293,7 +294,7 @@ Batch Records          — what happened in each production cycle
 Lessons Learned        — what was learned from doing it
 ```
 
-This document sits between governance and operations. It does not override the CANON or the Editorial Guidelines; it translates their principles into a system map. It does not specify procedure; it points to the SOPs that do. Document precedence in conflict is resolved by CANON §14 and Editorial Guidelines §4. Where this document and a subordinate document disagree on a procedure, the subordinate document governs the procedure and this document is corrected to match the system structure.
+This document sits between governance and operations. It does not override the CANON or the Editorial Guidelines; it translates their principles into a system map. It does not specify procedure; it points to the SOPs that do. The diagram above describes which document type governs a given subsystem — it is not a restatement of document precedence. Document precedence in conflict is resolved exclusively by `SETAS_DE_LA_PENA_CANON.md` Section 14, the single source of truth for precedence. Where this document and a subordinate document disagree on a procedure, the subordinate document governs the procedure and this document is corrected to match the system structure.
 
 ---
 
@@ -352,7 +353,7 @@ A reader who understands this map understands how the project behaves. The indiv
 
 ---
 
-*Document version: 1.0*
+*Document version: 1.1*
 *Status: Canonical — architectural bridge between the CANON, the Editorial Guidelines, and the operational knowledge base.*
 *Authority: Architectural — subordinate to `SETAS_DE_LA_PENA_CANON.md` and `EDITORIAL_GUIDELINES.md`; superior to operational documents.*
 *This document may only be revised through the decision process defined in CANON Section 16.*

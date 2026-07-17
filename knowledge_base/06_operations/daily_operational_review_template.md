@@ -1,7 +1,7 @@
 ---
 title: Daily Operational Review Template
-document_id: TMP-0001
-version: 1.1
+document_id: TMP-001
+version: 1.0
 status: operational_template
 authority: operations
 load_priority: selective
@@ -14,7 +14,6 @@ created: 2026-06-30
 | Field | Value |
 |---|---|
 | Date | YYYY-MM-DD |
-| Review ID | DOR-XXXX |
 | Operator | |
 | Weather | ☐ Sunny ☐ Cloudy ☐ Rainy ☐ Foggy — Temp: ___ °C / RH ext: ___ % |
 | Working Hours | HH:MM – HH:MM |
@@ -66,7 +65,7 @@ created: 2026-06-30
 
 | Field | Value |
 |---|---|
-| Identifier | OBS-XXXX |
+| Identifier | PRB-YYYY-MM-DD-01 |
 | Observed symptoms | |
 | Suspected cause | |
 | Immediate action | |
@@ -76,7 +75,7 @@ created: 2026-06-30
 
 | Field | Value |
 |---|---|
-| Identifier | OBS-XXXX |
+| Identifier | PRB-YYYY-MM-DD-02 |
 | Observed symptoms | |
 | Suspected cause | |
 | Immediate action | |
@@ -101,7 +100,7 @@ created: 2026-06-30
 
 | Field | Value |
 |---|---|
-| Experiment ID | EXP-XXXX |
+| Experiment ID | EXP-YYYY-MM-DD-01 |
 | Hypothesis | |
 | Variable changed | |
 | Control condition | |
@@ -201,7 +200,7 @@ created: 2026-06-30
 |---|---|
 | Processing date | |
 | Agent version | |
-| Source document | TMP-0001 |
+| Source document | TMP-001 |
 
 ### Suggested Repository Updates
 
@@ -243,4 +242,4 @@ created: 2026-06-30
 
 ---
 
-*TMP-0001 v1.1 — Setas de la Peña — Daily Operational Review Template*
+*TMP-001 v1.0 — Setas de la Peña — Daily Operational Review Template*

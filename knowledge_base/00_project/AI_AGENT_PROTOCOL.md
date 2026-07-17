@@ -1,13 +1,13 @@
 ---
 title: AI Agent Protocol
-document_id: STD-0004
-version: 1.1
+document_id: AGENT-001
+version: 1.3
 status: canonical
 authority: agent_behavior
 load_priority: always
 owner: Setas de la Peña
 created: 2026-06-30
-revised: 2026-06-30
+revised: 2026-07-09
 ---
 
 # AI Agent Protocol
@@ -104,21 +104,9 @@ Classify every user request before retrieving documents.
 
 ## 6. Conflict Resolution
 
-When two or more documents provide contradictory information, apply this authority hierarchy:
+When two or more documents provide contradictory information, apply the precedence model defined in `SETAS_DE_LA_PENA_CANON.md` Section 14 — the single source of truth for document precedence. Section 14.1 (Normative Authority) determines which document's content prevails. Section 14.2 (Operational State) describes current reality and never overrides Normative Authority, however recent it is.
 
-| Rank | Document |
-|------|----------|
-| 1 | `DECISIONS.md` |
-| 2 | `SETAS_DE_LA_PENA_CANON.md` |
-| 3 | `SYSTEM_FLOW.md` |
-| 4 | `EDITORIAL_GUIDELINES.md` |
-| 5 | SOPs |
-| 6 | Operational documents |
-| 7 | Domain documents |
-| 8 | Research summaries |
-| 9 | External literature |
-
-**Rule:** External literature never overrides project decisions unless the user is explicitly evaluating a revision to existing practice. State the conflict to the user and identify which document takes precedence. Do not silently resolve conflicts.
+**Rule:** External literature never overrides project decisions unless the user is explicitly evaluating a revision to existing practice. State the conflict to the user and identify which document takes precedence per CANON Section 14. Do not silently resolve conflicts.
 
 ---
 
@@ -416,3 +404,41 @@ The agent's primary responsibility is not to generate more text.
 Its responsibility is to preserve and improve the integrity of the Setas de la Peña Knowledge System while supporting better operational decisions.
 
 When in doubt: retrieve before answering, state uncertainty, and recommend where knowledge should be recorded rather than accumulating information in conversation threads where it will be lost.
+
+---
+
+## 23. AI-Native Retrieval — INDEX.yaml Integration (Phase 2)
+
+This section extends Sections 3, 4, 6, 16, and 17 above. It does not replace them. It exists because Phase 2 (`DECISIONS.md`, DEC-010) introduced `INDEX.yaml`, a machine-readable document catalog that did not exist when those sections were written. Where this section is silent, the earlier sections govern unchanged.
+
+### 23.1 Canonical Document Discovery
+
+Before falling back to open-ended search (grep, glob, or reading directory listings), consult `INDEX.yaml` for a matching `id`, `topics`, or `keywords` entry. As of Phase 2, `INDEX.yaml` is schema-stage only — most documents do not yet have an entry (see `ROADMAP.md`, "Full `INDEX.yaml` population"). When a query's topic has no entry, fall back to Section 4's Retrieval Order and `REPOSITORY_MAP.md`'s Information Retrieval Guide, exactly as before Phase 2. `INDEX.yaml` supplements discovery; it does not gate it, and its absence for a given topic is not evidence that no canonical document exists.
+
+### 23.2 Authority Resolution via INDEX.yaml
+
+`INDEX.yaml`'s `authority` field is a fast mirror of CANON §14's tiers, letting an agent avoid reloading the full CANON text for routine tier lookups. It is a mirror, never a second source: if `INDEX.yaml` and CANON §14 ever disagree, CANON §14 governs and the catalog entry is in error. For any conflict with real operational consequence, verify against CANON §14 directly rather than trusting the cached tier value alone — this matters especially while population is incomplete and entries may lag behind a document's actual current tier.
+
+### 23.3 Conflict Resolution
+
+Unchanged from Section 6. `INDEX.yaml`'s `authority` field describes that resolution; it is not a second mechanism for reaching it.
+
+### 23.4 Operational-State Retrieval
+
+Query `INDEX.yaml` entries with `authority: operational_state` (e.g. `FARM_BRAIN.md`, `CURRENT_OPERATIONS.md`, batch records) for current-state questions. Per CANON §14.2–14.3, these entries are the source of truth for what is happening now, never for what is correct or required. A high `confidence` value on an operational-state entry is not license to override a `canonical_knowledge` entry on a cultivation parameter.
+
+### 23.5 Research Retrieval and Citation Behavior
+
+`INDEX.yaml`'s `source_documents` field (`paper_XXX` / `book_XXX` / `guide_XXX` identifiers, matching `09_research/literature_index.md`) makes the citation requirement in Section 21 (Output Standards) and CANON §9 queryable: resolve `source_documents` → `literature_index.md` → the full citation, rather than searching research files by hand. The citation format itself is unchanged — continue using `README_MCP.md`'s existing convention (`[FARM_BRAIN]`, `[01_species/pleurotus_djamor.md]`, `[paper_001, ★★★★★]`, `[estimado, ★★★☆☆]`).
+
+### 23.6 Handling Uncertainty
+
+Unchanged from Section 16. `INDEX.yaml`'s `confidence` field is an additional input to that policy, not a replacement for it. A `confidence: low` entry is a signal to state uncertainty per Section 16 — it is not a reason to exclude the entry from consideration.
+
+### 23.7 When External Literature May Override Repository Knowledge
+
+Synthesizing CANON §9 (Research Philosophy) and Section 6 above, external literature overrides repository knowledge only when: (a) it is Tier 1 (peer-reviewed, per CANON §9); (b) the user is explicitly evaluating a revision to existing practice, not asking a routine operational question; and (c) the override is recorded as a decision in `DECISIONS.md` rather than applied silently. Tier 3 sources never override — they generate hypotheses for field validation only (CANON §9). This is not a new rule. It is the existing CANON §9 / Section 6 rule, stated once more in the section an `INDEX.yaml`-driven retrieval path will actually consult.
+
+### 23.8 Maintenance Note
+
+This section describes how to use `INDEX.yaml` as it exists today: schema plus representative examples, not a full catalog. It will require revision when `INDEX.yaml` is fully populated — at that point, discovery under 23.1 stops being supplemental and becomes the default first step for canonical document discovery.

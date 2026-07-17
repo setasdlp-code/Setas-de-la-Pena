@@ -1,11 +1,12 @@
 ---
 title: Identifier Standard
-document_id: STD-0001
+document_id: STD-001
 version: 1.2
 status: canonical
 authority: technical_standard
 load_priority: always
 owner: Setas de la Peña
+last_reviewed: 2026-07-17
 ---
 
 # Identifier Standard

@@ -10,14 +10,14 @@ Hallazgos de campo, post-mortems de lotes y resoluciones de incidentes que han m
 
 **Propósito:** Evitar repetir el mismo error. Una lección sin cambio de SOP o decisión no es una lección — es una anécdota.
 
-**Formato:** LL-XXXX | Fecha | Categoría | Una línea de título
+**Formato:** L-NNN | Fecha | Categoría | Una línea de título
 **Categorías:** `[SENSOR]` `[SUSTRATO]` `[FAE]` `[CONTAMINACION]` `[HARDWARE]` `[PROCESO]` `[NEGOCIO]`
 
 ---
 
 ## LECCIONES ACTIVAS
 
-### LL-0001 — [SENSOR] — Sensor HR integrado en VIVOSUN H05 no es confiable
+### L-001 — [SENSOR] — Sensor HR integrado en VIVOSUN H05 no es confiable
 
 **Fecha:** 2026-06 (pre-producción — detectado antes del primer lote)
 **Lote asociado:** N/A — detectado en banco de pruebas Martha Tent
@@ -33,23 +33,23 @@ El sensor del H05 probablemente mide HR en el chorro de niebla directamente desd
 El operador habría ajustado hacia abajo creyendo que la HR era suficiente. El sustrato y los caps habrían recibido menos humidificación de la necesaria, generando estrés hídrico y reducción de BE. La lógica de control automático hubiera operado invertida.
 
 **Cambio implementado:**
-- Sensor H05 descartado operacionalmente. Ver `DECISIONS.md` DEC-0003.
+- Sensor H05 descartado operacionalmente. Ver `DECISIONS.md` DEC-003.
 - Inkbird IBS-TH2 Plus = fuente de verdad para HR hasta llegada del SHT3x.
-- SHT3x (Sensirion, I²C) seleccionado como sensor primario. Ver `DECISIONS.md` DEC-0002.
+- SHT3x (Sensirion, I²C) seleccionado como sensor primario. Ver `DECISIONS.md` DEC-002.
 - SOP actualizado: nunca usar el display del H05 para decisiones de HR.
 
 **SOP afectado:** `05_equipment/martha.md`, `05_equipment/environmental_control.md`
-**Decisión creada:** DEC-0002, DEC-0003
+**Decisión creada:** DEC-002, DEC-003
 
 ---
 
 ## PLANTILLA PARA NUEVAS LECCIONES
 
 ```markdown
-### LL-XXXX — [CATEGORIA] — Título breve y descriptivo
+### L-NNN — [CATEGORIA] — Título breve y descriptivo
 
 **Fecha:** YYYY-MM
-**Lote asociado:** BT-XXXX o N/A
+**Lote asociado:** YYYY-MM-SP-NNN o N/A
 **Descubierto por:** Método de detección (inspección visual, sensor, comparación, etc.)
 
 **Qué pasó:**
@@ -66,7 +66,7 @@ Consecuencias observadas o que hubieran ocurrido sin detección.
 - Referencia al documento actualizado
 
 **SOP afectado:** [archivo o N/A]
-**Decisión creada:** [DEC-XXXX o N/A]
+**Decisión creada:** [DEC-NNN o N/A]
 ```
 
 ---
@@ -75,10 +75,10 @@ Consecuencias observadas o que hubieran ocurrido sin detección.
 
 | ID | Pregunta | Origen | Estado |
 |---|---|---|---|
-| QST-0001 | ¿Qué BE real se obtiene con paja de trigo de la Sabana de Bogotá? | Planificación Fase 1 | Pendiente primer lote |
-| QST-0002 | ¿Baja la T° nocturna en Tenjo de 18°C en época seca? | Riesgo P. djamor | Verificación de campo requerida |
-| QST-0028 | ¿SCD30 requiere ajuste adicional más allá de `altitude_compensation: 2600`? | ESPHome docs | Pendiente banco de pruebas |
-| QST-0008 | ¿Proveedores de spawn colombianos: calidad y disponibilidad real? | Planificación Fase 1 | Investigación pendiente |
+| I-001 | ¿Qué BE real se obtiene con paja de trigo de la Sabana de Bogotá? | Planificación Fase 1 | Pendiente primer lote |
+| I-002 | ¿Baja la T° nocturna en Tenjo de 18°C en época seca? | Riesgo P. djamor | Monitoreo Inkbird activo |
+| I-003 | ¿SCD30 requiere ajuste adicional más allá de `altitude_compensation: 2600`? | ESPHome docs | Pendiente banco de pruebas |
+| I-004 | ¿Proveedores de spawn colombianos: calidad y disponibilidad real? | Planificación Fase 1 | Investigación pendiente |
 
 ---
 

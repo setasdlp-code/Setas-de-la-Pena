@@ -13,6 +13,10 @@ Repositorio privado de investigación, operación y desarrollo de producto para 
 `climate-bench/` se mantiene como repositorio independiente y está excluido del repositorio principal.
 Los PDF completos usados como fuentes permanecen en un caché local excluido; Git conserva las citas y síntesis curadas.
 
+## Fuente canónica
+
+Desde DEC-013, la copia editable y canónica de la base es `knowledge_base/` dentro de este monorepo. El repositorio privado histórico `setasdlp-code/Knowledge-Base` se conserva como referencia de la reconciliación, pero no debe recibir cambios independientes. Toda modificación nueva entra aquí mediante rama y pull request.
+
 ## Seguridad
 
 El repositorio debe permanecer **privado**. Credenciales, tokens, exportaciones de correo y archivos `.env` están excluidos por `.gitignore`. Antes de cada commit, confirma el alcance con:
@@ -64,9 +68,8 @@ El script no ejecuta `git add`: conserva el historial, bloquea archivos sensible
 ## Validaciones rápidas
 
 ```bash
-python3 -m py_compile build_offline.py fetch_gmail.py mcp/setas_mcp.py ECC/main.py
-python3 ECC/main.py config
-python3 ECC/main.py test-skills
-node --check recipe-recommender.js
-bash -n push_to_github.sh
+python3 -m pip install -r mcp/requirements.txt -r scripts/quality/requirements.txt
+bash scripts/quality/run.sh
 ```
+
+El mismo gate corre en GitHub Actions para cada pull request y cada push a `main`. Verifica formatos estructurados, compilación, comportamiento seguro de ECC, MCP, secretos, exclusiones, IDs de equipos, rutas de `INDEX.yaml` y regresiones científicas/FAE conocidas.

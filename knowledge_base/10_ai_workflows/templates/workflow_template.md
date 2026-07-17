@@ -1,5 +1,5 @@
 ---
-workflow_id: WF-XXXX
+workflow_id: WF-XXX
 title: [Workflow Title]
 version: 1.0
 status: Active  # Active | Draft | Deprecated | Archived
@@ -18,7 +18,7 @@ revision_history:
     notes: Initial version
 ---
 
-# WF-XXXX — [Workflow Title]
+# WF-XXX — [Workflow Title]
 
 ## Purpose
 

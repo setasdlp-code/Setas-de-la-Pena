@@ -1,7 +1,7 @@
 ---
 title: Daily AI Review
-document_id: TMP-0002
-version: 1.1
+document_id: TMP-002
+version: 1.0
 status: operational_template
 authority: ai_operations
 load_priority: selective
@@ -15,9 +15,8 @@ created: 2026-06-30
 |---|---|
 | Review Date | YYYY-MM-DD |
 | Operator Reviewed | |
-| Review ID | AIR-XXXX |
-| DOR Reference | DOR-XXXX |
-| Source Template | TMP-0001 v1.1 |
+| DOR Reference | DOR-YYYY-MM-DD |
+| Source Template | TMP-001 v1.0 |
 | AI Version | |
 | Processing Timestamp | YYYY-MM-DD HH:MM UTC |
 
@@ -206,24 +205,25 @@ created: 2026-06-30
 > Verify continuity of identifier chain for all active entities referenced in today's DOR.
 
 ```
-Master/Working Culture (MC-XXXX / WC-XXXX)
+Culture (CUL-XXXX)
     ↓
-Grain Spawn (GS-XXXX)
+Spawn (SPW-XXXX)
     ↓
-Substrate Batch (SB-XXXX)
+Substrate (SUB-XXXX)
     ↓
-Fruiting Block (BL-XXXX) → Production Batch (BT-XXXX)
+Batch (BAT-XXXX)
     ↓
-Harvest (HV-XXXX) → Packaging Lot (PK-XXXX) → Customer Batch (CB-XXXX)
+Harvest (HAR-XXXX)
     ↓
-Knowledge (OBS-XXXX / EXP-XXXX / LL-XXXX / DEC-XXXX / SOP-XXXX)
+Knowledge (LES-XXXX / DEC-XXXX / SOP-XXXX)
 ```
 
 | Entity | Identifier | Chain Complete | Missing Link |
 |---|---|---|---|
 | Culture | | ☐ Yes ☐ No | |
 | Spawn | | ☐ Yes ☐ No | |
-| Substrate / Block / Batch | | ☐ Yes ☐ No | |
+| Substrate | | ☐ Yes ☐ No | |
+| Batch | | ☐ Yes ☐ No | |
 | Harvest | | ☐ Yes ☐ No | |
 
 **Traceability Summary:**
@@ -264,4 +264,4 @@ Knowledge (OBS-XXXX / EXP-XXXX / LL-XXXX / DEC-XXXX / SOP-XXXX)
 
 ---
 
-*TMP-0002 v1.1 — Setas de la Peña — Daily AI Review — AI-generated document. Requires human review before any repository action.*
+*TMP-002 v1.0 — Setas de la Peña — Daily AI Review — AI-generated document. Requires human review before any repository action.*

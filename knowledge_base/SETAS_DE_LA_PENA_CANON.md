@@ -1,11 +1,11 @@
 ---
 title: Setas de la Peña — Canon Architecture Document
-document_id: STD-0002
+document_id: CANON-001
 authority: highest
 category: architecture
 load_priority: always
-version: 1.2
-last_reviewed: 2026-06-29
+version: 1.3
+last_reviewed: 2026-07-09
 status: canonical
 supersedes: null
 superseded_by: null
@@ -270,7 +270,7 @@ The following metrics define operational success. They are evaluated per product
 | Grade A Yield | Grade A product / total fresh yield × 100 | ≥80% | `06_operations/quality_control.md` |
 | Sensor Uptime | Hours with valid sensor readings / total hours | ≥95% | `05_equipment/environmental_control.md` |
 | Lot Traceability | Lots with complete records / total lots | 100% | `06_operations/batch_tracking.md` |
-| Ventilation Control Compliance | Hours with CO₂ in target range and extractor response available / total fruiting hours | ≥90% after commissioning | `05_equipment/environmental_control.md` |
+| FAE Compliance | Hours within target FAE range / total fruiting hours | ≥90% | `05_equipment/environmental_control.md` |
 | Knowledge Growth | Validated additions to the knowledge base generated during each production cycle | ≥1 per cycle | `09_research/literature_database.md`, batch logs |
 
 Knowledge Growth is tracked because accumulated operational knowledge is a strategic asset. A production cycle that yields mushrooms but produces no validated, documented learning represents an irreversible opportunity cost. The cumulative knowledge base determines the project's capacity to diagnose future problems, train future operators, and expand into new species or processes without starting from zero.
@@ -281,20 +281,63 @@ Metrics below threshold for two consecutive cycles trigger a root-cause analysis
 
 ## 14. Document Precedence Rules
 
+Precedence in this repository is defined along two independent axes. They are not interchangeable and must not be conflated.
+
+**Normative Authority** determines which document's content prevails when two documents disagree. **Operational State** describes what is happening right now. Operational State reports current reality; it never overrides Normative Authority, regardless of how recent or specific its content is. A document can be operationally current and normatively subordinate at the same time — that is the expected condition, not a conflict.
+
+## 14.1 Normative Authority
+
 When two documents contain conflicting information, precedence is resolved in this order:
 
 1. `SETAS_DE_LA_PENA_CANON.md` (this document)
-2. `README_MCP.md`
-3. `FARM_BRAIN.md`
-4. Species profiles (`01_species/`)
-5. Substrate SOPs (`02_substrates/`)
-6. Equipment documentation (`05_equipment/`)
-7. Operations SOPs (`06_operations/`)
-8. Research summaries (`09_research/`)
-9. Business documents (`07_business/`)
-10. Brand documents (`08_brand/`)
+2. Governance Standards
+   - `EDITORIAL_GUIDELINES.md`
+   - `SYSTEM_FLOW.md`
+   - `AI_AGENT_PROTOCOL.md`
+   - `KNOWLEDGE_ARCHITECTURE.md`
+   - `IDENTIFIER_STANDARD.md`
+   - `REPOSITORY_MAP.md`
+   - `README_MCP.md`
+3. `DECISIONS.md`
+4. Canonical Knowledge
+   - `01_species/`
+   - `02_substrates/`
+   - `03_spawn/`
+   - `04_facility/`
+   - `05_equipment/`
+5. SOPs and Workflows
+   - `06_operations/`
+   - `10_ai_workflows/`
+6. Lessons and Historical Records
+   - `LESSONS_LEARNED.md`
+   - `CHANGELOG.md`
+7. Research Library
+   - `09_research/`
+   - `references/`
+8. Business and Brand
+   - `07_business/`
+   - `08_brand/`
+9. Archive / deprecated material
 
-A conflict between documents at different precedence levels is resolved by the higher-precedence document. A conflict between documents at the same level is flagged as a documentation inconsistency and resolved through the decision process defined in Section 16. The resolved position is documented in both affected files and in `FARM_BRAIN.md`.
+A document at higher precedence supersedes any document at lower precedence. A conflict between documents at the same level is flagged as a documentation inconsistency and resolved through the decision process defined in Section 16. The resolved position is documented in both affected files and in `DECISIONS.md`.
+
+## 14.2 Operational State
+
+Operational State documents report current reality — what is happening now. They rank outside the Normative Authority list in Section 14.1 and never override it.
+
+1. `CURRENT_OPERATIONS.md`
+2. `FARM_BRAIN.md`
+3. Batch records (`06_operations/batch_tracking.md` entries)
+4. Daily reviews (`06_operations/daily_operational_review_template.md`, `daily_ai_review.md` instances)
+5. Sensor exports
+
+## 14.3 Interaction Between the Two Axes
+
+- Operational State describes what is happening now. It does not establish what is correct or required — that determination belongs exclusively to Normative Authority (Section 14.1).
+- Research (`09_research/`) informs decisions but does not override project documentation unless a formal revision is made through the decision process defined in Section 16.
+- Lessons Learned (`LESSONS_LEARNED.md`) becomes authoritative only when converted into a `DECISIONS.md` entry or incorporated into a canonical or governance document. Until that conversion occurs, a lesson is a candidate for revision, not a ruling.
+
+This section is the single source of truth for document precedence. Any other document that discusses precedence (`AI_AGENT_PROTOCOL.md` Section 6, `EDITORIAL_GUIDELINES.md` Section 4, `SYSTEM_FLOW.md` Section 11) must reference this section rather than restate it.
 
 ---
 
@@ -440,9 +483,9 @@ A proposed revision to this document must demonstrate that an existing principle
 
 ---
 
-*Document version: 1.2*
-*Effective date: 2026-06-29*
+*Document version: 1.3*
+*Effective date: 2026-07-09*
 *Next scheduled review: 2026-12-29*
 *Authority: Chief Knowledge Architect — Setas de la Peña*
-*Supersedes: v1.1*
+*Supersedes: v1.2*
 *This document may only be revised through the decision process defined in Section 16.*
