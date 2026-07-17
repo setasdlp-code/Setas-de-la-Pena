@@ -8,7 +8,7 @@ confidence: low
 
 # CURRENT_OPERATIONS
 
-La última instantánea de campo encontrada es del 2026-06-29. Este documento no afirma recepciones, instalaciones ni producción que no estén respaldadas por una verificación posterior.
+La última instantánea general de campo encontrada es del 2026-06-29. La presencia del autoclave All American en el garaje fue confirmada por el propietario el 2026-07-10, sin commissioning ni validación de ciclos. Este documento no afirma otras recepciones, instalaciones ni producción sin evidencia posterior.
 
 ## Fase Actual
 
@@ -30,6 +30,7 @@ La última instantánea de campo encontrada es del 2026-06-29. Este documento no
 | SCD30 ×2 / SHT3x ×2 | Pedido; llegada estimada 2026-06-28 | Recepción, direcciones I²C y calibración |
 | TICONN IP67 ×2 | Pedido; llegada estimada 2026-06-28 | Recepción e inspección |
 | RPi4 + Home Assistant | Registros previos contradictorios | Presencia, versión, acceso y configuración |
+| Autoclave All American | Presencia física confirmada en garaje el 2026-07-10 | Placa/modelo, capacidad nominal, banco de pruebas y validación de ciclos |
 
 La nomenclatura correcta es T7 = humidificador y H4 = extractor.
 
@@ -73,6 +74,7 @@ Próxima acción y fecha: ...
 | Confirmar RPi4/HA/ESP32 | Captura de versión/configuración y prueba | Pendiente |
 | Validar sensores | Lecturas cruzadas y direcciones I²C | Pendiente |
 | Commissioning de ventilación | Caudal efectivo, ACH estimado y curva de CO₂ | Pendiente |
+| Comisionar autoclave | Foto de placa, prueba funcional y ciclo validado para una carga definida | Pendiente |
 | Conseguir spawn | Proveedor, lote `GS-XXXX` y trazabilidad | Pendiente |
 | Conseguir paja | Proveedor/lote `RM-XXXX` y costo | Pendiente |
 

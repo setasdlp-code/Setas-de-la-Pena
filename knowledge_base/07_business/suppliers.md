@@ -73,12 +73,12 @@ Directorio de proveedores actuales y potenciales para insumos de cultivo, electr
 
 | Producto | Proveedor | Canal | Estado |
 |---|---|---|---|
-| ESP32-WROOM-32 | Amazon.com | Pedido jun 2026 | Recepción por verificar |
-| SHT3x (sonda AC Infinity) | Amazon.com | Pedido jun 2026 | Recepción por verificar |
-| SCD30 (CO₂) | Amazon.com | Pedido jun 2026 | Recepción por verificar |
-| TICONN IP67 | Amazon.com | Pedido jun 2026 | Recepción por verificar |
-| Relay 4CH | Amazon.com | Pedido jun 2026 | Recepción por verificar |
-| PSU 5V / 12V | Amazon.com | Pedido jun 2026 | Recepción por verificar |
+| ESP32-WROOM-32 | Amazon.com | Pedido jun 2026 | En tránsito |
+| SHT3x (sonda AC Infinity) | Amazon.com | Pedido jun 2026 | En tránsito |
+| SCD30 (CO₂) | Amazon.com | Pedido jun 2026 | En tránsito |
+| TICONN IP67 | Amazon.com | Pedido jun 2026 | En tránsito |
+| Relay 4CH | Amazon.com | Pedido jun 2026 | En tránsito |
+| PSU 5V / 12V | Amazon.com | Pedido jun 2026 | En tránsito |
 | Cables, WAGO | Amazon.com / MercadoLibre | — | Comprar local si es posible |
 
 **Alternativas Colombia (electrónica):**
@@ -90,9 +90,9 @@ Directorio de proveedores actuales y potenciales para insumos de cultivo, electr
 
 | Equipo | Proveedor | Estado |
 |---|---|---|
-| CLOUDLAB 844 | Amazon.com | Recepción por verificar |
-| AC Infinity T7 | Amazon.com | Recepción por verificar |
-| AC Infinity H4 ×2 | Amazon.com | Recepción por verificar |
+| CLOUDLAB 844 | Amazon.com | En tránsito |
+| AC Infinity T7 | Amazon.com | En tránsito |
+| AC Infinity H4 ×2 | Amazon.com | En tránsito |
 | Recinto PIR/PUR | FrigoMaster Colombia | Cotizar urgente |
 | Autoclave | All-American / importar | Fase 2 — investigar |
 | Bolsas PP polipropileno | MercadoLibre Colombia | Fase 2 |

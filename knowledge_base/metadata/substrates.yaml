@@ -79,7 +79,7 @@ substrates:
     incompatible_species: []
     availability: local_potential        # borra accesible via cafeterias; confirmar en Tenjo
     evidence_rating: 3                    # fuente unica, clima mas calido que Tenjo
-    source: paper_006                     # SRC-0005 (Cenicafe 2005)
+    source: paper_006                     # Cenicafe 2005
     validation_status: needs_field_validation_tenjo
     notes: "Pulpa de café sola NO fructifica. Borra fresca <2 dias o ensilada. Revalidar BE bajo regimen termico frio de Tenjo."
 
@@ -99,7 +99,7 @@ substrates:
     incompatible_species: []
     availability: local_potential
     evidence_rating: 3
-    source: paper_006                     # SRC-0005 (Cenicafe 2005)
+    source: paper_006                     # Cenicafe 2005
     validation_status: needs_field_validation_tenjo
     notes: "T13/T14 sin borra (mas economicas). Ganoderma en Tenjo requiere calefaccion activa (fruiting 27-32C) -> Fase 2."
 

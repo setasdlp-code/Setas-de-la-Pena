@@ -57,7 +57,7 @@ Delaying internal grain spawn production until laboratory maturity is establishe
 
 ## Phase 2 — Near-Term Roadmap: Experimental Internal Grain Spawn Production
 
-**Trigger for Phase 2 Initiation:** After minimum three documented production cycles with BE within acceptance range and available laboratory capacity for experimental work.
+**Trigger for Phase 2 Initiation:** After minimum one documented production cycle with BE within acceptance range and available laboratory capacity for experimental work (see `laboratory_roadmap.md` §9).
 
 **Phase 2 Objectives:**
 - Develop internal grain spawn production protocol validated to commercial spawn quality standards

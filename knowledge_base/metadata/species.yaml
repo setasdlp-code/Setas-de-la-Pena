@@ -36,7 +36,7 @@ species:
     fae_per_hour: [8, 12]
     substrate_primary: masters_mix
     substrate_incompatible: []
-    be_range_percent: [50, 80]
+    be_range_percent: [80, 120]
     cycle_days: [60, 90]
     status_notes: "Alta complejidad. Requiere autoclave y parámetros muy estrechos."
 
@@ -50,7 +50,7 @@ species:
     incubation_temp_c: [21, 27]        # óptimo 25°C (Cenicafe paper_006)
     incubation_temp_optimal_c: 25
     humidity_percent: [80, 90]
-    co2_ppm_max: 1500
+    co2_ppm_max: 1000
     fae_per_hour: [4, 6]
     inoculation_rate_percent: [3.6, 7.5]   # 3.6% semilla comercial / 5-7.5% propia
     substrate_primary: supplemented_sawdust
@@ -102,4 +102,4 @@ species:
     be_range_percent: [13, 40]         # ~13% sobre café (Cenicafe); mayor en serrin/troncos
     cycle_days: [90, 180]
     requires_active_heating_tenjo: true   # fruiting 27-32°C inviable en Tenjo (12-18°C) sin calefaccion
-    status_notes: "Solo mercado medicinal. Fase 3. Fruiting óptimo 27–32°C → requiere calefacción activa en Tenjo (confirmado, Cenicafe paper_006). HR escalonada 90→70-80→30-40%. Nota nomenclatural: material comercial = G. lingzhi (SRC-0006)."
+    status_notes: "Solo mercado medicinal. Fase 3. Fruiting óptimo 27–32°C → requiere calefacción activa en Tenjo (confirmado, Cenicafe paper_006). HR escalonada 90→70-80→30-40%. Nota nomenclatural: material comercial = G. lingzhi (book_005)."

@@ -2,7 +2,7 @@
 title: Trazabilidad y Seguimiento de Lotes
 category: operations
 load_priority: selective
-last_reviewed: 2026-07-16
+last_reviewed: 2026-06-30
 confidence: high
 primary_sources:
   - Internal protocols
@@ -34,19 +34,18 @@ Traceability system for batches from inoculation through sale or disposal. Enabl
 ## Sistema de Numeración de Lotes
 
 ```
-Formato: BT-XXXX
+Formato: [AÑO]-[MES]-[ESPECIE]-[NÚMERO]
 Ejemplos:
-  BT-0001  → primer lote de producción registrado
-  BT-0002  → segundo lote de producción registrado
+  2026-07-DJ-001  → Julio 2026, P. djamor, lote 1
+  2026-08-LE-001  → Agosto 2026, L. edodes, lote 1
+  2026-07-HE-001  → Julio 2026, H. erinaceus, lote 1
 ```
-
-La fecha, especie, ubicación y operador son metadatos del registro; nunca se codifican en el identificador. Cada bloque físico usa `BL-XXXX` y referencia su lote `BT-XXXX` y su lote de sustrato `SB-XXXX`, conforme a `00_project/IDENTIFIER_STANDARD.md`.
 
 ## Batch Log Template
 
 ```
 ═══════════════════════════════════════════════════════════
-LOT ID (BT-XXXX): __________  MODULE (ENV-XXXX): ______  DATE LOGGED: _______
+LOT ID: ________________  MODULE: ______  DATE LOGGED: _______
 ═══════════════════════════════════════════════════════════
 SPECIES: ________________________________
 SUBSTRATE: ______________________________
@@ -62,13 +61,15 @@ Day  7: Colonization ____%  Contamination _____ T°___°C  Observations:
 Day 14: Colonization ____%  Contamination _____ T°___°C  Observations:
 Day 21: Colonization ____%  Contamination _____ T°___°C  Observations:
 Blocks Discarded (Contaminated): ___
+Contaminant Type/Appearance (if any — see contamination.md, Guía de Identificación Visual): _______________
+Day Detected (days since inoculation — see contamination.md, Momentos de Contaminación): ___
 Actual Colonization Timeline vs. Projected: ________________
 
 --- FRUITING PHASE ---
 Fruiting Induction Date: __________________
 First Pins Observed Date: ___________
 Fruiting Module/Chamber: _________________
-Initial Parameters: HR___% T°___°C CO₂___ppm Effective airflow___CFM Estimated ACH:___
+Initial Parameters: HR___% T°___°C CO₂___ppm FAE Cycles/hr:___
 
 FLUSH 1:
   Harvest Date: ____________
@@ -124,7 +125,7 @@ Home Assistant exports sensor data to CSV or InfluxDB for correlation analysis:
 - Average humidity during fruiting phase
 - Maximum CO₂ recorded during fruiting
 - Temperature min/max during fruiting
-- Effective airflow/estimated ACH and CO₂ control compliance
+- FAE cycle frequency and compliance
 - Correlate with yield per lot to identify environmental impact on biological efficiency
 
 Sensor data is reviewed alongside batch results to validate environmental parameter effectiveness and identify causation for yield variation.

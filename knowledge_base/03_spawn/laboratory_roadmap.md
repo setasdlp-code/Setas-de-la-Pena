@@ -1,7 +1,7 @@
 ---
 title: Laboratory Roadmap — Strategic Evolution of Laboratory Capability
 category: spawn
-document_id: DOC-0005
+document_id: LAB-ROADMAP-001
 load_priority: always
 last_reviewed: 2026-06-30
 status: strategic

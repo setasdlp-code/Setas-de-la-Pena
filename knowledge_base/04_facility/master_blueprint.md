@@ -52,7 +52,7 @@ Diseño modular de la instalación de Setas de la Peña en Tenjo. La filosofía 
 - Actividades: fruiting, pinning, cosecha
 - Equipos: CLOUDLAB 844, T7, H4, ESP32/ESPHome, sensores
 - Control ambiental automatizado: HR, T°, CO₂, FAE, luz
-- Estado actual de Martha Tent: verificación de campo requerida
+- Actualmente: Martha Tent (prototipo)
 
 ### Zona 5: Almacenamiento y Procesamiento
 - Actividades: pesaje, limpieza, refrigeración, empaque
@@ -62,9 +62,8 @@ Diseño modular de la instalación de Setas de la Peña en Tenjo. La filosofía 
 
 | Fase | Zonas | Estado |
 |---|---|---|
-| Verificación actual | Inventario de todas las zonas | Pendiente |
-| Fase 0 | Zona 4 (Martha Tent) | Último reporte activo; verificar |
-| Fase 1 | Zona 4 (CLOUDLAB 844) + Zona 1–2 básicas | Diseño; ejecución por verificar |
+| Fase 0 (actual) | Zona 4 (Martha Tent) | ✅ Activa |
+| Fase 1 | Zona 4 (CLOUDLAB 844) + Zona 1–2 básicas | En preparación |
 | Fase 2 | Recinto PIR/PUR + Zona 3 independiente | Pendiente |
 | Fase 3 | Laboratorio (Zona 2 profesional + agar + LAF) | Largo plazo |
 

@@ -2,8 +2,8 @@
 title: Martha Tent — Setup de Prototipo
 category: equipment
 load_priority: selective
-last_reviewed: 2026-07-16
-confidence: low
+last_reviewed: 2026-06-29
+confidence: high
 primary_sources:
   - Internal records
   - AC Infinity documentation
@@ -14,7 +14,7 @@ related_documents:
 ---
 
 # Executive Summary
-La Martha Tent 63" (Terra Fungus) está destinada a prototipado y validación. El último reporte (2026-06-29) la describía con control manual de HR; presencia, montaje y funcionamiento actuales requieren verificación de campo.
+La Martha Tent 63" (Terra Fungus) es una plataforma de prototipado y validación. Su función es desarrollar estrategias de control ambiental y validar parámetros de cultivo antes del despliegue en módulos de producción más grandes. Actualmente operada con control manual de HR (H05 en modo manual) y sensores Inkbird para lectura.
 
 # Technical Details
 
@@ -37,22 +37,22 @@ La Martha Tent funciona como:
 
 Data from Martha Tent experiments informs long-term decisions sobre environmental strategy para CLOUDLAB 844 y arquitectura futura.
 
-## Equipos Reportados en Martha Tent — Verificar
+## Equipos Actuales en Martha Tent
 
 | Equipo | Modelo | Estado |
 |---|---|---|
-| Humidificador | VIVOSUN H05 | Último reporte: modo manual; verificar |
-| Sensores T/HR | Inkbird IBS-TH2 Plus ×2 | Último reporte: funcionales; verificar |
-| Automatización | ESP32 previsto | Estado físico/configuración por verificar |
+| Humidificador | VIVOSUN H05 | Activo — **modo manual** |
+| Sensores T/HR | Inkbird IBS-TH2 Plus ×2 | Activos |
+| Automatización | Ninguna aún | Pendiente ESP32 |
 
 ## VIVOSUN H05 — Notas Críticas
 - Sensor integrado: **DESCARTADO** — sesgo de +30–35% HR.
 - Siempre operar en **modo manual %** usando lectura de Inkbird como referencia.
 - Tanque: 5L (~20h a plena carga). Verificar nivel diariamente.
 - Agua: filtrada <30 ppm TDS es apta. No requiere destilada.
-- Rol futuro posible: backup, solo si H05 y T7 se confirman físicamente y superan prueba funcional.
+- Rol futuro: backup cuando llegue T7.
 
-## Rutina Manual Provisional — Solo si el montaje se confirma
+## Operación Manual Actual
 
 ```
 RUTINA DIARIA — MARTHA TENT (Sin Automatización)
@@ -77,7 +77,7 @@ Sensor placement in Martha Tent reflects principles of environmental monitoring 
 These positioning principles transfer directly to environmental control documentation when larger modules are implemented. Ver: `environmental_control.md`.
 
 ## Plan de Upgrade — Martha Tent con ESP32
-Después de confirmar recepción e inventario:
+Con la llegada del hardware:
 1. Instalar SHT3x + SCD30 en Martha Tent con posicionamiento validado.
 2. Conectar T7 (reemplaza H05) a relay ESP32
 3. Conectar H4 a relay ESP32

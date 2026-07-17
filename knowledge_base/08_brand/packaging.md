@@ -32,8 +32,8 @@ Especificaciones de empaque para producto fresco y procesado. El empaque es part
 - **Etiqueta adhesiva:**
   - Nombre especie (español + latín)
   - Fecha de cosecha
-  - Lote de producción (`BT-XXXX`) y, si aplica, lote de empaque (`PK-XXXX`)
-  - Temperatura de conservación (4°C, máximo 5 días)
+  - Número de lote (YYYY-MM-SP-###)
+  - Temperatura de conservación (4°C; duración de referencia 5–7 días según `06_operations/quality_control.md` — valor final de etiqueta pendiente de validación, ver también verificación INVIMA pendiente más abajo)
   - Contacto: WhatsApp / email
 - **Presentación:** Setas orientadas uniformemente, no apiladas por presión.
 
@@ -80,10 +80,13 @@ Según INVIMA para alimentos frescos:
 
 ## Sistema de Trazabilidad en Empaque
 
-**Lote de producción:** `BT-XXXX`
-**Lote de empaque:** `PK-XXXX` (cuando una cosecha se divide o reempaca)
+**Número de lote:** `YYYY-MM-SP-###`
+- YYYY: año
+- MM: mes
+- SP: código especie (DJ=djamor, HE=erinaceus, SH=shiitake)
+- ###: número secuencial de lote
 
-La fecha, especie y presentación se registran como metadatos, no dentro del identificador.
+**Ejemplo:** `2026-08-DJ-003` = tercer lote de P. djamor de agosto 2026
 
 Con el número de lote se puede rastrear:
 - Fecha de inoculación

@@ -2,7 +2,7 @@
 title: Autoclaves y Esterilización
 category: equipment
 load_priority: selective
-last_reviewed: 2026-06-29
+last_reviewed: 2026-07-10
 confidence: high
 primary_sources:
   - Stamets (2000)
@@ -73,7 +73,7 @@ Used industrial autoclaves pueden representar una adquisición estratégica cuan
 ## Plan de Adquisición
 
 **Current Implementation (Fase 1):**
-Pasteurización exclusiva. Sin equipo de esterilización por presión.
+Pasteurización exclusiva en producción activa. Un autoclave All American (44 L declarados por el propietario — ver `metadata/equipment.yaml`) está físicamente en sitio (garaje, `04_facility/home_rnd_lab.md`). Puesta en marcha (banco de pruebas) aún no realizada. Validación de ciclos de esterilización para cargas concretas aún no realizada. No se usa todavía en producción — la pasteurización sigue siendo el método validado.
 
 **Near-Term Roadmap:**
 1. Adquirir olla de presión doméstica 23L (~$60–80 USD) cuando escala alcance 20–30 bloques/semana.
@@ -98,6 +98,9 @@ Pasteurización exclusiva. Sin equipo de esterilización por presión.
 # Open Questions
 - ¿Está disponible All-American en Colombia o hay equivalente local?
 - ¿Proveedor de bolsas PP 18×35 para autoclave en Colombia?
+- ¿Cuál es el modelo y la capacidad nominal oficial del autoclave ya presente en sitio? Los 44 L son la cifra reportada por el propietario, no una especificación de catálogo verificada — confirmar contra la placa del fabricante antes de fijar protocolos de ciclo.
+- ¿Cuándo se realiza la puesta en marcha (banco de pruebas) de la unidad ya presente en sitio?
+- ¿Cuándo se completa la validación de ciclos de esterilización para cargas concretas de la unidad ya presente en sitio?
 
 # References
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*, Cap. 5.

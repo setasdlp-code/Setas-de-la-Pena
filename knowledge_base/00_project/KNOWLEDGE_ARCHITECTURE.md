@@ -1,12 +1,11 @@
 ---
 title: Knowledge Architecture
-document_id: DOC-0001
-version: 1.1
+document_id: ARCH-KA-001
+version: 1.0
 status: canonical
 authority: architecture
 load_priority: always
 owner: Setas de la Peña
-last_reviewed: 2026-07-16
 ---
 
 # Knowledge Architecture
@@ -76,11 +75,20 @@ A single observation does not justify an SOP. A lesson learned is not a standard
 
 ---
 
-## Operations Evidence Store
+## Operations Directory
 
-The planned root-level `operations/` directory will store primary operational evidence. It has not yet been instantiated because no real production cycle has been recorded in this repository. Its purpose, once created, is to preserve the factual record of what occurred during cultivation.
+> **Status: PLANNED — not yet instantiated.** As of 2026-07-08 the project is
+> pre-production (zero active batches), so no `operations/` directory exists yet.
+> This section defines the *target* structure of System 2. Its instantiation is
+> deferred until the first production batch (see `DECISIONS.md` DEC-008 and the
+> migration plan, Phase 3). Until then, the operational-record **templates** live
+> in `06_operations/` — `daily_operational_review_template.md` (TMP-001) and
+> `daily_ai_review.md` (TMP-002) — and live tactical state is captured in
+> `CURRENT_OPERATIONS.md` at the knowledge_base root.
 
-It includes:
+When instantiated, the `operations/` directory stores primary operational evidence. Its purpose is to preserve the factual record of what occurred during cultivation.
+
+It will include:
 
 - Daily operational reviews
 - AI-generated review summaries
@@ -93,7 +101,7 @@ It includes:
 - Maintenance logs
 - Quality records
 
-Operations records are the raw material from which organizational knowledge is eventually extracted. They are not knowledge documents. Example or synthetic sensor data under `ECC/data/` must never be treated as operational evidence. Future databases or structured data systems may replace real records without affecting repository architecture or the Knowledge Base.
+Operations records are the raw material from which organizational knowledge is eventually extracted. They are not knowledge documents. Future databases or structured data systems may replace these records without affecting repository architecture or the Knowledge Base.
 
 ---
 

@@ -2,7 +2,7 @@
 title: Laboratorio de I+D (Casa) — Distribución y Adecuación
 category: facility
 load_priority: selective
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-10
 confidence: medium
 primary_sources:
   - Internal design (layout aprobado por Sebastián, 2026-07-05)
@@ -49,7 +49,7 @@ El sitio consta de tres espacios en dos niveles: **garaje** (planta baja), **pas
 
 - **Bodega de materia prima seca** (paja, aserrín, pellets, salvado, cal): en uno de los racks metálicos, en contenedores sellados — en clima húmedo y con roedores próximos, bolsa abierta = plaga y moho.
 - **Procesamiento de sustrato:** hidratación, mezcla y embolsado sobre el mesón metálico (1.50 m) o piso lavable. Operación más polvosa de todo el flujo.
-- **Estación de esterilización aquí** (recomendación): autoclave All American 44 L sobre la estufa doble industrial a gas propano. El garaje es el lugar correcto por ventilación para el propano (riesgo de CO), acceso a agua y drenaje para vapor/condensado.
+- **Estación de esterilización aquí:** autoclave All American (44 L declarados por el propietario; modelo y capacidad nominal oficial pendientes de confirmar contra la placa del equipo — ver `metadata/equipment.yaml`) presente físicamente en el garaje, sobre la estufa doble industrial a gas propano. Puesta en marcha (banco de pruebas) pendiente. Validación de ciclos de esterilización para cargas concretas, pendiente por separado — ver `05_equipment/autoclaves.md`. El garaje es el lugar correcto por ventilación para el propano (riesgo de CO), acceso a agua y drenaje para vapor/condensado.
 - **Barrera física con carro y lavadora:** cortina plástica o panel que aísle el mesón de procesamiento del carro. Riesgo real = gases de escape y polvo del carro sobre sustrato abierto (la pelusa de la lavadora es manejable).
 - **Convivencia carro/lavadora:** *observación de Sebastián* — el garaje aloja además carro y lavadora, motivo por el que se descartó como laboratorio limpio. Se mantiene solo como zona sucia + bodega.
 
@@ -84,7 +84,7 @@ Cuadrilátero irregular, área útil ~21–24 m². Un ducto rotulado **"Chimenea
 | Equipo | Cantidad | Ubicación |
 |---|---|---|
 | Estufa doble industrial (gas propano) | 1 | Garaje (esterilización) |
-| Autoclave All American 44 L | 1 | Garaje (sobre estufa) |
+| Autoclave All American (44 L declarados por el propietario, en sitio — ver `metadata/equipment.yaml`, `05_equipment/autoclaves.md`) | 1 | Garaje (sobre estufa) |
 | Mesón metálico 1.50 m | 1 | Garaje (procesamiento) |
 | Racks metálicos | 3 | Garaje (bodega) / distribuir según necesidad |
 | Incubadoras | — | Terraza (sección cerrada) |
@@ -111,7 +111,7 @@ Cuadrilátero irregular, área útil ~21–24 m². Un ducto rotulado **"Chimenea
 - Material, dimensiones y presupuesto del cerramiento de la terraza.
 - Función real del ducto "Chimenea / Ventilación casa" (¿extracción de la casa o toma?).
 - Confirmar existencia y capacidad de desagüe en la terraza para escurrido de la Martha tent.
-- Asignar identificadores **ENV-XXXX** (Growing Environment) a incubación y a la Martha tent, y **EQ-XXXX** a autoclave/estufa/LAF, según `STD-0001`.
+- Asignar identificadores **ENV-XXXX** (Growing Environment) a incubación y a la Martha tent, y **EQ-XXXX** a autoclave/estufa/LAF, según `STD-001`.
 
 # References
 

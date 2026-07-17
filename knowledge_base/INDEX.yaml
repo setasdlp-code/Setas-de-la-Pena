@@ -1,0 +1,358 @@
+# INDEX.yaml — Machine-Readable Document Catalog
+# Setas de la Peña Knowledge Base
+#
+# =============================================================================
+# WHAT THIS FILE IS — AND IS NOT
+# =============================================================================
+#
+# This file exists so an AI agent can discover the canonical document for a
+# topic, and the relationships between documents, in one lookup instead of a
+# full-repository search. It is designed for machine consumption first; the
+# human-readable equivalent is `00_project/SYSTEM_MAP.md`.
+#
+# THIS FILE CARRIES NO INDEPENDENT AUTHORITY. It is a MIRROR of decisions made
+# elsewhere, never a second source of them:
+#   - The `authority` field mirrors CANON §14. It never redefines precedence.
+#     If this file and CANON §14 ever disagree, CANON §14 governs and this
+#     file is corrected — the same discipline SYSTEM_MAP.md applies to itself.
+#   - The `related_documents` / `depends_on` / `implemented_by` fields mirror
+#     in-body citations per CROSS_REFERENCE_STANDARD.md §4. If an in-body
+#     reference and an entry here disagree, the in-body reference governs.
+#
+# STATUS: schema definition + representative examples only (Phase 2, DEC-010).
+# This is NOT a full catalog. Most of the repository's ~70 documents do not
+# yet have an entry. Full population is future work — see ROADMAP.md, "Full
+# INDEX.yaml population." Do not treat the absence of a document here as a
+# statement about that document's importance or validity.
+#
+# =============================================================================
+
+schema_version: "1.0"
+
+# -----------------------------------------------------------------------------
+# SCHEMA — field definitions
+# -----------------------------------------------------------------------------
+# Each field below is documented as data (not just as a comment) so an agent
+# parsing this file can read field purpose programmatically, not only a human
+# reading the source. Controlled vocabularies are listed where they exist —
+# use them exactly; do not invent new values without updating this schema
+# block first.
+
+schema:
+  id:
+    type: string
+    required: true
+    description: >
+      Stable machine key for this catalog entry, decoupled from title and
+      path so a rename or move never breaks a reference. Mirrors the
+      permanence philosophy of IDENTIFIER_STANDARD.md's object identifiers,
+      applied here to documents instead of biological/operational objects.
+      This file does not modify or extend IDENTIFIER_STANDARD.md's registry —
+      document IDs here are a separate, complementary namespace.
+    format: "lowercase-kebab-case, e.g. canon, pleurotus-djamor"
+
+  title:
+    type: string
+    required: true
+    description: Human display label, matching the document's own frontmatter `title` field.
+
+  path:
+    type: string
+    required: true
+    description: >
+      Relative path from the knowledge_base/ directory (or repository root for
+      /README.md). The sole mechanism for resolving id -> file.
+
+  authority:
+    type: string
+    required: true
+    description: >
+      Which CANON §14 tier this document belongs to. MIRRORED FROM CANON §14,
+      NEVER INDEPENDENTLY ASSIGNED. A document not listed in CANON §14.1's
+      Normative Authority enumeration (e.g. a pure-synthesis document like
+      SYSTEM_MAP.md) takes the value `none` — see `canonical` below for how
+      that case is distinguished from an authoritative document.
+    controlled_vocabulary:
+      - canon                            # CANON §14.1 tier 1
+      - governance_standards              # CANON §14.1 tier 2
+      - decisions                         # CANON §14.1 tier 3
+      - canonical_knowledge                # CANON §14.1 tier 4
+      - sops_and_workflows                 # CANON §14.1 tier 5
+      - lessons_and_historical_records      # CANON §14.1 tier 6
+      - research_library                   # CANON §14.1 tier 7
+      - business_and_brand                 # CANON §14.1 tier 8
+      - archive_deprecated                 # CANON §14.1 tier 9
+      - operational_state                  # CANON §14.2 — separate axis, not ranked
+      - none                               # no independent authority (e.g. SYSTEM_MAP.md)
+
+  category:
+    type: string
+    required: true
+    description: >
+      Reuses the existing `category:` frontmatter value already present on
+      most documents. No new taxonomy is introduced by this file.
+    controlled_vocabulary:
+      [architecture, project, species, substrates, spawn, facility, equipment,
+       operations, business, brand, research, references, meta, navigation, editorial]
+
+  canonical:
+    type: boolean
+    required: true
+    description: >
+      Is this document the source of truth for ITS OWN declared category and
+      scope? This is a SCOPED claim, not a global one — FARM_BRAIN.md is
+      canonical for "current operational snapshot" but is never canonical for
+      cultivation parameters (CANON §14.2/§14.3: Operational State never
+      overrides Normative Authority). A pure-synthesis document with no
+      independent claim of its own (SYSTEM_MAP.md) is `false`. A template with
+      no content of its own (workflow_template.md) is `false`.
+
+  topics:
+    type: list of string
+    required: false
+    description: Broad subject-matter buckets for semantic retrieval without full-text search.
+
+  keywords:
+    type: list of string
+    required: false
+    description: Literal terms and synonyms (including Spanish/English pairs) for exact-match retrieval.
+
+  related_documents:
+    type: list of string (document ids)
+    required: false
+    description: >
+      Symmetric "see also" — the machine-readable expression of
+      CROSS_REFERENCE_STANDARD.md. If A lists B here, B does not need to list
+      A back, but reciprocal listing is encouraged when both directions are
+      independently true.
+
+  depends_on:
+    type: list of string (document ids)
+    required: false
+    description: >
+      Asymmetric — this document's claims are only valid if the referenced
+      document's claims hold. Enables impact analysis: "if X changes, what
+      needs review?" is answered by "what depends_on X."
+
+  implemented_by:
+    type: list of string (document ids)
+    required: false
+    description: >
+      Inverse of depends_on, used primarily on decisions tier documents — a
+      decision is implemented_by the SOPs/domain documents it authorized.
+      Makes the Decision -> SOP chain (SYSTEM_FLOW.md §6) machine-queryable.
+
+  supersedes:
+    type: string or null (document id)
+    required: false
+    description: >
+      Version lineage. Extends the `supersedes` / `superseded_by` frontmatter
+      fields CANON already uses — not a new convention.
+
+  source_documents:
+    type: list of string
+    required: false
+    description: >
+      Evidentiary backing, using the existing paper_XXX / book_XXX / guide_XXX
+      identifiers from 09_research/literature_index.md. Makes CANON §9's
+      citation requirement machine-readable.
+
+  confidence:
+    type: string
+    required: false
+    description: >
+      Reuses the existing `confidence:` frontmatter value and the
+      AI_AGENT_PROTOCOL.md §17 four-level scale. Reflects strength of
+      repository evidence, not model certainty.
+    controlled_vocabulary: [high, medium, low, experimental]
+
+  status:
+    type: string
+    required: true
+    description: >
+      Lifecycle state. Distinct from `confidence` (evidence strength) —
+      a document can be `active` with `confidence: low` (an honest
+      estimate awaiting field validation).
+    controlled_vocabulary: [draft, active, deprecated, superseded]
+
+# -----------------------------------------------------------------------------
+# REPRESENTATIVE EXAMPLES
+# -----------------------------------------------------------------------------
+# The following entries illustrate the schema across the full range of
+# authority tiers, both canonical values, and multiple statuses. They are NOT
+# a complete catalog. Selection rationale for each entry is noted inline.
+
+documents:
+
+  # Tier 1 — CANON itself.
+  - id: canon
+    title: "Setas de la Peña — Canon Architecture Document"
+    path: SETAS_DE_LA_PENA_CANON.md
+    authority: canon
+    category: architecture
+    canonical: true
+    topics: [governance, precedence, engineering-philosophy, production-philosophy]
+    keywords: [CANON, principles, authority model, normative authority, operational state]
+    related_documents: [system-map, repository-map]
+    depends_on: []
+    implemented_by: [ai-agent-protocol, editorial-guidelines, system-flow, decisions]
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Tier 2 — a Governance Standard. Illustrates authority: governance_standards.
+  - id: ai-agent-protocol
+    title: "AI Agent Protocol"
+    path: 00_project/AI_AGENT_PROTOCOL.md
+    authority: governance_standards
+    category: project
+    canonical: true
+    topics: [agent behavior, retrieval order, conflict resolution, uncertainty policy]
+    keywords: [AI agent, retrieval, confidence labeling, request classification]
+    related_documents: [canon, cross-reference-standard]
+    depends_on: [canon]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Tier 3 — the decision log, indexed at file level (individual DEC-NNN
+  # entries are not separately cataloged — see ROADMAP.md on identifier
+  # convention debt for why DEC-NNN is not yet a clean machine key).
+  - id: decisions
+    title: "Registro de Decisiones — Setas de la Peña"
+    path: DECISIONS.md
+    authority: decisions
+    category: meta
+    canonical: true
+    topics: [architecture reconciliation, sensor selection, species selection, substrate selection]
+    keywords: [DEC-008, DEC-009, DEC-010, decision log, precedence hierarchy]
+    related_documents: [canon]
+    depends_on: [canon]
+    implemented_by: [environmental-control, pleurotus-djamor, substrate-library]
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Tier 4 — Canonical Knowledge. Illustrates depends_on and source_documents.
+  - id: pleurotus-djamor
+    title: "Pleurotus djamor — Pink Oyster / Orellana Rosada"
+    path: 01_species/pleurotus_djamor.md
+    authority: canonical_knowledge
+    category: species
+    canonical: true
+    topics: [P. djamor, fruiting parameters, FAE, substrate compatibility]
+    keywords: [pink oyster, orellana rosada, FAE, fresh air exchange, CO2 tolerance]
+    related_documents: [substrate-library, quality-control]
+    depends_on: [substrate-library]
+    implemented_by: [environmental-control]
+    supersedes: null
+    source_documents: [paper_001, paper_004, guide_002, book_007]
+    confidence: high
+    status: active
+
+  # Tier 5 — SOPs and Workflows. Illustrates depends_on referencing a
+  # canonical-knowledge document (the canonical home for the parameter it
+  # applies as an acceptance threshold — see CROSS_REFERENCE_STANDARD.md §2's
+  # worked FAE example).
+  - id: quality-control
+    title: "Control de Calidad"
+    path: 06_operations/quality_control.md
+    authority: sops_and_workflows
+    category: operations
+    canonical: true
+    topics: [acceptance thresholds, biological efficiency, contamination rate, grading]
+    keywords: [BE, contamination rate, grade A, quality control, QC]
+    related_documents: [batch-tracking, lessons-learned]
+    depends_on: [pleurotus-djamor]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Tier 6 — Lessons and Historical Records.
+  - id: lessons-learned
+    title: "Lecciones Aprendidas — Setas de la Peña"
+    path: LESSONS_LEARNED.md
+    authority: lessons_and_historical_records
+    category: meta
+    canonical: true
+    topics: [sensor bias, VIVOSUN H05, field validation]
+    keywords: [L-001, lessons learned, sensor calibration]
+    related_documents: [decisions]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Tier 7 — Research Library. Illustrates confidence distinct from status:
+  # a research entry can be `active` (in use) with per-source reliability
+  # already captured inline (see the document itself), not duplicated here.
+  - id: literature-database
+    title: "Base de Datos de Literatura"
+    path: 09_research/literature_database.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [evidence tiers, paper summaries, substrate research, medicinal properties]
+    keywords: [paper_001, book_007, guide_002, Cenicafe, evidence rating]
+    related_documents: [literature-index]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # Operational State — illustrates the separate, non-Normative-Authority axis
+  # (CANON §14.2) and the scoped meaning of `canonical` (§0 above): this
+  # document IS the source of truth for "current snapshot," and is NEVER a
+  # source of truth for cultivation parameters.
+  - id: farm-brain
+    title: "Farm Brain — Setas de la Peña"
+    path: FARM_BRAIN.md
+    authority: operational_state
+    category: project
+    canonical: true
+    topics: [current status, bottlenecks, weekly priorities]
+    keywords: [FARM_BRAIN, current state, roadmap snapshot]
+    related_documents: [current-operations]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # A Phase 2 synthesis document — illustrates authority: none and
+  # canonical: false, the two fields together expressing "this document makes
+  # no independent claim that could ever be in conflict with anything."
+  - id: system-map
+    title: "System Map"
+    path: 00_project/SYSTEM_MAP.md
+    authority: none
+    category: navigation
+    canonical: false
+    topics: [architecture overview, folder hierarchy, authority model]
+    keywords: [system map, architectural drawing, synthesis]
+    related_documents: [canon, system-flow, repository-map]
+    depends_on: [canon, system-flow, repository-map]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  # A template — illustrates canonical: false and status: draft for a
+  # document that holds no content of its own, only a structure to be filled.
+  - id: workflow-template
+    title: "Workflow Template"
+    path: 10_ai_workflows/templates/workflow_template.md
+    authority: none
+    category: project
+    canonical: false
+    topics: [AI workflow template]
+    keywords: [WF-XXX, template]
+    related_documents: []
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    status: draft

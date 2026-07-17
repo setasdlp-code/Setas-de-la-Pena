@@ -58,7 +58,7 @@ Esterilizar en mason jar con tapa de inyección (septum) a 121°C, 30 min.
 7. Verify quality before use: solution clarity, aroma profile, visual absence of bacterial slime.
 8. If acidic odor or extreme turbidity present → bacterial contamination suspected → discard entire batch.
 9. Use sterile 10–20 mL syringe to inoculate grain spawn jars.
-10. Store clean LC in refrigerator (4°C) for backup inoculum; use within 30 days or discard.
+10. Store clean LC in refrigerator (4°C) for backup inoculum. Recommended for use within 30 days for maximum inoculation vigor; maximum shelf life under refrigeration with weekly agitation is 2–3 months (see culture_storage.md) — do not discard solely for exceeding 30 days if quality verification (step 7) still passes.
 ```
 
 **Quality Assurance Requirement:** Every LC batch must originate from verified clean agar plate. Never inoculate LC from culture of uncertain purity or suspected contamination.
@@ -72,8 +72,8 @@ Esterilizar en mason jar con tapa de inyección (septum) a 121°C, 30 min.
 
 # Best Practices
 
-- Use LC within 30 days of inoculation for maximum viability.
-- Refrigerate clean LC at 4°C; extends usable life to 2–3 months with occasional gentle agitation (weekly).
+- Use LC within 30 days of inoculation for maximum viability — this is an operational recommendation for best vigor, not the biological shelf-life ceiling.
+- Refrigerate clean LC at 4°C; extends usable life to 2–3 months with occasional gentle agitation (weekly), consistent with `culture_storage.md`.
 - Always visually verify LC before use in production batch: absence of bacterial slime, appropriate color, mushroom aroma present.
 - Maintain backup agar plates from same source culture; do not rely on LC as only propagation source.
 - Document LC batch: inoculation date, source plate ID, quality verification date, strain ID, storage location.

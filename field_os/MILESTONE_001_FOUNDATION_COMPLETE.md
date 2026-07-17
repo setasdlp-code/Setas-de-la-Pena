@@ -1,5 +1,5 @@
 ---
-title: SdP Field OS — Milestone 001: Foundation Complete
+title: "SdP Field OS — Milestone 001: Foundation Complete"
 document_id: PMILE-001
 authority: product-governance
 category: project-milestone
