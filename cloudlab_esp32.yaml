@@ -1,0 +1,403 @@
+# =============================================================================
+# ESPHome — CLOUDLAB 844 (Cámara de Fructificación Principal)
+# Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
+# STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
+# =============================================================================
+# SENSORES
+#   Primario T/HR : SHT31  (I2C 0x44)  → fuente de verdad para control
+#   CO₂           : SCD30  (I2C 0x61)  → compensación de altitud activada
+#
+# ACTUADORES (Relay 4 canales, activo-LOW)
+#   CH1 GPIO26 → Tira LED 12V  (ciclo provisional 4h/día)
+#   CH2 GPIO27 → Fans circulación GDSTIME IP68 (on/off según HR)
+#   CH3 GPIO14 → Calefacción (reservado — QuietWarmth / panel)
+#   CH4 GPIO12 → Spare
+#
+# NOTAS DE INTEGRACIÓN
+#   · CloudForge T7 opera en modo AUTO nativo con su propia sonda.
+#     NO se controla por relay. HA solo monitorea HR para logs.
+#   · Cloudline H4 no está controlado por este archivo.
+#     No fijar velocidad o timer antes de medir caudal efectivo. El CLOUDLAB
+#     tiene ~2.88 m³; la línea base debe definirse por commissioning y CO₂.
+#   · Temperatura Tenjo: 7-19°C promedio. Calefacción activada cuando
+#     T < umbral_min definido en substitution.
+# =============================================================================
+
+substitutions:
+  device_name: cloudlab-844
+  friendly_name: "CLOUDLAB 844"
+
+  # --- Setpoints de control ---
+  hr_min: "85.0"          # % HR mínima para encender fans de circulación
+  hr_max: "90.0"          # % HR: sobre este valor activar circulación/alerta
+  co2_max: "2000"         # ppm CO₂: alarma; objetivo operativo 500-1500
+  temp_min: "20.0"        # °C mínima provisional — activa relay calefacción
+  temp_max: "30.0"        # °C máxima provisional — alerta sobrecalentamiento
+
+  # --- Ciclo de iluminación (hora local Colombia UTC-5) ---
+  luz_on_hora: "7"        # Enciende a las 07:00
+  luz_off_hora: "11"      # Apaga a las 11:00 (4h fotoperiodo provisional)
+
+  # --- Hardware ---
+  sda_pin: GPIO21
+  scl_pin: GPIO22
+  relay_led_pin: GPIO26
+  relay_fans_pin: GPIO27
+  relay_heat_pin: GPIO14
+  relay_spare_pin: GPIO12
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "Banco de pruebas CLOUDLAB · no comisionado para producción"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# --- WiFi ---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+# --- Logger y API ---
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# --- Tiempo via SNTP (Colombia UTC-5) ---
+# Necesario para el timer de iluminación.
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "America/Bogota"
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+    on_time:
+      # Encender LEDs a las 07:00
+      - hours: ${luz_on_hora}
+        minutes: 0
+        seconds: 0
+        then:
+          - switch.turn_on: relay_led
+          - logger.log: "Iluminación ON (07:00)"
+
+      # Apagar LEDs a las 11:00
+      - hours: ${luz_off_hora}
+        minutes: 0
+        seconds: 0
+        then:
+          - switch.turn_off: relay_led
+          - logger.log: "Iluminación OFF (11:00)"
+
+# --- I2C Bus ---
+i2c:
+  sda: ${sda_pin}
+  scl: ${scl_pin}
+  scan: true
+  frequency: 100kHz
+
+# =============================================================================
+# SENSORES
+# =============================================================================
+sensor:
+  # --- SHT31: Sensor PRIMARIO de temperatura y humedad ---
+  # Tecnología CMOSens. Fuente de verdad para control.
+  # Heater integrado — activar periódicamente via servicio HA si hay drift.
+  - platform: sht3xd
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      id: temp_primary
+      name: "Temperatura (SHT31)"
+      unit_of_measurement: "°C"
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 3
+            send_every: 3
+      on_value:
+        then:
+          # Alerta sobrecalentamiento
+          - if:
+              condition:
+                sensor.in_range:
+                  id: temp_primary
+                  above: ${temp_max}
+              then:
+                - logger.log:
+                    format: "⚠ ALERTA: Temperatura alta: %.1f°C"
+                    args: [x]
+          # Control calefacción (relay CH3)
+          - if:
+              condition:
+                sensor.in_range:
+                  id: temp_primary
+                  below: ${temp_min}
+              then:
+                - switch.turn_on: relay_heat
+              else:
+                - switch.turn_off: relay_heat
+
+    humidity:
+      id: hr_primary
+      name: "Humedad Relativa (SHT31)"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 3
+            send_every: 3
+      on_value:
+        then:
+          # Sanity check: ESPHome no puede detectar "sin cambio en 2h" nativamente,
+          # pero HA puede crear una alerta sobre esta entidad si no varía.
+          # Ver: sensor.sht31_humidity → Alert en HA con condition "unchanged 2h"
+
+          # Control fans de circulación por HR
+          - if:
+              condition:
+                sensor.in_range:
+                  id: hr_primary
+                  above: ${hr_max}
+              then:
+                - switch.turn_on: relay_fans
+                - logger.log: "Fans ON: HR sobre límite"
+              else:
+                - if:
+                    condition:
+                      sensor.in_range:
+                        id: hr_primary
+                        below: ${hr_min}
+                    then:
+                      - switch.turn_off: relay_fans
+                      - logger.log: "Fans OFF: HR bajo mínimo"
+
+          # Alerta HR excesiva
+          - if:
+              condition:
+                sensor.in_range:
+                  id: hr_primary
+                  above: 92.0
+              then:
+                - logger.log: "⚠ ALERTA: HR > 92% — fuera del rango provisional"
+
+  # --- SCD30: Sensor de CO₂ con compensación de altitud ---
+  # Altitud operacional redondeada de Tenjo: 2600 m.
+  # IMPORTANTE: altitude_compensation se ignora si ambient_pressure_compensation
+  # está activo. Se usa solo altitud (más simple, sin sensor de presión adicional).
+  - platform: scd30
+    address: 0x61
+    update_interval: 60s
+    altitude_compensation: 2600
+    # ambient_pressure_compensation: NO configurar si se usa altitude_compensation
+
+    automatic_self_calibration: false
+    # ASC desactivado: el SCD30 en la cámara nunca ve aire a 400ppm de referencia
+    # (siempre CO₂ elevado). ASC activo causaría deriva positiva del baseline.
+
+    co2:
+      id: co2_ppm
+      name: "CO₂ (SCD30)"
+      unit_of_measurement: "ppm"
+      accuracy_decimals: 0
+      filters:
+        - sliding_window_moving_average:
+            window_size: 3
+            send_every: 3
+      on_value:
+        then:
+          - if:
+              condition:
+                sensor.in_range:
+                  id: co2_ppm
+                  above: ${co2_max}
+              then:
+                - logger.log:
+                    format: "⚠ ALERTA CO₂ alto: %.0f ppm"
+                    args: [x]
+
+    temperature:
+      id: temp_scd30
+      name: "Temperatura (SCD30 — ref)"
+      unit_of_measurement: "°C"
+      accuracy_decimals: 1
+      # Sensor secundario — solo referencia y validación cruzada
+
+    humidity:
+      id: hr_scd30
+      name: "Humedad Relativa (SCD30 — ref)"
+      unit_of_measurement: "%"
+      accuracy_decimals: 1
+      # Sensor secundario — solo referencia y validación cruzada
+
+# --- Sensores calculados: discrepancia entre sensores ---
+# Si la diferencia entre primario y SCD30 supera umbrales → HA puede alertar.
+# Se exponen como sensores para HA.
+  - platform: template
+    name: "Delta Temperatura (SHT31 vs SCD30)"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: |-
+      if (id(temp_primary).has_state() && id(temp_scd30).has_state()) {
+        return abs(id(temp_primary).state - id(temp_scd30).state);
+      }
+      return NAN;
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return x > 3.0;'  # >3°C diferencia = posible fallo
+            then:
+              - logger.log:
+                  format: "⚠ DISCREPANCIA: Delta T = %.1f°C entre SHT31 y SCD30"
+                  args: [x]
+
+  - platform: template
+    name: "Delta HR (SHT31 vs SCD30)"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: |-
+      if (id(hr_primary).has_state() && id(hr_scd30).has_state()) {
+        return abs(id(hr_primary).state - id(hr_scd30).state);
+      }
+      return NAN;
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return x > 5.0;'  # >5% HR diferencia = posible fallo
+            then:
+              - logger.log:
+                  format: "⚠ DISCREPANCIA: Delta HR = %.1f%% entre SHT31 y SCD30"
+                  args: [x]
+
+# --- Tiempo de actividad ---
+  - platform: uptime
+    name: "Uptime CLOUDLAB"
+    update_interval: 3600s
+
+# =============================================================================
+# ACTUADORES — RELAYS
+# =============================================================================
+# Relay activo-LOW: true = relay energizado = circuito CERRADO
+# Ajustar "inverted: true" si el módulo es activo-HIGH
+
+switch:
+  # CH1 — Iluminación LED 12V
+  # Timer manejado por el bloque time: on_time: arriba.
+  # También controlable manualmente desde HA.
+  - platform: gpio
+    id: relay_led
+    pin:
+      number: ${relay_led_pin}
+      inverted: true   # relay activo-LOW
+    name: "Iluminación LED"
+    icon: "mdi:lightbulb"
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - logger.log: "LED ON"
+    on_turn_off:
+      - logger.log: "LED OFF"
+
+  # CH2 — Fans circulación GDSTIME IP68 80mm (12V)
+  # Controlado automáticamente por HR, o manualmente desde HA.
+  - platform: gpio
+    id: relay_fans
+    pin:
+      number: ${relay_fans_pin}
+      inverted: true
+    name: "Fans Circulación"
+    icon: "mdi:fan"
+    restore_mode: RESTORE_DEFAULT_ON   # circulación ON al reiniciar por seguridad
+    on_turn_on:
+      - logger.log: "Fans circulación ON"
+    on_turn_off:
+      - logger.log: "Fans circulación OFF"
+
+  # CH3 — Calefacción perimetral (panel / QuietWarmth)
+  # Controlado automáticamente por temperatura (lógica en sensor temp_primary).
+  - platform: gpio
+    id: relay_heat
+    pin:
+      number: ${relay_heat_pin}
+      inverted: true
+    name: "Calefacción"
+    icon: "mdi:radiator"
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - logger.log: "Calefacción ON"
+    on_turn_off:
+      - logger.log: "Calefacción OFF"
+
+  # CH4 — Spare (no asignado)
+  - platform: gpio
+    id: relay_spare
+    pin:
+      number: ${relay_spare_pin}
+      inverted: true
+    name: "Relay Spare"
+    icon: "mdi:electric-switch"
+    restore_mode: RESTORE_DEFAULT_OFF
+    internal: false   # Cambiar a true para ocultar de HA si no se usa
+
+# =============================================================================
+# BOTONES DE SERVICIO
+# =============================================================================
+button:
+  - platform: restart
+    name: "Reiniciar ESP32"
+    icon: "mdi:restart"
+
+  - platform: safe_mode
+    name: "Modo Seguro"
+    icon: "mdi:shield"
+
+# =============================================================================
+# DIAGNÓSTICO
+# =============================================================================
+binary_sensor:
+  - platform: status
+    name: "Estado Conexión CLOUDLAB"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP CLOUDLAB"
+    ssid:
+      name: "WiFi SSID CLOUDLAB"
+
+# =============================================================================
+# NOTAS DE PUESTA EN MARCHA
+# =============================================================================
+# 1. Verificar i2c scan en logs al iniciar — confirmar 0x44 (SHT31) y 0x61 (SCD30)
+# 2. Confirmar que relay inverted: true corresponde al módulo físico (medir con
+#    multímetro: relay debe estar ABIERTO cuando GPIO está en LOW al arranque)
+# 3. Primera verificación SCD30:
+#    - Desactivar automatic_self_calibration: false
+#    - Seguir el procedimiento del fabricante y usar una referencia conocida.
+#    - No inferir una concentración exterior corregida mediante una regla de tres
+#      con la altitud; la compensación de presión la realiza el sensor.
+# 4. Ajustar hora luz_on_hora / luz_off_hora según especie y época del año
+# 5. Crear en HA:
+#    - Alert: sensor.delta_temperatura > 3°C por >10 min → notificación
+#    - Alert: sensor.delta_hr > 5% por >10 min → notificación
+#    - Alert: sensor.humedad_relativa_sht31 sin cambio por 2h → sensor bloqueado
+#    - Alert: sensor.co2_scd30 > 2000 ppm por >15 min → alarma de ventilación
+# 6. BLOQUEANTE: medir caudal del H4 y documentar control por CO₂ antes de producción.

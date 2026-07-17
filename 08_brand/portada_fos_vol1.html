@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Setas de la Peña — Documentación Operativa Vol. I</title>
+<meta name="hz:slide-selector" content=".cover" />
+<meta name="hz:canvas-width" content="794" />
+<meta name="hz:canvas-height" content="1123" />
+<link rel="stylesheet" href="https://use.typekit.net/pfm7zcz.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #e8e6e1; }
+
+.cover {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  background: #FBF9F4; /* archival paper white */
+  overflow: hidden;
+  color: #1B1B18;
+}
+
+/* ---------- Masthead ---------- */
+.masthead {
+  position: absolute;
+  top: 24mm; left: 24mm; right: 24mm;
+}
+.org {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 500;
+  font-size: 11pt;
+  letter-spacing: 0.32em;
+  color: #1B1B18;
+}
+.series {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 400;
+  font-size: 8.5pt;
+  letter-spacing: 0.28em;
+  color: #6B6B63;
+  margin-top: 3.2mm;
+}
+
+/* ---------- Volume + title block ---------- */
+.volume-block {
+  position: absolute;
+  top: 96mm; left: 24mm; right: 24mm;
+}
+.vol {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 300;
+  font-size: 52pt;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: #1B1B18;
+}
+.title {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 400;
+  font-size: 17pt;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: #1B1B18;
+  margin-top: 14mm;
+  max-width: 120mm;
+}
+.title .fos {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 400;
+  font-size: 11pt;
+  letter-spacing: 0.18em;
+  color: #4C5B3A;
+  display: block;
+  margin-top: 3mm;
+}
+
+/* ---------- Document control box (único elemento gráfico) ---------- */
+.control {
+  position: absolute;
+  left: 24mm; bottom: 42mm;
+  width: 78mm;
+  border-top: 0.35mm solid #1B1B18;
+  border-bottom: 0.35mm solid #1B1B18;
+  padding: 4mm 0;
+}
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  line-height: 2.1;
+}
+.control-row .k {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: #6B6B63;
+}
+.control-row .v {
+  font-family: "source-code-pro", monospace;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: #1B1B18;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  position: absolute;
+  left: 24mm; right: 24mm; bottom: 24mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.scope {
+  font-family: "aktiv-grotesk", sans-serif;
+  font-weight: 400;
+  font-size: 8.5pt;
+  letter-spacing: 0.24em;
+  color: #1B1B18;
+}
+.mark {
+  font-family: "source-code-pro", monospace;
+  font-size: 7.5pt;
+  letter-spacing: 0.08em;
+  color: #6B6B63;
+}
+</style>
+</head>
+<body>
+<div class="cover" data-canvas-width="794" data-canvas-height="1123">
+
+  <header class="masthead">
+    <div class="org">SETAS DE LA PEÑA</div>
+    <div class="series">DOCUMENTACIÓN OPERATIVA</div>
+  </header>
+
+  <main class="volume-block">
+    <div class="vol">Vol.&nbsp;I</div>
+    <h1 class="title">Sistema de Registro Operativo
+      <span class="fos">FOS</span>
+    </h1>
+  </main>
+
+  <section class="control">
+    <div class="control-row"><span class="k">DOCUMENTO</span><span class="v">FOS-01</span></div>
+    <div class="control-row"><span class="k">REVISIÓN</span><span class="v">C</span></div>
+    <div class="control-row"><span class="k">FECHA</span><span class="v">JULIO 2026</span></div>
+    <div class="control-row"><span class="k">CLASIFICACIÓN</span><span class="v">USO INTERNO</span></div>
+  </section>
+
+  <footer class="footer">
+    <div class="scope">LABORATORIO&nbsp;&nbsp;·&nbsp;&nbsp;CULTIVO</div>
+    <div class="mark">SDLP · DOC</div>
+  </footer>
+
+</div>
+</body>
+</html>

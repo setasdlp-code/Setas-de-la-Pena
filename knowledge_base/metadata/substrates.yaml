@@ -1,0 +1,132 @@
+# Metadata — Sustratos y Recetas
+# Setas de la Peña
+# Última actualización: 2026-07-04
+
+substrates:
+  - id: wheat_straw_pasteurized
+    name: Paja de Trigo Pasteurizada
+    type: pasteurized
+    nitrogen_percent: [1.5, 2.0]
+    requires_autoclave: false
+    field_capacity_percent: 65
+    treatment_temp_c: 80
+    treatment_time_min: 60
+    compatible_species: [pleurotus_djamor, pleurotus_ostreatus]
+    incompatible_species: []
+    availability: local_cundinamarca
+    cost_estimate_cop_per_kg: 3000
+    evidence_rating: 5
+    notes: "Sustrato primario Fase 1. Disponible localmente en Sabana de Bogotá."
+
+  - id: masters_mix
+    name: "Master's Mix (50/50)"
+    type: sterilized
+    composition:
+      hardwood_sawdust_percent: 50
+      oat_hulls_percent: 50
+    nitrogen_percent: [2.5, 3.5]
+    requires_autoclave: true
+    autoclave_temp_c: 121
+    autoclave_time_h: 3
+    field_capacity_percent: 60
+    compatible_species: [hericium_erinaceus, lentinula_edodes, ganoderma_lucidum]
+    incompatible_species: []
+    availability: requires_sourcing
+    evidence_rating: 5
+    notes: "Sustrato óptimo para Lion's Mane y Shiitake. Solo Fase 2 con autoclave."
+
+  - id: supplemented_sawdust
+    name: Serrín Suplementado
+    type: sterilized
+    composition:
+      hardwood_sawdust_percent: 80
+      wheat_bran_percent: 15
+      gypsum_percent: 1
+    nitrogen_percent: [2.0, 3.0]
+    requires_autoclave: true
+    compatible_species: [lentinula_edodes, ganoderma_lucidum, hericium_erinaceus]
+    incompatible_species: []
+    availability: requires_sourcing
+    evidence_rating: 4
+    notes: "Para Shiitake en formato log o bloque. Fase 2."
+
+  - id: rice_straw
+    name: Paja de Arroz Pasteurizada
+    type: pasteurized
+    nitrogen_percent: [0.8, 1.2]
+    requires_autoclave: false
+    compatible_species: [pleurotus_djamor, pleurotus_ostreatus]
+    incompatible_species: []
+    availability: local_potential
+    evidence_rating: 3
+    notes: "Menor BE que paja de trigo para P. djamor. Alternativa si paja de trigo escasea."
+
+  - id: coffee_substrate_shiitake_t2
+    name: "Subproductos de café — formulación T2 (Shiitake)"
+    type: sterilized
+    composition:
+      coffee_stem_sawdust_percent: 28
+      spent_coffee_grounds_percent: 50   # borra
+      corn_bran_percent: 19              # salvado de maíz
+      calcium_compound_percent: 0.6      # CaCO3/CaSO4 minimo
+    carbon_nitrogen_ratio_target: 40
+    field_capacity_percent: 62.5
+    particle_size_cm: [0.5, 2.0]
+    requires_autoclave: true
+    be_percent: [50, 58]                 # rendimiento medio ~57.6% (Cenicafe, clima zona cafetera)
+    recommended_strains: [L54, L4055]
+    compatible_species: [lentinula_edodes]
+    incompatible_species: []
+    availability: local_potential        # borra accesible via cafeterias; confirmar en Tenjo
+    evidence_rating: 3                    # fuente unica, clima mas calido que Tenjo
+    source: paper_006                     # SRC-0005 (Cenicafe 2005)
+    validation_status: needs_field_validation_tenjo
+    notes: "Pulpa de café sola NO fructifica. Borra fresca <2 dias o ensilada. Revalidar BE bajo regimen termico frio de Tenjo."
+
+  - id: coffee_substrate_ganoderma_t12
+    name: "Subproductos de café — formulación T12 (Ganoderma)"
+    type: sterilized
+    composition:
+      spent_coffee_grounds_percent: 11.5  # borra
+      coffee_pulp_max_percent: 15
+      calcium_compound_percent: 0.6
+    carbon_nitrogen_ratio_target: [40, 60]
+    field_capacity_percent: 62.5
+    particle_size_cm: [0.5, 2.0]
+    requires_autoclave: true
+    be_percent: [13, 15]                  # rendimiento medio ~13.1% (1a cosecha ~15%)
+    compatible_species: [ganoderma_lucidum]
+    incompatible_species: []
+    availability: local_potential
+    evidence_rating: 3
+    source: paper_006                     # SRC-0005 (Cenicafe 2005)
+    validation_status: needs_field_validation_tenjo
+    notes: "T13/T14 sin borra (mas economicas). Ganoderma en Tenjo requiere calefaccion activa (fruiting 27-32C) -> Fase 2."
+
+# SUSTRATOS INCOMPATIBLES
+incompatible_substrates:
+  - substrate: eucalyptus_sawdust
+    incompatible_with: [pleurotus_djamor, hericium_erinaceus]
+    reason: "Eucaliptol y cineol inhiben el micelio. Nunca usar."
+    evidence_rating: 5
+
+spawn_ratios:
+  default_percent: 15
+  minimum_percent: 10
+  maximum_percent: 20
+  notes: "15% del peso seco es el estándar. Más spawn no mejora BE significativamente."
+
+gypsum:
+  name: "Yeso agrícola (CaSO₄ · 2H₂O)"
+  use_percent: [1, 2]
+  function: "pH buffer, anti-clumping, mejora estructura"
+  evidence_rating: 4
+  notes: "Suplemento seguro para todos los sustratos — no aumenta riesgo de contaminación."
+
+calcium_compounds:
+  name: "Compuestos de calcio (CaCO₃ / CaSO₄)"
+  minimum_functional_percent: 0.6
+  function: "Estabiliza la producción, acondiciona pH, aporta Ca²⁺ (estimula crecimiento hifal)"
+  evidence_rating: 3
+  source: paper_006   # Royse & Sanchez via Cenicafe
+  notes: "≥0,6% es umbral mínimo (no solo buffer). Mayor carbonato para acondicionar pH a ~4,5–5,5 en sustratos de café."

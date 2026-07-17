@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────
+# SECRETS — never commit (OAuth keys, tokens, personal data)
+# ─────────────────────────────────────────────
+gmail_credentials.json
+gmail_token.json
+*credentials*.json
+*token*.json
+sdp_emails.json
+.env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────────
+# OS / editor junk
+# ─────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+*.swp
+*~
+
+# ─────────────────────────────────────────────
+# Temp / lock files
+# ─────────────────────────────────────────────
+*.tmp
+.~lock.*#
+*.bak
+tmp/
+ECC/reports/
+ECC/data/alerts.jsonl
+ECC/data/current_cycle.json
+ECC/data/sensor_readings.jsonl
+ECC/data/system_state.json
+ECC/data/session_state.json
+
+# ─────────────────────────────────────────────
+# Independent repositories
+# ─────────────────────────────────────────────
+climate-bench/
+
+# Local evidence / exports with personal or order data
+captura-email.html
+captura-compra.html
+
+# Research source cache (citations stay versioned; full third-party PDFs do not)
+knowledge_base/09_research/source_pdfs/
+
+# ─────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ─────────────────────────────────────────────
+# Redundant archive (source lives in knowledge_base/)
+# ─────────────────────────────────────────────
+knowledge_base.zip

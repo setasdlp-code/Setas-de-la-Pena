@@ -1,0 +1,3 @@
+# Stable MCP Python SDK v1. The v2 line is prerelease/breaking as of 2026-07.
+mcp>=1.27,<2
+pydantic>=2.13,<3

@@ -1,0 +1,6 @@
+/* ─────────────────────────────────────────────────────────────
+   Setas de la Peña Design System — root entry point
+   Import this single file to get all tokens, type scale,
+   colour palette, spacing, and base resets.
+   ───────────────────────────────────────────────────────────── */
+@import "design/colors_and_type.css";

@@ -1,0 +1,105 @@
+# Metadata — Especies Cultivadas
+# Setas de la Peña
+# Última actualización: 2026-07-16
+
+species:
+  - id: pleurotus_djamor
+    common_name: Pink Oyster
+    scientific_name: Pleurotus djamor
+    priority: 1
+    phase: active
+    document: 01_species/pleurotus_djamor.md
+    fruiting_temp_c: [20, 30]
+    incubation_temp_c: [24, 28]
+    humidity_percent: [85, 90]
+    co2_target_ppm: [500, 1500]
+    co2_alarm_ppm: 2000
+    fae_ach_provisional: [5, 8]
+    fae_validation_status: commissioning_required
+    substrate_primary: wheat_straw
+    substrate_incompatible: [eucalyptus]
+    be_potential_percent: [80, 100]
+    be_validation_status: field_validation_required
+    cycle_days: [28, 40]
+    status_notes: "Especie prioritaria Fase 1. Rangos provisionales de guide_002/guide_003; validar BE, caudal y CO2 antes de declarar configuración productiva."
+
+  - id: hericium_erinaceus
+    common_name: Lion's Mane
+    scientific_name: Hericium erinaceus
+    priority: 2
+    phase: target_phase_2
+    document: 01_species/hericium_erinaceus.md
+    fruiting_temp_c: [18, 24]
+    incubation_temp_c: [21, 24]
+    humidity_percent: [90, 97]
+    co2_ppm_max: 1000
+    fae_per_hour: [8, 12]
+    substrate_primary: masters_mix
+    substrate_incompatible: []
+    be_range_percent: [50, 80]
+    cycle_days: [60, 90]
+    status_notes: "Alta complejidad. Requiere autoclave y parámetros muy estrechos."
+
+  - id: lentinula_edodes
+    common_name: Shiitake
+    scientific_name: Lentinula edodes
+    priority: 3
+    phase: target_phase_2
+    document: 01_species/lentinula_edodes.md
+    fruiting_temp_c: [10, 16]
+    incubation_temp_c: [21, 27]        # óptimo 25°C (Cenicafe paper_006)
+    incubation_temp_optimal_c: 25
+    humidity_percent: [80, 90]
+    co2_ppm_max: 1500
+    fae_per_hour: [4, 6]
+    inoculation_rate_percent: [3.6, 7.5]   # 3.6% semilla comercial / 5-7.5% propia
+    substrate_primary: supplemented_sawdust
+    substrate_alternatives: [coffee_substrate_shiitake_t2]
+    substrate_incompatible: []
+    be_range_percent: [40, 70]
+    cycle_days: [90, 150]
+    recommended_warm_tolerant_strains: [L54, L4055]   # fructificaron a 18-23°C (Cenicafe)
+    status_notes: "Temperatura de fruiting baja (cepas 10–16°C) — posible en Tenjo sin calefacción. Cepas L54/L4055 toleran fruiting más cálido (18–23°C, Cenicafe) — validar. Sustrato de café (T2) ~57% BE. Fuente: paper_006."
+
+  - id: pleurotus_ostreatus
+    common_name: Oyster Mushroom
+    scientific_name: Pleurotus ostreatus
+    priority: 4
+    phase: validation
+    document: 01_species/pleurotus_ostreatus.md
+    fruiting_temp_c: [10, 21]
+    incubation_temp_c: [22, 27]
+    humidity_percent: [85, 95]
+    co2_ppm_max: 1500
+    fae_per_hour: [5, 8]
+    substrate_primary: wheat_straw
+    substrate_incompatible: []
+    be_range_percent: [70, 100]
+    cycle_days: [35, 50]
+    status_notes: "Temperatura fría — se adapta bien al clima de Tenjo."
+
+  - id: ganoderma_lucidum
+    common_name: Reishi
+    scientific_name: Ganoderma lucidum
+    priority: 5
+    phase: target_phase_3
+    document: 01_species/ganoderma_lucidum.md
+    fruiting_temp_c: [27, 32]          # óptimo (rango tolerado 20-34; <20°C deforma) — Cenicafe paper_006
+    fruiting_temp_range_tolerated_c: [20, 34]
+    incubation_temp_c: [25, 32]        # óptimo micelio (rango 10-38)
+    substrate_moisture_percent: [65, 70]
+    substrate_ph: [4.2, 5.3]
+    primordia_temp_c: 30
+    primordia_humidity_percent: 90     # >90% induccion; 70-80% formacion sombrero; 30-40% estadio final
+    humidity_percent: [30, 90]         # ESCALONADA por etapa (ver primordia_humidity_percent)
+    co2_ppm_cap_trigger: 350           # caida a ~350 ppm dispara crecimiento del pileo
+    co2_ppm_max: 2000
+    fae_per_hour: [4, 6]
+    light_lux: [50, 450]
+    substrate_primary: supplemented_sawdust
+    substrate_alternatives: [coffee_substrate_ganoderma_t12]
+    substrate_incompatible: []
+    be_range_percent: [13, 40]         # ~13% sobre café (Cenicafe); mayor en serrin/troncos
+    cycle_days: [90, 180]
+    requires_active_heating_tenjo: true   # fruiting 27-32°C inviable en Tenjo (12-18°C) sin calefaccion
+    status_notes: "Solo mercado medicinal. Fase 3. Fruiting óptimo 27–32°C → requiere calefacción activa en Tenjo (confirmado, Cenicafe paper_006). HR escalonada 90→70-80→30-40%. Nota nomenclatural: material comercial = G. lingzhi (SRC-0006)."

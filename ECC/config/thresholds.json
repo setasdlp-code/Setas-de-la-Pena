@@ -1,0 +1,49 @@
+{
+  "status": "provisional_uncommissioned",
+  "scope": "Pleurotus djamor fruiting",
+  "source_of_truth": "knowledge_base/01_species/pleurotus_djamor.md",
+  "temperature": {
+    "min": 18,
+    "optimal_min": 20,
+    "optimal_max": 30,
+    "max": 32,
+    "unit": "Celsius"
+  },
+  "humidity": {
+    "min": 82,
+    "optimal_min": 85,
+    "optimal_max": 90,
+    "max": 92,
+    "unit": "percent_rh"
+  },
+  "co2": {
+    "min": 400,
+    "optimal_min": 500,
+    "optimal_max": 1500,
+    "max": 2000,
+    "unit": "ppm"
+  },
+  "light": {
+    "min": 500,
+    "optimal_min": 750,
+    "optimal_max": 1500,
+    "max": 2000,
+    "unit": "lux"
+  },
+  "ventilation": {
+    "provisional_ach_min": 5,
+    "provisional_ach_max": 8,
+    "validation_status": "commissioning_required",
+    "formula": "effective_airflow_cfm * duty_cycle * 60 / enclosure_volume_ft3"
+  },
+  "alert_thresholds": {
+    "warning_duration_minutes": 15,
+    "critical_duration_minutes": 60
+  },
+  "monitoring_interval_seconds": 300,
+  "fruiting_from_pins_days": {
+    "min": 7,
+    "max": 10,
+    "validation_status": "field_validation_required"
+  }
+}

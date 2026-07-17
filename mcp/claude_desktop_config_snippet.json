@@ -1,0 +1,12 @@
+{
+  "_instrucciones": "Agrega el bloque 'setas' dentro de 'mcpServers' en tu claude_desktop_config.json (~/.config/claude/claude_desktop_config.json en Mac).",
+  "mcpServers": {
+    "setas": {
+      "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
+      "args": [
+        "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_mcp.py"
+      ],
+      "env": {}
+    }
+  }
+}

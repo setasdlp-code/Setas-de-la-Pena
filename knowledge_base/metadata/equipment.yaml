@@ -1,0 +1,183 @@
+# Metadata — Inventario de equipos
+# Última actualización documental: 2026-07-16
+# Regla: verification_required no significa perdido ni no entregado; significa que falta evidencia de campo reciente.
+
+equipment:
+  - id: ENV-0001
+    legacy_key: cloudlab_844
+    name: AC Infinity CLOUDLAB 844
+    category: fruiting_chamber
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    ordered: "2026-06-27"
+    estimated_arrival_historical: "2026-07-05"
+    dimensions_cm: [120, 120, 200]
+    volume_m3: 2.88
+    source: "https://acinfinity.com/cloudlab-844-advance-grow-tent-4x4-thickest-poles-and-canvas-48-x-48-x-80/"
+    document: 05_equipment/environmental_control.md
+
+  - id: ENV-0002
+    legacy_key: martha_tent
+    name: Martha Tent 63in Terra Fungus
+    category: fruiting_chamber
+    status: verification_required
+    last_confirmed_status: active_manual
+    last_confirmed_on: "2026-06-29"
+    last_confirmed_location: tenjo
+
+  - id: EQ-0001
+    legacy_key: ac_infinity_t7
+    name: AC Infinity CloudForge T7
+    category: humidifier
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    capacity_liters: 15
+    ordered: "2026-06-27"
+    estimated_arrival_historical: "2026-06-28"
+
+  - id: EQ-0002
+    legacy_key: vivosun_h05
+    name: VIVOSUN H05 Ultrasonic Humidifier
+    category: humidifier
+    status: verification_required
+    last_confirmed_status: active_manual
+    last_confirmed_on: "2026-06-29"
+    sensor_discarded: true
+    sensor_bias_rh_percent: "+30 a +35"
+    notes: "Solo modo manual; nunca usar la lectura HR integrada."
+
+  - id: EQ-0003
+    legacy_key: ac_infinity_h4_1
+    name: AC Infinity CLOUDLINE H4 (unidad 1)
+    category: extractor
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    ip_rating: IP65
+    max_airflow_cfm_nameplate: 212
+    installed_airflow_status: commissioning_required
+
+  - id: EQ-0004
+    legacy_key: ac_infinity_h4_2
+    name: AC Infinity CLOUDLINE H4 (unidad 2)
+    category: extractor
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    ip_rating: IP65
+    max_airflow_cfm_nameplate: 212
+    installed_airflow_status: commissioning_required
+
+  - id: SNS-0001
+    legacy_key: sht3x_1
+    name: Sensirion SHT3x via AC Infinity probe (unidad 1)
+    category: sensor_th
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    i2c_address: "0x44"
+    precision_rh: "±2%"
+    precision_temp_c: "±0.2°C"
+
+  - id: SNS-0002
+    legacy_key: sht3x_2
+    name: Sensirion SHT3x via AC Infinity probe (unidad 2)
+    category: sensor_th
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    i2c_address: "0x44"
+
+  - id: SNS-0003
+    legacy_key: scd30_1
+    name: Sensirion SCD30 CO2 (unidad 1)
+    category: sensor_co2
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    i2c_address: "0x61"
+    altitude_compensation_m: 2600
+    precision_co2_ppm: "±(30 ppm + 3%)"
+
+  - id: SNS-0004
+    legacy_key: scd30_2
+    name: Sensirion SCD30 CO2 (unidad 2)
+    category: sensor_co2
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    i2c_address: "0x61"
+    altitude_compensation_m: 2600
+
+  - id: SNS-0005
+    legacy_key: inkbird_1
+    name: Inkbird IBS-TH2 Plus (unidad 1)
+    category: sensor_th_backup
+    status: verification_required
+    last_confirmed_status: active
+    last_confirmed_on: "2026-06-29"
+
+  - id: SNS-0006
+    legacy_key: inkbird_2
+    name: Inkbird IBS-TH2 Plus (unidad 2)
+    category: sensor_th_backup
+    status: verification_required
+    last_confirmed_status: active
+    last_confirmed_on: "2026-06-29"
+
+  - id: EQ-0005
+    legacy_key: esp32_1
+    name: ESP32-WROOM-32 ACEIRMC (unidad 1)
+    category: microcontroller
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    firmware_expected: esphome
+
+  - id: EQ-0006
+    legacy_key: esp32_2
+    name: ESP32-WROOM-32 ACEIRMC (unidad 2)
+    category: microcontroller
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    firmware_expected: esphome
+
+  - id: EQ-0007
+    legacy_key: esp32_3
+    name: ESP32-WROOM-32 ACEIRMC (unidad 3)
+    category: microcontroller
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    firmware_expected: esphome
+
+  - id: EQ-0008
+    legacy_key: ticonn_ip67_1
+    name: TICONN IP67 Enclosure (unidad 1)
+    category: enclosure
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    ip_rating: IP67
+
+  - id: EQ-0009
+    legacy_key: ticonn_ip67_2
+    name: TICONN IP67 Enclosure (unidad 2)
+    category: enclosure
+    status: verification_required
+    last_confirmed_status: ordered
+    last_confirmed_on: "2026-06-29"
+    ip_rating: IP67
+
+  - id: EQ-0010
+    legacy_key: raspberry_pi4
+    name: Raspberry Pi 4 Model B
+    category: hub
+    status: verification_required
+    last_confirmed_status: conflicting_records
+    last_confirmed_on: "2026-06-29"
+    software_expected: home_assistant
+    notes: "Un documento lo reportaba configurado y otro pendiente; verificar presencia, versión y configuración."

@@ -1,0 +1,83 @@
+{
+  "workflow_id": "WF-0001",
+  "cycle_name": "Pleurotus_djamor_fase1_provisional",
+  "status": "draft_uncommissioned",
+  "species": "Pleurotus djamor",
+  "duration_status": "field_validation_required",
+  "phases": [
+    {
+      "phase_name": "Preparación e inoculación",
+      "days_reference": "0-1",
+      "tasks": [
+        "Asignar GS-XXXX, SB-XXXX, BL-XXXX y BT-XXXX",
+        "Verificar pasteurización, capacidad de campo y temperatura del sustrato",
+        "Inocular, sellar y registrar el lote"
+      ],
+      "conditions": {
+        "substrate_temperature_max_c": 28,
+        "purpose": "Inocular con trazabilidad y minimizar contaminación"
+      }
+    },
+    {
+      "phase_name": "Colonización",
+      "days_reference": "1-18",
+      "tasks": [
+        "Inspeccionar sin abrir las bolsas",
+        "Registrar porcentaje de colonización y contaminación",
+        "Aislar bloques contaminados"
+      ],
+      "conditions": {
+        "temperature_c": [24, 28],
+        "light": "not_required",
+        "purpose": "Colonización completa antes de inducir fructificación"
+      }
+    },
+    {
+      "phase_name": "Inducción y fructificación",
+      "start_condition": "colonización completa confirmada",
+      "tasks": [
+        "Hacer cortes de fructificación y mover a ENV-XXXX",
+        "Registrar T, HR y CO2 con SNS-XXXX",
+        "Controlar ventilación por CO2 usando la línea base de commissioning"
+      ],
+      "conditions": {
+        "temperature_c": [20, 30],
+        "humidity_rh_percent": [85, 90],
+        "co2_target_ppm": [500, 1500],
+        "co2_alarm_ppm": 2000,
+        "light_lux": [750, 1500],
+        "light_hours_per_day": [3, 5],
+        "ventilation_status": "commissioning_required"
+      }
+    },
+    {
+      "phase_name": "Cosecha y cierre",
+      "start_condition": "morfología de cosecha confirmada",
+      "tasks": [
+        "Asignar HV-XXXX y registrar peso/calidad",
+        "Calcular BE al cerrar el lote",
+        "Registrar observaciones OBS-XXXX y decisiones derivadas"
+      ]
+    }
+  ],
+  "automated_actions": {
+    "enabled": false,
+    "blocked_until": [
+      "inventory_verified",
+      "sensors_cross_checked",
+      "ventilation_commissioned",
+      "manual_override_tested"
+    ],
+    "notes": "El sistema solo monitorea hasta cerrar commissioning; no acciona equipos desde este workflow."
+  },
+  "notifications": {
+    "daily_summary_time": "23:00",
+    "critical_alert_channels": ["local_log"],
+    "operator_contact": "configured_outside_git"
+  },
+  "data_collection": {
+    "sensor_interval_seconds": 300,
+    "quality_logs": "manual_at_harvest",
+    "cost_logs": "per_batch"
+  }
+}

@@ -1,0 +1,113 @@
+# Metadata — KPIs y Métricas Operacionales
+# Setas de la Peña
+# Última actualización: 2026-07-16
+
+# MÉTRICAS DE PRODUCCIÓN
+production_kpis:
+  biological_efficiency:
+    name: "Eficiencia Biológica (BE)"
+    formula: "(peso fresco cosecha / peso seco sustrato) × 100"
+    unit: percent
+    reference_potential_percent: [80, 100]
+    local_target_status: pending_three_comparable_batches
+    notes: "KPI principal. El rango 80–100% es referencia institucional, no umbral local validado."
+
+  contamination_rate:
+    name: "Tasa de Contaminación"
+    formula: "(bloques contaminados / bloques totales) × 100"
+    unit: percent
+    target_max: 10
+    alert_threshold: 15
+    notes: "Si supera 15%, revisar protocolo de inoculación y asepsia."
+
+  time_to_pinning:
+    name: "Tiempo a Pinning"
+    unit: days
+    reference:
+      pleurotus_djamor: [14, 21]
+      hericium_erinaceus: [21, 35]
+      lentinula_edodes: [60, 120]
+    notes: "Contar desde inoculación hasta primordios visibles."
+
+  yield_per_block:
+    name: "Rendimiento por Bloque"
+    unit: grams_fresh
+    target: 800
+    notes: "Para bloque de 1 kg sustrato seco. Varía por especie y flush."
+
+# MÉTRICAS AMBIENTALES
+environmental_kpis:
+  temperature:
+    unit: celsius
+    measurement_frequency: continuous
+    logging: home_assistant
+    alert_low: 18
+    alert_high: 30
+
+  humidity_rh:
+    unit: percent
+    measurement_frequency: continuous
+    logging: home_assistant
+    alert_low: 82
+    alert_high: 98
+
+  co2_ppm:
+    unit: ppm
+    measurement_frequency: continuous
+    logging: home_assistant
+    alert_max:
+      pleurotus_djamor: 2000
+      hericium_erinaceus: 1000
+      default: 1500
+
+  ventilation_ach:
+    unit: air_changes_per_hour
+    provisional_range: [5, 8]
+    validation_status: commissioning_required
+    formula: "effective_airflow_cfm × duty_cycle × 60 / enclosure_volume_ft3"
+    notes: "Medir caudal efectivo instalado; no inferir ACH solo desde el temporizador. Control primario por CO2."
+
+# MÉTRICAS FINANCIERAS
+financial_kpis:
+  cost_per_kg_produced:
+    formula: "costos variables totales / kg producidos"
+    unit: "COP/kg"
+    target_max: 15000
+    notes: "Calculado después de cada lote. Incluye spawn, sustrato, energía, MO."
+
+  revenue_per_week:
+    unit: COP
+    phase_1_target: 300000
+    phase_2_target: 1000000
+
+  break_even_modules:
+    estimate: 3
+    unit: modules
+    notes: "Estimado. Validar con datos reales de campo."
+
+# MÉTRICAS DE CALIDAD
+quality_kpis:
+  grade_a_percent:
+    name: "% Producto Grade A"
+    target: 80
+    notes: "Caps >5cm, color uniforme, sin daño"
+
+  shelf_life_days:
+    fresh_refrigerated: 5
+    dried: 365
+    notes: "A 4°C. Empacar con ventilación."
+
+# REGISTRO Y FRECUENCIA
+logging:
+  batch_log:
+    frequency: per_batch
+    template: "knowledge_base/06_operations/batch_tracking.md"
+
+  environmental_log:
+    frequency: continuous
+    platform: home_assistant
+    retention_days: 90
+
+  financial_log:
+    frequency: weekly
+    format: spreadsheet

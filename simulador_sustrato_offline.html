@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setas de la Peña — Simulador de Sustrato (Offline)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --coral-500: #C5562D;
+            --coral-700: #8C4027;
+            --moss-700: #4D6235;
+            --ink-900: #222;
+            --TXT: #333;
+            --BR: #ccc;
+            --WH: #fff;
+            --paper-50: #fafaf8;
+            --paper-100: #f0f0ed;
+            --paper-200: #e6e6e1;
+            --SL: #ddd;
+            --shadow-soft: 0 2px 8px rgba(0,0,0,0.08);
+            --r-sm: 6px;
+            --r-xs: 3px;
+            --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            --font-num: 'Courier New', monospace;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--paper-50);
+            color: var(--TXT);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--moss-700) 0%, var(--coral-500) 100%);
+            color: white;
+            border-radius: var(--r-sm);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: var(--paper-100);
+            border: 1px solid var(--BR);
+            border-radius: var(--r-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--moss-700);
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media(max-width: 900px) {
+            .cols { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--WH);
+            border: 1px solid var(--BR);
+            border-radius: var(--r-sm);
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card h2 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--BR);
+            color: var(--coral-500);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--BR);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--BR);
+            border-radius: var(--r-xs);
+            background: var(--paper-50);
+            font-family: var(--font-body);
+            font-size: 13px;
+            color: var(--TXT);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--coral-500);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: var(--r-xs);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--coral-500);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--coral-700);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--BR);
+            color: var(--TXT);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--coral-500);
+            color: var(--coral-500);
+        }
+
+        .result-box {
+            background: var(--paper-100);
+            border-left: 4px solid var(--moss-700);
+            padding: 16px;
+            border-radius: var(--r-xs);
+            margin-top: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .metric {
+            background: var(--paper-100);
+            padding: 12px;
+            border-radius: var(--r-xs);
+            border: 1px solid var(--SL);
+        }
+
+        .metric-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--BR);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--coral-500);
+            font-family: var(--font-num);
+        }
+
+        .species-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        @media(max-width: 600px) {
+            .species-list { grid-template-columns: 1fr; }
+        }
+
+        .species-chip {
+            padding: 8px 12px;
+            border: 2px solid var(--BR);
+            border-radius: 20px;
+            background: var(--paper-50);
+            color: var(--TXT);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .species-chip:hover {
+            border-color: var(--coral-500);
+        }
+
+        .species-chip.active {
+            border-color: var(--coral-500);
+            background: var(--coral-500);
+            color: white;
+        }
+
+        .alert {
+            padding: 12px 14px;
+            border-radius: var(--r-xs);
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            color: #1565c0;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .offline-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            background: var(--moss-700);
+            color: white;
+            border-radius: var(--r-sm);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .offline-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--BR);
+            font-size: 12px;
+            color: var(--BR);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍄 Setas de la Peña</h1>
+            <p>Simulador de Sustrato — Formulación de Recetas</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-dot"></span>
+                <strong>Modo Offline</strong>
+            </div>
+            <div class="status-item">
+                <span class="status-dot"></span>
+                Almacenamiento Local Habilitado
+            </div>
+        </div>
+
+        <div class="cols">
+            <!-- FORMULADOR -->
+            <div class="card">
+                <h2>Formulador de Sustrato</h2>
+
+                <div class="form-group">
+                    <label>Especie</label>
+                    <div class="species-list">
+                        <button type="button" class="species-chip" data-species="ostreatus" onclick="selectSpecies('ostreatus')">Ostreatus Gris</button>
+                        <button type="button" class="species-chip" data-species="shiitake" onclick="selectSpecies('shiitake')">Shiitake</button>
+                        <button type="button" class="species-chip" data-species="lions_mane" onclick="selectSpecies('lions_mane')">Lion's Mane</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Paja (kg)</label>
+                    <input type="number" id="paja" placeholder="40" value="40" min="0" step="5">
+                </div>
+
+                <div class="form-group">
+                    <label>Aserrín (kg)</label>
+                    <input type="number" id="aserrin" placeholder="30" value="30" min="0" step="5">
+                </div>
+
+                <div class="form-group">
+                    <label>Cal Agrícola (kg)</label>
+                    <input type="number" id="cal" placeholder="2" value="2" min="0" step="0.5">
+                </div>
+
+                <div class="form-group">
+                    <label>Humedad Objetivo (%)</label>
+                    <input type="number" id="humedad" placeholder="65" value="65" min="40" max="80" step="1">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="calcular()">Calcular</button>
+                    <button class="btn-secondary" onclick="limpiar()">Limpiar</button>
+                </div>
+
+                <div id="resultado" class="result-box" style="display: none;"></div>
+            </div>
+
+            <!-- MÉTRICAS -->
+            <div class="card">
+                <h2>Métricas de Calidad</h2>
+
+                <div id="metrics" class="metric-grid" style="display: none;">
+                    <div class="metric">
+                        <div class="metric-label">Relación C:N</div>
+                        <div class="metric-value" id="metric-cn">—</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">pH Estimado</div>
+                        <div class="metric-value" id="metric-ph">—</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Peso Total (kg)</div>
+                        <div class="metric-value" id="metric-total">—</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Estado</div>
+                        <div class="metric-value" id="metric-estado" style="font-size: 12px;">—</div>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 24px;">Historial</h2>
+                <div id="historial" style="font-size: 12px; line-height: 1.8;">
+                    <p style="color: var(--BR);">Sin recetas guardadas aún</p>
+                </div>
+
+                <button class="btn-secondary" onclick="borrarHistorial()" style="margin-top: 16px; width: 100%;">Borrar Historial</button>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>✓ Funciona sin internet:</strong> Este simulador está completamente almacenado en tu navegador. No necesita conexión a internet. Tus datos se guardan automáticamente.
+        </div>
+    </div>
+
+    <div class="offline-indicator">
+        <span class="offline-dot"></span>Offline Mode
+    </div>
+
+    <div class="footer">
+        <p>Setas de la Peña • Tenjo, Colombia • 2026</p>
+        <p style="margin-top: 8px;">Simulador de Sustrato v5.0 — Versión Offline</p>
+    </div>
+
+    <script>
+        // Base de datos local de especies
+        const ESPECIES = {
+            ostreatus: {
+                name: 'Orellana Gris',
+                scientific: 'Pleurotus ostreatus',
+                cn_optimo: { min: 25, max: 50, ideal: 35 },
+                n_optimo: { min: 0.8, max: 2.0, ideal: 1.4 },
+                ph_optimo: { min: 6.0, max: 7.5 },
+                humedad: 65,
+                temp_fructificacion: '12–22°C',
+                notas: 'La más fácil de cultivar. Tolera amplio rango de C:N.'
+            },
+            shiitake: {
+                name: 'Shiitake',
+                scientific: 'Lentinula edodes',
+                cn_optimo: { min: 30, max: 60, ideal: 45 },
+                n_optimo: { min: 0.8, max: 1.5, ideal: 1.2 },
+                ph_optimo: { min: 5.5, max: 7.0 },
+                humedad: 60,
+                temp_fructificacion: '10–18°C',
+                notas: 'Premium. Requiere madera dura. Largo tiempo de colonización.'
+            },
+            lions_mane: {
+                name: "Lion's Mane",
+                scientific: 'Hericium erinaceus',
+                cn_optimo: { min: 20, max: 40, ideal: 30 },
+                n_optimo: { min: 1.0, max: 2.0, ideal: 1.5 },
+                ph_optimo: { min: 6.0, max: 7.0 },
+                humedad: 70,
+                temp_fructificacion: '12–16°C',
+                notas: 'Medicinal. Prefiere maderas nobles.'
+            }
+        };
+
+        let especieActual = 'ostreatus';
+        let recetas = JSON.parse(localStorage.getItem('recetas')) || [];
+
+        function selectSpecies(species) {
+            especieActual = species;
+            document.querySelectorAll('.species-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            document.querySelector(`[data-species="${species}"]`).classList.add('active');
+        }
+
+        function calcular() {
+            const paja = parseFloat(document.getElementById('paja').value) || 0;
+            const aserrin = parseFloat(document.getElementById('aserrin').value) || 0;
+            const cal = parseFloat(document.getElementById('cal').value) || 0;
+            const humedad = parseFloat(document.getElementById('humedad').value) || 65;
+
+            const especie = ESPECIES[especieActual];
+
+            // Cálculos de formulación
+            const pesoSeco = paja + aserrin + cal;
+            const agua = (pesoSeco * humedad) / (100 - humedad);
+            const pesoTotal = pesoSeco + agua;
+
+            // Estimación de C:N (simplificada)
+            const carbonoPaja = paja * 0.40; // 40% C
+            const carbonoAserrin = aserrin * 0.45; // 45% C
+            const carbonoTotal = carbonoPaja + carbonoAserrin;
+
+            const nitrogeno = pesoSeco * 0.015; // Estimación conservadora 1.5%
+            const cnRatio = carbonoTotal / (nitrogeno || 1);
+
+            // pH estimado (cal aumenta pH)
+            const phBase = 6.5;
+            const phAjuste = (cal / pesoSeco) * 0.5;
+            const phEstimado = Math.min(phBase + phAjuste, 7.5);
+
+            // Validación
+            let estado = '✓ Óptimo';
+            let colorEstado = '#4caf50';
+
+            if (cnRatio < especie.cn_optimo.min || cnRatio > especie.cn_optimo.max) {
+                estado = '⚠ C:N fuera de rango';
+                colorEstado = '#ff9800';
+            }
+
+            if (phEstimado < especie.ph_optimo.min || phEstimado > especie.ph_optimo.max) {
+                estado = '⚠ pH fuera de rango';
+                colorEstado = '#ff9800';
+            }
+
+            if (humedad < 50 || humedad > 75) {
+                estado = '⚠ Humedad fuera de rango';
+                colorEstado = '#ff9800';
+            }
+
+            // Mostrar resultados
+            const resultado = `RECETA ${especie.name.toUpperCase()}
+
+Composición:
+  • Paja:          ${paja} kg
+  • Aserrín:       ${aserrin} kg
+  • Cal:           ${cal} kg
+  • Agua:          ${agua.toFixed(1)} kg
+  • ─────────────────────
+  • TOTAL:         ${pesoTotal.toFixed(1)} kg
+
+Parámetros:
+  • Relación C:N:  ${cnRatio.toFixed(1)} (rango óptimo: ${especie.cn_optimo.min}–${especie.cn_optimo.max})
+  • pH estimado:   ${phEstimado.toFixed(1)} (rango óptimo: ${especie.ph_optimo.min}–${especie.ph_optimo.max})
+  • Humedad:       ${humedad}% (rango: 50–75%)
+
+Recomendaciones:
+  • Mezclar a fondo
+  • Permitir descanso 24 h
+  • Embolsar y esterilizar 90 min a 15 PSI
+  • Enfriar completamente antes de inocular
+  • Temperatura fructificación: ${especie.temp_fructificacion}`;
+
+            document.getElementById('resultado').innerHTML = resultado;
+            document.getElementById('resultado').style.display = 'block';
+
+            // Mostrar métricas
+            document.getElementById('metric-cn').textContent = cnRatio.toFixed(1);
+            document.getElementById('metric-ph').textContent = phEstimado.toFixed(2);
+            document.getElementById('metric-total').textContent = pesoTotal.toFixed(1);
+            document.getElementById('metric-estado').textContent = estado;
+            document.getElementById('metric-estado').style.color = colorEstado;
+            document.getElementById('metrics').style.display = 'grid';
+
+            // Guardar en historial
+            const receta = {
+                id: Date.now(),
+                especie: especie.name,
+                fecha: new Date().toLocaleDateString('es-CO'),
+                paja, aserrin, cal, humedad,
+                cn: cnRatio.toFixed(1),
+                ph: phEstimado.toFixed(2),
+                total: pesoTotal.toFixed(1)
+            };
+
+            recetas.unshift(receta);
+            if (recetas.length > 20) recetas.pop();
+            localStorage.setItem('recetas', JSON.stringify(recetas));
+
+            actualizarHistorial();
+        }
+
+        function actualizarHistorial() {
+            if (recetas.length === 0) {
+                document.getElementById('historial').innerHTML = '<p style="color: var(--BR);">Sin recetas guardadas aún</p>';
+                return;
+            }
+
+            const html = recetas.map(r => `
+                <div style="padding: 8px; background: var(--paper-50); border-radius: 4px; margin-bottom: 8px;">
+                    <strong>${r.especie}</strong> • ${r.fecha}<br>
+                    Paja: ${r.paja}kg | Aserín: ${r.aserrin}kg | C:N: ${r.cn} | pH: ${r.ph}
+                </div>
+            `).join('');
+
+            document.getElementById('historial').innerHTML = html;
+        }
+
+        function limpiar() {
+            document.getElementById('paja').value = '40';
+            document.getElementById('aserrin').value = '30';
+            document.getElementById('cal').value = '2';
+            document.getElementById('humedad').value = '65';
+            document.getElementById('resultado').style.display = 'none';
+            document.getElementById('metrics').style.display = 'none';
+        }
+
+        function borrarHistorial() {
+            if (confirm('¿Borrar todo el historial de recetas?')) {
+                recetas = [];
+                localStorage.removeItem('recetas');
+                actualizarHistorial();
+            }
+        }
+
+        // Inicializar
+        selectSpecies('ostreatus');
+        actualizarHistorial();
+    </script>
+</body>
+</html>
