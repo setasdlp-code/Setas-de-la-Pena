@@ -1,0 +1,143 @@
+/* ════════════════════════════════════════════════════════════════
+   Bridge: old "Setas de la Peña" brand tokens → new
+   Field Operating System tokens. Keeps every existing class/selector
+   in recipe-sim-v2.css and the inline <style> working unchanged,
+   while resolving to the new paper/ink/hairline palette.
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Paper / cream ── */
+  --paper-50:  var(--paper-0);
+  --paper-100: var(--paper-0);
+  --paper-200: var(--paper-1);
+  --paper-300: var(--paper-2);
+
+  /* ── Ink ── */
+  --ink-900: var(--ink-0);
+  --ink-800: var(--ink-0);
+  --ink-700: var(--ink-1);
+  --ink-600: var(--ink-1);
+  --ink-500: var(--ink-2);
+  --ink-400: var(--ink-2);
+  --ink-300: var(--ink-3);
+  --ink-200: var(--ink-3);
+
+  /* ── Moss (brand green) → olive ── */
+  --moss-900: var(--accent-olive);
+  --moss-700: var(--accent-olive);
+  --moss-600: var(--accent-olive);
+  --moss-500: var(--accent-olive);
+  --moss-300: var(--accent-olive-dim);
+  --moss-200: var(--accent-olive-dim);
+
+  /* ── Coral (secondary accent) → terracotta ── */
+  --coral-700: var(--accent-terracotta);
+  --coral-600: var(--accent-terracotta);
+  --coral-500: var(--accent-terracotta);
+  --coral-300: var(--accent-terracotta);
+  --coral-200: var(--accent-terracotta-dim);
+  --coral-100: var(--accent-terracotta-dim);
+
+  /* ── Sand / bark (warm neutrals) → mushroom / hairline ── */
+  --sand-500: var(--accent-mushroom);
+  --sand-300: var(--line-1);
+  --sand-200: var(--paper-2);
+  --bark-700: var(--ink-1);
+  --bark-500: var(--accent-mushroom);
+  --bark-300: var(--line-1);
+
+  /* ── Slate (cool neutral) → blue-grey ── */
+  --slate-700: var(--accent-blue-grey);
+  --slate-600: var(--accent-blue-grey);
+  --slate-500: var(--accent-blue-grey);
+  --slate-300: var(--line-1);
+  --slate-200: var(--accent-blue-grey-dim);
+
+  /* ── Ochre (warning) → mushroom ── */
+  --ochre-700: var(--accent-mushroom);
+  --ochre-500: var(--accent-mushroom);
+  --ochre-200: var(--accent-mushroom-dim);
+
+  /* ── Back-compat aliases ── */
+  --rust-700: var(--status-error);
+  --rust-500: var(--status-error);
+  --rust-200: var(--status-error-bg);
+  --sky-500:  var(--accent-blue-grey);
+  --sky-200:  var(--accent-blue-grey-dim);
+
+  --success: var(--status-active);
+  --warning: var(--status-attention);
+  --danger:  var(--status-error);
+
+  /* ── Semantic surfaces ── */
+  --bg-page:     var(--surface-page);
+  --bg-elevated: var(--surface-page);
+  --bg-sunken:   var(--surface-recessed);
+  --bg-card:     var(--surface-page);
+  --bg-inverse:  var(--ink-0);
+
+  --fg-primary:   var(--text-primary);
+  --fg-secondary: var(--text-secondary);
+  --fg-muted:     var(--text-metadata);
+  --fg-faint:     var(--text-disabled);
+  --fg-inverse:   var(--paper-0);
+
+  --accent:        var(--accent-olive);
+  --accent-hover:  var(--accent-olive);
+  --accent-tint:   var(--accent-olive-dim);
+  --accent-2:       var(--accent-terracotta);
+  --accent-2-hover: var(--accent-terracotta);
+  --accent-2-tint:  var(--accent-terracotta-dim);
+
+  --border-soft:   var(--border-hairline);
+  --border-strong: var(--line-1);
+  --border-ink:    var(--ink-0);
+
+  /* ── Fonts ── */
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+  --font-sci:     var(--font-sans);
+  --font-num:     var(--font-mono);
+
+  /* ── Type scale (semantic shorthands used via font:var(--t-*)) ── */
+  --t-display-1: var(--weight-medium) var(--text-3xl)/var(--leading-tight) var(--font-sans);
+  --t-display-2: var(--weight-regular) var(--text-2xl)/var(--leading-tight) var(--font-sans);
+  --t-h1:        var(--weight-regular) var(--text-2xl)/var(--leading-snug) var(--font-sans);
+  --t-h2:        var(--weight-regular) var(--text-xl)/var(--leading-snug) var(--font-sans);
+  --t-h3:        var(--weight-medium) var(--text-lg)/var(--leading-snug) var(--font-sans);
+  --t-h4:        var(--weight-medium) var(--text-md)/var(--leading-snug) var(--font-sans);
+  --t-lede:      var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
+  --t-body:      var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-sans);
+  --t-body-sm:   var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
+  --t-caption:   var(--weight-regular) var(--text-xs)/var(--leading-normal) var(--font-sans);
+  --t-eyebrow:   var(--weight-medium) var(--text-xs)/1 var(--font-sans);
+  --t-label:     var(--weight-medium) var(--text-sm)/var(--leading-tight) var(--font-sans);
+  --t-button:    var(--weight-medium) var(--text-sm)/1 var(--font-sans);
+  --t-quote:     var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
+
+  /* ── Spacing (already 1:1 with new scale) ── */
+  --space-10: var(--space-9);
+
+  /* ── Radii — Field Operating System is flat: rules, not cards ── */
+  --r-xs:  var(--radius-sm);
+  --r-sm:  var(--radius-sm);
+  --r-md:  var(--radius-md);
+  --r-lg:  var(--radius-none);
+  --r-pill: var(--radius-none);
+
+  /* ── Shadows — none. Hairlines replace elevation. ── */
+  --shadow-soft: none;
+  --shadow-card: none;
+  --shadow-lift: none;
+  --shadow-inset: none;
+  --shadow-hard: none;
+
+  --ease: cubic-bezier(0.32, 0.72, 0.36, 1);
+}
+
+/* Flatten any remaining shadow/radius declarations that slipped through
+   as literal values rather than var() in the legacy stylesheets. */
+.dash-card, .spp-card, .plate, .inv-section, .inv-month-group,
+.cat-modal-box, .cgrid, .tle, .schsum, .mgrid {
+  box-shadow: none !important;
+}
+.spp-card.on { box-shadow: inset 0 0 0 2px var(--accent-blue-grey) !important; }
