@@ -1,0 +1,39 @@
+{
+  "name": "Field OS · Setas de la Peña",
+  "short_name": "Field OS",
+  "description": "Memoria operativa para el cultivo de setas en Tenjo.",
+  "lang": "es-CO",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F2E8D6",
+  "theme_color": "#F2E8D6",
+  "icons": [
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mi turno",
+      "short_name": "Turno",
+      "url": "./#today"
+    },
+    {
+      "name": "Producción",
+      "short_name": "Producción",
+      "url": "./#production"
+    }
+  ]
+}
