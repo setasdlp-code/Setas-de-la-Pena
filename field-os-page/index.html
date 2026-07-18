@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#F2E8D6">
+  <meta name="theme-color" content="#F6F4EC">
   <meta name="description" content="Field OS: memoria operativa para el cultivo de setas en Tenjo. Captura, trazabilidad, producción y aprendizaje en un sistema modular.">
   <meta property="og:title" content="Field OS · Setas de la Peña">
   <meta property="og:description" content="Registro operativo. Decisiones con evidencia.">
@@ -23,6 +23,7 @@
   <link rel="icon" href="./assets/icon-192.png" type="image/png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
+  <script src="https://unpkg.com/lucide@1.20.0/dist/umd/lucide.min.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -31,11 +32,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Navegación principal">
       <button class="brand" type="button" data-nav-target="today" aria-label="Ir a Mi turno">
-        <span class="brand-mark">SdP</span>
-        <span class="brand-copy">
-          <strong>Field OS</strong>
-          <small>Setas de la Peña</small>
-        </span>
+        <img class="brand-logo" src="./assets/logo-primary.png" alt="Setas de la Peña">
       </button>
 
       <div class="site-context">
@@ -114,7 +111,7 @@
               <h2>Contenedor</h2>
               <p>Escanea el QR o ingresa el código para abrir su identidad, historial reciente y eventos disponibles.</p>
               <button class="primary-action primary-action--light" type="button" id="scanButton">
-                <span class="scan-symbol" aria-hidden="true">⌗</span>
+                <span class="scan-symbol" aria-hidden="true"><i data-lucide="scan-line"></i></span>
                 <span><strong>Escanear contenedor</strong><small>Búsqueda por código disponible</small></span>
               </button>
               <button class="text-action text-action--light" type="button" id="manualRegisterButton">Ingresar código</button>
@@ -213,7 +210,7 @@
             <button class="primary-action primary-action--inline" type="button" id="executeBatchButton">Ejecutar lote</button>
           </div>
           <div class="validation-banner validation-banner--pass" id="massBalanceBanner" role="status">
-            <div><span class="validation-symbol" aria-hidden="true">✓</span><span><strong>Balance de masa cerrado</strong><small>La receta suma 100,0%. Todos los insumos tienen stock y lote de origen.</small></span></div>
+            <div><span class="validation-symbol" aria-hidden="true"><i data-lucide="circle-check"></i></span><span><strong>Balance de masa cerrado</strong><small>La receta suma 100,0%. Todos los insumos tienen stock y lote de origen.</small></span></div>
             <span class="source-tag source-tag--calculated">Calculado</span>
           </div>
           <div class="split-layout">
@@ -305,18 +302,18 @@
             <div class="card-heading"><div><p class="eyebrow">TRAZA ACTIVA</p><h2>EMP-260718-04 · Orellanas frescas 250 g</h2></div><span class="status status--approved">Liberado</span></div>
             <div class="trace-chain" aria-label="Cadena de trazabilidad del lote comercial">
               <button type="button"><small>Pedido</small><strong>PED-1048</strong><span>Restaurante Aldea</span></button>
-              <i aria-hidden="true">←</i>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
               <button type="button"><small>Empaque</small><strong>EMP-260718-04</strong><span>18 jul · 16:10</span></button>
-              <i aria-hidden="true">←</i>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
               <button type="button"><small>Cosecha</small><strong>COS-260718-02</strong><span>4,8 kg · grado A</span></button>
-              <i aria-hidden="true">←</i>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
               <button type="button"><small>Contenedores</small><strong>6 bolsas</strong><span>C-0410 → C-0415</span></button>
-              <i aria-hidden="true">←</i>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
               <button type="button"><small>Lote</small><strong>SDP-260607-OST-03</strong><span>Receta v1.8</span></button>
-              <i aria-hidden="true">←</i>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
               <button type="button"><small>Insumos</small><strong>4 lotes</strong><span>Origen verificado</span></button>
             </div>
-            <div class="release-summary"><div><span class="release-check">✓</span><span><strong>Control de liberación completo</strong><small>Peso, apariencia, temperatura, empaque y responsable registrados.</small></span></div><button class="compact-button" type="button">Ver ficha</button></div>
+            <div class="release-summary"><div><span class="release-check" aria-hidden="true"><i data-lucide="circle-check"></i></span><span><strong>Control de liberación completo</strong><small>Peso, apariencia, temperatura, empaque y responsable registrados.</small></span></div><button class="compact-button" type="button">Ver ficha</button></div>
           </article>
           <div class="split-layout split-layout--wide">
             <article class="card"><div class="card-heading"><div><p class="eyebrow">RESULTADO DEL LOTE</p><h2>Indicadores</h2></div><span class="source-tag source-tag--calculated">Calculado</span></div><dl class="data-grid data-grid--three"><div><dt>EB real</dt><dd>84,6%</dd><small>Cosecha / seco</small></div><div><dt>Contaminación</dt><dd>3,2%</dd><small>1 de 31 bolsas</small></div><div><dt>Grado A</dt><dd>91%</dd><small>Del peso fresco</small></div></dl></article>
@@ -340,13 +337,13 @@
       </main>
 
       <nav class="mobile-nav" aria-label="Navegación móvil">
-        <button type="button" class="mobile-nav-item is-active" data-nav-target="today" data-roles="operator,production,direction"><span>⌂</span>Turno</button>
-        <button type="button" class="mobile-nav-item" data-mobile-scan data-roles="operator"><span>⌗</span>Escanear</button>
-        <button type="button" class="mobile-nav-item" data-nav-target="production" data-roles="production"><span>◫</span>Producción</button>
-        <button type="button" class="mobile-nav-item" data-nav-target="environment" data-roles="production"><span>◌</span>Ambiente</button>
-        <button type="button" class="mobile-nav-item" data-nav-target="quality" data-roles="production,direction"><span>◎</span>Calidad</button>
-        <button type="button" class="mobile-nav-item" data-nav-target="commercial" data-roles="direction"><span>◇</span>Comercial</button>
-        <button type="button" class="mobile-nav-item" data-nav-target="learn" data-roles="direction"><span>↗</span>Aprender</button>
+        <button type="button" class="mobile-nav-item is-active" data-nav-target="today" data-roles="operator,production,direction"><span aria-hidden="true"><i data-lucide="house"></i></span>Turno</button>
+        <button type="button" class="mobile-nav-item" data-mobile-scan data-roles="operator"><span aria-hidden="true"><i data-lucide="scan-line"></i></span>Escanear</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="production" data-roles="production"><span aria-hidden="true"><i data-lucide="flask-conical"></i></span>Producción</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="environment" data-roles="production"><span aria-hidden="true"><i data-lucide="gauge"></i></span>Ambiente</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="quality" data-roles="production,direction"><span aria-hidden="true"><i data-lucide="shield-check"></i></span>Calidad</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="commercial" data-roles="direction"><span aria-hidden="true"><i data-lucide="truck"></i></span>Comercial</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="learn" data-roles="direction"><span aria-hidden="true"><i data-lucide="microscope"></i></span>Aprender</button>
       </nav>
     </div>
   </div>
@@ -355,7 +352,7 @@
     <form method="dialog" class="dialog-shell" id="captureForm">
       <div class="dialog-header">
         <div><p class="eyebrow">CONTENEDOR IDENTIFICADO</p><h2 id="captureTitle">C-0412</h2><p><i>Pleurotus ostreatus</i> · Fructificación · día 41</p></div>
-        <button class="dialog-close" type="button" aria-label="Cerrar registro">×</button>
+        <button class="dialog-close" type="button" aria-label="Cerrar registro"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="object-context">
         <div><small>Último evento</small><strong>Traslado · hoy 09:14</strong></div>
@@ -386,7 +383,7 @@
 
   <dialog class="confirm-dialog" id="batchDialog" aria-labelledby="batchDialogTitle">
     <form method="dialog" class="dialog-shell dialog-shell--small">
-      <div class="dialog-header"><div><p class="eyebrow">CONFIRMACIÓN OPERATIVA</p><h2 id="batchDialogTitle">Ejecutar lote</h2></div><button class="dialog-close" type="button" aria-label="Cerrar confirmación">×</button></div>
+      <div class="dialog-header"><div><p class="eyebrow">CONFIRMACIÓN OPERATIVA</p><h2 id="batchDialogTitle">Ejecutar lote</h2></div><button class="dialog-close" type="button" aria-label="Cerrar confirmación"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="confirmation-list"><div><span>Receta</span><strong>Orellana Gris · v1.8</strong></div><div><span>Balance</span><strong>100,0% · válido</strong></div><div><span>Materia seca</span><strong>2,97 kg</strong></div><div><span>Stock</span><strong>Completo · FIFO</strong></div></div>
       <p>La ejecución registra el evento, descuenta inventario por FIFO y fija la versión de receta asociada al lote.</p>
       <div class="dialog-actions dialog-actions--end"><button class="secondary-action" value="cancel">Cancelar</button><button class="primary-action primary-action--inline" id="confirmBatchButton" value="confirm">Confirmar ejecución</button></div>

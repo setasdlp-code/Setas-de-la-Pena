@@ -14,6 +14,12 @@ Prototipo navegable de la experiencia operativa de Field OS para Setas de la Pe�
 - controles táctiles, navegación con teclado y diseño responsive;
 - manifiesto y service worker para instalación y uso offline.
 
+## Sistema de diseño
+
+La interfaz reutiliza el sistema de diseño de Setas de la Peña: tipografías
+Gaya Patched y PP Object Sans, tokens Paper/Ink/Moss/Coral, logo e ilustración
+botánica oficiales, escala de espaciado de 4 px e iconografía Lucide de 1,5 px.
+
 ## Publicación
 
 Esta carpeta se publica como la raíz del repositorio público independiente

@@ -1,4 +1,4 @@
-const CACHE_NAME = "field-os-v3";
+const CACHE_NAME = "field-os-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,9 +6,16 @@ const APP_SHELL = [
   "./app.js",
   "./manifest.webmanifest",
   "./og.png",
+  "./assets/logo-primary.png",
   "./assets/hero-specimens.png",
   "./assets/icon-192.png",
-  "./assets/icon-512.png"
+  "./assets/icon-512.png",
+  "./assets/fonts/GayaPatched-Regular.otf",
+  "./assets/fonts/GayaPatched-Italic.otf",
+  "./assets/fonts/PPObjectSans-Regular.otf",
+  "./assets/fonts/PPObjectSans-Slanted.otf",
+  "./assets/fonts/PPObjectSans-Heavy.otf",
+  "./assets/fonts/PPObjectSans-HeavySlanted.otf"
 ];
 
 self.addEventListener("install", (event) => {

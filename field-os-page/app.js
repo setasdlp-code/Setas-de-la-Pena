@@ -38,6 +38,8 @@
   let toastTimer = null;
   let state = readState();
 
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.5 } });
+
   function readState() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
