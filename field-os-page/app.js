@@ -17,20 +17,20 @@
     operator: {
       session: "Cultivo · activa",
       eyebrow: "Sábado · 18 de julio · Turno de cultivo",
-      title: "El turno, sin ruido.",
-      lede: "Identifica el objeto en mano, registra el hecho y vuelve al cultivo. Cada evento queda atribuido y seguro."
+      title: "Registro del turno.",
+      lede: "Eventos, contenedores y condiciones del cultivo con autoría, hora y contexto."
     },
     production: {
       session: "Producción · Tenjo",
       eyebrow: "Sábado · 18 de julio · Operación",
-      title: "Lo que requiere atención.",
-      lede: "La operación aparece como evidencia concreta: lotes, condiciones y excepciones. Cada decisión conserva su origen."
+      title: "Estado de la operación.",
+      lede: "Lotes, condiciones y excepciones con origen verificable. Cada cambio conserva autoría, hora y contexto."
     },
     direction: {
       session: "Dirección · evidencia",
       eyebrow: "Sábado · 18 de julio · Vista de dirección",
-      title: "La operación, trazable.",
-      lede: "Demanda, calidad y aprendizaje comparten la misma memoria. Ninguna cifra comercial queda separada del lote que la produjo."
+      title: "Evidencia para decidir.",
+      lede: "Demanda, calidad, costos y aprendizaje vinculados con los lotes que los sustentan."
     }
   };
 
@@ -202,7 +202,7 @@
     eventCount.textContent = String(4 + state.events.length);
     document.querySelector("#eventNote").value = "";
     closeDialog(captureDialog);
-    showToast(`${record.type} guardada. El evento ya forma parte de la historia de C-0412.`);
+    showToast(`${record.type} registrada en C-0412.`);
   });
 
   document.querySelectorAll(".acknowledge-button").forEach((button) => {
@@ -212,7 +212,7 @@
       state.acknowledged += 1;
       saveState();
       updateReviewCount();
-      showToast("Revisión registrada con autor y hora.");
+      showToast("Revisión registrada · autor y hora conservados.");
     });
   });
 
@@ -224,7 +224,7 @@
       status.textContent = "Reconocida";
       status.className = "status status--ready";
     }
-    showToast("Incidencia reconocida. La lectura original permanece sin cambios.");
+    showToast("Incidencia reconocida · lectura original conservada.");
   });
 
   document.querySelector("#executeBatchButton").addEventListener("click", () => {
@@ -239,7 +239,7 @@
   });
 
   document.querySelector("#traceSearchButton")?.addEventListener("click", () => {
-    showToast("Demo: la búsqueda acepta código de pedido, empaque, cosecha, contenedor, lote o insumo.");
+    showToast("Criterios disponibles: pedido, empaque, cosecha, contenedor, lote o insumo.");
   });
 
   window.addEventListener("beforeinstallprompt", (event) => {

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#F2E8D6">
   <meta name="description" content="Field OS: memoria operativa para el cultivo de setas en Tenjo. Captura, trazabilidad, producción y aprendizaje en un sistema modular.">
   <meta property="og:title" content="Field OS · Setas de la Peña">
-  <meta property="og:description" content="El operador trabaja. Field OS recuerda.">
+  <meta property="og:description" content="Registro operativo. Decisiones con evidencia.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_CO">
   <meta property="og:url" content="https://setasdlp-code.github.io/Field-OS/">
@@ -16,7 +16,7 @@
   <meta property="og:image:alt" content="Field OS, memoria operativa de Setas de la Peña en Tenjo">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Field OS · Setas de la Peña">
-  <meta name="twitter:description" content="Memoria operativa para cultivo de precisión en Tenjo.">
+  <meta name="twitter:description" content="Registro operativo y evidencia trazable para el cultivo en Tenjo.">
   <meta name="twitter:image" content="https://setasdlp-code.github.io/Field-OS/og.png">
   <title>Field OS · Setas de la Peña</title>
   <link rel="canonical" href="https://setasdlp-code.github.io/Field-OS/">
@@ -102,22 +102,22 @@
           <div class="view-header view-header--hero">
             <div>
               <p class="eyebrow" id="todayEyebrow">Sábado · 18 de julio · Turno de cultivo</p>
-              <h1 id="today-title">El turno, sin ruido.</h1>
-              <p class="lede" id="todayLede">Identifica el objeto en mano, registra el hecho y vuelve al cultivo. Cada evento queda atribuido y seguro.</p>
+              <h1 id="today-title">Estado de la operación.</h1>
+              <p class="lede" id="todayLede">Lotes, condiciones y excepciones con origen verificable. Cada cambio conserva autoría, hora y contexto.</p>
             </div>
             <img class="hero-specimen" src="./assets/hero-specimens.png" alt="Ilustración botánica de setas y la Peña de Juaica">
           </div>
 
           <div class="today-grid">
             <article class="capture-card surface-dark">
-              <div class="card-kicker">SIGUIENTE ACCIÓN</div>
-              <h2>¿Qué tienes en la mano?</h2>
-              <p>Escanea el QR del contenedor. Field OS traerá solo su identidad, último evento y acciones válidas.</p>
+              <div class="card-kicker">REGISTRO DE EVENTO</div>
+              <h2>Contenedor</h2>
+              <p>Escanea el QR o ingresa el código para abrir su identidad, historial reciente y eventos disponibles.</p>
               <button class="primary-action primary-action--light" type="button" id="scanButton">
                 <span class="scan-symbol" aria-hidden="true">⌗</span>
-                <span><strong>Escanear contenedor</strong><small>También puedes buscar por código</small></span>
+                <span><strong>Escanear contenedor</strong><small>Búsqueda por código disponible</small></span>
               </button>
-              <button class="text-action text-action--light" type="button" id="manualRegisterButton">Registrar sin escanear</button>
+              <button class="text-action text-action--light" type="button" id="manualRegisterButton">Ingresar código</button>
             </article>
 
             <article class="session-card card">
@@ -143,7 +143,7 @@
               <div class="card-heading">
                 <div>
                   <p class="eyebrow">PARA REVISAR</p>
-                  <h2>Evidencia, no órdenes</h2>
+                  <h2>Evidencia operativa</h2>
                 </div>
                 <span class="count-badge" id="reviewCount">2</span>
               </div>
@@ -181,7 +181,7 @@
 
         <section class="view" id="view-plan" data-view="plan" aria-labelledby="plan-title" hidden>
           <div class="view-header">
-            <div><p class="eyebrow">DEMANDA → CAPACIDAD → LOTES</p><h1 id="plan-title">Plan de producción</h1><p class="lede">La demanda comercial se convierte en órdenes visibles, sin duplicar datos entre ventas y cultivo.</p></div>
+            <div><p class="eyebrow">DEMANDA → CAPACIDAD → LOTES</p><h1 id="plan-title">Plan de producción</h1><p class="lede">Demanda, capacidad y órdenes de cultivo consolidadas en una misma secuencia operativa.</p></div>
             <button class="primary-action primary-action--inline" type="button">Nueva orden</button>
           </div>
           <div class="metric-strip">
@@ -257,7 +257,7 @@
 
         <section class="view" id="view-environment" data-view="environment" aria-labelledby="environment-title" hidden>
           <div class="view-header">
-            <div><p class="eyebrow">LECTURAS → REGLAS → EVIDENCIA</p><h1 id="environment-title">Ambiente</h1><p class="lede">Lo medido, lo simulado y lo calculado nunca se confunden. Las incidencias se agrupan y conservan responsable y cierre.</p></div>
+            <div><p class="eyebrow">LECTURAS → REGLAS → EVIDENCIA</p><h1 id="environment-title">Ambiente</h1><p class="lede">Lecturas, simulaciones y cálculos identificados por origen. Cada incidencia conserva responsable, seguimiento y cierre.</p></div>
             <button class="secondary-action" type="button">Banco de reglas</button>
           </div>
           <div class="chamber-grid">
@@ -278,14 +278,14 @@
             <article class="card incident-card">
               <div class="card-heading"><div><p class="eyebrow">INCIDENCIA AGRUPADA</p><h2>HR bajo rango registrado</h2></div><span class="status status--watch">Abierta</span></div>
               <dl class="incident-details"><div><dt>Inicio</dt><dd>11:06</dd></div><div><dt>Duración</dt><dd>22 min</dd></div><div><dt>Regla</dt><dd>HR &lt; 85% · 15 min</dd></div><div><dt>Origen</dt><dd>Sensor H-02A</dd></div></dl>
-              <label class="incident-note">Nota de revisión<textarea rows="3" placeholder="Registrar la observación, no una suposición."></textarea></label>
+              <label class="incident-note">Nota de revisión<textarea rows="3" placeholder="Hallazgo, causa confirmada o acción realizada."></textarea></label>
               <button class="primary-action primary-action--inline incident-ack" type="button">Reconocer incidencia</button>
             </article>
           </div>
         </section>
 
         <section class="view" id="view-inventory" data-view="inventory" aria-labelledby="inventory-title" hidden>
-          <div class="view-header"><div><p class="eyebrow">LOTE DE ORIGEN → MOVIMIENTO → COSTO</p><h1 id="inventory-title">Inventario</h1><p class="lede">Cada kg conserva proveedor, lote, fecha, costo y consumo. La disponibilidad no es solo una cifra.</p></div><button class="primary-action primary-action--inline" type="button">Registrar compra</button></div>
+          <div class="view-header"><div><p class="eyebrow">LOTE DE ORIGEN → MOVIMIENTO → COSTO</p><h1 id="inventory-title">Inventario</h1><p class="lede">Disponibilidad consolidada por proveedor, lote, fecha, costo y consumo proyectado.</p></div><button class="primary-action primary-action--inline" type="button">Registrar compra</button></div>
           <div class="metric-strip"><div><span>Valor en stock</span><strong>$286.400</strong><small>COP · calculado</small></div><div><span>Ingredientes</span><strong>12</strong><small>7 con stock</small></div><div><span>Por reponer</span><strong>2</strong><small>Según plan activo</small></div><div><span>Cobertura</span><strong>18 días</strong><small>Demanda prevista</small></div></div>
           <article class="card inventory-table-card">
             <div class="card-heading"><div><p class="eyebrow">STOCK POR LOTE</p><h2>Materias primas</h2></div><button class="text-action" type="button">Exportar CSV</button></div>
@@ -300,7 +300,7 @@
         </section>
 
         <section class="view" id="view-quality" data-view="quality" aria-labelledby="quality-title" hidden>
-          <div class="view-header"><div><p class="eyebrow">DEL PEDIDO AL INSUMO</p><h1 id="quality-title">Calidad y trazabilidad</h1><p class="lede">Un lote comercial puede recorrerse hacia atrás hasta cada cosecha, contenedor, receta e insumo.</p></div><button class="secondary-action" type="button" id="traceSearchButton">Buscar código</button></div>
+          <div class="view-header"><div><p class="eyebrow">DEL PEDIDO AL INSUMO</p><h1 id="quality-title">Calidad y trazabilidad</h1><p class="lede">La traza vincula cada lote comercial con sus cosechas, contenedores, receta e insumos de origen.</p></div><button class="secondary-action" type="button" id="traceSearchButton">Buscar código</button></div>
           <article class="card trace-card">
             <div class="card-heading"><div><p class="eyebrow">TRAZA ACTIVA</p><h2>EMP-260718-04 · Orellanas frescas 250 g</h2></div><span class="status status--approved">Liberado</span></div>
             <div class="trace-chain" aria-label="Cadena de trazabilidad del lote comercial">
@@ -325,15 +325,15 @@
         </section>
 
         <section class="view" id="view-learn" data-view="learn" aria-labelledby="learn-title" hidden>
-          <div class="view-header"><div><p class="eyebrow">HIPÓTESIS → EVIDENCIA → DECISIÓN → SOP</p><h1 id="learn-title">Aprender</h1><p class="lede">La experimentación usa la misma memoria operativa, pero nunca contamina la línea base de producción.</p></div><button class="primary-action primary-action--inline" type="button">Nueva prueba</button></div>
+          <div class="view-header"><div><p class="eyebrow">HIPÓTESIS → EVIDENCIA → DECISIÓN → SOP</p><h1 id="learn-title">Aprender</h1><p class="lede">Los ensayos comparten la memoria operativa y permanecen separados de la línea base de producción.</p></div><button class="primary-action primary-action--inline" type="button">Nueva prueba</button></div>
           <div class="split-layout split-layout--wide">
             <article class="card experiment-card"><div class="card-heading"><div><p class="eyebrow">EXP-260629-ML-02</p><h2>Melena de león · humedad 64% vs 67%</h2></div><span class="status status--experimental">Experimental</span></div><p class="support-copy">Hipótesis: reducir humedad inicial mejora colonización sin disminuir eficiencia biológica.</p><div class="comparison-grid"><div><small>Control · 67%</small><strong>EB 72%</strong><span>Contam. 12%</span></div><div class="comparison-grid--best"><small>Tratamiento · 64%</small><strong>EB 79%</strong><span>Contam. 4%</span></div></div><div class="experiment-footer"><span>6/6 contenedores cerrados</span><button class="compact-button" type="button">Abrir evidencia</button></div></article>
-            <article class="card sop-card"><div class="card-heading"><div><p class="eyebrow">DECISIÓN PENDIENTE</p><h2>Promover a repetición</h2></div><span class="source-tag source-tag--manual">Juicio humano</span></div><p>La evidencia favorece 64%, pero una sola corrida no cambia el SOP. Field OS conserva el resultado y prepara la siguiente repetición.</p><div class="sop-lifecycle"><span class="is-done">Observación</span><span class="is-done">Prueba</span><span class="is-active">Repetición</span><span>Validación</span><span>SOP</span></div><button class="secondary-action" type="button">Crear repetición vinculada</button></article>
+            <article class="card sop-card"><div class="card-heading"><div><p class="eyebrow">DECISIÓN PENDIENTE</p><h2>Promover a repetición</h2></div><span class="source-tag source-tag--manual">Juicio técnico</span></div><p>El resultado favorece 64%. La adopción al SOP requiere repetición y validación; la siguiente corrida conservará el vínculo con esta evidencia.</p><div class="sop-lifecycle"><span class="is-done">Observación</span><span class="is-done">Prueba</span><span class="is-active">Repetición</span><span>Validación</span><span>SOP</span></div><button class="secondary-action" type="button">Crear repetición vinculada</button></article>
           </div>
         </section>
 
         <section class="view" id="view-commercial" data-view="commercial" aria-labelledby="commercial-title" hidden>
-          <div class="view-header"><div><p class="eyebrow">PEDIDOS → COSECHA → ENTREGA</p><h1 id="commercial-title">Comercial</h1><p class="lede">La promesa al cliente se apoya en lotes y fechas reales, no en una hoja separada.</p></div><button class="primary-action primary-action--inline" type="button">Nuevo pedido</button></div>
+          <div class="view-header"><div><p class="eyebrow">PEDIDOS → COSECHA → ENTREGA</p><h1 id="commercial-title">Comercial</h1><p class="lede">Pedidos, disponibilidad prevista y fechas de entrega vinculados con los lotes de producción.</p></div><button class="primary-action primary-action--inline" type="button">Nuevo pedido</button></div>
           <div class="metric-strip"><div><span>Semana 29</span><strong>38,5 kg</strong><small>Pedidos confirmados</small></div><div><span>Disponible</span><strong>41,2 kg</strong><small>Cosecha prevista</small></div><div><span>Margen bruto</span><strong>47%</strong><small>Calculado por lote</small></div><div><span>Entregas</span><strong>7</strong><small>Bogotá y Tenjo</small></div></div>
           <article class="card order-board"><div class="card-heading"><div><p class="eyebrow">DESPACHOS PRÓXIMOS</p><h2>Pedidos confirmados</h2></div><span class="source-tag source-tag--mixed">Pedido + plan</span></div><div class="order-list"><div><span class="order-date">20 JUL</span><div><strong>Restaurante Aldea</strong><small>Orellana gris · 8,0 kg · Bogotá</small></div><span class="status status--ready">Asignado</span><strong>EMP-260718-04</strong></div><div><span class="order-date">22 JUL</span><div><strong>Mercado de Tenjo</strong><small>Orellana fresca · 12,0 kg</small></div><span class="status status--ready">Cubierto</span><strong>2 cosechas</strong></div><div><span class="order-date">24 JUL</span><div><strong>La Despensa Verde</strong><small>Orellana blanca · 6,5 kg · Bogotá</small></div><span class="status status--watch">En riesgo</span><strong>–1,2 kg</strong></div></div></article>
         </section>
@@ -363,14 +363,14 @@
         <div><small>Lote</small><strong>SDP-260607-OST-03</strong></div>
       </div>
       <fieldset class="event-choices">
-        <legend>¿Qué ocurrió?</legend>
-        <label><input type="radio" name="eventType" value="Observación" checked><span><strong>Observación</strong><small>Registrar lo que ves</small></span></label>
+        <legend>Tipo de evento</legend>
+        <label><input type="radio" name="eventType" value="Observación" checked><span><strong>Observación</strong><small>Condición registrada</small></span></label>
         <label><input type="radio" name="eventType" value="Cosecha"><span><strong>Cosecha</strong><small>Peso y calidad</small></span></label>
         <label><input type="radio" name="eventType" value="Traslado"><span><strong>Traslado</strong><small>Cambio de zona</small></span></label>
         <label><input type="radio" name="eventType" value="Contaminación"><span><strong>Contaminación</strong><small>Hecho observado</small></span></label>
       </fieldset>
       <div class="capture-fields">
-        <label>Nota breve<textarea id="eventNote" rows="3" placeholder="Como en un cuaderno de campo…"></textarea></label>
+        <label>Detalle<textarea id="eventNote" rows="3" placeholder="Hallazgo, medida o condición relevante."></textarea></label>
         <div class="quick-notes" aria-label="Notas rápidas">
           <button type="button" data-quick-note="Desarrollo uniforme.">Desarrollo uniforme</button>
           <button type="button" data-quick-note="Sin anomalías visibles.">Sin anomalías</button>
@@ -378,7 +378,7 @@
         </div>
       </div>
       <div class="dialog-actions">
-        <span><strong>Íñigo Pinzón</strong><small>Hora y autor se añaden automáticamente</small></span>
+        <span><strong>Íñigo Pinzón</strong><small>Hora y autor quedan asociados al evento</small></span>
         <button class="primary-action primary-action--inline" type="submit">Guardar evento</button>
       </div>
     </form>
@@ -388,7 +388,7 @@
     <form method="dialog" class="dialog-shell dialog-shell--small">
       <div class="dialog-header"><div><p class="eyebrow">CONFIRMACIÓN OPERATIVA</p><h2 id="batchDialogTitle">Ejecutar lote</h2></div><button class="dialog-close" type="button" aria-label="Cerrar confirmación">×</button></div>
       <div class="confirmation-list"><div><span>Receta</span><strong>Orellana Gris · v1.8</strong></div><div><span>Balance</span><strong>100,0% · válido</strong></div><div><span>Materia seca</span><strong>2,97 kg</strong></div><div><span>Stock</span><strong>Completo · FIFO</strong></div></div>
-      <p>Se creará un evento inmutable y se descontarán los lotes de insumo más antiguos. La receta usada quedará bloqueada para este lote.</p>
+      <p>La ejecución registra el evento, descuenta inventario por FIFO y fija la versión de receta asociada al lote.</p>
       <div class="dialog-actions dialog-actions--end"><button class="secondary-action" value="cancel">Cancelar</button><button class="primary-action primary-action--inline" id="confirmBatchButton" value="confirm">Confirmar ejecución</button></div>
     </form>
   </dialog>
