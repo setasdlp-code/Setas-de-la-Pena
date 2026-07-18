@@ -16,11 +16,12 @@ Prototipo navegable de la experiencia operativa de Field OS para Setas de la Pe�
 
 ## Publicación
 
-El workflow `field-os-pages.yml` publica esta carpeta como artefacto estático de GitHub Pages.
+Esta carpeta se publica como la raíz del repositorio público independiente
+[`setasdlp-code/Field-OS`](https://github.com/setasdlp-code/Field-OS).
 
-La URL esperada del repositorio es:
+URL pública:
 
-`https://setasdlp-code.github.io/Setas-de-la-Pena/`
+`https://setasdlp-code.github.io/Field-OS/`
 
 ## Alcance
 
