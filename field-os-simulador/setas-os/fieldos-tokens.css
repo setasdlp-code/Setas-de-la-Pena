@@ -1,0 +1,197 @@
+/* ────────────────────────────────────────────────────────────────
+   Setas de la Peña — Deck alias layer
+   This file no longer defines its own palette/type/fonts. Every
+   variable the deck references is aliased to the bound design
+   system's real tokens (Field Operating System), loaded via
+   _ds_bundle.js + tokens/*.css in the deck's <helmet> BEFORE this
+   file. Do not add new hex colors, shadows, or radii here — add a
+   new alias pointing at a DS token instead.
+   ──────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── PAPER / INK — alias old 4-step naming to real paper-0..3 / ink-0..3 ── */
+  --paper-50:  var(--paper-0);
+  --paper-100: var(--paper-0);
+  --paper-200: var(--paper-1);
+  --paper-300: var(--paper-2);
+
+  --ink-900: var(--ink-0);
+  --ink-700: var(--ink-1);
+  --ink-500: var(--ink-2);
+  --ink-300: var(--ink-3);
+
+  /* ── EARTH PIGMENTS — consolidated onto the DS's 5 real accents ──
+     moss (brand green) -> olive · coral (rust/mushroom) -> terracotta
+     sand & bark (warm neutrals) -> mushroom · slate (cool neutral) -> blue-grey
+     ochre (caution) -> terracotta (DS's single attention hue)          */
+  --moss-900: var(--accent-olive);
+  --moss-700: var(--accent-olive);
+  --moss-500: var(--accent-olive);
+  --moss-300: var(--accent-olive-dim);
+  --moss-200: var(--accent-olive-dim);
+
+  --coral-900: var(--accent-terracotta);
+  --coral-700: var(--accent-terracotta);
+  --coral-500: var(--accent-terracotta);
+  --coral-300: var(--accent-terracotta-dim);
+  --coral-200: var(--accent-terracotta-dim);
+
+  --sand-500: var(--accent-mushroom);
+  --sand-300: var(--accent-mushroom-dim);
+  --sand-200: var(--accent-mushroom-dim);
+
+  --bark-700: var(--ink-0);
+  --bark-500: var(--accent-mushroom);
+  --bark-300: var(--accent-mushroom-dim);
+
+  --slate-900: var(--accent-blue-grey);
+  --slate-700: var(--accent-blue-grey);
+  --slate-500: var(--accent-blue-grey);
+  --slate-300: var(--accent-blue-grey-dim);
+  --slate-200: var(--accent-blue-grey-dim);
+
+  --ochre-900: var(--accent-terracotta);
+  --ochre-700: var(--accent-terracotta);
+  --ochre-500: var(--accent-terracotta);
+  --ochre-200: var(--accent-terracotta-dim);
+
+  /* Back-compat aliases used elsewhere in the deck */
+  --rust-700: var(--status-error);
+  --rust-500: var(--status-error);
+  --rust-200: var(--status-error-bg);
+  --sky-500:  var(--accent-blue-grey);
+  --sky-200:  var(--accent-blue-grey-dim);
+
+  --success: var(--status-active);
+  --warning: var(--status-attention);
+  --danger:  var(--status-error);
+
+  /* ── SEMANTIC SURFACES / TEXT — alias to DS semantic names ── */
+  --bg-page:     var(--surface-page);
+  --bg-elevated: var(--surface-panel);
+  --bg-sunken:   var(--surface-recessed);
+  --bg-card:     var(--surface-panel);
+  --bg-inverse:  var(--ink-0);
+
+  --fg-primary:   var(--text-primary);
+  --fg-secondary: var(--text-secondary);
+  --fg-muted:     var(--text-metadata);
+  --fg-faint:     var(--text-disabled);
+  --fg-inverse:   var(--paper-0);
+
+  --accent:        var(--status-active);
+  --accent-hover:  color-mix(in oklab, var(--status-active) 78%, black);
+  --accent-tint:   var(--status-active-bg);
+
+  --accent-2:       var(--status-attention);
+  --accent-2-hover: color-mix(in oklab, var(--status-attention) 78%, black);
+  --accent-2-tint:  var(--status-attention-bg);
+
+  --border-soft:   var(--border-hairline);
+  --border-ink:    var(--ink-0);
+
+  /* ── TYPE FAMILIES — DS provides one sans (Gaya) + one mono ── */
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+  /* --font-mono is defined by the DS's fonts.css (IBM Plex Mono) — not redeclared here */
+
+  /* ── TYPE SCALE (semantic shorthands) — composed from DS primitives ── */
+  --t-display-1:  var(--weight-black)  var(--text-3xl)/var(--leading-tight) var(--font-sans);
+  --t-display-2:  var(--weight-bold)   var(--text-3xl)/1.0 var(--font-sans);
+  --t-h1:         var(--weight-medium) var(--text-2xl)/var(--leading-tight) var(--font-sans);
+  --t-h2:         var(--weight-light)  var(--text-xl)/var(--leading-snug) var(--font-sans);
+  --t-h3:         var(--weight-black)  var(--text-lg)/var(--leading-snug) var(--font-sans);
+  --t-h4:         var(--weight-black)  var(--text-md)/var(--leading-snug) var(--font-sans);
+  --t-lede:       var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
+  --t-body:       var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
+  --t-body-sm:    var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
+  --t-caption:    var(--weight-regular) var(--text-xs)/var(--leading-snug) var(--font-sans);
+  --t-eyebrow:    var(--weight-bold) var(--text-2xs)/1.0 var(--font-mono);
+  --t-label:      var(--weight-bold) var(--text-base)/1.2 var(--font-sans);
+  --t-button:     var(--weight-bold) var(--text-sm)/1.0 var(--font-sans);
+  --t-quote:      italic var(--weight-light) var(--text-xl)/var(--leading-snug) var(--font-sans);
+  --t-sci:        italic var(--weight-light) var(--text-xs)/var(--leading-normal) var(--font-sans);
+  --t-kicker:     italic var(--weight-thin) var(--text-md)/var(--leading-snug) var(--font-sans);
+  --t-display-1i: italic var(--weight-black) var(--text-3xl)/var(--leading-tight) var(--font-sans);
+  --t-runninghead: var(--weight-light) var(--text-xs)/1.0 var(--font-sans);
+  --t-caption-i:  italic var(--weight-light) var(--text-xs)/var(--leading-snug) var(--font-sans);
+
+  /* Gaya weight expressions — raw weight tokens at 1em, DS-driven */
+  --t-gaya-black:    var(--weight-black)  1em/1.05 var(--font-sans);
+  --t-gaya-bold:     var(--weight-bold)   1em/1.05 var(--font-sans);
+  --t-gaya-medium:   var(--weight-medium) 1em/1.1  var(--font-sans);
+  --t-gaya-light:    var(--weight-light)  1em/1.15 var(--font-sans);
+  --t-gaya-thin:     var(--weight-thin)   1em/1.15 var(--font-sans);
+  --t-gaya-black-i:  italic var(--weight-black)  1em/1.05 var(--font-sans);
+  --t-gaya-bold-i:   italic var(--weight-bold)   1em/1.05 var(--font-sans);
+  --t-gaya-medium-i: italic var(--weight-medium) 1em/1.1  var(--font-sans);
+  --t-gaya-light-i:  italic var(--weight-light)  1em/1.15 var(--font-sans);
+  --t-gaya-thin-i:   italic var(--weight-thin)   1em/1.15 var(--font-sans);
+
+  /* ── SPACING — DS tops out at space-9 (96px); old space-10 folds into it ── */
+  --space-10: var(--space-9);
+
+  /* ── RADII — DS keeps radii near-flat (0/2/3px); no pill/lg glass shapes ── */
+  --r-xs:   var(--radius-sm);
+  --r-sm:   var(--radius-sm);
+  --r-md:   var(--radius-md);
+  --r-lg:   var(--radius-md);
+  --r-pill: var(--radius-md);
+
+  /* ── SHADOWS — DS explicitly uses none ── */
+  --shadow-soft:  var(--shadow-none);
+  --shadow-card:  var(--shadow-none);
+  --shadow-lift:  var(--shadow-none);
+  --shadow-inset: var(--shadow-none);
+
+  /* ── V5 — controlled dark surfaces, mixed from the DS's own accents.
+     Used sparingly (~1 in 4–6 pages) for declaration / chapter-opening
+     pages, never as decoration. Each pairs with beige text (--paper-100). ── */
+  --bg-dark-olive:      color-mix(in oklab, var(--accent-olive) 40%, black);
+  --bg-dark-terracotta: color-mix(in oklab, var(--accent-terracotta) 38%, black);
+  --bg-dark-slate:      color-mix(in oklab, var(--accent-blue-grey) 36%, black);
+  --bg-dark-ink:        var(--ink-0);
+
+  /* Muted accent tints legible against the dark surfaces above */
+  --on-dark-olive:      color-mix(in oklab, var(--accent-olive) 48%, white);
+  --on-dark-terracotta: color-mix(in oklab, var(--accent-terracotta) 48%, white);
+  --on-dark-slate:      color-mix(in oklab, var(--accent-blue-grey) 52%, white);
+  --on-dark-line:       color-mix(in oklab, var(--paper-0) 22%, transparent);
+
+  /* Apéndice — a slightly cooler, denser surface than the main body */
+  --paper-appendix: color-mix(in oklab, var(--paper-0) 91%, var(--accent-blue-grey) 9%);
+  --border-appendix: color-mix(in oklab, var(--line-1) 80%, var(--accent-blue-grey) 20%);
+}
+
+/* ── Semantic type classes (unchanged usage, now DS-backed) ── */
+.t-display-1 { font: var(--t-display-1); letter-spacing: -0.03em; }
+.t-display-2 { font: var(--t-display-2); letter-spacing: -0.02em; }
+.t-h1        { font: var(--t-h1); letter-spacing: -0.015em; }
+.t-h2        { font: var(--t-h2); }
+.t-h3        { font: var(--t-h3); letter-spacing: -0.005em; }
+.t-h4        { font: var(--t-h4); }
+.t-lede      { font: var(--t-lede); color: var(--fg-secondary); }
+.t-body      { font: var(--t-body); }
+.t-body-sm   { font: var(--t-body-sm); }
+.t-caption   { font: var(--t-caption); color: var(--fg-muted); }
+.t-eyebrow   { font: var(--t-eyebrow); letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-muted); }
+.t-label     { font: var(--t-label); }
+.t-button    { font: var(--t-button); letter-spacing: 0.02em; }
+.t-quote      { font: var(--t-quote); }
+.t-sci        { font: var(--t-sci); color: var(--fg-secondary); }
+.t-kicker     { font: var(--t-kicker); color: var(--fg-muted); }
+.t-runninghead{ font: var(--t-runninghead); letter-spacing: 0.2em; text-transform: uppercase; }
+.t-caption-i  { font: var(--t-caption-i); }
+
+h1 { font: var(--t-h1); letter-spacing: -0.015em; margin: 0 0 var(--space-5); }
+h2 { font: var(--t-h2); margin: 0 0 var(--space-4); }
+h3 { font: var(--t-h3); margin: 0 0 var(--space-3); }
+h4 { font: var(--t-h4); margin: 0 0 var(--space-2); }
+p  { margin: 0 0 var(--space-4); text-wrap: pretty; }
+code, pre { font-family: var(--font-mono); font-size: 0.92em; }
+
+/* Paper texture — flattened to a plain surface; DS forbids decorative
+   gradients/noise as embellishment. */
+.paper {
+  background-color: var(--bg-page);
+}

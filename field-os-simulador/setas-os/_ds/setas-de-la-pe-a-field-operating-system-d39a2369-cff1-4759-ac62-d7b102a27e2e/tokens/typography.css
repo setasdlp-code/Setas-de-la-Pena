@@ -1,0 +1,29 @@
+:root {
+  /* ---- Type scale — restrained, print-derived (pt-like steps) ---- */
+  --text-2xs: 10.5px;   /* fine print, legal-style notes */
+  --text-xs: 11.5px;    /* metadata, captions, table headers */
+  --text-sm: 13px;      /* dense table body, secondary UI text */
+  --text-base: 14.5px;  /* default body / UI text */
+  --text-md: 16px;      /* emphasized body, lab-form labels */
+  --text-lg: 19px;      /* section headings */
+  --text-xl: 24px;      /* page headings */
+  --text-2xl: 32px;     /* document title */
+  --text-3xl: 44px;     /* cover / division title only */
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.7;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-widest: 0.12em; /* small caps labels, eyebrow, figure refs */
+
+  --weight-thin: 100;
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-black: 900;
+}

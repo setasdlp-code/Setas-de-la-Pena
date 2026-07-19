@@ -1,0 +1,59 @@
+:root {
+  /* ---- Base: paper & ink ---- */
+  --paper-0: #F7F4EC;   /* page background */
+  --paper-1: #EFEBE0;   /* section / panel background */
+  --paper-2: #E5DFD0;   /* table stripe, recessed field */
+  --paper-3: #DCD5C2;   /* stronger recessed / pressed */
+
+  --ink-0: #1E1D19;     /* primary text, near-black warm */
+  --ink-1: #3C392F;     /* secondary text */
+  --ink-2: #6B6759;     /* tertiary text, captions, metadata */
+  --ink-3: #96907C;     /* disabled / placeholder text */
+
+  --line-0: #C9C1A9;    /* hairline rule, default */
+  --line-1: #A69E86;    /* stronger rule, table borders, active underline */
+  --line-2: #1E1D19;    /* heaviest rule — section dividers, print borders */
+
+  /* ---- Accents: classification & status only, never decoration ---- */
+  --accent-olive: #5B6B44;
+  --accent-olive-dim: #DCE1D1;      /* olive tint for backgrounds/chips */
+  --accent-terracotta: #A85C32;
+  --accent-terracotta-dim: #EFE0D3;
+  --accent-blue-grey: #5E7080;
+  --accent-blue-grey-dim: #DEE5E7;
+  --accent-mushroom: #7A6A52;
+  --accent-mushroom-dim: #E7E0D3;
+  --accent-rust: #8C3223;           /* reserved for error / contamination only */
+  --accent-rust-dim: #EEDAD3;
+
+  /* ---- Semantic aliases ---- */
+  --surface-page: var(--paper-0);
+  --surface-panel: var(--paper-1);
+  --surface-recessed: var(--paper-2);
+  --surface-pressed: var(--paper-3);
+
+  --text-primary: var(--ink-0);
+  --text-secondary: var(--ink-1);
+  --text-metadata: var(--ink-2);
+  --text-disabled: var(--ink-3);
+
+  --border-hairline: var(--line-0);
+  --border-strong: var(--line-1);
+  --border-heavy: var(--line-2);
+
+  --status-active: var(--accent-olive);
+  --status-active-bg: var(--accent-olive-dim);
+  --status-attention: var(--accent-terracotta);
+  --status-attention-bg: var(--accent-terracotta-dim);
+  --status-info: var(--accent-blue-grey);
+  --status-info-bg: var(--accent-blue-grey-dim);
+  --status-archived: var(--accent-mushroom);
+  --status-archived-bg: var(--accent-mushroom-dim);
+  --status-error: var(--accent-rust);
+  --status-error-bg: var(--accent-rust-dim);
+
+  --link: var(--accent-blue-grey);
+  --link-hover: var(--ink-0);
+
+  --focus-ring: var(--accent-olive);
+}

@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Banco climático virtual y portátil para Field OS.">
+  <title>Monitoreo · Field OS</title>
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+  <style>
+    :root {
+      /* Map to Field OS design-system tokens so this panel stays in sync with the shell */
+      --paper: var(--paper-1);
+      --ink: var(--ink-0);
+      --muted: var(--ink-2);
+      --line: var(--border-hairline);
+      --olive: var(--accent-olive);
+      --terra: var(--accent-terracotta);
+      --blue: var(--accent-blue-grey);
+      --brown: var(--accent-mushroom);
+      --ok: var(--accent-olive);
+      --warn: var(--accent-terracotta);
+      --critical: var(--accent-rust);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: light; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--paper-0);
+      font-family: var(--font-sans), 'Helvetica Neue', Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+    button, select { font: inherit; }
+    button { color: inherit; }
+
+    .shell { min-height: 100vh; padding: 22px; }
+
+    .topbar {
+      max-width: 1600px;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      padding: 5px 2px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--terra);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-sans), Georgia, serif;
+      font-size: clamp(30px, 4vw, 52px);
+      font-weight: 500;
+      letter-spacing: -.035em;
+      line-height: .95;
+    }
+
+    .subtitle {
+      max-width: 700px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status-block { min-width: 250px; text-align: right; }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper-0);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px rgba(71,100,63,.12); }
+    .dot.paused { background: var(--warn); box-shadow: 0 0 0 4px rgba(165,106,33,.12); }
+    .clock { margin-top: 9px; color: var(--muted); font-size: 12px; font-family: var(--font-mono), ui-monospace, monospace; }
+
+    .layout {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 306px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--border-soft, var(--line));
+      border-radius: 12px;
+      background: var(--paper-0);
+    }
+
+    .sidebar { padding: 16px; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .micro-tag {
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .chamber-list { display: grid; gap: 8px; }
+
+    .chamber {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--paper-1);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .chamber:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--olive) 50%, transparent); }
+    .chamber.active { border-color: var(--olive); background: var(--accent-olive-dim); }
+
+    .chamber-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .chamber-name { font-weight: 780; font-size: 13px; }
+    .chamber-state { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .chamber-readings { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; color: var(--muted); font-size: 11px; }
+    .chamber-readings strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; font-family: var(--font-mono), ui-monospace, monospace; }
+
+    .rule { height: 1px; margin: 16px 0; background: var(--line); }
+
+    label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+
+    select {
+      width: 100%;
+      padding: 10px 34px 10px 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--ink);
+      background: var(--paper-0);
+      outline: none;
+    }
+
+    select:focus { border-color: var(--olive); }
+
+    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+    .scenario {
+      min-height: 58px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--paper-1);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .scenario:hover { border-color: var(--terra); }
+    .scenario.active { color: #fff9ef; border-color: var(--terra); background: var(--terra); }
+    .scenario strong { display: block; margin-bottom: 3px; font-size: 11px; line-height: 1.2; }
+    .scenario span { display: block; color: var(--muted); font-size: 10px; line-height: 1.25; }
+    .scenario.active span { color: rgba(255,255,255,.74); }
+
+    .sidebar-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+    .workspace { display: grid; gap: 16px; min-width: 0; }
+
+    .hero-strip {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.15fr) repeat(3, minmax(150px, .72fr));
+      overflow: hidden;
+    }
+
+    .hero-cell { min-height: 121px; padding: 18px; border-right: 1px solid var(--line); }
+    .hero-cell:last-child { border-right: 0; }
+    .hero-cell.primary { background: var(--olive); color: #f8f2e7; }
+
+    .metric-label { color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .primary .metric-label { color: rgba(255,255,255,.65); }
+    .metric-value { margin-top: 13px; font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(28px, 3vw, 42px); line-height: 1; }
+    .metric-value small { font-family: inherit; font-size: .48em; }
+    .metric-foot { margin-top: 10px; color: var(--muted); font-size: 11px; }
+    .primary .metric-foot { color: rgba(255,255,255,.68); }
+
+    .grid-main { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(310px, .75fr); gap: 16px; }
+
+    .chart-panel { min-width: 0; padding: 17px; }
+    .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+    .chart-title { margin: 0; font-family: var(--font-sans), Georgia, serif; font-size: 21px; font-weight: 500; }
+    .chart-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; color: var(--muted); font-size: 10px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-line { width: 15px; height: 2px; background: currentColor; }
+    .temp { color: var(--terra); }
+    .hum { color: var(--blue); }
+    .co2 { color: var(--olive); }
+
+    .chart-wrap { position: relative; height: 330px; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    .actuator-panel { padding: 17px; }
+    .actuator-list { display: grid; gap: 10px; }
+
+    .actuator {
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-1);
+    }
+
+    .actuator-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .actuator-name { font-size: 11px; font-weight: 800; }
+    .actuator-value { font-size: 11px; font-weight: 850; color: var(--muted); }
+    .track { height: 5px; margin-top: 9px; overflow: hidden; border-radius: 999px; background: var(--paper-3); }
+    .fill { height: 100%; width: 0; border-radius: inherit; background: var(--blue); transition: width .4s ease; }
+    .actuator:nth-child(1) .fill { background: var(--terra); }
+    .actuator:nth-child(2) .fill { background: var(--blue); }
+    .actuator:nth-child(3) .fill, .actuator:nth-child(4) .fill { background: var(--olive); }
+
+    .decision {
+      margin-top: 14px;
+      padding: 12px;
+      border-left: 3px solid var(--terra);
+      background: var(--accent-terracotta-dim);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .decision strong { display: block; margin-bottom: 3px; font-size: 12px; }
+
+    .lower-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr); gap: 16px; }
+    .log-panel, .control-panel { padding: 17px; }
+
+    .log-list { max-height: 197px; overflow: auto; border-top: 1px solid var(--line); }
+    .log-row { display: grid; grid-template-columns: 70px 68px minmax(0,1fr); gap: 9px; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 11px; line-height: 1.35; }
+    .log-time { color: var(--muted); font-family: var(--font-mono), ui-monospace, monospace; }
+    .log-type { font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+    .log-type.alert { color: var(--critical); }
+    .log-type.action { color: var(--olive); }
+    .empty-log { padding: 20px 0; color: var(--muted); font-size: 11px; }
+
+    .control-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .control-button {
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--paper-1);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .control-button:hover { border-color: var(--olive); }
+    .control-button.primary { color: white; border-color: var(--olive); background: var(--olive); }
+    .control-button.active { color: white; border-color: var(--blue); background: var(--blue); }
+
+    .run-summary { margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .summary-item { padding: 10px; border: 1px solid var(--line); border-radius: 9px; }
+    .summary-item span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+    .summary-item strong { display: block; margin-top: 5px; font-family: var(--font-mono), ui-monospace, monospace; font-size: 19px; font-weight: 500; }
+
+    .footer {
+      max-width: 1600px;
+      margin: 16px auto 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .04em;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+      .sidebar .rule { display: none; }
+      .sidebar-note { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 780px) {
+      .shell { padding: 13px; }
+      .topbar { display: block; }
+      .status-block { margin-top: 14px; text-align: left; }
+      .sidebar { display: block; }
+      .sidebar .rule { display: block; }
+      .hero-strip { grid-template-columns: 1fr 1fr; }
+      .hero-cell { border-bottom: 1px solid var(--line); }
+      .hero-cell:nth-child(2) { border-right: 0; }
+      .hero-cell:nth-child(3), .hero-cell:nth-child(4) { border-bottom: 0; }
+      .grid-main, .lower-grid { grid-template-columns: 1fr; }
+      .chart-wrap { height: 280px; }
+      .footer { display: block; line-height: 1.6; }
+    }
+
+    @media (max-width: 470px) {
+      .hero-strip { grid-template-columns: 1fr; }
+      .hero-cell { border-right: 0; border-bottom: 1px solid var(--line) !important; }
+      .hero-cell:last-child { border-bottom: 0 !important; }
+      .scenario-grid { grid-template-columns: 1fr; }
+      .log-row { grid-template-columns: 58px 55px minmax(0,1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Setas<i> de la </i>Peña · Field OS</p>
+        <h1>Monitoreo</h1>
+        <p class="subtitle">Banco virtual para ensayar reglas de control climático antes de conectarlas a sensores y actuadores físicos.</p>
+      </div>
+      <div class="status-block">
+        <div class="status-line"><span class="dot" id="runDot"></span><span id="runStatus">Simulación activa</span></div>
+        <div class="clock" id="simClock">Día 01 · 00:00</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <section>
+          <h2 class="section-title">Cámaras virtuales <span class="micro-tag" id="chamberCount">02 activas</span></h2>
+          <div class="chamber-list" id="chamberList"></div>
+        </section>
+
+        <div class="rule"></div>
+
+        <section>
+          <h2 class="section-title">Perfil de prueba</h2>
+          <label for="phaseSelect">Fase simulada</label>
+          <select id="phaseSelect">
+            <option value="incubation">Incubación</option>
+            <option value="fruiting" selected>Fructificación</option>
+            <option value="rest">Reposo entre ciclos</option>
+          </select>
+        </section>
+
+        <div class="rule"></div>
+
+        <section>
+          <h2 class="section-title">Escenarios <span class="micro-tag">Selecciona uno</span></h2>
+          <div class="scenario-grid" id="scenarioGrid"></div>
+        </section>
+
+        <p class="sidebar-note">Los rangos y respuestas son ilustrativos. Deben reemplazarse por parámetros validados antes de controlar hardware real.</p>
+      </aside>
+
+      <section class="workspace">
+        <div class="panel hero-strip">
+          <div class="hero-cell primary">
+            <div class="metric-label">Cámara seleccionada</div>
+            <div class="metric-value" id="activeName">Cámara 01</div>
+            <div class="metric-foot" id="activeScenario">Escenario base · fructificación</div>
+          </div>
+          <div class="hero-cell">
+            <div class="metric-label">Temperatura</div>
+            <div class="metric-value"><span id="tempValue">17.0</span><small> °C</small></div>
+            <div class="metric-foot" id="tempTarget">objetivo 16–18 °C</div>
+          </div>
+          <div class="hero-cell">
+            <div class="metric-label">Humedad relativa</div>
+            <div class="metric-value"><span id="humValue">89</span><small> %</small></div>
+            <div class="metric-foot" id="humTarget">objetivo 85–92 %</div>
+          </div>
+          <div class="hero-cell">
+            <div class="metric-label">CO₂</div>
+            <div class="metric-value"><span id="co2Value">780</span><small> ppm</small></div>
+            <div class="metric-foot" id="co2Target">umbral ilustrativo 1.000 ppm</div>
+          </div>
+        </div>
+
+        <div class="grid-main">
+          <section class="panel chart-panel">
+            <div class="chart-head">
+              <div>
+                <p class="eyebrow">Lectura sintética</p>
+                <h2 class="chart-title">Condiciones durante la prueba</h2>
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item temp"><i class="legend-line"></i>Temperatura</span>
+                <span class="legend-item hum"><i class="legend-line"></i>Humedad</span>
+                <span class="legend-item co2"><i class="legend-line"></i>CO₂</span>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart" aria-label="Gráfico de temperatura, humedad y CO2"></canvas></div>
+          </section>
+
+          <section class="panel actuator-panel">
+            <p class="eyebrow">Decisión virtual</p>
+            <h2 class="chart-title">Actuadores</h2>
+            <div class="actuator-list" id="actuatorList"></div>
+            <div class="decision" id="decisionBox">
+              <strong>Sistema estable</strong>
+              Ninguna intervención prioritaria.
+            </div>
+          </section>
+        </div>
+
+        <div class="lower-grid">
+          <section class="panel log-panel">
+            <div class="chart-head">
+              <div>
+                <p class="eyebrow">Trazabilidad</p>
+                <h2 class="chart-title">Registro de eventos</h2>
+              </div>
+              <span class="micro-tag" id="eventCount">0 EVENTOS</span>
+            </div>
+            <div class="log-list" id="logList"></div>
+          </section>
+
+          <section class="panel control-panel">
+            <p class="eyebrow">Control de prueba</p>
+            <h2 class="chart-title">Ejecución</h2>
+            <div class="control-row" style="margin-top: 14px">
+              <button class="control-button primary" id="pauseButton">Pausar</button>
+              <button class="control-button speed active" data-speed="1" aria-pressed="true">1×</button>
+              <button class="control-button speed" data-speed="4" aria-pressed="false">4×</button>
+              <button class="control-button speed" data-speed="12" aria-pressed="false">12×</button>
+              <button class="control-button" id="resetButton">Reiniciar</button>
+              <button class="control-button" id="exportButton">Exportar CSV</button>
+            </div>
+            <div class="run-summary">
+              <div class="summary-item"><span>Tiempo simulado</span><strong id="elapsedValue">0 h</strong></div>
+              <div class="summary-item"><span>Alertas</span><strong id="alertValue">0</strong></div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>PROTOTIPO FUNCIONAL · DATOS SINTÉTICOS · SIN CONEXIÓN A HARDWARE</span>
+      <span>FIELD OS · MONITOREO v0.1 PORTÁTIL</span>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const phases = {
+        incubation: { name: "incubación", temp: [21, 24], hum: [55, 68], co2: 2400 },
+        fruiting: { name: "fructificación", temp: [16, 18], hum: [85, 92], co2: 1000 },
+        rest: { name: "reposo entre ciclos", temp: [15, 20], hum: [55, 70], co2: 1400 }
+      };
+
+      const scenarios = [
+        { id: "base", name: "Operación base", note: "Sin perturbación", effect: {} },
+        { id: "cold", name: "Noche fría", note: "Caída térmica", effect: { temp: -7 } },
+        { id: "door", name: "Puerta abierta", note: "Intercambio súbito", effect: { temp: -3.5, hum: -24, co2: -350 } },
+        { id: "dry", name: "Ola seca", note: "HR exterior baja", effect: { hum: -30, temp: 1.5 } },
+        { id: "co2", name: "CO₂ elevado", note: "FAE insuficiente", effect: { co2: 1700 } },
+        { id: "empty", name: "Tanque vacío", note: "Sin humidificación", effect: { hum: -38, humidifierFailure: true } }
+      ];
+
+      const actuatorLabels = {
+        heater: "Calefacción",
+        humidifier: "Humidificador",
+        circulation: "Circulación",
+        exhaust: "Extracción / FAE"
+      };
+
+      const makeChamber = (id, name, offset) => ({
+        id,
+        name,
+        phase: "fruiting",
+        scenario: "base",
+        temp: 17 + offset,
+        hum: 89 - offset * 2,
+        co2: 760 + offset * 85,
+        actuators: { heater: 8, humidifier: 22, circulation: 35, exhaust: 18 },
+        history: [],
+        logs: [],
+        lastDecision: "Sistema estable · ninguna intervención prioritaria."
+      });
+
+      const state = {
+        chambers: [makeChamber("c1", "Cámara 01", 0), makeChamber("c2", "Cámara 02", .6)],
+        activeId: "c1",
+        running: true,
+        speed: 1,
+        minutes: 0,
+        alerts: 0,
+        eventSerial: 0
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+      const rand = (spread) => (Math.random() - .5) * spread;
+      const active = () => state.chambers.find(c => c.id === state.activeId);
+      const scenarioById = (id) => scenarios.find(s => s.id === id);
+      const midpoint = (range) => (range[0] + range[1]) / 2;
+
+      function seedHistory(chamber) {
+        for (let i = 0; i < 65; i += 1) {
+          chamber.history.push({
+            minute: i * 5,
+            temp: chamber.temp + Math.sin(i / 8) * .35 + rand(.25),
+            hum: chamber.hum + Math.sin(i / 6) * 1.1 + rand(.7),
+            co2: chamber.co2 + Math.sin(i / 7) * 70 + rand(40)
+          });
+        }
+      }
+
+      state.chambers.forEach(seedHistory);
+      seedStartupLog();
+
+      function addLog(chamber, type, message) {
+        state.eventSerial += 1;
+        const item = { id: state.eventSerial, minute: state.minutes, type, message };
+        chamber.logs.unshift(item);
+        chamber.logs = chamber.logs.slice(0, 80);
+        if (type === "alert") state.alerts += 1;
+      }
+
+      function seedStartupLog() {
+        state.chambers.forEach(c => addLog(c, "info", `Monitoreo iniciado · perfil ${phases[c.phase].name}, escenario base.`));
+      }
+
+      function formatTime(totalMinutes) {
+        const day = Math.floor(totalMinutes / 1440) + 1;
+        const minuteOfDay = totalMinutes % 1440;
+        const h = Math.floor(minuteOfDay / 60);
+        const m = minuteOfDay % 60;
+        return `Día ${String(day).padStart(2, "0")} · ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      }
+
+      function shortTime(totalMinutes) {
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      }
+
+      function simulateChamber(chamber, stepMinutes) {
+        const profile = phases[chamber.phase];
+        const scenario = scenarioById(chamber.scenario);
+        const effect = scenario.effect;
+        const desiredTemp = midpoint(profile.temp) + (effect.temp || 0);
+        const desiredHum = midpoint(profile.hum) + (effect.hum || 0);
+        const desiredCo2 = Math.min(profile.co2 * .76, 900) + (effect.co2 || 0);
+
+        const heaterDemand = clamp((profile.temp[0] - chamber.temp) * 35, 0, 100);
+        const humidifierDemand = effect.humidifierFailure ? 0 : clamp((profile.hum[0] - chamber.hum) * 14, 0, 100);
+        const exhaustDemand = clamp((chamber.co2 - profile.co2 * .78) / 9, 8, 100);
+        const circulationDemand = clamp(30 + Math.abs(chamber.hum - midpoint(profile.hum)) * 2, 25, 85);
+
+        chamber.actuators.heater += (heaterDemand - chamber.actuators.heater) * .3;
+        chamber.actuators.humidifier += (humidifierDemand - chamber.actuators.humidifier) * .28;
+        chamber.actuators.exhaust += (exhaustDemand - chamber.actuators.exhaust) * .25;
+        chamber.actuators.circulation += (circulationDemand - chamber.actuators.circulation) * .22;
+
+        const correctionTemp = chamber.actuators.heater / 100 * 1.15;
+        const correctionHum = chamber.actuators.humidifier / 100 * 5.5 - chamber.actuators.exhaust / 100 * 1.3;
+        const correctionCo2 = -chamber.actuators.exhaust / 100 * 150;
+
+        chamber.temp += (desiredTemp - chamber.temp) * .08 + correctionTemp * .11 + rand(.12);
+        chamber.hum += (desiredHum - chamber.hum) * .075 + correctionHum * .13 + rand(.38);
+        chamber.co2 += (desiredCo2 - chamber.co2) * .07 + correctionCo2 * .08 + rand(22);
+
+        chamber.temp = clamp(chamber.temp, 3, 35);
+        chamber.hum = clamp(chamber.hum, 20, 99);
+        chamber.co2 = clamp(chamber.co2, 380, 4200);
+
+        const decisions = [];
+        let severity = "action";
+        if (chamber.temp < profile.temp[0] - 1) decisions.push(`Aumentar calefacción a ${Math.round(chamber.actuators.heater)}%`);
+        if (chamber.temp > profile.temp[1] + 1) decisions.push("Reducir aporte térmico y renovar aire");
+        if (chamber.hum < profile.hum[0] - 4) decisions.push(effect.humidifierFailure ? "Reponer agua antes de reactivar humidificación" : `Aumentar humidificación a ${Math.round(chamber.actuators.humidifier)}%`);
+        if (chamber.hum > profile.hum[1] + 4) decisions.push("Aumentar circulación para reducir condensación");
+        if (chamber.co2 > profile.co2) decisions.push(`Aumentar FAE a ${Math.round(chamber.actuators.exhaust)}%`);
+
+        const critical = chamber.temp < profile.temp[0] - 4 || chamber.temp > profile.temp[1] + 4 || chamber.hum < profile.hum[0] - 15 || chamber.co2 > profile.co2 + 900;
+        if (critical) severity = "alert";
+
+        chamber.lastDecision = decisions.length ? decisions.join(" · ") : "Sistema estable · ninguna intervención prioritaria.";
+
+        if (decisions.length && (state.eventSerial % 4 === 0 || critical)) {
+          addLog(chamber, severity, chamber.lastDecision);
+        }
+
+        // Rising-edge climate deviation → anchor to the OS ledger (close the loop)
+        if (critical && !chamber.wasCritical) {
+          let metric = "clima", detail = "";
+          if (chamber.temp < profile.temp[0] - 4) { metric = "temperatura"; detail = `Temperatura ${chamber.temp.toFixed(1)} °C · objetivo ${profile.temp[0]}–${profile.temp[1]} °C`; }
+          else if (chamber.temp > profile.temp[1] + 4) { metric = "temperatura"; detail = `Temperatura ${chamber.temp.toFixed(1)} °C · objetivo ${profile.temp[0]}–${profile.temp[1]} °C`; }
+          else if (chamber.hum < profile.hum[0] - 15) { metric = "humedad"; detail = `Humedad ${Math.round(chamber.hum)} % · objetivo ${profile.hum[0]}–${profile.hum[1]} %`; }
+          else if (chamber.co2 > profile.co2 + 900) { metric = "CO₂"; detail = `CO₂ ${Math.round(chamber.co2).toLocaleString("es-CO")} ppm · umbral ${profile.co2.toLocaleString("es-CO")} ppm`; }
+          try {
+            window.parent && window.parent !== window && window.parent.postMessage({
+              source: "climate-bench", kind: "climate-alert",
+              chamber: chamber.name, phase: profile.name, metric, detail,
+              at: formatTime(state.minutes)
+            }, "*");
+          } catch (e) {}
+        }
+        chamber.wasCritical = critical;
+
+        chamber.history.push({ minute: state.minutes, temp: chamber.temp, hum: chamber.hum, co2: chamber.co2 });
+        chamber.history = chamber.history.slice(-110);
+      }
+
+      function step() {
+        if (!state.running) return;
+        const stepMinutes = 5 * state.speed;
+        state.minutes += stepMinutes;
+        state.chambers.forEach(c => simulateChamber(c, stepMinutes));
+        render();
+      }
+
+      function buildChambers() {
+        $("chamberCount").textContent = `${String(state.chambers.length).padStart(2, "0")} activas`;
+        $("chamberList").innerHTML = state.chambers.map(c => `
+          <button class="chamber ${c.id === state.activeId ? "active" : ""}" data-chamber="${c.id}" aria-pressed="${c.id === state.activeId}">
+            <div class="chamber-head">
+              <span class="chamber-name">${c.name}</span>
+              <span class="chamber-state">${phases[c.phase].name}</span>
+            </div>
+            <div class="chamber-readings">
+              <span><strong>${c.temp.toFixed(1)}°</strong>temp.</span>
+              <span><strong>${Math.round(c.hum)}%</strong>HR</span>
+              <span><strong>${Math.round(c.co2)}</strong>ppm</span>
+            </div>
+          </button>
+        `).join("");
+
+        document.querySelectorAll("[data-chamber]").forEach(button => {
+          button.addEventListener("click", () => {
+            state.activeId = button.dataset.chamber;
+            $("phaseSelect").value = active().phase;
+            renderStructural();
+          });
+        });
+      }
+
+      // Per-tick in-place update — no innerHTML churn, no listener re-bind
+      function updateChambers() {
+        document.querySelectorAll(".chamber").forEach(btn => {
+          const c = state.chambers.find(ch => ch.id === btn.dataset.chamber);
+          if (!c) return;
+          const on = c.id === state.activeId;
+          btn.classList.toggle("active", on);
+          btn.setAttribute("aria-pressed", String(on));
+          btn.querySelector(".chamber-state").textContent = phases[c.phase].name;
+          const s = btn.querySelectorAll(".chamber-readings strong");
+          if (s.length === 3) {
+            s[0].textContent = `${c.temp.toFixed(1)}°`;
+            s[1].textContent = `${Math.round(c.hum)}%`;
+            s[2].textContent = `${Math.round(c.co2)}`;
+          }
+        });
+      }
+
+      function buildScenarios() {
+        const chamber = active();
+        $("scenarioGrid").innerHTML = scenarios.map(s => `
+          <button class="scenario ${s.id === chamber.scenario ? "active" : ""}" data-scenario="${s.id}" aria-pressed="${s.id === chamber.scenario}">
+            <strong>${s.name}</strong><span>${s.note}</span>
+          </button>
+        `).join("");
+
+        document.querySelectorAll("[data-scenario]").forEach(button => {
+          button.addEventListener("click", () => {
+            const c = active();
+            c.scenario = button.dataset.scenario;
+            addLog(c, button.dataset.scenario === "base" ? "info" : "action", `Escenario activado: ${scenarioById(c.scenario).name}.`);
+            renderStructural();
+          });
+        });
+      }
+
+      function updateScenarios() {
+        const sel = active().scenario;
+        document.querySelectorAll(".scenario").forEach(btn => {
+          const on = btn.dataset.scenario === sel;
+          btn.classList.toggle("active", on);
+          btn.setAttribute("aria-pressed", String(on));
+        });
+      }
+
+      function renderMetrics() {
+        const c = active();
+        const profile = phases[c.phase];
+        $("activeName").textContent = c.name;
+        $("activeScenario").textContent = `${scenarioById(c.scenario).name} · ${profile.name}`;
+        $("tempValue").textContent = c.temp.toFixed(1);
+        $("humValue").textContent = Math.round(c.hum);
+        $("co2Value").textContent = Math.round(c.co2);
+        $("tempTarget").textContent = `objetivo ${profile.temp[0]}–${profile.temp[1]} °C`;
+        $("humTarget").textContent = `objetivo ${profile.hum[0]}–${profile.hum[1]} %`;
+        $("co2Target").textContent = `umbral ilustrativo ${profile.co2.toLocaleString("es-CO")} ppm`;
+      }
+
+      function buildActuators() {
+        $("actuatorList").innerHTML = Object.keys(actuatorLabels).map(key => `
+          <div class="actuator" data-act="${key}">
+            <div class="actuator-head"><span class="actuator-name">${actuatorLabels[key]}</span><span class="actuator-value">0%</span></div>
+            <div class="track"><div class="fill" style="width:0%"></div></div>
+          </div>
+        `).join("");
+      }
+
+      function updateActuators() {
+        const c = active();
+        document.querySelectorAll(".actuator").forEach(el => {
+          const v = Math.round(c.actuators[el.dataset.act] || 0);
+          el.querySelector(".actuator-value").textContent = `${v}%`;
+          el.querySelector(".fill").style.width = `${v}%`;
+        });
+        const parts = c.lastDecision.split(" · ");
+        $("decisionBox").innerHTML = `<strong>${parts.length > 1 ? "Intervención sugerida" : "Estado de control"}</strong>${c.lastDecision}`;
+      }
+
+      // Only rebuild the log list when its contents actually change (preserves scroll position)
+      let logSignature = "";
+      function renderLogs() {
+        const logs = active().logs;
+        const sig = state.activeId + "|" + logs.length + "|" + (logs[0] ? logs[0].id : 0);
+        if (sig === logSignature) return;
+        logSignature = sig;
+        $("eventCount").textContent = `${logs.length} ${logs.length === 1 ? "EVENTO" : "EVENTOS"}`;
+        $("logList").innerHTML = logs.length ? logs.map(log => `
+          <div class="log-row">
+            <span class="log-time">${shortTime(log.minute)}</span>
+            <span class="log-type ${log.type}">${log.type === "alert" ? "Alerta" : log.type === "action" ? "Acción" : "Estado"}</span>
+            <span>${log.message}</span>
+          </div>
+        `).join("") : `<div class="empty-log">Activa un escenario para iniciar el registro de decisiones.</div>`;
+      }
+
+      function drawChart() {
+        const canvas = $("chart");
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        const ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+
+        const width = rect.width;
+        const height = rect.height;
+        const pad = { left: 40, right: 46, top: 12, bottom: 26 };
+        const innerW = width - pad.left - pad.right;
+        const innerH = height - pad.top - pad.bottom;
+        const data = active().history;
+
+        const styles = getComputedStyle(document.documentElement);
+        const tok = (n, fb) => (styles.getPropertyValue(n).trim() || fb);
+        const cInk = tok("--ink-2", "#6B6759");
+        const cLine = tok("--line-0", "#C9C1A9");
+        const cTemp = tok("--accent-terracotta", "#A85C32");
+        const cHum = tok("--accent-blue-grey", "#5E7080");
+        const cCo2 = tok("--accent-olive", "#5B6B44");
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = cLine;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = cInk;
+        ctx.font = "9px " + tok("--font-mono", "ui-monospace, monospace");
+
+        const series = [
+          { key: "temp", color: cTemp, min: 4, max: 34, unit: "°", fmt: v => v.toFixed(0) },
+          { key: "hum", color: cHum, min: 20, max: 100, unit: "%", fmt: v => v.toFixed(0) },
+          { key: "co2", color: cCo2, min: 350, max: 4200, unit: "", fmt: v => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(0)) }
+        ];
+
+        // Gridlines + left axis (temperature scale) + right axis (CO2 scale)
+        for (let i = 0; i <= 4; i += 1) {
+          const y = pad.top + innerH * i / 4;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(width - pad.right, y);
+          ctx.stroke();
+          const ratio = 1 - i / 4;
+          const tVal = series[0].min + (series[0].max - series[0].min) * ratio;
+          const cVal = series[2].min + (series[2].max - series[2].min) * ratio;
+          ctx.textAlign = "right";
+          ctx.fillStyle = cTemp;
+          ctx.fillText(series[0].fmt(tVal) + series[0].unit, pad.left - 6, y + 3);
+          ctx.textAlign = "left";
+          ctx.fillStyle = cCo2;
+          ctx.fillText(series[2].fmt(cVal), width - pad.right + 6, y + 3);
+        }
+
+        ctx.fillStyle = cInk;
+        ctx.textAlign = "right";
+        ctx.fillText("ahora", width - pad.right, height - 7);
+        ctx.textAlign = "left";
+        ctx.fillText("historial", pad.left, height - 7);
+        ctx.textAlign = "start";
+
+        series.forEach(seriesItem => {
+          ctx.beginPath();
+          ctx.strokeStyle = seriesItem.color;
+          ctx.lineWidth = 2;
+          ctx.lineJoin = "round";
+          ctx.lineCap = "round";
+          data.forEach((point, index) => {
+            const x = pad.left + (data.length === 1 ? 0 : index / (data.length - 1)) * innerW;
+            const ratio = clamp((point[seriesItem.key] - seriesItem.min) / (seriesItem.max - seriesItem.min), 0, 1);
+            const y = pad.top + innerH * (1 - ratio);
+            if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        });
+      }
+
+      function renderRunState() {
+        $("runStatus").textContent = state.running ? "Simulación activa" : "Simulación pausada";
+        $("runDot").classList.toggle("paused", !state.running);
+        $("pauseButton").textContent = state.running ? "Pausar" : "Continuar";
+        $("simClock").textContent = formatTime(state.minutes);
+        $("elapsedValue").textContent = state.minutes < 60 ? `${state.minutes} min` : `${(state.minutes / 60).toFixed(1)} h`;
+        $("alertValue").textContent = state.alerts;
+      }
+
+      // Rebuild lists + (re)bind listeners. Called on init, selection change, reset — NOT every tick.
+      function renderStructural() {
+        buildChambers();
+        buildScenarios();
+        buildActuators();
+        logSignature = "";
+        render();
+      }
+
+      // Per-tick live update: in-place, no innerHTML churn on the interactive lists.
+      function render() {
+        updateChambers();
+        updateScenarios();
+        renderMetrics();
+        updateActuators();
+        renderLogs();
+        renderRunState();
+        drawChart();
+      }
+
+      function reset() {
+        state.minutes = 0;
+        state.alerts = 0;
+        state.eventSerial = 0;
+        state.running = true;
+        state.speed = 1;
+        state.chambers = [makeChamber("c1", "Cámara 01", 0), makeChamber("c2", "Cámara 02", .6)];
+        state.chambers.forEach(seedHistory);
+        seedStartupLog();
+        document.querySelectorAll(".speed").forEach(b => {
+          const on = Number(b.dataset.speed) === 1;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-pressed", String(on));
+        });
+        $("phaseSelect").value = "fruiting";
+        renderStructural();
+      }
+
+      function exportCsv() {
+        const rows = [["camara", "minuto", "temperatura_c", "humedad_relativa_pct", "co2_ppm", "fase", "escenario"]];
+        state.chambers.forEach(c => {
+          c.history.forEach(p => rows.push([
+            c.name, p.minute, p.temp.toFixed(2), p.hum.toFixed(2), Math.round(p.co2), phases[c.phase].name, scenarioById(c.scenario).name
+          ]));
+        });
+        const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(",")).join("\n");
+        const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `climate-bench-${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      $("phaseSelect").addEventListener("change", event => {
+        const c = active();
+        c.phase = event.target.value;
+        addLog(c, "info", `Perfil cambiado a ${phases[c.phase].name}.`);
+        render();
+      });
+
+      $("pauseButton").addEventListener("click", () => {
+        state.running = !state.running;
+        renderRunState();
+      });
+
+      document.querySelectorAll(".speed").forEach(button => {
+        button.addEventListener("click", () => {
+          state.speed = Number(button.dataset.speed);
+          document.querySelectorAll(".speed").forEach(b => {
+            const on = b === button;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-pressed", String(on));
+          });
+        });
+      });
+
+      $("resetButton").addEventListener("click", reset);
+      $("exportButton").addEventListener("click", exportCsv);
+      window.addEventListener("resize", drawChart);
+
+      renderStructural();
+      setInterval(step, 850);
+    })();
+  </script>
+</body>
+</html>
