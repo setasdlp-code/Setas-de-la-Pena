@@ -1,75 +1,34 @@
-# Setas de la Peña
+# Field OS · GitHub Pages
 
-Repositorio privado de investigación, operación y desarrollo de producto para una empresa de cultivo y venta de setas en Tenjo, Colombia.
+Prototipo navegable de la experiencia operativa de Field OS para Setas de la Peña.
 
-## Contenido principal
+## Qué implementa
 
-- `knowledge_base/`: conocimiento canónico de cultivo, instalaciones, operación y negocio.
-- `field_os/`: arquitectura y diseño del sistema operativo de campo.
-- `assets/`, `08_brand/` y `fonts/`: identidad y recursos visuales.
-- `simulador_sustrato_v4.0.html`: simulador de formulación de sustratos.
-- `mcp/`: servidor local para consultar la base de conocimiento.
+- navegación adaptada a Operario, Producción y Dirección;
+- captura rápida por contenedor con eventos inmutables en la narrativa;
+- balance de masa obligatorio antes de ejecutar un lote;
+- origen visible para datos medidos, calculados y manuales;
+- inventario por lote y consumo FIFO;
+- trazabilidad desde pedido hasta insumo;
+- experimentos separados de la línea base de producción;
+- controles táctiles, navegación con teclado y diseño responsive;
+- manifiesto y service worker para instalación y uso offline.
 
-`climate-bench/` se mantiene como repositorio independiente y está excluido del repositorio principal.
-Los PDF completos usados como fuentes permanecen en un caché local excluido; Git conserva las citas y síntesis curadas.
+## Sistema de diseño
 
-## Fuente canónica
+La interfaz reutiliza el sistema de diseño de Setas de la Peña: tipografías
+Gaya Patched y PP Object Sans, tokens Paper/Ink/Moss/Coral, logo e ilustración
+botánica oficiales, escala de espaciado de 4 px e iconografía Lucide de 1,5 px.
 
-Desde DEC-013, la copia editable y canónica de la base es `knowledge_base/` dentro de este monorepo. El repositorio privado histórico `setasdlp-code/Knowledge-Base` se conserva como referencia de la reconciliación, pero no debe recibir cambios independientes. Toda modificación nueva entra aquí mediante rama y pull request.
+## Publicación
 
-## Seguridad
+Esta carpeta se publica como la raíz del repositorio público independiente
+[`setasdlp-code/Field-OS`](https://github.com/setasdlp-code/Field-OS).
 
-El repositorio debe permanecer **privado**. Credenciales, tokens, exportaciones de correo y archivos `.env` están excluidos por `.gitignore`. Antes de cada commit, confirma el alcance con:
+URL pública:
 
-```bash
-git status --short
-git diff --cached --name-only
-```
+`https://setasdlp-code.github.io/Field-OS/`
 
-## Configuración Python
+## Alcance
 
-El ECC actual usa únicamente la biblioteca estándar. El servidor MCP requiere Python 3.10 o superior y dependencias propias:
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r mcp/requirements.txt
-.venv/bin/python -c "import mcp, pydantic"
-```
-
-## Preparación inicial de Git
-
-1. Resuelve cualquier repositorio Git anidado: intégralo como carpeta normal, como submódulo válido o mantenlo fuera de este repositorio.
-2. Configura tu identidad si todavía no existe:
-
-   ```bash
-   git config user.name "Tu nombre"
-   git config user.email "tu@email.com"
-   ```
-
-3. Prepara el alcance y revísalo antes de crear el commit:
-
-   ```bash
-   git add -A
-   git status --short
-   git diff --cached --stat
-   git diff --cached --name-only
-   ```
-
-4. Crea un repositorio vacío y privado en GitHub.
-5. Publica únicamente el staging ya revisado:
-
-   ```bash
-   bash push_to_github.sh <URL_DEL_REPO> --confirm-private
-   ```
-
-El script no ejecuta `git add`: conserva el historial, bloquea archivos sensibles, `climate-bench`, cachés de fuentes y archivos mayores de 95 MB, y se niega a reemplazar un remoto diferente.
-
-## Validaciones rápidas
-
-```bash
-python3 -m pip install -r mcp/requirements.txt -r scripts/quality/requirements.txt
-bash scripts/quality/run.sh
-```
-
-El mismo gate corre en GitHub Actions para cada pull request y cada push a `main`. Verifica formatos estructurados, compilación, comportamiento seguro de ECC, MCP, secretos, exclusiones, IDs de equipos, rutas de `INDEX.yaml` y regresiones científicas/FAE conocidas.
+Los datos son demostrativos. El estado local únicamente conserva la vista elegida y los eventos creados durante la demostración. La versión operativa requerirá backend, autenticación, auditoría y sincronización offline transaccional.
