@@ -3,8 +3,8 @@ title: SdP Field OS — Prototypes
 document_id: PD-013
 authority: product-design
 category: product-design
-version: 1.0
-last_reviewed: 2026-07-06
+version: 1.1
+last_reviewed: 2026-07-17
 status: active
 governed_by:
   - PRODUCT_EXPERIENCE.md
@@ -26,3 +26,7 @@ superseded_by: null
 - **Dependencies.** Accepted wireframes; the existing design system.
 - **Responsible role.** Product Designer.
 - **Relationship with the approved architecture.** Downstream. A prototype demonstrates an approved flow; it is not a build and creates no architectural fact. It must not simulate behavior the architecture forbids or imply data the model does not hold.
+
+## Active prototypes
+
+- [`field-os-simulador-app/`](field-os-simulador-app/README.md) — simulador integrado de formulación, producción, bodega y bitácora. Incluye auditoría del 17 de julio de 2026 y compuerta automática de calidad.
