@@ -113,6 +113,10 @@ category: equipment
    - Enchufe a contacto cercano (cable extensión si necesario)
    - Termostato ajustado a **24 °C** (para djamor) o **22 °C** (para shiitake)
 
+> **Jerarquía de control (decisión de diseño).** El termostato propio de la QuietWarmth es el **control primario** de temperatura. El relé gobernado por el SHT31 es exclusivamente **corte de seguridad de segundo nivel** (sobretemperatura), no un lazo de regulación. No intentar regular con el relé: produciría ciclado rápido y desgaste del contacto.
+
+> **Setpoints — pendiente de validación.** Los valores 24 °C / 22 °C son de **incubación (colonización)**, no de fructificación. Los parámetros de fructificación validados por especie viven en `knowledge_base/01_species/` y en la nota de memoria `parametros_especificos_especies`. Confirmar el setpoint de colonización por especie antes de fijarlo como operacional: *P. djamor* tolera colonización más cálida que *H. erinaceus*. Hasta esa validación, tratar estos números como **hipótesis de trabajo**.
+
 ### Fase 5: Instalación del Humidificador (20 min)
 
 1. **Posición**: Esquina inferior frontal de la caja (acceso fácil para rellenado)
@@ -132,14 +136,22 @@ category: equipment
 
 ### Fase 7: Instalación del Relé (20 min)
 
-1. **Posición**: Fuera de la caja (caja IP67 pequeña o protoboard en exterior)
-2. **Conexión**:
-   - Entrada: Pin GPIO del Arduino/Pico
-   - NC (normally closed) del relé → Enchufe de la QuietWarmth
-   - Lógica: Corte si SHT31 lee T >28 °C (5 min delay para evitar on/off rápido)
-3. **Testeo**: Verificar que relé abre/cierra con comando GPIO
+1. **Posición**: Fuera de la caja (caja IP65/IP67 pequeña; no protoboard expuesta en operación)
+2. **Conexión — usar contacto NO (normally open), no NC**:
+   - Entrada: Pin GPIO del ESP32/Arduino
+   - **NO (normally open)** del relé → alimentación de la QuietWarmth
+   - Lógica: el GPIO debe **energizar activamente** el relé para que la resistencia reciba corriente
+3. **Testeo**: Verificar que relé abre/cierra con comando GPIO, y que al desconectar el microcontrolador la QuietWarmth queda **apagada**
+
+> **Corrección de seguridad (fail-safe).** La versión previa de este documento especificaba contacto **NC**. Con NC, un cuelgue, reset o pérdida de firmware del microcontrolador deja el contacto cerrado y la QuietWarmth **energizada sin supervisión** — el modo de falla peligroso. Con **NO**, cualquier fallo del controlador o de su alimentación corta la resistencia (falla al lado seguro). El termostato interno de la alfombra sigue actuando como límite independiente.
+>
+> Estado: **decisión adoptada**, pendiente de verificación en banco antes de operar con bolsas.
 
 ### Fase 8: Ventilación Pasiva (FAE) (20 min)
+
+> **Revisar antes de perforar.** Esta es una incubadora de **colonización**, no de fructificación. Durante la colonización el CO₂ elevado no es un problema y en varias especies favorece el crecimiento vegetativo del micelio; las tasas altas de FAE (5–8 cambios/h en *P. djamor*) corresponden a **fructificación**. Además, si las bolsas ya llevan filtro de intercambio gaseoso (ver `EQUIPAMIENTO_REAL_Bolsas_Filtros.md`), el intercambio ocurre a nivel de bolsa y la ventilación de la caja es en gran medida redundante.
+>
+> Recomendación: **empezar con un solo orificio de 38 mm** (o ninguno, si las bolsas son con filtro) y añadir el segundo únicamente si la validación de 48 h muestra condensación persistente o CO₂ fuera de rango. Perforar es irreversible; añadir después es trivial. Estado: **recomendación**, no parámetro validado.
 
 1. **Dos orificios laterales opuestos** de 38 mm cada uno:
    - Uno inferior (extracción de CO₂, que es denso)
@@ -161,33 +173,96 @@ category: equipment
 
 ### Fase 10: Configuración de Sensores (45 min — si no se ha hecho)
 
-**Arduino Nano (opción simple):**
+> **Alineación con la arquitectura de automatización del proyecto.** La línea definida para Setas de la Peña es **ESP32 + ESPHome + Home Assistant en RPi4** (ver `Arquitectura_Automatizacion_Setas_de_la_Pena.docx`, `cloudlab_esp32.yaml`, `plan_ha_v1.md`). El prototipo de esta incubadora debe usar la misma pila, no firmware C++ suelto sobre Arduino Nano/Pico: así el corte de seguridad, el logging y las alarmas quedan en HA junto con el resto de los módulos, sin una segunda base de código que mantener.
+>
+> El bloque Arduino de abajo se conserva únicamente como **referencia de banco de pruebas rápido**. No es la implementación de destino.
+
+**ESPHome (implementación de destino):**
+```yaml
+# Fragmento — integrar en el paquete ESPHome del módulo
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+
+sensor:
+  - platform: sht3xd
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      name: "Inc2 Temperatura"
+      id: inc2_t
+      on_value_range:
+        # Corte de seguridad: por encima de 28 °C se desenergiza el relé
+        above: 28.0
+        then:
+          - switch.turn_off: inc2_calefaccion
+        below: 26.0
+        then:
+          - switch.turn_on: inc2_calefaccion
+    humidity:
+      name: "Inc2 Humedad Relativa"
+
+switch:
+  - platform: gpio
+    pin: GPIO5
+    id: inc2_calefaccion
+    name: "Inc2 QuietWarmth"
+    restore_mode: ALWAYS_OFF   # fail-safe: tras reinicio queda apagada
+
+# Si el sensor deja de reportar, cortar la calefacción
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lambda: 'return isnan(id(inc2_t).state);'
+          then:
+            - switch.turn_off: inc2_calefaccion
+```
+
+Notas sobre este fragmento:
+
+- `restore_mode: ALWAYS_OFF` implementa el fail-safe en firmware, complementando el contacto NO del relé.
+- El bloque `interval` cubre el caso de **sensor caído**: sin lectura válida no hay supervisión, así que se corta la calefacción en vez de asumir que todo está bien.
+- La histéresis 26–28 °C es amplia a propósito: este lazo es corte de seguridad, no regulación.
+
+**Arduino Nano (solo banco de pruebas, no producción):**
 ```cpp
-#include <SPI.h>
+#include <Wire.h>
 #include <Adafruit_SHT31.h>
 
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
-const int RELAY_PIN = 5; // GPIO5
+const int RELAY_PIN = 5; // GPIO5 -> bobina del relé, contacto NO
 
 void setup() {
   Serial.begin(9600);
-  sht31.begin(0x44); // dirección I2C por defecto
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // inicialmente OFF (relé NC cierra)
+  digitalWrite(RELAY_PIN, LOW); // arranque seguro: relé sin energizar = calefacción OFF
+  if (!sht31.begin(0x44)) {
+    Serial.println("SHT31 no responde — calefaccion permanece OFF");
+    while (1) { delay(1000); } // sin sensor no hay supervision: no energizar
+  }
 }
 
 void loop() {
   float t = sht31.readTemperature();
   float hr = sht31.readHumidity();
-  
-  Serial.print("T="); Serial.print(t); Serial.print("C HR="); Serial.print(hr); Serial.println("%");
-  
-  if (t > 28.0) {
-    digitalWrite(RELAY_PIN, HIGH); // Abre relé, corta QuietWarmth
-  } else if (t < 26.0) {
-    digitalWrite(RELAY_PIN, LOW); // Cierra relé, permite QuietWarmth
+
+  if (isnan(t)) {
+    digitalWrite(RELAY_PIN, LOW); // lectura invalida -> corte
+    Serial.println("Lectura invalida — corte de calefaccion");
+    delay(30000);
+    return;
   }
-  
+
+  Serial.print("T="); Serial.print(t); Serial.print("C HR="); Serial.print(hr); Serial.println("%");
+
+  if (t > 28.0) {
+    digitalWrite(RELAY_PIN, LOW);  // desenergiza relé -> corta QuietWarmth
+  } else if (t < 26.0) {
+    digitalWrite(RELAY_PIN, HIGH); // energiza relé -> permite QuietWarmth
+  }
+
   delay(30000); // Lectura cada 30 seg
 }
 ```
@@ -209,6 +284,7 @@ Antes de introducir bolsas inoculadas:
 3. **Oscuridad**: Cerrar tapa, verificar obscuridad total (no entra luz visible)
 4. **Flujo de aire**: Colocar incienso cerca de orificios Poly-fil → debe circular ligeramente (sin corrientes fuertes)
 5. **Seguridad**: Verificar que no hay cables sueltos ni riesgo de electrodoméstico mojado
+6. **Prueba de fail-safe (obligatoria)**: con la QuietWarmth encendida y el relé energizado, **desconectar la alimentación del ESP32**. La resistencia debe apagarse de inmediato. Repetir desconectando el sensor SHT31: la calefacción debe cortarse dentro de 60 s. Si en cualquiera de los dos casos la resistencia sigue energizada, el cableado del relé está en NC — corregir antes de continuar.
 
 **Si todo pasa**: Listo para inocular.
 

@@ -1,0 +1,483 @@
+{"kind":"deck","id":"pr/a9g998","name":"Deck"}
+{"kind":"layout","layoutId":"9052e71b-04c1-4a7c-9123-47c9921327ef","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"5512b61b-4d01-4117-8ba0-f87700d4518f","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/0eaca2","slide":1,"title":"DOCUMENTO DE TRABAJO · ASESORÍA EXPERTA","textShapes":6}
+{"kind":"shape","id":"sh/u5ojulor","slide":1,"bbox":[68,56,540,1]}
+{"kind":"textbox","id":"sh/h8z2p07i","slide":1,"text":"DOCUMENTO DE TRABAJO · ASESORÍA EXPERTA","textPreview":"DOCUMENTO DE TRABAJO · ASESORÍA EXPERTA","textChars":39,"textLines":1,"bbox":[68,24,500,24]}
+{"kind":"textbox","id":"sh/g761wv6x","slide":1,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[452,24,156,24]}
+{"kind":"shape","id":"sh/72x0jqpg","slide":1,"bbox":[640,0,1,720]}
+{"kind":"textbox","id":"sh/61ojqlov","slide":1,"name":"cover-title","text":"Setas de la Peña","textPreview":"Setas de la Peña","textChars":16,"textLines":1,"bbox":[68,178,540,88]}
+{"kind":"textbox","id":"sh/t4fil07m","slide":1,"text":"Decisiones para validar un piloto\nde cultivo modular en Tenjo","textPreview":"Decisiones para validar un piloto | de cultivo modular en Tenjo","textChars":61,"textLines":2,"bbox":[68,278,520,92]}
+{"kind":"textbox","id":"sh/s361sv61","slide":1,"text":"Una interpretación ejecutiva del proyecto: qué existe, qué se está probando y qué debe resolverse antes de escalar.","textPreview":"Una interpretación ejecutiva del proyecto: qué existe, qué se está probando y qué debe resolverse antes de escalar.","textChars":115,"textLines":1,"bbox":[68,414,486,86]}
+{"kind":"textbox","id":"sh/jed0f6p4","slide":1,"text":"TENJO, CUNDINAMARCA · JULIO 2026","textPreview":"TENJO, CUNDINAMARCA · JULIO 2026","textChars":32,"textLines":1,"bbox":[68,636,430,24]}
+{"kind":"image","id":"im/7i9gje9w","slide":1,"name":"","alt":"Ilustración topográfica del valle de Tenjo y la Peña de Juaica","bbox":[622,24,658,696]}
+{"kind":"notes","id":"nt/0eaca2","slide":1,"text":""}
+{"kind":"slide","id":"sl/rmzllt","slide":2,"title":"SETAS DE LA PEÑA · DOCUMENTO DE TRABAJO","textShapes":15}
+{"kind":"textbox","id":"sh/3mxsbml8","slide":2,"text":"SETAS DE LA PEÑA · DOCUMENTO DE TRABAJO","textPreview":"SETAS DE LA PEÑA · DOCUMENTO DE TRABAJO","textChars":39,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/on6tkr2t","slide":2,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/p8fadc3y","slide":2,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/q9obmhkj","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/baxsfml4","slide":2,"name":"slide-title","text":"La asesoría tiene un trabajo concreto.","textPreview":"La asesoría tiene un trabajo concreto.","textChars":38,"textLines":1,"bbox":[68,102,1125,76]}
+{"kind":"textbox","id":"sh/cb6tor2p","slide":2,"text":"El proyecto no necesita aprobación general: necesita decisiones que reduzcan el riesgo del primer ciclo.","textPreview":"El proyecto no necesita aprobación general: necesita decisiones que reduzcan el riesgo del primer ciclo.","textChars":104,"textLines":1,"bbox":[68,170,960,40]}
+{"kind":"textbox","id":"sh/dczahw3a","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[68,238,110,64]}
+{"kind":"textbox","id":"sh/yd8bq1kv","slide":2,"text":"INFRAESTRUCTURA","textPreview":"INFRAESTRUCTURA","textChars":15,"textLines":1,"bbox":[68,314,300,24]}
+{"kind":"textbox","id":"sh/zehsj6lg","slide":2,"text":"Separar flujos limpios y sucios sin sobredimensionar la obra.","textPreview":"Separar flujos limpios y sucios sin sobredimensionar la obra.","textChars":61,"textLines":1,"bbox":[68,356,318,112]}
+{"kind":"shape","id":"sh/zapwfits","slide":2,"bbox":[424,258,1,250]}
+{"kind":"textbox","id":"sh/y9gfmdc7","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[450,238,110,64]}
+{"kind":"textbox","id":"sh/lc7ehsby","slide":2,"text":"PILOTO","textPreview":"PILOTO","textChars":6,"textLines":1,"bbox":[450,314,300,24]}
+{"kind":"textbox","id":"sh/kbyxonud","slide":2,"text":"Escoger la configuración mínima y los criterios de éxito.","textPreview":"Escoger la configuración mínima y los criterios de éxito.","textChars":57,"textLines":1,"bbox":[450,356,318,112]}
+{"kind":"shape","id":"sh/b6pwbytw","slide":2,"bbox":[806,258,1,250]}
+{"kind":"textbox","id":"sh/a5wfidcb","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[832,238,110,64]}
+{"kind":"textbox","id":"sh/x87ed8bm","slide":2,"text":"NEGOCIO","textPreview":"NEGOCIO","textChars":7,"textLines":1,"bbox":[832,314,300,24]}
+{"kind":"textbox","id":"sh/c7yxk3uh","slide":2,"text":"Definir qué evidencia comercial debe existir antes de ampliar capacidad.","textPreview":"Definir qué evidencia comercial debe existir antes de ampliar capacidad.","textChars":72,"textLines":1,"bbox":[832,356,318,112]}
+{"kind":"shape","id":"sh/v29gn2t0","slide":2,"bbox":[68,548,1144,84]}
+{"kind":"textbox","id":"sh/u10fuxsf","slide":2,"text":"La pregunta no es si la idea es interesante. Es qué debemos corregir antes de invertir más.","textPreview":"La pregunta no es si la idea es interesante. Es qué debemos corregir antes de invertir más.","textChars":91,"textLines":1,"bbox":[100,564,1080,50]}
+{"kind":"notes","id":"nt/rmzllt","slide":2,"text":""}
+{"kind":"slide","id":"sl/8yd2zm","slide":3,"title":"SETAS DE LA PEÑA · TESIS DEL PILOTO","textShapes":17}
+{"kind":"textbox","id":"sh/2xwry14z","slide":3,"text":"SETAS DE LA PEÑA · TESIS DEL PILOTO","textPreview":"SETAS DE LA PEÑA · TESIS DEL PILOTO","textChars":35,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/p0nq9w3q","slide":3,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/oze90rm5","slide":3,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/b2p8b6lw","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/a1gr214b","slide":3,"name":"slide-title","text":"La tesis es pequeña: reutilizar, separar, medir y escalar.","textPreview":"La tesis es pequeña: reutilizar, separar, medir y escalar.","textChars":58,"textLines":1,"bbox":[68,108,1060,96]}
+{"kind":"textbox","id":"sh/x47qdg3m","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[68,290,72,44]}
+{"kind":"shape","id":"sh/c3y94bmh","slide":3,"bbox":[68,344,242,2]}
+{"kind":"textbox","id":"sh/r6l8z2lc","slide":3,"text":"REUTILIZAR","textPreview":"REUTILIZAR","textChars":10,"textLines":1,"bbox":[68,364,242,32]}
+{"kind":"textbox","id":"sh/q5c7qh47","slide":3,"text":"Naves existentes antes que construcción nueva.","textPreview":"Naves existentes antes que construcción nueva.","textChars":46,"textLines":1,"bbox":[68,414,242,110]}
+{"kind":"textbox","id":"sh/c7a10365","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[354,290,72,44]}
+{"kind":"shape","id":"sh/dsj2t8nq","slide":3,"bbox":[354,344,242,2]}
+{"kind":"textbox","id":"sh/q58jytoz","slide":3,"text":"SEPARAR","textPreview":"SEPARAR","textChars":7,"textLines":1,"bbox":[354,364,242,32]}
+{"kind":"textbox","id":"sh/r6hkry5k","slide":3,"text":"Incubación, fructificación y zonas sucias con límites claros.","textPreview":"Incubación, fructificación y zonas sucias con límites claros.","textChars":61,"textLines":1,"bbox":[354,414,242,110]}
+{"kind":"textbox","id":"sh/0val4n61","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[640,290,72,44]}
+{"kind":"shape","id":"sh/1wj2x8nm","slide":3,"bbox":[640,344,242,2]}
+{"kind":"textbox","id":"sh/ets32dob","slide":3,"text":"MEDIR","textPreview":"MEDIR","textChars":5,"textLines":1,"bbox":[640,364,242,32]}
+{"kind":"textbox","id":"sh/zu1kvi5g","slide":3,"text":"Cada lote deja una historia comparable.","textPreview":"Cada lote deja una historia comparable.","textChars":39,"textLines":1,"bbox":[640,414,242,110]}
+{"kind":"textbox","id":"sh/gzq1sj6x","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[926,290,72,44]}
+{"kind":"shape","id":"sh/h0z2lo7i","slide":3,"bbox":[926,344,242,2]}
+{"kind":"textbox","id":"sh/xk7q9gvu","slide":3,"text":"ESCALAR","textPreview":"ESCALAR","textChars":7,"textLines":1,"bbox":[926,364,242,32]}
+{"kind":"textbox","id":"sh/wjy90bu9","slide":3,"text":"Un módulo nuevo solo después de evidencia repetible.","textPreview":"Un módulo nuevo solo después de evidencia repetible.","textChars":52,"textLines":1,"bbox":[926,414,242,110]}
+{"kind":"textbox","id":"sh/bip876d4","slide":3,"text":"El valor del proyecto no está en parecer grande; está en aprender sin perder trazabilidad.","textPreview":"El valor del proyecto no está en parecer grande; está en aprender sin perder trazabilidad.","textChars":90,"textLines":1,"bbox":[68,594,1060,42]}
+{"kind":"notes","id":"nt/8yd2zm","slide":3,"text":""}
+{"kind":"slide","id":"sl/3tk54k","slide":4,"title":"SETAS DE LA PEÑA · ESTADO ACTUAL","textShapes":14}
+{"kind":"textbox","id":"sh/8r2xkz2x","slide":4,"text":"SETAS DE LA PEÑA · ESTADO ACTUAL","textPreview":"SETAS DE LA PEÑA · ESTADO ACTUAL","textChars":32,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/7qtgruls","slide":4,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/mpkfi9k7","slide":4,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/lobyp43m","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/0n2xgz21","slide":4,"name":"slide-title","text":"Hoy existe suficiente para probar; todavía no para confiar.","textPreview":"Hoy existe suficiente para probar; todavía no para confiar.","textChars":59,"textLines":1,"bbox":[68,98,1125,74]}
+{"kind":"shape","id":"sh/zm9gnulg","slide":4,"bbox":[79,250,14,14]}
+{"kind":"textbox","id":"sh/yl0fepkv","slide":4,"text":"EXISTE","textPreview":"EXISTE","textChars":6,"textLines":1,"bbox":[110,242,190,24]}
+{"kind":"textbox","id":"sh/dkrylk3a","slide":4,"text":"Naves, autoclave y dos cámaras de fructificación.","textPreview":"Naves, autoclave y dos cámaras de fructificación.","textChars":49,"textLines":1,"bbox":[296,238,560,54]}
+{"kind":"shape","id":"sh/czixcf25","slide":4,"bbox":[110,302,746,1]}
+{"kind":"shape","id":"sh/mx8z2dcn","slide":4,"bbox":[79,332,14,14]}
+{"kind":"textbox","id":"sh/7yh0bid8","slide":4,"text":"EN PRUEBA","textPreview":"EN PRUEBA","textChars":9,"textLines":1,"bbox":[110,324,190,24]}
+{"kind":"textbox","id":"sh/8zqh4nut","slide":4,"text":"Alternativas de incubación y registro digital.","textPreview":"Alternativas de incubación y registro digital.","textChars":46,"textLines":1,"bbox":[296,320,560,54]}
+{"kind":"shape","id":"sh/90zidsbe","slide":4,"bbox":[110,384,746,1]}
+{"kind":"shape","id":"sh/y9ozydcr","slide":4,"bbox":[79,414,14,14]}
+{"kind":"textbox","id":"sh/zax07idc","slide":4,"text":"NO COMISIONADO","textPreview":"NO COMISIONADO","textChars":14,"textLines":1,"bbox":[110,406,190,24]}
+{"kind":"textbox","id":"sh/kbqh0nux","slide":4,"text":"Autoclave, Martha Terra Fungus y CloudLab 844.","textPreview":"Autoclave, Martha Terra Fungus y CloudLab 844.","textChars":46,"textLines":1,"bbox":[296,402,560,54]}
+{"kind":"shape","id":"sh/lczi9sv2","slide":4,"bbox":[110,466,746,1]}
+{"kind":"shape","id":"sh/a5ozutcf","slide":4,"bbox":[79,496,14,14]}
+{"kind":"textbox","id":"sh/b6xg3yd0","slide":4,"text":"POR DEFINIR","textPreview":"POR DEFINIR","textChars":11,"textLines":1,"bbox":[110,488,190,24]}
+{"kind":"textbox","id":"sh/fatwbuts","slide":4,"text":"Flujo estéril, estándar térmico, comprador y economía unitaria.","textPreview":"Flujo estéril, estándar térmico, comprador y economía unitaria.","textChars":63,"textLines":1,"bbox":[296,484,560,54]}
+{"kind":"textbox","id":"sh/1cved4by","slide":4,"text":"TENJO · CONTEXTO REAL / DISEÑO AÚN EN VALIDACIÓN","textPreview":"TENJO · CONTEXTO REAL / DISEÑO AÚN EN VALIDACIÓN","textChars":48,"textLines":1,"bbox":[904,552,308,24]}
+{"kind":"shape","id":"sh/0b2x4zad","slide":4,"bbox":[68,608,1144,34]}
+{"kind":"textbox","id":"sh/nedwfet4","slide":4,"text":"Regla de lectura: físico no significa comisionado; comisionado no significa validado.","textPreview":"Regla de lectura: físico no significa comisionado; comisionado no significa validado.","textChars":85,"textLines":1,"bbox":[86,613,1108,24]}
+{"kind":"image","id":"im/h4zat83e","slide":4,"name":"","geometry":"roundRect","alt":"Paisaje rural del valle de Tenjo","bbox":[904,230,308,308]}
+{"kind":"notes","id":"nt/3tk54k","slide":4,"text":""}
+{"kind":"slide","id":"sl/ommu87","slide":5,"title":"SETAS DE LA PEÑA · HIPÓTESIS BIOLÓGICA","textShapes":11}
+{"kind":"textbox","id":"sh/j29ovy9k","slide":5,"text":"SETAS DE LA PEÑA · HIPÓTESIS BIOLÓGICA","textPreview":"SETAS DE LA PEÑA · HIPÓTESIS BIOLÓGICA","textChars":38,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/k3ipo3q5","slide":5,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/54r6x8rq","slide":5,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/6507qd8v","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/s72ps3q1","slide":5,"text":"HIPÓTESIS ACTUAL DE ARRANQUE","textPreview":"HIPÓTESIS ACTUAL DE ARRANQUE","textChars":28,"textLines":1,"bbox":[624,104,420,24]}
+{"kind":"textbox","id":"sh/t8b618rm","slide":5,"text":"Shiitake enseña mucho, pero exige demasiado.","textPreview":"Shiitake enseña mucho, pero exige demasiado.","textChars":44,"textLines":1,"bbox":[624,142,574,90]}
+{"kind":"textbox","id":"sh/u9k7ud87","slide":5,"text":"Puede encarecer el primer aprendizaje.","textPreview":"Puede encarecer el primer aprendizaje.","textChars":38,"textLines":1,"bbox":[624,232,574,30]}
+{"kind":"shape","id":"sh/fato3i9s","slide":5,"bbox":[624,282,574,1]}
+{"kind":"textbox","id":"sh/3u1knitw","slide":5,"text":"A FAVOR","textPreview":"A FAVOR","textChars":7,"textLines":1,"bbox":[624,306,246,24]}
+{"kind":"textbox","id":"sh/2ts3edcr","slide":5,"text":"• Producto reconocido\n• Sustrato de madera disponible\n• Obliga a dominar el proceso","textPreview":"• Producto reconocido | • Sustrato de madera disponible | • Obliga a dominar el proceso","textChars":83,"textLines":3,"bbox":[624,340,246,124]}
+{"kind":"textbox","id":"sh/pwjmpsb2","slide":5,"text":"EN CONTRA","textPreview":"EN CONTRA","textChars":9,"textLines":1,"bbox":[916,306,246,24]}
+{"kind":"textbox","id":"sh/ovalgnuh","slide":5,"text":"• Ciclo lento\n• Control ambiental exigente\n• Menor tolerancia al error","textPreview":"• Ciclo lento | • Control ambiental exigente | • Menor tolerancia al error","textChars":70,"textLines":3,"bbox":[916,340,246,124]}
+{"kind":"shape","id":"sh/fq1kjyt0","slide":5,"bbox":[624,494,574,106]}
+{"kind":"textbox","id":"sh/e5s3atcf","slide":5,"text":"¿Conviene validar el sistema con la especie más informativa o con la más tolerante?","textPreview":"¿Conviene validar el sistema con la especie más informativa o con la más tolerante?","textChars":83,"textLines":1,"bbox":[650,510,522,74]}
+{"kind":"image","id":"im/a9ojal83","slide":5,"name":"","alt":"Lámina científica de shiitake","bbox":[52,88,520,548]}
+{"kind":"notes","id":"nt/ommu87","slide":5,"text":""}
+{"kind":"slide","id":"sl/8h7d96","slide":6,"title":"SETAS DE LA PEÑA · FLUJO PRODUCTIVO","textShapes":19}
+{"kind":"textbox","id":"sh/q583u1w7","slide":6,"text":"SETAS DE LA PEÑA · FLUJO PRODUCTIVO","textPreview":"SETAS DE LA PEÑA · FLUJO PRODUCTIVO","textChars":35,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/dsj25wfy","slide":6,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/sralwred","slide":6,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/fu1k76do","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/ets3y1w3","slide":6,"name":"slide-title","text":"El riesgo atraviesa todo el ciclo; el control no puede vivir al final.","textPreview":"El riesgo atraviesa todo el ciclo; el control no puede vivir al final.","textChars":70,"textLines":1,"bbox":[68,98,1125,94]}
+{"kind":"shape","id":"sh/1wjm9gvu","slide":6,"bbox":[312,316,60,34]}
+{"kind":"shape","id":"sh/0val0be9","slide":6,"bbox":[598,316,60,34]}
+{"kind":"shape","id":"sh/vyxkvmxk","slide":6,"bbox":[884,316,60,34]}
+{"kind":"shape","id":"sh/uxo3mhwz","slide":6,"bbox":[68,252,244,152]}
+{"kind":"textbox","id":"sh/k7qdwzyd","slide":6,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[86,268,58,38]}
+{"kind":"textbox","id":"sh/l8zep4fy","slide":6,"text":"ORIGEN","textPreview":"ORIGEN","textChars":6,"textLines":1,"bbox":[146,272,144,24]}
+{"kind":"textbox","id":"sh/y5ovu9gn","slide":6,"text":"Cultura y spawn","textPreview":"Cultura y spawn","textChars":15,"textLines":1,"bbox":[86,320,208,64]}
+{"kind":"shape","id":"sh/z6hwnuxs","slide":6,"bbox":[354,252,244,152]}
+{"kind":"textbox","id":"sh/8vqd0jyp","slide":6,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[372,268,58,38]}
+{"kind":"textbox","id":"sh/9wzetofa","slide":6,"text":"PREPARACIÓN","textPreview":"PREPARACIÓN","textChars":11,"textLines":1,"bbox":[432,272,144,24]}
+{"kind":"textbox","id":"sh/m98vy9gj","slide":6,"text":"Sustrato, tratamiento térmico e inoculación","textPreview":"Sustrato, tratamiento térmico e inoculación","textChars":43,"textLines":1,"bbox":[372,320,208,64]}
+{"kind":"shape","id":"sh/7ahwrex4","slide":6,"bbox":[640,252,244,152]}
+{"kind":"textbox","id":"sh/oz6dofy5","slide":6,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[658,268,58,38]}
+{"kind":"textbox","id":"sh/p0fuhkfq","slide":6,"text":"CRECIMIENTO","textPreview":"CRECIMIENTO","textChars":11,"textLines":1,"bbox":[718,272,144,24]}
+{"kind":"textbox","id":"sh/5w7algru","slide":6,"text":"Incubación y fructificación","textPreview":"Incubación y fructificación","textChars":27,"textLines":1,"bbox":[658,320,208,64]}
+{"kind":"shape","id":"sh/4vytsbq9","slide":6,"bbox":[926,252,244,152]}
+{"kind":"textbox","id":"sh/3u5sj69o","slide":6,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[944,268,58,38]}
+{"kind":"textbox","id":"sh/itwbq183","slide":6,"text":"CIRCULACIÓN","textPreview":"CIRCULACIÓN","textChars":11,"textLines":1,"bbox":[1004,272,144,24]}
+{"kind":"textbox","id":"sh/d07upgrq","slide":6,"text":"Cosecha, venta o descarte","textPreview":"Cosecha, venta o descarte","textChars":25,"textLines":1,"bbox":[944,320,208,64]}
+{"kind":"shape","id":"sh/szytwvq5","slide":6,"bbox":[68,458,1144,84]}
+{"kind":"textbox","id":"sh/rypsnq9k","slide":6,"text":"CONTROL DE CALIDAD  +  TRAZABILIDAD  +  CONTAMINACIÓN","textPreview":"CONTROL DE CALIDAD  +  TRAZABILIDAD  +  CONTAMINACIÓN","textChars":53,"textLines":1,"bbox":[90,474,1100,28]}
+{"kind":"textbox","id":"sh/qxgbul8z","slide":6,"text":"Tres capas transversales: acompañan cada decisión desde la inoculación hasta el destino final.","textPreview":"Tres capas transversales: acompañan cada decisión desde la inoculación hasta el destino final.","textChars":94,"textLines":1,"bbox":[120,510,1040,24]}
+{"kind":"textbox","id":"sh/1orut0rm","slide":6,"text":"Un lote no es solo producto: es una secuencia de evidencia.","textPreview":"Un lote no es solo producto: es una secuencia de evidencia.","textChars":59,"textLines":1,"bbox":[68,590,820,44]}
+{"kind":"notes","id":"nt/8h7d96","slide":6,"text":""}
+{"kind":"slide","id":"sl/rtgrbt","slide":7,"title":"SETAS DE LA PEÑA · RECONVERSIÓN DE LA FINCA","textShapes":27}
+{"kind":"textbox","id":"sh/94vix0vm","slide":7,"text":"SETAS DE LA PEÑA · RECONVERSIÓN DE LA FINCA","textPreview":"SETAS DE LA PEÑA · RECONVERSIÓN DE LA FINCA","textChars":43,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/m1kj25cb","slide":7,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/n2t0vadw","slide":7,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/wrm18fud","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/xsvi1kvy","slide":7,"name":"slide-title","text":"La reconversión funciona solo si los flujos sucio y limpio no se cruzan.","textPreview":"La reconversión funciona solo si los flujos sucio y limpio no se cruzan.","textChars":72,"textLines":1,"bbox":[68,98,1125,94]}
+{"kind":"shape","id":"sh/a54j65c7","slide":7,"bbox":[244,308,46,26]}
+{"kind":"shape","id":"sh/b6d0zads","slide":7,"bbox":[478,308,46,26]}
+{"kind":"shape","id":"sh/cvihwbu9","slide":7,"bbox":[712,308,46,26]}
+{"kind":"shape","id":"sh/dwbipgvu","slide":7,"bbox":[946,308,46,26]}
+{"kind":"shape","id":"sh/hgbmps3q","slide":7,"bbox":[68,240,190,154]}
+{"kind":"shape","id":"sh/gf25wn25","slide":7,"bbox":[83,257,26,26]}
+{"kind":"textbox","id":"sh/ve94nilk","slide":7,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[83,256,26,28]}
+{"kind":"textbox","id":"sh/ud0nudkz","slide":7,"text":"SUSTRATO","textPreview":"SUSTRATO","textChars":8,"textLines":1,"bbox":[86,306,154,24]}
+{"kind":"textbox","id":"sh/54bmts3m","slide":7,"text":"Mezcla y embolsado","textPreview":"Mezcla y embolsado","textChars":18,"textLines":1,"bbox":[86,340,154,38]}
+{"kind":"shape","id":"sh/43250721","slide":7,"bbox":[302,240,190,154]}
+{"kind":"shape","id":"sh/32t4r2lg","slide":7,"bbox":[317,257,26,26]}
+{"kind":"textbox","id":"sh/ihknyxkv","slide":7,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[317,256,26,28]}
+{"kind":"textbox","id":"sh/d8vmxc3i","slide":7,"text":"TRANSICIÓN","textPreview":"TRANSICIÓN","textChars":10,"textLines":1,"bbox":[320,306,154,24]}
+{"kind":"textbox","id":"sh/s7m5472d","slide":7,"text":"Cambio e higiene","textPreview":"Cambio e higiene","textChars":16,"textLines":1,"bbox":[320,340,154,38]}
+{"kind":"shape","id":"sh/cbup0ba9","slide":7,"bbox":[536,240,190,154]}
+{"kind":"shape","id":"sh/dc36tgbu","slide":7,"bbox":[551,257,26,26]}
+{"kind":"textbox","id":"sh/q9s7ylsj","slide":7,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[551,256,26,28]}
+{"kind":"textbox","id":"sh/balor6to","slide":7,"text":"INOCULACIÓN","textPreview":"INOCULACIÓN","textChars":11,"textLines":1,"bbox":[554,306,154,24]}
+{"kind":"textbox","id":"sh/0fup4val","slide":7,"text":"Trabajo limpio","textPreview":"Trabajo limpio","textChars":14,"textLines":1,"bbox":[554,340,154,38]}
+{"kind":"shape","id":"sh/lg3qx0b6","slide":7,"bbox":[770,240,190,154]}
+{"kind":"shape","id":"sh/ydc72lsf","slide":7,"bbox":[785,257,26,26]}
+{"kind":"textbox","id":"sh/zelovqt0","slide":7,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[785,256,26,28]}
+{"kind":"textbox","id":"sh/gjapsra1","slide":7,"text":"INCUBACIÓN","textPreview":"INCUBACIÓN","textChars":10,"textLines":1,"bbox":[788,306,154,24]}
+{"kind":"textbox","id":"sh/1kj6lwbm","slide":7,"text":"Calor estable","textPreview":"Calor estable","textChars":13,"textLines":1,"bbox":[788,340,154,38]}
+{"kind":"shape","id":"sh/3a90nyhg","slide":7,"bbox":[1004,240,190,154]}
+{"kind":"shape","id":"sh/ip0jetgv","slide":7,"bbox":[1019,257,26,26]}
+{"kind":"textbox","id":"sh/5crip8zm","slide":7,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1019,256,26,28]}
+{"kind":"textbox","id":"sh/4bi1g3y1","slide":7,"text":"FRUCTIFICACIÓN","textPreview":"FRUCTIFICACIÓN","textChars":14,"textLines":1,"bbox":[1022,306,154,24]}
+{"kind":"textbox","id":"sh/vmp0jehk","slide":7,"text":"Clima y cosecha","textPreview":"Clima y cosecha","textChars":15,"textLines":1,"bbox":[1022,340,154,38]}
+{"kind":"shape","id":"sh/ulgjatgz","slide":7,"bbox":[68,448,1144,100]}
+{"kind":"textbox","id":"sh/horiloza","slide":7,"text":"RESIDUOS","textPreview":"RESIDUOS","textChars":8,"textLines":1,"bbox":[88,466,140,24]}
+{"kind":"textbox","id":"sh/gni1cjyp","slide":7,"text":"Salida exterior directa","textPreview":"Salida exterior directa","textChars":23,"textLines":1,"bbox":[88,500,250,30]}
+{"kind":"shape","id":"sh/7ip0feh8","slide":7,"bbox":[366,466,1,64]}
+{"kind":"textbox","id":"sh/6hgj69gn","slide":7,"text":"RESTRICCIÓN","textPreview":"RESTRICCIÓN","textChars":11,"textLines":1,"bbox":[396,466,160,24]}
+{"kind":"textbox","id":"sh/mp0nahc7","slide":7,"text":"El pasillo entre naves no se usa para trabajo aséptico.","textPreview":"El pasillo entre naves no se usa para trabajo aséptico.","textChars":55,"textLines":1,"bbox":[396,500,420,30]}
+{"kind":"shape","id":"sh/nq94jmds","slide":7,"bbox":[850,466,1,64]}
+{"kind":"textbox","id":"sh/ori5c7ud","slide":7,"text":"ESTADO","textPreview":"ESTADO","textChars":6,"textLines":1,"bbox":[882,466,140,24]}
+{"kind":"textbox","id":"sh/9srmlcvy","slide":7,"text":"Esquema conceptual por verificar en sitio.","textPreview":"Esquema conceptual por verificar en sitio.","textChars":42,"textLines":1,"bbox":[882,500,292,30]}
+{"kind":"shape","id":"sh/e10n6xcb","slide":7,"bbox":[68,594,138,30]}
+{"kind":"shape","id":"sh/zm94f2dw","slide":7,"bbox":[79,605,8,8]}
+{"kind":"textbox","id":"sh/0ni587uh","slide":7,"text":"DECISIÓN","textPreview":"DECISIÓN","textChars":8,"textLines":1,"bbox":[95,597,104,24]}
+{"kind":"textbox","id":"sh/1ormhcv2","slide":7,"text":"¿La separación propuesta reduce realmente el riesgo de contaminación cruzada?","textPreview":"¿La separación propuesta reduce realmente el riesgo de contaminación cruzada?","textChars":77,"textLines":1,"bbox":[230,590,940,38]}
+{"kind":"notes","id":"nt/rtgrbt","slide":7,"text":""}
+{"kind":"slide","id":"sl/3mqtcc","slide":8,"title":"SETAS DE LA PEÑA · ARQUITECTURA DEL PILOTO","textShapes":13}
+{"kind":"textbox","id":"sh/vud0va50","slide":8,"text":"SETAS DE LA PEÑA · ARQUITECTURA DEL PILOTO","textPreview":"SETAS DE LA PEÑA · ARQUITECTURA DEL PILOTO","textChars":42,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/wvm1ov6l","slide":8,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/hwvix0nq","slide":8,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/ix4jq54b","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/jyd0za5w","slide":8,"name":"slide-title","text":"El piloto debe comparar métodos, no equipos.","textPreview":"El piloto debe comparar métodos, no equipos.","textChars":44,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"textbox","id":"sh/50vi1kn2","slide":8,"text":"INCUBACIÓN · COMPARACIÓN","textPreview":"INCUBACIÓN · COMPARACIÓN","textChars":24,"textLines":1,"bbox":[68,548,420,24]}
+{"kind":"textbox","id":"sh/y10zelo7","slide":8,"text":"Baño María vs. calefacción radiante","textPreview":"Baño María vs. calefacción radiante","textChars":35,"textLines":1,"bbox":[68,580,548,40]}
+{"kind":"shape","id":"sh/z2t0n65s","slide":8,"bbox":[658,198,554,150]}
+{"kind":"textbox","id":"sh/vmd0n6ho","slide":8,"text":"MARTHA TERRA FUNGUS","textPreview":"MARTHA TERRA FUNGUS","textChars":19,"textLines":1,"bbox":[682,218,320,24]}
+{"kind":"textbox","id":"sh/ul4zu103","slide":8,"text":"Rol propuesto: prototipo, cuarentena e investigación.","textPreview":"Rol propuesto: prototipo, cuarentena e investigación.","textChars":53,"textLines":1,"bbox":[682,256,490,52]}
+{"kind":"shape","id":"sh/hofipgzu","slide":8,"bbox":[982,304,190,30]}
+{"kind":"shape","id":"sh/wn6hwbi9","slide":8,"bbox":[993,315,8,8]}
+{"kind":"textbox","id":"sh/7id0j6hs","slide":8,"text":"NO COMISIONADA","textPreview":"NO COMISIONADA","textChars":14,"textLines":1,"bbox":[1009,307,156,24]}
+{"kind":"shape","id":"sh/mh4zq107","slide":8,"bbox":[658,374,554,150]}
+{"kind":"textbox","id":"sh/9kvilwzi","slide":8,"text":"CLOUDLAB 844","textPreview":"CLOUDLAB 844","textChars":12,"textLines":1,"bbox":[682,394,320,24]}
+{"kind":"textbox","id":"sh/8jmhsrix","slide":8,"text":"Rol propuesto: producción inicial con lo ya probado.","textPreview":"Rol propuesto: producción inicial con lo ya probado.","textChars":52,"textLines":1,"bbox":[682,432,490,52]}
+{"kind":"shape","id":"sh/zut0fmhg","slide":8,"bbox":[982,480,190,30]}
+{"kind":"shape","id":"sh/ytkzmh0v","slide":8,"bbox":[993,491,8,8]}
+{"kind":"textbox","id":"sh/2pkjyhk3","slide":8,"text":"NO COMISIONADA","textPreview":"NO COMISIONADA","textChars":14,"textLines":1,"bbox":[1009,483,156,24]}
+{"kind":"shape","id":"sh/nqt0rm18","slide":8,"bbox":[658,550,554,76]}
+{"kind":"textbox","id":"sh/or210r2t","slide":8,"text":"Éxito = estabilidad + consumo medido + ausencia de puntos calientes + repetibilidad","textPreview":"Éxito = estabilidad + consumo medido + ausencia de puntos calientes + repetibilidad","textChars":83,"textLines":1,"bbox":[680,564,510,48]}
+{"kind":"image","id":"im/xkj690jm","slide":8,"name":"","geometry":"roundRect","alt":"Diseño de incubadora de bolsas de grano en contenedor","bbox":[68,196,548,332]}
+{"kind":"notes","id":"nt/3mqtcc","slide":8,"text":""}
+{"kind":"slide","id":"sl/mmpp1o","slide":9,"title":"SETAS DE LA PEÑA · CONDICIÓN TÉRMICA","textShapes":13}
+{"kind":"textbox","id":"sh/076x076p","slide":9,"text":"SETAS DE LA PEÑA · CONDICIÓN TÉRMICA","textPreview":"SETAS DE LA PEÑA · CONDICIÓN TÉRMICA","textChars":36,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/zmxg72p4","slide":9,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/elofyxoz","slide":9,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/9czydc7m","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/obqx4761","slide":9,"name":"slide-title","text":"A 2.600 m, el frío ayuda al final y complica el principio.","textPreview":"A 2.600 m, el frío ayuda al final y complica el principio.","textChars":58,"textLines":1,"bbox":[68,98,1125,84]}
+{"kind":"textbox","id":"sh/m9of2hov","slide":9,"text":"≈13 °C","textPreview":"≈13 °C","textChars":6,"textLines":1,"bbox":[68,218,320,100]}
+{"kind":"textbox","id":"sh/xgzyhwni","slide":9,"text":"DIFERENCIA A COMPENSAR","textPreview":"DIFERENCIA A COMPENSAR","textChars":22,"textLines":1,"bbox":[72,324,320,24]}
+{"kind":"shape","id":"sh/wfqx8r6x","slide":9,"bbox":[68,372,690,1]}
+{"kind":"textbox","id":"sh/y1ojah0b","slide":9,"text":"FRUCTIFICACIÓN","textPreview":"FRUCTIFICACIÓN","textChars":14,"textLines":1,"bbox":[68,398,260,24]}
+{"kind":"textbox","id":"sh/j2x03mhw","slide":9,"text":"El clima fresco puede reducir la refrigeración necesaria.","textPreview":"El clima fresco puede reducir la refrigeración necesaria.","textChars":57,"textLines":1,"bbox":[68,432,292,80]}
+{"kind":"textbox","id":"sh/k361crih","slide":9,"text":"INCUBACIÓN","textPreview":"INCUBACIÓN","textChars":10,"textLines":1,"bbox":[404,398,260,24]}
+{"kind":"textbox","id":"sh/l4zi5wz2","slide":9,"text":"El sistema debe producir calor estable y responder a fallas.","textPreview":"El sistema debe producir calor estable y responder a fallas.","textChars":60,"textLines":1,"bbox":[404,432,292,80]}
+{"kind":"shape","id":"sh/658jeh0n","slide":9,"bbox":[68,546,690,72]}
+{"kind":"textbox","id":"sh/76h07mh8","slide":9,"text":"Estimación del documento base: modelo, no medición de campo. Los cálculos de 1.000 W y 90 W/caja corresponden a escalas distintas.","textPreview":"Estimación del documento base: modelo, no medición de campo. Los cálculos de 1.000 W y 90 W/caja corresponden a escalas distintas.","textChars":130,"textLines":1,"bbox":[88,558,650,48]}
+{"kind":"shape","id":"sh/87q1grid","slide":9,"bbox":[812,602,138,30]}
+{"kind":"shape","id":"sh/tsz29wzy","slide":9,"bbox":[823,613,8,8]}
+{"kind":"textbox","id":"sh/m94z2x03","slide":9,"text":"DECISIÓN","textPreview":"DECISIÓN","textChars":8,"textLines":1,"bbox":[839,605,104,24]}
+{"kind":"textbox","id":"sh/nad0v2ho","slide":9,"text":"¿Qué medir antes de escoger el estándar?","textPreview":"¿Qué medir antes de escoger el estándar?","textChars":40,"textLines":1,"bbox":[968,598,244,40]}
+{"kind":"image","id":"im/m1cnmtob","slide":9,"name":"","geometry":"roundRect","alt":"Paisaje de montaña en Tenjo","bbox":[812,190,400,390]}
+{"kind":"notes","id":"nt/mmpp1o","slide":9,"text":""}
+{"kind":"slide","id":"sl/rtri2k","slide":10,"title":"SETAS DE LA PEÑA · BIOSEGURIDAD Y APRENDIZAJE","textShapes":19}
+{"kind":"textbox","id":"sh/ex4bqlo7","slide":10,"text":"SETAS DE LA PEÑA · BIOSEGURIDAD Y APRENDIZAJE","textPreview":"SETAS DE LA PEÑA · BIOSEGURIDAD Y APRENDIZAJE","textChars":45,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/1kful0ny","slide":10,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/0z6tsv6d","slide":10,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/rudcf6pw","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/qt4bm1ob","slide":10,"name":"slide-title","text":"Una contaminación debe producir aprendizaje, no solo descarte.","textPreview":"Una contaminación debe producir aprendizaje, no solo descarte.","textChars":62,"textLines":1,"bbox":[68,98,1125,84]}
+{"kind":"shape","id":"sh/dwvuhgn2","slide":10,"bbox":[236,302,46,24]}
+{"kind":"shape","id":"sh/svmtob6h","slide":10,"bbox":[426,302,46,24]}
+{"kind":"shape","id":"sh/3qtcb6pk","slide":10,"bbox":[616,302,46,24]}
+{"kind":"shape","id":"sh/ipkbi1of","slide":10,"bbox":[806,302,46,24]}
+{"kind":"shape","id":"sh/szulkzi9","slide":10,"bbox":[996,302,46,24]}
+{"kind":"shape","id":"sh/t03mt4zu","slide":10,"bbox":[102,272,84,84]}
+{"kind":"textbox","id":"sh/6xc3ip03","slide":10,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[110,288,68,48]}
+{"kind":"textbox","id":"sh/7yl4ruho","slide":10,"text":"DETECTAR","textPreview":"DETECTAR","textChars":8,"textLines":1,"bbox":[68,374,152,24]}
+{"kind":"shape","id":"sh/kvalgzix","slide":10,"bbox":[292,272,84,84]}
+{"kind":"textbox","id":"sh/5wjmp4zi","slide":10,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[300,288,68,48]}
+{"kind":"textbox","id":"sh/its3ep07","slide":10,"text":"AISLAR","textPreview":"AISLAR","textChars":6,"textLines":1,"bbox":[258,374,152,24]}
+{"kind":"shape","id":"sh/ju1knuhs","slide":10,"bbox":[482,272,84,84]}
+{"kind":"textbox","id":"sh/4relsjih","slide":10,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[490,288,68,48]}
+{"kind":"textbox","id":"sh/psnm1oz2","slide":10,"text":"REGISTRAR","textPreview":"REGISTRAR","textChars":9,"textLines":1,"bbox":[448,374,152,24]}
+{"kind":"shape","id":"sh/dojm5or6","slide":10,"bbox":[672,272,84,84]}
+{"kind":"textbox","id":"sh/cnalcjal","slide":10,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[680,288,68,48]}
+{"kind":"textbox","id":"sh/bm143e90","slide":10,"text":"INVESTIGAR","textPreview":"INVESTIGAR","textChars":10,"textLines":1,"bbox":[638,374,152,24]}
+{"kind":"shape","id":"sh/qls3a9sf","slide":10,"bbox":[862,272,84,84]}
+{"kind":"textbox","id":"sh/pkj214ru","slide":10,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[870,288,68,48]}
+{"kind":"textbox","id":"sh/ojal8za9","slide":10,"text":"PROBAR","textPreview":"PROBAR","textChars":6,"textLines":1,"bbox":[828,374,152,24]}
+{"kind":"shape","id":"sh/3ihkze94","slide":10,"bbox":[1052,272,84,84]}
+{"kind":"textbox","id":"sh/2h8369sj","slide":10,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1060,288,68,48]}
+{"kind":"textbox","id":"sh/1gz2x4ry","slide":10,"text":"ACTUALIZAR SOP","textPreview":"ACTUALIZAR SOP","textChars":14,"textLines":1,"bbox":[1018,374,152,24]}
+{"kind":"shape","id":"sh/gfql4zad","slide":10,"bbox":[68,448,1144,120]}
+{"kind":"textbox","id":"sh/694ri14z","slide":10,"text":"Observar antes de intervenir","textPreview":"Observar antes de intervenir","textChars":28,"textLines":1,"bbox":[94,466,460,38]}
+{"kind":"textbox","id":"sh/7adsr6lk","slide":10,"text":"Caracterizar la anomalía, documentarla y cambiar el mínimo número de variables para conservar una lectura causal.","textPreview":"Caracterizar la anomalía, documentarla y cambiar el mínimo número de variables para conservar una lectura causal.","textChars":113,"textLines":1,"bbox":[94,510,1040,42]}
+{"kind":"textbox","id":"sh/sbm9kbm5","slide":10,"text":"Una prueba validada no cambia el procedimiento automáticamente: la decisión de actualizar el SOP es un paso propio.","textPreview":"Una prueba validada no cambia el procedimiento automáticamente: la decisión de actualizar el SOP es un paso propio.","textChars":115,"textLines":1,"bbox":[68,600,1120,36]}
+{"kind":"notes","id":"nt/rtri2k","slide":10,"text":""}
+{"kind":"slide","id":"sl/kusvy5","slide":11,"title":"SETAS DE LA PEÑA · OPERACIÓN DIARIA","textShapes":22}
+{"kind":"textbox","id":"sh/v2h8nq9k","slide":11,"text":"SETAS DE LA PEÑA · OPERACIÓN DIARIA","textPreview":"SETAS DE LA PEÑA · OPERACIÓN DIARIA","textChars":35,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/g3qpwva5","slide":11,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/h4zqp0rq","slide":11,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/i587y5sb","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/36h8ra9w","slide":11,"name":"slide-title","text":"La operación remota solo funciona si alguien observa y registra en sitio.","textPreview":"La operación remota solo funciona si alguien observa y registra en sitio.","textChars":73,"textLines":1,"bbox":[68,98,1125,92]}
+{"kind":"shape","id":"sh/47qp0fah","slide":11,"bbox":[68,218,520,132]}
+{"kind":"textbox","id":"sh/5szqtkr2","slide":11,"text":"OPERADOR REMOTO","textPreview":"OPERADOR REMOTO","textChars":15,"textLines":1,"bbox":[94,238,220,24]}
+{"kind":"textbox","id":"sh/qts725s7","slide":11,"text":"Planea · revisa datos · documenta decisiones","textPreview":"Planea · revisa datos · documenta decisiones","textChars":44,"textLines":1,"bbox":[94,278,452,52]}
+{"kind":"shape","id":"sh/ru18va9s","slide":11,"bbox":[692,218,520,132]}
+{"kind":"textbox","id":"sh/z2hcnul0","slide":11,"text":"CUIDADOR EN SITIO","textPreview":"CUIDADOR EN SITIO","textChars":17,"textLines":1,"bbox":[718,238,220,24]}
+{"kind":"textbox","id":"sh/y18bep4v","slide":11,"text":"Ejecuta · observa · registra · comunica anomalías","textPreview":"Ejecuta · observa · registra · comunica anomalías","textChars":49,"textLines":1,"bbox":[718,278,452,52]}
+{"kind":"textbox","id":"sh/l4jup436","slide":11,"text":"UNA JORNADA OPERATIVA","textPreview":"UNA JORNADA OPERATIVA","textChars":21,"textLines":1,"bbox":[68,398,280,24]}
+{"kind":"shape","id":"sh/k3atgzml","slide":11,"bbox":[90,474,1080,3]}
+{"kind":"shape","id":"sh/byhcjul4","slide":11,"bbox":[83,466,18,18]}
+{"kind":"textbox","id":"sh/ax8bap4j","slide":11,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[62,442,60,26]}
+{"kind":"textbox","id":"sh/x0zulk3a","slide":11,"text":"SANIDAD","textPreview":"SANIDAD","textChars":7,"textLines":1,"bbox":[16,500,152,44]}
+{"kind":"shape","id":"sh/czqtcfmp","slide":11,"bbox":[297,466,18,18]}
+{"kind":"textbox","id":"sh/vulcvel8","slide":11,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[276,442,60,26]}
+{"kind":"textbox","id":"sh/utsvm9kn","slide":11,"text":"AMBIENTE","textPreview":"AMBIENTE","textChars":8,"textLines":1,"bbox":[230,500,152,44]}
+{"kind":"shape","id":"sh/6pwfedov","slide":11,"bbox":[511,466,18,18]}
+{"kind":"textbox","id":"sh/rq5wni5g","slide":11,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[490,442,60,26]}
+{"kind":"textbox","id":"sh/srexgnm1","slide":11,"text":"BIOLOGÍA","textPreview":"BIOLOGÍA","textChars":8,"textLines":1,"bbox":[444,500,152,44]}
+{"kind":"shape","id":"sh/tsnepsnm","slide":11,"bbox":[725,466,18,18]}
+{"kind":"textbox","id":"sh/etgfix47","slide":11,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[704,442,60,26]}
+{"kind":"textbox","id":"sh/fupgr25s","slide":11,"text":"REGISTRO","textPreview":"REGISTRO","textChars":8,"textLines":1,"bbox":[658,500,152,44]}
+{"kind":"shape","id":"sh/gvyxknmd","slide":11,"bbox":[939,466,18,18]}
+{"kind":"textbox","id":"sh/1w7ytsni","slide":11,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[918,442,60,26]}
+{"kind":"textbox","id":"sh/uxcf6to3","slide":11,"text":"AJUSTE MÍNIMO","textPreview":"AJUSTE MÍNIMO","textChars":13,"textLines":1,"bbox":[872,500,152,44]}
+{"kind":"shape","id":"sh/vylwfy58","slide":11,"bbox":[1153,466,18,18]}
+{"kind":"textbox","id":"sh/xcrilw7q","slide":11,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1132,442,60,26]}
+{"kind":"textbox","id":"sh/cbihcr6l","slide":11,"text":"CIERRE","textPreview":"CIERRE","textChars":6,"textLines":1,"bbox":[1086,500,152,44]}
+{"kind":"shape","id":"sh/bq90jmp0","slide":11,"bbox":[68,588,1144,46]}
+{"kind":"textbox","id":"sh/qp0za1of","slide":11,"text":"Si el registro llega tarde, la supervisión remota deja de ser control y se vuelve reconstrucción.","textPreview":"Si el registro llega tarde, la supervisión remota deja de ser control y se vuelve reconstrucción.","textChars":97,"textLines":1,"bbox":[86,596,1108,30]}
+{"kind":"notes","id":"nt/kusvy5","slide":11,"text":""}
+{"kind":"slide","id":"sl/lafoo2","slide":12,"title":"SETAS DE LA PEÑA · SETAS OS","textShapes":14}
+{"kind":"textbox","id":"sh/xc3ixwn2","slide":12,"text":"SETAS DE LA PEÑA · SETAS OS","textPreview":"SETAS DE LA PEÑA · SETAS OS","textChars":27,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/a9szmhor","slide":12,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/va1gvm5w","slide":12,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/87ahk76l","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/98jytcn6","slide":12,"name":"slide-title","text":"Setas OS importa por las decisiones que habilita.","textPreview":"Setas OS importa por las decisiones que habilita.","textChars":49,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"textbox","id":"sh/nm1gr250","slide":12,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[548,204,72,52]}
+{"kind":"textbox","id":"sh/s3uhwbmp","slide":12,"text":"TRAZAR","textPreview":"TRAZAR","textChars":6,"textLines":1,"bbox":[626,206,220,24]}
+{"kind":"textbox","id":"sh/t4ni5gna","slide":12,"text":"Saber qué ocurrió con cada contenedor.","textPreview":"Saber qué ocurrió con cada contenedor.","textChars":38,"textLines":1,"bbox":[626,238,526,58]}
+{"kind":"shape","id":"sh/9cz2x0nq","slide":12,"bbox":[548,316,604,1]}
+{"kind":"textbox","id":"sh/8bq1ovm5","slide":12,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[548,336,72,52]}
+{"kind":"textbox","id":"sh/7ahkvq5k","slide":12,"text":"COMPARAR","textPreview":"COMPARAR","textChars":8,"textLines":1,"bbox":[626,338,220,24]}
+{"kind":"textbox","id":"sh/m98jml4z","slide":12,"text":"Leer diferencias entre recetas, cámaras y ciclos.","textPreview":"Leer diferencias entre recetas, cámaras y ciclos.","textChars":49,"textLines":1,"bbox":[626,370,526,58]}
+{"kind":"shape","id":"sh/l8z2tgne","slide":12,"bbox":[548,448,604,1]}
+{"kind":"textbox","id":"sh/kn61kbmt","slide":12,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[548,468,72,52]}
+{"kind":"textbox","id":"sh/zmxkr65o","slide":12,"text":"DECIDIR","textPreview":"DECIDIR","textChars":7,"textLines":1,"bbox":[626,470,220,24]}
+{"kind":"textbox","id":"sh/ylojil43","slide":12,"text":"Convertir evidencia repetida en SOP y nuevas capacidades.","textPreview":"Convertir evidencia repetida en SOP y nuevas capacidades.","textChars":57,"textLines":1,"bbox":[626,502,526,58]}
+{"kind":"shape","id":"sh/54j25kny","slide":12,"bbox":[548,594,604,42]}
+{"kind":"textbox","id":"sh/4ja1wfmd","slide":12,"text":"Funcional y navegable · aún no validado con ciclos productivos completos","textPreview":"Funcional y navegable · aún no validado con ciclos productivos completos","textChars":72,"textLines":1,"bbox":[566,601,568,28]}
+{"kind":"image","id":"im/v690ze58","slide":12,"name":"","geometry":"roundRect","alt":"Interfaz de monitoreo de Setas de la Peña","bbox":[68,194,420,414]}
+{"kind":"notes","id":"nt/lafoo2","slide":12,"text":""}
+{"kind":"slide","id":"sl/x2fsqh","slide":13,"title":"SETAS DE LA PEÑA · VIABILIDAD COMERCIAL","textShapes":12}
+{"kind":"textbox","id":"sh/6ponep0b","slide":13,"text":"SETAS DE LA PEÑA · VIABILIDAD COMERCIAL","textPreview":"SETAS DE LA PEÑA · VIABILIDAD COMERCIAL","textChars":39,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/tszm94zm","slide":13,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/srq5gzih","slide":13,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/fuh4behs","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/et8ni907","slide":13,"name":"slide-title","text":"La pregunta comercial: ¿cada kilo deja margen?","textPreview":"La pregunta comercial: ¿cada kilo deja margen?","textChars":46,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"shape","id":"sh/1wzmdozy","slide":13,"bbox":[68,214,1144,100]}
+{"kind":"textbox","id":"sh/gvq5kjid","slide":13,"text":"PRECIO / KG  −  SUSTRATO  −  ENERGÍA  −  MANO DE OBRA  −  FRÍO  −  TRANSPORTE  =  MARGEN","textPreview":"PRECIO / KG  −  SUSTRATO  −  ENERGÍA  −  MANO DE OBRA  −  FRÍO  −  TRANSPORTE  =  MARGEN","textChars":88,"textLines":1,"bbox":[88,234,1104,58]}
+{"kind":"textbox","id":"sh/vyd4za1o","slide":13,"text":"VARIABLES PRODUCTIVAS","textPreview":"VARIABLES PRODUCTIVAS","textChars":21,"textLines":1,"bbox":[68,356,320,24]}
+{"kind":"textbox","id":"sh/ux436503","slide":13,"text":"• Rendimiento por bloque\n• Eficiencia biológica\n• Duración del ciclo\n• Contaminación y descarte","textPreview":"• Rendimiento por bloque | • Eficiencia biológica | • Duración del ciclo | • Contaminación y descarte","textChars":95,"textLines":4,"bbox":[68,392,360,138]}
+{"kind":"shape","id":"sh/gvm1k76t","slide":13,"bbox":[456,356,1,174]}
+{"kind":"textbox","id":"sh/hwvidc7e","slide":13,"text":"VARIABLES COMERCIALES","textPreview":"VARIABLES COMERCIALES","textChars":21,"textLines":1,"bbox":[496,356,320,24]}
+{"kind":"textbox","id":"sh/ut4jixo3","slide":13,"text":"• Producto y presentación\n• Comprador objetivo\n• Precio y frecuencia\n• Empaque y cadena de frío","textPreview":"• Producto y presentación | • Comprador objetivo | • Precio y frecuencia | • Empaque y cadena de frío","textChars":95,"textLines":4,"bbox":[496,392,360,138]}
+{"kind":"shape","id":"sh/vud0b2po","slide":13,"bbox":[884,356,1,174]}
+{"kind":"textbox","id":"sh/4z61o765","slide":13,"text":"EVIDENCIA FALTANTE","textPreview":"EVIDENCIA FALTANTE","textChars":18,"textLines":1,"bbox":[924,356,250,24]}
+{"kind":"textbox","id":"sh/50fihc7q","slide":13,"text":"Costo/kg\nVolumen viable\nPrueba de entrega\nIntención de compra","textPreview":"Costo/kg | Volumen viable | Prueba de entrega | Intención de compra","textChars":61,"textLines":4,"bbox":[924,392,250,138]}
+{"kind":"shape","id":"sh/ixojmhoz","slide":13,"bbox":[68,578,1144,60]}
+{"kind":"textbox","id":"sh/3yx0fmpk","slide":13,"text":"No hay primera escala viable hasta completar esta cuenta con datos reales.","textPreview":"No hay primera escala viable hasta completar esta cuenta con datos reales.","textChars":74,"textLines":1,"bbox":[88,590,1104,36]}
+{"kind":"notes","id":"nt/x2fsqh","slide":13,"text":""}
+{"kind":"slide","id":"sl/aj83jz","slide":14,"title":"SETAS DE LA PEÑA · HOJA DE RUTA","textShapes":23}
+{"kind":"textbox","id":"sh/wrq1gfah","slide":14,"text":"SETAS DE LA PEÑA · HOJA DE RUTA","textPreview":"SETAS DE LA PEÑA · HOJA DE RUTA","textChars":31,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/vqh0na9w","slide":14,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/up8je5sb","slide":14,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/9ozil0rq","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/8n61cva5","slide":14,"name":"slide-title","text":"Avanzar por compuertas, no por entusiasmo.","textPreview":"Avanzar por compuertas, no por entusiasmo.","textChars":42,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"textbox","id":"sh/72x0jq9k","slide":14,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[68,222,74,56]}
+{"kind":"textbox","id":"sh/m1ojalsz","slide":14,"text":"AUTOCLAVE","textPreview":"AUTOCLAVE","textChars":9,"textLines":1,"bbox":[150,226,250,24]}
+{"kind":"textbox","id":"sh/l0fihgru","slide":14,"text":"Ciclo comisionado","textPreview":"Ciclo comisionado","textChars":17,"textLines":1,"bbox":[150,260,250,46]}
+{"kind":"shape","id":"sh/kz6h8va9","slide":14,"bbox":[68,324,320,1]}
+{"kind":"textbox","id":"sh/ih4zq9wb","slide":14,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[450,222,74,56]}
+{"kind":"textbox","id":"sh/jid0jexg","slide":14,"text":"RECETA","textPreview":"RECETA","textChars":6,"textLines":1,"bbox":[532,226,250,24]}
+{"kind":"textbox","id":"sh/4jmhsje1","slide":14,"text":"Sustrato documentado","textPreview":"Sustrato documentado","textChars":20,"textLines":1,"bbox":[532,260,250,46]}
+{"kind":"shape","id":"sh/5kvilofm","slide":14,"bbox":[450,324,320,1]}
+{"kind":"textbox","id":"sh/utkzm9wz","slide":14,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[832,222,74,56]}
+{"kind":"textbox","id":"sh/vetgfuxk","slide":14,"text":"LOTES","textPreview":"LOTES","textChars":5,"textLines":1,"bbox":[914,226,250,24]}
+{"kind":"textbox","id":"sh/wfmhoze5","slide":14,"text":"Muestra comparable","textPreview":"Muestra comparable","textChars":18,"textLines":1,"bbox":[914,260,250,46]}
+{"kind":"shape","id":"sh/hgvyh4fq","slide":14,"bbox":[832,324,320,1]}
+{"kind":"textbox","id":"sh/mpkzipw3","slide":14,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[68,398,74,56]}
+{"kind":"textbox","id":"sh/7qtgbuxo","slide":14,"text":"CONTAMINACIÓN","textPreview":"CONTAMINACIÓN","textChars":13,"textLines":1,"bbox":[150,402,250,24]}
+{"kind":"textbox","id":"sh/bupwjqdg","slide":14,"text":"Bajo umbral acordado","textPreview":"Bajo umbral acordado","textChars":20,"textLines":1,"bbox":[150,436,250,46]}
+{"kind":"shape","id":"sh/atgvalcv","slide":14,"bbox":[68,500,320,1]}
+{"kind":"textbox","id":"sh/xwrel0v6","slide":14,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[450,398,74,56]}
+{"kind":"textbox","id":"sh/cvixcvul","slide":14,"text":"FRUCTIFICACIÓN","textPreview":"FRUCTIFICACIÓN","textChars":14,"textLines":1,"bbox":[532,402,250,24]}
+{"kind":"textbox","id":"sh/zy9wnadc","slide":14,"text":"Estabilidad repetible","textPreview":"Estabilidad repetible","textChars":21,"textLines":1,"bbox":[532,436,250,46]}
+{"kind":"shape","id":"sh/yx0fe5cr","slide":14,"bbox":[450,500,320,1]}
+{"kind":"textbox","id":"sh/lkrep0vi","slide":14,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[832,398,74,56]}
+{"kind":"textbox","id":"sh/kzixgvux","slide":14,"text":"VENTA","textPreview":"VENTA","textChars":5,"textLines":1,"bbox":[914,402,250,24]}
+{"kind":"textbox","id":"sh/f25wb6d8","slide":14,"text":"Prueba comercial y logística","textPreview":"Prueba comercial y logística","textChars":28,"textLines":1,"bbox":[914,436,250,46]}
+{"kind":"shape","id":"sh/e1wv21wn","slide":14,"bbox":[832,500,320,1]}
+{"kind":"shape","id":"sh/4valw369","slide":14,"bbox":[68,574,1144,66]}
+{"kind":"textbox","id":"sh/5wj2p87u","slide":14,"text":"El tamaño de muestra y los umbrales de éxito deben definirse con criterio experto, no por conveniencia.","textPreview":"El tamaño de muestra y los umbrales de éxito deben definirse con criterio experto, no por conveniencia.","textChars":103,"textLines":1,"bbox":[92,588,1096,38]}
+{"kind":"notes","id":"nt/aj83jz","slide":14,"text":""}
+{"kind":"slide","id":"sl/pifntd","slide":15,"title":"SETAS DE LA PEÑA · DECISIONES DE LA ASESORÍA","textShapes":15}
+{"kind":"textbox","id":"sh/rmh43epw","slide":15,"text":"SETAS DE LA PEÑA · DECISIONES DE LA ASESORÍA","textPreview":"SETAS DE LA PEÑA · DECISIONES DE LA ASESORÍA","textChars":44,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/cnalwz6h","slide":15,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/dojm5472","slide":15,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/2h83qpof","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/3ih4zup0","slide":15,"name":"slide-title","text":"La asesoría debe dejar cinco decisiones claras.","textPreview":"La asesoría debe dejar cinco decisiones claras.","textChars":47,"textLines":1,"bbox":[68,102,1125,76]}
+{"kind":"textbox","id":"sh/4jqlsz6l","slide":15,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[68,214,72,48]}
+{"kind":"textbox","id":"sh/pkzm1476","slide":15,"text":"¿Qué debe cambiar en el flujo físico propuesto?","textPreview":"¿Qué debe cambiar en el flujo físico propuesto?","textChars":47,"textLines":1,"bbox":[160,214,980,50]}
+{"kind":"shape","id":"sh/mds32toj","slide":15,"bbox":[160,274,980,1]}
+{"kind":"textbox","id":"sh/nel4by54","slide":15,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[68,292,72,48]}
+{"kind":"textbox","id":"sh/f290n658","slide":15,"text":"¿Cuál es la instalación mínima que debemos comisionar primero?","textPreview":"¿Cuál es la instalación mínima que debemos comisionar primero?","textChars":62,"textLines":1,"bbox":[160,292,980,50]}
+{"kind":"shape","id":"sh/e10je14n","slide":15,"bbox":[160,352,980,1]}
+{"kind":"textbox","id":"sh/14bipgne","slide":15,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[68,370,72,48]}
+{"kind":"textbox","id":"sh/03i1gbmt","slide":15,"text":"¿Shiitake debe seguir siendo la especie inicial?","textPreview":"¿Shiitake debe seguir siendo la especie inicial?","textChars":48,"textLines":1,"bbox":[160,370,980,50]}
+{"kind":"shape","id":"sh/n6t0r654","slide":15,"bbox":[160,430,980,1]}
+{"kind":"textbox","id":"sh/25kji14z","slide":15,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[68,448,72,48]}
+{"kind":"textbox","id":"sh/p8bitgna","slide":15,"text":"¿Qué métricas y umbrales definen un piloto exitoso?","textPreview":"¿Qué métricas y umbrales definen un piloto exitoso?","textChars":51,"textLines":1,"bbox":[160,448,980,50]}
+{"kind":"shape","id":"sh/o721kbmp","slide":15,"bbox":[160,508,980,1]}
+{"kind":"textbox","id":"sh/but0vq5g","slide":15,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[68,526,72,48]}
+{"kind":"textbox","id":"sh/a9kjml4v","slide":15,"text":"¿Qué prueba comercial debe ocurrir antes de ampliar capacidad?","textPreview":"¿Qué prueba comercial debe ocurrir antes de ampliar capacidad?","textChars":62,"textLines":1,"bbox":[160,526,980,50]}
+{"kind":"shape","id":"sh/618va9sf","slide":15,"bbox":[160,586,980,1]}
+{"kind":"textbox","id":"sh/72hc3et0","slide":15,"text":"SIGUIENTE PASO · CONVERTIR LAS RESPUESTAS EN UN PLAN DE VALIDACIÓN","textPreview":"SIGUIENTE PASO · CONVERTIR LAS RESPUESTAS EN UN PLAN DE VALIDACIÓN","textChars":66,"textLines":1,"bbox":[68,638,940,24]}
+{"kind":"notes","id":"nt/pifntd","slide":15,"text":""}
+{"kind":"slide","id":"sl/gw6p1s","slide":16,"title":"SETAS DE LA PEÑA · APÉNDICE · ESPECIES FUTURAS","textShapes":13}
+{"kind":"textbox","id":"sh/ep4vax43","slide":16,"text":"SETAS DE LA PEÑA · APÉNDICE · ESPECIES FUTURAS","textPreview":"SETAS DE LA PEÑA · APÉNDICE · ESPECIES FUTURAS","textChars":46,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/1cvu5c3u","slide":16,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/0bmdc7m9","slide":16,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/nexc7ml0","slide":16,"text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/mdoveh4f","slide":16,"name":"slide-title","text":"La diversificación viene después de validar el sistema base.","textPreview":"La diversificación viene después de validar el sistema base.","textChars":60,"textLines":1,"bbox":[68,98,1125,78]}
+{"kind":"textbox","id":"sh/of6dgrml","slide":16,"text":"HERICIUM ERINACEUS","textPreview":"HERICIUM ERINACEUS","textChars":18,"textLines":1,"bbox":[68,480,246,24]}
+{"kind":"textbox","id":"sh/bixcbmlw","slide":16,"text":"Melena de león","textPreview":"Melena de león","textChars":14,"textLines":1,"bbox":[68,514,246,38]}
+{"kind":"textbox","id":"sh/oj6tkzal","slide":16,"text":"GANODERMA LUCIDUM","textPreview":"GANODERMA LUCIDUM","textChars":17,"textLines":1,"bbox":[354,480,246,24]}
+{"kind":"textbox","id":"sh/pkfat4rq","slide":16,"text":"Reishi","textPreview":"Reishi","textChars":6,"textLines":1,"bbox":[354,514,246,38]}
+{"kind":"textbox","id":"sh/3ixsru90","slide":16,"text":"PLEUROTUS ERYNGII","textPreview":"PLEUROTUS ERYNGII","textChars":17,"textLines":1,"bbox":[640,480,246,24]}
+{"kind":"textbox","id":"sh/cnqtozah","slide":16,"text":"Seta de cardo","textPreview":"Seta de cardo","textChars":13,"textLines":1,"bbox":[640,514,246,38]}
+{"kind":"textbox","id":"sh/qlobm9sb","slide":16,"text":"PHOLIOTA MICROSPORA","textPreview":"PHOLIOTA MICROSPORA","textChars":19,"textLines":1,"bbox":[926,480,246,24]}
+{"kind":"textbox","id":"sh/bmhsve9w","slide":16,"text":"Nameko","textPreview":"Nameko","textChars":6,"textLines":1,"bbox":[926,514,246,38]}
+{"kind":"shape","id":"sh/0rqtsjat","slide":16,"bbox":[68,586,1144,52]}
+{"kind":"textbox","id":"sh/lszu1ory","slide":16,"text":"Portafolio futuro; ninguna especie adicional se presenta como compromiso operativo actual.","textPreview":"Portafolio futuro; ninguna especie adicional se presenta como compromiso operativo actual.","textChars":90,"textLines":1,"bbox":[90,596,1100,32]}
+{"kind":"image","id":"im/4f6t0jad","slide":16,"name":"","geometry":"roundRect","alt":"Lámina de Melena de león","bbox":[68,210,246,250]}
+{"kind":"image","id":"im/r2hcby94","slide":16,"name":"","geometry":"roundRect","alt":"Lámina de Reishi","bbox":[354,210,246,250]}
+{"kind":"image","id":"im/94f6d4zy","slide":16,"name":"","geometry":"roundRect","alt":"Lámina de Seta de cardo","bbox":[640,210,246,250]}
+{"kind":"image","id":"im/yd4nypgb","slide":16,"name":"","geometry":"roundRect","alt":"Lámina de Nameko","bbox":[926,210,246,250]}
+{"kind":"notes","id":"nt/gw6p1s","slide":16,"text":""}
+{"kind":"slide","id":"sl/c0hbg2","slide":17,"title":"SETAS DE LA PEÑA · APÉNDICE · ESTADO DETALLADO","textShapes":5}
+{"kind":"textbox","id":"sh/2pkne1w3","slide":17,"text":"SETAS DE LA PEÑA · APÉNDICE · ESTADO DETALLADO","textPreview":"SETAS DE LA PEÑA · APÉNDICE · ESTADO DETALLADO","textChars":46,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/psvm9gfu","slide":17,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/or25gbe9","slide":17,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/bud4b6xk","slide":17,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/at4nilwz","slide":17,"name":"slide-title","text":"Cada sistema avanza por estados distintos.","textPreview":"Cada sistema avanza por estados distintos.","textChars":42,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"textbox","id":"sh/cvm5kbe5","slide":17,"text":"FUENTE · PANORAMA GENERAL - SDLP · FIG. 07","textPreview":"FUENTE · PANORAMA GENERAL - SDLP · FIG. 07","textChars":42,"textLines":1,"bbox":[68,626,560,24]}
+{"kind":"image","id":"im/wfmt4bi1","slide":17,"name":"","geometry":"roundRect","alt":"Matriz de estado de sistemas del documento original","bbox":[68,184,1144,430]}
+{"kind":"notes","id":"nt/c0hbg2","slide":17,"text":""}
+{"kind":"slide","id":"sl/wr931x","slide":18,"title":"SETAS DE LA PEÑA · APÉNDICE · INCUBACIÓN","textShapes":5}
+{"kind":"textbox","id":"sh/ilsretob","slide":18,"text":"SETAS DE LA PEÑA · APÉNDICE · INCUBACIÓN","textPreview":"SETAS DE LA PEÑA · APÉNDICE · INCUBACIÓN","textChars":40,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/5o3a98n2","slide":18,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/4na9g36h","slide":18,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/vi1s3y50","slide":18,"text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/uxsratof","slide":18,"name":"slide-title","text":"Aún no hay un estándar de incubación.","textPreview":"Aún no hay un estándar de incubación.","textChars":37,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"shape","id":"sh/wja9c36l","slide":18,"bbox":[68,608,1144,36]}
+{"kind":"textbox","id":"sh/felsfi54","slide":18,"text":"Variables críticas: calentamiento · estabilidad · consumo · mantenimiento · condensación · puntos calientes","textPreview":"Variables críticas: calentamiento · estabilidad · consumo · mantenimiento · condensación · puntos calientes","textChars":107,"textLines":1,"bbox":[86,612,1108,28]}
+{"kind":"image","id":"im/sf29obal","slide":18,"name":"","geometry":"roundRect","alt":"Comparación entre baño María y calefacción radiante","bbox":[68,190,1144,402]}
+{"kind":"notes","id":"nt/wr931x","slide":18,"text":""}
+{"kind":"slide","id":"sl/r75ixv","slide":19,"title":"SETAS DE LA PEÑA · APÉNDICE · PLANO TÉCNICO","textShapes":8}
+{"kind":"textbox","id":"sh/bed4va1o","slide":19,"text":"SETAS DE LA PEÑA · APÉNDICE · PLANO TÉCNICO","textPreview":"SETAS DE LA PEÑA · APÉNDICE · PLANO TÉCNICO","textChars":43,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/cfm54fit","slide":19,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/x0vmxkje","slide":19,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/y14n6p0z","slide":19,"text":"19","textPreview":"19","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/z2d4zu1k","slide":19,"name":"slide-title","text":"El blueprint es una hipótesis, no una obra aprobada.","textPreview":"El blueprint es una hipótesis, no una obra aprobada.","textChars":52,"textLines":1,"bbox":[68,94,1125,70]}
+{"kind":"shape","id":"sh/l4vm1kjq","slide":19,"bbox":[68,178,98,462]}
+{"kind":"textbox","id":"sh/m54nap0b","slide":19,"text":"ESTADO","textPreview":"ESTADO","textChars":6,"textLines":1,"bbox":[76,202,82,24]}
+{"kind":"textbox","id":"sh/76x43u1w","slide":19,"text":"PROPUESTA","textPreview":"PROPUESTA","textChars":9,"textLines":1,"bbox":[76,262,82,30]}
+{"kind":"textbox","id":"sh/f65obilk","slide":19,"text":"REVISAR\nEN SITIO","textPreview":"REVISAR | EN SITIO","textChars":16,"textLines":2,"bbox":[76,306,82,70]}
+{"kind":"shape","id":"sh/u5wn2d4z","slide":19,"bbox":[86,400,62,1]}
+{"kind":"textbox","id":"sh/h876ds3q","slide":19,"text":"Alturas\nDrenajes\nCargas\nGas / agua\nFlujos\nEsclusa","textPreview":"Alturas | Drenajes | Cargas | Gas / agua | Flujos | Esclusa","textChars":49,"textLines":6,"bbox":[76,424,82,178]}
+{"kind":"image","id":"im/90n614na","slide":19,"name":"","geometry":"roundRect","alt":"Blueprint actualizado del centro de cultivo","bbox":[190,178,1022,462]}
+{"kind":"notes","id":"nt/r75ixv","slide":19,"text":""}
+{"kind":"slide","id":"sl/iiu2s9","slide":20,"title":"SETAS DE LA PEÑA · APÉNDICE · SETAS OS","textShapes":18}
+{"kind":"textbox","id":"sh/107e9kze","slide":20,"text":"SETAS DE LA PEÑA · APÉNDICE · SETAS OS","textPreview":"SETAS DE LA PEÑA · APÉNDICE · SETAS OS","textChars":38,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/exgfypg3","slide":20,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/fypw7uho","slide":20,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/onyx4zy5","slide":20,"text":"20","textPreview":"20","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/pored4zq","slide":20,"name":"slide-title","text":"Cada contenedor conserva su propia historia.","textPreview":"Cada contenedor conserva su propia historia.","textChars":44,"textLines":1,"bbox":[68,98,1125,70]}
+{"kind":"textbox","id":"sh/nmpwbuhk","slide":20,"text":"REGISTRO MÍNIMO","textPreview":"REGISTRO MÍNIMO","textChars":15,"textLines":1,"bbox":[832,210,300,24]}
+{"kind":"textbox","id":"sh/crix8zy1","slide":20,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[832,252,48,34]}
+{"kind":"textbox","id":"sh/xsryh4fm","slide":20,"text":"Contenedor","textPreview":"Contenedor","textChars":10,"textLines":1,"bbox":[890,252,280,34]}
+{"kind":"shape","id":"sh/x87ud8ne","slide":20,"bbox":[890,292,280,1]}
+{"kind":"textbox","id":"sh/w7ydk3mt","slide":20,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[832,306,48,34]}
+{"kind":"textbox","id":"sh/v6pcby58","slide":20,"text":"Fecha y autor","textPreview":"Fecha y autor","textChars":13,"textLines":1,"bbox":[890,306,280,34]}
+{"kind":"shape","id":"sh/a5gbit4n","slide":20,"bbox":[890,346,280,1]}
+{"kind":"textbox","id":"sh/5cruh8nq","slide":20,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[832,360,48,34]}
+{"kind":"textbox","id":"sh/kbido3m5","slide":20,"text":"Evento","textPreview":"Evento","textChars":6,"textLines":1,"bbox":[890,360,280,34]}
+{"kind":"shape","id":"sh/ja9cfi5k","slide":20,"bbox":[890,400,280,1]}
+{"kind":"textbox","id":"sh/i90vmd4z","slide":20,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[832,414,48,34]}
+{"kind":"textbox","id":"sh/lgnu5on6","slide":20,"text":"Condición","textPreview":"Condición","textChars":9,"textLines":1,"bbox":[890,414,280,34]}
+{"kind":"shape","id":"sh/0fetcjml","slide":20,"bbox":[890,454,280,1]}
+{"kind":"textbox","id":"sh/cjidsjuh","slide":20,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[832,468,48,34]}
+{"kind":"textbox","id":"sh/dkrulov2","slide":20,"text":"Resultado","textPreview":"Resultado","textChars":9,"textLines":1,"bbox":[890,468,280,34]}
+{"kind":"shape","id":"sh/qx0vq9cb","slide":20,"bbox":[890,508,280,1]}
+{"kind":"textbox","id":"sh/ry9cjedw","slide":20,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[832,522,48,34]}
+{"kind":"textbox","id":"sh/0n2dw3ut","slide":20,"text":"Enmienda, no borrado","textPreview":"Enmienda, no borrado","textChars":20,"textLines":1,"bbox":[890,522,280,34]}
+{"kind":"shape","id":"sh/1obupove","slide":20,"bbox":[890,562,280,1]}
+{"kind":"textbox","id":"sh/el0vutcn","slide":20,"text":"PANTALLAS DE DEMOSTRACIÓN · NO EVIDENCIA DE VALIDACIÓN PRODUCTIVA","textPreview":"PANTALLAS DE DEMOSTRACIÓN · NO EVIDENCIA DE VALIDACIÓN PRODUCTIVA","textChars":65,"textLines":1,"bbox":[68,624,920,24]}
+{"kind":"image","id":"im/fexor250","slide":20,"name":"","geometry":"roundRect","alt":"Capturas de interfaz de Field OS del documento original","bbox":[68,190,710,410]}
+{"kind":"notes","id":"nt/iiu2s9","slide":20,"text":""}
+{"kind":"slide","id":"sl/xe33wf","slide":21,"title":"SETAS DE LA PEÑA · APÉNDICE · FRENTES ABIERTOS","textShapes":5}
+{"kind":"textbox","id":"sh/29kf2hs7","slide":21,"text":"SETAS DE LA PEÑA · APÉNDICE · FRENTES ABIERTOS","textPreview":"SETAS DE LA PEÑA · APÉNDICE · FRENTES ABIERTOS","textChars":46,"textLines":1,"bbox":[68,28,560,24]}
+{"kind":"textbox","id":"sh/pcvexwry","slide":21,"text":"REV. JUL 2026","textPreview":"REV. JUL 2026","textChars":13,"textLines":1,"bbox":[1020,28,192,24]}
+{"kind":"shape","id":"sh/4bmx4rad","slide":21,"bbox":[68,60,1144,1]}
+{"kind":"textbox","id":"sh/redwz694","slide":21,"text":"21","textPreview":"21","textChars":2,"textLines":1,"bbox":[1132,680,80,24]}
+{"kind":"textbox","id":"sh/qd4f61sj","slide":21,"name":"slide-title","text":"Los frentes abiertos deben volverse compuertas verificables.","textPreview":"Los frentes abiertos deben volverse compuertas verificables.","textChars":60,"textLines":1,"bbox":[68,94,1125,70]}
+{"kind":"shape","id":"sh/cfmx8bap","slide":21,"bbox":[68,608,1144,38]}
+{"kind":"textbox","id":"sh/7i9wn2tk","slide":21,"text":"Infraestructura · especies · procesos · datos · producto y circulación","textPreview":"Infraestructura · especies · procesos · datos · producto y circulación","textChars":70,"textLines":1,"bbox":[86,614,1108,26]}
+{"kind":"image","id":"im/k3qh03ex","slide":21,"name":"","geometry":"roundRect","alt":"Tabla de frentes abiertos del documento original","bbox":[68,198,1144,390]}
+{"kind":"notes","id":"nt/xe33wf","slide":21,"text":""}
