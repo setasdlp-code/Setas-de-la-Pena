@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "field-os-simulador",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 4173,
+      "cwd": "field_os/20_product_design/PROTOTYPES/field-os-simulador-app"
+    }
+  ]
+}

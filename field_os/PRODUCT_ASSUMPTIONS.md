@@ -339,8 +339,8 @@ The consolidated ranking of what to validate first is in *Assumption Validation 
 **Confidence level:** Low.
 **How it can be validated:** Confirm staffing trajectory against production targets.
 **Consequences if false (stays single-user):** Multi-user concerns can be deferred — favourable. If growth is assumed away but occurs, capture design lacks needed multi-user handling.
-**Related ADRs:** ADR-0002.
-**Status:** Proposed.
+**Related ADRs:** ADR-0002, ADR-0004.
+**Status:** Proposed. *(Owner risk-acceptance note, 2026-07-27: ADR-0004 scoped in a presentation-only, client-side role-scoped module view ahead of this assumption reaching `Validated`. Status remains `Proposed` — this is a logged decision to proceed despite the open question, not a validation claim. No server-side authorization exists; see ADR-0004's required follow-up.)*
 **Owner:** Founder.
 **Origin:** Product Design.
 **Validation Method:** User interview / staffing trajectory review against production targets.
@@ -403,8 +403,8 @@ The consolidated ranking of what to validate first is in *Assumption Validation 
 **Confidence level:** Low.
 **How it can be validated:** Assess accuracy/coverage of the sensor set intended for reference.
 **Consequences if false:** Referenced sensor data misleads review; better to reference less until sensing matures.
-**Related ADRs:** ADR-0003.
-**Status:** Proposed.
+**Related ADRs:** ADR-0003, ADR-0004.
+**Status:** Proposed. *(Owner risk-acceptance note, 2026-07-27: ADR-0004 scoped in a climate-alert escalation surface (Monitoring / Climate Alert module, MODULE_MAP §4.5) ahead of this assumption reaching `Validated`. Status remains `Proposed` — this is a logged decision to proceed despite unvalidated sensor trust, not a validation claim. The escalation banner must not be treated as a validated safety signal until this resolves.)*
 **Owner:** Laboratory.
 **Origin:** Operational Experience.
 **Validation Method:** Laboratory experiment / field testing of sensor accuracy and coverage.

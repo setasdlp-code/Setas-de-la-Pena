@@ -3,8 +3,8 @@ title: SdP Field OS — Conceptual Data Model
 document_id: PDATA-001
 authority: product-architecture
 category: product-architecture
-version: 1.0
-last_reviewed: 2026-07-05
+version: 1.1
+last_reviewed: 2026-07-27
 status: active
 governed_by:
   - PRODUCT_CANON.md
@@ -12,11 +12,15 @@ governed_by:
   - ADR-0001_Central_Operational_Unit.md
   - ADR-0002_Product_Priority.md
   - ADR-0003_System_Boundary.md
+  - ADR-0004_V1_Scope_Expansion.md
   - PRODUCT_ASSUMPTIONS.md
 references:
   - ../knowledge_base/00_project/IDENTIFIER_STANDARD.md
 supersedes: null
 superseded_by: null
+amendment_log:
+  - "v1.0 → v1.1 (2026-07-27): added §2.15 Media Evidence, §2.16 Chamber Climate Alert, §2.17 Inventory Item; extended §2.6 Operator with a Role concept — all per ADR-0004. IN-3 and GR-2 remain Proposed; see each new entity's caveat."
+  - "v1.1 (2026-07-27, same day): §2.17 Inventory Item updated — /api/inventory shipped as a real store (server/inventory-store.mjs), replacing the initial mock. Caveat updated accordingly: the store is real, but stock quantities are operator-entered and unaudited (no history of changes)."
 ---
 
 # DATA_MODEL — SdP Field OS
@@ -107,10 +111,11 @@ Entities are grouped by ownership: **Owned** (Field OS is the authority), **Refe
 
 #### 2.6 Operator (attribution)
 - **Purpose.** The actor to whom recorded events are attributed and who interprets and decides; the primary decision-maker the system supports but never replaces. *(PC-12; ARCHITECTURE §2.6; IDENTIFIER_STANDARD §9.3 operator attribution.)*
-- **Identity.** A persistent attribution identity used to sign events. This document models the Operator only as *authorship and accountability*; a roles/permissions/concurrency model is **not** defined here because single-user (US-1, US-3) and multi-user (GR-2) are `Proposed`.
+- **Identity.** A persistent attribution identity used to sign events. This document models the Operator only as *authorship and accountability*; a **server-enforced** roles/permissions/concurrency model is **not** defined here because single-user (US-1, US-3) and multi-user (GR-2) are `Proposed`.
 - **Owner.** Field OS owns the attribution; the human is not a Field OS object.
 - **Lifecycle / Persistence.** The attribution persists, immutable, with each event it signed.
 - **Relationships.** Author of Events and Observations; the party Evidence and Knowledge serve.
+- **Role (added 2026-07-27, ADR-0004).** A label an Operator selects (e.g. operator/revisor/gerencia) that scopes which modules are presented. **This is presentation-only** — it changes what a client renders, not what an actor is authorized to do; there is no server-side check tying a Role to write or read permission on any entity in this catalog. `GR-2` remains `Proposed`, Low confidence. Modeling a real authorization concept (an enforced permission boundary per Role) is deferred until `GR-2` is validated or the owner risk-acceptance in ADR-0004 is revisited.
 
 ### B. Referenced entities *(read-only pointers; authority is external — DM-6, PC-08, ADR-0003)*
 
@@ -163,6 +168,34 @@ Implies procedure enforcement, explicitly deferred (ADR-0002). Reserved so it ca
 
 #### 2.14 AI Review / Interpretation artifact *(deferred)*
 An interpretation produced by *reading* the record (repository maturation path: record → daily AI review → lesson). Interpretation follows evidence and never precedes or rewrites it (PC-09, PC-03). Largely deferred (AI-1, AI-2 `Proposed`); its output may re-enter as new evidence, but the interpretation layer is downstream and owns nothing in the record.
+
+### D. Owned entities added 2026-07-27 (ADR-0004) *(each carries an explicit caveat — see below)*
+
+#### 2.15 Media Evidence
+- **Purpose.** An optional photo attached to an Observation or quick Event, strengthening the remote reviewer's faithful sight of conditions. *(CANON P-08; extends WF-3, does not introduce a new workflow. ADR-0004.)*
+- **Identity.** A server-assigned opaque reference (never a client-supplied name, never inline base64) held on the Event it is attached to.
+- **Owner.** Field OS.
+- **Lifecycle.** Captured at the same moment as its parent Event; immutable and permanent thereafter — it does not have its own lifecycle independent of the Event it evidences.
+- **Persistence.** Permanent, alongside its parent Event.
+- **Relationships.** Attached to exactly one Observation or quick Event; never a standalone record.
+
+#### 2.16 Chamber Climate Alert
+- **Purpose.** A record that Field OS has detected an unresolved climate deviation in a Room/Zone and, past a fixed window, escalated it. *(ADR-0004, reopening the "monitor" option ADR-0002 named but deferred.)*
+- **Identity.** Keyed to the Room/Zone it concerns, with a `since` timestamp marking when the deviation was first detected.
+- **Owner.** Field OS owns the alert/escalation record itself. **It does not own the sensor data behind it** — that remains a Sensor Reading (§2.8), external, with trustworthiness `IN-3` still `Proposed`, Low confidence.
+- **Lifecycle.** Opens when a deviation is detected; escalates automatically after a fixed unresolved window; closes when the underlying condition is read as resolved. Not append-only in the same sense as an Operational Event — it reflects current derived monitoring state, not a historical fact being recorded.
+- **Persistence.** Current-state, not permanent history in the ledger sense; a resolved alert is not retained as a standing record the way a Harvest or Observation is.
+- **Relationships.** References a Room/Zone (§2.9); reads Sensor Reading (§2.8) as its evidentiary basis.
+- **Caveat.** This entity must not be presented or relied on as a validated safety signal. The underlying `IN-3` assumption is unvalidated; this is a logged risk acceptance (ADR-0004), not a claim that chamber sensing is trustworthy.
+
+#### 2.17 Inventory Item
+- **Purpose.** A record of a stocked input (e.g. substrate ingredient) and whether it is at or below a minimum, surfaced as a low-stock signal on Inicio. *(ADR-0004; a first, narrow slice of Bodega, not the full inventory/procurement domain.)*
+- **Identity.** A lot/batch identifier for the stocked insumo (distinct from a Container's identity — an Inventory Item is a supply object, not a cultivation object).
+- **Owner.** Field OS. Backed by a real store (`server/inventory-store.mjs`, `/api/inventory`) as of 2026-07-27 — no longer a mock. `status` (`OK`/`Reponer`) is always server-derived from `cantidad` vs `minimo`, never a client-settable value.
+- **Lifecycle.** Reflects current stock status; **overwritten in place** on each update (unlike an Operational Event, this is not an append-only history — there is no record of prior quantities, who changed them, or when).
+- **Persistence.** Current-state only.
+- **Relationships.** Referenced by Inicio's low-stock banner and the Inventario screen; not otherwise connected to Container, Batch, or Event.
+- **Caveat.** The *data source* is real, but the underlying quantities are operator-entered and unaudited — there is no ledger-style history of stock changes, and no reconciliation against actual purchases/consumption. Treat displayed quantities as only as accurate as the last manual entry.
 
 ---
 
@@ -310,13 +343,17 @@ For each entity: supporting Canon principle(s), ADR(s), PRODUCT_ARCHITECTURE sec
 | Relationships (first-class) | PC-01, PC-02, PC-11 | ADR-0001, ADR-0003 | §3 | `MODULE_MAP`, `TECHNICAL_ARCHITECTURE` |
 | State (derived) | PC-11 | ADR-0002 | §1, §5.3, INV-4 | `TECHNICAL_ARCHITECTURE` |
 | Deferred concepts (Task, AI Review) | PC-04 | ADR-0002 | §2.11, §5.6, INV-8 | `ROADMAP`, `MODULE_MAP` |
+| Media Evidence *(added 2026-07-27)* | PC-08 (evidence, CANON P-08) | ADR-0004 | §2.4 (extends Observation) | `MODULE_MAP`, `TECHNICAL_ARCHITECTURE` |
+| Chamber Climate Alert *(added 2026-07-27; IN-3 `Proposed`)* | — (no Canon principle claims sensor trust) | ADR-0004 (reopens ADR-0002's deferred "monitor" option); ADR-0003 (reads, never commands) | §2.9 (extends Sensor Reading context) | `MODULE_MAP`, `TECHNICAL_ARCHITECTURE` |
+| Operator Role *(added 2026-07-27; GR-2 `Proposed`, presentation-only)* | PC-12 (operator remains decision-maker; a Role does not change that) | ADR-0004 | §2.6 (extends Operator) | `MODULE_MAP`, `TECHNICAL_ARCHITECTURE` |
+| Inventory Item *(added 2026-07-27; real store, unaudited quantities)* | — (visibility surface, no principle claims data quality) | ADR-0004 | none yet (new surface) | `MODULE_MAP` |
 
 ---
 
-*Document version: 1.0*
-*Effective date: 2026-07-05*
+*Document version: 1.1*
+*Effective date: 2026-07-27 (supersedes v1.0 of 2026-07-05)*
 *Authority: Field OS product architecture (information model)*
-*Governed by: PRODUCT_CANON.md, PRODUCT_ARCHITECTURE.md, ADR-0001, ADR-0002, ADR-0003, PRODUCT_ASSUMPTIONS.md*
+*Governed by: PRODUCT_CANON.md, PRODUCT_ARCHITECTURE.md, ADR-0001, ADR-0002, ADR-0003, ADR-0004, PRODUCT_ASSUMPTIONS.md*
 *References: knowledge_base/00_project/IDENTIFIER_STANDARD.md*
-*Derived only from approved governance. Defines conceptual product entities, not database entities. Introduces no new entity, principle, or decision.*
+*Derived only from approved governance. Defines conceptual product entities, not database entities. §§2.15–2.17 and the Role extension to §2.6 are new entities introduced by ADR-0004 (2026-07-27), each carrying its own caveat; every other entity is unchanged from v1.0 and introduces no new principle or decision beyond ADR-0004 itself.*
 *Valid independent of any language, framework, database, interface, or deployment model.*
