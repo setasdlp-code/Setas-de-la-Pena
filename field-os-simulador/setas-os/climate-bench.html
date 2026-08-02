@@ -264,9 +264,34 @@
     .log-row { display: grid; grid-template-columns: 70px 68px minmax(0,1fr); gap: 9px; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 11px; line-height: 1.35; }
     .log-time { color: var(--muted); font-family: var(--font-mono), ui-monospace, monospace; }
     .log-type { font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
-    .log-type.alert { color: var(--critical); }
-    .log-type.action { color: var(--olive); }
+    .log-type.alert, .log-type.critico { color: var(--critical); }
+    .log-type.action, .log-type.accion, .log-type.resuelto { color: var(--olive); }
+    .log-type.aviso { color: var(--olive); }
+    .log-type.alarma { color: var(--warn); }
     .empty-log { padding: 20px 0; color: var(--muted); font-size: 11px; }
+
+    .incident-panel { padding: 17px; margin-bottom: 16px; }
+    .incident-list { max-height: 340px; overflow: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .incident-row { border: 1px solid var(--line); border-left: 4px solid var(--olive); border-radius: 6px; padding: 10px 12px; font-size: 11px; }
+    .incident-row.tier-aviso { border-left-color: var(--olive); }
+    .incident-row.tier-alarma { border-left-color: var(--warn); }
+    .incident-row.tier-critico { border-left-color: var(--critical); background: color-mix(in oklab, var(--critical) 6%, transparent); }
+    .incident-row.closed { opacity: .6; }
+    .incident-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .incident-tier { font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; }
+    .incident-tier.tier-aviso { color: var(--olive); background: color-mix(in oklab, var(--olive) 14%, transparent); }
+    .incident-tier.tier-alarma { color: var(--warn); background: color-mix(in oklab, var(--warn) 14%, transparent); }
+    .incident-tier.tier-critico { color: var(--critical); background: color-mix(in oklab, var(--critical) 14%, transparent); }
+    .incident-metric { font-weight: 700; }
+    .incident-time { margin-left: auto; color: var(--muted); font-family: var(--font-mono), ui-monospace, monospace; }
+    .incident-detail { margin-top: 5px; color: var(--ink-1); }
+    .incident-rule { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .incident-meta { margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 10px; }
+    .incident-actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .incident-btn { font-size: 10px; font-weight: 700; padding: 5px 9px; border-radius: 5px; border: 1px solid var(--line); background: var(--paper-0); cursor: pointer; }
+    .incident-btn:hover:not(:disabled) { border-color: var(--olive); }
+    .incident-btn:disabled { opacity: .45; cursor: default; }
+    .incident-btn.danger:hover:not(:disabled) { border-color: var(--critical); color: var(--critical); }
 
     .control-row { display: flex; flex-wrap: wrap; gap: 7px; }
     .control-button {
@@ -304,6 +329,11 @@
       .sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
       .sidebar .rule { display: none; }
       .sidebar-note { grid-column: 1 / -1; }
+      .sidebar > section { grid-column: 1 / -1; }
+      .profile-section { display: flex; align-items: center; gap: 12px; }
+      .profile-section .section-title { flex: none; margin: 0; }
+      .profile-section label { display: none; }
+      .profile-section select { margin: 0; width: auto; flex: 1; max-width: 240px; }
     }
 
     @media (max-width: 780px) {
@@ -346,14 +376,7 @@
 
     <main class="layout">
       <aside class="panel sidebar">
-        <section>
-          <h2 class="section-title">Cámaras virtuales <span class="micro-tag" id="chamberCount">02 activas</span></h2>
-          <div class="chamber-list" id="chamberList"></div>
-        </section>
-
-        <div class="rule"></div>
-
-        <section>
+        <section class="profile-section">
           <h2 class="section-title">Perfil de prueba</h2>
           <label for="phaseSelect">Fase simulada</label>
           <select id="phaseSelect">
@@ -361,6 +384,13 @@
             <option value="fruiting" selected>Fructificación</option>
             <option value="rest">Reposo entre ciclos</option>
           </select>
+        </section>
+
+        <div class="rule"></div>
+
+        <section>
+          <h2 class="section-title">Cámaras virtuales <span class="micro-tag" id="chamberCount">02 activas</span></h2>
+          <div class="chamber-list" id="chamberList"></div>
         </section>
 
         <div class="rule"></div>
@@ -424,6 +454,17 @@
           </section>
         </div>
 
+        <section class="panel incident-panel">
+          <div class="chart-head">
+            <div>
+              <p class="eyebrow">Gestión de incidencias</p>
+              <h2 class="chart-title">Aviso · Alarma · Crítico</h2>
+            </div>
+            <span class="micro-tag" id="incidentCount">0 ABIERTAS</span>
+          </div>
+          <div class="incident-list" id="incidentList"></div>
+        </section>
+
         <div class="lower-grid">
           <section class="panel log-panel">
             <div class="chart-head">
@@ -449,7 +490,7 @@
             </div>
             <div class="run-summary">
               <div class="summary-item"><span>Tiempo simulado</span><strong id="elapsedValue">0 h</strong></div>
-              <div class="summary-item"><span>Alertas</span><strong id="alertValue">0</strong></div>
+              <div class="summary-item"><span>Incidencias abiertas</span><strong id="alertValue">0</strong></div>
             </div>
           </section>
         </div>
@@ -499,6 +540,7 @@
         actuators: { heater: 8, humidifier: 22, circulation: 35, exhaust: 18 },
         history: [],
         logs: [],
+        incidents: [],
         lastDecision: "Sistema estable · ninguna intervención prioritaria."
       });
 
@@ -509,7 +551,9 @@
         speed: 1,
         minutes: 0,
         alerts: 0,
-        eventSerial: 0
+        eventSerial: 0,
+        incidentSerial: 0,
+        incidentRevision: 0
       };
 
       const $ = (id) => document.getElementById(id);
@@ -538,7 +582,10 @@
         const item = { id: state.eventSerial, minute: state.minutes, type, message };
         chamber.logs.unshift(item);
         chamber.logs = chamber.logs.slice(0, 80);
-        if (type === "alert") state.alerts += 1;
+      }
+
+      function openIncidentsCount() {
+        return state.chambers.reduce((sum, c) => sum + c.incidents.filter(i => !i.closedAt).length, 0);
       }
 
       function seedStartupLog() {
@@ -557,6 +604,156 @@
         const h = Math.floor(totalMinutes / 60);
         const m = totalMinutes % 60;
         return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      }
+
+      // ── Semántica de alertas: aviso / alarma / crítico ──────────────────
+      // Cada regla es explícita y visible en la UI (rule) junto al valor medido (detail).
+      const SEVERITY_ORDER = { aviso: 1, alarma: 2, critico: 3 };
+      const SEVERITY_LABEL = { aviso: "Aviso", alarma: "Alarma", critico: "Crítico" };
+
+      function classify(metric, chamber, profile) {
+        if (metric === "temp") {
+          const [lo, hi] = profile.temp;
+          const dev = Math.max(lo - chamber.temp, chamber.temp - hi);
+          if (dev <= 0) return null;
+          const tier = dev > 4 ? "critico" : dev > 2.5 ? "alarma" : "aviso";
+          return {
+            tier,
+            rule: `Temperatura fuera de ${lo}–${hi} °C · aviso >0, alarma >2.5, crítico >4 °C de desvío`,
+            detail: `Temperatura ${chamber.temp.toFixed(1)} °C · objetivo ${lo}–${hi} °C`
+          };
+        }
+        if (metric === "hum") {
+          const [lo, hi] = profile.hum;
+          const dev = Math.max(lo - chamber.hum, chamber.hum - hi);
+          if (dev <= 0) return null;
+          const tier = dev > 15 ? "critico" : dev > 8 ? "alarma" : "aviso";
+          return {
+            tier,
+            rule: `Humedad fuera de ${lo}–${hi} % · aviso >0, alarma >8, crítico >15 pp de desvío`,
+            detail: `Humedad ${Math.round(chamber.hum)} % · objetivo ${lo}–${hi} %`
+          };
+        }
+        if (metric === "co2") {
+          const dev = chamber.co2 - profile.co2;
+          if (dev <= 0) return null;
+          const tier = dev > 900 ? "critico" : dev > 400 ? "alarma" : "aviso";
+          return {
+            tier,
+            rule: `CO₂ sobre el umbral ${profile.co2.toLocaleString("es-CO")} ppm · aviso >0, alarma >400, crítico >900 ppm por encima`,
+            detail: `CO₂ ${Math.round(chamber.co2).toLocaleString("es-CO")} ppm · umbral ${profile.co2.toLocaleString("es-CO")} ppm`
+          };
+        }
+        return null;
+      }
+
+      const METRIC_LABEL = { temp: "Temperatura", hum: "Humedad", co2: "CO₂" };
+
+      function findOpenIncident(chamber, metric) {
+        return chamber.incidents.find(i => i.metric === metric && !i.closedAt);
+      }
+
+      // Único punto de búsqueda contenedor+incidencia para las acciones manuales
+      // (reconocer/asignar/silenciar/cerrar) — evita repetir el mismo par de .find().
+      function findIncident(chamberId, incidentId) {
+        const chamber = state.chambers.find(c => c.id === chamberId);
+        const incident = chamber && chamber.incidents.find(i => i.id === incidentId);
+        return { chamber, incident };
+      }
+
+      function isSilenced(incident) {
+        return incident.silencedUntil != null && state.minutes < incident.silencedUntil;
+      }
+
+      function notifyParent(chamber, verdict) {
+        try {
+          window.parent && window.parent !== window && window.parent.postMessage({
+            source: "climate-bench", kind: "climate-alert",
+            chamber: chamber.name, phase: phases[chamber.phase].name, metric: METRIC_LABEL[verdict.metric] || "clima", detail: verdict.detail,
+            at: formatTime(state.minutes)
+          }, "*");
+        } catch (e) {}
+      }
+
+      // Abre / actualiza / cierra la incidencia de un contenedor+métrica. Deduplica: mientras
+      // la condición persista se actualiza la MISMA incidencia (lastSeenAt) en vez de crear
+      // una fila de registro por cada tick — solo se registra al abrir, escalar o resolver.
+      function upsertIncident(chamber, metric, verdict) {
+        const existing = findOpenIncident(chamber, metric);
+        if (!verdict) {
+          if (existing) closeIncident(chamber, existing, true);
+          return;
+        }
+        if (!existing) {
+          const incident = {
+            id: "INC_" + (++state.incidentSerial),
+            metric, tier: verdict.tier, rule: verdict.rule, detail: verdict.detail,
+            openedAt: state.minutes, lastSeenAt: state.minutes,
+            ackedAt: null, ackedBy: null, assignedTo: null,
+            silencedUntil: null, closedAt: null, autoResolved: false
+          };
+          chamber.incidents.unshift(incident);
+          state.alerts += 1;
+          state.incidentRevision += 1;
+          addLog(chamber, verdict.tier, `${SEVERITY_LABEL[verdict.tier]} · ${METRIC_LABEL[metric]} · ${verdict.detail}`);
+          if (verdict.tier === "critico") notifyParent(chamber, { ...verdict, metric });
+          return;
+        }
+        existing.lastSeenAt = state.minutes;
+        existing.detail = verdict.detail;
+        if (SEVERITY_ORDER[verdict.tier] > SEVERITY_ORDER[existing.tier]) {
+          const prevTier = existing.tier;
+          existing.tier = verdict.tier;
+          existing.rule = verdict.rule;
+          state.incidentRevision += 1;
+          if (!isSilenced(existing)) addLog(chamber, verdict.tier, `Escalada ${SEVERITY_LABEL[prevTier]} → ${SEVERITY_LABEL[verdict.tier]} · ${METRIC_LABEL[metric]} · ${verdict.detail}`);
+          if (verdict.tier === "critico") notifyParent(chamber, { ...verdict, metric });
+        }
+      }
+
+      function closeIncident(chamber, incident, autoResolved) {
+        incident.closedAt = state.minutes;
+        incident.autoResolved = !!autoResolved;
+        state.incidentRevision += 1;
+        const mins = incident.closedAt - incident.openedAt;
+        addLog(chamber, "resuelto", `${SEVERITY_LABEL[incident.tier]} resuelta · ${METRIC_LABEL[incident.metric]} normalizado tras ${mins} min` + (autoResolved ? "" : " · cerrada manualmente"));
+      }
+
+      function ackIncident(chamberId, incidentId) {
+        const { chamber, incident } = findIncident(chamberId, incidentId);
+        if (!incident || incident.ackedAt) return;
+        incident.ackedAt = state.minutes;
+        incident.ackedBy = "Operador";
+        state.incidentRevision += 1;
+        addLog(chamber, "accion", `Reconocida · ${METRIC_LABEL[incident.metric]} (${SEVERITY_LABEL[incident.tier]}) · tiempo de respuesta ${incident.ackedAt - incident.openedAt} min`);
+        render();
+      }
+
+      function assignIncident(chamberId, incidentId) {
+        const { chamber, incident } = findIncident(chamberId, incidentId);
+        if (!incident) return;
+        const who = window.prompt("Asignar incidencia a:", incident.assignedTo || "");
+        if (who == null || !who.trim()) return;
+        incident.assignedTo = who.trim();
+        state.incidentRevision += 1;
+        addLog(chamber, "accion", `Asignada a ${incident.assignedTo} · ${METRIC_LABEL[incident.metric]} (${SEVERITY_LABEL[incident.tier]})`);
+        render();
+      }
+
+      function silenceIncident(chamberId, incidentId) {
+        const { chamber, incident } = findIncident(chamberId, incidentId);
+        if (!incident) return;
+        incident.silencedUntil = state.minutes + 30;
+        state.incidentRevision += 1;
+        addLog(chamber, "accion", `Silenciada 30 min · ${METRIC_LABEL[incident.metric]} (${SEVERITY_LABEL[incident.tier]})`);
+        render();
+      }
+
+      function closeIncidentManual(chamberId, incidentId) {
+        const { chamber, incident } = findIncident(chamberId, incidentId);
+        if (!incident || incident.closedAt) return;
+        closeIncident(chamber, incident, false);
+        render();
       }
 
       function simulateChamber(chamber, stepMinutes) {
@@ -590,38 +787,18 @@
         chamber.co2 = clamp(chamber.co2, 380, 4200);
 
         const decisions = [];
-        let severity = "action";
         if (chamber.temp < profile.temp[0] - 1) decisions.push(`Aumentar calefacción a ${Math.round(chamber.actuators.heater)}%`);
         if (chamber.temp > profile.temp[1] + 1) decisions.push("Reducir aporte térmico y renovar aire");
         if (chamber.hum < profile.hum[0] - 4) decisions.push(effect.humidifierFailure ? "Reponer agua antes de reactivar humidificación" : `Aumentar humidificación a ${Math.round(chamber.actuators.humidifier)}%`);
         if (chamber.hum > profile.hum[1] + 4) decisions.push("Aumentar circulación para reducir condensación");
         if (chamber.co2 > profile.co2) decisions.push(`Aumentar FAE a ${Math.round(chamber.actuators.exhaust)}%`);
-
-        const critical = chamber.temp < profile.temp[0] - 4 || chamber.temp > profile.temp[1] + 4 || chamber.hum < profile.hum[0] - 15 || chamber.co2 > profile.co2 + 900;
-        if (critical) severity = "alert";
-
         chamber.lastDecision = decisions.length ? decisions.join(" · ") : "Sistema estable · ninguna intervención prioritaria.";
 
-        if (decisions.length && (state.eventSerial % 4 === 0 || critical)) {
-          addLog(chamber, severity, chamber.lastDecision);
-        }
-
-        // Rising-edge climate deviation → anchor to the OS ledger (close the loop)
-        if (critical && !chamber.wasCritical) {
-          let metric = "clima", detail = "";
-          if (chamber.temp < profile.temp[0] - 4) { metric = "temperatura"; detail = `Temperatura ${chamber.temp.toFixed(1)} °C · objetivo ${profile.temp[0]}–${profile.temp[1]} °C`; }
-          else if (chamber.temp > profile.temp[1] + 4) { metric = "temperatura"; detail = `Temperatura ${chamber.temp.toFixed(1)} °C · objetivo ${profile.temp[0]}–${profile.temp[1]} °C`; }
-          else if (chamber.hum < profile.hum[0] - 15) { metric = "humedad"; detail = `Humedad ${Math.round(chamber.hum)} % · objetivo ${profile.hum[0]}–${profile.hum[1]} %`; }
-          else if (chamber.co2 > profile.co2 + 900) { metric = "CO₂"; detail = `CO₂ ${Math.round(chamber.co2).toLocaleString("es-CO")} ppm · umbral ${profile.co2.toLocaleString("es-CO")} ppm`; }
-          try {
-            window.parent && window.parent !== window && window.parent.postMessage({
-              source: "climate-bench", kind: "climate-alert",
-              chamber: chamber.name, phase: profile.name, metric, detail,
-              at: formatTime(state.minutes)
-            }, "*");
-          } catch (e) {}
-        }
-        chamber.wasCritical = critical;
+        // Incidencias con severidad explícita (aviso/alarma/crítico), deduplicadas por métrica:
+        // mientras la desviación persista se actualiza la misma incidencia en vez de repetir el registro.
+        upsertIncident(chamber, "temp", classify("temp", chamber, profile));
+        upsertIncident(chamber, "hum", classify("hum", chamber, profile));
+        upsertIncident(chamber, "co2", classify("co2", chamber, profile));
 
         chamber.history.push({ minute: state.minutes, temp: chamber.temp, hum: chamber.hum, co2: chamber.co2 });
         chamber.history = chamber.history.slice(-110);
@@ -740,6 +917,12 @@
 
       // Only rebuild the log list when its contents actually change (preserves scroll position)
       let logSignature = "";
+      let incidentSignature = "";
+      const LOG_TYPE_LABEL = {
+        info: "Estado", action: "Acción", accion: "Acción",
+        aviso: "Aviso", alarma: "Alarma", critico: "Crítico", resuelto: "Resuelta"
+      };
+
       function renderLogs() {
         const logs = active().logs;
         const sig = state.activeId + "|" + logs.length + "|" + (logs[0] ? logs[0].id : 0);
@@ -749,10 +932,45 @@
         $("logList").innerHTML = logs.length ? logs.map(log => `
           <div class="log-row">
             <span class="log-time">${shortTime(log.minute)}</span>
-            <span class="log-type ${log.type}">${log.type === "alert" ? "Alerta" : log.type === "action" ? "Acción" : "Estado"}</span>
+            <span class="log-type ${log.type}">${LOG_TYPE_LABEL[log.type] || "Estado"}</span>
             <span>${log.message}</span>
           </div>
         `).join("") : `<div class="empty-log">Activa un escenario para iniciar el registro de decisiones.</div>`;
+      }
+
+      function renderIncidents() {
+        const chamber = active();
+        const open = chamber.incidents.filter(i => !i.closedAt);
+        const closed = chamber.incidents.filter(i => i.closedAt).slice(0, 5);
+        const sig = state.activeId + "|" + chamber.incidents.length + "|" + state.incidentRevision;
+        if (sig === incidentSignature) return;
+        incidentSignature = sig;
+        $("incidentCount").textContent = `${open.length} ${open.length === 1 ? "ABIERTA" : "ABIERTAS"}`;
+        const row = (i, isOpen) => `
+          <div class="incident-row tier-${i.tier}${isOpen ? "" : " closed"}">
+            <div class="incident-head">
+              <span class="incident-tier tier-${i.tier}">${SEVERITY_LABEL[i.tier]}</span>
+              <span class="incident-metric">${METRIC_LABEL[i.metric]}</span>
+              <span class="incident-time">${isOpen ? `abierta ${shortTime(i.openedAt)} · ${state.minutes - i.openedAt} min` : `resuelta en ${i.closedAt - i.openedAt} min${i.autoResolved ? "" : " · manual"}`}</span>
+            </div>
+            <div class="incident-detail">${i.detail}</div>
+            <div class="incident-rule">${i.rule}</div>
+            ${isOpen ? `
+            <div class="incident-meta">
+              ${i.ackedAt != null ? `<span>Reconocida · resp. ${i.ackedAt - i.openedAt} min</span>` : ""}
+              ${i.assignedTo ? `<span>Asignada a ${i.assignedTo}</span>` : ""}
+              ${isSilenced(i) ? `<span>Silenciada ${i.silencedUntil - state.minutes} min más</span>` : ""}
+            </div>
+            <div class="incident-actions">
+              <button class="incident-btn" data-act="ack" data-chamber="${chamber.id}" data-incident="${i.id}" ${i.ackedAt != null ? "disabled" : ""}>Reconocer</button>
+              <button class="incident-btn" data-act="assign" data-chamber="${chamber.id}" data-incident="${i.id}">Asignar</button>
+              <button class="incident-btn" data-act="silence" data-chamber="${chamber.id}" data-incident="${i.id}" ${isSilenced(i) ? "disabled" : ""}>Silenciar 30 min</button>
+              <button class="incident-btn danger" data-act="close" data-chamber="${chamber.id}" data-incident="${i.id}">Cerrar</button>
+            </div>` : ""}
+          </div>`;
+        const openHtml = open.map(i => row(i, true)).join("");
+        const closedHtml = closed.map(i => row(i, false)).join("");
+        $("incidentList").innerHTML = (openHtml + closedHtml) || `<div class="empty-log">Sin incidencias — todas las lecturas dentro de rango.</div>`;
       }
 
       function drawChart() {
@@ -838,7 +1056,7 @@
         $("pauseButton").textContent = state.running ? "Pausar" : "Continuar";
         $("simClock").textContent = formatTime(state.minutes);
         $("elapsedValue").textContent = state.minutes < 60 ? `${state.minutes} min` : `${(state.minutes / 60).toFixed(1)} h`;
-        $("alertValue").textContent = state.alerts;
+        $("alertValue").textContent = openIncidentsCount();
       }
 
       // Rebuild lists + (re)bind listeners. Called on init, selection change, reset — NOT every tick.
@@ -847,6 +1065,7 @@
         buildScenarios();
         buildActuators();
         logSignature = "";
+        incidentSignature = "";
         render();
       }
 
@@ -857,6 +1076,7 @@
         renderMetrics();
         updateActuators();
         renderLogs();
+        renderIncidents();
         renderRunState();
         drawChart();
       }
@@ -865,6 +1085,8 @@
         state.minutes = 0;
         state.alerts = 0;
         state.eventSerial = 0;
+        state.incidentSerial = 0;
+        state.incidentRevision = 0;
         state.running = true;
         state.speed = 1;
         state.chambers = [makeChamber("c1", "Cámara 01", 0), makeChamber("c2", "Cámara 02", .6)];
@@ -906,6 +1128,16 @@
       $("pauseButton").addEventListener("click", () => {
         state.running = !state.running;
         renderRunState();
+      });
+
+      $("incidentList").addEventListener("click", event => {
+        const button = event.target.closest(".incident-btn");
+        if (!button) return;
+        const { act, chamber, incident } = button.dataset;
+        if (act === "ack") ackIncident(chamber, incident);
+        else if (act === "assign") assignIncident(chamber, incident);
+        else if (act === "silence") silenceIncident(chamber, incident);
+        else if (act === "close") closeIncidentManual(chamber, incident);
       });
 
       document.querySelectorAll(".speed").forEach(button => {

@@ -100,7 +100,7 @@
   function placeData(m,codewords){ var n=m.length; var bitIdx=0;
     var bits=[]; for(var i=0;i<codewords.length;i++) for(var b=7;b>=0;b--) bits.push((codewords[i]>>b)&1);
     var upward=true;
-    for(var col=n-1; col>0; col-=2){ if(col===6) col--;
+    for(var col=n-1; col>0; col-=2){ if(col===6) col--; 
       for(var t=0;t<n;t++){ var row=upward?(n-1-t):t;
         for(var dc=0;dc<2;dc++){ var cc=col-dc;
           if(m[row][cc]===null){ var bit=bitIdx<bits.length?bits[bitIdx++]:0; m[row][cc]=bit; } } }
