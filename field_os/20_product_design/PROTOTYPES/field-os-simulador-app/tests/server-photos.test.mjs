@@ -17,6 +17,11 @@ const listen = async (server) => {
 
 const close = (server) => new Promise((resolveClose, rejectClose) => {
   server.close((error) => error ? rejectClose(error) : resolveClose());
+  // fetch() keeps its HTTP/1.1 connection alive by default, which otherwise
+  // blocks close()'s callback until the idle socket times out — force it
+  // shut so the promise settles immediately instead of racing the test
+  // runner's own shutdown (surfaced as ERR_TEST_FAILURE on Node 22 in CI).
+  server.closeAllConnections();
 });
 
 const paths = async () => {

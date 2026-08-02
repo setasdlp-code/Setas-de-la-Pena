@@ -15,6 +15,8 @@ const listen = async (server) => {
 
 const close = (server) => new Promise((resolveClose, rejectClose) => {
   server.close((error) => error ? rejectClose(error) : resolveClose());
+  // see server-photos.test.mjs close() for why this is needed
+  server.closeAllConnections();
 });
 
 const paths = async () => {
