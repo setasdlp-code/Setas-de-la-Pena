@@ -1,0 +1,679 @@
+FIG.
+COVER‑TERRITORIO
+D O C U M E N T O I N S T I T U C I O N A L · P A N O R A M A G E N E R A L 	D O C . G E N ‑ 0 1 · R E V . J U L 2 0 2 6
+territorio, cultivo, infraestructura y conocimiento
+Setas de
+la PeñaPanorama general de la operación
+Un sistema modular para el cultivo de hongos gourmet, en desarrollo en Tenjo,
+Cundinamarca, con proyección futura hacia especies funcionales y medicinales. Este
+documento separa con claridad lo construido de lo que sigue siendo visión.
+Setas de la Peña
+Tenjo, Cundinamarca · julio 2026
+
+-- 1 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+qué es Setas de la Peña
+Un sistema modular para el cultivo de hongos
+gourmet, desarrollado en Tenjo, Cundinamarca, con
+desarrollo futuro de especies funcionales y medicinales.
+TERRITORIO → CULTIVO → INFRAESTRUCTURA → REGISTRO → CONOCIMIENTO
+I. TERRITORIO Y CONDICIONES 	p. 02 / 26
+
+-- 2 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO I
+Tenjo fija las condiciones
+antes que cualquier
+decisión de diseño.
+Un valle rural del Altiplano Cundiboyacense, a cerca de 2.600 m s. n. m., entre serranías que moderan
+su escala. El clima frío puede reducir la carga de enfriamiento en fructificación, pero exige calefacción
+en incubación. Su proximidad a Bogotá y las condiciones del acceso rural determinan cómo se opera.
+ALTITUD
+≈2.600 m s. n. m., clima frío de montaña.
+OPERACIÓN REMOTA
+Cuidador en sitio; decisiones a distancia.
+CAPITAL LIMITADO
+Infraestructura de pequeña escala.
+EXPANSIÓN INCREMENTAL
+Crecimiento módulo a módulo, no de golpe.
+FIG. VALLE-TENJO
+FOTOGRAFÍA DOCUMENTAL
+Vista panorámica del valle de Tenjo, con serranías al fondo.
+I. TERRITORIO Y CONDICIONES 	p. 03 / 26
+
+-- 3 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO I · TERRITORIO
+La Peña de Juaica: horizonte
+e imaginario del valle.
+La Peña de Juaica es uno de los hitos geográficos del valle, entre Tenjo, Tabio y Subachoque. Su
+silueta funciona como orientación y límite visual constante del paisaje agrícola cotidiano.
+Alrededor de Juaica circula una tradición oral extensa: memoria muisca, tradición campesina,
+guacas, cuevas, luces, apariciones, ovnis y portales — relatos que forman parte del imaginario del
+valle, transmitidos de generación en generación.
+El nombre es pertenencia territorial. Sitúa la operación en un paisaje donde lo material, lo histórico y lo
+imaginado conviven — como tradición oral, no como causa biológica del cultivo.
+FIG. PENA-JUAICA
+FOTOGRAFÍA DOCUMENTAL
+Perfil topográfico real de la Peña de Juaica desde el valle.
+I. TERRITORIO Y CONDICIONES 	p. 04 / 26
+
+-- 4 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO I · FIG. 01
+Cuatro condiciones territoriales, cada una con su respuesta de diseño.
+CONDICIÓN 	OPORTUNIDAD 	RIESGO 	RESPUESTA DE DISEÑO
+Altitud (≈2.600 m) 	Temperaturas frescas favorables a fructificación de
+shiitake.
+Incubación exige calor estable que el clima no ofrece. 	Módulos térmicos separados: incubación calefaccionada,
+fructificación pasiva.
+Operación remota 	Permite planeación y revisión de datos a distancia. 	Decisiones tardías si el registro no llega a tiempo. 	Field OS como instrumento de registro diario y alerta.
+Capital limitado 	Cada módulo se valida antes de comprometer el
+siguiente.
+Sobredimensionar infraestructura antes de tener
+demanda.
+Infraestructura modular de pequeña escala, pagada por fases.
+Expansión incremental 	Cada ciclo validado informa mejor el siguiente módulo. 	Crecer antes de validar reproduce fallos a mayor escala. 	Se crece validando ciclos, nunca proyectando escala.
+I. TERRITORIO Y CONDICIONES 	p. 05 / 26
+
+-- 5 of 39 --
+
+CAPÍTULO II · MISIÓN
+Construir una operación de cultivo
+de hongos viable, que produzca
+resultados confiables, pueda
+recuperarse de fallos y se expanda
+sin rediseñar su estructura de base.
+p. 06 / 26
+
+-- 6 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO II
+Seis principios operativos resumidos del canon completo.
+El canon completo incluye también lenguaje técnico específico y el principio de observación previa a la intervención.
+01
+Verificabilidad
+Nada se acepta sin poder comprobarse.
+02
+Simplicidad
+La solución más simple que funcione.
+03
+Modularidad
+Unidades independientes, nunca un monolito.
+04
+Documentación
+Lo no documentado no existe operativamente.
+05
+Medición
+Sin dato no hay comparación posible.
+06
+Aislamiento del fallo
+Un módulo falla; el resto sigue en pie.
+II. PROPÓSITO Y FILOSOFÍA 	p. 07 / 26
+
+-- 7 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO II · TESIS CENTRAL
+La documentación sostiene la continuidad operativa.
+Perder la documentación elimina la capacidad de reproducir, mantener y auditar el activo. Field OS existe como el instrumento que la sostiene día
+a día.
+01
+Prototipo →
+02
+Medición →
+03
+Ciclo documentado →
+04
+Validación →
+05
+Nuevo módulo
+Cada expansión parte de un ciclo validado — por contaminación bajo umbral, rendimiento, estabilidad ambiental y repetibilidad — nunca de una proyección de escala.
+II. PROPÓSITO Y FILOSOFÍA 	p. 08 / 26
+
+-- 8 of 39 --
+
+CAPÍTULO III · EL SISTEMA PRODUCTIVO
+Un flujo continuo, de la cultura
+al descarte, con el control de
+calidad como banda transversal.
+p. 09 / 26
+
+-- 9 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO III · FIG. 02
+La operación completa, de principio a fin.
+01
+Cultura / spawn 	→
+02
+Preparación de sustrato →
+03
+Pasteurización /
+esterilización
+→
+04
+Enfriamiento 	→
+05
+Inoculación 	→
+06
+Incubación 	→
+07
+Fructificación 	→
+08
+Cosecha 	→
+09
+Venta o descarte
+CONTROL DE CALIDAD — banda transversal: ocurre durante todo el ciclo, no como una etapa aislada al final.
+Fig. 02 — la secuencia varía por especie; para múltiples especies el orden de pasos puede ajustarse dentro de este mismo esqueleto.
+III. EL SISTEMA PRODUCTIVO 	p. 10 / 26
+
+-- 10 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+III. EL SISTEMA PRODUCTIVO 	p. 11 / 26
+FIG. SHIITAKE-PLATE
+LÁMINA CIENTÍFICA
+Lámina — placa completa: sombrero, pie, laminillas, sección y bloque de fructificación.
+CAPÍTULO III · ESPECIE PRIORITARIA DE DESARROLLO
+Lentinula edodes
+Shiitake: especie
+prioritaria de desarrollo.
+Hongo saprófito de madera, cultivado sobre bloques esterilizados de aserrín
+de madera dura y suplementos agrícolas. Orienta el proyecto hacia un
+producto gastronómico reconocido y establece, desde el inicio, un estándar
+técnico exigente.
+Puede beneficiarse de temperaturas exteriores frescas en fructificación, según la cepa y
+el rango validado; la incubación exige calor estable independiente del clima.
+DIRECCIÓN DEFINIDA · ACTUALIZACIÓN DOCUMENTAL PENDIENTE
+
+-- 11 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO III · PRODUCTO Y CIRCULACIÓN
+Qué se vende, a quién y cómo circula.
+Campos por definir a medida que avanza la validación comercial — marcados aquí para que la respuesta quede documentada apenas exista.
+PRESENTACIÓN
+Por definir — fresco, seco o procesado.
+COMPRADOR OBJETIVO
+Por definir — restaurantes, tiendas especializadas o venta directa.
+PRIMERA ESCALA VIABLE
+Por definir — volumen mínimo sostenible en la primera fase.
+EMPAQUE Y REFRIGERACIÓN
+Por definir — cadena de frío y empaque desde cosecha hasta entrega.
+POR QUÉ ESTE SHIITAKE
+Por definir — diferenciación frente a la oferta existente.
+MATERIALES LOCALES DE SUSTRATO
+Por definir — residuos agrícolas o forestales del valle evaluados
+como insumo.
+III. EL SISTEMA PRODUCTIVO 	p. 12 / 26
+
+-- 12 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO III
+El lote agrupa; el contenedor se registra.
+El lote agrupa unidades que comparten receta, inoculación o ciclo. El contenedor es la unidad física registrada — con su propia historia, hasta quedar liberado
+para venta.
+AGRUPA
+LOTE → 	CONTENEDOR SDP‑0141 	CONTENEDOR SDP‑0142 	CONTENEDOR SDP‑0143
+CRITERIOS DE PRODUCTO
+01 	Sanidad
+02 	Uniformidad
+03 	Condición de cosecha
+CRITERIOS DE LIBERACIÓN
+01 	Rendimiento biológico dentro de rango
+02 	Integridad del registro
+03 	Criterio de descarte no activado
+Los umbrales exactos se definen por especie y receta, y se documentan aparte. Ejemplo de ficha de contenedor, con campos "Lote" y "Contenedor" separados, en el apéndice.
+III. EL SISTEMA PRODUCTIVO 	p. 13 / 26
+
+-- 13 of 39 --
+
+CAPÍTULO IV · INFRAESTRUCTURA MODULAR
+Tres espacios, tres funciones
+operativas, construidos por fases.
+p. 14 / 26
+
+-- 14 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO IV · FIG. 03
+Tres espacios, tres
+funciones operativas.
+El flujo asciende desde el garaje hacia la terraza. El pasillo funciona como filtro de entrada: separa
+la ropa, los objetos y las prácticas del exterior antes de acceder a las áreas de laboratorio y cultivo.
+GARAJE 	Materia prima, preparación de sustrato, esterilización y almacenamiento
+PASILLO CERRADO 	Transición, cambio de ropa y calzado, EPP e higiene de manos antes de entrar a la terraza
+TERRAZA 	Laboratorio e inoculación, incubación y fructificación, en sectores físicamente
+diferenciados
+El pasillo no se utiliza para inoculación ni para trabajo aséptico.
+FIG. PLANO-INSTALACION
+PLANO TÉCNICO
+Axonometría lineal del flujo garaje → pasillo → terraza.
+IV. INFRAESTRUCTURA MODULAR 	p. 15 / 26
+
+-- 15 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO IV
+El laboratorio se construye por fases, no de una vez.
+FASE INICIAL · POR ADQUIRIR
+Still Air Box (SAB)
+Trabajo en agar e inoculación limpia —
+adecuación pendiente
+EXPANSIÓN POSTERIOR
+Flujo laminar
+Aumento de confiabilidad y escala
+EN SITIO · NO COMISIONADO
+Autoclave
+Ciclo no validado
+PROYECTADO
+Spawn propio
+No usado en producción
+PROYECTADO
+Biblioteca de cultivos
+Preservación de cepas
+FIG. AUTOCLAVE-LAB
+FOTOGRAFÍA DE EQUIPO
+Autoclave instalado en sitio, no comisionado.
+IV. INFRAESTRUCTURA MODULAR 	p. 16 / 26
+
+-- 16 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO IV · INCUBACIÓN
+Dos enfoques en paralelo, ninguno declarado ganador.
+Shiitake requiere incubación prolongada a 20–24 °C; el clima fresco de Tenjo puede exigir calefacción para sostenerla.
+FIG. INCUB-BANO-MARIA
+FOTOGRAFÍA DE EQUIPO
+FIG. INCUB-RADIANTE
+FOTOGRAFÍA DE EQUIPO
+BAÑO MARÍA 	EN VALIDACIÓN
+Estabilidad por transferencia de agua. En prueba: tiempo de calentamiento, estabilidad ±°C, consumo y condensación.
+CALEFACCIÓN RADIANTE 	EN VALIDACIÓN
+Calor directo bajo el contenedor. En prueba: mantenimiento y riesgo de puntos calientes frente al baño María.
+IV. INFRAESTRUCTURA MODULAR 	p. 17 / 26
+
+-- 17 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO IV · FRUCTIFICACIÓN
+Dos módulos, dos roles previstos.
+Roles previstos mientras no haya ciclos documentados; estado físico y operativo se registran por separado.
+FIG. MARTHA-TERRA-FUNGUS
+FOTOGRAFÍA DE EQUIPO
+MARTHA TERRA FUNGUS 	EN SITIO · NO COMISIONADA
+Rol previsto: prototipo, cuarentena e investigación — donde se prueba antes de mover a producción.
+FIG. CLOUDLAB-844
+FOTOGRAFÍA DE EQUIPO
+CLOUDLAB 844 	EN SITIO · NO COMISIONADA
+Rol previsto: producción inicial — recibirá lo ya probado en Terra Fungus, a mayor volumen.
+IV. INFRAESTRUCTURA MODULAR 	p. 18 / 26
+
+-- 18 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO V
+Dos roles, una misma disciplina de registro.
+OPERADOR REMOTO
+Planea, revisa datos, documenta decisiones y mantiene la arquitectura de la operación.
+CUIDADOR EN SITIO
+Ejecuta procedimientos, observa, registra y comunica anomalías en el momento en que ocurren.
+FIG. 04 · UNA JORNADA OPERATIVA
+Preparación sanitaria 	Revisión ambiental 	Inspección biológica 	Registro 	Intervención mínima 	Limpieza y cierre
+V. OPERACIÓN DIARIA 	p. 19 / 26
+
+-- 19 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO V · PRINCIPIO
+Observar antes de intervenir.
+Caracterizar la anomalía, documentarla y modificar el mínimo número de variables necesario para conservar una interpretación causal.
+FIG. 05 · CADA CONTAMINACIÓN GENERA EVIDENCIA OPERATIVA
+01
+Detección →
+02
+Aislamiento →
+03
+Registro →
+04
+Investigación →
+05
+Prueba ⇒
+06 · PUNTO DE DECISIÓN
+Decisión
+→
+07
+Actualización del SOP
+Una prueba validada no conduce automáticamente a un cambio de procedimiento — la decisión de actualizar el SOP es un paso propio.
+V. OPERACIÓN DIARIA 	p. 20 / 26
+
+-- 20 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO VI
+Field OS es el instrumento.
+Todo empieza en el registro.
+Cada sesión de trabajo atribuye el trabajo a alguien y a un momento. Los eventos no se sobrescriben: las correcciones se añaden
+como nuevos eventos, conservando fecha, autor, objeto y contexto.
+MVP FUNCIONAL Implementado y probado con pantallas de demostración. La validación mediante ciclos productivos completos permanece pendiente.
+→
+VI. EL SISTEMA DE CONOCIMIENTO 	p. 21 / 26
+
+-- 21 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO VI · FIG. 06
+Cuatro niveles estructuran el paso del evento al análisis.
+01
+Registro 	→
+02
+Entidades 	→
+03
+Relaciones
+en construcción
+→
+04
+Patrones
+en construcción
+TRES VELOCIDADES DE CONOCIMIENTO
+Estable
+Parámetros biológicos, procesos físicos y evidencia consolidada.
+Operacional
+Equipos, SOP activos, recetas y lotes.
+Dinámico
+Prioridades, obstáculos y decisiones pendientes.
+VI. EL SISTEMA DE CONOCIMIENTO 	p. 22 / 26
+
+-- 22 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO VII
+Dos sistemas distintos, una misma disciplina de registro.
+CONTROL AMBIENTAL
+Los controladores actúan automáticamente dentro de límites validados: temperatura, humedad, tiempo.
+Variables continuas que exceden la atención humana.
+APOYO A DECISIONES
+Los modelos de recomendación sugieren; no toman decisiones biológicas ni cambian estados sin
+intervención humana.
+CANON — ARQUITECTURA OBJETIVO
+Sensor 	→ 	Microcontrolador 	→ 	Actuador 	→ 	Log 	- - → 	Alerta
+Línea continua = comprobado en campo; línea punteada = pendiente de integración.
+VII. AUTOMATIZACIÓN Y ESTADO 	p. 23 / 26
+
+-- 23 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO VII · FIG. 07
+Cinco estados, por sistema, con fecha de verificación.
+SISTEMA 	DOCUMENTADO 	EN SITIO 	COMISIONADO 	VALIDADO 	OPERATIVO 	VERIFICADO
+Field OS (registro) ● 	● 	● 	◐ 	○ jul 2026
+Autoclave ● 	● 	○ 	○ 	○ jun 2026
+SAB / flujo laminar ● 	○ 	○ 	○ 	○ por adquirir
+Incubación (baño María / radiante) ● 	● 	◐ 	○ 	○ jul 2026
+Martha / CLOUDLAB 844 ● 	● 	○ 	○ 	○ jun 2026
+● verificado	
+◐ parcial / en curso 	○ pendiente 	Detalle completo por herramienta en el apéndice.
+VII. AUTOMATIZACIÓN Y ESTADO 	p. 24 / 26
+
+-- 24 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+CAPÍTULO VIII
+La hoja de ruta avanza mediante criterios de validación.
+Autoclave comisionado y ciclo validado 	Responsable: operador remoto
+Receta de sustrato documentada 	Responsable: laboratorio
+Tres lotes comparables completados 	Responsable: cuidador en sitio
+Contaminación bajo umbral definido 	Responsable: operador remoto
+Fructificación estable en ambos módulos 	Responsable: cuidador en sitio
+Poscosecha probada, empaque y entrega definidos 	Responsable: operador remoto
+Evidencia y estado por frente, con fecha exacta de revisión, en el apéndice.
+VIII. HOJA DE RUTA 	p. 25 / 26
+
+-- 25 of 39 --
+
+S E T A S D E L A P E Ñ A · P A N O R A M A G E N E R A L 	R E V . J U L 2 0 2 6
+El valle aporta las condiciones; la operación construye el microclima.
+Cada ciclo produce alimento y conocimiento
+verificable.
+Territorio 	→ 	Cultivo 	→ 	Producto 	→ 	Registro 	→ 	Conocimiento 	→ 	Siguiente ciclo
+P R O T O T I P O F U N C I O N A L — I N T E R A C T I V O
+Field OS MVP-1 Abrir prototipo →
+Documento institucional — Setas de la Peña.
+Doc. GEN‑01 · rev. jul 2026 · 26 páginas + apéndice operativo.
+CIERRE 	p. 26 / 26
+
+-- 26 of 39 --
+
+A P É N D I C E
+Apéndice operativo
+Modelos de información, comparaciones técnicas y frentes abiertos que sostienen el panorama general — para
+lectura detenida, no para proyección.
+
+-- 27 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+MODELO DE INFORMACIÓN
+Ocho campos, la unidad
+mínima de aprendizaje.
+Cada contenedor se registra y se relee con los mismos campos, sin importar la
+especie o la etapa. El ejemplo es ilustrativo, no un registro real.
+DATOS ILUSTRATIVOS
+LOTE 	L‑2026‑07‑A
+CONTENEDOR 	SDP‑0142
+Especie 	Lentinula edodes
+Receta 	Bloque · aserrín + suplemento
+Fecha 	Inoculación registrada
+Cámara 	Incubadora 02
+Observaciones 	Colonización en curso
+Resultado 	Pendiente
+Estado 	ACTIVO
+APÉNDICE OPERATIVO 	Apéndice · p. 01 / 11
+
+-- 28 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+COMPARACIÓN TÉCNICA
+Variables que decidirán el estándar de incubación.
+VARIABLE 	BAÑO MARÍA 	CALEFACCIÓN RADIANTE
+Tiempo de calentamiento 	En prueba 	En prueba
+Estabilidad ±°C 	En prueba 	En prueba
+Consumo 	En prueba 	En prueba
+Mantenimiento 	Bajo 	Medio
+Condensación 	Riesgo alto 	Riesgo bajo
+Riesgo de puntos calientes 	Bajo 	Riesgo alto
+Ninguno de los dos enfoques se declara superior hasta completar las pruebas comparativas.
+APÉNDICE OPERATIVO 	Apéndice · p. 02 / 11
+
+-- 29 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+ESTADO DE HERRAMIENTAS
+Estado y evidencia de cada herramienta de laboratorio.
+HERRAMIENTA 	ESTADO 	EVIDENCIA / FECHA
+SAB y agar 	Por adquirir 	Adecuación de espacio pendiente
+Autoclave 	En sitio · no comisionado 	Ciclo no validado · sin uso en producción · jun 2026
+Spawn propio 	Proyectado 	Depende de un autoclave comisionado, un ciclo validado y un procedimiento limpio
+reproducible. El flujo laminar corresponde a una expansión posterior.
+Biblioteca de cultivos 	Proyectado 	Sin fecha estimada
+APÉNDICE OPERATIVO 	Apéndice · p. 03 / 11
+
+-- 30 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+FIELD OS — CAPTURA DE INTERFAZ
+La trazabilidad no se pide. Se acumula.
+VISTA · LISTA DE CONTENEDORES
+→
+VISTA · CADENA DE EVENTOS POR CONTENEDOR
+De la lista de contenedores a la cadena de eventos de cualquiera de ellos: cada línea con fecha y autor. Pantallas de demostración.
+APÉNDICE OPERATIVO 	Apéndice · p. 04 / 11
+
+-- 31 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+ARQUITECTURA DE CONOCIMIENTO — DETALLE
+Cuatro niveles convierten el evento en patrón.
+01 · REGISTRO
+Ej.: "Inoculación del contenedor SDP-0142, 08:40,
+cuidador en sitio."
+02 · ENTIDADES
+Ej.: contenedor, receta, cámara y operador quedan
+vinculados como entidades propias.
+03 · RELACIONES · en construcción
+Ej. previsto: qué recetas rinden mejor en qué cámara.
+04 · PATRONES · en construcción
+Ej. previsto: estacionalidad de contaminación
+por cámara.
+Relaciones y patrones no existen todavía como capacidad operativa — se marcan como en construcción hasta acumular suficiente evidencia.
+APÉNDICE OPERATIVO 	Apéndice · p. 05 / 11
+
+-- 32 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+FLUJO DE MADURACIÓN DOCUMENTAL
+Ocho pasos convierten una observación en estándar.
+01
+Observación
+→
+02
+Documentación
+→
+03
+Experimento
+→
+04
+Validación
+→
+05
+Lección
+→
+06
+Decisión
+→
+07
+Actualización del SOP
+→
+08
+Base de conocimiento
+APÉNDICE OPERATIVO 	Apéndice · p. 06 / 11
+
+-- 33 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+AUTOMATIZACIÓN Y HERRAMIENTAS
+Cuatro capacidades en integración progresiva.
+Ninguna reemplaza a Field OS ni a la base de conocimiento — todas leerán de ellas.
+01
+Dashboard
+Panorama del cultivo · hardware por definir
+02
+Sensores
+Hardware adquirido · integración con Field
+OS pendiente
+03
+Alertas
+Depende de sensores integrados
+04
+Analítica predictiva
+Requiere base de conocimiento madura
+APÉNDICE OPERATIVO 	Apéndice · p. 07 / 11
+
+-- 34 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+MAPA FÍSICO — VERSIÓN COMPLETA
+Ocho módulos, un mismo flujo de trabajo.
+MATERIA PRIMA
+Garaje / prep. materia prima
+TRANSICIÓN
+Pasillo cerrado / cambio e higiene
+SECTOR TERRAZA
+Laboratorio e inoculación
+SECTOR TERRAZA
+Incubadoras
+SECTOR TERRAZA
+Martha Terra Fungus
+SECTOR TERRAZA
+CLOUDLAB 844
+POSCOSECHA HIGIÉNICA
+Control de calidad
+POSCOSECHA HIGIÉNICA
+Almacenamiento y procesamiento
+El flujo es unidireccional: garaje → pasillo (transición) → terraza
+sectorizada → poscosecha higiénica. El pasillo no se usa para
+inoculación ni trabajo aséptico.
+APÉNDICE OPERATIVO 	Apéndice · p. 08 / 11
+
+-- 35 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+AISLAMIENTO DEL FALLO, POR CÁMARA
+Ninguna cámara depende de un único punto de control.
+SENSOR
+Cámara
+individual
+→
+CONTROLADOR
+Lógica local →
+ACTUADOR
+Respuesta
+ambiental
+→
+REGISTRO
+Evento en Field
+OS
+- - →
+ALERTA
+Operador o
+revisor
+Línea continua = lazo local ya operativo por cámara; línea punteada = alerta hacia el operador, hoy manual.
+APÉNDICE OPERATIVO 	Apéndice · p. 09 / 11
+
+-- 36 of 39 --
+
+S E T A S D E L A P E Ñ A · A P É N D I C E O P E R A T I V O 	R E V . J U L 2 0 2 6
+FRENTES ABIERTOS
+Estado, siguiente compuerta, responsable y evidencia.
+Revisado en julio de 2026 — fecha exacta por frente, para evitar que la página envejezca de forma silenciosa.
+FRENTE 	ESTADO ACTUAL 	SIGUIENTE COMPUERTA 	RESPONSABLE 	EVIDENCIA
+Infraestructura 	Incubación en prueba comparativa 	Fijar estándar de incubación 	Operador remoto 	Por definir
+Especies 	Shiitake como plataforma de validación 	Incorporar al repositorio de especies 	Operador remoto 	Por definir
+Procesos 	Autoclave en sitio, no comisionado 	Comisionar y validar ciclo 	Laboratorio 	Por definir
+Datos 	Registro y entidades operativos 	Construir capa de relaciones 	Operador remoto 	Por definir
+Producto y circulación 	Sin definir presentación ni comprador 	Definir primera escala viable 	Operador remoto 	Por definir
+APÉNDICE OPERATIVO 	Apéndice · p. 10 / 11
+
+-- 37 of 39 --
+
+F I N D E L A P É N D I C E
+Este apéndice se actualiza a medida que cada
+frente cruza su siguiente compuerta de validación.
+Apéndice · p. 11 / 11
+
+-- 38 of 39 --
+
+U S O I N T E R N O · N O F O R M A P A R T E D E L A P A G I N A C I Ó N P Ú B L I C A 	R E V . J U L 2 0 2 6
+PÁGINA INTERNA
+Recursos de imagen pendientes por producir o adquirir.
+PÁG. PDF 	FOLIO PÚBLICO 	FIG. 	TIPO DE RECURSO 	ESTADO DEL RECURSO 	CAPTION PROPUESTO
+01 	— (portada) 	FIG. COVER-TERRITORIO 	Mapa / cartografía 	Pendiente de producir 	Contorno topográfico del valle de Tenjo y la Peña de Juaica.
+03 	03 / 26 	FIG. VALLE-TENJO 	Fotografía documental 	Pendiente de producir 	Panorámica del valle de Tenjo con serranías al fondo, luz natural.
+04 	04 / 26 	FIG. PENA-JUAICA 	Fotografía documental 	Pendiente de producir 	Perfil topográfico real de la Peña de Juaica desde el valle.
+11 	11 / 26 	FIG. SHIITAKE-PLATE 	Lámina científica 	Pendiente de producir 	Lámina — placa completa de Lentinula edodes, trazo a grafito y tinta.
+15 	15 / 26 	FIG. PLANO-INSTALACION 	Plano técnico 	Pendiente de producir 	Axonometría lineal del flujo garaje → pasillo → terraza.
+16 	16 / 26 	FIG. AUTOCLAVE-LAB 	Fotografía de equipo 	Pendiente de producir 	Autoclave instalado en sitio, no comisionado.
+17 	17 / 26 	FIG. INCUB-BANO-MARIA 	Fotografía de equipo 	Pendiente de producir 	Módulo de incubación por baño María, en validación.
+17 	17 / 26 	FIG. INCUB-RADIANTE 	Fotografía de equipo 	Pendiente de producir 	Módulo de calefacción radiante, en validación.
+18 	18 / 26 	FIG. MARTHA-TERRA-FUNGUS 	Fotografía de equipo 	Pendiente de producir 	Cámara Martha Terra Fungus, en sitio.
+18 	18 / 26 	FIG. CLOUDLAB-844 	Fotografía de equipo 	Pendiente de producir 	Cámara CLOUDLAB 844, en sitio.
+PÁGINA INTERNA · NO PÚBLICA 	10 recursos pendientes
+
+-- 39 of 39 --
+

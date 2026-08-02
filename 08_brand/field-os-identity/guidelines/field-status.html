@@ -1,0 +1,10 @@
+<!-- @dsCard group="Field components" viewport="700x180" name="Status as Text · FOS-05" subtitle="El estado se escribe sobre filete; nunca en pastilla rellena" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="height:180px;background:var(--surface-panel);padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:24px;overflow:hidden;font-family:var(--font-sans)">
+<div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--status-active);margin-bottom:14px">Correcto</div>
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start"><span class="fos-status fos-status--attention">Requiere atención</span><span class="fos-status fos-status--error">Contaminación · bloque 7</span></div>
+<p style="font-size:13px;color:var(--text-secondary);margin:16px 0 0;line-height:1.55">Acento en el texto, filete superior. Un solo acento por vista.</p></div>
+<div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--status-error);margin-bottom:14px">Incorrecto</div>
+<span style="display:inline-block;background:var(--accent-terracotta);color:#fff;padding:4px 12px;border-radius:999px;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.2)">Requiere atención</span>
+<p style="font-size:13px;color:var(--text-secondary);margin:16px 0 0;line-height:1.55">Radio, sombra y color plano: tres cosas que este sistema no tiene. Rust solo para error y contaminación.</p></div>
+</div>

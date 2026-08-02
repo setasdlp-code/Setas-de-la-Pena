@@ -1,0 +1,17 @@
+<!-- @dsCard group="Customer" viewport="700x300" name="QR Traceability Bridge · FOS-06.5" subtitle="Ubicación, tamaño mínimo y qué muestra el escaneo" -->
+<link rel="stylesheet" href="../styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div style="height:300px;background:var(--surface-panel);padding:20px 24px;display:flex;gap:24px;overflow:hidden">
+<div style="width:260px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center">
+<div id="qr-bridge" style="width:88px;height:88px"></div>
+<div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-metadata)">Mín. 20mm impreso · 16px pantalla</div>
+</div>
+<div style="flex:1;font-size:13px;line-height:1.6;color:var(--text-secondary)">
+<div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);border-bottom:var(--rule-strong);padding-bottom:6px;margin-bottom:8px">Muestra al escanear</div>
+<p style="margin:0 0 6px">Origen (Palencia) · fecha de cosecha · nombre del cultivador o cooperativa · especie en lenguaje común.</p>
+<div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--status-error);border-bottom:var(--rule-strong);padding-bottom:6px;margin:12px 0 8px">Nunca muestra</div>
+<p style="margin:0">Código de lote interno, sala/túnel, nombre de operario, temperatura/HR — esos datos viven en la ficha (FOS-02), no en la página de destino del QR.</p>
+<p style="margin:10px 0 0;padding-top:10px;border-top:var(--rule-hairline);font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata)">Precedente: Knorr y Starbucks separan igual — trazabilidad completa detrás del escaneo, etiqueta frontal limpia.</p>
+</div>
+</div>
+<script>new QRCode(document.getElementById('qr-bridge'), 'https://sdlp.local/LP-0417-26');</script>

@@ -3,8 +3,8 @@ title: SdP Field OS — MVP-1 Architecture
 document_id: PMVP-001
 authority: product-implementation-blueprint
 category: product-architecture
-version: 1.0
-last_reviewed: 2026-07-05
+version: 1.1
+last_reviewed: 2026-07-27
 status: active
 governed_by:
   - PRODUCT_CANON.md
@@ -17,9 +17,12 @@ governed_by:
   - ADR-0001_Central_Operational_Unit.md
   - ADR-0002_Product_Priority.md
   - ADR-0003_System_Boundary.md
+  - ADR-0004_V1_Scope_Expansion.md
   - PRODUCT_ASSUMPTIONS.md
 supersedes: null
 superseded_by: null
+amendment_log:
+  - "v1.0 → v1.1 (2026-07-27): §2/§3 updated per ADR-0004 to move climate-alert escalation, a role-scoped module view, and inventory visibility from deferred to included. IN-3 and GR-2 remain Proposed in PRODUCT_ASSUMPTIONS.md; this is a logged owner risk-acceptance, not a validation claim."
 ---
 
 # FIELD_OS_MVP_ARCHITECTURE — SdP Field OS MVP-1
@@ -32,7 +35,7 @@ superseded_by: null
 
 This is the implementation blueprint for **Field OS MVP-1** — the first usable version, built to be used every day in the laboratory and cultivation facility at Setas de la Peña. It designs the *smallest* system that delivers real operational value while remaining **completely faithful to the approved architecture**. It redesigns nothing: not Field OS, not the Recipe Simulator, not the Knowledge System.
 
-MVP-1 preserves **every architectural invariant** (INV-1 … INV-11) and implements only the minimum needed to create operational memory. It prioritizes **simplicity, reliability, traceability, and speed of capture** over automation or intelligence. It assumes **one primary operator and one reviewer** and does not optimize for future scale (GR-1, GR-2 deferred).
+MVP-1 preserves **every architectural invariant** (INV-1 … INV-11) and implements only the minimum needed to create operational memory. It prioritizes **simplicity, reliability, traceability, and speed of capture** over automation or intelligence. It assumes **one primary operator and one reviewer** and does not optimize for future scale (GR-1 deferred; GR-2 has a presentation-only first slice per ADR-0004, with no server-side authorization yet built).
 
 It stays technology-agnostic: it defines capabilities, interactions, and properties (e.g. an append-only, immutable event store as a *property*, not a product), not frameworks, databases, or languages. Every capability maps to an existing DATA_MODEL entity, MODULE_MAP module, and USER_WORKFLOW.
 
@@ -49,7 +52,9 @@ It solves four real problems immediately:
 3. **There is no per-container traceability.** Contamination and divergence happen to individual objects; MVP-1 anchors every event to one container, so an exceptional object can be identified and explained (ADR-0001).
 4. **Failures teach nothing.** MVP-1 records disposals and failures with the same standing as successes, so the operation learns (CANON §6).
 
-MVP-1 does **not** advise, monitor, optimize, or automate. Its whole value is a fast, faithful record that later capabilities can build on (PC-04). If it captures reliably and is actually used, it succeeds.
+MVP-1 does **not** advise, optimize, or automate. Its whole value is a fast, faithful record that later capabilities can build on (PC-04). If it captures reliably and is actually used, it succeeds.
+
+**Amended 2026-07-27 (ADR-0004).** A first monitoring capability (climate-alert escalation), a first slice of role-scoped presentation, and inventory visibility were pulled forward into v1 scope as a logged owner risk-acceptance — see §2 and §3 below and ADR-0004 for the full record, including what remains unvalidated (`IN-3`, `GR-2`) and what server-side work is still required.
 
 ---
 
@@ -69,6 +74,10 @@ Only the capabilities required to create operational memory. Each maps to a work
 - **Flag for future interpretation (WF-10).** A lightweight marker event. *Essential (cheap):* preserves the deferred-interpretation seam (PC-04) at near-zero cost, so nothing is lost while AI is deferred.
 - **Operational Sessions.** The capture wrapper that makes the above fast (Section 4).
 - **Operator attribution.** Every event carries who recorded it (PC-12; one operator, one reviewer).
+- **Photo/media evidence on Observation and quick events (ADR-0004).** An optional photo attached to an observation or quick event, stored server-side (never inline base64) and referenced from the event. *Essential (once built):* photographic evidence strengthens the remote reviewer's faithful sight of conditions (CANON P-08), consistent with WF-3's existing purpose — this is evidentiary richness on an already-included capability, not a new one.
+- **Climate-alert escalation (ADR-0004, added 2026-07-27).** Chamber climate is read (never commanded, ADR-0003) and an unresolved deviation escalates to a persistent banner after a fixed window. *Caveat:* the underlying sensor trustworthiness (`IN-3`) remains `Proposed`, Low confidence — this capability is scoped in with that gap open, not because `IN-3` was validated. Do not treat the banner as a validated safety signal until `IN-3` resolves.
+- **Role-scoped module view (ADR-0004, added 2026-07-27).** Certain modules (e.g. Inventario) are hidden per a selected role. *Caveat:* this is presentation-only — no server-side authorization exists. `GR-2` (multi-user) remains `Proposed`, Low confidence. Do not treat the role selector as an access-control boundary.
+- **Inventory visibility (ADR-0004, added 2026-07-27).** A low-stock signal surfaces on Inicio from Bodega stock data. *Caveat:* the current stock source is a mock; this is scoped in as a surface, not as a claim of real, trustworthy inventory data.
 
 **Invariant preservation.** Every capability above writes only immutable, append-only, container-anchored, attributed events through the single write path Identity → Capture → Records (INV-1..6). Recipe/sensor/knowledge stay external references (INV-7). The operator decides; MVP records (INV-10). Nothing here interprets before it records (INV-5). Deferred capability is reserved, not built (INV-8).
 
@@ -82,11 +91,12 @@ Nothing below exists in MVP-1. Each exclusion is intentional and justified.
 - **Automation control.** Field OS never commands hardware (PC-08; ADR-0003). Adding control is a *boundary change*, not an MVP feature.
 - **Advanced analytics.** Analytics is a downstream reader of a record that does not yet exist; premature (PC-04). Basic history review (WF-7/8) is included; analytics is not.
 - **Scheduling / tasks.** Introduces the Task concept, which implies procedure enforcement — explicitly deferred (ADR-0002; DATA_MODEL §2.13).
-- **Notifications / monitoring / alerting.** Monitoring is deferred (ADR-0002); it also depends on sensor trust that is `Proposed` (IN-3).
 - **Optimization, recipe calculations, cost analysis.** These belong **permanently inside the Recipe Simulator**, never Field OS (RECIPE_SIMULATOR_INTEGRATION §8; PC-08). Putting them here would create a competing source of recipe truth (ADR-0003).
-- **Automated sensor ingestion.** Sensor trustworthiness is `Proposed` (IN-3); MVP references environmental context only manually and lightly, if at all. Automated ingestion waits for validated sensing.
-- **Multi-user, roles, permissions, concurrency.** Single operator + single reviewer is assumed; multi-user is `Proposed` (GR-2). No roles model is built.
+- **Automated sensor ingestion.** A first, narrow reference (climate-alert escalation, §2) is now in scope per ADR-0004, with `IN-3` explicitly still open. Broader automated ingestion beyond that one escalation surface remains deferred until sensing is validated.
+- **Server-side roles, permissions, concurrency control.** A first, presentation-only role-scoped view is now in scope per ADR-0004 (§2), but it is **not** an authorization model — no server-side role/permission enforcement exists. `GR-2` remains `Proposed`. Building real authorization (verified operator identity, server-enforced permissions, concurrency control) remains deferred.
 - **Offline-sync sophistication.** Connectivity is `Proposed` (MO-3); MVP assumes capture must not be lost, but elaborate sync is deferred until connectivity is surveyed.
+
+**Moved to §2, 2026-07-27 (ADR-0004):** notifications/monitoring/alerting (as climate-alert escalation) and inventory (as a low-stock visibility surface) are no longer fully deferred — see §2's caveats for what remains open in each.
 
 The common thread: MVP-1 excludes everything that interprets, controls, predicts, or scales, because none of it records reality — and recording reality is the whole job of the first version (ADR-0002).
 

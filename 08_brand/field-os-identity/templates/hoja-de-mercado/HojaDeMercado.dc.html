@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Hoja de Mercado" description="Lista de precios imprimible para el puesto — legible a 2 metros" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:840px;min-height:1100px;background:var(--surface-page);padding:56px 60px;box-sizing:border-box;font-family:var(--font-sans);color:var(--text-primary);display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--border-heavy);padding-bottom:16px">
+<div style="font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:.01em">Setas de la Peña</div>
+<div style="font-family:var(--font-mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)">{{ fecha }}</div>
+</div>
+<div style="margin-top:28px;display:flex;justify-content:space-between;align-items:baseline">
+<h1 style="margin:0;font-family:var(--font-display);font-weight:700;font-size:52px;line-height:1.05">{{ titulo }}</h1>
+<span style="font-family:var(--font-mono);font-size:13px;color:var(--status-active);text-transform:uppercase;letter-spacing:.08em">Cosecha de hoy</span>
+</div>
+<div style="margin-top:32px;display:flex;flex-direction:column">
+<sc-for list="{{ productos }}" as="p" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:1fr auto;gap:8px 32px;align-items:baseline;padding:22px 0;border-bottom:1px solid var(--border-strong)">
+<div><div style="font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1.1">{{ p.nombre }}</div>
+<sc-if value="{{ mostrarDescripciones }}" hint-placeholder-val="{{ true }}"><div style="font-size:17px;line-height:1.45;color:var(--text-secondary);margin-top:6px;max-width:520px">{{ p.descripcion }}</div></sc-if>
+</div>
+<div style="text-align:right"><div style="font-family:var(--font-mono);font-weight:600;font-size:36px;white-space:nowrap">{{ p.precio }}</div>
+<sc-if value="{{ p.aviso }}" hint-placeholder-val="{{ false }}"><div style="font-family:var(--font-mono);font-size:13px;color:var(--status-attention);text-transform:uppercase;letter-spacing:.08em;margin-top:4px">{{ p.estado }}</div></sc-if>
+<sc-if value="{{ p.disponible }}" hint-placeholder-val="{{ true }}"><div style="font-family:var(--font-mono);font-size:13px;color:var(--status-active);text-transform:uppercase;letter-spacing:.08em;margin-top:4px">{{ p.estado }}</div></sc-if></div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:auto;padding-top:36px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
+<p style="margin:0;font-size:16px;line-height:1.55;color:var(--text-secondary);max-width:480px">{{ notaPie }}</p>
+<div style="text-align:center;flex-shrink:0"><div style="width:84px;height:84px;border:1px solid var(--border-strong);background:repeating-linear-gradient(45deg,var(--paper-2),var(--paper-2) 4px,var(--surface-page) 4px,var(--surface-page) 8px);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--text-metadata)">QR</div>
+<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata);margin-top:6px;letter-spacing:.06em">De qué lote viene<br>tu compra</div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:840,&quot;height&quot;:1100},&quot;fecha&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sábado · 25 jul 2026&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;titulo&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Precios de hoy&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mostrarDescripciones&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;notaPie&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Todo lo que ves se cortó esta mañana en nuestros túneles de cultivo, aquí en la Peña. Pregúntanos cómo cocinar cada una — nos encanta contarlo.&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      fecha: this.props.fecha ?? 'Sábado · 25 jul 2026',
+      titulo: this.props.titulo ?? 'Precios de hoy',
+      mostrarDescripciones: this.props.mostrarDescripciones ?? true,
+      notaPie: this.props.notaPie ?? 'Todo lo que ves se cortó esta mañana en nuestros túneles de cultivo, aquí en la Peña. Pregúntanos cómo cocinar cada una — nos encanta contarlo.',
+      productos: [
+        { nombre: 'Seta ostra', descripcion: 'Suave y carnosa. La de todos los días: plancha, revuelto, arroz.', precio: '6,80 € / kg', estado: 'Disponible', disponible: true, aviso: false },
+        { nombre: 'Seta ostra amarilla', descripcion: 'Más delicada y aromática. Salteado corto, fuego fuerte.', precio: '8,50 € / kg', estado: 'Disponible', disponible: true, aviso: false },
+        { nombre: 'Melena de león', descripcion: 'Textura que recuerda al marisco. Filetes a la plancha con mantequilla.', precio: '12,00 € / kg', estado: 'Pocas unidades', disponible: false, aviso: true },
+        { nombre: 'Shiitake fresco', descripcion: 'Sabor profundo. Guisos, caldos y wok.', precio: '9,90 € / kg', estado: 'Disponible', disponible: true, aviso: false }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
