@@ -35,7 +35,10 @@ const STATIC_FILES = new Set([
   '/sesion.html',
   '/recipe-sim-v2.css',
   '/ds-bridge.css',
-  '/fieldos-tokens.css'
+  '/fieldos-tokens.css',
+  '/climate-bench.html',
+  '/qr-mini.js',
+  '/sesion.css'
 ]);
 const STATIC_PREFIXES = ['/assets/', '/_ds/', '/_standalone_imgs/'];
 

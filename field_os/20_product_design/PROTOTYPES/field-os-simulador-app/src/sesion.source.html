@@ -430,6 +430,11 @@ const HistoryView = ({ containers }) => (
             <li key={entry.id + entry.type}>
               <span className="fos-mono">{new Date(entry.ts).toLocaleString('es-CO')}</span> — {entry.type}
               {entry.payload && entry.payload.nota ? `: “${entry.payload.nota}”` : ''}
+              {entry.payload && entry.payload.photo_ref ? (
+                <a href={`/photos/${entry.payload.photo_ref}`} target="_blank" rel="noopener noreferrer" className="fos-history-photo-link">
+                  <img src={`/photos/${entry.payload.photo_ref}`} alt="Foto adjunta al evento" className="fos-photo-thumb fos-history-photo-thumb" />
+                </a>
+              ) : ''}
             </li>
           ))}
         </ul>

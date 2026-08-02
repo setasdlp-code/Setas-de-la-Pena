@@ -4,6 +4,9 @@ Aplicación web auditada para Setas de la Peña, con dos módulos:
 
 - **Simulador** (`simulador.html`, editable en `src/simulador.source.html`): formulación y optimización de recetas de sustrato.
 - **Sesión de campo** (`sesion.html`, editable en `src/sesion.source.html`): registro de contenedores, cosechas, observaciones y eventos rápidos sobre un ledger append-only, con undo, adjunto de fotos, resumen por WhatsApp, una paleta de comandos, alertas climáticas, vista por rol e inventario. Alcance formalizado en `field_os/adr/ADR-0004_V1_Scope_Expansion.md` y `FIELD_OS_MVP_ARCHITECTURE.md` v1.1 — ver ese ADR para las cauciones vigentes (sin autenticación de rol en servidor; confianza de sensores climáticos aún no validada).
+- **Monitoreo de clima** (`climate-bench.html`): banco climático virtual y portátil — simula cámaras, escenarios de perturbación (puerta abierta, ola seca, CO₂ elevado, etc.) y decisiones de control, con exportación a CSV. Prototipo funcional con datos sintéticos, sin conexión a hardware ni al servidor de persistencia; usa los tokens FOS reales (`_ds/.../tokens/*.css`) pero mantiene su propio `<script>` inline — no pasa por el pipeline de build/CSP de `simulador`/`sesion`, así que `npm run quality` no lo valida. Antes de promoverlo más allá de prototipo, extraer ese script a un bundle igual que los otros módulos.
+
+Además, `qr-mini.js` (generador de códigos QR autocontenido, ISO/IEC 18004, sin dependencias) vive en la raíz del proyecto listo para usarse — aún no está referenciado por ningún módulo; es la base pensada para la regla FOS-06 ("el código de lote viaja solo por QR, nunca impreso como texto visible").
 
 ## Instalación y ejecución
 

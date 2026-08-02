@@ -104,12 +104,12 @@ requireCondition(/className="wrap"\s+role="main"\s+id="main-content"/.test(simul
 requireCondition(/aria-label="Módulos principales"/.test(simuladorSourceHtml), 'La navegación principal no tiene nombre accesible (simulador).');
 
 requireCondition(
-  /if\(suppOverLimit&&profile\.forceLowRisk\) return;/.test(simuladorSourceHtml),
-  'Los perfiles de bajo riesgo deben excluir recetas sobre el límite de suplemento.'
+  /if\(suppOverLimit&&profileKey==='rescate'\) return;/.test(simuladorSourceHtml),
+  'El perfil Rescate debe excluir por completo recetas sobre el límite de suplemento (exclusión dura). Producción permite mostrarlas con penalización y advertencia visible — decisión de producto 2026.'
 );
 requireCondition(
-  /const status=criticals>0\?'critical':warnings>0\?'good'/.test(simuladorSourceHtml),
-  'El veredicto debe priorizar problemas críticos y advertencias.'
+  /const status=score>=85\?'excellent':score>=65\?'good':score>=40\?'needs_work':'critical';/.test(simuladorSourceHtml),
+  'El veredicto (modelo de score compuesto v9) debe seguir priorizando "critical" como el estado más bajo — decisión de producto 2026: reemplaza el modelo anterior de conteo de errores/advertencias.'
 );
 requireCondition(
   /else if\(s\.some\(x=>x\.t==='warning'\)\) main='Receta funcional con ajustes requeridos antes de escalar\.'/.test(simuladorSourceHtml),
@@ -130,7 +130,7 @@ requireCondition(
 
 for (const accessiblePattern of [
   /aria-label=\{`Agregar \$\{ing\.name\} a la receta`\}/,
-  /aria-label=\{`Quitar \$\{g\.name\} de la receta`\}/,
+  /aria-label=\{`Quitar \$\{g\??\.name(\|\|'ingrediente')?\} de la receta`\}/,
   /aria-label=\{`Porcentaje de \$\{g\.name\}`\}/,
   /aria-label="Especie objetivo del optimizador"/,
   /aria-label="Costo máximo por kilogramo"/

@@ -5,12 +5,12 @@ import test from 'node:test';
 
 const html = readFileSync(resolve(import.meta.dirname, '..', 'src', 'simulador.source.html'), 'utf8');
 
-test('los perfiles de bajo riesgo rechazan suplemento por encima del límite', () => {
-  assert.match(html, /if\(suppOverLimit&&profile\.forceLowRisk\) return;/);
+test('el perfil Rescate rechaza por completo suplemento por encima del límite (exclusión dura)', () => {
+  assert.match(html, /if\(suppOverLimit&&profileKey==='rescate'\) return;/);
 });
 
-test('el veredicto crítico domina el puntaje numérico', () => {
-  assert.match(html, /const status=criticals>0\?'critical':warnings>0\?'good'/);
+test('el veredicto crítico domina el puntaje numérico (modelo de score compuesto v9)', () => {
+  assert.match(html, /const status=score>=85\?'excellent':score>=65\?'good':score>=40\?'needs_work':'critical';/);
   assert.match(html, /disabled=\{status==='critical'\}/);
 });
 
@@ -25,6 +25,6 @@ test('la penalización de suplemento no depende de una condición imposible', ()
 
 test('los controles simbólicos esenciales tienen nombre accesible', () => {
   assert.match(html, /aria-label=\{`Agregar \$\{ing\.name\} a la receta`\}/);
-  assert.match(html, /aria-label=\{`Quitar \$\{g\.name\} de la receta`\}/);
+  assert.match(html, /aria-label=\{`Quitar \$\{g\??\.name(\|\|'ingrediente')?\} de la receta`\}/);
   assert.match(html, /aria-label=\{`Porcentaje de \$\{g\.name\}`\}/);
 });

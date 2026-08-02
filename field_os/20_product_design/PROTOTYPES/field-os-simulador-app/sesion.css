@@ -45,6 +45,8 @@ body{margin:0;background:var(--paper-0,#F6F4EC);color:var(--ink-0,#1A1410);font-
 .fos-history-item{border:1px solid var(--border-strong,#ccc);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
 .fos-history-item summary{cursor:pointer;font-size:14px;}
 .fos-history-item ul{margin:8px 0 0;padding-left:18px;font-size:13px;}
+.fos-history-photo-link{display:inline-block;vertical-align:middle;margin-left:6px;}
+.fos-history-photo-thumb{width:28px;height:28px;border-radius:4px;vertical-align:middle;}
 .fos-pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-family:var(--font-mono,monospace);text-transform:uppercase;}
 .fos-pill-activo{background:var(--status-active-bg,#e3f0e3);color:var(--status-active,#2E3B2F);}
 .fos-pill-cerrado{background:var(--paper-2,#eee);color:var(--ink-1,#403830);}
