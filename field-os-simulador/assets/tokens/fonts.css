@@ -1,0 +1,21 @@
+/* Gaya — primary typeface, provided by Setas de la Peña. */
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; }
+
+/* IBM Plex Mono — intentional addition for tabular data, metadata, codes, SOP numbers.
+   No mono face was supplied; this is the nearest CDN match to the technical-manual /
+   lab-notebook register the brief calls for. Loaded from Google Fonts CDN. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  --font-sans: 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}

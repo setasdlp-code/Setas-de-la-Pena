@@ -1,0 +1,19 @@
+<!-- @dsCard group="Customer" viewport="700x260" name="Shelf Label · FOS-06.2" subtitle="Etiqueta de venta: precio y frescura por delante, trazabilidad en QR" -->
+<link rel="stylesheet" href="../styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div style="height:260px;background:var(--surface-page);padding:20px;display:flex;gap:24px;align-items:center;overflow:hidden">
+<div style="width:300px;border:var(--rule-heavy);padding:16px 18px;display:grid;gap:8px">
+<div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)">Setas de la Peña</div>
+<div style="font-size:24px;font-weight:var(--weight-medium);font-style:italic">Seta ostra</div>
+<div style="font-size:13px;color:var(--text-secondary)">Origen: Palencia · Cortada hoy</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:var(--rule-hairline);padding-top:10px;margin-top:4px">
+<span style="font-family:var(--font-mono);font-size:19px;font-variant-numeric:tabular-nums">6,80 €/kg</span>
+<div id="qr-label" style="width:44px;height:44px"></div>
+</div>
+</div>
+<div style="max-width:280px;font-size:13px;line-height:1.6;color:var(--text-secondary)">
+<p style="margin:0">El QR enlaza al lote real (<span style="font-family:var(--font-mono);color:var(--text-metadata)">LP·0417·26</span>) para quien quiera trazabilidad completa — pero la etiqueta que ve el cliente sólo habla de origen, frescura y precio.</p>
+<p style="margin:10px 0 0;padding-top:10px;border-top:var(--rule-hairline);font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata)">Precedente: Knorr encadenó millones de códigos únicos a granja, matadero y planta sin tocar el diseño frontal del paquete. Mismo principio aquí.</p>
+</div>
+</div>
+<script>new QRCode(document.getElementById('qr-label'), 'https://sdlp.local/LP-0417-26');</script>

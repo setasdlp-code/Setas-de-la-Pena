@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link rel="stylesheet" href="fieldos-tokens.css">
+<script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
+<style>
+  html, body { margin:0; background: var(--paper-1); }
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  a { color: var(--accent-terracotta); }
+  a:hover { color: color-mix(in oklab, var(--accent-terracotta) 78%, black); }
+  .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  .fos-scroll::-webkit-scrollbar { display: none; }
+  @keyframes fos-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fos-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fos-toast { 0%{opacity:0;transform:translateY(8px);} 12%{opacity:1;transform:translateY(0);} 88%{opacity:1;transform:translateY(0);} 100%{opacity:0;transform:translateY(-4px);} }
+  @keyframes fos-screen { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
+  .app-rail { position:fixed; z-index:60; background:var(--paper-0); display:flex; }
+  .rail-btn { display:flex; flex-direction:column; align-items:center; gap:5px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:13px 4px; transition:color .15s; }
+  .rail-btn:hover { color:var(--ink-1); }
+  .rail-btn.on { color:var(--ink-0); }
+  .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
+  .rail-btn span { font-family:var(--font-mono); font-size:9px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; }
+  .app-main { flex:1; min-width:0; }
+  @media (min-width:860px){
+    .app-rail { left:0; top:0; bottom:0; width:104px; flex-direction:column; align-items:stretch; gap:2px; border-right:1px solid var(--border-strong); }
+    .rail-btn.on::before { content:''; position:absolute; left:0; top:10px; bottom:10px; width:3px; background:var(--accent-terracotta); }
+    .app-main { margin-left:104px; }
+  }
+  @media (max-width:859px){
+    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:6px 4px calc(8px + env(safe-area-inset-bottom)); }
+    .rail-mark { display:none; }
+    .rail-btn { flex:1; padding:5px 0; gap:3px; min-height:52px; }
+    .rail-btn span { font-size:8.5px; }
+    .app-main { margin-left:0; padding-bottom:70px; }
+  }
+  .col { max-width:640px; margin:0 auto; }
+</style>
+</helmet>
+
+<div class="app-shell">
+  <!-- ===================== RAIL / TAB BAR ===================== -->
+  <nav class="app-rail">
+    <span class="rail-mark">Setas<br><em>OS</em></span>
+    <button class="rail-btn {{ navInicioCls }}" onClick="{{ goInicio }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="rail-btn {{ navSesionCls }}" onClick="{{ goSesion }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>Sesión</span>
+    </button>
+    <button class="rail-btn {{ navSimCls }}" onClick="{{ goSim }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"/><path d="M8 3h8"/><path d="M7.5 14h9"/></svg>
+      <span>Simulador</span>
+    </button>
+    <button class="rail-btn {{ navRevisionCls }}" onClick="{{ goRevision }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v16H4z"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14.5l2 2 4-4"/></svg>
+      <span>Revisión</span>
+    </button>
+  </nav>
+
+  <main class="app-main fos-scroll" style="height:100vh;overflow-y:auto;position:relative;">
+
+    <!-- =================== INICIO / LAUNCHER =================== -->
+    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:44px 26px 60px;">
+      <div class="col">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
+          <span style="font:var(--t-eyebrow);letter-spacing:.18em;text-transform:uppercase;color:var(--accent-olive);">Setas de la Peña</span>
+          <span style="font:var(--t-caption);color:var(--text-metadata);">{{ dateStr }}</span>
+        </div>
+        <div style="margin-top:34px;">
+          <div style="font-family:var(--font-sans);font-weight:200;font-style:italic;font-size:22px;color:var(--text-metadata);">buenos días, {{ operator }}</div>
+          <h1 style="font-family:var(--font-sans);font-weight:900;font-size:56px;line-height:.96;letter-spacing:-.025em;color:var(--ink-0);margin:8px 0 0;">Field<br>Operating<br>System</h1>
+          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:18px 0 0;max-width:420px;">Un solo sistema para el campo: registra lo que ocurre en cada contenedor y formula el sustrato con evidencia. Todo comparte especies y lotes.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:38px;">
+          <button onClick="{{ openSession }}" style="cursor:pointer;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:5px;min-height:130px;justify-content:flex-end;">
+            <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;letter-spacing:-.01em;">Abrir sesión</span>
+            <span style="font:var(--t-body-sm);opacity:.72;">Registro de campo · trazabilidad por contenedor</span>
+          </button>
+          <button onClick="{{ goSim }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:5px;min-height:130px;justify-content:flex-end;">
+            <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;letter-spacing:-.01em;">Simulador de recetas</span>
+            <span style="font:var(--t-body-sm);color:var(--text-metadata);">Formular sustrato · {{ simRecipeCount }} recetas guardadas</span>
+          </button>
+          <button onClick="{{ goRevision }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:5px;min-height:130px;justify-content:flex-end;">
+            <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;letter-spacing:-.01em;">Revisión diaria</span>
+            <span style="font:var(--t-body-sm);color:var(--text-metadata);">Lo que ocurrió, leído del registro</span>
+          </button>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:40px 0 12px;">Especies compartidas</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;">
+          <sc-for list="{{ speciesCards }}" as="sp" hint-placeholder-count="5">
+            <div style="border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:14px 15px;display:flex;flex-direction:column;gap:3px;">
+              <span style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent-olive);"></span><span style="font:var(--t-label);color:var(--ink-0);">{{ sp.name }}</span></span>
+              <span style="font-family:var(--font-sans);font-style:italic;font-weight:300;font-size:12px;color:var(--text-secondary);">{{ sp.sci }}</span>
+              <button onClick="{{ sp.formular }}" style="align-self:flex-start;margin-top:8px;cursor:pointer;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:3px;">Formular en Simulador →</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== SESIÓN (Field OS) =================== -->
+    <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
+
+      <!-- START / SESSION PICKER -->
+      <sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:44px 26px 50px;">
+        <div class="col">
+          <span style="font:var(--t-eyebrow);letter-spacing:.18em;text-transform:uppercase;color:var(--accent-olive);">Sesión de campo</span>
+          <div style="margin-top:30px;">
+            <div style="font-family:var(--font-sans);font-weight:200;font-style:italic;font-size:22px;color:var(--text-metadata);">buenos días, {{ operator }}</div>
+            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:48px;line-height:.98;letter-spacing:-.02em;color:var(--ink-0);margin:8px 0 0;">Abre una sesión.</h1>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:18px 0 0;max-width:400px;">Una sesión fija tu nombre y la hora. Todo lo que registres después queda atribuido, sin volver a preguntarte.</p>
+          </div>
+          <div style="margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+            <button onClick="{{ startLab }}" style="cursor:pointer;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;">Laboratorio</span>
+              <span style="font:var(--t-body-sm);opacity:.7;">Spawn, agar, inoculación</span>
+            </button>
+            <button onClick="{{ startCult }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;">Cultivo</span>
+              <span style="font:var(--t-body-sm);color:var(--text-metadata);">Manejo, observación, cosecha</span>
+            </button>
+          </div>
+          <button onClick="{{ goRevision }}" style="cursor:pointer;margin-top:20px;background:none;border:none;padding:6px 0;text-align:left;font:var(--t-label);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:3px;">Revisión diaria del día anterior →</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SESSION HOME (ledger) -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);min-height:100vh;display:flex;flex-direction:column;">
+        <div style="position:sticky;top:0;z-index:3;background:color-mix(in oklab, var(--paper-1) 84%, transparent);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1);padding:16px 26px 12px;border-bottom:1px solid var(--border-soft);">
+          <div class="col" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--accent-olive);"></span>
+              <span style="font:var(--t-label);color:var(--ink-0);">Sesión de {{ sessionLabel }}</span>
+            </div>
+            <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ sessionClock }}</span>
+          </div>
+          <div class="col" style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ operator }} · {{ dateStr }}</div>
+        </div>
+
+        <div class="col" style="width:100%;padding:22px 26px 4px;">
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Registrado en esta sesión</div>
+          <div style="font-family:var(--font-sans);font-weight:900;font-size:15px;color:var(--ink-0);margin-top:2px;"><span style="font-size:36px;line-height:1;letter-spacing:-.02em;">{{ ledgerCount }}</span> <span style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--text-metadata);">eventos</span></div>
+        </div>
+
+        <sc-if value="{{ hasLedger }}" hint-placeholder-val="{{ true }}">
+        <div class="col" style="width:100%;padding:6px 26px 20px;display:flex;flex-direction:column;">
+          <sc-for list="{{ ledger }}" as="ev" hint-placeholder-count="3">
+            <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-soft);">
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ ev.accent }};"></span>
+                <span style="font-family:var(--font-mono);color:var(--text-disabled);margin-top:8px;font-size:11px;">{{ ev.time }}</span>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;justify-content:space-between;gap:8px;">
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span>
+                  <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span>
+                </div>
+                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ noLedger }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:50px 40px;gap:8px;">
+          <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--border-strong);"></div>
+          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;">Aún no has registrado nada. El instrumento espera; tú trabajas.</div>
+        </div>
+        </sc-if>
+
+        <div style="height:24px;flex:none;"></div>
+
+        <div style="position:sticky;bottom:0;margin-top:auto;padding:16px 26px 22px;background:linear-gradient(to top, var(--paper-1) 62%, transparent);">
+          <div class="col" style="display:flex;flex-direction:column;gap:10px;">
+            <button onClick="{{ openCapture }}" style="cursor:pointer;width:100%;border:none;background:var(--accent-terracotta);color:#fff;border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:17px;letter-spacing:.02em;">Registrar</button>
+            <div style="display:flex;gap:10px;">
+              <button onClick="{{ goHistory }}" style="flex:1;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-sm);padding:13px;font:var(--t-label);">Contenedores</button>
+              <button onClick="{{ goEnd }}" style="flex:1;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-sm);padding:13px;font:var(--t-label);">Finalizar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- REGISTER CONTAINER -->
+      <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h2>
+          </div>
+
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Especie</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <sc-for list="{{ speciesOptions }}" as="sp" hint-placeholder-count="5">
+              <button onClick="{{ sp.select }}" style="{{ sp.style }}">{{ sp.name }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 10px;">
+            <div style="font:var(--t-label);color:var(--ink-0);">Referencia de receta <span style="font-weight:400;color:var(--text-metadata);">· solo lectura</span></div>
+            <button onClick="{{ formularSelected }}" disabled="{{ formularDisabled }}" style="{{ formularStyle }}">Formular en Simulador →</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ recipeOptions }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.select }}" style="{{ r.style }}">
+                <span style="display:flex;flex-direction:column;gap:2px;text-align:left;">
+                  <span style="font:var(--t-label);">{{ r.id }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);">{{ r.desc }}</span>
+                </span>
+                <sc-if value="{{ r.sim }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font:var(--t-caption);font-weight:800;color:var(--accent-terracotta);border:1px solid var(--accent-terracotta);border-radius:var(--radius-md);padding:3px 10px;">del Simulador</span></sc-if>
+                <sc-if value="{{ r.exp }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font:var(--t-caption);font-weight:800;color:var(--accent-olive);border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:3px 10px;">experimental</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font:var(--t-label);color:var(--ink-0);">Lote</span>
+              <span style="font:var(--t-caption);color:var(--text-metadata);">Agrupa esta tanda de trabajo</span>
+            </div>
+            <span style="font:var(--t-label);font-family:var(--font-mono);color:var(--accent-olive);">{{ batchId }}</span>
+          </div>
+
+          <button onClick="{{ confirmRegister }}" disabled="{{ registerDisabled }}" style="{{ registerBtnStyle }};margin-top:20px;">{{ registerBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- OBSERVATION -->
+      <sc-if value="{{ isObserve }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h2>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Contenedor</div>
+          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pick }}" style="{{ c.pickStyle }}">
+                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
+                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Percepción</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <sc-for list="{{ obsTags }}" as="t" hint-placeholder-count="6">
+              <button onClick="{{ t.toggle }}" style="{{ t.style }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Nota <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
+          <textarea onInput="{{ setObsNote }}" value="{{ obsNote }}" placeholder="Como en un cuaderno de campo…" rows="3" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
+          <button onClick="{{ confirmObs }}" disabled="{{ obsDisabled }}" style="{{ obsBtnStyle }};margin-top:20px;">{{ obsBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- HARVEST -->
+      <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h2>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Contenedor</div>
+          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pickH }}" style="{{ c.pickStyleH }}">
+                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
+                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Peso fresco</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:10px 12px;max-width:340px;">
+            <button onClick="{{ weightDown }}" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">–</button>
+            <div style="text-align:center;"><span style="font-family:var(--font-mono);font-weight:600;font-size:38px;letter-spacing:-.02em;color:var(--ink-0);">{{ weight }}</span><span style="font:var(--t-label);color:var(--text-metadata);margin-left:4px;">g</span></div>
+            <button onClick="{{ weightUp }}" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">+</button>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Cierre del contenedor</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ closeOptions }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></button>
+            </sc-for>
+          </div>
+          <button onClick="{{ confirmHarvest }}" disabled="{{ harvestDisabled }}" style="{{ harvestBtnStyle }};margin-top:20px;">{{ harvestBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- QUICK EVENT -->
+      <sc-if value="{{ isQuick }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h2>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">{{ quickHint }}</p>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Contenedor</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pickQ }}" style="{{ c.pickStyleQ }}"><span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span><span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span></button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Nota <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
+          <textarea onInput="{{ setQuickNote }}" value="{{ quickNote }}" rows="3" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
+          <button onClick="{{ confirmQuick }}" disabled="{{ quickDisabled }}" style="{{ quickBtnStyle }};margin-top:20px;">{{ quickBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- HISTORY -->
+      <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 40px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+
+          <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-7 · Historia</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h2>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ allContainers }}" as="c" hint-placeholder-count="5">
+                <button onClick="{{ c.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;gap:14px;">
+                  <span style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ c.statusAccent }};"></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                    <span style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);font-family:var(--font-mono);color:var(--ink-0);">{{ c.id }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ c.statusLabel }}</span></span>
+                    <span style="font:var(--t-body-sm);color:var(--text-secondary);">{{ c.species }} · {{ c.stage }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ historyDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;">
+            <button onClick="{{ backToList }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:2px 0 10px;">← Todos los contenedores</button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="width:12px;height:12px;border-radius:50%;background:{{ detailAccent }};"></span>
+              <span style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--ink-0);">{{ detailId }}</span>
+            </div>
+            <div style="font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:19px;color:var(--text-secondary);margin-top:6px;">{{ detailSci }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">{{ detailStatusLabel }}</span>
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Receta {{ detailRecipe }}</span>
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Lote {{ detailBatch }}</span>
+            </div>
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 6px;">Cadena de eventos · inmutable</div>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ detailTimeline }}" as="ev" hint-placeholder-count="4">
+                <div style="display:flex;gap:14px;">
+                  <div style="flex:none;display:flex;flex-direction:column;align-items:center;">
+                    <span style="width:11px;height:11px;border-radius:50%;background:{{ ev.accent }};margin-top:16px;"></span>
+                    <span style="flex:1;width:1px;background:var(--border-strong);"></span>
+                  </div>
+                  <div style="flex:1;padding:14px 0;border-bottom:1px solid var(--border-soft);">
+                    <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.date }}</span></div>
+                    <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
+                    <div style="font:var(--t-caption);color:var(--text-disabled);margin-top:4px;">{{ ev.by }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- END SESSION -->
+      <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Volver</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h2>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
+          </div>
+          <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
+            <div style="display:flex;gap:18px;">
+              <div style="flex:1;"><div style="font-family:var(--font-mono);font-weight:600;font-size:34px;color:var(--ink-0);">{{ ledgerCount }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">eventos</div></div>
+              <div style="flex:1;"><div style="font-family:var(--font-mono);font-weight:600;font-size:34px;color:var(--ink-0);">{{ sessionClock }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">duración</div></div>
+            </div>
+            <div style="height:1px;background:var(--border-soft);margin:18px 0;"></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ endBreakdown }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="display:flex;align-items:center;gap:9px;font:var(--t-body-sm);color:var(--ink-1);"><span style="width:8px;height:8px;border-radius:50%;background:{{ b.accent }};"></span>{{ b.label }}</span><span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-0);">{{ b.count }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;">
+            <button onClick="{{ confirmEnd }}" style="cursor:pointer;border:none;background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:16px;">Finalizar sesión</button>
+            <button onClick="{{ goSesionHome }}" style="cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-md);padding:15px;font:var(--t-label);">Seguir trabajando</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CAPTURE SHEET OVERLAY -->
+      <sc-if value="{{ isCapture }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeCapture }}" style="position:fixed;inset:0;z-index:80;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;justify-content:flex-end;">
+        <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:10px 20px 34px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
+          <div class="col">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--border-strong);margin:6px auto 14px;"></div>
+            <div style="font:var(--t-label);color:var(--ink-0);padding:0 4px 12px;">Registrar un evento</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+              <sc-for list="{{ captureOptions }}" as="o" hint-placeholder-count="6">
+                <button onClick="{{ o.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:16px 15px;display:flex;flex-direction:column;gap:8px;">
+                  <span style="width:12px;height:12px;border-radius:50%;background:{{ o.accent }};"></span>
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ o.label }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);line-height:1.3;">{{ o.desc }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </sc-if>
+
+    <!-- =================== SIMULADOR (iframe) =================== -->
+    <sc-if value="{{ isSim }}" hint-placeholder-val="{{ false }}">
+    <iframe src="{{ simSrc }}" title="Simulador de Recetas" style="width:100%;height:100vh;border:none;display:block;background:#fff;"></iframe>
+    </sc-if>
+
+    <!-- =================== REVISIÓN DIARIA =================== -->
+    <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Revisión diaria · solo lectura</div>
+        <h2 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h2>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">23</div><div style="font:var(--t-caption);color:var(--text-metadata);">eventos</div></div>
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">9</div><div style="font:var(--t-caption);color:var(--text-metadata);">contenedores</div></div>
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--accent-terracotta);">2</div><div style="font:var(--t-caption);color:var(--text-metadata);">cosechas</div></div>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Periodos de trabajo</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ reviewSessions }}" as="s" hint-placeholder-count="2">
+            <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:var(--t-label);color:var(--ink-0);">{{ s.label }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ s.time }}</span></div>
+              <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:3px;">{{ s.summary }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 4px;">Todos los eventos</div>
+        <div style="display:flex;flex-direction:column;">
+          <sc-for list="{{ reviewEvents }}" as="ev" hint-placeholder-count="6">
+            <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
+              <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ ev.time }}</span>
+              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
+              <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div><div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:22px;background:color-mix(in oklab,var(--accent-olive) 12%, var(--paper-0));border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:15px 16px;">
+          <div style="font:var(--t-label);color:var(--accent-olive);">Preparado para el Sistema de Conocimiento</div>
+          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:3px;">2 resultados marcados como experimentales · listos para evaluación. La evidencia se prepara, no se ingiere automáticamente.</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+
+  <!-- TOAST -->
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:0;right:0;bottom:34px;z-index:90;pointer-events:none;display:flex;justify-content:center;padding:0 22px;">
+    <div style="background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:14px 20px;display:flex;align-items:center;gap:12px;max-width:520px;animation:fos-toast 2.6s ease forwards;">
+      <span style="flex:none;width:9px;height:9px;border-radius:50%;background:var(--accent-olive-dim);"></span>
+      <span style="font:var(--t-body-sm);font-weight:400;">{{ toastText }}</span>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820}}">
+const SPECIES = [
+  { key:'p_ostreatus_gris', name:'Orellana gris', sci:'Pleurotus ostreatus' },
+  { key:'lions_mane',       name:'Melena de león', sci:'Hericium erinaceus' },
+  { key:'p_eryngii',        name:'Seta de cardo',  sci:'Pleurotus eryngii' },
+  { key:'shiitake',         name:'Shiitake',       sci:'Lentinula edodes' },
+  { key:'reishi',           name:'Reishi',         sci:'Ganoderma lucidum' },
+];
+const spName = k => (SPECIES.find(s=>s.key===k)||{name:k}).name;
+const spSci  = k => (SPECIES.find(s=>s.key===k)||{sci:''}).sci;
+
+const RECIPES = [
+  { id:'F-018 · v3', desc:'Roble + salvado · hidratación 62%', exp:false },
+  { id:'F-022 · v1', desc:'Haya + salvado · hidratación 60%', exp:false },
+  { id:'F-011 · v5', desc:'Sustrato maestro shiitake', exp:false },
+  { id:'F-030 · v1', desc:'Suplemento enriquecido · en prueba', exp:true },
+];
+const TYPES = {
+  registro:     { label:'Registro',      accent:'var(--accent-olive)' },
+  inoculacion:  { label:'Inoculación',   accent:'var(--accent-olive-dim)' },
+  observacion:  { label:'Observación',   accent:'var(--accent-blue-grey)' },
+  traslado:     { label:'Traslado',      accent:'var(--accent-mushroom)' },
+  contaminacion:{ label:'Contaminación', accent:'var(--status-error)' },
+  cosecha:      { label:'Cosecha',       accent:'var(--accent-terracotta)' },
+  descarte:     { label:'Descarte',      accent:'var(--ink-2)' },
+  marca:        { label:'Marca',         accent:'var(--accent-terracotta)' },
+};
+const STATUS = {
+  activo:      { label:'Activo',       accent:'var(--accent-olive)' },
+  contaminado: { label:'Contaminado',  accent:'var(--status-error)' },
+  cosechado:   { label:'Cosechado',    accent:'var(--accent-terracotta)' },
+  descartado:  { label:'Descartado',   accent:'var(--ink-2)' },
+};
+const OBS_TAGS = ['Sano','Micelio avanzando','Primordios visibles','Condensación','Mancha sospechosa','Olor anómalo'];
+
+class Component extends DCLogic {
+  state = {
+    module: 'inicio',
+    screen: 'start',
+    capture: false,
+    sessionType: null,
+    startMs: 0,
+    clock: '0 min',
+    toast: null,
+    seq: 415,
+    simKey: 0,
+    simRecipes: [],
+    ledger: [
+      { type:'observacion', time:'08:52', container:'C-0412', note:'Micelio cubre 90% del bloque.' },
+      { type:'traslado',    time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
+    ],
+    rSpecies: null, rRecipe: null,
+    oContainer: null, oTags: [], oNote: '',
+    hContainer: null, weight: 240, hClose: 'cosechado',
+    quickType: null, qContainer: null, qNote: '',
+    detail: null,
+    containers: [
+      { id:'C-0414', key:'lions_mane', status:'activo', stage:'inoculación', recipe:'F-030 · v1', batch:'L-2609', tl:[
+        { type:'registro', date:'2 jul · 08:30', note:'Alta en registro. Referencia experimental.', by:'Íñigo' },
+        { type:'inoculacion', date:'2 jul · 08:34', note:'Inoculado con spawn de grano R-14.', by:'Íñigo' } ] },
+      { id:'C-0413', key:'p_eryngii', status:'activo', stage:'primordios', recipe:'F-022 · v1', batch:'L-2608', tl:[
+        { type:'registro', date:'27 jun · 09:10', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'27 jun · 09:14', note:'Bloque de haya + salvado.', by:'Íñigo' },
+        { type:'observacion', date:'1 jul · 08:20', note:'Colonización completa, superficie blanca.', by:'Íñigo' },
+        { type:'traslado', date:'2 jul · 08:40', note:'A cámara de fructificación.', by:'Íñigo' } ] },
+      { id:'C-0412', key:'lions_mane', status:'activo', stage:'incubación', recipe:'F-018 · v3', batch:'L-2608', tl:[
+        { type:'registro', date:'25 jun · 10:02', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'25 jun · 10:06', note:'Roble + salvado, hidratación 62%.', by:'Íñigo' },
+        { type:'observacion', date:'2 jul · 08:52', note:'Micelio cubre 90% del bloque.', by:'Íñigo' } ] },
+      { id:'C-0409', key:'shiitake', status:'contaminado', stage:'incubación', recipe:'F-011 · v5', batch:'L-2607', tl:[
+        { type:'registro', date:'20 jun · 09:40', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'20 jun · 09:45', note:'Sustrato maestro shiitake.', by:'Íñigo' },
+        { type:'contaminacion', date:'29 jun · 11:15', note:'Trichoderma verde en la base. Aislado.', by:'Íñigo' } ] },
+      { id:'C-0402', key:'p_ostreatus_gris', status:'cosechado', stage:'ciclo cerrado', recipe:'F-022 · v1', batch:'L-2605', tl:[
+        { type:'registro', date:'8 jun · 08:15', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'8 jun · 08:20', note:'Haya + salvado.', by:'Íñigo' },
+        { type:'observacion', date:'22 jun · 08:30', note:'Primer flush formándose.', by:'Íñigo' },
+        { type:'cosecha', date:'26 jun · 09:00', note:'Cosecha 310 g. Contenedor cerrado.', by:'Íñigo' } ] },
+    ],
+    reviewSessions: [
+      { label:'Sesión de laboratorio', time:'07:30 – 09:10', summary:'3 contenedores nuevos, 4 inoculaciones, 1 contaminación aislada.' },
+      { label:'Sesión de cultivo', time:'16:20 – 17:45', summary:'6 observaciones, 2 traslados, 2 cosechas (620 g total).' },
+    ],
+    reviewEvents: [
+      { type:'registro', time:'07:34', container:'C-0414', note:'Alta · Melena de león · ref. experimental F-030.' },
+      { type:'inoculacion', time:'07:41', container:'C-0414', note:'Inoculado con spawn R-14.' },
+      { type:'contaminacion', time:'08:12', container:'C-0409', note:'Trichoderma en la base. Aislado.' },
+      { type:'observacion', time:'08:20', container:'C-0413', note:'Colonización completa.' },
+      { type:'traslado', time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
+      { type:'cosecha', time:'16:55', container:'C-0402', note:'310 g. Contenedor cerrado.' },
+      { type:'cosecha', time:'17:20', container:'C-0398', note:'310 g. Contenedor cerrado.' },
+    ],
+  };
+
+  componentDidMount(){
+    this.refreshSim();
+    this._onStorage = (e)=>{ if(!e || e.key==='setas_v6' || e.key===null) this.refreshSim(); };
+    window.addEventListener('storage', this._onStorage);
+  }
+  componentWillUnmount(){
+    clearInterval(this._t);
+    window.removeEventListener('storage', this._onStorage);
+  }
+  refreshSim(){
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem('setas_v6')||'[]'); } catch(e){}
+    if(Array.isArray(list)) this.setState({ simRecipes:list });
+  }
+
+  fmtClock(){
+    const m = Math.max(0, Math.round((Date.now()-this.state.startMs)/60000));
+    return m < 1 ? 'ahora' : (m + ' min');
+  }
+  startSession(type){
+    this.setState({ module:'sesion', screen:'home', sessionType:type, capture:false, startMs:Date.now(), clock:'ahora' });
+    clearInterval(this._t);
+    this._t = setInterval(()=>this.setState({ clock:this.fmtClock() }), 20000);
+  }
+  toast(t){ this.setState({ toast:t }); clearTimeout(this._toast); this._toast = setTimeout(()=>this.setState({toast:null}), 2600); }
+  now(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  push(ev){ this.setState(s=>({ ledger:[{...ev, time:this.now()}, ...s.ledger] })); }
+  go(screen){ this.setState({ screen, capture:false }); }
+
+  openSimForSpecies(key){
+    try { localStorage.setItem('sim_preselect_spp', key); } catch(e){}
+    this.setState(s=>({ module:'sim', simKey:s.simKey+1, capture:false }));
+  }
+
+  confirmRegister(){
+    const { rSpecies, rRecipe } = this.state;
+    if(!rSpecies || !rRecipe) return;
+    const rec = this.recipeById(rRecipe);
+    const id = 'C-0'+(this.state.seq+1);
+    const recNote = rec.sim ? ('receta del Simulador · '+rec.id) : rec.id + (rec.exp?' · experimental':'');
+    const cont = { id, key:rSpecies, status:'activo', stage:'inoculación', recipe:rec.id, batch:'L-2609',
+      tl:[ {type:'registro', date:'2 jul · '+this.now(), note:'Alta en registro. '+recNote+'.', by:'Íñigo'},
+           {type:'inoculacion', date:'2 jul · '+this.now(), note:'Inoculado · '+spName(rSpecies)+'.', by:'Íñigo'} ] };
+    this.setState(s=>({ seq:s.seq+1, containers:[cont, ...s.containers], rSpecies:null, rRecipe:null }));
+    this.push({ type:'registro', container:id, note:spName(rSpecies)+' · '+recNote });
+    this.go('home'); this.toast(id+' registrado y anclado.');
+  }
+  confirmObs(){
+    const { oContainer, oTags, oNote } = this.state;
+    if(!oContainer) return;
+    const note = (oTags.join(', ') + (oNote?' — '+oNote:'')) || 'Observación registrada.';
+    this.setState(s=>({ containers:s.containers.map(c=>c.id===oContainer?{...c, tl:[...c.tl, {type:'observacion', date:'2 jul · '+this.now(), note, by:'Íñigo'}]}:c), oContainer:null, oTags:[], oNote:'' }));
+    this.push({ type:'observacion', container:oContainer, note });
+    this.go('home'); this.toast('Observación registrada en '+oContainer+'.');
+  }
+  confirmHarvest(){
+    const { hContainer, weight, hClose } = this.state;
+    if(!hContainer) return;
+    const closed = hClose==='cosechado';
+    const note = weight+' g fresco. '+(closed?'Contenedor cerrado.':'Contenedor sigue activo (más flushes).');
+    this.setState(s=>({ containers:s.containers.map(c=>c.id===hContainer?{...c, status:closed?'cosechado':c.status, stage:closed?'ciclo cerrado':c.stage, tl:[...c.tl,{type:'cosecha', date:'2 jul · '+this.now(), note, by:'Íñigo'}]}:c), hContainer:null, weight:240, hClose:'cosechado' }));
+    this.push({ type:'cosecha', container:hContainer, note:weight+' g fresco.' });
+    this.go('home'); this.toast(weight+' g cosechados de '+hContainer+'.');
+  }
+  confirmQuick(){
+    const { quickType, qContainer, qNote } = this.state;
+    if(!qContainer) return;
+    const meta = TYPES[quickType];
+    const contam = quickType==='contaminacion';
+    this.setState(s=>({ containers:s.containers.map(c=>c.id===qContainer?{...c, status:contam?'contaminado':c.status, tl:[...c.tl,{type:quickType, date:'2 jul · '+this.now(), note:qNote||meta.label+' registrada.', by:'Íñigo'}]}:c), qContainer:null, qNote:'', quickType:null }));
+    this.push({ type:quickType, container:qContainer, note:qNote||meta.label+' registrada.' });
+    this.go('home'); this.toast(meta.label+' en '+qContainer+'.');
+  }
+
+  recipeOptionsList(){
+    const built = RECIPES.map(r=>({ ...r, sim:false }));
+    const sim = (this.state.simRecipes||[]).map(r=>{
+      const cn = (r.cn!=null && r.cn!=='—') ? ('C:N '+r.cn+' · ') : '';
+      const eb = (r.eb!=null && r.eb!=='—') ? ('EB '+r.eb+'% · ') : '';
+      return { id:'SIM · '+(r.name||('receta '+r.id)), desc:cn+eb+(r.date||''), exp:false, sim:true, sKey:r.sKey };
+    });
+    return [...sim, ...built];
+  }
+  recipeById(id){ return this.recipeOptionsList().find(r=>r.id===id) || {id, desc:'', sim:false, exp:false}; }
+
+  chipStyle(sel){
+    const base='cursor:pointer;font:var(--t-label);padding:12px 16px;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--ink-0);color:var(--paper-0);'
+               : base+'var(--border-strong);background:var(--paper-0);color:var(--ink-1);';
+  }
+  cardStyle(sel){
+    const base='cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:15px 16px;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--paper-0);'
+               : base+'var(--border-soft);background:var(--paper-0);';
+  }
+  pillPick(sel){
+    const base='cursor:pointer;flex:none;display:flex;flex-direction:column;gap:2px;text-align:left;padding:12px 16px;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--ink-0);color:var(--paper-0);'
+               : base+'var(--border-strong);background:var(--paper-0);color:var(--ink-0);';
+  }
+  primaryBtn(enabled){
+    const base='width:100%;border:none;border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:16px;';
+    return enabled ? base+'cursor:pointer;background:var(--accent-terracotta);color:#fff;'
+                   : base+'background:var(--paper-2);color:var(--ink-3);cursor:not-allowed;';
+  }
+
+  renderVals(){
+    const s = this.state;
+    const sessionLabel = s.sessionType==='lab' ? 'laboratorio' : 'cultivo';
+    const active = s.containers.filter(c=>c.status==='activo');
+    const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
+
+    const ledger = s.ledger.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent }));
+    const counts = {};
+    s.ledger.forEach(e=>{ counts[e.type]=(counts[e.type]||0)+1; });
+    const endBreakdown = Object.keys(counts).map(k=>({ label:TYPES[k].label, accent:TYPES[k].accent, count:counts[k] }));
+
+    const captureOptions = [
+      { key:'registro', label:'Contenedor', desc:'Dar de alta un objeto nuevo (WF-1)', go:()=>this.go('register') },
+      { key:'observacion', label:'Observación', desc:'Capturar lo que ves (WF-3)', go:()=>this.go('observe') },
+      { key:'cosecha', label:'Cosecha', desc:'Registrar el resultado (WF-4)', go:()=>this.go('harvest') },
+      { key:'traslado', label:'Traslado', desc:'Mover de zona o cámara', go:()=>this.setState({quickType:'traslado', screen:'quick', capture:false}) },
+      { key:'contaminacion', label:'Contaminación', desc:'Marcar un objeto afectado', go:()=>this.setState({quickType:'contaminacion', screen:'quick', capture:false}) },
+      { key:'marca', label:'Marca', desc:'Señalar para revisión (WF-10)', go:()=>this.setState({quickType:'marca', screen:'quick', capture:false}) },
+    ].map(o=>({ ...o, accent:TYPES[o.key].accent }));
+
+    const quickMeta = s.quickType ? TYPES[s.quickType] : {label:''};
+    const quickCopy = {
+      traslado:{ title:'Registrar traslado', hint:'Un movimiento de zona sigue anclado a su contenedor.' },
+      contaminacion:{ title:'Marcar contaminación', hint:'El fallo se registra con el mismo valor que el éxito.' },
+      marca:{ title:'Marcar para revisión', hint:'Un marcador ligero; nada se interpreta todavía.' },
+    }[s.quickType] || { title:'', hint:'' };
+
+    const navCls = m => s.module===m ? 'on' : '';
+
+    return {
+      // modules
+      isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision',
+      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navSimCls:navCls('sim'), navRevisionCls:navCls('revision'),
+      goInicio:()=>this.setState({module:'inicio',capture:false}),
+      goSesion:()=>this.setState({module:'sesion',capture:false}),
+      goSim:()=>{ this.refreshSim(); this.setState({module:'sim',capture:false}); },
+      goRevision:()=>this.setState({module:'revision',capture:false}),
+      simSrc:'simulador.html?k='+s.simKey,
+
+      // inicio
+      openSession:()=>this.setState({module:'sesion',screen:'start',capture:false}),
+      simRecipeCount:(s.simRecipes||[]).length,
+      speciesCards: SPECIES.map(sp=>({ name:sp.name, sci:sp.sci, formular:()=>this.openSimForSpecies(sp.key) })),
+
+      // session screen flags
+      isStart:s.screen==='start', isHome:s.screen==='home', isRegister:s.screen==='register',
+      isObserve:s.screen==='observe', isHarvest:s.screen==='harvest', isQuick:s.screen==='quick',
+      isHistory:s.screen==='history', isEnd:s.screen==='end',
+      isCapture:s.capture, showToast:!!s.toast, toastText:s.toast||'',
+      stop:(e)=>{ e.stopPropagation(); },
+
+      dateStr:'mié · 2 jul', operator:'Íñigo', sessionLabel, sessionClock:s.clock,
+
+      startLab:()=>this.startSession('lab'), startCult:()=>this.startSession('cult'),
+
+      ledger, ledgerCount:s.ledger.length, hasLedger:s.ledger.length>0, noLedger:s.ledger.length===0,
+      openCapture:()=>this.setState({capture:true}), closeCapture:()=>this.setState({capture:false}),
+      captureOptions, goSesionHome:()=>this.go('home'), goHistory:()=>this.setState({screen:'history', detail:null, capture:false}), goEnd:()=>this.go('end'),
+
+      // register
+      speciesOptions: SPECIES.map(sp=>({ name:sp.name, style:this.chipStyle(s.rSpecies===sp.key), select:()=>this.setState({rSpecies:sp.key}) })),
+      recipeOptions: this.recipeOptionsList().map(r=>({ id:r.id, desc:r.desc, exp:r.exp, sim:r.sim, style:this.cardStyle(s.rRecipe===r.id), select:()=>this.setState({rRecipe:r.id}) })),
+      batchId:'L-2609',
+      formularDisabled: !s.rSpecies,
+      formularStyle: 'cursor:'+(s.rSpecies?'pointer':'not-allowed')+';background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:'+(s.rSpecies?'var(--accent-terracotta)':'var(--ink-3)')+';text-decoration:underline;text-underline-offset:3px;white-space:nowrap;',
+      formularSelected:()=>{ if(s.rSpecies) this.openSimForSpecies(s.rSpecies); },
+      registerDisabled: !(s.rSpecies&&s.rRecipe),
+      registerBtnStyle:this.primaryBtn(!!(s.rSpecies&&s.rRecipe)),
+      registerBtnLabel: (s.rSpecies&&s.rRecipe) ? 'Registrar contenedor' : 'Elige especie y receta',
+      confirmRegister:()=>this.confirmRegister(),
+
+      // observe / harvest / quick
+      activeContainers: active.map(c=>({ id:c.id, species:spName(c.key),
+        pick:()=>this.setState({oContainer:c.id}), pickStyle:this.pillPick(s.oContainer===c.id),
+        pickH:()=>this.setState({hContainer:c.id}), pickStyleH:this.pillPick(s.hContainer===c.id),
+        pickQ:()=>this.setState({qContainer:c.id}), pickStyleQ:this.pillPick(s.qContainer===c.id) })),
+      obsTags: OBS_TAGS.map(t=>({ label:t, style:this.chipStyle(s.oTags.includes(t)), toggle:()=>this.setState(st=>({ oTags: st.oTags.includes(t)?st.oTags.filter(x=>x!==t):[...st.oTags,t] })) })),
+      obsNote:s.oNote, setObsNote:(e)=>this.setState({oNote:e.target.value}),
+      obsDisabled:!s.oContainer, obsBtnStyle:this.primaryBtn(!!s.oContainer),
+      obsBtnLabel: s.oContainer ? 'Guardar observación' : 'Elige un contenedor',
+      confirmObs:()=>this.confirmObs(),
+
+      weight:s.weight, weightUp:()=>this.setState(st=>({weight:st.weight+10})), weightDown:()=>this.setState(st=>({weight:Math.max(0,st.weight-10)})),
+      closeOptions:[
+        { key:'cosechado', label:'Cerrar contenedor', desc:'Fin del ciclo de vida', style:this.cardStyle(s.hClose==='cosechado'), select:()=>this.setState({hClose:'cosechado'}) },
+        { key:'activo', label:'Mantener activo', desc:'Se esperan más flushes', style:this.cardStyle(s.hClose==='activo'), select:()=>this.setState({hClose:'activo'}) },
+      ],
+      harvestDisabled:!s.hContainer, harvestBtnStyle:this.primaryBtn(!!s.hContainer),
+      harvestBtnLabel: s.hContainer ? 'Registrar cosecha' : 'Elige un contenedor',
+      confirmHarvest:()=>this.confirmHarvest(),
+
+      quickRef: s.quickType ? (s.quickType==='marca'?'WF-10 · Marca':'Evento operativo') : '',
+      quickTitle:quickCopy.title, quickHint:quickCopy.hint,
+      quickNote:s.qNote, setQuickNote:(e)=>this.setState({qNote:e.target.value}),
+      quickDisabled:!s.qContainer, quickBtnStyle:this.primaryBtn(!!s.qContainer),
+      quickBtnLabel: s.qContainer ? ('Registrar '+quickMeta.label.toLowerCase()) : 'Elige un contenedor',
+      confirmQuick:()=>this.confirmQuick(),
+
+      // history
+      historyList: !detail, historyDetail: !!detail,
+      allContainers: s.containers.map(c=>({ id:c.id, species:spName(c.key), stage:c.stage, statusLabel:STATUS[c.status].label, statusAccent:STATUS[c.status].accent, open:()=>this.setState({detail:c.id}) })),
+      backToList:()=>this.setState({detail:null}),
+      detailId: detail?detail.id:'', detailSci: detail?spSci(detail.key):'', detailAccent: detail?STATUS[detail.status].accent:'',
+      detailStatusLabel: detail?STATUS[detail.status].label:'', detailRecipe: detail?detail.recipe:'', detailBatch: detail?detail.batch:'',
+      detailTimeline: detail? detail.tl.map(ev=>({ typeLabel:TYPES[ev.type].label, accent:TYPES[ev.type].accent, date:ev.date, note:ev.note, by:'por '+ev.by })) : [],
+
+      // end
+      endBreakdown,
+      confirmEnd:()=>{ clearInterval(this._t); this.setState({module:'inicio', screen:'start', sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
+
+      // review
+      reviewSessions:s.reviewSessions,
+      reviewEvents: s.reviewEvents.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
+    };
+  }
+}
+</script>
+</body>
+</html>

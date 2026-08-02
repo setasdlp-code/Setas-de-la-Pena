@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F6F4EC">
+  <meta name="description" content="Field OS: memoria operativa para el cultivo de setas en Tenjo. Captura, trazabilidad, producción y aprendizaje en un sistema modular.">
+  <meta property="og:title" content="Field OS · Setas de la Peña">
+  <meta property="og:description" content="Registro operativo. Decisiones con evidencia.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_CO">
+  <meta property="og:url" content="https://setasdlp-code.github.io/Field-OS/">
+  <meta property="og:image" content="https://setasdlp-code.github.io/Field-OS/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Field OS, memoria operativa de Setas de la Peña en Tenjo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Field OS · Setas de la Peña">
+  <meta name="twitter:description" content="Registro operativo y evidencia trazable para el cultivo en Tenjo.">
+  <meta name="twitter:image" content="https://setasdlp-code.github.io/Field-OS/og.png">
+  <title>Field OS · Setas de la Peña</title>
+  <link rel="canonical" href="https://setasdlp-code.github.io/Field-OS/">
+  <link rel="icon" href="./assets/icon-192.png" type="image/png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://unpkg.com/lucide@1.20.0/dist/umd/lucide.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Saltar al contenido</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <button class="brand" type="button" data-nav-target="today" aria-label="Ir a Mi turno">
+        <img class="brand-logo" src="./assets/logo-primary.png" alt="Setas de la Peña">
+      </button>
+
+      <div class="site-context">
+        <span class="context-dot" aria-hidden="true"></span>
+        <span>Tenjo · 2.592 msnm</span>
+      </div>
+
+      <nav class="primary-nav" aria-label="Secciones de Field OS">
+        <button type="button" class="nav-item is-active" data-nav-target="today" data-roles="operator,production,direction">
+          <span class="nav-code">01</span><span>Mi turno</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="plan" data-roles="production,direction">
+          <span class="nav-code">02</span><span>Plan</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="production" data-roles="production">
+          <span class="nav-code">03</span><span>Producción</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="environment" data-roles="production">
+          <span class="nav-code">04</span><span>Ambiente</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="inventory" data-roles="production">
+          <span class="nav-code">05</span><span>Inventario</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="quality" data-roles="production,direction">
+          <span class="nav-code">06</span><span>Calidad</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="learn" data-roles="production,direction">
+          <span class="nav-code">07</span><span>Aprender</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="commercial" data-roles="direction">
+          <span class="nav-code">08</span><span>Comercial</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span>Sincronizado</span>
+        <strong><span class="sync-dot" aria-hidden="true"></span> hace 12 s</strong>
+      </div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div class="mobile-brand" aria-hidden="true">Field OS</div>
+        <div class="topbar-status">
+          <span class="topbar-label">SESIÓN</span>
+          <strong id="sessionLabel">Cultivo · activa</strong>
+        </div>
+        <div class="topbar-actions">
+          <label class="role-field" for="roleSelect">
+            <span>Vista</span>
+            <select id="roleSelect" aria-label="Cambiar rol de demostración">
+              <option value="operator">Operario</option>
+              <option value="production" selected>Producción</option>
+              <option value="direction">Dirección</option>
+            </select>
+          </label>
+          <button class="icon-button" type="button" id="installButton" hidden>Instalar</button>
+          <button class="avatar-button" type="button" aria-label="Perfil de Íñigo">IP</button>
+        </div>
+      </header>
+
+      <main id="workspace" tabindex="-1">
+        <section class="view is-visible" id="view-today" data-view="today" aria-labelledby="today-title">
+          <div class="view-header view-header--hero">
+            <div>
+              <p class="eyebrow" id="todayEyebrow">Sábado · 18 de julio · Turno de cultivo</p>
+              <h1 id="today-title">Estado de la operación.</h1>
+              <p class="lede" id="todayLede">Lotes, condiciones y excepciones con origen verificable. Cada cambio conserva autoría, hora y contexto.</p>
+            </div>
+            <img class="hero-specimen" src="./assets/hero-specimens.png" alt="Ilustración botánica de setas y la Peña de Juaica">
+          </div>
+
+          <div class="today-grid">
+            <article class="capture-card surface-dark">
+              <div class="card-kicker">REGISTRO DE EVENTO</div>
+              <h2>Contenedor</h2>
+              <p>Escanea el QR o ingresa el código para abrir su identidad, historial reciente y eventos disponibles.</p>
+              <button class="primary-action primary-action--light" type="button" id="scanButton">
+                <span class="scan-symbol" aria-hidden="true"><i data-lucide="scan-line"></i></span>
+                <span><strong>Escanear contenedor</strong><small>Búsqueda por código disponible</small></span>
+              </button>
+              <button class="text-action text-action--light" type="button" id="manualRegisterButton">Ingresar código</button>
+            </article>
+
+            <article class="session-card card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">ESTA SESIÓN</p>
+                  <h2>Cultivo</h2>
+                </div>
+                <span class="status status--live">Activa</span>
+              </div>
+              <dl class="session-metrics">
+                <div><dt>Eventos</dt><dd id="eventCount">4</dd></div>
+                <div><dt>Contenedores</dt><dd>3</dd></div>
+                <div><dt>Duración</dt><dd>01:24</dd></div>
+              </dl>
+              <div class="session-operator">
+                <span class="operator-avatar">IP</span>
+                <span><small>Operador</small><strong>Íñigo Pinzón</strong></span>
+              </div>
+            </article>
+
+            <article class="evidence-card card" data-role-block="production,direction">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">PARA REVISAR</p>
+                  <h2>Evidencia operativa</h2>
+                </div>
+                <span class="count-badge" id="reviewCount">2</span>
+              </div>
+              <div class="evidence-list" id="evidenceList">
+                <div class="evidence-item">
+                  <span class="evidence-severity evidence-severity--watch" aria-hidden="true"></span>
+                  <div><strong>Cámara 02 · HR 78%</strong><small>Medido · fuera del rango registrado durante 22 min</small></div>
+                  <button type="button" class="compact-button acknowledge-button">Reconocer</button>
+                </div>
+                <div class="evidence-item">
+                  <span class="evidence-severity evidence-severity--note" aria-hidden="true"></span>
+                  <div><strong>C-0414 · marca de revisión</strong><small>Manual · registrada por Íñigo a las 10:42</small></div>
+                  <button type="button" class="compact-button acknowledge-button">Revisado</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="activity-card card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">MEMORIA DEL TURNO</p>
+                  <h2>Últimos eventos</h2>
+                </div>
+                <button type="button" class="text-action" data-nav-target="quality">Ver trazabilidad</button>
+              </div>
+              <ol class="timeline" id="eventTimeline">
+                <li><time>11:18</time><span class="timeline-dot timeline-dot--harvest"></span><div><strong>Cosecha · C-0412</strong><small>420 g · primera florada · calidad 4/5</small></div></li>
+                <li><time>10:42</time><span class="timeline-dot timeline-dot--flag"></span><div><strong>Marca · C-0414</strong><small>Amarillamiento leve en borde superior</small></div></li>
+                <li><time>09:56</time><span class="timeline-dot"></span><div><strong>Observación · C-0413</strong><small>Primordios uniformes · sin anomalías</small></div></li>
+                <li><time>09:14</time><span class="timeline-dot"></span><div><strong>Traslado · C-0412</strong><small>Incubación → cámara de fructificación 01</small></div></li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-plan" data-view="plan" aria-labelledby="plan-title" hidden>
+          <div class="view-header">
+            <div><p class="eyebrow">DEMANDA → CAPACIDAD → LOTES</p><h1 id="plan-title">Plan de producción</h1><p class="lede">Demanda, capacidad y órdenes de cultivo consolidadas en una misma secuencia operativa.</p></div>
+            <button class="primary-action primary-action--inline" type="button">Nueva orden</button>
+          </div>
+          <div class="metric-strip">
+            <div><span>Demanda 8 semanas</span><strong>268 kg</strong><small>Confirmada + prevista</small></div>
+            <div><span>Capacidad comprometida</span><strong>78%</strong><small>3 cámaras activas</small></div>
+            <div><span>Próxima brecha</span><strong>12 kg</strong><small>Semana del 24 ago</small></div>
+            <div><span>Lotes por iniciar</span><strong>4</strong><small>22–29 jul</small></div>
+          </div>
+          <div class="split-layout split-layout--wide">
+            <article class="card schedule-board">
+              <div class="card-heading"><div><p class="eyebrow">PRÓXIMOS 14 DÍAS</p><h2>Órdenes y capacidad</h2></div><span class="source-tag source-tag--calculated">Calculado</span></div>
+              <div class="schedule-row schedule-head"><span>Orden</span><span>Especie</span><span>Inicio</span><span>Cámara</span><span>Estado</span></div>
+              <div class="schedule-row"><strong>OP-260722-01</strong><span>Orellana gris</span><span>22 jul</span><span>Inc. 01</span><span class="status status--ready">Lista</span></div>
+              <div class="schedule-row"><strong>OP-260724-02</strong><span>Orellana blanca</span><span>24 jul</span><span>Inc. 02</span><span class="status status--watch">Falta spawn</span></div>
+              <div class="schedule-row"><strong>OP-260727-01</strong><span>Orellana gris</span><span>27 jul</span><span>Inc. 01</span><span class="status status--draft">Borrador</span></div>
+              <div class="schedule-row"><strong>EXP-260729-01</strong><span>Melena de león</span><span>29 jul</span><span>Lab.</span><span class="status status--experimental">Experimental</span></div>
+            </article>
+            <article class="card demand-card">
+              <div class="card-heading"><div><p class="eyebrow">ORIGEN DE DEMANDA</p><h2>Agosto</h2></div><span class="source-tag source-tag--mixed">Mixto</span></div>
+              <div class="demand-bar"><span style="--share:42%"><b>Restaurantes</b><small>42%</small></span><span style="--share:31%"><b>Mercado</b><small>31%</small></span><span style="--share:17%"><b>Directo</b><small>17%</small></span><span style="--share:10%"><b>Reserva</b><small>10%</small></span></div>
+              <p class="support-copy">Cada orden conserva su cliente, fecha prometida y lote comercial esperado. El plan cambia; la historia no.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-production" data-view="production" aria-labelledby="production-title" hidden>
+          <div class="view-header">
+            <div><p class="eyebrow">RECETA APROBADA → BALANCE → EJECUCIÓN</p><h1 id="production-title">Producción</h1><p class="lede">Una sola función de cálculo valida el lote antes de pesar o descontar inventario.</p></div>
+            <button class="primary-action primary-action--inline" type="button" id="executeBatchButton">Ejecutar lote</button>
+          </div>
+          <div class="validation-banner validation-banner--pass" id="massBalanceBanner" role="status">
+            <div><span class="validation-symbol" aria-hidden="true"><i data-lucide="circle-check"></i></span><span><strong>Balance de masa cerrado</strong><small>La receta suma 100,0%. Todos los insumos tienen stock y lote de origen.</small></span></div>
+            <span class="source-tag source-tag--calculated">Calculado</span>
+          </div>
+          <div class="split-layout">
+            <article class="card recipe-card">
+              <div class="card-heading"><div><p class="eyebrow">RECETA VERSIONADA</p><h2>Orellana Gris · v1.8</h2></div><span class="status status--approved">Aprobada</span></div>
+              <div class="recipe-composition" aria-label="Composición de la receta">
+                <span class="recipe-segment recipe-segment--straw" style="--size:62%">62%</span>
+                <span class="recipe-segment recipe-segment--sawdust" style="--size:22%">22%</span>
+                <span class="recipe-segment recipe-segment--bran" style="--size:12%">12%</span>
+                <span class="recipe-segment recipe-segment--mineral" style="--size:4%">4%</span>
+              </div>
+              <div class="recipe-lines">
+                <div><span class="ingredient-dot ingredient-dot--straw"></span><strong>Paja de trigo</strong><span>62,0%</span></div>
+                <div><span class="ingredient-dot ingredient-dot--sawdust"></span><strong>Aserrín de roble</strong><span>22,0%</span></div>
+                <div><span class="ingredient-dot ingredient-dot--bran"></span><strong>Salvado de trigo</strong><span>12,0%</span></div>
+                <div><span class="ingredient-dot ingredient-dot--mineral"></span><strong>Yeso + CaCO₃</strong><span>4,0%</span></div>
+                <div class="recipe-total"><span></span><strong>Total</strong><span>100,0%</span></div>
+              </div>
+              <dl class="data-grid">
+                <div><dt>C:N</dt><dd>35,2 : 1</dd><small>Calculado</small></div>
+                <div><dt>Humedad</dt><dd>67,0%</dd><small>Objetivo</small></div>
+                <div><dt>Materia seca</dt><dd>2,97 kg</dd><small>Calculado</small></div>
+                <div><dt>Sustrato final</dt><dd>9,00 kg</dd><small>Calculado</small></div>
+              </dl>
+            </article>
+            <article class="card batch-card">
+              <div class="card-heading"><div><p class="eyebrow">ORDEN OP-260722-01</p><h2>Lote SDP-260722-OST-01</h2></div><span class="source-tag source-tag--manual">Manual</span></div>
+              <div class="batch-controls">
+                <label>Número de bolsas<input type="number" value="6" min="1" max="200"></label>
+                <label>Kg húmedo / bolsa<input type="number" value="1.5" min="0.5" max="10" step="0.1"></label>
+                <label>Spawn<input type="number" value="8" min="1" max="30" step="0.5"><span>%</span></label>
+                <label>Resolución de báscula<select><option>1 g</option><option>5 g</option><option>10 g</option></select></label>
+              </div>
+              <div class="batch-equation" aria-label="Ecuación de balance de masa">
+                <span><small>Insumos húmedos</small><strong>6,81 kg</strong></span><b>+</b><span><small>Agua neta</small><strong>1,47 L</strong></span><b>+</b><span><small>Spawn</small><strong>0,72 kg</strong></span><b>=</b><span class="batch-equation-total"><small>Lote final</small><strong>9,00 kg</strong></span>
+              </div>
+              <p class="support-copy">La ejecución crea un evento inmutable, bloquea la versión de receta y descuenta inventario por lote FIFO.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-environment" data-view="environment" aria-labelledby="environment-title" hidden>
+          <div class="view-header">
+            <div><p class="eyebrow">LECTURAS → REGLAS → EVIDENCIA</p><h1 id="environment-title">Ambiente</h1><p class="lede">Lecturas, simulaciones y cálculos identificados por origen. Cada incidencia conserva responsable, seguimiento y cierre.</p></div>
+            <button class="secondary-action" type="button">Banco de reglas</button>
+          </div>
+          <div class="chamber-grid">
+            <article class="chamber-card chamber-card--selected"><div class="card-heading"><div><p class="eyebrow">CÁMARA 01</p><h2>Fructificación</h2></div><span class="status status--live">Estable</span></div><dl><div><dt>Temperatura</dt><dd>17,1 °C</dd><small>Medido · 12 s</small></div><div><dt>HR</dt><dd>89%</dd><small>Medido · 12 s</small></div><div><dt>CO₂</dt><dd>749 ppm</dd><small>Medido · 24 s</small></div></dl></article>
+            <article class="chamber-card"><div class="card-heading"><div><p class="eyebrow">CÁMARA 02</p><h2>Fructificación</h2></div><span class="status status--watch">En revisión</span></div><dl><div><dt>Temperatura</dt><dd>17,5 °C</dd><small>Medido · 9 s</small></div><div><dt>HR</dt><dd>78%</dd><small>Medido · 9 s</small></div><div><dt>CO₂</dt><dd>812 ppm</dd><small>Medido · 18 s</small></div></dl></article>
+            <article class="chamber-card"><div class="card-heading"><div><p class="eyebrow">INCUBACIÓN 01</p><h2>Colonización</h2></div><span class="status status--live">Estable</span></div><dl><div><dt>Temperatura</dt><dd>21,8 °C</dd><small>Medido · 14 s</small></div><div><dt>HR</dt><dd>82%</dd><small>Medido · 14 s</small></div><div><dt>Puerta</dt><dd>Cerrada</dd><small>Medido · 3 min</small></div></dl></article>
+          </div>
+          <div class="split-layout split-layout--wide">
+            <article class="card climate-chart-card">
+              <div class="card-heading"><div><p class="eyebrow">ÚLTIMAS 12 HORAS</p><h2>Cámara 02 · humedad relativa</h2></div><span class="source-tag source-tag--measured">Medido</span></div>
+              <div class="chart-shell" role="img" aria-label="La humedad de la cámara 02 desciende gradualmente de 88 a 78 por ciento en doce horas">
+                <div class="chart-range"><span>92%</span><span>85%</span><span>78%</span></div>
+                <div class="chart-grid-lines"><i></i><i></i><i></i></div>
+                <div class="chart-line"><span style="--x:0%;--y:24%"></span><span style="--x:10%;--y:26%"></span><span style="--x:20%;--y:29%"></span><span style="--x:30%;--y:34%"></span><span style="--x:40%;--y:37%"></span><span style="--x:50%;--y:43%"></span><span style="--x:60%;--y:49%"></span><span style="--x:70%;--y:55%"></span><span style="--x:80%;--y:64%"></span><span style="--x:90%;--y:72%"></span><span style="--x:100%;--y:78%"></span></div>
+                <div class="chart-threshold">Rango registrado: 85–92%</div>
+              </div>
+            </article>
+            <article class="card incident-card">
+              <div class="card-heading"><div><p class="eyebrow">INCIDENCIA AGRUPADA</p><h2>HR bajo rango registrado</h2></div><span class="status status--watch">Abierta</span></div>
+              <dl class="incident-details"><div><dt>Inicio</dt><dd>11:06</dd></div><div><dt>Duración</dt><dd>22 min</dd></div><div><dt>Regla</dt><dd>HR &lt; 85% · 15 min</dd></div><div><dt>Origen</dt><dd>Sensor H-02A</dd></div></dl>
+              <label class="incident-note">Nota de revisión<textarea rows="3" placeholder="Hallazgo, causa confirmada o acción realizada."></textarea></label>
+              <button class="primary-action primary-action--inline incident-ack" type="button">Reconocer incidencia</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-inventory" data-view="inventory" aria-labelledby="inventory-title" hidden>
+          <div class="view-header"><div><p class="eyebrow">LOTE DE ORIGEN → MOVIMIENTO → COSTO</p><h1 id="inventory-title">Inventario</h1><p class="lede">Disponibilidad consolidada por proveedor, lote, fecha, costo y consumo proyectado.</p></div><button class="primary-action primary-action--inline" type="button">Registrar compra</button></div>
+          <div class="metric-strip"><div><span>Valor en stock</span><strong>$286.400</strong><small>COP · calculado</small></div><div><span>Ingredientes</span><strong>12</strong><small>7 con stock</small></div><div><span>Por reponer</span><strong>2</strong><small>Según plan activo</small></div><div><span>Cobertura</span><strong>18 días</strong><small>Demanda prevista</small></div></div>
+          <article class="card inventory-table-card">
+            <div class="card-heading"><div><p class="eyebrow">STOCK POR LOTE</p><h2>Materias primas</h2></div><button class="text-action" type="button">Exportar CSV</button></div>
+            <div class="data-table" role="table" aria-label="Inventario de materias primas">
+              <div class="data-row data-row--head" role="row"><span>Ingrediente</span><span>Lote / proveedor</span><span>Disponible</span><span>Costo/kg</span><span>Cobertura</span><span>Estado</span></div>
+              <div class="data-row" role="row"><strong>Paja de trigo</strong><span>PT-260703 · Paloquemao</span><span>15,0 kg</span><span>$1.200</span><span>12 días</span><span class="status status--ready">Disponible</span></div>
+              <div class="data-row" role="row"><strong>Aserrín de roble</strong><span>AR-260629 · El Rosal</span><span>8,0 kg</span><span>$800</span><span>21 días</span><span class="status status--ready">Disponible</span></div>
+              <div class="data-row" role="row"><strong>Salvado de trigo</strong><span>ST-260711 · Paloquemao</span><span>5,0 kg</span><span>$2.100</span><span>9 días</span><span class="status status--watch">Reponer</span></div>
+              <div class="data-row" role="row"><strong>Spawn O. gris</strong><span>SP-260714 · Micelio Andino</span><span>3,2 kg</span><span>$12.000</span><span>1 orden</span><span class="status status--watch">Reservado</span></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" id="view-quality" data-view="quality" aria-labelledby="quality-title" hidden>
+          <div class="view-header"><div><p class="eyebrow">DEL PEDIDO AL INSUMO</p><h1 id="quality-title">Calidad y trazabilidad</h1><p class="lede">La traza vincula cada lote comercial con sus cosechas, contenedores, receta e insumos de origen.</p></div><button class="secondary-action" type="button" id="traceSearchButton">Buscar código</button></div>
+          <article class="card trace-card">
+            <div class="card-heading"><div><p class="eyebrow">TRAZA ACTIVA</p><h2>EMP-260718-04 · Orellanas frescas 250 g</h2></div><span class="status status--approved">Liberado</span></div>
+            <div class="trace-chain" aria-label="Cadena de trazabilidad del lote comercial">
+              <button type="button"><small>Pedido</small><strong>PED-1048</strong><span>Restaurante Aldea</span></button>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
+              <button type="button"><small>Empaque</small><strong>EMP-260718-04</strong><span>18 jul · 16:10</span></button>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
+              <button type="button"><small>Cosecha</small><strong>COS-260718-02</strong><span>4,8 kg · grado A</span></button>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
+              <button type="button"><small>Contenedores</small><strong>6 bolsas</strong><span>C-0410 → C-0415</span></button>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
+              <button type="button"><small>Lote</small><strong>SDP-260607-OST-03</strong><span>Receta v1.8</span></button>
+              <i data-lucide="arrow-left" aria-hidden="true"></i>
+              <button type="button"><small>Insumos</small><strong>4 lotes</strong><span>Origen verificado</span></button>
+            </div>
+            <div class="release-summary"><div><span class="release-check" aria-hidden="true"><i data-lucide="circle-check"></i></span><span><strong>Control de liberación completo</strong><small>Peso, apariencia, temperatura, empaque y responsable registrados.</small></span></div><button class="compact-button" type="button">Ver ficha</button></div>
+          </article>
+          <div class="split-layout split-layout--wide">
+            <article class="card"><div class="card-heading"><div><p class="eyebrow">RESULTADO DEL LOTE</p><h2>Indicadores</h2></div><span class="source-tag source-tag--calculated">Calculado</span></div><dl class="data-grid data-grid--three"><div><dt>EB real</dt><dd>84,6%</dd><small>Cosecha / seco</small></div><div><dt>Contaminación</dt><dd>3,2%</dd><small>1 de 31 bolsas</small></div><div><dt>Grado A</dt><dd>91%</dd><small>Del peso fresco</small></div></dl></article>
+            <article class="card"><div class="card-heading"><div><p class="eyebrow">NO CONFORMIDADES</p><h2>Últimos 30 días</h2></div><span class="count-badge">1</span></div><div class="evidence-item"><span class="evidence-severity evidence-severity--watch"></span><div><strong>NC-260709-01 · sello incompleto</strong><small>Cerrada · causa y acción documentadas</small></div><button class="compact-button" type="button">Abrir</button></div></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-learn" data-view="learn" aria-labelledby="learn-title" hidden>
+          <div class="view-header"><div><p class="eyebrow">HIPÓTESIS → EVIDENCIA → DECISIÓN → SOP</p><h1 id="learn-title">Aprender</h1><p class="lede">Los ensayos comparten la memoria operativa y permanecen separados de la línea base de producción.</p></div><button class="primary-action primary-action--inline" type="button">Nueva prueba</button></div>
+          <div class="split-layout split-layout--wide">
+            <article class="card experiment-card"><div class="card-heading"><div><p class="eyebrow">EXP-260629-ML-02</p><h2>Melena de león · humedad 64% vs 67%</h2></div><span class="status status--experimental">Experimental</span></div><p class="support-copy">Hipótesis: reducir humedad inicial mejora colonización sin disminuir eficiencia biológica.</p><div class="comparison-grid"><div><small>Control · 67%</small><strong>EB 72%</strong><span>Contam. 12%</span></div><div class="comparison-grid--best"><small>Tratamiento · 64%</small><strong>EB 79%</strong><span>Contam. 4%</span></div></div><div class="experiment-footer"><span>6/6 contenedores cerrados</span><button class="compact-button" type="button">Abrir evidencia</button></div></article>
+            <article class="card sop-card"><div class="card-heading"><div><p class="eyebrow">DECISIÓN PENDIENTE</p><h2>Promover a repetición</h2></div><span class="source-tag source-tag--manual">Juicio técnico</span></div><p>El resultado favorece 64%. La adopción al SOP requiere repetición y validación; la siguiente corrida conservará el vínculo con esta evidencia.</p><div class="sop-lifecycle"><span class="is-done">Observación</span><span class="is-done">Prueba</span><span class="is-active">Repetición</span><span>Validación</span><span>SOP</span></div><button class="secondary-action" type="button">Crear repetición vinculada</button></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-commercial" data-view="commercial" aria-labelledby="commercial-title" hidden>
+          <div class="view-header"><div><p class="eyebrow">PEDIDOS → COSECHA → ENTREGA</p><h1 id="commercial-title">Comercial</h1><p class="lede">Pedidos, disponibilidad prevista y fechas de entrega vinculados con los lotes de producción.</p></div><button class="primary-action primary-action--inline" type="button">Nuevo pedido</button></div>
+          <div class="metric-strip"><div><span>Semana 29</span><strong>38,5 kg</strong><small>Pedidos confirmados</small></div><div><span>Disponible</span><strong>41,2 kg</strong><small>Cosecha prevista</small></div><div><span>Margen bruto</span><strong>47%</strong><small>Calculado por lote</small></div><div><span>Entregas</span><strong>7</strong><small>Bogotá y Tenjo</small></div></div>
+          <article class="card order-board"><div class="card-heading"><div><p class="eyebrow">DESPACHOS PRÓXIMOS</p><h2>Pedidos confirmados</h2></div><span class="source-tag source-tag--mixed">Pedido + plan</span></div><div class="order-list"><div><span class="order-date">20 JUL</span><div><strong>Restaurante Aldea</strong><small>Orellana gris · 8,0 kg · Bogotá</small></div><span class="status status--ready">Asignado</span><strong>EMP-260718-04</strong></div><div><span class="order-date">22 JUL</span><div><strong>Mercado de Tenjo</strong><small>Orellana fresca · 12,0 kg</small></div><span class="status status--ready">Cubierto</span><strong>2 cosechas</strong></div><div><span class="order-date">24 JUL</span><div><strong>La Despensa Verde</strong><small>Orellana blanca · 6,5 kg · Bogotá</small></div><span class="status status--watch">En riesgo</span><strong>–1,2 kg</strong></div></div></article>
+        </section>
+      </main>
+
+      <nav class="mobile-nav" aria-label="Navegación móvil">
+        <button type="button" class="mobile-nav-item is-active" data-nav-target="today" data-roles="operator,production,direction"><span aria-hidden="true"><i data-lucide="house"></i></span>Turno</button>
+        <button type="button" class="mobile-nav-item" data-mobile-scan data-roles="operator"><span aria-hidden="true"><i data-lucide="scan-line"></i></span>Escanear</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="production" data-roles="production"><span aria-hidden="true"><i data-lucide="flask-conical"></i></span>Producción</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="environment" data-roles="production"><span aria-hidden="true"><i data-lucide="gauge"></i></span>Ambiente</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="quality" data-roles="production,direction"><span aria-hidden="true"><i data-lucide="shield-check"></i></span>Calidad</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="commercial" data-roles="direction"><span aria-hidden="true"><i data-lucide="truck"></i></span>Comercial</button>
+        <button type="button" class="mobile-nav-item" data-nav-target="learn" data-roles="direction"><span aria-hidden="true"><i data-lucide="microscope"></i></span>Aprender</button>
+      </nav>
+    </div>
+  </div>
+
+  <dialog class="capture-dialog" id="captureDialog" aria-labelledby="captureTitle">
+    <form method="dialog" class="dialog-shell" id="captureForm">
+      <div class="dialog-header">
+        <div><p class="eyebrow">CONTENEDOR IDENTIFICADO</p><h2 id="captureTitle">C-0412</h2><p><i>Pleurotus ostreatus</i> · Fructificación · día 41</p></div>
+        <button class="dialog-close" type="button" aria-label="Cerrar registro"><i data-lucide="x" aria-hidden="true"></i></button>
+      </div>
+      <div class="object-context">
+        <div><small>Último evento</small><strong>Traslado · hoy 09:14</strong></div>
+        <div><small>Receta</small><strong>Orellana Gris · v1.8</strong></div>
+        <div><small>Lote</small><strong>SDP-260607-OST-03</strong></div>
+      </div>
+      <fieldset class="event-choices">
+        <legend>Tipo de evento</legend>
+        <label><input type="radio" name="eventType" value="Observación" checked><span><strong>Observación</strong><small>Condición registrada</small></span></label>
+        <label><input type="radio" name="eventType" value="Cosecha"><span><strong>Cosecha</strong><small>Peso y calidad</small></span></label>
+        <label><input type="radio" name="eventType" value="Traslado"><span><strong>Traslado</strong><small>Cambio de zona</small></span></label>
+        <label><input type="radio" name="eventType" value="Contaminación"><span><strong>Contaminación</strong><small>Hecho observado</small></span></label>
+      </fieldset>
+      <div class="capture-fields">
+        <label>Detalle<textarea id="eventNote" rows="3" placeholder="Hallazgo, medida o condición relevante."></textarea></label>
+        <div class="quick-notes" aria-label="Notas rápidas">
+          <button type="button" data-quick-note="Desarrollo uniforme.">Desarrollo uniforme</button>
+          <button type="button" data-quick-note="Sin anomalías visibles.">Sin anomalías</button>
+          <button type="button" data-quick-note="Revisar en el próximo turno.">Marcar revisión</button>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <span><strong>Íñigo Pinzón</strong><small>Hora y autor quedan asociados al evento</small></span>
+        <button class="primary-action primary-action--inline" type="submit">Guardar evento</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog" id="batchDialog" aria-labelledby="batchDialogTitle">
+    <form method="dialog" class="dialog-shell dialog-shell--small">
+      <div class="dialog-header"><div><p class="eyebrow">CONFIRMACIÓN OPERATIVA</p><h2 id="batchDialogTitle">Ejecutar lote</h2></div><button class="dialog-close" type="button" aria-label="Cerrar confirmación"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="confirmation-list"><div><span>Receta</span><strong>Orellana Gris · v1.8</strong></div><div><span>Balance</span><strong>100,0% · válido</strong></div><div><span>Materia seca</span><strong>2,97 kg</strong></div><div><span>Stock</span><strong>Completo · FIFO</strong></div></div>
+      <p>La ejecución registra el evento, descuenta inventario por FIFO y fija la versión de receta asociada al lote.</p>
+      <div class="dialog-actions dialog-actions--end"><button class="secondary-action" value="cancel">Cancelar</button><button class="primary-action primary-action--inline" id="confirmBatchButton" value="confirm">Confirmar ejecución</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <noscript><p class="noscript-message">Field OS necesita JavaScript para cambiar vistas y registrar eventos en esta demostración.</p></noscript>
+</body>
+</html>

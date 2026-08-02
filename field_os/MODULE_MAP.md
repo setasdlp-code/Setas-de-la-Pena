@@ -3,8 +3,8 @@ title: SdP Field OS — Conceptual Module Map
 document_id: PMOD-001
 authority: product-architecture
 category: product-architecture
-version: 1.0
-last_reviewed: 2026-07-05
+version: 1.1
+last_reviewed: 2026-07-27
 status: active
 governed_by:
   - PRODUCT_CANON.md
@@ -13,9 +13,13 @@ governed_by:
   - ADR-0001_Central_Operational_Unit.md
   - ADR-0002_Product_Priority.md
   - ADR-0003_System_Boundary.md
+  - ADR-0004_V1_Scope_Expansion.md
   - PRODUCT_ASSUMPTIONS.md
 supersedes: null
 superseded_by: null
+amendment_log:
+  - "v1.0 → v1.1 (2026-07-27): added §4.5 Monitoring / Climate Alert, §5.2 Role-Scoped Presentation, §5.3 Inventory Visibility — all per ADR-0004, each with an explicit caveat (IN-3 and GR-2 remain Proposed; inventory data was initially mocked)."
+  - "v1.1 (2026-07-27, same day): §5.3 updated — /api/inventory shipped as a real store, replacing the mock. Caveat updated: the store is real, but stock quantities are operator-entered and unaudited (no history of changes, no reconciliation)."
 ---
 
 # MODULE_MAP — SdP Field OS
@@ -67,7 +71,10 @@ The modules fall into five tiers by the kind of responsibility they hold. Author
 | Knowledge Boundary | Boundary | Knowledge References | ADR-0003 |
 | Recipe & Formulation Boundary | Boundary | Recipe References | ADR-0003 |
 | Automation Boundary | Boundary | Sensor Reading references | ADR-0003 |
+| Monitoring / Climate Alert *(added 2026-07-27; IN-3 `Proposed`)* | Boundary | Chamber Climate Alert | ADR-0004 |
 | Review / Query | Access | nothing new (read-only) | ADR-0002 |
+| Role-Scoped Presentation *(added 2026-07-27; GR-2 `Proposed`, presentation-only)* | Access | Operator Role (client-side view scoping) | ADR-0004 |
+| Inventory Visibility *(added 2026-07-27; real store, unaudited quantities)* | Access | Inventory Item (read-only signal) | ADR-0004 |
 | AI Interpretation | Deferred | nothing in the foundation | ADR-0002 |
 
 ---
@@ -236,9 +243,24 @@ Boundary modules hold the **read-only reference seams** to the three neighbourin
 - **Outputs.** Read-only sensor references.
 - **Dependencies.** Automation Layer (read-only).
 - **Boundaries.** Never issues a control command; never becomes the controller (ADR-0003 alternative rejected). Referenced-reading trustworthiness is `Proposed` (IN-3) — referenced as context, not owned truth.
-- **Deferred capabilities.** Monitoring/alerting on sensor data is deferred (ADR-0002); the seam must remain read-only when that capability is later added (PC-04).
+- **Deferred capabilities.** Broader monitoring/alerting beyond §4.5's narrow escalation surface remains deferred (ADR-0002); the seam must remain read-only regardless (PC-08, ADR-0003).
 - **Related DATA_MODEL entities.** Sensor Reading.
 - **Supporting PRODUCT_CANON.** PC-08. **Supporting ADRs.** ADR-0003.
+
+### 4.5 Monitoring / Climate Alert *(added 2026-07-27, ADR-0004)*
+- **Purpose.** Detect an unresolved climate deviation read via the Automation Boundary and escalate it after a fixed window — the first, narrow instance of the "monitor" capability ADR-0002 named but deferred.
+- **Responsibilities.** Read Sensor Reading references (never own or command); derive an alert when a chamber is out of range; escalate the alert to a persistent, non-dismissable signal past a fixed unresolved window; surface escalated alerts to Review/Query.
+- **Objects owned.** Chamber Climate Alert (current-state, not append-only history).
+- **Objects consumed.** Sensor Reading references (Automation Boundary); Room/Zone references.
+- **Objects produced.** Alert/escalation state for Review/Query to surface.
+- **Inputs.** A Sensor Reading read via the Automation Boundary.
+- **Outputs.** An alert, escalated past the fixed window.
+- **Dependencies.** Automation Boundary (source of Sensor Reading references).
+- **Boundaries.** Never commands hardware (ADR-0003 unchanged); never writes an Operational Event on the ledger — an alert is derived monitoring state, not a captured fact about a container.
+- **Deferred capabilities.** Everything beyond this one escalation surface — correlating alerts with operational events, prescriptive guidance, or any control action — remains deferred (ADR-0002; PC-08, PC-09).
+- **Caveat.** `IN-3` (sensor trustworthiness) remains `Proposed`, Low confidence. This module is scoped in as a logged owner risk-acceptance (ADR-0004), not because sensor trust was validated. Its output must not be presented or relied on as a validated safety signal until `IN-3` resolves.
+- **Related DATA_MODEL entities.** Chamber Climate Alert (§2.16); Sensor Reading (§2.8).
+- **Supporting PRODUCT_CANON.** none directly (no principle claims sensor trust). **Supporting ADRs.** ADR-0004 (scope), ADR-0003 (read-only boundary preserved).
 
 ---
 
@@ -257,6 +279,36 @@ Boundary modules hold the **read-only reference seams** to the three neighbourin
 - **Deferred capabilities.** Must leave room for later advisory/monitoring surfacing to read from the same evidence without a rebuild (PC-04).
 - **Related DATA_MODEL entities.** Operational Record; State model.
 - **Supporting PRODUCT_CANON.** PC-12. **Supporting ADRs.** ADR-0002.
+
+### 5.2 Role-Scoped Presentation *(added 2026-07-27, ADR-0004)*
+- **Purpose.** Present a subset of modules to an Operator based on a selected Role — a first, deliberately narrow slice of the multi-user surface (`GR-2`).
+- **Responsibilities.** Read the Operator's selected Role; hide modules a Role is not scoped to see in the client.
+- **Objects owned.** Nothing new beyond the Role concept on Operator (DATA_MODEL §2.6). No permission or authorization object exists.
+- **Objects consumed.** Operator Role (client-side selection).
+- **Objects produced.** A filtered module view, in the client only.
+- **Inputs.** A Role selection.
+- **Outputs.** Which modules are rendered.
+- **Dependencies.** None server-side — this module has no dependency on an authorization service because none exists yet.
+- **Boundaries.** **Not an access-control boundary.** It changes what renders, never what an API call is permitted to do. Every ledger/photo endpoint remains reachable by any caller regardless of the Role selected in the UI.
+- **Deferred capabilities.** Server-enforced roles, permissions, and concurrency control (`GR-2`) — the actual authorization model — remain entirely deferred. This module must not be mistaken for that.
+- **Caveat.** `GR-2` (multi-user) remains `Proposed`, Low confidence. Scoped in as a logged owner risk-acceptance (ADR-0004) for presentation only.
+- **Related DATA_MODEL entities.** Operator (§2.6, Role extension).
+- **Supporting PRODUCT_CANON.** PC-12 (the operator remains the decision-maker; a Role label does not change that). **Supporting ADRs.** ADR-0004.
+
+### 5.3 Inventory Visibility *(added 2026-07-27, ADR-0004)*
+- **Purpose.** Surface a low-stock signal for Bodega insumos on Inicio — a first, narrow slice of inventory, not the full procurement/stock domain.
+- **Responsibilities.** Read Inventory Item records; surface a banner when an item is below a minimum.
+- **Objects owned.** Nothing beyond the Inventory Item visibility itself. Note: the underlying store (`server/inventory-store.mjs`) does provide a write path (register/update a lot's quantity) — that capability belongs to Inventory Item's own store, not to this Access-tier visibility module, which only reads and surfaces.
+- **Objects consumed.** Inventory Item (§2.17), backed by a real store as of 2026-07-27 (`/api/inventory`).
+- **Objects produced.** A low-stock banner for Review/Query-style surfaces.
+- **Inputs.** Inventory Item stock status.
+- **Outputs.** A visibility signal.
+- **Dependencies.** `/api/inventory` (real, current-state store).
+- **Boundaries.** Read-only from this module's perspective; not connected to Container, Batch, or Event.
+- **Deferred capabilities.** Procurement, reconciliation against real purchases/consumption, and an audit trail of stock changes (today, an update overwrites in place with no history) remain out of scope.
+- **Caveat.** The data source is real, not a claim that displayed quantities are accurate — they are operator-entered and unaudited (ADR-0004 required follow-up: reconciliation/audit trail).
+- **Related DATA_MODEL entities.** Inventory Item (§2.17).
+- **Supporting PRODUCT_CANON.** none directly. **Supporting ADRs.** ADR-0004.
 
 ---
 
@@ -303,12 +355,15 @@ This single-writer, many-reader shape is the module-level expression of "history
 | Automation Boundary | Sensor Reading | PC-08 | ADR-0003 | `TECHNICAL_ARCHITECTURE` |
 | Review / Query | Operational Record; State | PC-12 | ADR-0002 | `USER_WORKFLOWS`, `TECHNICAL_ARCHITECTURE` |
 | AI Interpretation *(deferred)* | AI Review artifact | PC-04, PC-09 | ADR-0002 | `ROADMAP` |
+| Monitoring / Climate Alert *(added 2026-07-27; IN-3 `Proposed`)* | Chamber Climate Alert | — | ADR-0004, ADR-0003 | `TECHNICAL_ARCHITECTURE` |
+| Role-Scoped Presentation *(added 2026-07-27; GR-2 `Proposed`, presentation-only)* | Operator Role | PC-12 | ADR-0004 | `TECHNICAL_ARCHITECTURE` |
+| Inventory Visibility *(added 2026-07-27; real store, unaudited quantities)* | Inventory Item | — | ADR-0004 | `TECHNICAL_ARCHITECTURE` |
 
 ---
 
-*Document version: 1.0*
-*Effective date: 2026-07-05*
+*Document version: 1.1*
+*Effective date: 2026-07-27 (supersedes v1.0 of 2026-07-05)*
 *Authority: Field OS product architecture (module map)*
-*Governed by: PRODUCT_CANON.md, PRODUCT_ARCHITECTURE.md, DATA_MODEL.md, ADR-0001, ADR-0002, ADR-0003, PRODUCT_ASSUMPTIONS.md*
-*Defines conceptual responsibility clusters, not screens, services, or storage. Introduces no new module, principle, or implementation decision.*
+*Governed by: PRODUCT_CANON.md, PRODUCT_ARCHITECTURE.md, DATA_MODEL.md, ADR-0001, ADR-0002, ADR-0003, ADR-0004, PRODUCT_ASSUMPTIONS.md*
+*Defines conceptual responsibility clusters, not screens, services, or storage. §§4.5, 5.2, 5.3 are new modules introduced by ADR-0004 (2026-07-27), each carrying its own caveat; every other module is unchanged from v1.0.*
 *Valid independent of any language, framework, database, interface, or deployment model.*

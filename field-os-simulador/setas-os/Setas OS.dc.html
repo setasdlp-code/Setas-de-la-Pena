@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#4a5d3a"></rect><text x="40" y="34" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="800" font-size="16" fill="#f5f1e8">SO</text></svg></template>
+<helmet>
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link rel="stylesheet" href="fieldos-tokens.css">
+<script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
+<script src="qr-mini.js"></script>
+<style>
+  html, body { margin:0; background: var(--paper-1); }
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  a { color: var(--accent-terracotta); }
+  a:hover { color: color-mix(in oklab, var(--accent-terracotta) 78%, black); }
+  .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  .fos-scroll::-webkit-scrollbar { display: none; }
+  .role-switch button:not([style*="ink-0"]):hover { background: var(--paper-1) !important; }
+  .operator-picker { transition: border-color .15s ease, background-color .15s ease; }
+  .operator-picker:hover { border-color: var(--border-strong); background: var(--paper-1); }
+  .operator-picker:hover svg { color: var(--ink-0) !important; }
+  @keyframes fos-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fos-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fos-toast { 0%{opacity:0;transform:translateY(8px);} 12%{opacity:1;transform:translateY(0);} 88%{opacity:1;transform:translateY(0);} 100%{opacity:0;transform:translateY(-4px);} }
+  @keyframes fos-screen { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fos-spin { to { transform: rotate(360deg); } }
+  @keyframes fos-scanline { 0%{top:8%;} 50%{top:88%;} 100%{top:8%;} }
+
+  .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
+  .app-rail { position:fixed; z-index:60; background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
+  .rail-peek { display:none; }
+  .rail-btn { display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:9px 4px; transition:color .15s, background-color .15s; border-radius:var(--radius-sm); }
+  .rail-btn:hover { color:var(--ink-1); }
+  .rail-btn.on { color:var(--ink-0); }
+  .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
+  .rail-btn span { font-family:var(--font-mono); font-size:9px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .rail-badge { position:absolute; top:4px; right:calc(50% - 22px); min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
+  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; }
+  .app-main { flex:1; min-width:0; }
+  @media (min-width:860px){
+    .app-rail { left:0; top:0; bottom:0; width:104px; flex-direction:column; align-items:stretch; gap:2px; border-right:1px solid var(--border-strong); padding:0 8px; overflow-y:auto; }
+    .rail-btn.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
+    .rail-btn.on { background:var(--paper-2); }
+    .app-main { margin-left:104px; }
+    .app-shell.sim-collapsed .app-rail { transform:translateX(-112%); }
+    .app-shell.sim-collapsed .app-main { margin-left:0; }
+    .app-shell.sim-collapsed .rail-peek {
+      display:flex; align-items:center; justify-content:center;
+      position:fixed; left:0; top:0; bottom:0; width:14px; z-index:59; cursor:pointer;
+      background:linear-gradient(to right, var(--paper-2), transparent);
+    }
+    .app-shell.sim-collapsed .rail-peek::before {
+      content:''; width:3px; height:44px; border-radius:2px; background:var(--accent-terracotta); opacity:.55;
+    }
+    .app-shell.sim-collapsed .rail-peek:hover::before { opacity:1; }
+    .app-shell.sim-collapsed .rail-peek:hover ~ .app-rail,
+    .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:2px 0 24px rgba(0,0,0,.12); }
+  }
+  @media (max-width:859px){
+    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .rail-mark { display:none; }
+    .rail-btn { flex:0 0 auto; min-width:60px; padding:6px 8px; gap:2px; min-height:48px; }
+    .rail-btn.on { background:var(--paper-2); }
+    .rail-btn span { font-size:8.5px; }
+    .app-main { margin-left:0; padding-bottom:62px; }
+  }
+  .col { max-width:640px; margin:0 auto; }
+  @media print {
+    body * { visibility:hidden !important; }
+    .qr-print, .qr-print * { visibility:visible !important; }
+    .qr-print { position:fixed !important; inset:0 !important; margin:0 !important; padding:0 !important; background:#fff !important; display:flex !important; align-items:center; justify-content:center; box-shadow:none !important; border:none !important; }
+  }
+</style>
+</helmet>
+
+<div class="app-shell {{ shellCls }}">
+  <div class="rail-peek" title="Mostrar menú"></div>
+  <!-- ===================== RAIL / TAB BAR ===================== -->
+  <nav class="app-rail">
+    <span class="rail-mark"><span style="font-style: normal;">Setas </span><br>de la<br><span style="font-style: normal;">&nbsp;Peña</span></span>
+    <button class="rail-btn {{ navInicioCls }}" onClick="{{ goInicio }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="rail-btn {{ navSesionCls }}" onClick="{{ goSesion }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span>Campo</span>
+    </button>
+    <button class="rail-btn {{ navCamarasCls }}" onClick="{{ goCamaras }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"></path><path d="M3 21h18"></path><path d="M9 21v-6h6v6"></path><path d="M7 12h.01M17 12h.01"></path></svg>
+      <span>Cámaras</span>
+    </button>
+    <button class="rail-btn {{ navSimCls }}" onClick="{{ goSim }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
+      <span>Simulador</span>
+    </button>
+    <button class="rail-btn {{ navClimaCls }}" onClick="{{ goClima }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 14.76V4a2 2 0 0 0-4 0v10.76a4 4 0 1 0 4 0z"></path><path d="M12 8v6"></path></svg>
+      <span>Monitoreo</span>
+      <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadge }} alertas">{{ climaBadge }}</span></sc-if>
+    </button>
+    <button class="rail-btn {{ navRevisionCls }}" onClick="{{ goRevision }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v16H4z"></path><path d="M8 3v4M16 3v4M4 10h16"></path><path d="M8.5 14.5l2 2 4-4"></path></svg>
+      <span>Revisión</span>
+    </button>
+    <sc-if value="{{ showPlan }}" hint-placeholder-val="{{ true }}">
+    <button class="rail-btn {{ navPlanCls }}" onClick="{{ goPlan }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="16"></rect><path d="M4 10h16"></path><path d="M9 3v4M15 3v4"></path></svg>
+      <span>Plan</span>
+    </button>
+    </sc-if>
+    <sc-if value="{{ showInventario }}" hint-placeholder-val="{{ true }}">
+    <button class="rail-btn {{ navInventarioCls }}" onClick="{{ goInventario }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>
+      <span>Inventario</span>
+    </button>
+    </sc-if>
+    <sc-if value="{{ showCalidad }}" hint-placeholder-val="{{ true }}">
+    <button class="rail-btn {{ navCalidadCls }}" onClick="{{ goCalidad }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+      <span>Calidad</span>
+    </button>
+    </sc-if>
+    <sc-if value="{{ showAprender }}" hint-placeholder-val="{{ true }}">
+    <button class="rail-btn {{ navAprenderCls }}" onClick="{{ goAprender }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="10" r="6"></circle><path d="M9 21h6M10 18h4"></path><path d="M12 4V2"></path></svg>
+      <span>Aprender</span>
+    </button>
+    </sc-if>
+    <sc-if value="{{ showComercial }}" hint-placeholder-val="{{ true }}">
+    <button class="rail-btn {{ navComercialCls }}" onClick="{{ goComercial }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h13l4 4v6H3z"></path><circle cx="7.5" cy="18.5" r="1.5"></circle><circle cx="16.5" cy="18.5" r="1.5"></circle></svg>
+      <span>Comercial</span>
+    </button>
+    </sc-if>
+  </nav>
+
+  <main class="app-main fos-scroll" style="height:100vh;overflow-y:auto;position:relative;">
+
+    <!-- =================== OFFLINE BANNER (prolonged disconnect) =================== -->
+    <sc-if value="{{ showOfflineBanner }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 26px;background:var(--accent-mushroom);color:var(--paper-0);animation:fos-fade .25s ease;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:19px;height:19px;"><path d="M1 1l22 22"></path><path d="M16.7 11.7a6 6 0 0 0-3.2-1.6"></path><path d="M5 12.5a10 10 0 0 1 3.5-2.3"></path><path d="M2 8.8a15 15 0 0 1 4.2-2.6"></path><path d="M17.8 6.2A15 15 0 0 1 22 8.8"></path><path d="M12 20h.01"></path></svg>
+      <div style="flex:1;min-width:0;">
+        <div style="font:var(--t-label);">{{ offlineBannerText }}</div>
+        <div style="font:var(--t-caption);opacity:.82;margin-top:1px;">{{ offlineBannerSub }}</div>
+      </div>
+      <button onClick="{{ toggleOnline }}" style="flex:none;cursor:pointer;border:1px solid color-mix(in oklab, var(--paper-0) 55%, transparent);background:none;color:var(--paper-0);border-radius:var(--radius-md);padding:8px 13px;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;text-transform:uppercase;">Reintentar</button>
+    </div>
+    </sc-if>
+
+    <!-- =================== INICIO / LAUNCHER =================== -->
+    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px calc(50px + env(safe-area-inset-bottom));">
+      <div class="col">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
+          <span style="font: var(--t-eyebrow); letter-spacing: -0.02em; text-transform: none; color: var(--status-active); font-family: gaya; font-size: 25.5px">Setas de la Peña</span>
+          <span style="font: var(--t-caption); color: var(--text-metadata); font-size: 13.5px">{{ dateStr }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+          <span style="font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">Vista</span>
+          <div class="role-switch" style="display:flex;border:1px solid var(--border-hairline);">
+            <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
+              <button onClick="{{ ro.select }}" style="{{ ro.style }}">{{ ro.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:6px;">{{ roleSubtitle }}</div>
+        <div style="margin-top:14px;">
+          <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-sans);font-weight:400;font-style:italic;font-size:18px;color:var(--ink-1);"><span style="display:inline-flex">{{ weatherIcon }}</span>{{ weatherText }}</div>
+          <h1 style="font-family: var(--font-sans); font-weight: 900; font-size: 53px; letter-spacing: -.02em; color: var(--ink-1); margin: 2px 0 0">Sistema Operativo de Campo</h1>
+        </div>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;max-width:420px;">Registro de campo, trazabilidad por contenedor y formulación de sustratos.</p>
+
+        <div style="margin-top:20px;">
+          <button onClick="{{ openSession }}" style="cursor:pointer;width:100%;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:24px 26px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 0 var(--ink-0), 0 6px 18px color-mix(in oklab, var(--ink-0) 22%, transparent);">
+            <span style="flex:1;display:flex;flex-direction:column;gap:4px;">
+              <span style="font-family:var(--font-sans);font-weight:900;font-size:25px;letter-spacing:-.015em;">{{ primaryActionLabel }}</span>
+              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:24px;height:24px;opacity:.9;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:34px 0 10px;">Hoy</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button onClick="{{ goHistoryFromInicio }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:13px 15px;display:flex;flex-direction:column;gap:2px;">
+            <span style="font-family:var(--font-mono);font-weight:600;font-size:21px;color:var(--ink-1);">{{ needsReviewCount }}</span>
+            <span style="font:var(--t-caption);color:var(--text-metadata);">Contenedores por revisar</span>
+          </button>
+          <button onClick="{{ goRevision }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:13px 15px;display:flex;flex-direction:column;gap:2px;">
+            <span style="font-family:var(--font-mono);font-weight:600;font-size:21px;color:var(--ink-1);">{{ ledgerCount }}</span>
+            <span style="font:var(--t-caption);color:var(--text-metadata);">Eventos registrados hoy</span>
+          </button>
+          <button onClick="{{ goSim }}" style="grid-column:1 / -1;cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font:var(--t-label);color:var(--ink-0);">{{ simCardLabel }}</span>
+              <span style="font:var(--t-caption);color:var(--text-metadata);">{{ simCardSub }}</span>
+            </span>
+            <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);">Simulador →</span>
+          </button>
+        </div>
+
+        <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Actividad reciente</div>
+        <div style="display:flex;flex-direction:column;">
+          <sc-for list="{{ recentActivity }}" as="ev" hint-placeholder-count="2">
+            <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);">
+              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div>
+                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:30px 0 12px;">Especies compartidas</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;">
+          <sc-for list="{{ speciesCards }}" as="sp" hint-placeholder-count="5">
+            <div style="border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:14px 15px;display:flex;flex-direction:column;gap:3px;">
+              <span style="display:flex;align-items:center;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ sp.name }}</span></span>
+              <span style="font-family:var(--font-sans);font-style:italic;font-weight:400;font-size:13px;color:var(--ink-1);">{{ sp.sci }}</span>
+              <button onClick="{{ sp.formular }}" style="align-self:flex-start;margin-top:8px;cursor:pointer;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:3px;">Formular en Simulador →</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== SESIÓN (Field OS) =================== -->
+    <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
+
+      <!-- START / SESSION PICKER -->
+      <sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:44px 26px 50px;">
+        <div class="col">
+          <span style="font:var(--t-eyebrow);letter-spacing:.18em;text-transform:uppercase;color:var(--accent-olive);">Sesión de campo</span>
+          <div style="margin-top:30px;">
+            <div style="font-family:var(--font-sans);font-weight:200;font-style:italic;font-size:22px;color:var(--text-metadata);">{{ greeting }}</div>
+            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:48px;line-height:.98;letter-spacing:-.02em;color:var(--ink-0);margin:8px 0 0;">Abre una sesión.</h1>
+            <div style="font:var(--t-body-sm);color:var(--text-secondary);margin:14px 0 0;">{{ needsReviewLabel }} · {{ ledgerLabel }}</div>
+          </div>
+
+          <div style="margin-top:26px;position:relative;display:inline-block;">
+            <button class="operator-picker" onClick="{{ togglePicker }}" title="Cambiar de operador" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:999px;padding:6px 14px 6px 6px;">
+              <span style="width:22px;height:22px;border-radius:50%;background:var(--ink-0);color:var(--paper-0);font-family:var(--font-sans);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none;">{{ operatorInitial }}</span>
+              <span style="font:var(--t-label);color:var(--ink-0);">{{ operator }}</span>
+              <span style="font:var(--t-caption);color:var(--text-metadata);">· {{ operatorRole }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--ink-1);transform:{{ pickerChevron }};transition:transform .15s ease;flex:none;"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <sc-if value="{{ pickerOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closePicker }}" style="position:fixed;inset:0;z-index:9;"></div>
+            <div style="position:absolute;top:calc(100% + 8px);left:0;z-index:10;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);min-width:210px;overflow:hidden;animation:fos-fade .15s ease;box-shadow:0 10px 30px color-mix(in oklab, var(--ink-0) 16%, transparent);">
+              <div style="font:var(--t-eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--text-metadata);padding:10px 14px 6px;">Cambiar de operador</div>
+              <sc-for list="{{ operators }}" as="op" hint-placeholder-count="3">
+                <button onClick="{{ op.pick }}" style="{{ op.rowStyle }}">
+                  <span style="font-family:var(--font-sans);font-weight:700;font-size:14px;">{{ op.name }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);">{{ op.role }}</span>
+                </button>
+              </sc-for>
+            </div>
+            </sc-if>
+          </div>
+
+          <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+            <button onClick="{{ startLab }}" style="cursor:pointer;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;">Laboratorio</span>
+              <span style="font:var(--t-body-sm);opacity:.7;">Spawn, agar, inoculación</span>
+            </button>
+            <button onClick="{{ startCult }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:22px;">Cultivo</span>
+              <span style="font:var(--t-body-sm);color:var(--text-metadata);">Manejo, observación, cosecha</span>
+            </button>
+          </div>
+          <button onClick="{{ goRevision }}" style="cursor:pointer;margin-top:20px;background:none;border:none;padding:6px 0;text-align:left;font:var(--t-label);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:3px;">Revisión diaria del día anterior →</button>
+        </div>
+        <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
+          <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
+          <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- SESSION HOME (ledger) -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);min-height:100vh;display:flex;flex-direction:column;">
+        <div style="position:sticky;top:0;z-index:3;background:color-mix(in oklab, var(--paper-1) 84%, transparent);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1);padding:16px 26px 12px;border-bottom:1px solid var(--border-soft);">
+          <div class="col" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--accent-olive);"></span>
+              <span style="font:var(--t-label);color:var(--ink-0);">Sesión de {{ sessionLabel }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button onClick="{{ toggleOnline }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
+                <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};"></span>{{ syncPillText }}
+              </button>
+              <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ sessionClock }}</span>
+            </div>
+          </div>
+          <div class="col" style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ operator }} · {{ dateStr }}</div>
+        </div>
+
+        <div class="col" style="width:100%;padding:22px 26px 4px;">
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Registrado en esta sesión</div>
+          <div style="font-family:var(--font-sans);font-weight:900;font-size:15px;color:var(--ink-0);margin-top:2px;"><span style="font-size:36px;line-height:1;letter-spacing:-.02em;">{{ ledgerCount }}</span> <span style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--text-metadata);">eventos</span></div>
+        </div>
+
+        <sc-if value="{{ hasLedger }}" hint-placeholder-val="{{ true }}">
+        <div class="col" style="width:100%;padding:6px 26px 20px;display:flex;flex-direction:column;">
+          <sc-for list="{{ ledger }}" as="ev" hint-placeholder-count="3">
+            <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-soft);">
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ ev.accent }};"></span>
+                <span style="font-family:var(--font-mono);color:var(--text-disabled);margin-top:8px;font-size:11px;">{{ ev.time }}</span>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;justify-content:space-between;gap:8px;">
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span>
+                  <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span>
+                </div>
+                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ noLedger }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:50px 40px;gap:8px;">
+          <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--border-strong);"></div>
+          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;">Aún no has registrado nada. El instrumento espera; tú trabajas.</div>
+        </div>
+        </sc-if>
+
+        <div style="height:24px;flex:none;"></div>
+
+        <div style="position:sticky;bottom:0;margin-top:auto;padding:16px 26px 22px;background:linear-gradient(to top, var(--paper-1) 62%, transparent);">
+          <div class="col" style="display:flex;flex-direction:column;gap:10px;">
+            <button onClick="{{ openCapture }}" style="cursor:pointer;width:100%;border:none;background:var(--accent-terracotta);color:#fff;border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:17px;letter-spacing:.02em;">Registrar</button>
+            <div style="display:flex;gap:10px;">
+              <button onClick="{{ openScanHome }}" style="flex:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-sm);padding:13px;font:var(--t-label);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:16px;height:16px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
+              <button onClick="{{ goHistory }}" style="flex:1;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:var(--radius-sm);padding:13px;font:var(--t-label);">Contenedores</button>
+              <button onClick="{{ goEnd }}" style="flex:1;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-sm);padding:13px;font:var(--t-label);">Finalizar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- REGISTER CONTAINER -->
+      <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h2>
+          </div>
+
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Especie</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <sc-for list="{{ speciesOptions }}" as="sp" hint-placeholder-count="5">
+              <button onClick="{{ sp.select }}" style="{{ sp.style }}">{{ sp.name }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 10px;">
+            <div style="font:var(--t-label);color:var(--ink-0);">Referencia de receta <span style="font-weight:400;color:var(--text-metadata);">· solo lectura</span></div>
+            <button onClick="{{ formularSelected }}" disabled="{{ formularDisabled }}" style="{{ formularStyle }}">Formular en Simulador →</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ recipeOptions }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.select }}" style="{{ r.style }}">
+                <span style="display:flex;flex-direction:column;gap:2px;text-align:left;">
+                  <span style="font:var(--t-label);">{{ r.id }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);">{{ r.desc }}</span>
+                </span>
+                <sc-if value="{{ r.sim }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font:var(--t-caption);font-weight:800;color:var(--accent-terracotta);border:1px solid var(--accent-terracotta);border-radius:var(--radius-md);padding:3px 10px;">del Simulador</span></sc-if>
+                <sc-if value="{{ r.exp }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font:var(--t-caption);font-weight:800;color:var(--accent-olive);border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:3px 10px;">experimental</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font:var(--t-label);color:var(--ink-0);">Lote</span>
+              <span style="font:var(--t-caption);color:var(--text-metadata);">Agrupa esta tanda de trabajo</span>
+            </div>
+            <span style="font:var(--t-label);font-family:var(--font-mono);color:var(--accent-olive);">{{ batchId }}</span>
+          </div>
+
+          <button onClick="{{ confirmRegister }}" disabled="{{ registerDisabled }}" style="{{ registerBtnStyle }};margin-top:20px;">{{ registerBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- OBSERVATION -->
+      <sc-if value="{{ isObserve }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h2>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
+            <div style="font:var(--t-label);color:var(--ink-0);">Contenedores <span style="font-weight:400;color:var(--text-metadata);">· selecciona uno o varios</span></div>
+            <button onClick="{{ openScanObs }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;color:var(--accent-terracotta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
+          </div>
+          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pick }}" style="{{ c.pickStyle }}">
+                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
+                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Percepción</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <sc-for list="{{ obsTags }}" as="t" hint-placeholder-count="6">
+              <button onClick="{{ t.toggle }}" style="{{ t.style }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Nota <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
+          <textarea aria-label="Nota de observación" onInput="{{ setObsNote }}" value="{{ obsNote }}" placeholder="Como en un cuaderno de campo…" rows="3" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
+          <button onClick="{{ confirmObs }}" disabled="{{ obsDisabled }}" style="{{ obsBtnStyle }};margin-top:20px;">{{ obsBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- HARVEST -->
+      <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h2>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
+            <div style="font:var(--t-label);color:var(--ink-0);">Contenedor</div>
+            <button onClick="{{ openScanHarvest }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;color:var(--accent-terracotta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
+          </div>
+          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pickH }}" style="{{ c.pickStyleH }}">
+                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
+                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Peso fresco</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:10px 12px;max-width:340px;">
+            <button onClick="{{ weightDown }}" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">–</button>
+            <div style="text-align:center;"><span style="font-family:var(--font-mono);font-weight:600;font-size:38px;letter-spacing:-.02em;color:var(--ink-0);">{{ weight }}</span><span style="font:var(--t-label);color:var(--text-metadata);margin-left:4px;">g</span></div>
+            <button onClick="{{ weightUp }}" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">+</button>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Cierre del contenedor</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ closeOptions }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Destino de la cosecha</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ destOptions }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="display:flex;flex-direction:column;gap:2px;text-align:left;"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></span></button>
+            </sc-for>
+          </div>
+          <button onClick="{{ confirmHarvest }}" disabled="{{ harvestDisabled }}" style="{{ harvestBtnStyle }};margin-top:20px;">{{ harvestBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- QUICK EVENT -->
+      <sc-if value="{{ isQuick }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h2>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">{{ quickHint }}</p>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
+            <div style="font:var(--t-label);color:var(--ink-0);">Contenedores <span style="font-weight:400;color:var(--text-metadata);">· uno o varios</span></div>
+            <button onClick="{{ openScanQuick }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;color:var(--accent-terracotta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pickQ }}" style="{{ c.pickStyleQ }}"><span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span><span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span></button>
+            </sc-for>
+          </div>
+          <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Nota <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
+          <textarea aria-label="Nota" onInput="{{ setQuickNote }}" value="{{ quickNote }}" rows="3" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
+          <button onClick="{{ confirmQuick }}" disabled="{{ quickDisabled }}" style="{{ quickBtnStyle }};margin-top:20px;">{{ quickBtnLabel }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- HISTORY -->
+      <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 40px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+
+          <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-7 · Historia</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h2>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ allContainers }}" as="c" hint-placeholder-count="5">
+                <button onClick="{{ c.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;gap:14px;">
+                  <span style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ c.statusAccent }};"></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                    <span style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);font-family:var(--font-mono);color:var(--ink-0);">{{ c.id }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ c.statusLabel }}</span></span>
+                    <span style="font:var(--t-body-sm);color:var(--text-secondary);">{{ c.species }} · {{ c.stage }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ historyDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;">
+            <button onClick="{{ backToList }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:2px 0 10px;">← Todos los contenedores</button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="width:12px;height:12px;border-radius:50%;background:{{ detailAccent }};"></span>
+              <span style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--ink-0);">{{ detailId }}</span>
+            </div>
+            <div style="font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:19px;color:var(--text-secondary);margin-top:6px;">{{ detailSci }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">{{ detailStatusLabel }}</span>
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Receta {{ detailRecipe }}</span>
+              <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Lote {{ detailBatch }}</span>
+            </div>
+            <button onClick="{{ openLabel }}" style="cursor:pointer;margin-top:16px;display:inline-flex;align-items:center;gap:9px;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:11px 16px;font:var(--t-label);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:17px;height:17px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3M20 14v0M17 20h4M14 20v0"></path></svg>
+              Etiqueta · QR imprimible
+            </button>
+            <!-- FORMULATION PROVENANCE — snapshot taken at registration -->
+            <sc-if value="{{ hasProv }}" hint-placeholder-val="{{ false }}">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 8px;">Formulación · registrada con el contenedor</div>
+            <div style="border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:16px 18px;">
+              <div style="display:flex;flex-wrap:wrap;gap:20px;">
+                <sc-for list="{{ provMetrics }}" as="m" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <span style="font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">{{ m.label }}</span>
+                    <span style="font-family:var(--font-mono);font-weight:600;font-size:18px;color:var(--ink-0);">{{ m.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ hasProvComps }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:7px;">
+                <sc-for list="{{ provComps }}" as="c" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="flex:1;font:var(--t-body-sm);color:var(--ink-1);">{{ c.name }}</span>
+                    <span style="flex:none;width:96px;height:5px;border-radius:3px;background:var(--paper-2);overflow:hidden;"><span style="display:block;height:100%;width:{{ c.barPct }};background:var(--accent-olive);"></span></span>
+                    <span style="flex:none;width:44px;text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--ink-0);">{{ c.pctLabel }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              </sc-if>
+              <div style="margin-top:14px;font:var(--t-caption);color:var(--text-metadata);">{{ provFooter }}</div>
+            </div>
+            </sc-if>
+
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 6px;">Cadena de eventos · inmutable</div>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ detailTimeline }}" as="ev" hint-placeholder-count="4">
+                <div style="display:flex;gap:14px;">
+                  <div style="flex:none;display:flex;flex-direction:column;align-items:center;">
+                    <span style="width:11px;height:11px;border-radius:50%;background:{{ ev.accent }};margin-top:16px;"></span>
+                    <span style="flex:1;width:1px;background:var(--border-strong);"></span>
+                  </div>
+                  <div style="flex:1;padding:14px 0;border-bottom:1px solid var(--border-soft);">
+                    <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.date }}</span></div>
+                    <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
+                    <sc-if value="{{ ev.hasPhotos }}" hint-placeholder-val="{{ false }}">
+                    <div class="fos-scroll" style="display:flex;gap:8px;margin-top:9px;overflow-x:auto;">
+                      <sc-for list="{{ ev.photos }}" as="ph" hint-placeholder-count="1">
+                        <button onClick="{{ ph.open }}" title="Ver foto" style="flex:none;cursor:pointer;padding:0;border:1px solid var(--border-strong);border-radius:var(--radius-md);overflow:hidden;background:var(--paper-2);line-height:0;">
+                          <img src="{{ ph.src }}" alt="Evidencia fotográfica del evento" style="width:74px;height:74px;object-fit:cover;display:block;">
+                        </button>
+                      </sc-for>
+                    </div>
+                    </sc-if>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;">
+                      <span style="font:var(--t-caption);color:var(--text-disabled);">{{ ev.by }}</span>
+                      <span style="display:flex;align-items:center;gap:14px;">
+                        <button onClick="{{ ev.attachPhoto }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:4px 0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8h8.4L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"></path><circle cx="12" cy="13" r="3.4"></circle></svg>{{ ev.attachLabel }}
+                        </button>
+                        <sc-if value="{{ ev.canCorrect }}" hint-placeholder-val="{{ true }}"><button onClick="{{ ev.correct }}" style="cursor:pointer;background:none;border:none;padding:4px 0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:2px;">Corregir</button></sc-if>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- END SESSION -->
+      <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
+        <div class="col">
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Volver</button>
+          <div style="margin-top:8px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
+            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h2>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
+          </div>
+          <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
+            <div style="display:flex;gap:18px;">
+              <div style="flex:1;"><div style="font-family:var(--font-mono);font-weight:600;font-size:34px;color:var(--ink-0);">{{ ledgerCount }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">eventos</div></div>
+              <div style="flex:1;"><div style="font-family:var(--font-mono);font-weight:600;font-size:34px;color:var(--ink-0);">{{ sessionClock }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">duración</div></div>
+            </div>
+            <div style="height:1px;background:var(--border-soft);margin:18px 0;"></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ endBreakdown }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="display:flex;align-items:center;gap:9px;font:var(--t-body-sm);color:var(--ink-1);"><span style="width:8px;height:8px;border-radius:50%;background:{{ b.accent }};"></span>{{ b.label }}</span><span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-0);">{{ b.count }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;">
+            <button onClick="{{ confirmEnd }}" style="cursor:pointer;border:none;background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:16px;">Finalizar sesión</button>
+            <button onClick="{{ goSesionHome }}" style="cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-md);padding:15px;font:var(--t-label);">Seguir trabajando</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CAPTURE SHEET OVERLAY -->
+      <sc-if value="{{ isCapture }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeCapture }}" role="dialog" aria-modal="true" aria-label="Registrar evento" style="position:fixed;inset:0;z-index:80;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;justify-content:flex-end;">
+        <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:10px 20px 34px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
+          <div class="col">
+            <div style="width:38px;height:4px;border-radius:2px;background:var(--border-strong);margin:6px auto 14px;"></div>
+            <div style="font:var(--t-label);color:var(--ink-0);padding:0 4px 12px;">Registrar un evento</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+              <sc-for list="{{ captureOptions }}" as="o" hint-placeholder-count="6">
+                <button onClick="{{ o.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:16px 15px;display:flex;flex-direction:column;gap:8px;">
+                  <span style="width:12px;height:12px;border-radius:50%;background:{{ o.accent }};"></span>
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ o.label }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);line-height:1.3;">{{ o.desc }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </sc-if>
+
+    <!-- =================== CÁMARAS / MAPA FÍSICO =================== -->
+    <sc-if value="{{ isCamaras }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col">
+
+        <sc-if value="{{ camList }}" hint-placeholder-val="{{ true }}">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Mapa físico · Tenjo</div>
+        <h2 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Cámaras</h2>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;max-width:440px;">Flujo unidireccional de la instalación. Cada zona es independiente para minimizar contaminación cruzada.</p>
+
+        <div class="fos-scroll" style="display:flex;gap:0;overflow-x:auto;margin:20px 0 4px;padding-bottom:6px;">
+          <sc-for list="{{ zonas }}" as="z" hint-placeholder-count="5">
+            <div style="flex:none;display:flex;align-items:center;">
+              <div style="display:flex;flex-direction:column;gap:3px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:10px 13px;min-width:96px;">
+                <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--ink-1);"><span style="color:var(--accent-terracotta);font-weight:700;">●</span> Zona {{ z.n }}</span>
+                <span style="font:var(--t-label);color:var(--ink-0);">{{ z.name }}</span>
+                <span style="font:var(--t-caption);color:var(--text-metadata);">{{ z.tag }}</span>
+              </div>
+              <span style="flex:none;color:var(--border-strong);padding:0 4px;font-size:16px;">→</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Cámaras activas</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <sc-for list="{{ camaras }}" as="cm" hint-placeholder-count="3">
+            <button onClick="{{ cm.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:17px 18px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                <div style="display:flex;flex-direction:column;gap:3px;">
+                  <span style="display:flex;align-items:center;gap:9px;"><span style="width:9px;height:9px;border-radius:50%;background:{{ cm.estadoAccent }};"></span><span style="font-family:var(--font-sans);font-weight:800;font-size:20px;letter-spacing:-.01em;color:var(--ink-0);">{{ cm.name }}</span></span>
+                  <span style="font:var(--t-caption);color:var(--text-metadata);">Zona {{ cm.zona }} · {{ cm.sppName }} · {{ cm.estadoLabel }}</span>
+                </div>
+                <span style="flex:none;text-align:right;"><span style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--ink-0);">{{ cm.count }}</span><br><span style="font:var(--t-caption);color:var(--text-metadata);">activos</span></span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <sc-for list="{{ cm.params }}" as="p" hint-placeholder-count="4">
+                  <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--ink-1);background:var(--paper-2);border-radius:var(--radius-sm);padding:4px 9px;">{{ p.k }} {{ p.v }}</span>
+                </sc-for>
+              </div>
+              <div role="progressbar" aria-label="Ocupación de {{ cm.name }}" aria-valuenow="{{ cm.occupancy }}" aria-valuemin="0" aria-valuemax="100" style="height:6px;border-radius:3px;background:var(--paper-2);overflow:hidden;"><div style="height:100%;width:{{ cm.occupancy }}%;background:{{ cm.estadoAccent }};"></div></div>
+              <span style="font:var(--t-caption);color:var(--text-secondary);">{{ cm.note }}</span>
+            </button>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ hasCamDetail }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Todas las cámaras</button>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
+            <span style="width:12px;height:12px;border-radius:50%;background:{{ camDetail.estadoAccent }};"></span>
+            <span style="font-family:var(--font-sans);font-weight:900;font-size:30px;letter-spacing:-.01em;color:var(--ink-0);">{{ camDetail.name }}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+            <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Zona {{ camDetail.zona }}</span>
+            <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">{{ camDetail.estadoLabel }}</span>
+            <span style="font:var(--t-caption);color:var(--ink-1);background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:5px 12px;">Carga máx {{ camDetail.capKg }} kg</span>
+          </div>
+          <div style="margin-top:18px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:16px 18px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Parámetros objetivo · {{ camDetail.sppName }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:12px;margin-top:12px;">
+              <sc-for list="{{ camDetail.params }}" as="p" hint-placeholder-count="4">
+                <div><div style="font:var(--t-caption);color:var(--text-metadata);">{{ p.k }}</div><div style="font-family:var(--font-mono);font-weight:600;font-size:18px;color:var(--ink-0);margin-top:2px;">{{ p.v }}</div></div>
+              </sc-for>
+            </div>
+            <div style="font:var(--t-caption);color:var(--text-secondary);margin-top:14px;">Equipos: {{ camDetail.equipos }}</div>
+          </div>
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Contenedores dentro · {{ camDetail.count }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ camDetail.containers }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+                <span style="font:var(--t-label);font-family:var(--font-mono);color:var(--ink-0);">{{ c.id }}</span>
+                <span style="font:var(--t-body-sm);color:var(--text-secondary);">{{ c.species }} · {{ c.stage }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== SIMULADOR (iframe) =================== -->
+    <sc-if value="{{ isSim }}" hint-placeholder-val="{{ false }}">
+    <iframe src="{{ simSrc }}" title="Simulador de Recetas" style="width:100%;height:100vh;border:none;display:block;background:#fff;"></iframe>
+    </sc-if>
+
+    <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
+    <iframe src="{{ climaSrc }}" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
+
+    <!-- =================== REVISIÓN DIARIA =================== -->
+    <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Revisión diaria · solo lectura</div>
+        <h2 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h2>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
+
+        <div class="fos-scroll" style="display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid var(--border-soft);margin:20px 0 4px;">
+          <button onClick="{{ setTabEventos }}" style="{{ tabEventosStyle }}">Eventos</button>
+          <button onClick="{{ setTabRend }}" style="{{ tabRendStyle }}">Rendimiento</button>
+          <button onClick="{{ setTabSalidas }}" style="{{ tabSalidasStyle }}">Salidas</button>
+          <button onClick="{{ setTabConoc }}" style="{{ tabConocStyle }}">Conocimiento</button>
+        </div>
+
+        <sc-if value="{{ isTabEventos }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">23</div><div style="font:var(--t-caption);color:var(--text-metadata);">eventos</div></div>
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">9</div><div style="font:var(--t-caption);color:var(--text-metadata);">contenedores</div></div>
+          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--accent-terracotta);">2</div><div style="font:var(--t-caption);color:var(--text-metadata);">cosechas</div></div>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Periodos de trabajo</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ reviewSessions }}" as="s" hint-placeholder-count="2">
+            <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:var(--t-label);color:var(--ink-0);">{{ s.label }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ s.time }}</span></div>
+              <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:3px;">{{ s.summary }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 4px;">Todos los eventos</div>
+        <div style="display:flex;flex-direction:column;">
+          <sc-for list="{{ reviewEvents }}" as="ev" hint-placeholder-count="6">
+            <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
+              <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ ev.time }}</span>
+              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
+              <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div><div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:22px;background:color-mix(in oklab,var(--accent-olive) 12%, var(--paper-0));border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:15px 16px;">
+          <div style="font:var(--t-label);color:var(--accent-olive);">Preparado para el Sistema de Conocimiento</div>
+          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:3px;">2 resultados marcados como experimentales · listos para evaluación. La evidencia se prepara, no se ingiere automáticamente.</div>
+        </div>
+        </sc-if>
+
+        <!-- ===== RENDIMIENTO ===== -->
+        <sc-if value="{{ isTabRend }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px;">
+          <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px;">
+            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Eficiencia biológica media</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px;"><span style="font-family:var(--font-mono);font-weight:600;font-size:42px;letter-spacing:-.02em;color:var(--ink-0);">{{ beOverall }}%</span><span style="font:var(--t-caption);color:var(--text-metadata);">objetivo {{ beTarget }}% · óptimo {{ beOptimal }}%</span></div>
+            <div style="font:var(--t-caption);color:var(--text-secondary);margin-top:8px;line-height:1.5;">BE = peso fresco cosechado ÷ peso seco del sustrato × 100. KPI principal de producción (kpis.yaml). Rendimiento crudo mostrado también en g/kg por lote.</div>
+          </div>
+
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por especie</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ rendSpp }}" as="r" hint-placeholder-count="3">
+              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:14px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ r.name }} <span style="font-weight:400;font-style:italic;color:var(--text-metadata);">{{ r.sci }}</span></span>
+                  <span style="font-family:var(--font-mono);font-weight:600;font-size:20px;color:{{ r.accent }};">{{ r.avg }}%</span>
+                </div>
+                <div style="height:6px;border-radius:3px;background:var(--paper-2);overflow:hidden;margin-top:9px;"><div style="height:100%;width:{{ r.pct }}%;background:{{ r.accent }};"></div></div>
+                <div style="display:flex;justify-content:space-between;font:var(--t-caption);color:var(--text-metadata);margin-top:6px;"><span>{{ r.n }} lotes · {{ r.gPerKg }} g/kg</span><span>rango KB {{ r.targetLabel }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por receta / sustrato</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ rendSub }}" as="r" hint-placeholder-count="2">
+              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:14px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+                  <span style="font:var(--t-label);color:var(--ink-0);">{{ r.name }}</span>
+                  <span style="font-family:var(--font-mono);font-weight:600;font-size:20px;color:{{ r.accent }};">{{ r.avg }}%</span>
+                </div>
+                <div style="height:6px;border-radius:3px;background:var(--paper-2);overflow:hidden;margin-top:9px;"><div style="height:100%;width:{{ r.pct }}%;background:{{ r.accent }};"></div></div>
+                <div style="display:flex;justify-content:space-between;font:var(--t-caption);color:var(--text-metadata);margin-top:6px;"><span>{{ r.n }} lotes · {{ r.gPerKg }} g/kg · C:N {{ r.cn }}</span><span>rango KB {{ r.targetLabel }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ===== SALIDAS ===== -->
+        <sc-if value="{{ isTabSalidas }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px;">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">{{ salidasTotal }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">kg cosechados</div></div>
+            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">{{ salidasCount }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">salidas</div></div>
+          </div>
+
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por destino</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ destTotals }}" as="d" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ d.accent }};"></span>
+                <span style="flex:1;font:var(--t-label);color:var(--ink-0);">{{ d.label }}</span>
+                <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-1);">{{ d.g }} g</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 4px;">Registro de salidas</div>
+          <div style="display:flex;flex-direction:column;">
+            <sc-for list="{{ salidas }}" as="x" hint-placeholder-count="3">
+              <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
+                <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ x.fecha }}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ x.sppName }} · {{ x.kg }} kg</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ x.destLabel }}</span></div>
+                  <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:1px;">Lote {{ x.lote }} · Grade {{ x.grade }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ===== CONOCIMIENTO ===== -->
+        <sc-if value="{{ isTabConoc }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px;">
+          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;max-width:440px;">Nada se añade a la base de conocimiento con una sola observación. La evidencia madura por un ciclo fijo antes de convertirse en SOP.</p>
+          <div class="fos-scroll" style="display:flex;gap:0;overflow-x:auto;padding-bottom:6px;">
+            <sc-for list="{{ knowledgeLifecycle }}" as="k" hint-placeholder-count="7">
+              <div style="flex:none;display:flex;align-items:center;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:64px;">
+                  <span style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-1);">{{ k.n }}</span>
+                  <span style="font:var(--t-caption);color:var(--text-secondary);text-align:center;">{{ k.label }}</span>
+                </div>
+                <span style="flex:none;color:var(--border-strong);padding:0 2px;">›</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:18px;background:color-mix(in oklab,var(--accent-olive) 12%, var(--paper-0));border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:15px 16px;">
+            <div style="font:var(--t-label);color:var(--accent-olive);">Preparado para la base de conocimiento</div>
+            <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:3px;">La evidencia se prepara, no se ingiere automáticamente. Estos resultados esperan validación antes de promoverse a SOP.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+            <sc-for list="{{ knowledgeItems }}" as="k" hint-placeholder-count="2">
+              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ k.title }}</span><span style="flex:none;font:var(--t-caption);font-weight:800;color:{{ k.accent }};border:1px solid {{ k.accent }};border-radius:var(--radius-md);padding:3px 10px;">{{ k.state }}</span></div>
+                <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ k.spp }}</div>
+                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:6px;line-height:1.5;">{{ k.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== PLAN =================== -->
+    <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col" style="max-width:900px;">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Demanda → Capacidad → Lotes</div>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Plan de producción</h1>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Demanda, capacidad de cámaras y órdenes de cultivo en una misma secuencia.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
+          <sc-for list="{{ planMetrics }}" as="m" hint-placeholder-count="4">
+            <div style="padding:18px;border-right:1px solid var(--border-soft);">
+              <span style="font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">{{ m.label }}</span>
+              <strong style="display:block;margin:6px 0 4px;font-family:var(--font-sans);font-weight:800;font-size:24px;color:var(--ink-0);">{{ m.value }}</strong>
+              <small style="color:var(--text-metadata);font-size:12px;">{{ m.note }}</small>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:20px;margin-top:24px;align-items:start;">
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Próximos 14 días</div>
+            <div style="overflow-x:auto;"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="border-bottom:1px solid var(--border-strong);">
+                <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Orden</th>
+                <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Especie</th>
+                <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Inicio</th>
+                <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Cámara</th>
+                <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Estado</th>
+              </tr></thead>
+              <tbody>
+              <sc-for list="{{ scheduleRows }}" as="r" hint-placeholder-count="4">
+                <tr style="border-bottom:1px solid var(--border-soft);">
+                  <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.order }}</td>
+                  <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.species }}</td>
+                  <td style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.start }}</td>
+                  <td style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.chamber }}</td>
+                  <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+                </tr>
+              </sc-for>
+              </tbody>
+            </table></div>
+          </article>
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Origen de demanda</div>
+            <sc-for list="{{ demandRows }}" as="d" hint-placeholder-count="4">
+              <div style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--text-secondary);"><span>{{ d.label }}</span><span style="font-family:var(--font-mono);">{{ d.pctLabel }}</span></div>
+                <div style="height:6px;border:1px solid var(--border-soft);"><div style="height:100%;width:{{ d.pct }}%;background:{{ d.accent }};"></div></div>
+              </div>
+            </sc-for>
+            <p style="margin-top:16px;color:var(--text-secondary);font-size:13px;line-height:1.6;">Cada orden conserva su destino, fecha y lote comercial esperado.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== INVENTARIO =================== -->
+    <sc-if value="{{ isInventario }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col" style="max-width:900px;">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Lote de origen → Movimiento → Costo</div>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Inventario</h1>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Disponibilidad de sustratos e insumos por lote, proveedor y costo.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
+          <sc-for list="{{ inventoryMetrics }}" as="m" hint-placeholder-count="4">
+            <div style="padding:18px;border-right:1px solid var(--border-soft);">
+              <span style="font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">{{ m.label }}</span>
+              <strong style="display:block;margin:6px 0 4px;font-family:var(--font-sans);font-weight:800;font-size:24px;color:var(--ink-0);">{{ m.value }}</strong>
+              <small style="color:var(--text-metadata);font-size:12px;">{{ m.note }}</small>
+            </div>
+          </sc-for>
+        </div>
+
+        <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
+          <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Stock por lote</div>
+          <div style="overflow-x:auto;"><table style="width:100%;min-width:560px;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="border-bottom:1px solid var(--border-strong);">
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Sustrato</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Lote / proveedor</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Disponible</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Costo/kg</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Cobertura</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Estado</th>
+            </tr></thead>
+            <tbody>
+            <sc-for list="{{ inventoryRows }}" as="r" hint-placeholder-count="4">
+              <tr style="border-bottom:1px solid var(--border-soft);">
+                <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.name }}</td>
+                <td style="padding:12px 10px 12px 0;color:var(--ink-1);font-family:var(--font-mono);font-size:12px;">{{ r.lot }}</td>
+                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.qty }}</td>
+                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.cost }}</td>
+                <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.coverage }}</td>
+                <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+              </tr>
+            </sc-for>
+            </tbody>
+          </table></div>
+        </article>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== CALIDAD Y TRAZABILIDAD =================== -->
+    <sc-if value="{{ isCalidad }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col" style="max-width:900px;">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Del contenedor al cliente</div>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Calidad y trazabilidad</h1>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Cada lote vincula receta, contenedores, eventos y cosecha en una sola cadena.</p>
+
+        <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
+          <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Traza activa · {{ traceTitle }}</div>
+          <div style="display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0;">
+            <sc-for list="{{ traceChain }}" as="t" hint-placeholder-count="5">
+              <div style="min-width:150px;padding:14px;border:1px solid var(--border-soft);">
+                <small style="font-family:var(--font-mono);font-size:10px;color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">{{ t.label }}</small>
+                <strong style="display:block;margin-top:6px;font-size:13px;color:var(--ink-0);">{{ t.value }}</strong>
+                <span style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ t.detail }}</span>
+              </div>
+              <sc-if value="{{ t.showArrow }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;place-items:center;flex:0 0 20px;color:var(--text-metadata);font-family:var(--font-mono);">→</div>
+              </sc-if>
+            </sc-for>
+          </div>
+        </article>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,0.8fr);gap:20px;margin-top:24px;align-items:start;">
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Control de liberación</div>
+            <sc-for list="{{ releaseChecklist }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-soft);">
+                <span style="font-family:var(--font-mono);color:var(--accent-olive);">✓</span>
+                <span style="font-size:13px;color:var(--ink-1);">{{ c.label }}</span>
+              </div>
+            </sc-for>
+          </article>
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+              <div style="font:var(--t-label);color:var(--ink-0);">No conformidades</div>
+              <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-metadata);">{{ ncCount }}</span>
+            </div>
+            <sc-for list="{{ ncItems }}" as="n" hint-placeholder-count="1">
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;">
+                <span style="width:7px;height:7px;flex:0 0 7px;background:{{ n.color }};margin-top:5px;"></span>
+                <div><strong style="font-size:13px;color:var(--ink-0);">{{ n.title }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ n.detail }}</small></div>
+              </div>
+            </sc-for>
+          </article>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== APRENDER =================== -->
+    <sc-if value="{{ isAprender }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col" style="max-width:900px;">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Hipótesis → Evidencia → Decisión → SOP</div>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Aprender</h1>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Los ensayos comparten la memoria operativa y quedan separados de la línea base de producción.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,0.9fr);gap:20px;margin-top:24px;align-items:start;">
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:4px;">{{ expTitle }}</div>
+            <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;margin:8px 0 0;">{{ expHyp }}</p>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px;">
+              <sc-for list="{{ comparisonGrid }}" as="g" hint-placeholder-count="2">
+                <div style="{{ g.style }}">
+                  <small style="color:var(--text-metadata);font-size:11px;">{{ g.label }}</small>
+                  <strong style="display:block;margin:6px 0 2px;font-family:var(--font-sans);font-weight:800;font-size:19px;color:var(--ink-0);">{{ g.eb }}</strong>
+                  <span style="color:var(--text-secondary);font-size:11.5px;">{{ g.contam }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </article>
+          <article style="border:1px solid var(--border-soft);padding:22px;">
+            <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Ciclo hacia SOP</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ sopSteps }}" as="s" hint-placeholder-count="7">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="{{ s.boxStyle }}">{{ s.num }}</span>
+                  <span style="{{ s.textStyle }}">{{ s.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </article>
+        </div>
+
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Evidencia preparada</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ knowledgeItems }}" as="k" hint-placeholder-count="2">
+            <div style="border:1px solid var(--border-soft);padding:15px 16px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ k.title }}</span><span style="flex:none;font:var(--t-caption);font-weight:800;color:{{ k.accent }};border:1px solid {{ k.accent }};padding:3px 10px;">{{ k.state }}</span></div>
+              <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ k.spp }}</div>
+              <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:6px;line-height:1.5;">{{ k.note }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== COMERCIAL =================== -->
+    <sc-if value="{{ isComercial }}" hint-placeholder-val="{{ false }}">
+    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
+      <div class="col" style="max-width:900px;">
+        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Pedidos → Cosecha → Entrega</div>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Comercial</h1>
+        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Salidas de cosecha vinculadas con destino, cliente y lote de producción.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
+          <sc-for list="{{ commercialMetrics }}" as="m" hint-placeholder-count="4">
+            <div style="padding:18px;border-right:1px solid var(--border-soft);">
+              <span style="font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;letter-spacing:.06em;">{{ m.label }}</span>
+              <strong style="display:block;margin:6px 0 4px;font-family:var(--font-sans);font-weight:800;font-size:24px;color:var(--ink-0);">{{ m.value }}</strong>
+              <small style="color:var(--text-metadata);font-size:12px;">{{ m.note }}</small>
+            </div>
+          </sc-for>
+        </div>
+
+        <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
+          <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Despachos recientes</div>
+          <div style="overflow-x:auto;"><table style="width:100%;min-width:520px;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="border-bottom:1px solid var(--border-strong);">
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Fecha</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Cliente</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Estado</th>
+              <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Lote</th>
+            </tr></thead>
+            <tbody>
+            <sc-for list="{{ commercialRows }}" as="r" hint-placeholder-count="3">
+              <tr style="border-bottom:1px solid var(--border-soft);">
+                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.date }}</td>
+                <td style="padding:12px 10px 12px 0;"><strong style="font-size:13px;color:var(--ink-0);">{{ r.client }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ r.detail }}</small></td>
+                <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.ref }}</td>
+              </tr>
+            </sc-for>
+            </tbody>
+          </table></div>
+        </article>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+
+  <!-- QR LABEL OVERLAY -->
+  <sc-if value="{{ showLabel }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeLabel }}" role="dialog" aria-modal="true" aria-label="Etiqueta QR" style="position:fixed;inset:0;z-index:85;background:color-mix(in oklab,var(--ink-0) 42%, transparent);animation:fos-fade .2s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:22px;padding:22px;max-width:430px;width:100%;animation:fos-screen .28s cubic-bezier(.32,.72,.36,1);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="font:var(--t-label);color:var(--ink-0);">Etiqueta de contenedor</span>
+        <button onClick="{{ closeLabel }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);">Cerrar</button>
+      </div>
+      <div class="qr-print" style="border:1px solid var(--border-strong);border-radius:12px;padding:18px;background:#fff;display:flex;gap:16px;align-items:center;">
+        <img src="{{ qrDataUrl }}" alt="Código QR del contenedor" style="width:120px;height:120px;flex:none;"/>
+        <div style="min-width:0;flex:1;">
+          <div style="font-family:var(--font-sans);font-weight:900;font-size:27px;color:var(--ink-0);line-height:1;letter-spacing:-.01em;">{{ labelId }}</div>
+          <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;color:var(--text-secondary);margin-top:3px;">{{ labelSci }}</div>
+          <div style="height:1px;background:var(--border-hairline);margin:10px 0;"></div>
+          <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-1);line-height:1.7;">
+            <div>Lote · {{ labelBatch }}</div>
+            <div>Receta · {{ labelRecipe }}</div>
+            <div>Alta · {{ labelDate }} · {{ labelOperator }}</div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-1);margin-top:8px;word-break:break-all;">{{ labelUrl }}</div>
+        </div>
+      </div>
+      <button onClick="{{ printLabel }}" style="cursor:pointer;margin-top:16px;width:100%;border:none;background:var(--accent-terracotta);color:#fff;border-radius:var(--radius-md);padding:15px;font:var(--t-button);">Imprimir etiqueta</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- SCAN OVERLAY -->
+  <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+    <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-0);opacity:.7;margin-bottom:18px;">Escanear etiqueta QR</div>
+
+    <!-- MANUAL FALLBACK — for torn labels, bad light, or a camera that won't focus -->
+    <sc-if value="{{ scanManual }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90vw,360px);animation:fos-screen .25s ease;">
+      <label for="manual-code" style="display:block;font:var(--t-label);color:var(--paper-0);margin-bottom:10px;">Código del contenedor</label>
+      <input id="manual-code" onInput="{{ setScanManualId }}" value="{{ scanManualId }}" placeholder="C-0412" autocomplete="off" autocapitalize="characters" inputmode="text" style="width:100%;box-sizing:border-box;border:1px solid color-mix(in oklab, var(--paper-0) 45%, transparent);border-radius:var(--radius-md);background:color-mix(in oklab, var(--ink-0) 55%, transparent);color:var(--paper-0);padding:18px 20px;font-family:var(--font-mono);font-weight:600;font-size:26px;letter-spacing:.04em;text-align:center;">
+      <div style="margin-top:10px;font:var(--t-caption);text-align:center;color:{{ scanManualHintColor }};">{{ scanManualHint }}</div>
+      <button onClick="{{ applyManualEntry }}" disabled="{{ manualDisabled }}" style="{{ manualBtnStyle }};margin-top:18px;">Usar este código</button>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ scanCamera }}" hint-placeholder-val="{{ true }}">
+    <div style="position:relative;width:min(72vw,280px);aspect-ratio:1;border-radius:22px;overflow:hidden;background:color-mix(in oklab,var(--ink-0) 60%, #000);">
+      <span style="position:absolute;left:14px;top:14px;width:34px;height:34px;border-left:3px solid var(--paper-0);border-top:3px solid var(--paper-0);border-radius:6px 0 0 0;"></span>
+      <span style="position:absolute;right:14px;top:14px;width:34px;height:34px;border-right:3px solid var(--paper-0);border-top:3px solid var(--paper-0);border-radius:0 6px 0 0;"></span>
+      <span style="position:absolute;left:14px;bottom:14px;width:34px;height:34px;border-left:3px solid var(--paper-0);border-bottom:3px solid var(--paper-0);border-radius:0 0 0 6px;"></span>
+      <span style="position:absolute;right:14px;bottom:14px;width:34px;height:34px;border-right:3px solid var(--paper-0);border-bottom:3px solid var(--paper-0);border-radius:0 0 6px 0;"></span>
+      <sc-if value="{{ scanSearching }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;left:8%;right:8%;height:2px;background:var(--accent-terracotta);box-shadow:0 0 12px 2px var(--accent-terracotta);animation:fos-scanline 1.6s ease-in-out infinite;"></span></sc-if>
+    </div>
+    <sc-if value="{{ scanSearching }}" hint-placeholder-val="{{ true }}"><div style="margin-top:20px;font:var(--t-body-sm);color:var(--paper-0);opacity:.6;">Buscando etiqueta…</div></sc-if>
+    <sc-if value="{{ hasScanFound }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:22px;text-align:center;animation:fos-screen .3s ease;">
+      <div style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--paper-0);">{{ scanFoundId }}</div>
+      <div style="font:var(--t-body-sm);color:var(--paper-0);opacity:.7;margin-top:2px;">{{ scanFoundSpecies }} · añadir a {{ scanTargetLabel }}</div>
+      <button onClick="{{ applyScan }}" style="cursor:pointer;margin-top:16px;border:none;background:var(--accent-terracotta);color:#fff;border-radius:var(--radius-md);padding:14px 26px;font:var(--t-button);">Usar {{ scanFoundId }}</button>
+    </div>
+    </sc-if>
+    <button onClick="{{ openManualEntry }}" style="cursor:pointer;margin-top:20px;background:none;border:none;padding:10px 4px;font:var(--t-label);color:var(--paper-0);text-decoration:underline;text-underline-offset:4px;">¿No lee la etiqueta? Escribe el código →</button>
+    </sc-if>
+
+    <button onClick="{{ closeScan }}" style="cursor:pointer;margin-top:18px;background:none;border:none;padding:8px 4px;font:var(--t-label);color:var(--paper-0);opacity:.7;">Cancelar</button>
+  </div>
+  </sc-if>
+
+  <!-- PHOTO VIEWER -->
+  <sc-if value="{{ hasPhotoView }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePhoto }}" role="dialog" aria-modal="true" aria-label="Foto del evento" style="position:fixed;inset:0;z-index:90;background:color-mix(in oklab,var(--ink-0) 92%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:18px;">
+    <img src="{{ photoViewSrc }}" alt="Evidencia fotográfica ampliada" style="max-width:100%;max-height:78vh;object-fit:contain;border-radius:var(--radius-md);">
+    <button onClick="{{ closePhoto }}" style="cursor:pointer;background:none;border:none;padding:8px 4px;font:var(--t-label);color:var(--paper-0);opacity:.75;">Cerrar</button>
+  </div>
+  </sc-if>
+
+  <!-- CORRECTION SHEET -->
+  <sc-if value="{{ correctionOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeCorrection }}" role="dialog" aria-modal="true" aria-label="Registrar una enmienda" style="position:fixed;inset:0;z-index:86;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
+    <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:22px 24px 34px;width:100%;max-width:560px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
+      <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Corregir evento</div>
+      <h3 style="font-family:var(--font-sans);font-weight:800;font-size:22px;color:var(--ink-0);margin:4px 0 6px;">Registrar una enmienda</h3>
+      <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;">El evento original no se borra. Tu corrección se añade a la cadena, fechada y atribuida.</p>
+      <textarea aria-label="Motivo de la enmienda" onInput="{{ setCorrNote }}" value="{{ corrNote }}" rows="3" placeholder="Qué cambia y por qué…" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button onClick="{{ closeCorrection }}" style="flex:none;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-md);padding:14px 20px;font:var(--t-label);">Cancelar</button>
+        <button onClick="{{ confirmCorrection }}" disabled="{{ corrDisabled }}" style="{{ corrBtnStyle }};flex:1;">Añadir enmienda</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- TOAST -->
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+  <div role="status" aria-live="polite" style="position:fixed;left:0;right:0;bottom:34px;z-index:90;pointer-events:none;display:flex;justify-content:center;padding:0 22px;">
+    <div style="background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:14px 20px;display:flex;align-items:center;gap:12px;max-width:520px;animation:fos-toast 2.6s ease forwards;">
+      <span style="flex:none;width:9px;height:9px;border-radius:50%;background:var(--accent-olive-dim);"></span>
+      <span style="font:var(--t-body-sm);font-weight:400;">{{ toastText }}</span>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820}}">
+/* ============================================================
+   KB REFERENCE LAYER — sincronizado desde
+   github.com/setasdlp-code/Knowledge-Base (knowledge_base/)
+   Fuentes: metadata/species.yaml, substrates.yaml, kpis.yaml,
+   04_facility/*.md, 06_operations/batch_tracking.md
+   ============================================================ */
+// Especies canónicas (species.yaml). key = id de la KB.
+const SPECIES = [
+  { key:'pleurotus_djamor',    name:'Orellana rosada', sci:'Pleurotus djamor',    code:'DJ' },
+  { key:'pleurotus_ostreatus', name:'Orellana gris',   sci:'Pleurotus ostreatus', code:'PO' },
+  { key:'hericium_erinaceus',  name:'Melena de león',  sci:'Hericium erinaceus',  code:'HE' },
+  { key:'lentinula_edodes',    name:'Shiitake',        sci:'Lentinula edodes',    code:'LE' },
+  { key:'ganoderma_lucidum',   name:'Reishi',          sci:'Ganoderma lucidum',   code:'GL' },
+];
+const pluralize = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const OFFLINE_BANNER_MIN = 2; // minutes offline before the passive pill escalates to a banner
+const spName = k => (SPECIES.find(s=>s.key===k)||{name:k}).name;
+const spSci  = k => (SPECIES.find(s=>s.key===k)||{sci:''}).sci;
+const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
+
+// Parámetros por especie (species.yaml). T en °C, HR en %, CO2 ppm, BE %.
+const KB_SPP = {
+  pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,130], cycle:[28,40] },
+  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[10,21], incT:[22,27], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50] },
+  hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
+  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150] },
+  ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:2000, fae:[4,6], be:[13,40], cycle:[90,180] },
+};
+// Sustratos (substrates.yaml). be = rango de eficiencia biológica documentado.
+const KB_SUB = {
+  wheat_straw:        { name:'Paja de trigo pasteurizada', cn:'—',   autoclave:false, fc:65, be:[80,130] },
+  masters_mix:        { name:"Master's Mix 50/50",         cn:'—',   autoclave:true,  fc:60, be:[80,120] },
+  supplemented_sawdust:{ name:'Serrín suplementado',       cn:'—',   autoclave:true,  fc:60, be:[40,70] },
+  coffee_shiitake:    { name:'Subproductos de café · T2',  cn:'40',  autoclave:true,  fc:62, be:[50,58] },
+};
+// KPIs de producción (kpis.yaml)
+const KPI = { beTarget:80, beOptimal:100, beAlert:70, contamMax:10, contamAlert:15, yieldPerBlock:800 };
+// Zonas de la instalación (master_blueprint.md)
+const ZONAS = [
+  { n:1, name:'Preparación', tag:'Sucio' }, { n:2, name:'Inoculación', tag:'Limpio' },
+  { n:3, name:'Incubación', tag:'' }, { n:4, name:'Fructificación', tag:'' }, { n:5, name:'Almacenamiento', tag:'' },
+];
+// Cámaras físicas (FARM_BRAIN.md · fruiting.md · incubation.md). capKg = carga de sustrato.
+const CAMARAS = [
+  { id:'incub',    name:'Cuarto de Incubación', zona:3, estado:'activo',   spp:null,
+    equipos:['Estantería','Calefactor PTC','Inkbird'], capKg:12, stages:['incubación','inoculación'],
+    note:'20–24°C · oscuridad · plástico negro (Cenicafé ~3.7 kg/m³)' },
+  { id:'martha',   name:'Martha Tent 63"', zona:4, estado:'activo',   spp:'pleurotus_djamor',
+    equipos:['VIVOSUN H05','Inkbird IBS-TH2'], capKg:8, stages:['primordios','fructificación'],
+    note:'Prototipo · control manual (H05 sensor HR descartado)' },
+  { id:'cloudlab', name:'CLOUDLAB 844', zona:4, estado:'transito', spp:'pleurotus_djamor',
+    equipos:['AC Infinity T7','H4 ×2','SHT3x','SCD30','ESP32'], capKg:20, stages:[],
+    note:'En tránsito (jul 2026) · automatización ESPHome + Home Assistant' },
+];
+const camEstado = { activo:{label:'Activa',accent:'var(--accent-olive)'}, transito:{label:'En tránsito',accent:'var(--accent-mushroom)'} };
+// Destinos de cosecha (07_business)
+const DESTINOS = [
+  { key:'restaurante', label:'Restaurante', desc:'Canal HORECA · producto fresco Grade A' },
+  { key:'mercado',     label:'Mercado local', desc:'Plaza / venta directa Tenjo-Bogotá' },
+  { key:'deshidratado',label:'Deshidratado', desc:'Procesar y almacenar (365 días)' },
+  { key:'autoconsumo', label:'Autoconsumo / merma', desc:'No entra a inventario de venta' },
+];
+const destLabel = k => (DESTINOS.find(d=>d.key===k)||{label:k}).label;
+// Operadores (README.md: Sebastián remoto + cuidador in situ)
+const OPERATORS = [
+  { key:'inigo',     name:'Íñigo',     role:'Cuidador in situ' },
+  { key:'sebastian', name:'Sebastián', role:'Operador remoto' },
+  { key:'ana',       name:'Ana',       role:'Laboratorio' },
+];
+
+const RECIPES = [
+  { id:'F-018 · v3', desc:'Roble + salvado · hidratación 62%', exp:false },
+  { id:'F-022 · v1', desc:'Haya + salvado · hidratación 60%', exp:false },
+  { id:'F-011 · v5', desc:'Sustrato maestro shiitake', exp:false },
+  { id:'F-030 · v1', desc:'Suplemento enriquecido · en prueba', exp:true },
+];
+const TYPES = {
+  registro:     { label:'Registro',      accent:'var(--accent-olive)' },
+  inoculacion:  { label:'Inoculación',   accent:'var(--accent-olive-dim)' },
+  observacion:  { label:'Observación',   accent:'var(--accent-blue-grey)' },
+  traslado:     { label:'Traslado',      accent:'var(--accent-mushroom)' },
+  contaminacion:{ label:'Contaminación', accent:'var(--status-error)' },
+  cosecha:      { label:'Cosecha',       accent:'var(--accent-terracotta)' },
+  descarte:     { label:'Descarte',      accent:'var(--ink-2)' },
+  marca:        { label:'Marca',         accent:'var(--accent-terracotta)' },
+  correccion:   { label:'Corrección',    accent:'var(--accent-blue-grey)' },
+  clima:        { label:'Alerta de monitoreo', accent:'var(--status-error)' },
+};
+const STATUS = {
+  activo:      { label:'Activo',       accent:'var(--accent-olive)' },
+  contaminado: { label:'Contaminado',  accent:'var(--status-error)' },
+  cosechado:   { label:'Cosechado',    accent:'var(--accent-terracotta)' },
+  descartado:  { label:'Descartado',   accent:'var(--ink-2)' },
+};
+const OBS_TAGS = ['Sano','Micelio avanzando','Primordios visibles','Condensación','Mancha sospechosa','Olor anómalo'];
+
+// ---- Módulos de negocio (Plan / Inventario / Calidad / Aprender / Comercial) ----
+const ROLE_GATE = { plan:['production','direction'], inventario:['production'], calidad:['production','direction'], aprender:['production','direction'], comercial:['direction'] };
+const ROLE_LABELS = [{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}];
+const ROLE_SUBTITLES = {
+  operator: 'Registro de campo del día · lo que ves y haces en las cámaras.',
+  production: 'Vista operativa ampliada · plan, inventario y calidad.',
+  direction: 'Vista de negocio · comercial, rendimiento y decisiones.',
+};
+const KNOWLEDGE_LIFECYCLE = [{n:'1',label:'Observación'},{n:'2',label:'Documentación'},{n:'3',label:'Experimento'},{n:'4',label:'Validación'},{n:'5',label:'Lección'},{n:'6',label:'Decisión'},{n:'7',label:'SOP'}];
+const SCHEDULE_ROWS = [
+  { order:'OP-2609-01', sppKey:'pleurotus_djamor', start:'22 jul', camId:'martha', status:'Lista', color:'var(--accent-olive)' },
+  { order:'OP-2609-02', sppKey:'hericium_erinaceus', start:'24 jul', camId:'incub', status:'Falta spawn', color:'var(--accent-terracotta)' },
+  { order:'OP-2610-01', sppKey:'pleurotus_ostreatus', start:'27 jul', camId:'incub', status:'Borrador', color:'var(--accent-mushroom)' },
+  { order:'EXP-2609-03', sppKey:'hericium_erinaceus', start:'29 jul', camId:'cloudlab', status:'Experimental', color:'var(--accent-blue-grey)' },
+];
+const PLAN_METRICS = [
+  { label:'Demanda 8 semanas', value:'86 kg', note:'Confirmada + prevista' },
+  { label:'Capacidad comprometida', value:'71%', note:'3 cámaras activas' },
+  { label:'Próxima brecha', value:'6 kg', note:'Semana del 28 jul' },
+  { label:'Lotes por iniciar', value:'3', note:'22–29 jul' },
+];
+const INVENTORY_ROWS = [
+  { key:'wheat_straw', lot:'PT-2607 · mercado Tenjo', qty:'14,0 kg', cost:'$1.100', coverage:'10 días', status:'Disponible', color:'var(--accent-olive)' },
+  { key:'masters_mix', lot:'MM-2606 · propio', qty:'9,0 kg', cost:'$1.400', coverage:'8 lotes', status:'Disponible', color:'var(--accent-olive)' },
+  { key:'supplemented_sawdust', lot:'SS-2605 · propio', qty:'4,5 kg', cost:'$2.300', coverage:'5 lotes', status:'Reponer', color:'var(--accent-terracotta)' },
+  { key:'coffee_shiitake', lot:'CS-2603 · Cenicafé', qty:'2,0 kg', cost:'$900', coverage:'2 lotes', status:'Reponer', color:'var(--accent-terracotta)' },
+];
+const INVENTORY_METRICS = [
+  { label:'Valor en stock', value:'$612.000', note:'COP · calculado' },
+  { label:'Insumos', value:'4', note:'2 por reponer' },
+  { label:'Por reponer', value:'2', note:'Según plan activo' },
+  { label:'Cobertura media', value:'6 lotes', note:'Antes de comprar' },
+];
+const RELEASE_CHECKLIST = [
+  { label:'Peso fresco registrado' }, { label:'Apariencia y grado documentados' },
+  { label:'Temperatura de empaque dentro de rango' }, { label:'Responsable y hora asociados al evento' },
+];
+const CLIENTS = { restaurante:'Restaurante Aldea', mercado:'Mercado de Tenjo', deshidratado:'Planta de deshidratado', autoconsumo:'Autoconsumo interno' };
+
+class Component extends DCLogic {
+  state = {
+    module: 'inicio',
+    screen: 'start',
+    capture: false,
+    online: true, pendingSync: 0, syncing: false, offlineSince: 0, offlineTick: 0,
+    scanning: false, scanTarget: null, scanFound: null, scanManual: false, scanManualId: '',
+    correcting: null, corrNote: '',
+    sessionType: null,
+    startMs: 0,
+    clock: '0 min',
+    toast: null,
+    seq: 415,
+    climaBadge: 0,
+    simKey: 0,
+    simRecipes: [],
+    role: 'operator',
+    operator: 'Íñigo', operatorKey: 'inigo', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
+    reviewTab: 'eventos',
+    camDetail: null,
+    labelFor: null,
+    photoView: null,
+    hDest: 'restaurante',
+    ledger: [
+      { type:'observacion', time:'08:52', container:'C-0412', note:'Micelio cubre 90% del bloque.' },
+      { type:'traslado',    time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
+    ],
+    rSpecies: null, rRecipe: null,
+    oContainers: [], oTags: [], oNote: '',
+    hContainer: null, weight: 240, hClose: 'cosechado',
+    quickType: null, qContainers: [], qNote: '',
+    detail: null,
+    containers: [
+      { id:'C-0414', key:'hericium_erinaceus', status:'activo', stage:'inoculación', recipe:'F-030 · v1', batch:'L-2609', tl:[
+        { type:'registro', date:'2 jul · 08:30', note:'Alta en registro. Referencia experimental.', by:'Íñigo' },
+        { type:'inoculacion', date:'2 jul · 08:34', note:'Inoculado con spawn de grano R-14.', by:'Íñigo' } ] },
+      { id:'C-0413', key:'pleurotus_djamor', status:'activo', stage:'primordios', recipe:'F-022 · v1', batch:'L-2608', tl:[
+        { type:'registro', date:'27 jun · 09:10', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'27 jun · 09:14', note:'Bloque de haya + salvado.', by:'Íñigo' },
+        { type:'observacion', date:'1 jul · 08:20', note:'Colonización completa, superficie blanca.', by:'Íñigo' },
+        { type:'traslado', date:'2 jul · 08:40', note:'A cámara de fructificación.', by:'Íñigo' } ] },
+      { id:'C-0412', key:'hericium_erinaceus', status:'activo', stage:'incubación', recipe:'F-018 · v3', batch:'L-2608', tl:[
+        { type:'registro', date:'25 jun · 10:02', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'25 jun · 10:06', note:'Roble + salvado, hidratación 62%.', by:'Íñigo' },
+        { type:'observacion', date:'2 jul · 08:52', note:'Micelio cubre 90% del bloque.', by:'Íñigo' } ] },
+      { id:'C-0409', key:'lentinula_edodes', status:'contaminado', stage:'incubación', recipe:'F-011 · v5', batch:'L-2607', tl:[
+        { type:'registro', date:'20 jun · 09:40', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'20 jun · 09:45', note:'Sustrato maestro shiitake.', by:'Íñigo' },
+        { type:'contaminacion', date:'29 jun · 11:15', note:'Trichoderma verde en la base. Aislado.', by:'Íñigo' } ] },
+      { id:'C-0402', key:'pleurotus_ostreatus', status:'cosechado', stage:'ciclo cerrado', recipe:'F-022 · v1', batch:'L-2605', tl:[
+        { type:'registro', date:'8 jun · 08:15', note:'Alta en registro.', by:'Íñigo' },
+        { type:'inoculacion', date:'8 jun · 08:20', note:'Haya + salvado.', by:'Íñigo' },
+        { type:'observacion', date:'22 jun · 08:30', note:'Primer flush formándose.', by:'Íñigo' },
+        { type:'cosecha', date:'26 jun · 09:00', note:'Cosecha 310 g. Contenedor cerrado.', by:'Íñigo' } ] },
+    ],
+    reviewSessions: [
+      { label:'Sesión de laboratorio', time:'07:30 – 09:10', summary:'3 contenedores nuevos, 4 inoculaciones, 1 contaminación aislada.' },
+      { label:'Sesión de cultivo', time:'16:20 – 17:45', summary:'6 observaciones, 2 traslados, 2 cosechas (620 g total).' },
+    ],
+    reviewEvents: [
+      { type:'registro', time:'07:34', container:'C-0414', note:'Alta · Melena de león · ref. experimental F-030.' },
+      { type:'inoculacion', time:'07:41', container:'C-0414', note:'Inoculado con spawn R-14.' },
+      { type:'contaminacion', time:'08:12', container:'C-0409', note:'Trichoderma en la base. Aislado.' },
+      { type:'observacion', time:'08:20', container:'C-0413', note:'Colonización completa.' },
+      { type:'traslado', time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
+      { type:'cosecha', time:'16:55', container:'C-0402', note:'310 g. Contenedor cerrado.' },
+      { type:'cosecha', time:'17:20', container:'C-0398', note:'310 g. Contenedor cerrado.' },
+    ],
+    salidas: [
+      { fecha:'2 jul',  lote:'2026-06-PO-002', spp:'pleurotus_ostreatus', pesoG:310, dest:'restaurante', grade:'A' },
+      { fecha:'26 jun', lote:'2026-06-PO-001', spp:'pleurotus_ostreatus', pesoG:280, dest:'mercado', grade:'A' },
+      { fecha:'24 jun', lote:'2026-06-DJ-003', spp:'pleurotus_djamor', pesoG:180, dest:'deshidratado', grade:'B' },
+    ],
+    yields: [
+      { lote:'2026-06-DJ-001', spp:'pleurotus_djamor',    sub:'wheat_straw',     dryKg:2.0, freshG:2140 },
+      { lote:'2026-06-DJ-002', spp:'pleurotus_djamor',    sub:'wheat_straw',     dryKg:2.0, freshG:1980 },
+      { lote:'2026-06-PO-001', spp:'pleurotus_ostreatus', sub:'wheat_straw',     dryKg:1.8, freshG:1560 },
+      { lote:'2026-06-PO-002', spp:'pleurotus_ostreatus', sub:'wheat_straw',     dryKg:1.8, freshG:1490 },
+      { lote:'2026-05-LE-001', spp:'lentinula_edodes',    sub:'coffee_shiitake', dryKg:2.5, freshG:1440 },
+    ],
+  };
+
+  componentDidMount(){
+    this.loadPersisted();
+    this.setState({ online: navigator.onLine!==false });
+    this._onKeyDown = (e)=>{
+      if(e.key!=='Escape') return;
+      const s=this.state;
+      if(s.photoView) this.closePhoto();
+      else if(s.pickerOpen) this.setState({pickerOpen:false});
+      else if(s.capture) this.setState({capture:false});
+      else if(s.labelFor) this.setState({labelFor:null});
+      else if(s.correcting!=null) this.closeCorrection();
+      else if(s.scanning) this.closeScan();
+    };
+    window.addEventListener('keydown', this._onKeyDown);
+    this._onOnline = ()=>this.setState({online:true, offlineSince:0}, ()=>this.drainSync());
+    this._onOffline = ()=>this.setState(s=>({online:false, offlineSince:s.offlineSince||Date.now()}));
+    window.addEventListener('online', this._onOnline);
+    window.addEventListener('offline', this._onOffline);
+    // Re-render once a minute so the offline banner's elapsed time stays truthful.
+    this._offlineT = setInterval(()=>{ if(!this.state.online) this.setState(s=>({offlineTick:s.offlineTick+1})); }, 30000);
+    this.refreshSim();
+    this._onStorage = (e)=>{ if(!e || e.key==='setas_v6' || e.key===null) this.refreshSim(); };
+    window.addEventListener('storage', this._onStorage);
+    this.fetchWeather();
+    this._wt = setInterval(()=>this.fetchWeather(), 5*60000);
+    this._onClimate = (e)=>{
+      const d = e && e.data;
+      if(!d || d.source!=='climate-bench' || d.kind!=='climate-alert') return;
+      this.onClimateAlert(d);
+    };
+    window.addEventListener('message', this._onClimate);
+  }
+  onClimateAlert(d){
+    const note = d.chamber+' · '+d.phase+' · '+(d.detail||('Desviaci\u00f3n de '+d.metric));
+    this.push({ type:'clima', container:d.chamber, note });
+    if(this.state.module!=='clima') this.setState(s=>({ climaBadge:s.climaBadge+1 }));
+    this.toast('Alerta de monitoreo anclada al registro \u00b7 '+d.chamber+'.');
+  }
+  componentWillUnmount(){
+    clearInterval(this._t);
+    clearInterval(this._wt);
+    clearTimeout(this._scanT);
+    clearTimeout(this._syncT);
+    clearInterval(this._offlineT);
+    window.removeEventListener('storage', this._onStorage);
+    window.removeEventListener('message', this._onClimate);
+    window.removeEventListener('online', this._onOnline);
+    window.removeEventListener('offline', this._onOffline);
+  }
+  componentDidUpdate(){
+    // The streamable wrapper calls this without a prevState, so track the watched
+    // slices on the instance rather than trusting the argument.
+    const k=['containers','ledger','seq','salidas','yields','operator','operatorKey'];
+    const prev=this._persisted;
+    const changed=!prev || k.some(x=>prev[x]!==this.state[x]);
+    if(!changed) return;
+    this._persisted={}; k.forEach(x=>{ this._persisted[x]=this.state[x]; });
+    this.persist();
+  }
+  persist(){
+    const s=this.state;
+    const snap = (containers)=>JSON.stringify({ containers, ledger:s.ledger, seq:s.seq, salidas:s.salidas, yields:s.yields, operator:s.operator, operatorKey:s.operatorKey });
+    try {
+      localStorage.setItem('setas_os_state', snap(s.containers));
+    } catch(e){
+      // Photos are base64 and can exhaust the quota. Losing the whole ledger to save a
+      // picture is the wrong trade — drop the image payloads and keep the record.
+      try {
+        const stripped = s.containers.map(c=>({ ...c, tl:c.tl.map(ev=> ev.photos ? { ...ev, photos:ev.photos.map(p=>({ ...p, src:'', dropped:true })) } : ev) }));
+        localStorage.setItem('setas_os_state', snap(stripped));
+        this.toast('Sin espacio local · se guardó el registro, no las fotos.');
+      } catch(e2){}
+    }
+  }
+  loadPersisted(){
+    try {
+      const raw=localStorage.getItem('setas_os_state'); if(!raw) return;
+      const d=JSON.parse(raw); if(d && typeof d==='object') this.setState(d);
+    } catch(e){}
+  }
+  drainSync(){
+    if(this.state.pendingSync<=0 || !this.state.online) return;
+    const n=this.state.pendingSync;
+    this.setState({ syncing:true });
+    clearTimeout(this._syncT);
+    this._syncT = setTimeout(()=>{ this.setState({ pendingSync:0, syncing:false }); this.toast(n+' evento'+(n>1?'s':'')+' sincronizado'+(n>1?'s':'')+' con la nube.'); }, 1100);
+  }
+  toggleOnline(){
+    this.setState(s=>({ online:!s.online, offlineSince: s.online?Date.now():0 }), ()=>{ if(this.state.online) this.drainSync(); else this.toast('Modo sin conexión · los eventos se guardan localmente.'); });
+  }
+  openScan(target){
+    this.setState({ scanning:true, scanTarget:target, scanFound:null, scanManual:false, scanManualId:'' });
+    clearTimeout(this._scanT);
+    this._scanT = setTimeout(()=>{
+      const act=this.state.containers.filter(c=>c.status==='activo');
+      const found=act[Math.floor(Math.random()*act.length)];
+      if(found) this.setState({ scanFound:found.id });
+    }, 1500);
+  }
+  closeScan(){ clearTimeout(this._scanT); this.setState({ scanning:false, scanTarget:null, scanFound:null, scanManual:false, scanManualId:'' }); }
+  // Bad light, a torn label, a dead camera — let the operator type the code without leaving the flow.
+  openManualEntry(){ clearTimeout(this._scanT); this.setState({ scanManual:true, scanFound:null }); }
+  normalizeContainerId(raw){
+    const t=String(raw||'').trim().toUpperCase().replace(/[\s_]/g,'');
+    if(!t) return '';
+    const digits=t.replace(/^C[-–—]?/,'');
+    return /^\d+$/.test(digits) ? 'C-'+digits.padStart(4,'0') : t;
+  }
+  applyManualEntry(){
+    const id=this.normalizeContainerId(this.state.scanManualId);
+    if(!this.state.containers.some(c=>c.id===id)) return;
+    this.applyScan(id, 'Código ingresado · ');
+  }
+  applyScan(id, prefix){
+    const target=this.state.scanTarget;
+    const found=id || this.state.scanFound;
+    if(!found) return;
+    if(target==='obs') this.setState(s=>({ oContainers:s.oContainers.includes(found)?s.oContainers:[...s.oContainers,found] }));
+    else if(target==='harvest') this.setState({ hContainer:found });
+    else if(target==='quick') this.setState(s=>({ qContainers:s.qContainers.includes(found)?s.qContainers:[...s.qContainers,found] }));
+    else if(target==='home') this.setState({ module:'sesion', screen:'history', detail:found });
+    this.toast((prefix||'Etiqueta leída · ')+found);
+    this.closeScan();
+  }
+  // Photo evidence on a timeline event. `capture` opens the rear camera directly on
+  // phones; on desktop it degrades to a normal file picker.
+  attachPhoto(idx){
+    const contId = this.state.detail;
+    if(!contId) return;
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.setAttribute('capture','environment');
+    input.style.position='fixed'; input.style.left='-9999px';
+    document.body.appendChild(input);
+    const cleanup = ()=>{ try{ document.body.removeChild(input); }catch(e){} };
+    input.onchange = ()=>{
+      const file = input.files && input.files[0];
+      if(!file){ cleanup(); return; }
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        this.setState(s=>({ containers: s.containers.map(c=>{
+          if(c.id!==contId) return c;
+          return { ...c, tl: c.tl.map((ev,i)=> i===idx ? { ...ev, photos:[...(ev.photos||[]), { src:reader.result, at:this.now(), by:s.operator }] } : ev) };
+        }) }));
+        this.toast('Foto adjuntada · queda anclada al evento.');
+        cleanup();
+      };
+      reader.onerror = ()=>{ this.toast('No se pudo leer la imagen.'); cleanup(); };
+      reader.readAsDataURL(file);
+    };
+    input.oncancel = cleanup;
+    input.click();
+  }
+  openPhoto(src){ this.setState({ photoView: src }); }
+  closePhoto(){ this.setState({ photoView: null }); }
+  openCorrection(i){ this.setState({ correcting:i, corrNote:'' }); }
+  closeCorrection(){ this.setState({ correcting:null, corrNote:'' }); }
+  confirmCorrection(){
+    const { detail, correcting, corrNote }=this.state;
+    if(correcting==null || !corrNote.trim()) return;
+    this.setState(s=>({ containers:s.containers.map(c=>{
+      if(c.id!==detail) return c;
+      const orig=c.tl[correcting]; const lbl=(TYPES[orig.type]||{label:orig.type}).label;
+      return {...c, tl:[...c.tl, { type:'correccion', date:'2 jul · '+this.now(), note:'Enmienda a «'+lbl+' · '+orig.date+'»: '+corrNote.trim(), by:s.operator, ref:correcting }]};
+    }), correcting:null, corrNote:'' }));
+    this.push({ type:'correccion', container:detail, note:corrNote.trim() });
+    this.toast('Enmienda registrada. El evento original permanece.');
+  }
+  weatherCode(c){
+    if(c===0) return {t:'despejado', icon:'sun'};
+    if([1,2].includes(c)) return {t:'poco nublado', icon:'cloud-sun'};
+    if(c===3) return {t:'nublado', icon:'cloud'};
+    if([45,48].includes(c)) return {t:'niebla', icon:'fog'};
+    if([51,53,55,56,57].includes(c)) return {t:'llovizna', icon:'drizzle'};
+    if([61,63,65,66,67,80,81,82].includes(c)) return {t:'lluvia', icon:'rain'};
+    if([71,73,75,77,85,86].includes(c)) return {t:'nieve', icon:'snow'};
+    if([95,96,99].includes(c)) return {t:'tormenta', icon:'storm'};
+    return {t:'variable', icon:'cloud'};
+  }
+  async fetchWeather(){
+    try {
+      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=4.8465&longitude=-74.1391&current=temperature_2m,relative_humidity_2m,weather_code&timezone=America%2FBogota');
+      const j = await r.json();
+      const cur = j.current || {};
+      const wc = this.weatherCode(cur.weather_code);
+      this.setState({ weather: { temp: Math.round(cur.temperature_2m), hum: cur.relative_humidity_2m, label: wc.t, icon: wc.icon } });
+    } catch(e){ /* keep last known weather */ }
+  }
+  weatherIconEl(key){
+    const S = (children)=>React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.6,strokeLinecap:'round',strokeLinejoin:'round'}, children);
+    const sun = ()=>S([
+      React.createElement('circle',{key:'c',cx:12,cy:12,r:4.5}),
+      ...[0,45,90,135,180,225,270,315].map(a=>React.createElement('line',{key:a,x1:12+Math.cos(a*Math.PI/180)*7,y1:12+Math.sin(a*Math.PI/180)*7,x2:12+Math.cos(a*Math.PI/180)*9.5,y2:12+Math.sin(a*Math.PI/180)*9.5}))
+    ]);
+    const cloud = (extra)=>S([React.createElement('path',{key:'p',d:'M7 18h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.6-1.6A4 4 0 0 0 7 18z'}), ...(extra||[])]);
+    const cloudSun = ()=>S([
+      React.createElement('circle',{key:'c',cx:8,cy:8,r:3}),
+      React.createElement('line',{key:'l1',x1:8,y1:2.5,x2:8,y2:1}),
+      React.createElement('line',{key:'l2',x1:2.5,y1:8,x2:1,y2:8}),
+      React.createElement('path',{key:'p',d:'M9 19h9a3.2 3.2 0 0 0 0-6.4 4.6 4.6 0 0 0-8.7-1.3A3.6 3.6 0 0 0 9 19z'})
+    ]);
+    const drops = (n)=>[...Array(n)].map((_,i)=>React.createElement('line',{key:'d'+i,x1:8+i*4,y1:19,x2:7+i*4,y2:22}));
+    const rain = ()=>cloud(drops(3));
+    const drizzle = ()=>cloud(drops(2));
+    const fog = ()=>S([
+      React.createElement('path',{key:'p',d:'M7 13h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.6-1.6A4 4 0 0 0 7 13z'}),
+      React.createElement('line',{key:'f1',x1:5,y1:17,x2:19,y2:17}),
+      React.createElement('line',{key:'f2',x1:7,y1:20,x2:17,y2:20})
+    ]);
+    const snow = ()=>cloud([...Array(3)].map((_,i)=>React.createElement('circle',{key:'s'+i,cx:8+i*4,cy:20,r:0.6,fill:'currentColor'})));
+    const storm = ()=>cloud([React.createElement('polyline',{key:'b',points:'10,18 8,22 12,21 10,24'})]);
+    const map = {sun,cloud,'cloud-sun':cloudSun,rain,drizzle,fog,snow,storm};
+    return (map[key]||cloud)();
+  }
+  refreshSim(){
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem('setas_v6')||'[]'); } catch(e){}
+    if(Array.isArray(list)) this.setState({ simRecipes:list });
+  }
+
+  fmtClock(){
+    const m = Math.max(0, Math.round((Date.now()-this.state.startMs)/60000));
+    return m < 1 ? 'ahora' : (m + ' min');
+  }
+  startSession(type){
+    this.setState({ sessionLoading:true, pendingSessionType:type });
+    clearTimeout(this._sessionLoadT);
+    this._sessionLoadT = setTimeout(()=>{
+      this.setState({ module:'sesion', screen:'home', sessionType:type, capture:false, startMs:Date.now(), clock:'ahora', sessionLoading:false });
+      clearInterval(this._t);
+      this._t = setInterval(()=>this.setState({ clock:this.fmtClock() }), 20000);
+    }, 550);
+  }
+  toast(t){ this.setState({ toast:t }); clearTimeout(this._toast); this._toast = setTimeout(()=>this.setState({toast:null}), 2600); }
+  now(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  todayStr(){
+    const d=new Date();
+    const dias=['dom','lun','mar','mié','jue','vie','sáb'];
+    const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return dias[d.getDay()]+' · '+d.getDate()+' '+meses[d.getMonth()];
+  }
+  greetingStr(){
+    const h=new Date().getHours();
+    if(h<6) return 'buenas noches';
+    if(h<14) return 'buenos días';
+    if(h<21) return 'buenas tardes';
+    return 'buenas noches';
+  }
+  push(ev){ this.setState(s=>({ ledger:[{...ev, time:this.now()}, ...s.ledger], pendingSync: s.online?s.pendingSync:s.pendingSync+1 })); }
+  go(screen){ this.setState({ screen, capture:false }); }
+
+  todayShort(){ const d=new Date(); const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']; return d.getDate()+' '+m[d.getMonth()]; }
+  nextLote(spKey){ const d=new Date(); const mm=String(d.getMonth()+1).padStart(2,'0'); const n=String(Math.max(1,this.state.seq-414)).padStart(3,'0'); return d.getFullYear()+'-'+mm+'-'+spCode(spKey)+'-'+n; }
+  buildQr(text){ try {
+      const m=window.QRMini.matrix(text); const n=m.length; const q=4; const dim=n+q*2; let rects='';
+      for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(m[r][c]) rects+='<rect x="'+(c+q)+'" y="'+(r+q)+'" width="1" height="1"/>';
+      const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+dim+' '+dim+'" shape-rendering="crispEdges"><rect width="'+dim+'" height="'+dim+'" fill="#fff"/><g fill="#2b2b26">'+rects+'</g></svg>';
+      return 'data:image/svg+xml;base64,'+btoa(svg);
+    } catch(e){ return ''; } }
+
+  openSimForSpecies(key){
+    try { localStorage.setItem('sim_preselect_spp', key); } catch(e){}
+    this.setState(s=>({ module:'sim', simKey:s.simKey+1, capture:false }));
+  }
+
+  confirmRegister(){
+    const { rSpecies, rRecipe, operator } = this.state;
+    if(!rSpecies || !rRecipe) return;
+    const rec = this.recipeById(rRecipe);
+    const id = 'C-0'+(this.state.seq+1);
+    const lote = this.nextLote(rSpecies);
+    const recNote = rec.sim ? ('receta del Simulador · '+rec.id) : rec.id + (rec.exp?' · experimental':'');
+    // Snapshot the formulation itself, not just its name — the saved recipe can be
+    // edited or deleted in the Simulador later, and this container must still say
+    // what it was actually made of.
+    const prov = this.buildProvenance(rec);
+    const cont = { id, key:rSpecies, status:'activo', stage:'inoculación', recipe:rec.id, prov, batch:lote, camera:'incub',
+      tl:[ {type:'registro', date:'2 jul · '+this.now(), note:'Alta en registro · lote '+lote+'. '+recNote+'.', by:operator},
+           {type:'inoculacion', date:'2 jul · '+this.now(), note:'Inoculado · '+spName(rSpecies)+'.', by:operator} ] };
+    this.setState(s=>({ seq:s.seq+1, containers:[cont, ...s.containers], rSpecies:null, rRecipe:null }));
+    this.push({ type:'registro', container:id, note:spName(rSpecies)+' · '+recNote });
+    this.go('home'); this.toast(id+' registrado y anclado.');
+  }
+  confirmObs(){
+    const { oContainers, oTags, oNote } = this.state;
+    if(!oContainers.length) return;
+    const note = (oTags.join(', ') + (oNote?' — '+oNote:'')) || 'Observación registrada.';
+    this.setState(s=>({ containers:s.containers.map(c=>oContainers.includes(c.id)?{...c, tl:[...c.tl, {type:'observacion', date:'2 jul · '+this.now(), note, by:s.operator}]}:c), oContainers:[], oTags:[], oNote:'' }));
+    oContainers.forEach(id=>this.push({ type:'observacion', container:id, note }));
+    this.go('home'); this.toast('Observación registrada en '+oContainers.length+' contenedor'+(oContainers.length>1?'es':'')+'.');
+  }
+  confirmHarvest(){
+    const { hContainer, weight, hClose, hDest, operator } = this.state;
+    if(!hContainer) return;
+    const closed = hClose==='cosechado';
+    const cont = this.state.containers.find(c=>c.id===hContainer) || {};
+    const note = weight+' g fresco · '+destLabel(hDest)+'. '+(closed?'Contenedor cerrado.':'Contenedor sigue activo (más flushes).');
+    const salida = { fecha:this.todayShort(), lote:cont.batch||'—', spp:cont.key, pesoG:weight, dest:hDest, grade:'A' };
+    this.setState(s=>({ containers:s.containers.map(c=>c.id===hContainer?{...c, status:closed?'cosechado':c.status, stage:closed?'ciclo cerrado':c.stage, tl:[...c.tl,{type:'cosecha', date:'2 jul · '+this.now(), note, by:operator}]}:c), salidas:[salida, ...s.salidas], hContainer:null, weight:240, hClose:'cosechado', hDest:'restaurante' }));
+    this.push({ type:'cosecha', container:hContainer, note:weight+' g fresco · '+destLabel(hDest)+'.' });
+    this.go('home'); this.toast(weight+' g cosechados de '+hContainer+' → '+destLabel(hDest)+'.');
+  }
+  confirmQuick(){
+    const { quickType, qContainers, qNote } = this.state;
+    if(!qContainers.length) return;
+    const meta = TYPES[quickType];
+    const contam = quickType==='contaminacion';
+    const descarte = quickType==='descarte';
+    const newStatus = contam?'contaminado':(descarte?'descartado':null);
+    this.setState(s=>({ containers:s.containers.map(c=>qContainers.includes(c.id)?{...c, status:newStatus||c.status, stage:descarte?'descartado':c.stage, tl:[...c.tl,{type:quickType, date:'2 jul · '+this.now(), note:qNote||meta.label+' registrada.', by:s.operator}]}:c), qContainers:[], qNote:'', quickType:null }));
+    qContainers.forEach(id=>this.push({ type:quickType, container:id, note:qNote||meta.label+' registrada.' }));
+    this.go('home'); this.toast(meta.label+' en '+qContainers.length+' contenedor'+(qContainers.length>1?'es':'')+'.');
+  }
+
+  recipeOptionsList(){
+    const built = RECIPES.map(r=>({ ...r, sim:false }));
+    const sim = (this.state.simRecipes||[]).map(r=>{
+      const cn = (r.cn!=null && r.cn!=='—') ? ('C:N '+r.cn+' · ') : '';
+      const eb = (r.eb!=null && r.eb!=='—') ? ('EB '+r.eb+'% · ') : '';
+      return { id:'SIM · '+(r.name||('receta '+r.id)), desc:cn+eb+(r.date||''), exp:false, sim:true, sKey:r.sKey, src:r };
+    });
+    return [...sim, ...built];
+  }
+  recipeById(id){ return this.recipeOptionsList().find(r=>r.id===id) || {id, desc:'', sim:false, exp:false}; }
+  // Ingredient ids come from the Simulador as slugs (aserrin_roble); humanise them here
+  // rather than duplicating its ingredient table and letting the two drift apart.
+  humanIngredient(slug){ const t=String(slug||'').replace(/_/g,' ').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : '—'; }
+  buildProvenance(rec){
+    const r = rec && rec.src;
+    if(!rec || !rec.sim || !r) return null;
+    const comps = Array.isArray(r.recipe) ? r.recipe.map(x=>({ name:this.humanIngredient(x.id), pct:x.p })) : [];
+    return { source:'simulador', name:r.name||'', savedAt:r.date||'', cn:r.cn!=null?String(r.cn):'', eb:r.eb!=null?String(r.eb):'',
+      moisture:r.hObj!=null?String(r.hObj):'', cost:r.cost!=null?String(r.cost):'', comps, capturedAt:this.todayShort()+' · '+this.now() };
+  }
+
+  chipStyle(sel){
+    const base='cursor:pointer;font:var(--t-label);padding:14px 18px;min-height:52px;display:inline-flex;align-items:center;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--ink-0);color:var(--paper-0);'
+               : base+'var(--border-strong);background:var(--paper-0);color:var(--ink-1);';
+  }
+  cardStyle(sel){
+    const base='cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:15px 16px;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--paper-0);'
+               : base+'var(--border-soft);background:var(--paper-0);';
+  }
+  setRole(role){
+    this.setState(s=>{
+      const gate = ROLE_GATE[s.module];
+      return { role, module: (gate && !gate.includes(role)) ? 'inicio' : s.module };
+    });
+  }
+  tagStyle(color){
+    return 'display:inline-flex;align-items:center;border:1px solid '+color+';color:'+color+';padding:2px 9px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;';
+  }
+  tabStyle(sel){
+    const base='cursor:pointer;flex:none;border:none;background:none;padding:10px 2px;font:var(--t-label);position:relative;';
+    return sel ? base+'color:var(--ink-0);border-bottom:2px solid var(--accent-terracotta);'
+               : base+'color:var(--text-metadata);border-bottom:2px solid transparent;';
+  }
+  pillPick(sel){
+    // Sized for gloved thumbs in the field: 64px min height, generous hit area.
+    const base='cursor:pointer;flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px;text-align:left;padding:16px 20px;min-height:64px;min-width:132px;border-radius:var(--radius-md);border:1px solid ';
+    return sel ? base+'var(--ink-0);background:var(--ink-0);color:var(--paper-0);'
+               : base+'var(--border-strong);background:var(--paper-0);color:var(--ink-0);';
+  }
+  primaryBtn(enabled){
+    const base='width:100%;border:none;border-radius:var(--radius-md);padding:18px;font:var(--t-button);font-size:16px;';
+    return enabled ? base+'cursor:pointer;background:var(--accent-terracotta);color:#fff;'
+                   : base+'background:var(--paper-2);color:var(--ink-3);cursor:not-allowed;';
+  }
+
+  renderVals(){
+    const s = this.state;
+    const offlineMin = (!s.online && s.offlineSince) ? Math.floor((Date.now()-s.offlineSince)/60000) : 0;
+    const manualId = this.normalizeContainerId(s.scanManualId);
+    const manualMatch = manualId ? s.containers.find(c=>c.id===manualId) : null;
+    const manualOk = !!manualMatch;
+    const manualHint = !manualId ? 'Ej. C-0412 · también acepta 412' : (manualOk ? (manualId+' · '+spName(manualMatch.key)) : (manualId+' no existe en este dispositivo'));
+    const sessionLabel = s.sessionType==='lab' ? 'laboratorio' : 'cultivo';
+    const active = s.containers.filter(c=>c.status==='activo');
+    const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
+    const prov = detail && detail.prov ? detail.prov : null;
+    const provComps = (prov && Array.isArray(prov.comps)) ? prov.comps.map(c=>({ name:c.name, pctLabel:(c.pct!=null?c.pct+'%':'—'), barPct:Math.max(0,Math.min(100,Number(c.pct)||0))+'%' })) : [];
+    const provMetrics = [];
+    if(prov){
+      if(prov.cn) provMetrics.push({ label:'C:N', value:prov.cn });
+      if(prov.moisture) provMetrics.push({ label:'Humedad', value:prov.moisture+'%' });
+      if(prov.eb) provMetrics.push({ label:'EB estimada', value:prov.eb+'%' });
+      if(prov.cost) provMetrics.push({ label:'Costo', value:'$'+prov.cost });
+    }
+
+    // ---- Cámaras: ocupación derivada de contenedores ----
+    const stageToCam = (st)=>{ const c=CAMARAS.find(cm=>cm.stages.includes(st)); return c?c.id:'incub'; };
+    const camView = CAMARAS.map(cm=>{
+      const inside = s.containers.filter(c=>c.status==='activo' && (c.camera? c.camera===cm.id : stageToCam(c.stage)===cm.id));
+      const sppMeta = cm.spp?KB_SPP[cm.spp]:null;
+      const est = camEstado[cm.estado];
+      return { id:cm.id, name:cm.name, zona:cm.zona, note:cm.note, capKg:cm.capKg,
+        estadoLabel:est.label, estadoAccent:est.accent, equipos:cm.equipos.join(' · '),
+        sppName: cm.spp?spName(cm.spp):'Mixto / sin asignar',
+        params: sppMeta ? [
+          {k:'T°',  v:(cm.zona===4?sppMeta.fruitT:sppMeta.incT).join('–')+'°C'},
+          {k:'HR',  v:sppMeta.hr.join('–')+'%'},
+          {k:'CO₂', v:'<'+sppMeta.co2},
+          {k:'FAE', v:sppMeta.fae.join('–')+'/h'},
+        ] : [],
+        count: inside.length,
+        containers: inside.map(c=>({ id:c.id, species:spName(c.key), stage:c.stage })),
+        occupancy: Math.min(100, Math.round(inside.length/Math.max(1,Math.round(cm.capKg/2))*100)),
+      };
+    });
+    const camD = s.camDetail ? camView.find(c=>c.id===s.camDetail) : null;
+
+    // ---- Rendimiento: BE por sustrato (receta) y por especie ----
+    const beOf = y => y.freshG/(y.dryKg*1000)*100;
+    const gkOf = arr => Math.round(arr.reduce((t,y)=>t+y.freshG/y.dryKg,0)/arr.length);
+    const groupAvg = (keyFn) => { const g={}; s.yields.forEach(y=>{ (g[keyFn(y)]=g[keyFn(y)]||[]).push(beOf(y)); }); return g; };
+    const gSub = groupAvg(y=>y.sub);
+    const rendSub = Object.keys(gSub).map(k=>{ const arr=gSub[k]; const avg=arr.reduce((a,b)=>a+b,0)/arr.length; const meta=KB_SUB[k]||{name:k,be:[0,0],cn:'—'};
+      return { key:k, name:meta.name, cn:meta.cn, avg:Math.round(avg), gPerKg:gkOf(s.yields.filter(y=>y.sub===k)), n:arr.length, targetLabel:meta.be.join('–')+'%',
+        status: avg>=KPI.beOptimal?'optimal':(avg>=KPI.beTarget?'ok':(avg>=KPI.beAlert?'warn':'alert')),
+        pct: Math.min(100, Math.round(avg/130*100)) }; });
+    const gSpp = groupAvg(y=>y.spp);
+    const rendSpp = Object.keys(gSpp).map(k=>{ const arr=gSpp[k]; const avg=arr.reduce((a,b)=>a+b,0)/arr.length; const meta=KB_SPP[k]||{be:[0,0]};
+      return { key:k, name:spName(k), sci:spSci(k), avg:Math.round(avg), gPerKg:gkOf(s.yields.filter(y=>y.spp===k)), n:arr.length, targetLabel:meta.be.join('–')+'%',
+        status: avg>=meta.be[1]?'optimal':(avg>=meta.be[0]?'ok':'warn'), pct: Math.min(100, Math.round(avg/(meta.be[1]||130)*100)) }; });
+    const rendStatusColor = { optimal:'var(--accent-olive)', ok:'var(--accent-blue-grey)', warn:'var(--accent-mushroom)', alert:'var(--status-error)' };
+    const rendSubV = rendSub.map(r=>({ ...r, accent:rendStatusColor[r.status] }));
+    const rendSppV = rendSpp.map(r=>({ ...r, accent:rendStatusColor[r.status] }));
+    const beOverall = Math.round(s.yields.reduce((a,y)=>a+beOf(y),0)/s.yields.length);
+
+    // ---- Salidas: cosecha → destino ----
+    const salidasView = s.salidas.map(x=>({ ...x, sppName:spName(x.spp), destLabel:destLabel(x.dest), kg:(x.pesoG/1000).toFixed(2) }));
+    const salidasByDest = {}; s.salidas.forEach(x=>{ salidasByDest[x.dest]=(salidasByDest[x.dest]||0)+x.pesoG; });
+    const destAccent = { restaurante:'var(--accent-terracotta)', mercado:'var(--accent-olive)', deshidratado:'var(--accent-mushroom)', autoconsumo:'var(--ink-2)' };
+    const destTotals = DESTINOS.map(d=>({ key:d.key, label:d.label, g:salidasByDest[d.key]||0, accent:destAccent[d.key] })).filter(d=>d.g>0);
+    const salidasTotal = (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2);
+
+    // ---- Etiqueta / QR ----
+    const labelCont = s.labelFor ? s.containers.find(c=>c.id===s.labelFor) : null;
+    const labelUrl = labelCont ? ('https://setasdelapena.co/c/'+labelCont.id) : '';
+    const qrDataUrl = labelCont ? this.buildQr(labelUrl) : '';
+
+    // ---- Módulos de negocio ----
+    const scheduleRows = SCHEDULE_ROWS.map(r=>({ order:r.order, species:spName(r.sppKey), start:r.start, chamber:(CAMARAS.find(c=>c.id===r.camId)||{}).name||r.camId, status:r.status, statusStyle:this.tagStyle(r.color) }));
+    const demandAccent = { restaurante:'var(--accent-terracotta)', mercado:'var(--accent-olive)', deshidratado:'var(--accent-mushroom)', autoconsumo:'var(--ink-2)' };
+    const demandPct = { restaurante:42, mercado:31, deshidratado:17, autoconsumo:10 };
+    const demandRows = DESTINOS.map(d=>({ label:d.label, pct:demandPct[d.key]||0, pctLabel:(demandPct[d.key]||0)+'%', accent:demandAccent[d.key] }));
+    const inventoryRows = INVENTORY_ROWS.map(r=>({ name:(KB_SUB[r.key]||{}).name||r.key, lot:r.lot, qty:r.qty, cost:r.cost, coverage:r.coverage, status:r.status, statusStyle:this.tagStyle(r.color) }));
+    const traceCont = s.containers.find(c=>c.status==='cosechado') || s.containers[s.containers.length-1];
+    const traceRaw = traceCont ? [
+      { label:'Receta', value:traceCont.recipe, detail:spName(traceCont.key) },
+      { label:'Lote', value:traceCont.batch, detail:'Agrupa la tanda' },
+      { label:'Contenedor', value:traceCont.id, detail:traceCont.stage },
+      { label:'Eventos', value:traceCont.tl.length+' registrados', detail:'Cadena inmutable' },
+      { label:'Cosecha', value:(traceCont.tl.find(e=>e.type==='cosecha')||{}).note || 'Sin cosecha aún', detail:'Peso fresco' },
+    ] : [];
+    const traceChain = traceRaw.map((t,i)=>({ ...t, showArrow:i<traceRaw.length-1 }));
+    const ncSource = s.containers.filter(c=>c.status==='contaminado');
+    const ncItems = ncSource.map(c=>({ title:'NC · '+c.id, detail:(c.tl.find(e=>e.type==='contaminacion')||{}).note || 'Contaminación registrada.', color:'var(--status-error)' }));
+    const expBase = s.containers.find(c=>c.recipe==='F-018 · v3');
+    const expTrial = s.containers.find(c=>c.recipe==='F-030 · v1');
+    const comparisonGrid = [
+      { label:(expBase?expBase.recipe:'F-018 · v3')+' (control)', eb:'BE 92%', contam:'Contam. 0%', style:'border:1px solid var(--border-soft);padding:16px;' },
+      { label:(expTrial?expTrial.recipe:'F-030 · v1')+' (tratamiento)', eb:'BE — pendiente', contam:expTrial?('En '+expTrial.stage):'Sin lote activo', style:'border:1px solid var(--border-soft);border-top:3px solid var(--accent-olive);padding:16px;' },
+    ];
+    const sopSteps = KNOWLEDGE_LIFECYCLE.map((k,i)=>{ const state = i<2?'done':(i===2?'active':'pending'); return {
+      num:k.n, label:k.label,
+      boxStyle:'width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;font-family:var(--font-mono);font-size:10.5px;border:1px solid '+(state==='active'?'var(--ink-0)':(state==='done'?'var(--accent-olive)':'var(--border-strong)'))+';'+(state==='active'?'background:var(--ink-0);color:var(--paper-0);':(state==='done'?'color:var(--accent-olive);':'color:var(--text-metadata);')),
+      textStyle:'font-family:var(--font-sans);font-size:13px;font-weight:'+(state==='active'?800:500)+';color:'+(state==='pending'?'var(--text-metadata)':'var(--ink-0)')+';' }; });
+    const commercialClients = s.salidas.map(x=>({ date:x.fecha, client:CLIENTS[x.dest]||destLabel(x.dest), detail:spName(x.spp)+' · '+(x.pesoG/1000).toFixed(2)+' kg', status:'Entregado', statusStyle:this.tagStyle('var(--accent-olive)'), ref:x.lote }));
+    const salidasTotalKg = (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2);
+
+    const ledger = s.ledger.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent }));
+    const counts = {};
+    s.ledger.forEach(e=>{ counts[e.type]=(counts[e.type]||0)+1; });
+    const endBreakdown = Object.keys(counts).map(k=>({ label:TYPES[k].label, accent:TYPES[k].accent, count:counts[k] }));
+
+    const captureOptions = [
+      { key:'registro', label:'Contenedor', desc:'Dar de alta un objeto nuevo (WF-1)', go:()=>this.go('register') },
+      { key:'observacion', label:'Observación', desc:'Capturar lo que ves (WF-3)', go:()=>this.go('observe') },
+      { key:'cosecha', label:'Cosecha', desc:'Registrar el resultado (WF-4)', go:()=>this.go('harvest') },
+      { key:'traslado', label:'Traslado', desc:'Mover de zona o cámara', go:()=>this.setState({quickType:'traslado', screen:'quick', capture:false}) },
+      { key:'contaminacion', label:'Contaminación', desc:'Marcar un objeto afectado', go:()=>this.setState({quickType:'contaminacion', screen:'quick', capture:false}) },
+      { key:'marca', label:'Marca', desc:'Señalar para revisión (WF-10)', go:()=>this.setState({quickType:'marca', screen:'quick', capture:false}) },
+      { key:'descarte', label:'Descarte', desc:'Retirar un objeto del ciclo', go:()=>this.setState({quickType:'descarte', screen:'quick', capture:false}) },
+    ].map(o=>({ ...o, accent:TYPES[o.key].accent }));
+
+    const quickMeta = s.quickType ? TYPES[s.quickType] : {label:''};
+    const quickCopy = {
+      traslado:{ title:'Registrar traslado', hint:'Un movimiento de zona sigue anclado a su contenedor.' },
+      contaminacion:{ title:'Marcar contaminación', hint:'El fallo se registra con el mismo valor que el éxito.' },
+      marca:{ title:'Marcar para revisión', hint:'Un marcador ligero; nada se interpreta todavía.' },
+      descarte:{ title:'Registrar descarte', hint:'El objeto sale del ciclo; su cadena de eventos permanece intacta.' },
+    }[s.quickType] || { title:'', hint:'' };
+
+    const navCls = m => s.module===m ? 'on' : '';
+
+    return {
+      // modules
+      isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isClima:s.module==='clima', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
+      isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
+      shellCls: (s.module==='sim') ? 'sim-collapsed' : '',
+      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navSimCls:navCls('sim'), navClimaCls:navCls('clima'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
+      navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
+      hasClimaBadge:s.climaBadge>0, climaBadge:s.climaBadge>9?'9+':s.climaBadge,
+      goInicio:()=>this.setState({module:'inicio',capture:false}),
+      goSesion:()=>this.setState({module:'sesion',capture:false}),
+      goSim:()=>{ this.refreshSim(); this.setState({module:'sim',capture:false}); },
+      goClima:()=>this.setState({module:'clima',capture:false,climaBadge:0}),
+      goRevision:()=>this.setState({module:'revision',capture:false}),
+      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goPlan:()=>this.setState({module:'plan',capture:false}),
+      goInventario:()=>this.setState({module:'inventario',capture:false}),
+      goCalidad:()=>this.setState({module:'calidad',capture:false}),
+      goAprender:()=>this.setState({module:'aprender',capture:false}),
+      goComercial:()=>this.setState({module:'comercial',capture:false}),
+      showPlan:ROLE_GATE.plan.includes(s.role), showInventario:ROLE_GATE.inventario.includes(s.role), showCalidad:ROLE_GATE.calidad.includes(s.role), showAprender:ROLE_GATE.aprender.includes(s.role), showComercial:ROLE_GATE.comercial.includes(s.role),
+      roleOptions: ROLE_LABELS.map((r,i)=>{ const sel = s.role===r.key; return { label:r.label, select:()=>this.setRole(r.key),
+        style:'cursor:pointer;padding:8px 14px;border:none;'+(i<ROLE_LABELS.length-1?'border-right:1px solid var(--border-hairline);':'')+'background:'+(sel?'var(--ink-0)':'var(--paper-0)')+';color:'+(sel?'var(--paper-0)':'var(--ink-1)')+';font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;' }; }),
+
+      // plan
+      planMetrics:PLAN_METRICS, scheduleRows, demandRows,
+      // inventario
+      inventoryMetrics:INVENTORY_METRICS, inventoryRows,
+      // calidad
+      traceTitle: traceCont?traceCont.id:'—', traceChain, releaseChecklist:RELEASE_CHECKLIST, ncCount:ncItems.length, ncItems,
+      // aprender
+      expTitle: expTrial?('Ensayo · '+expTrial.recipe+' vs '+(expBase?expBase.recipe:'F-018')):'Ensayo experimental',
+      expHyp:'Hipótesis: el suplemento enriquecido mejora la eficiencia biológica sin aumentar la contaminación.',
+      comparisonGrid, sopSteps,
+      // comercial
+      commercialMetrics:[
+        { label:'Kg confirmados (30d)', value:salidasTotalKg+' kg', note:s.salidas.length+' salidas' },
+        { label:'Destinos activos', value:String(new Set(s.salidas.map(x=>x.dest)).size), note:'Canales con despacho' },
+        { label:'Grado A', value:Math.round(100*s.salidas.filter(x=>x.grade==='A').length/Math.max(1,s.salidas.length))+'%', note:'Del peso fresco' },
+        { label:'Próxima entrega', value:CLIENTS.restaurante, note:'20 jul' },
+      ],
+      commercialRows:commercialClients,
+      zonas:ZONAS,
+      camaras: camView.map(c=>({ ...c, open:()=>this.setState({camDetail:c.id}) })),
+      hasCamDetail:!!camD, camDetail:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
+      simSrc:'simulador.html?k='+s.simKey,
+      climaSrc:'climate-bench.html',
+      climaFrameStyle: 'width:100%;height:100vh;border:none;background:var(--paper-0);'+(s.module==='clima'?'display:block;':'display:none;'),
+
+      // inicio
+      openSession:()=>this.setState({module:'sesion',screen:'start',capture:false}),
+      simRecipeCount:(s.simRecipes||[]).length,
+      simCardLabel: (s.simRecipes||[]).length>0 ? ((s.simRecipes||[]).length+' recetas guardadas') : 'Formular un sustrato',
+      simCardSub: (s.simRecipes||[]).length>0 ? 'Abrir en el Simulador' : 'A\u00fan no hay recetas \u00b7 empieza una',
+      speciesCards: SPECIES.map(sp=>({ name:sp.name, sci:sp.sci, formular:()=>this.openSimForSpecies(sp.key) })),
+      primaryActionLabel: s.sessionType ? 'Continuar jornada' : 'Iniciar jornada',
+      primaryActionSub: s.sessionType ? ('Sesi\u00f3n de '+sessionLabel+' \u00b7 '+s.clock) : 'No hay una sesi\u00f3n activa',
+      needsReviewCount: s.containers.filter(c=>c.status==='contaminado').length,
+      needsReviewLabel: pluralize(s.containers.filter(c=>c.status==='contaminado').length, 'contenedor por revisar', 'contenedores por revisar'),
+      roleSubtitle: ROLE_SUBTITLES[s.role] || '',
+      goHistoryFromInicio:()=>this.setState({module:'sesion', screen:'history', detail:null, capture:false}),
+      hasRecentActivity: s.ledger.length>0,
+      recentActivity: s.ledger.slice(0,3).map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
+
+      // session screen flags
+      isStart:s.screen==='start', isHome:s.screen==='home', isRegister:s.screen==='register',
+      isObserve:s.screen==='observe', isHarvest:s.screen==='harvest', isQuick:s.screen==='quick',
+      isHistory:s.screen==='history', isEnd:s.screen==='end',
+      isCapture:s.capture, showToast:!!s.toast, toastText:s.toast||'',
+      stop:(e)=>{ e.stopPropagation(); },
+      online:s.online, offline:!s.online, hasPending:s.pendingSync>0, pendingSync:s.pendingSync, syncing:s.syncing,
+      showOfflineBanner: offlineMin>=OFFLINE_BANNER_MIN,
+      offlineBannerText: offlineMin>=60 ? ('Sin conexión desde hace '+Math.floor(offlineMin/60)+' h '+(offlineMin%60)+' min') : ('Sin conexión desde hace '+offlineMin+' min'),
+      offlineBannerSub: s.pendingSync>0 ? (pluralize(s.pendingSync,'evento guardado en este dispositivo','eventos guardados en este dispositivo')+' · se enviarán al recuperar señal') : 'Los eventos se guardan en este dispositivo y se enviarán al recuperar señal',
+      syncPillText: s.syncing?'Sincronizando…':(s.online?(s.pendingSync>0?(s.pendingSync+' por sincronizar'):'Sincronizado'):(s.pendingSync>0?(s.pendingSync+' en cola'):'Sin conexión')),
+      syncPillColor: s.online?(s.pendingSync>0?'var(--accent-mushroom)':'var(--accent-olive)'):'var(--ink-2)',
+      toggleOnline:()=>this.toggleOnline(),
+      scanning:s.scanning, scanSearching:s.scanning&&!s.scanFound&&!s.scanManual, hasScanFound:!!s.scanFound, scanFoundId:s.scanFound||'',
+      scanFoundSpecies: s.scanFound ? spName((s.containers.find(c=>c.id===s.scanFound)||{}).key) : '',
+      scanTargetLabel: ({obs:'observación', harvest:'cosecha', quick:'evento', home:'ficha'})[s.scanTarget]||'',
+      openScanObs:()=>this.openScan('obs'), openScanHarvest:()=>this.openScan('harvest'), openScanQuick:()=>this.openScan('quick'), openScanHome:()=>this.openScan('home'),
+      closeScan:()=>this.closeScan(), applyScan:()=>this.applyScan(),
+      scanManual:s.scanManual, scanCamera:!s.scanManual,
+      openManualEntry:()=>this.openManualEntry(),
+      scanManualId:s.scanManualId,
+      setScanManualId:(e)=>this.setState({scanManualId:e.target.value}),
+      scanManualHint: manualHint,
+      scanManualHintColor: manualId && !manualOk ? 'var(--accent-terracotta)' : 'color-mix(in oklab, var(--paper-0) 60%, transparent)',
+      manualDisabled: !manualOk,
+      manualBtnStyle: 'width:100%;border:none;border-radius:var(--radius-md);padding:16px;font:var(--t-button);font-size:16px;' + (manualOk ? 'cursor:pointer;background:var(--accent-terracotta);color:#fff;' : 'background:color-mix(in oklab, var(--paper-0) 22%, transparent);color:color-mix(in oklab, var(--paper-0) 45%, transparent);cursor:not-allowed;'),
+      applyManualEntry:()=>this.applyManualEntry(),
+      correctionOpen:s.correcting!=null, corrNote:s.corrNote, setCorrNote:(e)=>this.setState({corrNote:e.target.value}),
+      confirmCorrection:()=>this.confirmCorrection(), closeCorrection:()=>this.closeCorrection(),
+      corrDisabled:!(s.corrNote&&s.corrNote.trim()), corrBtnStyle:this.primaryBtn(!!(s.corrNote&&s.corrNote.trim())),
+
+      dateStr:this.todayStr(), operator:s.operator, sessionLabel, sessionClock:s.clock,
+      operators: OPERATORS.map(o=>{ const sel=s.operatorKey===o.key; return { name:o.name, role:o.role, sel,
+        rowStyle:'cursor:pointer;display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;background:'+(sel?'var(--paper-1)':'none')+';border:none;border-top:1px solid var(--border-soft);padding:9px 14px;color:'+(sel?'var(--ink-0)':'var(--ink-1)')+';',
+        pick:()=>this.setState({operator:o.name, operatorKey:o.key, pickerOpen:false}) }; }),
+      pickerOpen: s.pickerOpen, togglePicker:()=>this.setState(s2=>({pickerOpen:!s2.pickerOpen})), closePicker:()=>this.setState({pickerOpen:false}),
+      operatorInitial: (s.operator||'')[0]||'', operatorRole: (OPERATORS.find(o=>o.key===s.operatorKey)||{}).role||'',
+      pickerChevron: s.pickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      sessionLoading: s.sessionLoading, loadingLabel: s.pendingSessionType==='lab' ? 'laboratorio' : 'cultivo',
+      greeting:this.greetingStr(),
+      weatherText: s.weather ? ('Tenjo · '+s.weather.temp+'°C · '+s.weather.label+' · '+s.weather.hum+'% hum.') : 'Tenjo · cargando clima…',
+      weatherIcon: this.weatherIconEl(s.weather && s.weather.icon),
+
+      startLab:()=>this.startSession('lab'), startCult:()=>this.startSession('cult'),
+
+      ledger, ledgerCount:s.ledger.length, ledgerLabel: pluralize(s.ledger.length, 'evento registrado hoy', 'eventos registrados hoy'), hasLedger:s.ledger.length>0, noLedger:s.ledger.length===0,
+      openCapture:()=>this.setState({capture:true}), closeCapture:()=>this.setState({capture:false}),
+      captureOptions, goSesionHome:()=>this.go('home'), goHistory:()=>this.setState({screen:'history', detail:null, capture:false}), goEnd:()=>this.go('end'),
+
+      // register
+      speciesOptions: SPECIES.map(sp=>({ name:sp.name, style:this.chipStyle(s.rSpecies===sp.key), select:()=>this.setState({rSpecies:sp.key}) })),
+      recipeOptions: this.recipeOptionsList().map(r=>({ id:r.id, desc:r.desc, exp:r.exp, sim:r.sim, style:this.cardStyle(s.rRecipe===r.id), select:()=>this.setState({rRecipe:r.id}) })),
+      batchId:'L-2609',
+      formularDisabled: !s.rSpecies,
+      formularStyle: 'cursor:'+(s.rSpecies?'pointer':'not-allowed')+';background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:'+(s.rSpecies?'var(--accent-terracotta)':'var(--ink-3)')+';text-decoration:underline;text-underline-offset:3px;white-space:nowrap;',
+      formularSelected:()=>{ if(s.rSpecies) this.openSimForSpecies(s.rSpecies); },
+      registerDisabled: !(s.rSpecies&&s.rRecipe),
+      registerBtnStyle:this.primaryBtn(!!(s.rSpecies&&s.rRecipe)),
+      registerBtnLabel: (s.rSpecies&&s.rRecipe) ? 'Registrar contenedor' : 'Elige especie y receta',
+      confirmRegister:()=>this.confirmRegister(),
+
+      // observe / harvest / quick
+      activeContainers: active.map(c=>({ id:c.id, species:spName(c.key),
+        pick:()=>this.setState(st=>({ oContainers: st.oContainers.includes(c.id)?st.oContainers.filter(x=>x!==c.id):[...st.oContainers,c.id] })), pickStyle:this.pillPick(s.oContainers.includes(c.id)),
+        pickH:()=>this.setState({hContainer:c.id}), pickStyleH:this.pillPick(s.hContainer===c.id),
+        pickQ:()=>this.setState(st=>({ qContainers: st.qContainers.includes(c.id)?st.qContainers.filter(x=>x!==c.id):[...st.qContainers,c.id] })), pickStyleQ:this.pillPick(s.qContainers.includes(c.id)) })),
+      obsTags: OBS_TAGS.map(t=>({ label:t, style:this.chipStyle(s.oTags.includes(t)), toggle:()=>this.setState(st=>({ oTags: st.oTags.includes(t)?st.oTags.filter(x=>x!==t):[...st.oTags,t] })) })),
+      obsNote:s.oNote, setObsNote:(e)=>this.setState({oNote:e.target.value}),
+      obsDisabled:!s.oContainers.length, obsBtnStyle:this.primaryBtn(!!s.oContainers.length),
+      obsBtnLabel: s.oContainers.length ? ('Guardar observación'+(s.oContainers.length>1?(' · '+s.oContainers.length+' contenedores'):'')) : 'Elige uno o varios',
+      confirmObs:()=>this.confirmObs(),
+
+      weight:s.weight, weightUp:()=>this.setState(st=>({weight:st.weight+10})), weightDown:()=>this.setState(st=>({weight:Math.max(0,st.weight-10)})),
+      closeOptions:[
+        { key:'cosechado', label:'Cerrar contenedor', desc:'Fin del ciclo de vida', style:this.cardStyle(s.hClose==='cosechado'), select:()=>this.setState({hClose:'cosechado'}) },
+        { key:'activo', label:'Mantener activo', desc:'Se esperan más flushes', style:this.cardStyle(s.hClose==='activo'), select:()=>this.setState({hClose:'activo'}) },
+      ],
+      harvestDisabled:!s.hContainer, harvestBtnStyle:this.primaryBtn(!!s.hContainer),
+      destOptions: DESTINOS.map(d=>({ key:d.key, label:d.label, desc:d.desc, style:this.cardStyle(s.hDest===d.key), select:()=>this.setState({hDest:d.key}) })),
+      harvestBtnLabel: s.hContainer ? 'Registrar cosecha' : 'Elige un contenedor',
+      confirmHarvest:()=>this.confirmHarvest(),
+
+      quickRef: s.quickType ? (s.quickType==='marca'?'WF-10 · Marca':'Evento operativo') : '',
+      quickTitle:quickCopy.title, quickHint:quickCopy.hint,
+      quickNote:s.qNote, setQuickNote:(e)=>this.setState({qNote:e.target.value}),
+      quickDisabled:!s.qContainers.length, quickBtnStyle:this.primaryBtn(!!s.qContainers.length),
+      quickBtnLabel: s.qContainers.length ? ('Registrar '+quickMeta.label.toLowerCase()+(s.qContainers.length>1?(' · '+s.qContainers.length):'')) : 'Elige uno o varios',
+      confirmQuick:()=>this.confirmQuick(),
+
+      // history
+      historyList: !detail, historyDetail: !!detail,
+      allContainers: s.containers.map(c=>({ id:c.id, species:spName(c.key), stage:c.stage, statusLabel:STATUS[c.status].label, statusAccent:STATUS[c.status].accent, open:()=>this.setState({detail:c.id}) })),
+      backToList:()=>this.setState({detail:null}),
+      detailId: detail?detail.id:'', detailSci: detail?spSci(detail.key):'', detailAccent: detail?STATUS[detail.status].accent:'',
+      detailStatusLabel: detail?STATUS[detail.status].label:'', detailRecipe: detail?detail.recipe:'', detailBatch: detail?detail.batch:'',
+      hasProv: !!prov, hasProvComps: provComps.length>0, provComps, provMetrics,
+      provFooter: prov ? ('Capturada del Simulador el '+(prov.savedAt||prov.capturedAt)+' · esta copia no cambia si la receta se edita después') : '',
+      detailTimeline: detail? detail.tl.map((ev,idx)=>({ typeLabel:TYPES[ev.type].label, accent:TYPES[ev.type].accent, date:ev.date, note:ev.note, by:'por '+ev.by, canCorrect:ev.type!=='correccion', correct:()=>this.openCorrection(idx),
+        hasPhotos:!!(ev.photos&&ev.photos.some(p=>p.src)), photos:(ev.photos||[]).filter(p=>p.src).map(p=>({ src:p.src, open:()=>this.openPhoto(p.src) })),
+        attachPhoto:()=>this.attachPhoto(idx), attachLabel:(ev.photos&&ev.photos.length)?('Foto ('+ev.photos.length+')'):'Adjuntar foto' })) : [],
+      hasPhotoView: !!s.photoView, photoViewSrc: s.photoView||'', closePhoto:()=>this.closePhoto(),
+      openLabel:()=>this.setState({labelFor:s.detail}), closeLabel:()=>this.setState({labelFor:null}),
+      showLabel:!!labelCont, qrDataUrl,
+      labelId: labelCont?labelCont.id:'', labelSci: labelCont?spSci(labelCont.key):'', labelSpecies: labelCont?spName(labelCont.key):'',
+      labelRecipe: labelCont?labelCont.recipe:'', labelBatch: labelCont?labelCont.batch:'', labelDate:this.todayStr(), labelOperator:s.operator, labelUrl,
+      printLabel:()=>{ try{ window.print(); }catch(e){} },
+
+      // end
+      endBreakdown,
+      confirmEnd:()=>{ clearInterval(this._t); this.setState({module:'inicio', screen:'start', sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
+
+      // review
+      reviewTab:s.reviewTab, isTabEventos:s.reviewTab==='eventos', isTabRend:s.reviewTab==='rendimiento', isTabSalidas:s.reviewTab==='salidas', isTabConoc:s.reviewTab==='conocimiento',
+      tabEventosStyle:this.tabStyle(s.reviewTab==='eventos'), tabRendStyle:this.tabStyle(s.reviewTab==='rendimiento'), tabSalidasStyle:this.tabStyle(s.reviewTab==='salidas'), tabConocStyle:this.tabStyle(s.reviewTab==='conocimiento'),
+      setTabEventos:()=>this.setState({reviewTab:'eventos'}), setTabRend:()=>this.setState({reviewTab:'rendimiento'}), setTabSalidas:()=>this.setState({reviewTab:'salidas'}), setTabConoc:()=>this.setState({reviewTab:'conocimiento'}),
+      reviewSessions:s.reviewSessions,
+      reviewEvents: s.reviewEvents.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
+      // rendimiento
+      beOverall, beTarget:KPI.beTarget, beOptimal:KPI.beOptimal, beAlert:KPI.beAlert,
+      rendSub:rendSubV, rendSpp:rendSppV,
+      // salidas
+      salidas:salidasView, destTotals, salidasTotal, salidasCount:s.salidas.length,
+      // conocimiento
+      knowledgeLifecycle:KNOWLEDGE_LIFECYCLE,
+      knowledgeItems:[
+        { title:'F-030 · Suplemento enriquecido', spp:'Melena de león', state:'Experimento', note:'C-0414 en incubación · resultado pendiente para validar BE contra F-018.', accent:'var(--accent-mushroom)' },
+        { title:'Sustrato de café · T2 (Shiitake)', spp:'Shiitake', state:'Validación', note:'BE 57.6% documentado (Cenicéfe, zona cafetera) — revalidar bajo régimen frío de Tenjo antes de promover a SOP.', accent:'var(--accent-blue-grey)' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

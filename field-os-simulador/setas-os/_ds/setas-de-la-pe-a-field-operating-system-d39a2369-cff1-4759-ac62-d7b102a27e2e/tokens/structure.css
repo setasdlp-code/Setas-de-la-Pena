@@ -1,0 +1,31 @@
+/* Structure: rules, radii, focus — no shadows, no glass, no floating panels. */
+:root {
+  --radius-none: 0px;
+  --radius-sm: 2px;   /* tags, inputs only */
+  --radius-md: 3px;   /* rare — small controls */
+
+  --rule-hairline: 1px solid var(--border-hairline);
+  --rule-strong: 1px solid var(--border-strong);
+  --rule-heavy: 2px solid var(--border-heavy);
+
+  --focus-outline: 2px solid var(--focus-ring);
+
+  --shadow-none: none;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--link); text-decoration: none; border-bottom: 1px solid var(--border-hairline); }
+a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+
+::selection { background: var(--accent-olive-dim); }

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Ficha de Lote" description="Registro de lote imprimible — Setas de la Peña" -->
+<helmet><script src="./ds-base.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script></helmet>
+<div style="width:900px;background:var(--surface-page);padding:40px;box-sizing:border-box;font-family:var(--font-sans);color:var(--text-primary)">
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-metadata);border-bottom:1px solid var(--border-hairline);padding-bottom:12px">
+<span>Ficha de lote · Setas de la Peña</span><span>Doc. {{ docCode }} · Rev. jul 2026</span></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:20px;gap:20px">
+<div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-metadata)">{{ ubicacion }}</div>
+<h2 style="font-size:34px;margin:6px 0 0;font-weight:700">{{ especie }}</h2></div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+<div style="font-family:var(--font-mono);font-size:20px">{{ loteId }}</div>
+<div id="qr-lote" style="width: 98px; height: 92px"></div></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 40px;margin-top:28px;font-size:16px">
+<div style="border-top:1px solid var(--border-hairline);padding-top:8px"><div style="font-size:12px;color:var(--text-metadata)">Fecha inoculación</div><div style="font-family:var(--font-mono)">{{ fechaInoculacion }}</div></div>
+<div style="border-top:1px solid var(--border-hairline);padding-top:8px"><div style="font-size:12px;color:var(--text-metadata)">Sustrato / lote</div><div style="font-family:var(--font-mono)">{{ sustrato }}</div></div>
+<div style="border-top:1px solid var(--border-hairline);padding-top:8px"><div style="font-size:12px;color:var(--text-metadata)">Operario</div><div>{{ operario }}</div></div>
+<div style="border-top:1px solid var(--border-hairline);padding-top:8px"><div style="font-size:12px;color:var(--text-metadata)">Temp. / HR</div><div style="font-family:var(--font-mono)">{{ tempHr }}</div></div>
+<div style="border-top:1px solid var(--border-hairline);padding-top:8px;grid-column:1 / -1"><div style="font-size:12px;color:var(--text-metadata)">Evento actual</div><div style="color:var(--status-active)">{{ evento }}</div></div>
+</div>
+<div style="margin-top:32px;border-top:1px solid var(--border-strong);padding-top:14px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--text-metadata);text-transform:uppercase;margin-bottom:10px">Anotaciones posteriores — no sobrescribir</div>
+<sc-for list="{{ anotaciones }}" as="a" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:110px 1fr 60px;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--border-hairline)"><span style="font-family:var(--font-mono)">{{ a.fecha }}</span><span>{{ a.nota }}</span><span style="font-family:var(--font-mono);color:var(--text-metadata)">{{ a.init }}</span></div>
+</sc-for>
+<div style="display:grid;grid-template-columns:110px 1fr 60px;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--border-hairline);color:var(--text-disabled)"><span>__‑__ · __</span><span>&nbsp;</span><span>init.</span></div>
+<div style="display:grid;grid-template-columns:110px 1fr 60px;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--border-hairline);color:var(--text-disabled)"><span>__‑__ · __</span><span>&nbsp;</span><span>init.</span></div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:620},&quot;especie&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Pleurotus ostreatus&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;loteId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;LP·0417·26&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;ubicacion&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Túnel 03 · estante B · pos. 4–9&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fechaInoculacion&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2026-06-12&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sustrato&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;SP·118·26&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;operario&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;M. Ramírez&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tempHr&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;17,4 °C · 88 %&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;evento&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Fructificación&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() {
+    this.generateQR();
+  }
+  componentDidUpdate() {
+    this.generateQR();
+  }
+  generateQR() {
+    const loteId = this.renderVals().loteId;
+    const qrEl = document.getElementById('qr-lote');
+    if (qrEl && loteId) {
+      qrEl.innerHTML = '';
+      new QRCode(qrEl, { text: `https://sdlp.local/${loteId.replace(/·/g, '-')}`, width: 256, height: 256 });
+      qrEl.style.overflow = 'hidden';
+      qrEl.querySelectorAll('img, canvas').forEach(el => { el.style.width = '100%'; el.style.height = '100%'; el.style.objectFit = 'contain'; });
+    }
+  }
+  renderVals() {
+    return {
+      docCode: 'FIC-04',
+      ubicacion: 'Túnel 03 · estante B · pos. 4–9',
+      especie: 'Pleurotus ostreatus',
+      loteId: 'LP·0417·26',
+      fechaInoculacion: '2026-06-12',
+      sustrato: 'SP·118·26',
+      operario: 'M. Ramírez',
+      tempHr: '17,4 °C · 88 %',
+      evento: 'Fructificación',
+      anotaciones: [{ fecha: '07-19 · MR', nota: 'Segunda oleada iniciada, dos días antes de lo previsto.', init: 'init.' }]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

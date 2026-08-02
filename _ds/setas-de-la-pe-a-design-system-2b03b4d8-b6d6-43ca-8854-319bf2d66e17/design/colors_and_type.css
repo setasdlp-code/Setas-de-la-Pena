@@ -1,191 +1,137 @@
 /* ────────────────────────────────────────────────────────────────
-   Setas de la Peña — Colors & Type
-   The visual system is derived from the hand-drawn brand sketches:
-   warm paper, ink, and earthy pigments (rust, moss, ochre).
+   Setas de la Peña — Colors & Type — LEGACY ALIAS BRIDGE
+   This file no longer defines its own palette/type/fonts/shadows.
+   Every variable the old simulador (v4.0, v4 OFFLINE) and
+   recipe-sim-v2.css reference is aliased to the real Field Operating
+   System tokens loaded below. Do not add new hex colors, shadows, or
+   radii here — add a new alias pointing at a FOS token instead.
+   Canonical source: 08_brand/field-os-identity/tokens/*.css
    ──────────────────────────────────────────────────────────────── */
 
-/* ── FONTS ──────────────────────────────────────────────────── */
-
-@font-face {
-  font-family: "PP Object Sans";
-  src: url("./fonts/PPObjectSans-Regular.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "PP Object Sans";
-  src: url("./fonts/PPObjectSans-Slanted.otf") format("opentype");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "PP Object Sans";
-  src: url("./fonts/PPObjectSans-Heavy.otf") format("opentype");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "PP Object Sans";
-  src: url("./fonts/PPObjectSans-HeavySlanted.otf") format("opentype");
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Gaya Patched";
-  src: url("./fonts/GayaPatched-Regular.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Gaya Patched";
-  src: url("./fonts/GayaPatched-Italic.otf") format("opentype");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
+@import url("../../../08_brand/field-os-identity/tokens/colors.css");
+@import url("../../../08_brand/field-os-identity/tokens/typography.css");
+@import url("../../../08_brand/field-os-identity/tokens/spacing.css");
+@import url("../../../08_brand/field-os-identity/tokens/structure.css");
+@import url("../../../08_brand/field-os-identity/tokens/fonts.css");
 
 :root {
-  /* ── COLOR — RAW PALETTE ──────────────────────────────────── */
+  /* ── PAPER — alias old 4-step naming to real paper-0..3 ── */
+  --paper-50:  var(--paper-0);
+  --paper-100: var(--paper-0);
+  --paper-200: var(--paper-1);
+  --paper-300: var(--paper-2);
 
-  /* Paper / cream — the breathing room of the brand.
-     Lightened to match the 2026 board: near-white warm paper. */
-  --paper-50:  #FCFBF6;  /* lightest — highlights / inset cards (almost white) */
-  --paper-100: #F6F4EC;  /* primary canvas (default page bg) — matches board */
-  --paper-200: #EDE8DB;  /* slightly darker cream / hover on paper */
-  --paper-300: #DBD4C3;  /* subtle dividers, deboss */
+  /* ── INK — alias old 4-step naming to real ink-0..3 ── */
+  --ink-900: var(--ink-0);
+  --ink-700: var(--ink-1);
+  --ink-500: var(--ink-2);
+  --ink-300: var(--ink-3);
 
-  /* Ink — warm near-black, never pure #000 */
-  --ink-900: #1A1410;    /* primary text & line work */
-  --ink-700: #3A2F26;    /* secondary text, oak shadow */
-  --ink-500: #6B5B4A;    /* tertiary text, captions */
-  --ink-300: #A89682;    /* placeholder text, disabled */
+  /* ── EARTH PIGMENTS — consolidated onto FOS's 5 real accents ──
+     moss (brand green) -> olive · coral (rust/mushroom) -> terracotta
+     sand & bark (warm neutrals) -> mushroom · slate (cool neutral) -> blue-grey
+     ochre (caution) -> terracotta (FOS's single attention hue)          */
+  --moss-900: var(--accent-olive);
+  --moss-700: var(--accent-olive);
+  --moss-500: var(--accent-olive);
+  --moss-300: var(--accent-olive-dim);
+  --moss-200: var(--accent-olive-dim);
 
-  /* Earth pigments — exact-matched to the 2026 brand board.
-     MOSS is the primary brand color (wordmark green).
-     CORAL is secondary (polypore / mushroom caps).
-     SAND + BARK are the warm neutrals; SLATE is the cool neutral. */
+  --coral-700: var(--accent-terracotta);
+  --coral-500: var(--accent-terracotta);
+  --coral-300: var(--accent-terracotta-dim);
+  --coral-200: var(--accent-terracotta-dim);
 
-  --moss-900: #1E2A16;   /* deepest — display headings on cream */
-  --moss-700: #2E3B2F;   /* primary brand green — board #2E3B2F (wordmark) */
-  --moss-500: #6D7C5A;   /* board sage #6D7C5A — secondary text, ground tone */
-  --moss-300: #A0AE80;   /* soft moss — borders, dividers */
-  --moss-200: #CDD5B4;   /* moss tint — freshness, "in season" */
+  --sand-500: var(--accent-mushroom);
+  --sand-300: var(--accent-mushroom-dim);
+  --sand-200: var(--accent-mushroom-dim);
 
-  --coral-700: #9C3F1F;  /* hover, deeper polypore */
-  --coral-500: #C5562D;  /* secondary accent — board rust #C5562D */
-  --coral-300: #D98A63;  /* soft coral */
-  --coral-200: #EBC4AC;  /* warm tint */
+  --bark-700: var(--accent-mushroom);
+  --bark-500: var(--accent-mushroom);
+  --bark-300: var(--accent-mushroom-dim);
 
-  /* Sand — board #BFA98B. Warm neutral: oyster / lion's-mane body. */
-  --sand-500: #BFA98B;
-  --sand-300: #D4C4AC;
-  --sand-200: #E7DCC9;
+  --slate-500: var(--accent-blue-grey);
+  --slate-300: var(--accent-blue-grey-dim);
+  --slate-200: var(--accent-blue-grey-dim);
 
-  /* Bark — board #594631. Deep warm brown: stems, oak substrate. */
-  --bark-700: #594631;
-  --bark-500: #7A6248;
-  --bark-300: #A89178;
+  --ochre-700: var(--accent-terracotta);
+  --ochre-500: var(--accent-terracotta);
+  --ochre-200: var(--accent-terracotta-dim);
 
-  /* Slate — board #4E6A7A. Cool neutral: shadow, mountain stone, dates. */
-  --slate-500: #4E6A7A;
-  --slate-300: #8AA0AC;
-  --slate-200: #C4D0D7;
+  /* Back-compat aliases (old file's own back-compat layer) */
+  --rust-700: var(--accent-rust);
+  --rust-500: var(--accent-rust);
+  --rust-200: var(--accent-rust-dim);
+  --sky-500:  var(--accent-blue-grey);
+  --sky-200:  var(--accent-blue-grey-dim);
 
-  /* Ochre retained for warning semantics + paper wash (not a board headline). */
-  --ochre-700: #8A6312;
-  --ochre-500: #C68F2C;
-  --ochre-200: #ECD8A8;
-
-  /* Back-compat aliases */
-  --rust-700: var(--coral-700);
-  --rust-500: var(--coral-500);
-  --rust-200: var(--coral-200);
-  --sky-500:  var(--slate-500);
-  --sky-200:  var(--slate-200);
-
-  /* Semantic feedback — kept warm to match palette */
-  --success: var(--moss-500);
-  --warning: var(--ochre-500);
-  --danger:  var(--rust-700);
+  /* Semantic feedback */
+  --success: var(--status-active);
+  --warning: var(--status-attention);
+  --danger:  var(--status-error);
 
   /* ── COLOR — SEMANTIC SURFACES ───────────────────────────── */
+  --bg-page:     var(--surface-page);
+  --bg-elevated: var(--surface-page);
+  --bg-sunken:   var(--surface-recessed);
+  --bg-card:     var(--surface-panel);
+  --bg-inverse:  var(--ink-0);
 
-  --bg-page:     var(--paper-100);
-  --bg-elevated: var(--paper-50);
-  --bg-sunken:   var(--paper-200);
-  --bg-card:     var(--paper-50);
-  --bg-inverse:  var(--ink-900);
+  --fg-primary:   var(--text-primary);
+  --fg-secondary: var(--text-secondary);
+  --fg-muted:     var(--text-metadata);
+  --fg-faint:     var(--text-disabled);
+  --fg-inverse:   var(--paper-0);
 
-  --fg-primary:   var(--ink-900);
-  --fg-secondary: var(--ink-700);
-  --fg-muted:     var(--ink-500);
-  --fg-faint:     var(--ink-300);
-  --fg-inverse:   var(--paper-100);
+  --accent:        var(--status-active);
+  --accent-hover:  var(--ink-0);
+  --accent-tint:   var(--status-active-bg);
 
-  --accent:        var(--moss-700);
-  --accent-hover:  var(--moss-900);
-  --accent-tint:   var(--moss-200);
+  --accent-2:       var(--status-attention);
+  --accent-2-hover: var(--accent-terracotta);
+  --accent-2-tint:  var(--status-attention-bg);
 
-  --accent-2:       var(--coral-500);  /* secondary accent — coral mushroom */
-  --accent-2-hover: var(--coral-700);
-  --accent-2-tint:  var(--coral-200);
+  --border-soft:   var(--border-hairline);
+  --border-ink:    var(--ink-0);
 
-  --border-soft:   color-mix(in oklab, var(--ink-900) 10%, transparent);
-  --border-strong: color-mix(in oklab, var(--ink-900) 22%, transparent);
-  --border-ink:    var(--ink-900);
+  /* ── TYPE — FAMILIES — alias to FOS (IBM Plex Sans replaces PP Object Sans) ──
+     --font-display and --font-mono already exist identically via the FOS
+     fonts.css import above — only --font-body needs an alias (old name). */
+  --font-body: var(--font-sans);
 
-  /* ── TYPE — FAMILIES ─────────────────────────────────────── */
+  /* ── TYPE — SCALE (semantic shorthand `font:` shorthand rebuilt from FOS tokens) ──
+     FOS has no equivalent 88px display-1 or 68px display-2 — clamped to FOS's
+     largest normative size (text-3xl, 44px, cover/division title only). */
+  --t-display-1: var(--weight-black) var(--text-3xl)/var(--leading-tight) var(--font-display);
+  --t-display-2: var(--weight-regular) var(--text-3xl)/var(--leading-tight) var(--font-display);
+  --t-h1:        var(--weight-regular) var(--text-2xl)/var(--leading-tight) var(--font-display);
+  --t-h2:        var(--weight-regular) var(--text-xl)/var(--leading-snug) var(--font-display);
+  --t-h3:        var(--weight-medium) var(--text-lg)/var(--leading-snug) var(--font-sans);
+  --t-h4:        var(--weight-medium) var(--text-md)/var(--leading-snug) var(--font-sans);
+  --t-lede:      var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
+  --t-body:      var(--weight-regular) var(--text-prose)/var(--leading-normal) var(--font-sans);
+  --t-body-sm:   var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-sans);
+  --t-caption:   var(--weight-regular) var(--text-sm)/var(--leading-field) var(--font-sans);
+  --t-eyebrow:   var(--weight-bold) var(--text-xs)/var(--leading-tight) var(--font-mono);
+  --t-label:     var(--weight-bold) var(--text-base)/var(--leading-tight) var(--font-sans);
+  --t-button:    var(--weight-bold) var(--text-base)/var(--leading-tight) var(--font-sans);
+  --t-quote:     italic var(--weight-regular) var(--text-lg)/var(--leading-snug) var(--font-display);
 
-  --font-display: "Gaya Patched", "Cooper Std", "DM Serif Display", Georgia, serif;
-  --font-body:    "PP Object Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono:    "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  /* ── SPACING — FOS scale stops at space-9 (96px); alias the old space-10 ── */
+  --space-10: var(--space-9);
 
-  /* ── TYPE — SCALE (semantic) ─────────────────────────────── */
+  /* ── RADII — FOS is near-flat by design; old r-* aliased down, not decorative ── */
+  --r-xs:  var(--radius-none);
+  --r-sm:  var(--radius-sm);
+  --r-md:  var(--radius-md);
+  --r-lg:  var(--radius-md);
+  --r-pill: var(--radius-md);
 
-  --t-display-1: 800 88px/0.95 var(--font-display);
-  --t-display-2: 400 68px/1.0  var(--font-display);
-  --t-h1:        400 52px/1.05 var(--font-display);
-  --t-h2:        400 40px/1.1  var(--font-display);
-  --t-h3:        800 26px/1.2  var(--font-body);
-  --t-h4:        800 20px/1.25 var(--font-body);
-  --t-lede:      400 22px/1.45 var(--font-body);
-  --t-body:      400 17px/1.55 var(--font-body);
-  --t-body-sm:   400 15px/1.5  var(--font-body);
-  --t-caption:   400 13px/1.45 var(--font-body);
-  --t-eyebrow:   800 12px/1.0  var(--font-body);  /* tracking-wider, uppercase */
-  --t-label:     800 14px/1.2  var(--font-body);
-  --t-button:    800 15px/1.0  var(--font-body);
-  --t-quote:     400 italic 28px/1.35 var(--font-display);
-
-  /* ── SPACING ─────────────────────────────────────────────── */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  24px;
-  --space-6:  32px;
-  --space-7:  48px;
-  --space-8:  64px;
-  --space-9:  96px;
-  --space-10: 128px;
-
-  /* ── RADII ───────────────────────────────────────────────── */
-  --r-xs:  4px;
-  --r-sm:  8px;
-  --r-md:  14px;
-  --r-lg:  22px;
-  --r-pill: 999px;
-
-  /* ── SHADOWS — soft, like printed ink-bleed ──────────────── */
-  --shadow-soft: 0 1px 0 var(--paper-300), 0 8px 24px -12px color-mix(in oklab, var(--ink-900) 25%, transparent);
-  --shadow-card: 0 1px 0 var(--paper-300), 0 18px 40px -22px color-mix(in oklab, var(--ink-900) 40%, transparent);
-  --shadow-lift: 0 24px 60px -28px color-mix(in oklab, var(--ink-900) 50%, transparent);
-  --shadow-inset: inset 0 1px 0 var(--paper-50), inset 0 -1px 0 color-mix(in oklab, var(--ink-900) 8%, transparent);
+  /* ── SHADOWS — FOS forbids shadows entirely: all aliased to none ── */
+  --shadow-soft: var(--shadow-none);
+  --shadow-card: var(--shadow-none);
+  --shadow-lift: var(--shadow-none);
+  --shadow-inset: var(--shadow-none);
 }
 
 /* ── BASELINE / RESET-ISH ───────────────────────────────────── */
@@ -203,36 +149,32 @@ body {
 
 /* ── SEMANTIC TYPE CLASSES ──────────────────────────────────── */
 
-.t-display-1 { font: var(--t-display-1); letter-spacing: -0.01em; }
-.t-display-2 { font: var(--t-display-2); letter-spacing: -0.005em; }
-.t-h1        { font: var(--t-h1); letter-spacing: -0.005em; }
+.t-display-1 { font: var(--t-display-1); letter-spacing: var(--tracking-tight); }
+.t-display-2 { font: var(--t-display-2); letter-spacing: var(--tracking-tight); }
+.t-h1        { font: var(--t-h1); letter-spacing: var(--tracking-tight); }
 .t-h2        { font: var(--t-h2); }
-.t-h3        { font: var(--t-h3); letter-spacing: -0.005em; }
+.t-h3        { font: var(--t-h3); letter-spacing: var(--tracking-tight); }
 .t-h4        { font: var(--t-h4); }
 .t-lede      { font: var(--t-lede); color: var(--fg-secondary); }
 .t-body      { font: var(--t-body); }
 .t-body-sm   { font: var(--t-body-sm); }
 .t-caption   { font: var(--t-caption); color: var(--fg-muted); }
-.t-eyebrow   { font: var(--t-eyebrow); letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-muted); }
+.t-eyebrow   { font: var(--t-eyebrow); letter-spacing: var(--tracking-widest); text-transform: uppercase; color: var(--fg-muted); }
 .t-label     { font: var(--t-label); }
-.t-button    { font: var(--t-button); letter-spacing: 0.02em; }
+.t-button    { font: var(--t-button); letter-spacing: var(--tracking-wide); }
 .t-quote     { font: var(--t-quote); }
 
 /* Default heading elements bind to scale */
-h1 { font: var(--t-h1); letter-spacing: -0.005em; margin: 0 0 var(--space-5); }
+h1 { font: var(--t-h1); letter-spacing: var(--tracking-tight); margin: 0 0 var(--space-5); }
 h2 { font: var(--t-h2); margin: 0 0 var(--space-4); }
 h3 { font: var(--t-h3); margin: 0 0 var(--space-3); }
 h4 { font: var(--t-h4); margin: 0 0 var(--space-2); }
 p  { margin: 0 0 var(--space-4); text-wrap: pretty; }
-a  { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-a:hover { color: var(--accent-hover); }
+a  { color: var(--link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--link-hover); }
 code, pre { font-family: var(--font-mono); font-size: 0.92em; }
 
-/* ── PAPER TEXTURE — applied opt-in via class ───────────────── */
+/* ── PAPER TEXTURE — FOS forbids gradients/noise; flat surface only ──────── */
 .paper {
   background-color: var(--bg-page);
-  background-image:
-    radial-gradient(at 20% 10%, color-mix(in oklab, var(--ochre-200) 30%, transparent) 0, transparent 50%),
-    radial-gradient(at 80% 90%, color-mix(in oklab, var(--rust-200) 22%, transparent) 0, transparent 55%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
