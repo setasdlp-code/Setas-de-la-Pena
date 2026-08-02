@@ -23,6 +23,10 @@
       --ok: var(--accent-olive);
       --warn: var(--accent-terracotta);
       --critical: var(--accent-rust);
+      /* Validated dataviz palette (CVD-safe, ≥15 ΔE normal-vision floor) */
+      --chart-temp: #D85C32;
+      --chart-hum: #0D5FA0;
+      --chart-co2: #B8861F;
     }
 
     * { box-sizing: border-box; }
@@ -221,12 +225,31 @@
     .chart-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; color: var(--muted); font-size: 10px; }
     .legend-item { display: inline-flex; align-items: center; gap: 5px; }
     .legend-line { width: 15px; height: 2px; background: currentColor; }
-    .temp { color: var(--terra); }
-    .hum { color: var(--blue); }
-    .co2 { color: var(--olive); }
+    .temp { color: var(--chart-temp); }
+    .hum { color: var(--chart-hum); }
+    .co2 { color: var(--chart-co2); }
 
-    .chart-wrap { position: relative; height: 330px; }
+    .chart-wrap { position: relative; height: 330px; cursor: crosshair; }
     canvas { display: block; width: 100%; height: 100%; }
+    .chart-tooltip {
+      position: absolute;
+      display: none;
+      background: var(--paper-1);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 10px;
+      font-family: ui-monospace, monospace;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    .chart-tooltip.active { display: block; }
+    .chart-tooltip-row { margin: 3px 0; }
+    .chart-tooltip-row:first-child { margin-top: 0; }
+    .chart-tooltip-label { color: var(--muted); display: inline-block; width: 55px; }
+    .chart-tooltip-value { font-weight: 800; }
 
     .actuator-panel { padding: 17px; }
     .actuator-list { display: grid; gap: 10px; }
@@ -415,7 +438,10 @@
                 <span class="legend-item co2"><i class="legend-line"></i>CO₂</span>
               </div>
             </div>
-            <div class="chart-wrap"><canvas id="chart" aria-label="Gráfico de temperatura, humedad y CO2"></canvas></div>
+            <div class="chart-wrap">
+              <canvas id="chart" aria-label="Gráfico de temperatura, humedad y CO2"></canvas>
+              <div class="chart-tooltip" id="chartTooltip"></div>
+            </div>
           </section>
 
           <section class="panel actuator-panel">
@@ -780,9 +806,9 @@
         const tok = (n, fb) => (styles.getPropertyValue(n).trim() || fb);
         const cInk = tok("--ink-2", "#6B6759");
         const cLine = tok("--line-0", "#C9C1A9");
-        const cTemp = tok("--accent-terracotta", "#A85C32");
-        const cHum = tok("--accent-blue-grey", "#5E7080");
-        const cCo2 = tok("--accent-olive", "#5B6B44");
+        const cTemp = tok("--chart-temp", "#D85C32");
+        const cHum = tok("--chart-hum", "#0D5FA0");
+        const cCo2 = tok("--chart-co2", "#B8861F");
 
         ctx.clearRect(0, 0, width, height);
         ctx.strokeStyle = cLine;
@@ -927,6 +953,28 @@
       $("resetButton").addEventListener("click", reset);
       $("exportButton").addEventListener("click", exportCsv);
       window.addEventListener("resize", drawChart);
+
+      // Chart hover tooltip
+      const canvas = $("chart");
+      const tooltip = $("chartTooltip");
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const data = active().history;
+        if (!data.length) return;
+        const relX = (e.clientX - rect.left) / rect.width;
+        const idx = Math.round(relX * (data.length - 1));
+        const clampedIdx = Math.max(0, Math.min(data.length - 1, idx));
+        const point = data[clampedIdx];
+        tooltip.innerHTML = `
+          <div class="chart-tooltip-row"><span class="chart-tooltip-label">Temperatura:</span><span class="chart-tooltip-value" style="color:var(--chart-temp)">${point.temp.toFixed(1)}°C</span></div>
+          <div class="chart-tooltip-row"><span class="chart-tooltip-label">Humedad:</span><span class="chart-tooltip-value" style="color:var(--chart-hum)">${Math.round(point.hum)}%</span></div>
+          <div class="chart-tooltip-row"><span class="chart-tooltip-label">CO₂:</span><span class="chart-tooltip-value" style="color:var(--chart-co2)">${Math.round(point.co2)} ppm</span></div>
+        `;
+        tooltip.classList.add("active");
+        tooltip.style.left = Math.min(relX * rect.width + 10, rect.width - 180) + "px";
+        tooltip.style.top = "10px";
+      });
+      canvas.addEventListener("mouseleave", () => tooltip.classList.remove("active"));
 
       renderStructural();
       setInterval(step, 850);
