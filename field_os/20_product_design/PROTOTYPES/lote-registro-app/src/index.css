@@ -1,0 +1,170 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@import "./styles/fos-fonts.css";
+@import "./styles/fos-colors.css";
+@import "./styles/fos-typography.css";
+@import "./styles/fos-spacing.css";
+@import "./styles/fos-structure.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ════════════════════════════════════════════════════════════════
+   Field Operating System (FOS) → shadcn/ui bridge.
+   Maps shadcn's semantic tokens to the real FOS tokens loaded above.
+   Canonical source: 08_brand/field-os-identity/tokens/*.css — if a
+   value looks wrong here, that's where it's defined, not this file.
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  --radius: var(--radius-none);
+
+  --background: var(--surface-page);
+  --foreground: var(--text-primary);
+  --card: var(--surface-page);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-page);
+  --popover-foreground: var(--text-primary);
+
+  /* FOS-07: accents are for classification/status only, never decoration —
+     the primary action colour is ink itself (flat, functional), not an accent. */
+  --primary: var(--ink-0);
+  --primary-foreground: var(--paper-0);
+  --secondary: var(--surface-recessed);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-panel);
+  --muted-foreground: var(--text-metadata);
+  --accent: var(--surface-recessed);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--status-error);
+
+  --border: var(--border-hairline);
+  --input: var(--border-hairline);
+  --ring: var(--focus-ring);
+}
+
+.dark {
+  /* FOS specifies no dark palette (paper/ink is print-derived and fixed) —
+     fall back to the same flat paper/ink tokens rather than inventing one. */
+  --background: var(--surface-page);
+  --foreground: var(--text-primary);
+  --card: var(--surface-page);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-page);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--ink-0);
+  --primary-foreground: var(--paper-0);
+  --secondary: var(--surface-recessed);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-panel);
+  --muted-foreground: var(--text-metadata);
+  --accent: var(--surface-recessed);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--status-error);
+  --border: var(--border-hairline);
+  --input: var(--border-hairline);
+  --ring: var(--focus-ring);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  /* font-sans/font-mono and the whole text-* scale are NOT redeclared here:
+     fos-fonts.css and fos-typography.css already set --font-sans, --font-mono
+     and --text-xs..--text-3xl as plain (unlayered) :root custom properties,
+     which win over Tailwind's own @theme-layer defaults of the same name —
+     redeclaring them here as `--font-sans: var(--font-sans)` would be a
+     self-referential (cyclic) custom property and silently break. The same
+     applies to --radius-sm/--radius-md, which fos-structure.css already
+     sets directly. Only radius-lg/xl need mapping — FOS has no equivalent
+     of its own, and the "cero decoración" rule wants both flat (0). */
+  --radius-lg: var(--radius-none);
+  --radius-xl: var(--radius-none);
+}
+
+/* ---- Flatten shadcn primitives to FOS geometry: no shadows, hairline
+   rules instead of elevation, olive focus ring, 44px minimum tap target
+   for on-screen field-capture controls (FOS-08). Targets data-slot
+   attributes so the generated component files stay untouched.
+
+   Deliberately UNLAYERED (not @layer components): shadcn's own utility
+   classes (text-sm, md:text-sm, rounded-lg, shadow-md...) live in
+   Tailwind's `utilities` layer, which always wins over `components` in
+   layer order regardless of selector specificity — an @layer components
+   rule here would silently lose to e.g. Input's own `md:text-sm`. Plain
+   unlayered rules beat every layer, which is what we want. ---- */
+[data-slot="card"] {
+  box-shadow: var(--shadow-none);
+  border: var(--rule-hairline);
+}
+
+[data-slot="card-title"] {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+}
+
+[data-slot="card-description"] {
+  color: var(--text-metadata);
+  font-size: var(--text-sm);
+}
+
+/* FOS-04: field label/value floor is --text-base (14.5px), not the
+   dense-table --text-sm (13px) shadcn defaults these controls to. */
+[data-slot="label"],
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"],
+[data-slot="select-value"],
+[data-slot="select-item"] {
+  font-family: var(--font-sans);
+  font-size: var(--text-base) !important;
+}
+
+/* FOS-08: 44px minimum tap target for any on-screen field-capture control. */
+[data-slot="button"],
+[data-slot="input"],
+[data-slot="select-trigger"] {
+  min-height: var(--tap-target-min);
+}
+
+[data-slot="textarea"] {
+  min-height: calc(var(--tap-target-min) * 2);
+}
+
+[data-slot="select-content"] {
+  box-shadow: var(--shadow-none);
+  border: var(--rule-hairline);
+}
+
+[data-slot="button"] {
+  font-family: var(--font-sans);
+}
+
+[data-slot="button"][data-variant="default"]:hover {
+  background: var(--ink-1);
+}
+
+[data-slot="button"][data-variant="outline"] {
+  border-color: var(--border-hairline);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
