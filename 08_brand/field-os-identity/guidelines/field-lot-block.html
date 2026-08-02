@@ -1,0 +1,13 @@
+<!-- @dsCard group="Field components" viewport="700x230" name="Lot Identity Block · FOS-01" subtitle="Tres tallas fijas: bandeja, general, saco. Sin acento, sin sombra, sin radio" -->
+<link rel="stylesheet" href="../styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div style="height:230px;background:var(--surface-panel);padding:20px;display:flex;gap:20px;align-items:flex-start;overflow:hidden">
+<div class="fos-lot fos-lot--tray"><div class="fos-lot__code">LP·0417·26</div><div class="fos-lot__row"><div><span class="fos-lot__k">Fecha</span>2026-07-24</div><div><span class="fos-lot__k">Sala</span>T-03</div></div><div id="qr-tray" style="width:44px;height:44px;margin-top:8px"></div></div>
+<div class="fos-lot"><div class="fos-lot__code">LP·0417·26</div><div class="fos-lot__row"><div><span class="fos-lot__k">Fecha</span>2026-07-24</div><div><span class="fos-lot__k">Sala</span>T-03</div></div><div class="fos-lot__row"><div><span class="fos-lot__k">Especie</span>P. ostreatus</div><div><span class="fos-lot__k">Operario</span>M.R.</div></div><div id="qr-general" style="width:44px;height:44px;margin-top:8px"></div></div>
+<div class="fos-lot fos-lot--bulk"><div class="fos-lot__code">LP·0417·26</div><div class="fos-lot__row"><div><span class="fos-lot__k">Fecha</span>2026-07-24</div><div><span class="fos-lot__k">Sala</span>T-03</div></div><div class="fos-lot__row"><div><span class="fos-lot__k">Especie</span>P. ostreatus</div><div><span class="fos-lot__k">Operario</span>M.R.</div></div><div class="fos-lot__row"><div><span class="fos-lot__k">GTIN</span>0842•••••••8</div><div><span class="fos-lot__k">Evento</span>Envasado</div></div><div id="qr-bulk" style="width:44px;height:44px;margin-top:8px"></div></div>
+</div>
+<script>
+new QRCode(document.getElementById('qr-tray'), 'https://sdlp.local/LP-0417-26');
+new QRCode(document.getElementById('qr-general'), 'https://sdlp.local/LP-0417-26');
+new QRCode(document.getElementById('qr-bulk'), 'https://sdlp.local/LP-0417-26');
+</script>
