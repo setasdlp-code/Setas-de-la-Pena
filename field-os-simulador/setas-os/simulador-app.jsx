@@ -419,7 +419,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppP/5));
   }
-    let recipeScore=0;if(sp){const cnNear=Math.max(0,1-Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)||1));const nNear=Math.max(0,1-Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)||1));const phNear=sp.ph_optimal?Math.max(0,1-Math.abs(avgPh-(( sp.ph_optimal.min+sp.ph_optimal.max)/2))/((sp.ph_optimal.max-sp.ph_optimal.min)||1)):0.5;const ebNorm=Math.min(1,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline));const costScore=cost<2000?1:cost<3500?0.7:cost<5500?0.4:0.15;const trichPen=trichoderma?0.5:1;const totPen=(tot>=97&&tot<=103)?1:0.9;recipeScore=Math.round((cnNear*25+nNear*20+ebNorm*25+costScore*10+phNear*10+10)*trichPen*totPen);}const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,recipeScore,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
@@ -518,26 +518,17 @@ const solveTargetPct=(recipe,sKey,ings,id,metric,target,lockedIds=[])=>{
 const METRIC_LABEL={cn:'C:N',n:'N',ph:'pH'};
 const fmtMetric=(metric,v)=>metric==='cn'?`${v.toFixed(1)}:1`:metric==='n'?`${v.toFixed(2)}%`:v.toFixed(1);
 
-// ── v13: calcRiskScore — penalizaciones por factores de riesgo real ──
-const calcRiskScore=(recipe,an,sKey,treatment,ings=INGS)=>{
-  if(!an||!an.sp) return 50;
-  const sp=an.sp;
-  let pen=0;
-  if(an.trichoderma) pen+=35;
-  if(an.suppP>sp.supplementation_max&&treatment&&treatment.col!=='autoclave') pen+=20;
-  else if(an.suppP>sp.supplementation_max) pen+=8;
-  if(an.cafeP>25) pen+=12;
-  else if(an.cafeP>20) pen+=5;
-  if(an.densaP>60&&an.airP<10) pen+=15;
-  else if(an.densaP>40&&an.airP<8) pen+=8;
-  if(sp.ph_optimal){
-    if(an.avgPh<sp.ph_optimal.min-0.5||an.avgPh>sp.ph_optimal.max+0.5) pen+=12;
-    else if(an.avgPh<sp.ph_optimal.min||an.avgPh>sp.ph_optimal.max) pen+=5;
-  }
-  if(an.incompat&&an.incompat.length>0) pen+=an.incompat.length*5;
-  if(treatment&&treatment.col==='cwlp'&&an.suppP>12) pen+=10;
-  if(an.tot<97||an.tot>103) pen+=5;
-  return Math.max(0,100-pen);
+// ── scoreAn — puente hacia scoring.js (SetasScoring), fuente única del score ──
+// Reemplaza calcRiskScore, el compuesto de puntaje de generateOptimizer y el
+// resultScore de runAutoOptimizer: los tres consumían fórmulas independientes
+// que podían dar números distintos para la misma receta (ver auditoría de
+// scoring). extraCtx acepta {treatment,profile,recipe,stockIds,weights} — la
+// severidad (criticals/warnings) SIEMPRE se deriva aquí vía assessSeverity,
+// para que ningún llamador pueda saltarse los techos por severidad.
+const scoreAn=(an,extraCtx={})=>{
+  if(!an||!an.sp) return{score:0,status:'sin_receta',breakdown:null,weights:null,caps:null};
+  const sev=SetasScoring.assessSeverity(an);
+  return SetasScoring.scoreRecipe(an,{...extraCtx,criticals:sev.criticals,warnings:sev.warnings});
 };
 
 // ── v13: normalizeRecipe — rebalancear a 100% respetando bloqueos ──
@@ -764,9 +755,6 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       if(solve){it._solve=solve;quantifyItem(it,recipe,sKey,ings,lockedIds);delete it._solve;}
     });
   }
-  // ── Score: usa la misma fórmula matizada del Constructor (an.recipeScore) ──
-  // para evitar el caso 100/100 cuando el Constructor calcula 86. Si por alguna
-  // razón an.recipeScore no existe, caemos al cálculo por conteo como respaldo.
   // ── v13: enriquecer ítems con "por qué" y "riesgo si no se corrige" ──
   const WHY_MAP={'↓C:N':'La relación C:N determina velocidad de colonización y rendimiento. Alto C:N = carbono sin aprovechar.','↑C:N':'C:N bajo = exceso de nitrógeno, el nutriente que activa mohos competidores.','↑N':'El nitrógeno es el nutriente limitante para el crecimiento del micelio.','↓N':'Exceso de N activa bacterias y Trichoderma que colonizan más rápido que el micelio.','⚠':'Trichoderma colapsa el bloque — compite más rápido que cualquier micelio de seta.','↑pH':'pH ácido bloquea enzimas hidrolíticas del micelio que degradan la lignina.','↓pH':'pH alcalino inhibe el crecimiento y favorece bacterias contaminantes.','↑EB':'EB no explotada = dinero en el sustrato que el hongo no puede aprovechar.','Ca':'Sin minerales, el pH cae durante la incubación y el micelio pierde vigor a mitad del ciclo.','$↓':'El costo de ingredientes es el mayor gasto variable de la producción.','Dig':'Baja digestibilidad requiere más energía del micelio, aumentando el riesgo de contaminación.','→N':'N y C:N están relacionados: ajustar uno afecta el otro en la misma receta.','→C':'La base de carbono define la estructura física y el C:N base del sustrato.'};
   const RISK_MAP={'↓C:N':'Colonización lenta, EB reducida, mayor ventana de contaminación.','↑C:N':'Exceso de N → bacterias → olor a amoniaco → contaminación del lote completo.','↑N':'EB reducida 30–50%. En casos extremos, colapso completo del bloque.','↓N':'Sin corrección: probabilidad alta de Trichoderma y pérdida del lote.','⚠':'Sin autoclave: pérdida del lote completo en 5–10 días de colonización.','↑pH':'Colonización parcial, EB reducida, mayor riesgo bacteriano.','↓pH':'Bloqueo enzimático completo en pH>8 para la mayoría de Pleurotus.','↑EB':'Receta subóptima — EB 20–40% menor a lo posible con los ingredientes disponibles.','Ca':'pH variable lote-a-lote — resultados inconsistentes.','Dig':'Colonización 50–100% más lenta; mayor riesgo de contaminación por exposición prolongada.','→N':'EB por debajo del potencial óptimo de la especie.','→C':'C:N alejado del ideal reduce la eficiencia biológica estimada.'};
@@ -774,35 +762,11 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
     if(!it.why&&WHY_MAP[it.icon]) it.why=WHY_MAP[it.icon];
     if(!it.riskIfIgnored&&RISK_MAP[it.icon]) it.riskIfIgnored=RISK_MAP[it.icon];
   });
-  const criticals=items.filter(s=>s.priority==='critical').length;
-  const warnings=items.filter(s=>s.priority==='warning').length;
-  // ── v13: score compuesto (recipeScore + ebIndex + riskScore + treatmentScore + balance + stock) ──
+  // ── Score: única fuente de verdad, compartida con runAutoOptimizer ──
+  // (ver scoring.js). Perito y Optimizador ya no pueden divergir para la
+  // misma receta porque ambos llaman a scoreAn/SetasScoring.scoreRecipe.
   const tr13=calcTreatment(an,sKey);
-  const riskScore13=calcRiskScore(recipe,an,sKey,tr13,ings);
-  const ebIndex13=an.ebIndex||0;
-  const treatmentScore13=(()=>{
-    if(!tr13) return 50;
-    if(an.trichoderma&&tr13.col==='autoclave') return 100;
-    if(an.trichoderma&&tr13.col!=='autoclave') return 10;
-    if(an.suppP>=(an.sp?.supplementation_max||20)&&tr13.col==='autoclave') return 95;
-    if(an.suppP>12&&tr13.col==='cwlp') return 40;
-    return 80;
-  })();
-  const totalBalanceScore13=an.tot>=99&&an.tot<=101?100:an.tot>=97&&an.tot<=103?70:40;
-  const stockScore13=stockIds.size===0?100:(()=>{
-    const inStock=recipe.filter(r=>stockIds.has(r.id)).length;
-    return Math.round((inStock/Math.max(1,recipe.length))*100);
-  })();
-  let score=Math.round(
-    0.30*(an.recipeScore||0)+
-    0.25*ebIndex13+
-    0.20*riskScore13+
-    0.10*treatmentScore13+
-    0.10*totalBalanceScore13+
-    0.05*stockScore13
-  );
-  if(criticals>0) score=Math.min(score,55);
-  else if(warnings>0) score=Math.min(score,88);
+  const {score,status:statusFromScore}=scoreAn(an,{treatment:tr13,recipe,stockIds});
   // Garantía: si la receta es casi-óptima pero no hay tips útiles, sugerir refinamiento mineral.
   const hasTips=items.some(s=>s.priority==='tip');
   if(score>=85&&!hasTips&&recipe&&recipe.length){
@@ -822,8 +786,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
         delta:null,apply:null});
     }
   }
-  const status=score>=85?'excellent':score>=65?'good':score>=40?'needs_work':'critical';
-  return{score,status,items};
+  return{score,status:statusFromScore,items};
 };
 
 // ── Costos energéticos de procesamiento (COP / kg de sustrato húmedo) ──
@@ -1257,7 +1220,7 @@ const SpeciesRecommender=({recipe})=>{
   if(!recipe||!recipe.length) return null;
   const scores=Object.entries(SPP).map(([key,sp])=>{
     const a=analyze(recipe,key);
-    return{key,sp,score:a?a.recipeScore:0,eb:a?a.eb:0};
+    return{key,sp,score:a?scoreAn(a).score:0,eb:a?a.eb:0};
   }).sort((a,b)=>b.score-a.score);
   const maxScore=scores[0]?.score||1;
   const bandColors=Object.fromEntries(Object.entries(BANDS));
@@ -1320,15 +1283,18 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
     if(an.cafeP>cafeLimit) return;
     if(maxCost>0&&an.cost>maxCost) return;
     const tr=calcTreatment(an,targetKey);
-    const riskScore=calcRiskScore(rec,an,targetKey,tr,effectiveINGS);
-    const ebIndex=an.ebIndex||0;
-    const costScore=an.cost<800?100:an.cost<1500?70:an.cost<2500?45:20;
-    const treatScore=(!tr)?50:profile.preferTreatment&&profile.preferTreatment.includes(tr.col)?90:60;
-    const stockCoverage=useStock?100:(()=>{const inS=rec.filter(r=>stockIds.has(r.id)).length;return Math.round((inS/Math.max(1,rec.length))*100);})();
-    const suppPenalty=suppOverLimit?Math.round((an.suppP-suppLimit)*3):0;
-    const resultScore=Math.max(5,Math.round(0.28*(an.recipeScore||0)+0.22*ebIndex+0.18*riskScore+0.14*costScore+0.10*treatScore+0.08*stockCoverage)-suppPenalty);
+    // ── Score: misma fuente que el Perito (scoreAn → scoring.js) — ver
+    // generateOptimizer. Antes esta función tenía su propia combinación de
+    // pesos (0.28/0.22/0.18/0.14/0.10/0.08 + un suppPenalty aplicado por
+    // fuera de la fórmula), distinta de la del Perito, así que la receta #1
+    // del Optimizador podía puntuar distinto al cargarla en el Constructor.
+    // No se pasa `profile`: scoreTreatment lo ignora deliberadamente (ver
+    // scoring.js) para que el score no dependa de si el llamador se acuerda
+    // de pasarlo — eso fue justo lo que causó una divergencia real de 3
+    // puntos entre esta función y generateOptimizer durante la migración.
+    const {score:resultScore,breakdown}=scoreAn(an,{treatment:tr,recipe:rec,stockIds});
     const maxKgWet=Object.keys(stockMap).length>0?calcMaxBatchFromStock(rec,stockMap,10,sp.moisture?.ideal||65,effectiveINGS):null;
-    results.push({recipe:rec,an,score:resultScore,riskScore,treatmentName:tr?.name||'',maxKgWet,suppOverLimit});
+    results.push({recipe:rec,an,score:resultScore,riskScore:breakdown.risk,treatmentName:tr?.name||'',maxKgWet,suppOverLimit});
   };
 
   const aerOpts=[null,...aers.slice(0,2)];
@@ -2080,7 +2046,7 @@ function App(props){
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced) return;
     const trSave=an?calcTreatment(an,sKey):null;
-    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:an?an.recipeScore:0,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
+    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
@@ -2088,7 +2054,7 @@ function App(props){
     if(window.SetasDB){
       window.SetasDB.saveReceta({
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
-        cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:an?an.recipeScore:0,
+        cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
     }
   };
@@ -2143,6 +2109,17 @@ function App(props){
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds]);
   const cAn=useMemo(()=>analyze(cmpRecipe,cmpKey,effectiveINGS),[cmpRecipe,cmpKey,effectiveINGS]);
   const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb),[schKey,schDate,an]);
+  // Score de una receta guardada (Recetario/Dashboard), recalculado en vivo con
+  // la matriz actual en vez de confiar en el número persistido al guardarla —
+  // así una receta guardada antes de una recalibración de pesos no queda con
+  // un número que ya no es comparable con las recetas nuevas.
+  const liveScoreFor=e=>{
+    if(!e?.recipe?.length) return 0;
+    const a2=analyze(e.recipe,e.sKey,effectiveINGS);
+    if(!a2) return 0;
+    const tr2=calcTreatment(a2,e.sKey);
+    return scoreAn(a2,{treatment:tr2,recipe:e.recipe}).score;
+  };
 
   const addI=id=>{if(recipe.find(r=>r.id===id)) return;setRecipe([...recipe,{id,p:10}]);};
   // Pure: aplica una sugerencia a una receta dada y retorna la nueva. No muta estado.
@@ -2335,7 +2312,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       spawnPct:an?.dynSpawn||tr?.spawn||8,humedad:hm,tratamiento:tr?.name||'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
-      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:an.recipeScore,cost:Math.round(an.cost)}:null,
+      recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
   };
   const crearBitLote=(form)=>{
@@ -3623,7 +3600,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {lockedIds.length>0&&<span style={{marginLeft:'auto',opacity:.8}}>● {lockedIds.length} fijado{lockedIds.length!==1?'s':''}</span>}
                 </div>
               )}
-              {an&&an.sp&&(opt?.score>0||an.recipeScore>0)&&(()=>{const sc=opt?.score||an.recipeScore;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
+              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
                 <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'all .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
@@ -3764,7 +3741,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }}>↓ PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){alert('No hay receta');return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:an.recipeScore}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
+                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}>↓ JSON</button>
                 <button className="btn" onClick={()=>{
@@ -3863,7 +3840,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB {e.eb}%</span>
-                            {e.score&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--coral-500)',fontWeight:600}}>Score {e.score}/100</span>}
+                            {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
                             {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
                           <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -3955,7 +3932,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </button>}
                         <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
                         {(status==='needs_work'||status==='critical')&&<button onClick={()=>{// MODAL: prompt trial name (use modal input instead)
-                const nm=window.prompt('Nombre de la prueba experimental:');if(!nm) return;const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:an.recipeScore,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}alert('Guardada como prueba: '+nm);}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                const nm=window.prompt('Nombre de la prueba experimental:');if(!nm) return;const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}alert('Guardada como prueba: '+nm);}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -4626,7 +4603,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['C:N',an.cn.toFixed(1)+':1','relaci\u00f3n'],
                     ['Nitr\u00f3geno',an.avgN.toFixed(2)+'%','total'],
                     ['Ef. biol\u00f3gica',(an.ebLow??an.eb.toFixed(0))+'\u2013'+(an.ebHigh??an.eb.toFixed(0))+'%','estimada'],
-                    ['Score',an.recipeScore+'/100','perito'],
+                    ['Score',opt.score+'/100','perito'],
                     ['Costo/kg','$'+Math.round(an.cost).toLocaleString('es-CO'),'estimado'],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{background:'var(--paper-50)',padding:'10px 6px',textAlign:'center'}}>
@@ -4780,7 +4757,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const s2=SPP[e.sKey];
                         const band=BANDS[e.sKey]||'var(--ink-700)';
                         const eb=parseFloat(e.eb)||0;
-                        const sc=e.score||0;
+                        const sc=liveScoreFor(e);
                         // Costo ingredientes: guardado o recalculado al vuelo
                         const costIngKg=e.cost>0?e.cost:(()=>{const a2=analyze(e.recipe,e.sKey,effectiveINGS);return a2?Math.round(a2.cost):0;})();
                         // Costo energético: guardado (recetas nuevas) o estimado por especie (recetas antiguas)

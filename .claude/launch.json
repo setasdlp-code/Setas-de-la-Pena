@@ -15,6 +15,13 @@
       "runtimeArgs": ["-m", "http.server", "8743", "--bind", "127.0.0.1", "--directory", "/Users/sebastianpinzon/Documents/SETAS de la PEÑA/Simulador de Rectas/export-setas-os-v5"],
       "port": 8743,
       "autoPort": true
+    },
+    {
+      "name": "setas-os-v5-local",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8744", "--bind", "127.0.0.1", "--directory", "field-os-simulador/setas-os"],
+      "port": 8744,
+      "autoPort": true
     }
   ]
 }
