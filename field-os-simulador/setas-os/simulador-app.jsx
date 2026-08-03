@@ -1735,7 +1735,13 @@ const MobileQuickJump=({recipeCount=0,total=0})=>{
 };
 
 
-// ── v4: INVENTARIO helpers ────────────────────────────────────────────────────
+// ── v4: INVENTARIO helpers ──
+// Duplicados a propósito respecto a inventario.js (mismo patrón que MASS_BALANCE_TOL
+// en firebase/db.js): el bundler de este .dc.html (dc-runtime, ver support.js) ejecuta
+// este archivo dentro de un `new Function(...)` propio y no engancha de forma confiable
+// los globals de un <script src> añadido a mano, así que no puede depender en vivo de
+// inventario.js. inventario.js + inventario.test.js son la fuente de verdad probada;
+// si cambias la lógica aquí, cambia también inventario.js (y viceversa).
 const stockActual=(ingredienteId,lotes)=>
   lotes.filter(l=>l.activo&&l.ingredienteId===ingredienteId)
        .reduce((s,l)=>s+(l.cantidadKgDisponible||0),0);
@@ -1745,6 +1751,23 @@ const precioPonderado=(ingredienteId,lotes)=>{
   const totalKg=active.reduce((s,l)=>s+l.cantidadKgDisponible,0);
   if(!totalKg) return null;
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
+};
+
+// Descuenta inventario FIFO — misma lógica que SetasInventario.consumirInventarioFIFO
+// en inventario.js (ver el comentario de arriba sobre por qué está duplicada).
+const consumirInventarioFIFOLocal=(lotes,rows)=>{
+  let updated=[...lotes];
+  for(const row of rows){
+    let remaining=row.krKg;
+    const lotesIng=updated.filter(l=>l.activo&&l.ingredienteId===row.id).sort((a,b)=>new Date(a.fechaIngreso)-new Date(b.fechaIngreso));
+    for(const lote of lotesIng){
+      if(remaining<=0.001) break;
+      const consume=Math.min(lote.cantidadKgDisponible,remaining);
+      updated=updated.map(l=>l.id===lote.id?{...l,cantidadKgDisponible:Math.max(0,Math.round((l.cantidadKgDisponible-consume)*1000)/1000)}:l);
+      remaining-=consume;
+    }
+  }
+  return updated;
 };
 
 const SEED_PROVEEDORES=[
@@ -2007,19 +2030,20 @@ function App(props){
   };
 
   const eliminarIngrediente=(ingredienteId,nombre)=>{
-    // MODAL: eliminar stock
-    if(!window.confirm(`¿Eliminar todo el stock de "${nombre}"?\n\nEsto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`)) return;
-    setInvLotes(prev=>{
-      const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
-      return upd;
-    });
-    // Limpiar pantry
-    try{
-      const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
-      delete pantry[ingredienteId];
-      localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
-    }catch(e){}
+    const doDelete=()=>{
+      setInvLotes(prev=>{
+        const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
+        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        return upd;
+      });
+      // Limpiar pantry
+      try{
+        const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
+        delete pantry[ingredienteId];
+        localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
+      }catch(e){}
+    };
+    setConfirmDlg({title:'Eliminar stock',msg:`¿Eliminar todo el stock de "${nombre}"? Esto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`,danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
   // Compatibilidad legacy (usada en botón "Agregar ingrediente al stock")
   const saveStockEdit=(ingredienteId,nuevoKg)=>{
@@ -2236,7 +2260,7 @@ function App(props){
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
     const el=document.querySelector('.prod-sheet');
-    if(!el){alert('Genera la hoja primero (debe haber una receta activa).');return;}
+    if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
     const fecha=prodDate||new Date().toISOString().slice(0,10);
@@ -2277,7 +2301,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 <body>${el.outerHTML}</body></html>`;
     const pw=window.open('','_blank','width=900,height=1100');
     if(!pw){
-      alert('El navegador bloqueó la ventana emergente.\nPermite pop-ups para este sitio e inténtalo de nuevo.\n(Ícono en la barra de direcciones → Permitir pop-ups)');
+      setNoticeDlg({title:'Ventana bloqueada',msg:'El navegador bloqueó la ventana emergente. Permite pop-ups para este sitio e inténtalo de nuevo (ícono en la barra de direcciones → Permitir pop-ups).'});
       return;
     }
     pw.document.open();
@@ -2304,17 +2328,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const{preview,loteNum,fecha}=loteBatchConfirm;
     const now=new Date().toISOString();
     setInvLotes(prev=>{
-      let updated=[...prev];
-      for(const row of preview){
-        let remaining=row.krKg;
-        const lotesIng=updated.filter(l=>l.activo&&l.ingredienteId===row.id).sort((a,b)=>new Date(a.fechaIngreso)-new Date(b.fechaIngreso));
-        for(const lote of lotesIng){
-          if(remaining<=0.001) break;
-          const consume=Math.min(lote.cantidadKgDisponible,remaining);
-          updated=updated.map(l=>l.id===lote.id?{...l,cantidadKgDisponible:Math.max(0,Math.round((l.cantidadKgDisponible-consume)*1000)/1000)}:l);
-          remaining-=consume;
-        }
-      }
+      const updated=consumirInventarioFIFOLocal(prev,preview);
       try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
       return updated;
     });
@@ -2373,16 +2387,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});};
-  const updateBitBolsa=(bolsaId,fields)=>{setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});};
+  const updateBitBolsa=(bolsaId,fields)=>{setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});}return upd;});};
   const addBitCosecha=(cosecha)=>{setBitCosechas(prev=>{const upd=[...prev,{...cosecha,id:'COS_'+Date.now()}];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});};
   const deleteBitCosecha=(id)=>{setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});};
   const deleteBitLote=(loteId)=>{
-    // MODAL: delete batch
-    if(!window.confirm('¿Eliminar este lote y todas sus bolsas y cosechas?')) return;
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-    if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
+    const doDelete=()=>{
+      setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
+      setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+      setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
+    };
+    setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
   const calcLoteStats=(loteId)=>{
     const lote=bitLotes.find(lt=>lt.id===loteId);if(!lote) return null;
@@ -2449,8 +2464,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowProvModal(false);
   };
 
-  const eliminarProveedor=id=>{// MODAL: delete provider
-    if(!window.confirm('¿Eliminar proveedor?')) return;saveProveedores(invProveedores.filter(p=>p.id!==id));};
+  const eliminarProveedor=id=>{
+    setConfirmDlg({title:'Eliminar proveedor',msg:'¿Eliminar este proveedor? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>saveProveedores(invProveedores.filter(p=>p.id!==id))});
+  };
 
   const addCmpItem=()=>setCmpItems(prev=>[...prev,{uid:Date.now(),ingId:'',kg:'',precio:''}]);
   const updCmpItem=(uid,field,val)=>setCmpItems(prev=>prev.map(it=>it.uid===uid?{...it,[field]:val}:it));
@@ -2458,6 +2474,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   // ── Captura automática de compras (foto de recibo / texto pegado) ──
   const fileToBase64=file=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+  // Redimensiona y recomprime una foto a JPEG antes de guardarla como dataURL en localStorage —
+  // una foto de celular sin comprimir (2-4 MB) agota rápido la cuota de ~5 MB del navegador.
+  const compressImageToDataURL=(file,maxDim=1280,quality=0.72)=>new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>maxDim||h>maxDim){const scale=maxDim/Math.max(w,h);w=Math.round(w*scale);h=Math.round(h*scale);}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=e=>{URL.revokeObjectURL(url);reject(e);};
+    img.src=url;
+  });
   const matchIngId=nombre=>{
     if(!nombre) return '';
     const n=nombre.toLowerCase().trim();
@@ -2472,18 +2505,35 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setCmpMode('manual');
   };
   const extraerJSON=txt=>{const m=txt.match(/\[[\s\S]*\]/);return JSON.parse(m?m[0]:txt);};
+  const CMP_MAX_BYTES=10*1024*1024;
   const capturarFoto=async e=>{
     const file=e.target.files&&e.target.files[0]; if(!file) return;
+    const esPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
+    if(file.size>CMP_MAX_BYTES){
+      setCmpParseErr(`El archivo pesa ${(file.size/1024/1024).toFixed(1)} MB — el máximo es 10 MB. Comprime ${esPDF?'el PDF':'la foto'} o usa Manual.`);
+      e.target.value=''; return;
+    }
+    if(!window.claude||typeof window.claude.complete!=='function'){
+      setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
+      e.target.value=''; return;
+    }
     setCmpParsing(true);setCmpParseErr('');setCmpFuente('ocr');
     try{
       const b64=await fileToBase64(file);
       const listaIngs=INGS.map(g=>g.name).join(', ');
+      const fileBlock=esPDF
+        ?{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
+        :{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}};
       const resp=await window.claude.complete({messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},
-        {type:'text',text:`Esta es una foto de una factura/recibo de compra de insumos para cultivo de hongos. Extrae cada ítem comprado como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
+        fileBlock,
+        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Extrae cada ítem comprado como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
       ]}]});
-      applyParsedItems(extraerJSON(resp));
-    }catch(err){setCmpParseErr('No se pudo leer la foto. Intenta de nuevo o usa Manual.');}
+      try{
+        applyParsedItems(extraerJSON(resp));
+      }catch(parseErr){
+        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+      }
+    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
     setCmpParsing(false); e.target.value='';
   };
   const parsearTexto=async()=>{
@@ -2499,7 +2549,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const registrarCompra=()=>{
     const valid=cmpItems.filter(it=>it.ingId&&parseFloat(it.kg)>0);
-    if(!cmpProvId||valid.length===0){alert('Selecciona proveedor y agrega al menos un ítem.');return;}
+    if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Selecciona proveedor y agrega al menos un ítem.'});return;}
     const cId='compra_'+Date.now();
     const nuevaCompra={id:cId,fecha:cmpFecha,proveedorId:cmpProvId,
       items:valid.map(it=>({ingredienteId:it.ingId,kg:parseFloat(it.kg),precio:parseFloat(it.precio)||0})),
@@ -2796,16 +2846,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                   <div>
                   <div style={{display:'flex',gap:6,marginBottom:14}}>
-                    {[['manual','✎ Manual'],['foto','📷 Foto de recibo'],['texto','✉ Pegar texto']].map(([v,l])=>(
+                    {[['manual','✎ Manual'],['foto','📷 Foto / PDF de recibo'],['texto','✉ Pegar texto']].map(([v,l])=>(
                       <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
                     ))}
                   </div>
 
                   {cmpMode==='foto'&&(
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
-                      <input type="file" accept="image/*" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
-                      <button className="inv-btn inv-btn-pri inv-btn-sm" disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':'📷 Tomar foto / subir recibo'}</button>
-                      <div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--border-soft)',marginTop:8}}>La foto se lee y llena los ítems abajo — revisa antes de registrar.</div>
+                      <input type="file" accept="image/*,application/pdf" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
+                      <button className="inv-btn inv-btn-pri inv-btn-sm" disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':'📷 Tomar foto / subir recibo (o PDF)'}</button>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena los ítems abajo — revisa antes de registrar.</div>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
@@ -3101,7 +3151,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th></tr></thead>
-                      <tbody>{bolsas.map(bolsa=>{const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);const est=EB[bolsa.estado]||EB.sana;return(<tr key={bolsa.id}><td style={{fontFamily:'var(--font-mono)',fontSize:10,whiteSpace:'nowrap'}}>{bolsa.codigo}</td><td><select value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:10,border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>{Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select></td>{['col25','col50','col100'].map(f=>(<td key={f}><input type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:9,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td>))}<td><input type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:11,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td><td style={{textAlign:'center'}}>{bolsa.foto?<img src={bolsa.foto} alt="" style={{width:28,height:28,objectFit:'cover',borderRadius:3,cursor:'pointer',display:'block',margin:'0 auto'}} onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} title="Clic para quitar"/>:<label style={{cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:9,color:'var(--coral-500)',textDecoration:'underline',display:'block',textAlign:'center'}}>+foto<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(!f) return;const r=new FileReader();r.onload=ev=>updateBitBolsa(bolsa.id,{foto:ev.target.result});r.readAsDataURL(f);}}/></label>}</td><td><div style={{display:'flex',alignItems:'center',gap:5}}><span style={{fontFamily:'var(--font-num)',fontSize:13}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button></div></td></tr>);})}</tbody>
+                      <tbody>{bolsas.map(bolsa=>{const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);const est=EB[bolsa.estado]||EB.sana;return(<tr key={bolsa.id}><td style={{fontFamily:'var(--font-mono)',fontSize:10,whiteSpace:'nowrap'}}>{bolsa.codigo}</td><td><select value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:10,border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>{Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select></td>{['col25','col50','col100'].map(f=>(<td key={f}><input type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:9,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td>))}<td><input type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:11,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td><td style={{textAlign:'center'}}>{bolsa.foto?<img src={bolsa.foto} alt="" style={{width:28,height:28,objectFit:'cover',borderRadius:3,cursor:'pointer',display:'block',margin:'0 auto'}} onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} title="Clic para quitar"/>:<label style={{cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:9,color:'var(--coral-500)',textDecoration:'underline',display:'block',textAlign:'center'}}>+foto<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Intenta con otra imagen.'}));e.target.value='';}}/></label>}</td><td><div style={{display:'flex',alignItems:'center',gap:5}}><span style={{fontFamily:'var(--font-num)',fontSize:13}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 </div>
@@ -3882,13 +3932,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button className="btn" onClick={()=>window.print()}>Imprimir ficha</button>
                 <button className="btn pri" onClick={exportR}>↓ Exportar .txt</button>
                 <button className="btn" onClick={()=>{
-                  if(typeof html2pdf==='undefined'){alert('html2pdf no disponible');return;}
+                  if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible.'});return;}
                   const el=document.querySelector('.print-panel');
-                  if(!el){alert('Genera análisis primero');return;}
+                  if(!el){setNoticeDlg({msg:'Genera análisis primero.'});return;}
                   html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
                 }}>↓ PDF</button>
                 <button className="btn" onClick={()=>{
-                  if(!recipe.length){alert('No hay receta');return;}
+                  if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
                   const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}>↓ JSON</button>
@@ -4723,7 +4773,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='inventario'&&<BodegaSection/>}
+        {tab==='inventario'&&BodegaSection()}
 
         {tab==='dashboard'&&(
           <div>
@@ -4821,7 +4871,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
         )}
 
-        {tab==='bitacora'&&<BitacoraSection/>}
+        {tab==='bitacora'&&BitacoraSection()}
 
         {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
         {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
@@ -4886,7 +4936,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){alert('Completa código y especie.');return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
             </div>
           </div>
@@ -4908,7 +4958,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){alert('Selecciona bolsa y peso.');return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
+                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
               </div>
             </div>
           </div>
