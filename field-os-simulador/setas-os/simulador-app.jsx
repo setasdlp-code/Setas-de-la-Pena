@@ -1,7 +1,6 @@
 
 
 
-
 const {useState,useMemo,useEffect,useRef}=React;
 
 const IMG={
@@ -3288,7 +3287,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="fos-kicker">Buenas, equipo</div>
                 <h1 className="fos-h1">Laboratorio<br/>SdlP</h1>
               </div>
-              <div className="fos-home-art"><img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner-botanico-sketch.png'} alt="" aria-hidden="true"/></div>
+              <div className="fos-home-art"><img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner-botanico-sketch.jpg'} width="560" height="210" loading="lazy" decoding="async" alt="" aria-hidden="true"/></div>
             </div>
             <div className="fos-tiles">
               {TILES.map(ti=>(
