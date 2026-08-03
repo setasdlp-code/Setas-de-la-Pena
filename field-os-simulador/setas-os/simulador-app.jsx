@@ -1473,6 +1473,48 @@ const PeritoItem=React.memo(({item,onApply})=>(
   </div>
 ));
 
+// ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
+const ConfirmModal=({dlg,onClose})=>(
+  <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div className="inv-modal" style={{width:420}}>
+      <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+        <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
+        <button onClick={()=>{dlg.onConfirm();onClose();}} className={`inv-btn ${dlg.danger?'inv-btn-danger':'inv-btn-pri'}`}>{dlg.confirmLabel||'Confirmar'}</button>
+      </div>
+    </div>
+  </div>
+);
+const PromptModal=({dlg,onClose})=>{
+  const[val,setVal]=React.useState(dlg.defaultValue||'');
+  const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
+  return(
+    <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="inv-modal" style={{width:420}}>
+        <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
+        {dlg.label&&<label className="inv-label">{dlg.label}</label>}
+        <input className="inv-input" autoFocus value={val} placeholder={dlg.placeholder||''} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
+        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+          <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
+          <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const NoticeModal=({dlg,onClose})=>(
+  <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div className="inv-modal" style={{width:420}}>
+      <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
+      <div style={{display:'flex',justifyContent:'flex-end'}}>
+        <button onClick={onClose} className="inv-btn inv-btn-pri">Aceptar</button>
+      </div>
+    </div>
+  </div>
+);
+
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
 const CAT_COLORS={
@@ -1808,13 +1850,13 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState('inicio');
-  const TAB_LABELS={inicio:'Inicio',catalogo:'Especies',formular:'Formular',optimizar:'Optimizar',inventario:'Bodega',produccion:'Ficha',schedule:'Cronograma',dashboard:'Dashboard',bitacora:'Bitácora'};
+  const TAB_LABELS={inicio:'Inicio',catalogo:'Especies',formular:'Formular',optimizar:'Generar',inventario:'Bodega',produccion:'Ficha',schedule:'Cronograma',dashboard:'Dashboard',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Recetas',tabs:['catalogo','formular','optimizar'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
   ];
-  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',optimizar:'Optimizador de receta',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',optimizar:'Generador de recetas',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular','optimizar'];
   const CULTIVO_TABS=['inventario','produccion','schedule','dashboard','bitacora'];
@@ -1867,6 +1909,9 @@ function App(props){
   const [prodLoteNum,setProdLoteNum]=useState('');  // número de lote imprimible
   const [checkedSteps,setCheckedSteps]=useState({}); // checkboxes interactivos de la hoja
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
+  const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
+  const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
+  const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
   const [bitBolsas,setBitBolsas]=useState([]);
@@ -2058,10 +2103,14 @@ function App(props){
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
     }
   };
-  const loadR=e=>{// MODAL: replace recipe
-    if(recipe.length>0&&!window.confirm(`¿Reemplazar con "${e.name}"?`)) return;setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);setNavOpen(false);};
-  const delR=id=>{// MODAL: delete recipe
-    if(!window.confirm('¿Eliminar?')) return;const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}};
+  const loadR=e=>{
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);setNavOpen(false);};
+    if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
+    apply();
+  };
+  const delR=id=>{
+    setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}}});
+  };
 
   const sp=SPP[sKey];
   const effectiveINGS=useMemo(()=>INGS.map(ing=>{
@@ -2363,7 +2412,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const loadOptimal=()=>{
     const r=runAutoOptimizer(sKey,invLotes,0,optimizerINGS,false);
     if(r.results&&r.results.length){setRecipe(r.results[0].recipe);setLockedIds([]);}
-    else alert('No se encontró una combinación óptima para esta especie.');
+    else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
   };
   const updP=(id,p)=>{
     if(!normMode){setRecipe(recipe.map(r=>r.id===id?{...r,p}:r));return;}
@@ -3174,7 +3223,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const TILES=[
             {t:'Formular una receta',s:'Mezcla · C:N · humedad · optimizador',tb:'formular',pri:true},
             {t:'Catálogo de especies',s:'Elegir o cambiar la especie activa',tb:'catalogo'},
-            {t:'Optimizar receta',s:'Generar automáticamente la mejor mezcla',tb:'optimizar'},
+            {t:'Generar receta',s:'Crear combinaciones nuevas desde cero',tb:'optimizar'},
             {t:'Preparar un lote',s:'Ficha de producción del día · báscula',tb:'produccion'},
             {t:'Cronograma',s:'Fechas de siembra y cosecha',tb:'schedule'},
             {t:'Revisar bodega',s:'Stock · compras · proveedores',tb:'inventario'},
@@ -3489,32 +3538,132 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             </div>
             <div className="builder-right">
-            {an&&recipe.length>0&&(()=>{
-              const {score,status}=opt||{score:0,status:'sin_receta'};
+            {an&&(()=>{
+              const hasPer=recipe.length>0;
+              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+              const criticals=items.filter(s=>s.priority==='critical');
+              const warnings=items.filter(s=>s.priority==='warning');
+              const tips=items.filter(s=>s.priority==='tip');
+              const infos=items.filter(s=>s.priority==='info');
               const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+              const cur=sp?Math.min(an.cn,max):0;
+              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
               return(
-                <div className="panel print-panel" id="bl-perito" style={{background:sm.bg,border:`1.5px solid ${sm.border}`,marginBottom:12,display:'flex',alignItems:'center',gap:14,padding:'12px 16px',position:'sticky',top:8,zIndex:20,boxShadow:'0 2px 8px rgba(0,0,0,.12)'}}>
-                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:52,height:52,borderRadius:'50%',background:sm.badge,flexShrink:0}}>
-                    <span style={{fontFamily:'var(--font-num)',fontSize:20,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:6,color:'rgba(255,255,255,.7)',letterSpacing:'.1em',marginTop:1}}>SCORE</span>
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:16,fontWeight:800,color:sm.txt,lineHeight:1}}>{sm.veredicto}</div>
-                  </div>
-                  <div style={{display:'flex',gap:12,flexShrink:0}}>
+                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
+                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
+                  {hasPer&&(
+                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:7,color:'rgba(255,255,255,.7)',letterSpacing:'.1em',marginTop:1}}>SCORE</span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
+                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
+                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          Deshacer ({recipeHistory.length})
+                        </button>}
+                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
+                  <div className="mgrid" style={{marginBottom:12}}>
                     {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`},
-                      {l:'EB',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`},
-                      {l:'Costo/kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`},
+                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
                     ].map(m=>(
-                      <div key={m.l} style={{textAlign:'center'}}>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.08em',textTransform:'uppercase',color:sm.badge,opacity:.8}}>{m.l}</div>
-                        <div style={{fontFamily:'var(--font-num)',fontSize:13,fontWeight:700,color:sm.txt}}>{m.v}</div>
+                      <div key={m.l} className="mc">
+                        <div className="mlbl">{m.l}</div>
+                        <div className="mval">{m.v}</div>
+                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
                       </div>
                     ))}
                   </div>
-                  <button onClick={()=>goTab('optimizar')} style={{fontFamily:'var(--font-body)',fontSize:9,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>Ver detalle →</button>
+
+                  {/* ── EBDial + C:N gauge ── */}
+                  <EBDial an={an} sp={sp}/>
+                  {sp&&an.cn>0&&(
+                    <div className="gauge-wrap">
+                      <div className="gauge-hdr">
+                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                      </div>
+                      <div className="gauge-tr">
+                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                      </div>
+                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                    </div>
+                  )}
+                  <NitrogenChart recipe={recipe}/>
+
+                  {/* ── PERITO: INDICADORES + ITEMS ── */}
+                  {hasPer&&(
+                    <>
+                      {/* ── barra resumen live: score + EB + costo ── */}
+                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
+                        {[
+                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
+                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                        ].map((m,i)=>(
+                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
+                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:16,color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                      </div>
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:12,padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:10}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</details>}
+                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:10,color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:11,color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+                    </>
+                  )}
+
+                  {/* ── CHARTS TOGGLE + CHARTS ── */}
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
+                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                  </div>
+                  {showFlush&&<FlushChart an={an}/>}
+                  {showCompChart&&<CompositionChart recipe={recipe}/>}
+                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
+
+                  {/* ── EVALUACIÓN TÉCNICA ── */}
+                  <div className="dbox" style={{marginTop:8}}>
+                    <div className="dttl">Evaluación</div>
+                    <div className="dtxt">{dg.main}</div>
+                  </div>
+                  {dg.sugs.length>0&&(<>
+                    <div className="sec" style={{marginTop:8}}>A considerar</div>
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                  </>)}
                 </div>
               );
             })()}
@@ -3538,8 +3687,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
                   <button className={`tog${normMode?' on':''}`} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
-                  <button className="tog" onClick={()=>{// MODAL: clear recipe
-      if(window.confirm('¿Limpiar receta?')){setRecipe([]);setLockedIds([]);}}}>Limpiar</button>
+                  <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
                 </div>}
               </div>
               {recipe.length===0
@@ -3548,8 +3696,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Optimizador</strong> genera automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>setTab('optimizar')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Optimizador ↓</button>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
+                    <button onClick={()=>setTab('optimizar')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -3753,12 +3901,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       try{
                         const p=JSON.parse(ev.target.result);
                         if(p.receta&&p.especie){
-                          // MODAL: import recipe
-            if(recipe.length>0&&!window.confirm(`¿Reemplazar receta actual con "${p.especie.nombre||p.especie.key}"?`)) return;
-                          if(p.especie.key&&SPP[p.especie.key]) setSKey(p.especie.key);
-                          setRecipe(p.receta.map(r=>({id:r.id,p:r.porcentaje})));
-                        } else {alert('JSON inválido — no contiene campos receta/especie.');}
-                      } catch(err){alert('Error al leer el archivo JSON.');}
+                          const apply=()=>{
+                            if(p.especie.key&&SPP[p.especie.key]) setSKey(p.especie.key);
+                            setRecipe(p.receta.map(r=>({id:r.id,p:r.porcentaje})));
+                          };
+                          if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta actual con "${p.especie.nombre||p.especie.key}"?`,onConfirm:apply});}
+                          else apply();
+                        } else {setNoticeDlg({msg:'JSON inválido — no contiene los campos receta/especie.'});}
+                      } catch(err){setNoticeDlg({msg:'Error al leer el archivo JSON. Verifica que sea un archivo exportado desde el simulador.'});}
                     };
                     reader.readAsText(file);
                   };
@@ -3862,170 +4012,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='optimizar'&&(
           <div>
-{/* ── OPTIMIZADOR ── */}
+{/* ── GENERADOR DE RECETAS ── */}
             <div className="panel opt-panel" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:20,background:'var(--paper-50,#fff)'}}>
-                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Optimizador de receta</div>
-                <div style={{display:'flex',alignItems:'center',gap:10}}>
-                  {an&&recipe.length>0&&(()=>{
-                    const {score,status}=opt||{score:0,status:'sin_receta'};
-                    const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-                    return(
-                      <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:34,height:34,borderRadius:'50%',background:sm.badge,flexShrink:0}}>
-                          <span style={{fontFamily:'var(--font-num)',fontSize:13,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        </div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:sm.badge}}>{sm.veredicto}</span>
-                        <div style={{display:'flex',gap:8,marginLeft:6}}>
-                          {[
-                            {l:'C:N',v:`${an.cn.toFixed(1)}:1`},
-                            {l:'EB',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`},
-                            {l:'Costo/kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`},
-                          ].map(m=>(
-                            <span key={m.l} style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-600)'}}><b>{m.l}</b> {m.v}</span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
-                </div>
+                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
+                <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
               {showOptimizer&&(<>
-                <div style={{marginTop:0}}>
-                        {/* ══ PANEL UNIFICADO: PERITO + ANÁLISIS ══ */}
-            {an&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const infos=items.filter(s=>s.priority==='info');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an.cn,max):0;
-              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-              return(
-                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
-                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
-                  {hasPer&&(
-                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:7,color:'rgba(255,255,255,.7)',letterSpacing:'.1em',marginTop:1}}>SCORE</span>
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,marginTop:4,lineHeight:1.4}}>
-                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
-                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
-                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
-                        </div>
-                      </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
-                          Deshacer ({recipeHistory.length})
-                        </button>}
-                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{// MODAL: prompt trial name (use modal input instead)
-                const nm=window.prompt('Nombre de la prueba experimental:');if(!nm) return;const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}alert('Guardada como prueba: '+nm);}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
-                  <div className="mgrid" style={{marginBottom:12}}>
-                    {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
-                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
-                    ].map(m=>(
-                      <div key={m.l} className="mc">
-                        <div className="mlbl">{m.l}</div>
-                        <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* ── EBDial + C:N gauge ── */}
-                  <EBDial an={an} sp={sp}/>
-                  {sp&&an.cn>0&&(
-                    <div className="gauge-wrap">
-                      <div className="gauge-hdr">
-                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                      </div>
-                      <div className="gauge-tr">
-                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                      </div>
-                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                    </div>
-                  )}
-                  <NitrogenChart recipe={recipe}/>
-
-                  {/* ── PERITO: INDICADORES + ITEMS ── */}
-                  {hasPer&&(
-                    <>
-                      {/* ── barra resumen live: score + EB + costo ── */}
-                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
-                        {[
-                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
-                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                        ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:16,color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
-                      </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:12,padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:10}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:10,color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:11,color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
-                    </>
-                  )}
-
-                  {/* ── CHARTS TOGGLE + CHARTS ── */}
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
-                  </div>
-                  {showFlush&&<FlushChart an={an}/>}
-                  {showCompChart&&<CompositionChart recipe={recipe}/>}
-                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
-
-                  {/* ── EVALUACIÓN TÉCNICA ── */}
-                  <div className="dbox" style={{marginTop:8}}>
-                    <div className="dttl">Evaluación</div>
-                    <div className="dtxt">{dg.main}</div>
-                  </div>
-                  {dg.sugs.length>0&&(<>
-                    <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
-                  </>)}
-                </div>
-              );
-            })()}
-
-                </div>
                 <div style={{marginTop:0}}>
                   <div style={{display:'flex',gap:0,marginBottom:14,border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
                     <button style={{flex:1,padding:'8px 12px',fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',border:formularMode==='auto'?'1px solid var(--coral-500)':'1px solid var(--border-soft)',background:formularMode==='auto'?'var(--paper-100)':'transparent',color:formularMode==='auto'?'var(--coral-500)':'var(--ink-500)'}} onClick={()=>setFormularMode('auto')}>Automática</button>
@@ -4106,7 +4099,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               ):(
                                 <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:11,color:'#7A5A10',marginBottom:12}}>
-                                  Inventario vacío. Cambia a <strong>Receta óptima</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
+                                  Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
                                 </div>
                               );
                             })():(
@@ -4396,7 +4389,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                   )}
-                                  <button className="btn pri" style={{width:'100%'}} onClick={()=>{setRecipe(invResult.recipe);goTab('formular');}}>Cargar en Constructor</button>
+                                  <button className="btn pri" style={{width:'100%'}} onClick={()=>{setRecipe(invResult.recipe);goTab('formular');}}>Cargar en Formulador</button>
                                 </>)
                               }
                             </div>
@@ -4482,13 +4475,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
                 <div style={{padding:'14px',fontFamily:'var(--font-mono)',fontSize:12,color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
-                  No hay receta activa. Arma una en <strong>Constructor</strong>, genera una en <strong>✦ Optimizar</strong>, o usa <strong>Receta óptima</strong> en el Perito.
+                  No hay receta activa. Arma una en <strong>Formulador</strong> o genera una automáticamente en <strong>Generar</strong>.
                 </div>
               ):(
                 <>
                 {an&&!balanced&&(
                   <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:12,color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
-                    ⚠ {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Constructor</strong>.
+                    ⚠ {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -4746,7 +4739,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
               {saved.length===0
-                ?<div className="rec-empty">No hay recetas guardadas.<br/>Crea y guarda desde el Constructor.</div>
+                ?<div className="rec-empty">No hay recetas guardadas.<br/>Crea y guarda desde el Formulador.</div>
                 :(()=>{
                   const filtered=saved.filter(e=>dashFilter==='all'||e.sKey===dashFilter);
                   if(!filtered.length) return <div className="sempty">Sin recetas para esta especie.</div>;
@@ -4829,6 +4822,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='bitacora'&&<BitacoraSection/>}
+
+        {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
+        {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
+        {noticeDlg&&<NoticeModal dlg={noticeDlg} onClose={()=>setNoticeDlg(null)}/>}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(

@@ -22,6 +22,13 @@
       "runtimeArgs": ["-m", "http.server", "8744", "--bind", "127.0.0.1", "--directory", "field-os-simulador/setas-os"],
       "port": 8744,
       "autoPort": true
+    },
+    {
+      "name": "setas-os-v5-verify",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8745", "--bind", "127.0.0.1", "--directory", "field-os-simulador/setas-os"],
+      "port": 8745,
+      "autoPort": true
     }
   ]
 }
