@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
-<script src="./vendor/babel.min.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -24,7 +23,6 @@
 <link rel="stylesheet" href="sim.css">
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
-<script src="vendor/lucide.min.js"></script>
 <script type="module" src="firebase/firebase-init.js"></script>
 <script type="module" src="firebase/db.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
@@ -45,7 +43,7 @@
 <meta name="ext-resource-dependency" content="_standalone_imgs/enoki.png" data-resource-id="img_enoki">
 <meta name="ext-resource-dependency" content="_standalone_imgs/nameko.png" data-resource-id="img_nameko">
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner.png" data-resource-id="img_banner">
-<meta name="ext-resource-dependency" content="_standalone_imgs/banner-botanico-sketch.png" data-resource-id="imgBannerBotanico">
+<meta name="ext-resource-dependency" content="_standalone_imgs/banner-botanico-sketch.jpg" data-resource-id="imgBannerBotanico">
 <style>
   html, body { margin:0; background: var(--paper-1); }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -1100,7 +1098,7 @@
           <button onClick="{{ t.go }}" aria-current="{{ t.on }}" style="{{ t.style }}">{{ t.label }}</button>
         </sc-for>
       </div>
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.jsx" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" hint-size="100%,100vh"></x-import>
       </sc-if>
     </div>
 
@@ -2948,7 +2946,7 @@ class Component extends DCLogic {
   }
 
   bannerImgResolved(){
-    return (window.__resources && window.__resources.imgBannerBotanico) || '_standalone_imgs/banner-botanico-sketch.png';
+    return (window.__resources && window.__resources.imgBannerBotanico) || '_standalone_imgs/banner-botanico-sketch.jpg';
   }
   renderVals(){
     const s = this.state;
