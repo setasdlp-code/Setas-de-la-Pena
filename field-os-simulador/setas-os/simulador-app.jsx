@@ -3347,7 +3347,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="p-activa">Activa</span>
                     </div>
                     {hasImg
-                      ?<div className="p-img"><img src={IMG[k]} alt={d.name}/></div>
+                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} loading="lazy" decoding="async"/></div>
                       :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--accent-blue-grey)':'var(--accent-mushroom)'}/></div>
                     }
                     <div className="p-body">
@@ -3450,7 +3450,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* RIGHT: Ilustración full-bleed + CTA */}
                 <div className="spp-info-center" style={{display:'flex',flexDirection:'column'}}>
                   <div className="spp-img-wrap" style={{flex:1,position:'relative',minHeight:320}}>
-                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}}/>}
+                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>

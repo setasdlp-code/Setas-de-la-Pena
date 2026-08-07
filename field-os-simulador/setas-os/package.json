@@ -1,0 +1,12 @@
+{
+  "name": "setas-os-v5",
+  "private": true,
+  "description": "Setas OS v5 — Cuaderno de Campo / Formulador de sustratos. HTML/JS/CSS estático, sin build step.",
+  "scripts": {
+    "test": "node --test *.test.js",
+    "lhci": "lhci autorun --config=./lighthouserc.cjs"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.14.0"
+  }
+}

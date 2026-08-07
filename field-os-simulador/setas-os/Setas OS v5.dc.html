@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setas OS v5 — Setas de la Peña</title>
+<meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script>
 // Buffer de errores tempranos — debe ir ANTES de cualquier otro script.
 // firebase/error-monitor.js es type="module" y por eso siempre se ejecuta
@@ -219,7 +223,7 @@
     <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
       <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
-        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
+        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
           <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
         </button>
         <div style="position:relative;display:inline-block;">
@@ -242,11 +246,11 @@
           </div>
           </sc-if>
         </div>
-        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:14px;height:14px;"><path d="M6 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V5.5a1.5 1.5 0 0 1 3 0V12"></path><path d="M15 12V8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-3"></path></svg>
           <span class="fos-btn-label">Guantes</span>
         </button>
-        <button onClick="{{ openCmd }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button onClick="{{ openCmd }}" aria-label="Buscar" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
           <span class="fos-btn-label">Buscar</span> <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
         </button>

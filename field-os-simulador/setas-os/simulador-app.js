@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 2a34733d8608be78a66f5ee87701dcd0dd61d0f56812306a1e0dcb414dace13e
+// source-hash: ad38a9e226314368aed4c3c8f62327b9703743ae939c8ee6cb526471db6cf039
 const {
   useState,
   useMemo,
@@ -10154,7 +10154,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       className: "p-img"
     }, /*#__PURE__*/React.createElement("img", {
       src: IMG[k],
-      alt: d.name
+      alt: d.name,
+      loading: "lazy",
+      decoding: "async"
     })) : /*#__PURE__*/React.createElement("div", {
       className: "p-svg",
       style: {
@@ -10540,7 +10542,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       className: "spp-info-img",
       style: {
         objectPosition: 'center 65%'
-      }
+      },
+      loading: "lazy",
+      decoding: "async"
     })), /*#__PURE__*/React.createElement("div", {
       className: "spp-cta-row"
     }, /*#__PURE__*/React.createElement("span", {
