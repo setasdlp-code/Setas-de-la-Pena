@@ -6,6 +6,16 @@
 //
 // Consumido por simulador-app.jsx vía <script src="./scoring.js"> (global
 // SetasScoring) y por scoring.test.js vía require() en Node.
+//
+// Guard de idempotencia: el runtime .dc de "Setas OS v5.dc.html" clona todo
+// <body> para hidratarlo (ver comentario en firebase/auth-gate.js), y el
+// <helmet> con este <script src="scoring.js"> se "mirroriza" al <head> real
+// una vez por cada copia — la original oculta Y la clonada visible — así que
+// este archivo se ejecuta dos veces en esa página. Sin este guard, los
+// `const` de abajo redeclaran en la segunda ejecución y lanzan
+// "Identifier '...' has already been declared", tumbando toda la app.
+if (!globalThis.__setasScoringLoaded) {
+globalThis.__setasScoringLoaded = true;
 
 const clamp01to100 = (v) => Math.max(0, Math.min(100, v));
 
@@ -239,3 +249,5 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined') {
   globalThis.SetasScoring = api;
 }
+
+} // fin del guard de idempotencia (globalThis.__setasScoringLoaded)

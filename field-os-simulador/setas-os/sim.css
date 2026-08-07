@@ -899,15 +899,13 @@
 
 /* ── DASHBOARD ──────────────────────────────────────────────────── */
 .sim-root .dash-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; margin-top:18px; }
-.sim-root .dash-card{ background:var(--paper-50); border:1px solid var(--border-soft); border-radius:var(--r-sm); border-top:3px solid var(--border-soft); overflow:hidden; transition:box-shadow .2s var(--ease),transform .2s var(--ease); }
-.sim-root .dash-card:hover{ background:var(--paper-100); }
-.sim-root .dash-card-top{ padding:14px 16px; border-bottom:1px solid var(--paper-300); }
-.sim-root .dash-card-name{ font-size:15px; font-weight:700; color:var(--ink-900); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sim-root .dash-card-spp{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-700); }
-.sim-root .dash-card-body{ padding:13px 16px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+/* .dash-card / -top / -name / -spp / -body / -foot base rules removed 2026-08:
+   fully superseded by the "DASH CARDS — editorial redesign" !important block
+   further down (~line 2330), which is later in source and matches equal
+   specificity, so it always wins on every shared property at every width.
+   .dash-grid kept — its display:grid/margin-top aren't set by that block. */
 .sim-root .dash-kv .dk{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-700); margin-bottom:3px; }
 .sim-root .dash-kv .dv{ font-family:var(--font-num); font-size:22px; color:var(--ink-900); line-height:1; }
-.sim-root .dash-card-foot{ padding:9px 14px; border-top:1px solid var(--paper-300); display:flex; gap:6px; background:var(--paper-100); }
 
 /* ── INVERSE CALC ───────────────────────────────────────────────── */
 .sim-root .inv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
@@ -919,8 +917,10 @@
   .sim-root .rec-sticky{ position:static !important; }
 }
 .sim-root .inv-field label{ display:block; font-family:var(--font-body); font-weight:800; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-500); margin-bottom:5px; }
-.sim-root .inv-field select, .sim-root .inv-field input[type=number]{ width:100%; padding:10px 11px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:13px; color:var(--ink-900); outline:none; }
-.sim-root .inv-field select:focus, .sim-root .inv-field input:focus{ border-color:var(--coral-500); }
+/* select/input sizing consolidated below (~line 1528) — this used to duplicate
+   it with an [type=number] selector, which by CSS specificity always won over
+   the later, broader rule and silently drifted to a different padding/font-size
+   (10px 11px/13px vs 10px 12px/14px) for numeric fields only. Removed 2026-08. */
 .sim-root .inv-result{ background:var(--paper-50); border:1px solid rgba(26,20,16,0.13); border-radius:0; padding:20px; margin-top:16px; }
 
 /* ── PRICES EDITOR ──────────────────────────────────────────────── */
@@ -1073,10 +1073,10 @@
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:320px; }
-  .sim-root .ing-item{ padding:8px 0; gap:8px; min-height:48px; }
-  .sim-root .ing-name{ font-size:12px; }
-  .sim-root .ing-meta{ font-size:10px; }
-  
+  /* .ing-item/.ing-name/.ing-meta sizing removed 2026-08: dead — the
+     unconditional "card style" block further down (~line 2098) always
+     wins with equal !important specificity at every viewport width. */
+
   /* ── Recipe row ── */
   .sim-root .rec-row{ grid-template-columns:1fr 80px 24px; gap:8px; padding:10px 11px; }
   .sim-root .rec-row input[type=number]{ font-size:16px; padding:8px 6px; min-height:42px; }
@@ -1103,7 +1103,7 @@
   .sim-root .btot{ border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); padding:8px 0; }
   
   /* ── Actions ── */
-  .sim-root .act-row{ flex-direction:column; gap:6px; }
+  .sim-root .act-row{ flex-direction:column; gap:8px; }
   .sim-root .btn{ width:100%; min-width:auto; }
   
   /* ── Info cards ── */
@@ -1152,8 +1152,9 @@
   
   /* ── Dashboard ── */
   .sim-root .dash-grid{ grid-template-columns:1fr; gap:10px; }
-  .sim-root .dash-card-body{ grid-template-columns:1fr 1fr; gap:8px; }
-  
+  /* .dash-card-body grid-template-columns removed 2026-08: dead, that
+     element is display:flex now (see the editorial redesign block). */
+
   /* ── Comparator ── */
   .sim-root .cgrid{ grid-template-columns:1fr; gap:0; }
   .sim-root .cch{ padding:12px 14px; }
@@ -1204,10 +1205,8 @@
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:240px; }
-  .sim-root .ing-item{ padding:6px 0; gap:6px; min-height:44px; }
-  .sim-root .ing-name{ font-size:11px; }
-  .sim-root .ing-meta{ font-size:9px; gap:6px; }
-  
+  /* .ing-item/.ing-name/.ing-meta sizing removed 2026-08: dead, see note above. */
+
   /* ── Recipe row ── */
   .sim-root .rec-row{ grid-template-columns:1fr 70px 20px; gap:6px; padding:8px 10px; }
   .sim-root .rec-row input[type=number]{ font-size:16px; padding:7px 5px; min-height:40px; }
@@ -1240,7 +1239,7 @@
   .sim-root .btot .bl{ font-size:6.5px; margin-top:3px; }
   
   /* ── Actions ── */
-  .sim-root .act-row{ flex-direction:column; gap:6px; }
+  .sim-root .act-row{ flex-direction:column; gap:8px; }
   .sim-root .btn{ width:100%; min-width:auto; justify-content:center; }
   
   /* ── Info rows ── */
@@ -1299,13 +1298,9 @@
   
   /* ── Dashboard ── */
   .sim-root .dash-grid{ grid-template-columns:1fr; gap:8px; }
-  .sim-root .dash-card-top{ padding:10px 12px; }
-  .sim-root .dash-card-name{ font-size:13px; }
-  .sim-root .dash-card-spp{ font-size:10px; }
-  .sim-root .dash-card-body{ grid-template-columns:1fr; gap:6px; padding:8px 12px; }
-  .sim-root .dk{ font-size:9px; }
-  .sim-root .dv{ font-size:18px; }
-  
+  /* dash-card-top/-name/-spp/-body + dk/dv sizing removed 2026-08: dead,
+     same reason as the block above. */
+
   /* ── Comparator ── */
   .sim-root .cgrid{ grid-template-columns:1fr; }
   .sim-root .cch{ padding:10px 12px; }
@@ -1620,23 +1615,19 @@
 
 /* ── Dashboard cards grid ──────────────────────────────────────── */
 .sim-root .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
-.sim-root .dash-card{background:var(--paper-50);border:1px solid var(--border-soft);border-top:3px solid var(--ink-700);border-radius:var(--r-sm);overflow:hidden;display:flex;flex-direction:column;}
-.sim-root .dash-card-top{padding:12px 14px 8px;}
-.sim-root .dash-card-name{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--ink-900);line-height:1.2;}
-.sim-root .dash-card-spp{font-family:var(--font-mono);font-size:11px;color:var(--ink-500);margin-top:3px;}
-.sim-root .dash-card-body{padding:8px 14px;flex:1;}
-.sim-root .dash-kv{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--paper-300);}
-.sim-root .dash-kv:last-child{border-bottom:none;}
-.sim-root .dk{font-family:var(--font-body);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-600);font-weight:700;}
-.sim-root .dv{font-family:var(--font-num);font-size:16px;font-weight:700;color:var(--ink-900);}
-.sim-root .dash-card-foot{display:flex;gap:6px;padding:10px 12px;background:var(--paper-100);border-top:1px solid var(--border-soft);}
+/* .dash-card/-top/-name/-spp/-body/-foot + dash-kv/dk/dv removed 2026-08:
+   this was a second, already-superseded redesign generation — see the note
+   near line ~900. The dash-card-foot buttons were renamed .dash-sload/.dash-sdel
+   (see the editorial-redesign block further down) so they no longer share a
+   class with the unrelated recipe-list-row button below — the bare
+   .sload/.sdel rules here now unambiguously belong to that one (currently
+   display:none) button at simulador-app.jsx:4057. */
 .sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;transition:background .15s;}
 .sim-root .sload:hover{background:var(--coral-600,var(--accent-terracotta));}
 .sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:all .15s;}
 .sim-root .sdel:hover{background:var(--paper-200);color:var(--coral-500);}
 @media(max-width:768px){
   .sim-root .dash-grid{grid-template-columns:1fr!important;}
-  .sim-root .dash-card-foot{padding:10px!important;}
   .sim-root .sload{padding:10px 14px!important;font-size:13px!important;}
 }
 
@@ -1697,7 +1688,7 @@
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
 .sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:32px 24px;backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
-.sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn .22s cubic-bezier(.32,.72,.36,1);}
+.sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn .22s cubic-bezier(.32,.72,.36,1);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .12s;font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:#fff;border-color:var(--coral-500);}
@@ -1766,10 +1757,10 @@
 .sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
 .sim-root .spp-grid > *:nth-child(n+7){background:var(--paper-100)!important;}
 @media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
-.sim-root .spp-card{transition:background .15s,box-shadow .15s,transform .15s;border-radius:var(--r-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:0 1px 4px rgba(26,20,16,0.05)!important;contain:paint;isolation:isolate;}
-.sim-root .spp-card:hover{box-shadow:0 4px 12px rgba(26,20,16,0.09)!important;}
-.sim-root .spp-card.on{background:#F4F7F8!important;box-shadow:inset 0 0 0 3px var(--accent-blue-grey),0 6px 18px rgba(78,106,122,0.28)!important;transform:translateY(-2px);position:relative;}
-.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 2px 6px rgba(78,106,122,0.35);}
+.sim-root .spp-card{transition:background .15s,box-shadow .15s,transform .15s;border-radius:var(--r-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:var(--shadow-card-rest)!important;contain:paint;isolation:isolate;}
+.sim-root .spp-card:hover{box-shadow:var(--shadow-card-hover)!important;}
+.sim-root .spp-card.on{background:#F4F7F8!important;box-shadow:var(--shadow-ring-accent)!important;transform:translateY(-2px);position:relative;}
+.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:var(--shadow-badge-accent);}
 /* Scientific name — smaller italic, warm grey for editorial contrast */
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
 .sim-root .p-common{font-family:var(--font-display);font-weight:400;font-size:28px;color:var(--ink-900);line-height:1.1;}
@@ -1785,8 +1776,6 @@
 .sim-root .p-family-strip{position:absolute;left:0;top:0;bottom:0;width:15px;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,0.025);border-right:1px solid rgba(26,20,16,0.05);z-index:1;}
 .sim-root .p-family-strip span{font-family:var(--font-body);font-weight:800;font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-400);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;}
 .sim-root .spp-card .p-arch-head, .sim-root .spp-card .p-img, .sim-root .spp-card .p-body, .sim-root .spp-card .p-chips{margin-left:15px;}
-/* Image area — warm paper bg, no grid */
-.sim-root .spp-card .p-img{background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;}
 /* Parameter chips — 2-row grid like reference */
 .sim-root .p-chips{margin-left:15px;border-top:1px solid rgba(26,20,16,0.07);padding-top:12px;}
 .sim-root .p-chips-row{display:grid;}
@@ -1801,7 +1790,7 @@
 .sim-root .p-chip-arr{display:flex;align-items:center;justify-content:center;border-right:none;padding:5px 4px;}
 .sim-root .p-chip-arr svg{color:var(--coral-500);}
 /* Spp-info — Hoja de herbario */
-.sim-root .spp-info-2col{display:grid;grid-template-columns:1fr 1.15fr;gap:0;background:var(--paper-50);border:1px solid var(--ink-900);box-shadow:4px 4px 0 rgba(26,20,16,0.05),0 6px 24px rgba(26,20,16,0.09);margin-top:32px;scroll-margin-top:80px;overflow:hidden;}
+.sim-root .spp-info-2col{display:grid;grid-template-columns:1fr 1.15fr;gap:0;background:var(--paper-50);border:1px solid var(--ink-900);box-shadow:var(--shadow-panel-lift);margin-top:32px;scroll-margin-top:80px;overflow:hidden;}
 .sim-root .spp-info-left{display:flex;flex-direction:column;border-right:1px solid rgba(26,20,16,0.1);min-height:480px;}
 .sim-root .spp-info-top{padding:32px 28px 20px;flex:1;}
 .sim-root .spp-info-center{background:var(--paper-50);overflow:hidden;position:relative;}
@@ -1970,7 +1959,7 @@
   /* 21. Opt result: pills wrap + botones visibles */
   .sim-root .opt-result-head{ flex-wrap:wrap; gap:8px; }
   .sim-root .opt-pills{ min-width:100%; order:3; }
-  .sim-root .opt-result-head > div:last-child{ order:4; width:100%; display:flex!important; flex-direction:row!important; gap:6px!important; }
+  .sim-root .opt-result-head > div:last-child{ order:4; width:100%; display:flex!important; flex-direction:row!important; gap:8px!important; }
   .sim-root .opt-result-head > div:last-child .opt-load{ flex:1; text-align:center; }
 
   /* 22. Price row: apilar */
@@ -1997,6 +1986,17 @@
   /* 27. Flush bars */
   .sim-root .flush-label{ width:60px; font-size:8px; }
 
+  /* 27b. Barra de guardar receta: fijada al fondo (thumb zone) en vez de requerir scroll.
+     bottom:96px para no quedar tapada por .species-bridge, que también es sticky
+     al fondo con z-index:50 (ver ~línea 1716) — 96px cubre su altura observada
+     (~84px) incluso si el nombre de la especie se envuelve a dos líneas. */
+  .sim-root .sbar{
+    position:sticky; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:20;
+    background:var(--paper-50);
+    padding:10px 0;
+    box-shadow:var(--shadow-sticky-edge);
+  }
+
   /* 28. Receta activa: % input y controles con objetivo táctil mayor */
   .sim-root .rec-pct-input{ min-height:44px!important; padding:8px!important; }
   .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:44px!important; }
@@ -2004,7 +2004,7 @@
 
   /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil mayor */
   .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:40px!important; min-width:40px!important; }
-  .sim-root .cat-modal-close{ width:40px!important; height:40px!important; }
+  .sim-root .cat-modal-close{ width:44px!important; height:44px!important; }
 }
 
 /* Producción: grid de lote a 1 columna en teléfonos angostos — debe ir DESPUÉS del
@@ -2015,10 +2015,9 @@
 }
 
 /* ── FAB: salto rápido entre Ingredientes ↔ Receta activa en Formular (móvil) ── */
-.sim-root .mobile-quickjump{display:none;position:fixed;right:16px;bottom:20px;z-index:65;align-items:center;gap:6px;padding:13px 18px;border-radius:999px;background:var(--ink-900);color:var(--paper-50);border:none;font-family:var(--font-mono);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 6px 18px rgba(26,20,16,.3);cursor:pointer;}
+.sim-root .mobile-quickjump{display:none;position:fixed;right:16px;bottom:20px;z-index:65;align-items:center;gap:6px;padding:13px 18px;border-radius:999px;background:var(--ink-900);color:var(--paper-50);border:none;font-family:var(--font-mono);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;box-shadow:var(--shadow-fab);cursor:pointer;}
 .sim-root .mobile-quickjump:active{transform:scale(.96);}
-@media(max-width:900px){.sim-root .mobile-quickjump{display:inline-flex;}}
-@media(max-width:800px){.sim-root .mobile-quickjump{bottom:calc(78px + env(safe-area-inset-bottom));}}
+@media(max-width:900px){.sim-root .mobile-quickjump{display:inline-flex;bottom:calc(78px + env(safe-area-inset-bottom));}}
 
 /* ── Hoja de Producción: compactar en móvil (screen-only, no afecta impresión) ── */
 @media screen and (max-width:900px){
@@ -2100,13 +2099,13 @@
 .sim-root .ing-list > div{
   border-radius:4px!important;
   border:1px solid rgba(26,20,16,0.11)!important;
-  box-shadow:0 1px 4px rgba(26,20,16,0.05)!important;
+  box-shadow:var(--shadow-card-rest)!important;
   /* NO overflow:hidden here — absolute-positioned buttons live in this wrapper */
   transition:box-shadow .15s,transform .15s!important;
   background:var(--paper-50)!important;
 }
 .sim-root .ing-list > div:hover{
-  box-shadow:0 4px 12px rgba(26,20,16,0.09)!important;
+  box-shadow:var(--shadow-card-hover)!important;
   transform:translateY(-1px)!important;
 }
 
@@ -2228,6 +2227,11 @@
 @media(hover:none){
   .sim-root .ing-quick-add{ display:flex!important; }
 }
+/* Hit-area táctil ≥44px para botones circulares pequeños (visual se mantiene, toque se amplía vía ::before) */
+.sim-root .ing-quick-add,.sim-root .view-btn,.sim-root .bodega-bar-refresh{position:relative;}
+.sim-root .ing-quick-add::before,.sim-root .view-btn::before,.sim-root .bodega-bar-refresh::before{
+  content:'';position:absolute;inset:-8px;
+}
 
 /* Sticky "añadido" feedback: pulso en el botón + flash en la fila */
 @keyframes qaPulse{0%{transform:scale(1);}40%{transform:scale(1.35);background:var(--moss-500)!important;}100%{transform:scale(1);background:var(--moss-500)!important;}}
@@ -2322,14 +2326,14 @@
   border:1px solid rgba(26,20,16,0.11)!important;
   border-top-width:3px!important;
   border-radius:0!important;
-  box-shadow:0 1px 4px rgba(26,20,16,0.05)!important;
+  box-shadow:var(--shadow-card-rest)!important;
   transition:box-shadow .15s,transform .15s!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
 }
 .sim-root .dash-card:hover{
-  box-shadow:0 4px 14px rgba(26,20,16,0.10)!important;
+  box-shadow:var(--shadow-card-hover)!important;
   transform:translateY(-1px)!important;
 }
 
@@ -2403,7 +2407,11 @@
   border-top:1px solid rgba(26,20,16,0.08)!important;
   margin-top:auto!important;
 }
-.sim-root .sload{
+/* Renamed from bare .sload/.sdel 2026-08 — that name was also used by an
+   unrelated (currently display:none) recipe-list-row button in
+   simulador-app.jsx, so the two features fought over the same class. This
+   one is now scoped to the dashboard/Recetario card footer only. */
+.sim-root .dash-sload{
   font-family:var(--font-body)!important;
   font-size:9px!important;
   font-weight:800!important;
@@ -2418,8 +2426,8 @@
   transition:background .12s!important;
   flex:1!important;
 }
-.sim-root .sload:hover{background:var(--ink-1)!important;}
-.sim-root .sdel{
+.sim-root .dash-sload:hover{background:var(--ink-1)!important;}
+.sim-root .dash-sdel{
   font-family:var(--font-body)!important;
   font-size:9px!important;
   font-weight:800!important;
@@ -2432,7 +2440,7 @@
   cursor:pointer!important;
   transition:color .12s!important;
 }
-.sim-root .sdel:hover{color:var(--coral-500)!important;background:var(--paper-100)!important;}
+.sim-root .dash-sdel:hover{color:var(--coral-500)!important;background:var(--paper-100)!important;}
 
 
 /* Panel background — warm paper, not sand */
@@ -2573,15 +2581,15 @@
 .sim-root .sguide-compat{display:flex;flex-direction:column;gap:7px;}
 .sim-root .sguide-compat-row{display:flex;gap:10px;align-items:flex-start;}
 .sim-root .sguide-compat-cat{font-family:var(--font-mono);font-size:9px;font-weight:800;color:var(--ink-700);width:78px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em;padding-top:3px;background:rgba(197,86,45,0.08);padding:4px 8px;border-radius:2px;margin-left:-8px;}
-.sim-root .sguide-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.sim-root .sguide-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .sim-root .sguide-chip{font-family:var(--font-mono);font-size:10px;font-weight:600;padding:4px 10px;background:var(--paper-100);border:1.5px solid var(--paper-300);border-radius:4px;color:var(--ink-900);cursor:pointer;transition:all .15s;}
-.sim-root .sguide-chip:hover{background:var(--coral-100,#f5e5d8);border-color:var(--coral-400,#d97a4f);color:var(--coral-700,#a0442d);transform:translateY(-1px);box-shadow:0 2px 4px rgba(197,86,45,0.15);}
+.sim-root .sguide-chip:hover{background:var(--coral-100,#f5e5d8);border-color:var(--coral-400,#d97a4f);color:var(--coral-700,#a0442d);transform:translateY(-1px);box-shadow:var(--shadow-hover-accent2-sm);}
 .sim-root .sguide-chip.added{background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));border-color:var(--moss-400,#7A9B60);color:var(--moss-700);}
 .sim-root .sguide-chip.added:hover{background:color-mix(in oklab,var(--coral-200) 50%,var(--paper-50));border-color:var(--coral-400,#d97a4f);color:var(--coral-700);}
 .sim-root .sguide-toggle-compat{font-family:var(--font-mono);font-size:10px;font-weight:700;color:#fff;background:var(--coral-500);border:none;cursor:pointer;padding:5px 12px;border-radius:3px;transition:all .15s;text-transform:uppercase;letter-spacing:.06em;}
-.sim-root .sguide-toggle-compat:hover{background:var(--coral-600);transform:translateY(-1px);box-shadow:0 3px 8px rgba(197,86,45,0.25);}
+.sim-root .sguide-toggle-compat:hover{background:var(--coral-600);transform:translateY(-1px);box-shadow:var(--shadow-hover-accent2-md);}
 @media(max-width:900px){.sim-root .sguide-params{grid-template-columns:repeat(4,1fr)!important;}}
-@media(max-width:600px){.sim-root .sguide-params{grid-template-columns:repeat(2,1fr)!important;}.sim-root .sguide-compat-row{flex-direction:column;gap:3px;}.sim-root .sguide-compat-cat{width:auto;}.sim-root .p-chips-row1{grid-template-columns:1fr 1fr!important;}.sim-root .p-chips-row2{grid-template-columns:1fr 1fr!important;}.sim-root .p-chip-val{font-size:10px;}.sim-root .p-chip-lbl{font-size:8px;}}
+@media(max-width:600px){.sim-root .sguide-params{grid-template-columns:repeat(2,1fr)!important;}.sim-root .sguide-compat-row{flex-direction:column;gap:8px;}.sim-root .sguide-compat-cat{width:auto;}.sim-root .p-chips-row1{grid-template-columns:1fr 1fr!important;}.sim-root .p-chips-row2{grid-template-columns:1fr 1fr!important;}.sim-root .p-chip-val{font-size:10px;}.sim-root .p-chip-lbl{font-size:8px;}}
 
 
 /* ==== NATIVE MERGE: print visibility override (beats shell body *{visibility:hidden}) ==== */

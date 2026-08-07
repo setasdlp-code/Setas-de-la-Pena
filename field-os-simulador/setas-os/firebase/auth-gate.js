@@ -105,6 +105,10 @@ function init() {
   });
 
   el.signoutBtn.addEventListener("click", () => signOut(auth));
+
+  // Expuesto para que el menú de operador del shell (Setas OS v5.dc.html,
+  // fuera de este módulo) pueda cerrar sesión sin duplicar el botón flotante.
+  window.__setasSignOut = () => signOut(auth);
 }
 
 if (document.body) init();

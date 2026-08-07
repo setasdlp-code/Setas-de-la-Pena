@@ -95,5 +95,15 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
+
+    // Monitoreo de errores del cliente (ver firebase/error-monitor.js) — cada
+    // operador puede reportar sus propios errores, pero no leer los de otros
+    // ni modificar/borrar el historial (evita que un error mal-intencionado
+    // se use para tapar reportes previos).
+    match /app_errors/{id} {
+      allow create: if signedIn();
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
   }
 }

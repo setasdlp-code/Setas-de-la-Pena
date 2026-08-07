@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d0870915954daeb37d44898f4fe4f3bbc9cf02ae87932af5d1a8bfaf17ffc0e1
+// source-hash: 2a34733d8608be78a66f5ee87701dcd0dd61d0f56812306a1e0dcb414dace13e
 const {
   useState,
   useMemo,
@@ -6832,6 +6832,21 @@ function App(props) {
     }
     apply();
   };
+  // Protección de UI: solo evita el clic accidental de un operador de campo en
+  // una acción destructiva e irreversible — no es seguridad real (toda la app
+  // comparte una sola cuenta de Firebase; ver nota junto a OPERATORS en
+  // "Setas OS v5.dc.html"). props.isAdmin viene del operador elegido en el
+  // picker del encabezado.
+  const requireAdmin = fn => (...args) => {
+    if (!props.isAdmin) {
+      setNoticeDlg({
+        title: 'Acción restringida',
+        msg: 'Solo un administrador puede hacer esto. Si te corresponde, cámbiate de operador en el encabezado (ícono de usuario).'
+      });
+      return;
+    }
+    fn(...args);
+  };
   const delR = id => {
     setConfirmDlg({
       title: 'Eliminar receta',
@@ -8211,6 +8226,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     className: "inv-btn inv-btn-sec inv-btn-sm",
     style: {
       flex: 1,
+      whiteSpace: 'normal',
+      lineHeight: 1.25,
+      textAlign: 'center',
       ...(cmpMode === v ? {
         background: 'var(--ink-0)',
         color: 'var(--paper-0)',
@@ -8596,7 +8614,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     className: "prov-muni"
   }, p.municipio)), /*#__PURE__*/React.createElement("button", {
     className: "inv-btn inv-btn-danger inv-btn-sm",
-    onClick: () => eliminarProveedor(p.id)
+    onClick: () => requireAdmin(eliminarProveedor)(p.id)
   }, "\u2715")))))), showProvModal && /*#__PURE__*/React.createElement("div", {
     className: "inv-modal-bg",
     onClick: e => {
@@ -9044,7 +9062,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       onClick: e => e.stopPropagation()
     }, /*#__PURE__*/React.createElement("button", {
       className: "inv-btn inv-btn-sec inv-btn-sm",
-      onClick: () => deleteBitLote(lote.id)
+      onClick: () => requireAdmin(deleteBitLote)(lote.id)
     }, "\u2715")));
   }))))), bitTab === 'bit_bolsas' && bitActiveLoteId && (() => {
     const lote = bitLotes.find(lt => lt.id === bitActiveLoteId);
@@ -15268,7 +15286,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }, "+", e.recipe.length - 4, " m\xE1s"))), /*#__PURE__*/React.createElement("div", {
         className: "dash-card-foot"
       }, /*#__PURE__*/React.createElement("button", {
-        className: "sload",
+        className: "dash-sload",
         style: {
           flex: 1
         },
@@ -15276,8 +15294,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           loadR(e);
         }
       }, "Cargar"), /*#__PURE__*/React.createElement("button", {
-        className: "sdel",
-        onClick: () => delR(e.id)
+        className: "dash-sdel",
+        onClick: () => requireAdmin(delR)(e.id)
       }, "\u2715")));
     }));
   })())), tab === 'bitacora' && BitacoraSection(), confirmDlg && /*#__PURE__*/React.createElement(ConfirmModal, {
