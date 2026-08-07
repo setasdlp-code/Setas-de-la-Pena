@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6cf41f4dd84802a517fc333934bc4c71d3fdd143d2f7819c3cd4e9d74454145a
+// source-hash: d0870915954daeb37d44898f4fe4f3bbc9cf02ae87932af5d1a8bfaf17ffc0e1
 const {
   useState,
   useMemo,
@@ -6507,6 +6507,18 @@ function App(props) {
     tipo: 'plaza',
     municipio: ''
   });
+
+  // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
+  // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
+  React.useEffect(() => {
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showProvModal || catalogModalOpen);
+    if (!anyModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showProvModal, catalogModalOpen]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({
@@ -9159,7 +9171,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "Cosechado"))), /*#__PURE__*/React.createElement("div", {
       className: "inv-section"
     }, /*#__PURE__*/React.createElement("table", {
-      className: "inv-table"
+      className: "inv-table bolsas-table"
     }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
       scope: "col"
     }, "C\xF3digo"), /*#__PURE__*/React.createElement("th", {
@@ -9183,12 +9195,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return /*#__PURE__*/React.createElement("tr", {
         key: bolsa.id
       }, /*#__PURE__*/React.createElement("td", {
+        "data-label": "C\xF3digo",
         style: {
           fontFamily: 'var(--font-mono)',
           fontSize: 10,
           whiteSpace: 'nowrap'
         }
-      }, bolsa.codigo), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("select", {
+      }, bolsa.codigo), /*#__PURE__*/React.createElement("td", {
+        "data-label": "Estado"
+      }, /*#__PURE__*/React.createElement("select", {
         value: bolsa.estado,
         onChange: e => updateBitBolsa(bolsa.id, {
           estado: e.target.value
@@ -9207,8 +9222,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }, Object.entries(EB).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
         key: k,
         value: k
-      }, v.l)))), ['col25', 'col50', 'col100'].map(f => /*#__PURE__*/React.createElement("td", {
-        key: f
+      }, v.l)))), [['col25', 'Col 25%'], ['col50', 'Col 50%'], ['col100', 'Col 100%']].map(([f, lbl]) => /*#__PURE__*/React.createElement("td", {
+        key: f,
+        "data-label": lbl
       }, /*#__PURE__*/React.createElement("input", {
         type: "date",
         value: bolsa[f] || '',
@@ -9224,7 +9240,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
           borderRadius: 3,
           background: 'var(--paper-50)'
         }
-      }))), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("input", {
+      }))), /*#__PURE__*/React.createElement("td", {
+        "data-label": "Observaciones"
+      }, /*#__PURE__*/React.createElement("input", {
         type: "text",
         value: bolsa.observaciones || '',
         placeholder: "\u2026",
@@ -9241,6 +9259,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           background: 'var(--paper-50)'
         }
       })), /*#__PURE__*/React.createElement("td", {
+        "data-label": "Foto",
         style: {
           textAlign: 'center'
         }
@@ -9287,7 +9306,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
           }));
           e.target.value = '';
         }
-      }))), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
+      }))), /*#__PURE__*/React.createElement("td", {
+        "data-label": "Cosechas"
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           display: 'flex',
           alignItems: 'center',
@@ -14146,6 +14167,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       borderRadius: 'var(--r-sm)'
     }
   }, "\u26A0 ", balMsg, " \u2014 no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (\xB1", MASS_BALANCE_TOL, "%). Ajusta los porcentajes en el ", /*#__PURE__*/React.createElement("strong", null, "Formulador"), "."), /*#__PURE__*/React.createElement("div", {
+    className: "prod-batch-grid",
     style: {
       display: 'grid',
       gridTemplateColumns: '1fr 1fr 1fr 1.2fr 1fr auto',
