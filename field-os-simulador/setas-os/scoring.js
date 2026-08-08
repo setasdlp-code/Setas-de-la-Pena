@@ -195,43 +195,67 @@ const scoreRecipe = (an, ctx = {}) => {
   return { score, status, breakdown, weights, caps: SEVERITY_CAPS };
 };
 
+// ── detectSeverity: única fuente de las banderas críticas/warning ──
+// Antes eran dos copias manuales de las mismas 10 condiciones: una aquí
+// (assessSeverity, define los techos de score) y otra en generateOptimizer
+// en simulador-app.jsx (define qué ítems ve el usuario). Coincidían por
+// casualidad de mantenimiento, no por construcción — un umbral tocado en
+// un solo lado habría reproducido el mismo bug que ya se corrigió una vez
+// entre Perito y Optimizador, esta vez entre el score y su propia lista de
+// ítems. Ahora ambos consumidores llaman a esta función; generateOptimizer
+// solo decide QUÉ TEXTO/ACCIÓN mostrar por cada bandera en true, nunca
+// redefine la condición.
+const detectSeverity = (an) => {
+  const sp = an && an.sp;
+  if (!sp) return null;
+  const cnHigh = an.cn > sp.cn_optimal.max;
+  const cnLow = an.cn < sp.cn_optimal.min;
+  const nLow = an.avgN < sp.n_optimal.min;
+  const nHigh = an.avgN > sp.n_optimal.max && !an.trichoderma;
+  const trichoderma = !!an.trichoderma;
+  const phLow = !!(sp.ph_optimal && an.avgPh < sp.ph_optimal.min);
+  const phHigh = !!(sp.ph_optimal && an.avgPh > sp.ph_optimal.max);
+
+  const cnInRange = an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max;
+  const cnDist = Math.abs(an.cn - sp.cn_optimal.ideal) / Math.max(0.01, sp.cn_optimal.max - sp.cn_optimal.min);
+  const cnWarn = cnInRange && cnDist > 0.08;
+
+  const nInRange = an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max;
+  const nDist = Math.abs(an.avgN - sp.n_optimal.ideal) / Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);
+  const nWarn = nInRange && nDist > 0.1;
+
+  const ebWarn = an.eb < sp.eb_optimal * 0.95 && an.suppP < sp.supplementation_max - 3;
+
+  return { cnHigh, cnLow, nLow, nHigh, trichoderma, phLow, phHigh, cnWarn, nWarn, ebWarn, cnDist, nDist };
+};
+
 // ── assessSeverity: criticals/warnings derivables solo de an/sp ──
-// Réplica de las condiciones que generateOptimizer usa para marcar items
-// como 'critical'/'warning' (fuera de rango vs. dentro de rango pero lejos
-// del ideal), pero sin la búsqueda de ingredientes alternativos en el
-// catálogo — esa parte es asesoría para el usuario, no señal de severidad.
 // Deliberadamente NO replica la condición "hay un ingrediente en stock que
 // lo resuelva" que el aviso de EB sin explotar tenía en el código original:
 // aquí el hecho de que la receta esté por debajo de su EB potencial cuenta
 // como warning siempre, sin importar si hay un insumo a mano para corregirlo.
 const assessSeverity = (an) => {
-  const sp = an && an.sp;
-  if (!sp) return { criticals: 0, warnings: 0 };
+  const f = detectSeverity(an);
+  if (!f) return { criticals: 0, warnings: 0 };
   let criticals = 0;
   let warnings = 0;
 
-  if (an.cn > sp.cn_optimal.max) criticals++;
-  if (an.cn < sp.cn_optimal.min) criticals++;
-  if (an.avgN < sp.n_optimal.min) criticals++;
-  if (an.avgN > sp.n_optimal.max && !an.trichoderma) criticals++;
-  if (an.trichoderma) criticals++;
-  if (sp.ph_optimal && an.avgPh < sp.ph_optimal.min) criticals++;
-  if (sp.ph_optimal && an.avgPh > sp.ph_optimal.max) criticals++;
+  if (f.cnHigh) criticals++;
+  if (f.cnLow) criticals++;
+  if (f.nLow) criticals++;
+  if (f.nHigh) criticals++;
+  if (f.trichoderma) criticals++;
+  if (f.phLow) criticals++;
+  if (f.phHigh) criticals++;
 
-  const cnInRange = an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max;
-  const cnDist = Math.abs(an.cn - sp.cn_optimal.ideal) / (sp.cn_optimal.max - sp.cn_optimal.min);
-  if (cnInRange && cnDist > 0.08) warnings++;
-
-  const nInRange = an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max;
-  const nDist = Math.abs(an.avgN - sp.n_optimal.ideal) / Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);
-  if (nInRange && nDist > 0.1) warnings++;
-
-  if (an.eb < sp.eb_optimal * 0.95 && an.suppP < sp.supplementation_max - 3) warnings++;
+  if (f.cnWarn) warnings++;
+  if (f.nWarn) warnings++;
+  if (f.ebWarn) warnings++;
 
   return { criticals, warnings };
 };
 
-const api = { scoreRecipe, assessSeverity };
+const api = { scoreRecipe, assessSeverity, detectSeverity };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

@@ -544,6 +544,27 @@ const normalizeRecipe=(rec,lockedIds=[])=>{
   });
 };
 
+// Aplica un tope a un ingrediente DESPUÉS de normalizar (no antes): normalizeRecipe
+// reescala proporcionalmente usando el valor previo como peso, así que un clamp
+// aplicado antes de normalizar no sobrevive si ese ingrediente es el único (o
+// dominante) libre — la reescala lo vuelve a empujar por encima del tope. Aquí el
+// excedente se reparte solo entre los demás ingredientes libres; si no hay ninguno,
+// el excedente simplemente no se asigna (la receta queda <100%, visible en el score
+// de mass-balance, en vez de romper el tope en silencio).
+const capFreeIngredient=(rec,id,cap,lockedIds=[])=>{
+  const item=rec.find(r=>r.id===id);
+  if(!item||lockedIds.includes(id)||(parseFloat(item.p)||0)<=cap) return rec;
+  const excess=(parseFloat(item.p)||0)-cap;
+  const others=rec.filter(r=>r.id!==id&&!lockedIds.includes(r.id));
+  const othersSum=others.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
+  return rec.map(r=>{
+    if(r.id===id) return {...r,p:cap};
+    if(lockedIds.includes(r.id)||othersSum<=0) return r;
+    const add=excess*(parseFloat(r.p)||0)/othersSum;
+    return {...r,p:Math.round(((parseFloat(r.p)||0)+add)*10)/10};
+  });
+};
+
 // ── v13: calcMaxBatchFromStock — kg húmedos máximos producibles con bodega ──
 const calcMaxBatchFromStock=(recipe,stockMap,batchKgWet=10,hObj=65,ings=INGS)=>{
   const dry=batchKgWet*(1-hObj/100);
@@ -577,6 +598,10 @@ const quantifyItem=(item,recipe,sKey,ings,lockedIds)=>{
 const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedIds=[])=>{
   if(!an||!an.sp) return{score:0,status:'sin_receta',items:[]};
   const sp=an.sp;const items=[];
+  // flags: única fuente de qué es crítico/warning, compartida con assessSeverity
+  // (scoring.js) — ver comentario ahí. Este bloque solo decide texto/acción por
+  // cada bandera en true, nunca redefine la condición.
+  const flags=SetasScoring.detectSeverity(an);
   // Helper: mejor ingrediente en stock para un filtro+sort dados
   const bestStock=(filter,sortFn=(a,b)=>0)=>{
     const candidates=ings.filter(g=>g.cs.includes(sKey)&&filter(g)).sort(sortFn);
@@ -585,7 +610,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
   };
 
   // ── CRÍTICOS: fuera de rango ──
-  if(an.cn>sp.cn_optimal.max){
+  if(flags.cnHigh){
     const best=bestStock(g=>g.n>=1.5&&g.role!=='base_carbono',(a,b)=>b.n-a.n);
     const inRec=recipe?.find(r=>best&&r.id===best.id);
     items.push({priority:'critical',icon:'↓C:N',
@@ -595,7 +620,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
       apply:best?{mode:inRec?'increase':'add',id:best.id,delta:7}:null});
   }
-  if(an.cn<sp.cn_optimal.min){
+  if(flags.cnLow){
     const best=bestStock(g=>g.cn>60&&g.role==='base_carbono',(a,b)=>b.cn-a.cn);
     const inRec=recipe?.find(r=>best&&r.id===best.id);
     items.push({priority:'critical',icon:'↑C:N',
@@ -605,7 +630,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
       apply:best?{mode:inRec?'increase':'add',id:best.id,delta:8}:null});
   }
-  if(an.avgN<sp.n_optimal.min){
+  if(flags.nLow){
     const best=bestStock(g=>g.n>=2&&g.role!=='base_carbono',(a,b)=>a.cost-b.cost);
     const inRec=recipe?.find(r=>best&&r.id===best.id);
     items.push({priority:'critical',icon:'↑N',
@@ -615,7 +640,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`N ${an.avgN.toFixed(2)}% → objetivo >${sp.n_optimal.min}%`,
       apply:best?{mode:inRec?'increase':'add',id:best.id,delta:8}:null});
   }
-  if(an.avgN>sp.n_optimal.max&&!an.trichoderma){
+  if(flags.nHigh){
     const base=bestStock(g=>g.cn>80&&g.role==='base_carbono',(a,b)=>b.cn-a.cn);
     const suppInRec=recipe?.filter(r=>{const g=ings.find(i=>i.id===r.id);return g&&g.n>=2&&g.role!=='base_carbono';}) || [];
     items.push({priority:'critical',icon:'↓N',
@@ -625,14 +650,14 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`N ${an.avgN.toFixed(2)}% → objetivo <${sp.n_optimal.max}%`,
       apply:suppInRec.length>0?{mode:'decrease',id:suppInRec[0].id,delta:6}:(base?{mode:'increase',id:base.id,delta:8}:null)});
   }
-  if(an.trichoderma){
+  if(flags.trichoderma){
     items.push({priority:'critical',icon:'⚠',
       label:'Riesgo Trichoderma',
       action:'Esterilizar en autoclave 121°C × 90 min, o reducir N total por debajo del umbral',
       effect:`N crítico sin esterilización → EB cae ~85% · Trichoderma compite activamente con el micelio`,
       delta:'Acción inmediata requerida',apply:null});
   }
-  if(sp.ph_optimal&&an.avgPh<sp.ph_optimal.min){
+  if(flags.phLow){
     const best=bestStock(g=>g.ph>7.5,(a,b)=>b.ph-a.ph);
     items.push({priority:'critical',icon:'↑pH',
       label:'pH demasiado ácido',
@@ -641,7 +666,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min+sp.ph_optimal.max)/2).toFixed(1)}`,
       apply:best?{mode:'add',id:best.id,delta:2}:null});
   }
-  if(sp.ph_optimal&&an.avgPh>sp.ph_optimal.max){
+  if(flags.phHigh){
     const cafe=bestStock(g=>g.ph<6&&g.n>=0.5,(a,b)=>a.ph-b.ph);
     items.push({priority:'critical',icon:'↓pH',
       label:'pH demasiado alcalino',
@@ -652,8 +677,8 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
   }
 
   // ── MEJORAS: dentro de rango pero lejos del ideal ──
-  const cnDist=Math.abs(an.cn-sp.cn_optimal.ideal)/(sp.cn_optimal.max-sp.cn_optimal.min);
-  if(cnDist>0.08&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max){
+  const cnDist=flags.cnDist;
+  if(flags.cnWarn){
     const subir=an.cn>sp.cn_optimal.ideal;
     const ing=subir
       ? bestStock(g=>g.n>=1.5&&g.role!=='base_carbono',(a,b)=>b.n-a.n)
@@ -666,8 +691,8 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`+${Math.round(cnDist*15)}% EB estimada`,
       apply:{mode:inRec?'increase':'add',id:ing.id,delta:4}});
   }
-  const nDist=Math.abs(an.avgN-sp.n_optimal.ideal)/Math.max(0.01,sp.n_optimal.max-sp.n_optimal.min);
-  if(nDist>0.10&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max){
+  const nDist=flags.nDist;
+  if(flags.nWarn){
     const subir=an.avgN<sp.n_optimal.ideal;
     const ing=subir
       ? bestStock(g=>g.n>=2&&g.role!=='base_carbono',(a,b)=>a.cost-b.cost)
@@ -680,7 +705,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       delta:`N → ${sp.n_optimal.ideal}% (+EB)`,
       apply:{mode:subir?(inRec?'increase':'add'):'decrease',id:ing.id,delta:4}});
   }
-  if(an.eb<sp.eb_optimal*0.95&&an.suppP<sp.supplementation_max-3){
+  if(flags.ebWarn){
     const margen=sp.supplementation_max-an.suppP;
     const ing=bestStock(g=>g.n>=2&&g.role==='suplemento_n',(a,b)=>a.cost-b.cost);
     const inRec=recipe?.find(r=>ing&&r.id===ing.id);
@@ -2222,7 +2247,11 @@ function App(props){
     if(mode==='add'){
       if(existing){
         const curP=parseFloat(existing.p)||0;
-        return normalizeRecipe(rec.map(r=>r.id===id?{...r,p:Math.min(45,curP+delta)}:r),locked);
+        // Clamp DESPUÉS de normalizar — ver comentario en capFreeIngredient: si se
+        // clampea antes, la reescala proporcional de normalizeRecipe puede volver a
+        // empujar el valor por encima del tope cuando es el único ingrediente libre.
+        const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:curP+delta}:r),locked);
+        return capFreeIngredient(normalized,id,45,locked);
       } else {
         const free=rec.filter(r=>!locked.includes(r.id));
         const sumFree=free.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
@@ -2231,7 +2260,8 @@ function App(props){
       }
     } else if(mode==='increase'){
       const cur=existing?(parseFloat(existing.p)||0):0;
-      return normalizeRecipe(rec.map(r=>r.id===id?{...r,p:Math.min(60,cur+delta)}:r),locked);
+      const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:cur+delta}:r),locked);
+      return capFreeIngredient(normalized,id,60,locked);
     } else if(mode==='decrease'){
       const cur=existing?(parseFloat(existing.p)||0):0;
       return normalizeRecipe(rec.map(r=>r.id===id?{...r,p:Math.max(0,cur-delta)}:r).filter(r=>r.p>0.1),locked);
