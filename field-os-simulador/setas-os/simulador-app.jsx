@@ -914,8 +914,8 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
         <div key={st.n} style={{display:'flex',gap:14,marginBottom:12,paddingBottom:12,borderBottom:'1px solid var(--paper-300)'}}>
           <div style={{fontFamily:"var(--font-num)",fontSize:28,fontWeight:300,color:'var(--coral-500)',lineHeight:1,minWidth:32,paddingTop:2}}>{st.n}</div>
           <div>
-            <div style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:4}}>{st.t}</div>
-            <div style={{fontSize:13,color:'var(--ink-700)',lineHeight:1.55}}>{st.d}</div>
+            <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:4}}>{st.t}</div>
+            <div style={{fontSize:"var(--text-base)",color:'var(--ink-700)',lineHeight:1.55}}>{st.d}</div>
           </div>
         </div>
       ))}
@@ -977,14 +977,14 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
       <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
       <RadarSVG size={600}/>
-      <div style={{fontFamily:'var(--font-body)',fontSize:14,color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
+      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
     </div>
   );
   
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--space-5) 0 var(--space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'var(--space-2) var(--space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'.04em'}}>⛶ Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--space-2) var(--space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
     </div>
   );
 };
@@ -1002,7 +1002,7 @@ const NitrogenChart=({recipe})=>{
   const PAL=['var(--coral-700)','var(--accent-olive)','var(--ochre-600)','var(--accent-blue-grey)','var(--accent-terracotta)','var(--moss-700)','var(--ochre-500)','var(--slate-600,var(--accent-blue-grey))','var(--coral-700)','var(--moss-500)'];
   return(
     <div style={{marginBottom:20,background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'14px 16px'}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Contribución de Nitrógeno por ingrediente</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Contribución de Nitrógeno por ingrediente</div>
       <div style={{height:18,display:'flex',borderRadius:2,overflow:'hidden',marginBottom:11,border:'1px solid rgba(0,0,0,.07)'}}>
         {items.map((it,i)=>(
           <div key={i} title={`${it.name}: ${((it.contrib/total)*100).toFixed(1)}% del N total`}
@@ -1013,13 +1013,13 @@ const NitrogenChart=({recipe})=>{
         {items.map((it,i)=>(
           <div key={i} style={{display:'flex',alignItems:'center',gap:5}}>
             <div style={{width:9,height:9,background:PAL[i%PAL.length],flexShrink:0,border:'1px solid rgba(0,0,0,.1)'}}/>
-            <span style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-700)',fontWeight:500}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>
               {it.name.length>22?it.name.slice(0,22)+'…':it.name}&nbsp;<strong style={{color:'var(--ink-900)'}}>{((it.contrib/total)*100).toFixed(1)}%</strong>
             </span>
           </div>
         ))}
       </div>
-      <div style={{marginTop:9,fontFamily:"var(--font-mono)",fontSize:10,color:'var(--ink-600)',borderTop:'1px solid var(--paper-300)',paddingTop:7}}>
+      <div style={{marginTop:9,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-600)',borderTop:'1px solid var(--paper-300)',paddingTop:7}}>
         N absoluto en sustrato: {total.toFixed(3)} g/100g (masa seca)
       </div>
     </div>
@@ -1042,8 +1042,8 @@ const FlushChart=({an})=>{
     <div style={{marginBottom:16,background:'var(--paper-50,var(--paper-100))',border:'1px solid var(--border-soft)',overflow:'hidden'}}>
       {/* Header */}
       <div style={{padding:'10px 14px 8px',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-        <span style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.22em',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas</span>
-        <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-600)',fontWeight:700}}>EB {ebLow}–{ebHigh}%</span>
+        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas</span>
+        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:700}}>EB {ebLow}–{ebHigh}%</span>
       </div>
       {/* Flush columns */}
       <div style={{display:'flex',gap:0}}>
@@ -1053,23 +1053,23 @@ const FlushChart=({an})=>{
           return(
             <div key={i} style={{flex:1,borderRight:i<2?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
               {/* ordinal label */}
-              <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
+              <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
               {/* big number */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:f.color,letterSpacing:'-.02em'}}>{val.toFixed(0)}<span style={{fontSize:13,fontWeight:400,opacity:.7}}>%</span></div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:f.color,letterSpacing:'var(--tracking-tight)'}}>{val.toFixed(0)}<span style={{fontSize:"var(--text-base)",fontWeight:400,opacity:.7}}>%</span></div>
               {/* kg/kg */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',letterSpacing:'.04em'}}>{(val/100).toFixed(2)} kg/kg</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',letterSpacing:'var(--tracking-label)'}}>{(val/100).toFixed(2)} kg/kg</div>
               {/* bar visual */}
               <div style={{width:'100%',marginTop:6,height:4,background:'rgba(0,0,0,.07)',borderRadius:2,overflow:'hidden'}}>
                 <div style={{height:'100%',width:`${(f.pct/maxPct)*100}%`,background:f.color,borderRadius:2,transition:'width .6s cubic-bezier(.4,0,.2,1)'}}/>
               </div>
               {/* days */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)',marginTop:1}}>{f.days}</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',marginTop:1}}>{f.days}</div>
             </div>
           );
         })}
       </div>
       {/* Footer */}
-      <div style={{padding:'6px 14px',borderTop:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)',background:'var(--paper-100)'}}>
+      <div style={{padding:'6px 14px',borderTop:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',background:'var(--paper-100)'}}>
         Distribución 55/30/15% · ±{Math.round((ebHigh-ebLow)/2/eb*100)}% incertidumbre · por kg sustrato seco
       </div>
     </div>
@@ -1093,7 +1093,7 @@ const CompositionChart=({recipe})=>{
   const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
   return(
     <div style={{marginBottom:16,padding:'14px 16px',background:'var(--paper-100)',border:'1px solid var(--border-soft)'}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Composición por función</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Composición por función</div>
       <div style={{height:18,display:'flex',borderRadius:2,overflow:'hidden',border:'1px solid rgba(0,0,0,.07)',marginBottom:10}}>
         {entries.map(([role,val],i)=>(
           <div key={i} title={`${ROLE_LABELS[role]||role}: ${val.toFixed(1)}%`}
@@ -1104,7 +1104,7 @@ const CompositionChart=({recipe})=>{
         {entries.map(([role,val],i)=>(
           <div key={i} style={{display:'flex',alignItems:'center',gap:5}}>
             <div style={{width:9,height:9,background:ROLE_COLORS[role]||'var(--ink-2)',flexShrink:0,border:'1px solid rgba(0,0,0,.1)'}}/>
-            <span style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-700)',fontWeight:500}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>
               {ROLE_LABELS[role]||role}&nbsp;<strong style={{color:'var(--ink-900)'}}>{val.toFixed(1)}%</strong>
             </span>
           </div>
@@ -1143,10 +1143,10 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
     <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
       <div style={{width:20,height:4,borderRadius:2,background:band,flexShrink:0}}/>
       <span style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
-        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
-        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.12em',textTransform:'uppercase',color:band,opacity:.8}}>ver ▼</span>
+        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
+        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:band,opacity:.8}}>ver ▼</span>
       </span>
-      <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:15,color:`color-mix(in oklab,${band} 85%,var(--ink-900))`}}>{sp.name}</span>
+      <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:`color-mix(in oklab,${band} 85%,var(--ink-900))`}}>{sp.name}</span>
     </div>
   );
 
@@ -1164,17 +1164,17 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
             <span className="p-arch-code">{code}</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
-            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-400)'}}>▲</span>
+            <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>▲</span>
           </div>
         </div>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
           {img&&<img src={img} alt={sp.name} style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
           <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
-            <div style={{fontFamily:'var(--font-sci)',fontSize:11,fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'.01em'}}>{sp.scientific}</div>
-            <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'-.02em',marginBottom:open?8:0}}>{sp.name}</div>
-            {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:11,color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
+            <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
+            <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
+            {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
           </div>
         </div>
         {open&&(
@@ -1226,19 +1226,19 @@ const SpeciesRecommender=({recipe})=>{
   const bandColors=Object.fromEntries(Object.entries(BANDS));
   return(
     <div style={{padding:'14px 16px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',marginBottom:16}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Compatibilidad por especie</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Compatibilidad por especie</div>
       {scores.map(({key,sp,score,eb},i)=>{
         const col=bandColors[key]||'var(--ink-2)';
         return(
           <div key={key} className="spr-row">
             <div className="spr-rank">{i+1}</div>
             <div style={{width:10,height:10,background:col,borderRadius:'50%',flexShrink:0}}/>
-            <div style={{flex:1,fontFamily:"var(--font-body)",fontSize:12,color:'var(--ink-900)'}}>{sp.name}</div>
+            <div style={{flex:1,fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",color:'var(--ink-900)'}}>{sp.name}</div>
             <div className="spr-bar">
               <div className="spr-fill" style={{width:`${maxScore>0?(score/maxScore)*100:0}%`,background:col}}/>
             </div>
             <div className="spr-score" style={{color:i===0?col:'var(--ink-900)'}}>{score}</div>
-            <div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--border-soft)',minWidth:48,textAlign:'right'}}>EB {eb.toFixed(0)}%</div>
+            <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',minWidth:48,textAlign:'right'}}>EB {eb.toFixed(0)}%</div>
           </div>
         );
       })}
@@ -1462,8 +1462,8 @@ const PeritoItem=React.memo(({item,onApply})=>(
       </div>
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
-      {item.why&&<div style={{fontSize:11,color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
-      {item.riskIfIgnored&&<div style={{fontSize:11,color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+      {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
+      {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
     </div>
     <div className="pi-actions">
       {item.apply
@@ -1478,7 +1478,7 @@ const ConfirmModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div className="inv-modal" style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
-      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
         <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
         <button onClick={()=>{dlg.onConfirm();onClose();}} className={`inv-btn ${dlg.danger?'inv-btn-danger':'inv-btn-pri'}`}>{dlg.confirmLabel||'Confirmar'}</button>
@@ -1507,7 +1507,7 @@ const NoticeModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div className="inv-modal" style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
-      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',justifyContent:'flex-end'}}>
         <button onClick={onClose} className="inv-btn inv-btn-pri">Aceptar</button>
       </div>
@@ -1682,7 +1682,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
         color="var(--accent-olive)" warnColor="#A8432A"/>
-      <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
       <BandGauge label="N" unit="%"
         min={sp.n_optimal.min} max={sp.n_optimal.max} ideal={sp.n_optimal.ideal}
         value={an.avgN} scaleMin={0} scaleMax={3.5}
@@ -1693,14 +1693,14 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
         reference={optimalAn?Math.round(optimalAn.eb):null}
         scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10)}
         color="#A8432A" warnColor="var(--accent-terracotta)"/>
-      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {an.ebLow}–{an.ebHigh}% · índice {an.ebIndex}/100 · la aguja es el valor central</div>}
+      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {an.ebLow}–{an.ebHigh}% · índice {an.ebIndex}/100 · la aguja es el valor central</div>}
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft, #ddd)')}}>
         {hasHist?(
-          <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-800,#333)',lineHeight:1.5}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800,#333)',lineHeight:1.5}}>
             <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
           </div>
         ):(
-          <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-700,#666)',lineHeight:1.5}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700,#666)',lineHeight:1.5}}>
             Estimación teórica — sin lotes previos de {sp.name} en el registro para proyectar EB real.
           </div>
         )}
@@ -1850,17 +1850,18 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState('inicio');
-  const TAB_LABELS={inicio:'Inicio',catalogo:'Especies',formular:'Formular',optimizar:'Generar',inventario:'Bodega',produccion:'Ficha',schedule:'Cronograma',dashboard:'Dashboard',bitacora:'Bitácora'};
+  const TAB_LABELS={inicio:'Inicio',catalogo:'Especies',formular:'Formular',inventario:'Bodega',produccion:'Ficha',schedule:'Cronograma',dashboard:'Dashboard',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Recetas',tabs:['catalogo','formular','optimizar'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'recetas',label:'Recetas',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
   ];
-  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',optimizar:'Generador de recetas',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
   const [mode,setMode]=useState('receta');
-  const RECETA_TABS=['catalogo','formular','optimizar'];
+  const RECETA_TABS=['catalogo','formular'];
   const CULTIVO_TABS=['inventario','produccion','schedule','dashboard','bitacora'];
-  const goTab=t=>{setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');};
+  const TAB_ALIASES={optimizar:'formular'};
+  const goTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');};
   useEffect(()=>{ if(props.tab) goTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
@@ -1935,7 +1936,7 @@ function App(props){
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
   const [formularMode,setFormularMode]=useState('auto');
-  const [showOptimizer,setShowOptimizer]=useState(()=>typeof window!=='undefined'?window.innerWidth>900:true);
+  const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
   const [loadedFlash,setLoadedFlash]=useState(false);
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
@@ -2007,19 +2008,19 @@ function App(props){
   };
 
   const eliminarIngrediente=(ingredienteId,nombre)=>{
-    // MODAL: eliminar stock
-    if(!window.confirm(`¿Eliminar todo el stock de "${nombre}"?\n\nEsto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`)) return;
-    setInvLotes(prev=>{
-      const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
-      return upd;
-    });
-    // Limpiar pantry
-    try{
-      const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
-      delete pantry[ingredienteId];
-      localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
-    }catch(e){}
+    setConfirmDlg({title:'Eliminar stock',msg:`¿Eliminar todo el stock de "${nombre}"?\n\nEsto marcará los lotes como inactivos. Los movimientos e historial de compras se conservan.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
+      setInvLotes(prev=>{
+        const upd=prev.map(l=>l.ingredienteId===ingredienteId?{...l,activo:false}:l);
+        try{localStorage.setItem('sdp_lotes',JSON.stringify(upd));}catch(e){}
+        return upd;
+      });
+      // Limpiar pantry
+      try{
+        const pantry=JSON.parse(localStorage.getItem('sdp_pantry')||'{}');
+        delete pantry[ingredienteId];
+        localStorage.setItem('sdp_pantry',JSON.stringify(pantry));
+      }catch(e){}
+    }});
   };
   // Compatibilidad legacy (usada en botón "Agregar ingrediente al stock")
   const saveStockEdit=(ingredienteId,nuevoKg)=>{
@@ -2236,7 +2237,7 @@ function App(props){
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
     const el=document.querySelector('.prod-sheet');
-    if(!el){alert('Genera la hoja primero (debe haber una receta activa).');return;}
+    if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
     const fecha=prodDate||new Date().toISOString().slice(0,10);
@@ -2277,7 +2278,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 <body>${el.outerHTML}</body></html>`;
     const pw=window.open('','_blank','width=900,height=1100');
     if(!pw){
-      alert('El navegador bloqueó la ventana emergente.\nPermite pop-ups para este sitio e inténtalo de nuevo.\n(Ícono en la barra de direcciones → Permitir pop-ups)');
+      setNoticeDlg({msg:'El navegador bloqueó la ventana emergente.\nPermite pop-ups para este sitio e inténtalo de nuevo.\n(Ícono en la barra de direcciones → Permitir pop-ups)'});
       return;
     }
     pw.document.open();
@@ -2377,12 +2378,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const addBitCosecha=(cosecha)=>{setBitCosechas(prev=>{const upd=[...prev,{...cosecha,id:'COS_'+Date.now()}];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});};
   const deleteBitCosecha=(id)=>{setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});};
   const deleteBitLote=(loteId)=>{
-    // MODAL: delete batch
-    if(!window.confirm('¿Eliminar este lote y todas sus bolsas y cosechas?')) return;
-    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-    if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
+    setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas?',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
+      setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
+      setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+      setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
+    }});
   };
   const calcLoteStats=(loteId)=>{
     const lote=bitLotes.find(lt=>lt.id===loteId);if(!lote) return null;
@@ -2449,8 +2450,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowProvModal(false);
   };
 
-  const eliminarProveedor=id=>{// MODAL: delete provider
-    if(!window.confirm('¿Eliminar proveedor?')) return;saveProveedores(invProveedores.filter(p=>p.id!==id));};
+  const eliminarProveedor=id=>{
+    setConfirmDlg({title:'Eliminar proveedor',msg:'¿Eliminar proveedor?',danger:true,confirmLabel:'Eliminar',onConfirm:()=>saveProveedores(invProveedores.filter(p=>p.id!==id))});
+  };
 
   const addCmpItem=()=>setCmpItems(prev=>[...prev,{uid:Date.now(),ingId:'',kg:'',precio:''}]);
   const updCmpItem=(uid,field,val)=>setCmpItems(prev=>prev.map(it=>it.uid===uid?{...it,[field]:val}:it));
@@ -2499,7 +2501,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const registrarCompra=()=>{
     const valid=cmpItems.filter(it=>it.ingId&&parseFloat(it.kg)>0);
-    if(!cmpProvId||valid.length===0){alert('Selecciona proveedor y agrega al menos un ítem.');return;}
+    if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Selecciona proveedor y agrega al menos un ítem.'});return;}
     const cId='compra_'+Date.now();
     const nuevaCompra={id:cId,fecha:cmpFecha,proveedorId:cmpProvId,
       items:valid.map(it=>({ingredienteId:it.ingId,kg:parseFloat(it.kg),precio:parseFloat(it.precio)||0})),
@@ -2609,7 +2611,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {(()=>{
                     const ingIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
                     if(!ingIds.length) return(
-                      <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:12,color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
                         Sin inventario.
                         <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
                       </div>
@@ -2625,7 +2627,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const prov=invProveedores.find(p=>p.id===provId);
                       return{id,name:g?.name||id,stock,pp,prov,dotColor,alertaMin,provId};
                     }).sort((a,b)=>b.stock-a.stock);
-                    const INP={fontFamily:'var(--font-mono)',fontSize:12,border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
+                    const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
                       <div className="inv-section">
                         <table className="inv-table">
@@ -2646,9 +2648,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               return(
                                 <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
                                   {/* INGREDIENTE */}
-                                  <td style={{fontFamily:"var(--font-body)",fontSize:13,minWidth:160}}>
+                                  <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
                                     {isEditing?(
-                                      <select value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:11}}>
+                                      <select value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
                                       </select>
                                     ):(
@@ -2656,7 +2658,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* STOCK */}
-                                  <td style={{fontFamily:"var(--font-num)",fontSize:15,fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                  <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
                                     {isEditing?(
                                       <input autoFocus type="number" min="0" step="0.5"
                                         value={editingRowData.stock}
@@ -2682,9 +2684,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* PROVEEDOR */}
-                                  <td style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:12,minWidth:130}}>
+                                  <td style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
                                     {isEditing?(
-                                      <select value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:11}}>
+                                      <select value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         <option value="">Sin especificar</option>
                                         {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                                       </select>
@@ -2702,16 +2704,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         placeholder="kg"
                                       />
                                     ):(
-                                      <span style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
+                                      <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
                                     )}
                                   </td>
                                   {/* ESTADO */}
                                   <td>
                                     {r.stock<r.alertaMin
-                                      ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:10,fontWeight:700}}>Crítico</span>
+                                      ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                       :r.stock<r.alertaMin*2.5
-                                        ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:10}}>Bajo</span>
-                                        :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:10}}>OK</span>}
+                                        ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
+                                        :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                   </td>
                                   {/* ACCIONES */}
                                   <td>
@@ -2761,7 +2763,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setShowAddStockForm(false);setAddStockId('');setAddStockKg('');}}>Cancelar</button>
                       </div>
                     )}
-                    <span style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--border-soft)'}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>
                       ≥5 kg · 2–5 kg · &lt;2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar.
                     </span>
                   </div>
@@ -2774,19 +2776,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {cmpConfirm?(
                     <div>
                       <div style={{padding:'14px 16px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',marginBottom:14}}>
-                        <div style={{fontFamily:"var(--font-mono)",fontSize:12,fontWeight:700,color:'var(--ink-800)',marginBottom:2}}>✓ Compra registrada</div>
-                        <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2}}>✓ Compra registrada</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                       </div>
                       <div className="inv-section" style={{marginBottom:14}}>
                         {cmpConfirm.items.map((it,i)=>(
                           <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',borderBottom:i<cmpConfirm.items.length-1?'1px solid var(--border-soft)':'none'}}>
                             <div>
-                              <div style={{fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,color:'var(--ink-800)'}}>{it.nombre}</div>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--ink-500)'}}>+{it.kgComprado} kg comprados</div>
+                              <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",fontWeight:600,color:'var(--ink-800)'}}>{it.nombre}</div>
+                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>+{it.kgComprado} kg comprados</div>
                             </div>
                             <div style={{textAlign:'right'}}>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:14,fontWeight:700,color:'var(--accent-olive)'}}>{it.stockNuevo.toFixed(1)} kg</div>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:'var(--border-soft)'}}>stock actual</div>
+                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-base)",fontWeight:700,color:'var(--accent-olive)'}}>{it.stockNuevo.toFixed(1)} kg</div>
+                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>stock actual</div>
                             </div>
                           </div>
                         ))}
@@ -2805,15 +2807,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
                       <input type="file" accept="image/*" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
                       <button className="inv-btn inv-btn-pri inv-btn-sm" disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':'📷 Tomar foto / subir recibo'}</button>
-                      <div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--border-soft)',marginTop:8}}>La foto se lee y llena los ítems abajo — revisa antes de registrar.</div>
-                      {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto se lee y llena los ítems abajo — revisa antes de registrar.</div>
+                      {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
                   {cmpMode==='texto'&&(
                     <div style={{marginBottom:16}}>
                       <textarea className="inv-input" rows="4" style={{width:'100%',resize:'vertical',fontFamily:"var(--font-body)"}} placeholder="Pega aquí el mensaje o correo del proveedor…" value={cmpPasteText} onChange={e=>setCmpPasteText(e.target.value)}/>
                       <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':'Interpretar texto'}</button>
-                      {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
+                      {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
 
@@ -2842,29 +2844,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     return(
                     <div key={it.uid} style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',padding:'10px 12px',marginBottom:8,background:'var(--paper-50)'}}>
                       <div style={{display:'flex',gap:8,marginBottom:8}}>
-                        <select className="inv-input" style={{flex:1,fontSize:12}} value={it.ingId} onChange={e=>updCmpItem(it.uid,'ingId',e.target.value)}>
+                        <select className="inv-input" style={{flex:1,fontSize:"var(--text-sm)"}} value={it.ingId} onChange={e=>updCmpItem(it.uid,'ingId',e.target.value)}>
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(gg=>(<option key={gg.id} value={gg.id}>{gg.name}</option>))}
                         </select>
                         <button className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1}>✕</button>
                       </div>
-                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--coral-500)',marginBottom:8}}>⚠ Sin coincidencia automática — elige el ingrediente.</div>}
+                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8}}>⚠ Sin coincidencia automática — elige el ingrediente.</div>}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:4}}>
                           <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))}>−</button>
-                          <input type="number" className="inv-input" style={{width:64,textAlign:'center',fontSize:12}} min="0" step="0.5" value={it.kg} onChange={e=>updCmpItem(it.uid,'kg',e.target.value)} placeholder="kg"/>
+                          <input type="number" className="inv-input" style={{width:64,textAlign:'center',fontSize:"var(--text-sm)"}} min="0" step="0.5" value={it.kg} onChange={e=>updCmpItem(it.uid,'kg',e.target.value)} placeholder="kg"/>
                           <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String((parseFloat(it.kg)||0)+1))}>＋</button>
-                          <span style={{fontFamily:"var(--font-mono)",fontSize:10,color:'var(--ink-500)'}}>kg</span>
+                          <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>kg</span>
                         </div>
-                        <input type="number" className="inv-input" style={{width:90,fontSize:12}} min="0" step="100" value={it.precio} onChange={e=>updCmpItem(it.uid,'precio',e.target.value)} placeholder="$/kg"/>
-                        <span style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-700)',marginLeft:'auto',whiteSpace:'nowrap'}}>${((parseFloat(it.kg)||0)*(parseFloat(it.precio)||0)).toLocaleString('es-CO')}</span>
+                        <input type="number" className="inv-input" style={{width:90,fontSize:"var(--text-sm)"}} min="0" step="100" value={it.precio} onChange={e=>updCmpItem(it.uid,'precio',e.target.value)} placeholder="$/kg"/>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',marginLeft:'auto',whiteSpace:'nowrap'}}>${((parseFloat(it.kg)||0)*(parseFloat(it.precio)||0)).toLocaleString('es-CO')}</span>
                       </div>
                     </div>
                   );})}
 
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
                     <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={addCmpItem}>＋ Agregar ítem</button>
-                    <span style={{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:700,color:'var(--ink-800)'}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)'}}>
                       Total: ${cmpItems.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0).toLocaleString('es-CO')} COP
                     </span>
                   </div>
@@ -2882,7 +2884,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='historial'&&(
                 <div>
                   {invCompras.length===0
-                    ?<div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:12,color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    ?<div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
                         Sin compras registradas.
                         <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
                       </div>
@@ -2904,7 +2906,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
                                 <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
-                                <span style={{fontFamily:"var(--font-mono)",fontSize:12,color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
+                                <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
                               </div>
                             </div>
                             {!collapsed&&(
@@ -2921,17 +2923,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     return(
                                       <tr key={c.id}>
                                         <td>{c.fecha}</td>
-                                        <td style={{fontFamily:"var(--font-body)",fontSize:12}}>{prov?.nombre||c.proveedorId}</td>
+                                        <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-sm)"}}>{prov?.nombre||c.proveedorId}</td>
                                         <td>
                                           <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                                             {c.items.map((it,i)=>{
                                               const g=INGS.find(x=>x.id===it.ingredienteId);
-                                              return<span key={i} style={{fontFamily:"var(--font-mono)",fontSize:9,padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)',borderRadius:2}}>{g?.name||it.ingredienteId} {it.kg}kg</span>;
+                                              return<span key={i} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)',borderRadius:2}}>{g?.name||it.ingredienteId} {it.kg}kg</span>;
                                             })}
                                           </div>
                                         </td>
-                                        <td style={{fontFamily:"var(--font-num)",fontSize:14,color:'var(--coral-700)'}}>${tot.toLocaleString('es-CO')}</td>
-                                        <td style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
+                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--coral-700)'}}>${tot.toLocaleString('es-CO')}</td>
+                                        <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
                                       </tr>
                                     );
                                   })}
@@ -2953,7 +2955,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className="inv-btn inv-btn-pri" onClick={()=>setShowProvModal(true)}>＋ Agregar proveedor</button>
                   </div>
                   {invProveedores.length===0
-                    ?<div style={{textAlign:'center',padding:24,fontFamily:"var(--font-mono)",fontSize:12,color:'var(--border-soft)'}}>Sin proveedores. Agrega el primero.</div>
+                    ?<div style={{textAlign:'center',padding:24,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>Sin proveedores. Agrega el primero.</div>
                     :<div className="inv-section">
                       {invProveedores.map(p=>(
                         <div key={p.id} className="prov-row">
@@ -3013,22 +3015,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     disabled={k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId}
                     style={{opacity:k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId?0.4:1}}>{label}</button>
                 ))}
-                {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
+                {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
               </div>
             </div>
 
             {bitTab==='bit_dash'&&(
               <div className="panel">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                  <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes experimentales <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
+                  <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes experimentales <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
                   <div style={{display:'flex',gap:6}}>
-                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,cursor:'pointer',transition:'all .12s'}}>⊞ Cuadrícula</button>
-                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,cursor:'pointer',transition:'all .12s'}}>≡ Tabla</button>
+                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>⊞ Cuadrícula</button>
+                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>≡ Tabla</button>
                     <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
                 {bitLotes.length>0&&(()=>{const allStats=bitLotes.map(lt=>({lt,s:calcLoteStats(lt.id)}));const wd=allStats.filter(x=>x.s&&x.s.totalFresco>0);const avgBE=wd.length?wd.reduce((s,x)=>s+(x.s.be||0),0)/wd.length:null;const ws=allStats.filter(x=>x.s);const avgCont=ws.length?ws.reduce((s,x)=>s+(x.s.contPct||0),0)/ws.length:null;const totalKg=allStats.reduce((s,x)=>s+(x.s?.totalFresco||0),0);return(<div className="inv-stat-row" style={{marginBottom:16}}><div className="inv-stat"><div className="inv-stat-val">{bitLotes.length}</div><div className="inv-stat-lbl">Lotes</div></div><div className="inv-stat"><div className="inv-stat-val">{avgBE!=null?avgBE.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE media</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:avgCont!=null&&avgCont>15?'var(--coral-700)':'inherit'}}>{avgCont!=null?avgCont.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">Contam. media</div></div><div className="inv-stat"><div className="inv-stat-val">{totalKg.toFixed(2)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>);})()} 
-                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:13,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
+                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
                 {bitLotes.length>0&&bitDashView==='grid'&&(
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
                     {bitLotes.map(lote=>{
@@ -3042,21 +3044,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         >
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
-                              <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
-                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:14,color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
-                              {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:12,color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-base)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
+                              {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
                             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:9,padding:'2px 7px',borderRadius:10,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'.06em'}}>{lote.estado}</span>
-                              {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)'}}>/100</span></span>}
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
+                              {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>/100</span></span>}
                             </div>
                           </div>
                           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
-                            {[['Sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['BE',stats?.be!=null?stats.be.toFixed(0)+'%':'—'],['Cosecha',stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'8px 4px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:2}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:15,color:'var(--ink-900)'}}>{v}</div></div>))}
+                            {[['Sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['BE',stats?.be!=null?stats.be.toFixed(0)+'%':'—'],['Cosecha',stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'8px 4px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:2}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{v}</div></div>))}
                           </div>
                           <div style={{padding:'6px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-500)'}}>{lote.fechaInoculacion}</span>
-                            {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:9,padding:'2px 7px',borderRadius:10,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)'}}>sin veredicto</span>}
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.fechaInoculacion}</span>
+                            {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>sin veredicto</span>}
                           </div>
                         </div>
                       );
@@ -3067,7 +3069,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:11,whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:11}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:9,padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:9,padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitLote(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitLote(lote.id)}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3083,16 +3085,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-500)'}}>{lote.codigo}</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{lote.codigo}</div>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:17,color:'var(--ink-900)'}}>{lote.especie}</div>
-                      {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:12,color:'var(--ink-600)'}}>{lote.especieCientifico}</div>}
+                      {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{lote.especieCientifico}</div>}
                     </div>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      <select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:12,padding:'6px 10px'}}>
+                      <select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
                       </select>
-                      <select value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:12,padding:'6px 10px'}}>
+                      <select value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         {['incubacion','fructificacion','completado','descartado'].map(st=><option key={st} value={st}>{st}</option>)}
                       </select>
                     </div>
@@ -3101,7 +3103,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th></tr></thead>
-                      <tbody>{bolsas.map(bolsa=>{const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);const est=EB[bolsa.estado]||EB.sana;return(<tr key={bolsa.id}><td style={{fontFamily:'var(--font-mono)',fontSize:10,whiteSpace:'nowrap'}}>{bolsa.codigo}</td><td><select value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:10,border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>{Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select></td>{['col25','col50','col100'].map(f=>(<td key={f}><input type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:9,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td>))}<td><input type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:11,border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td><td style={{textAlign:'center'}}>{bolsa.foto?<img src={bolsa.foto} alt="" style={{width:28,height:28,objectFit:'cover',borderRadius:3,cursor:'pointer',display:'block',margin:'0 auto'}} onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} title="Clic para quitar"/>:<label style={{cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:9,color:'var(--coral-500)',textDecoration:'underline',display:'block',textAlign:'center'}}>+foto<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(!f) return;const r=new FileReader();r.onload=ev=>updateBitBolsa(bolsa.id,{foto:ev.target.result});r.readAsDataURL(f);}}/></label>}</td><td><div style={{display:'flex',alignItems:'center',gap:5}}><span style={{fontFamily:'var(--font-num)',fontSize:13}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button></div></td></tr>);})}</tbody>
+                      <tbody>{bolsas.map(bolsa=>{const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);const est=EB[bolsa.estado]||EB.sana;return(<tr key={bolsa.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td><td><select value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>{Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select></td>{['col25','col50','col100'].map(f=>(<td key={f}><input type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td>))}<td><input type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td><td style={{textAlign:'center'}}>{bolsa.foto?<img src={bolsa.foto} alt="" style={{width:28,height:28,objectFit:'cover',borderRadius:3,cursor:'pointer',display:'block',margin:'0 auto'}} onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} title="Clic para quitar"/>:<label style={{cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',textDecoration:'underline',display:'block',textAlign:'center'}}>+foto<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(!f) return;const r=new FileReader();r.onload=ev=>updateBitBolsa(bolsa.id,{foto:ev.target.result});r.readAsDataURL(f);}}/></label>}</td><td><div style={{display:'flex',alignItems:'center',gap:5}}><span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 </div>
@@ -3119,9 +3121,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Cosechas — {lote.codigo}</div>
                     <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');setBitCosechaForm({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
                   </div>
-                  {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
-                  {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:12,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
-                  {cosechas.length>0&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Bolsa</th><th>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th>Calidad</th><th>Observaciones</th><th></th></tr></thead><tbody>{cosechas.map(c=>(<tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:11}}>{c.codigo}</td><td style={{fontFamily:'var(--font-num)',fontSize:14,textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:11}}>{c.fecha}</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:14}}>{c.pesoFresco}</td><td style={{textAlign:'center',fontSize:12}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:12,color:'var(--ink-600)'}}>{c.observaciones}</td><td><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitCosecha(c.id)}>✕</button></td></tr>))}<tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:12,padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr></tbody></table></div>)}
+                  {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
+                  {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
+                  {cosechas.length>0&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Bolsa</th><th>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th>Calidad</th><th>Observaciones</th><th></th></tr></thead><tbody>{cosechas.map(c=>(<tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.codigo}</td><td style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.fecha}</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td><td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td><td><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitCosecha(c.id)}>✕</button></td></tr>))}<tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)",fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr></tbody></table></div>)}
                 </div>
               );
             })()}
@@ -3131,8 +3133,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               return(
                 <div className="panel">
                   <div className="sec">Comparador de recetas</div>
-                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:12,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Necesitas al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
-                  {lotesConDatos.length>=2&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Lote / Receta</th><th>Especie</th><th style={{textAlign:'right'}}>Contam.</th><th style={{textAlign:'right'}}>Días col.</th><th style={{textAlign:'right'}}>BE</th><th style={{textAlign:'right'}}>kg/bolsa</th><th style={{textAlign:'right'}}>Costo/kg</th><th style={{textAlign:'center'}}>Score</th><th>Veredicto</th></tr></thead><tbody>{lotesConDatos.map(lote=>{const stats=calcLoteStats(lote.id);const score=calcLoteScore(stats);const VC={'prometedora':'var(--moss-500)','descartar':'var(--coral-700)','buena para escalar':'var(--moss-700)','riesgo contaminación':'var(--ochre-500)','repetir':'var(--ink-600)','ajustar humedad':'var(--ochre-600)'};return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:11}}><div style={{fontWeight:700,color:'var(--ink-900)'}}>{lote.codigo}</div>{lote.recipeRef&&<div style={{fontSize:9,color:'var(--ink-500)'}}>{lote.recipeRef.name}</div>}</td><td style={{fontFamily:'var(--font-body)',fontSize:13}}>{lote.especie}</td><td style={{textAlign:'right',color:stats?.contPct>20?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.diasCol!=null?stats.diasCol.toFixed(1)+'d':'—'}</td><td style={{textAlign:'right',fontWeight:700,color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)'}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.bolsasSanas>0&&stats.totalFresco?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'}</td><td style={{textAlign:'right'}}>{stats?.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—'}</td><td style={{textAlign:'center',fontFamily:'var(--font-num)',fontSize:16,color:'var(--coral-700)',fontWeight:700}}>{score!==null?score:'—'}</td><td><select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} style={{padding:'4px 7px',fontFamily:'var(--font-mono)',fontSize:11,border:'1px solid var(--border-soft)',borderRadius:4,background:'var(--paper-50)',color:VC[lote.veredicto]||'var(--ink-700)',width:'100%'}}><option value="">— sin veredicto —</option>{['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}</select></td></tr>);})}</tbody></table></div>)}
+                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Necesitas al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
+                  {lotesConDatos.length>=2&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Lote / Receta</th><th>Especie</th><th style={{textAlign:'right'}}>Contam.</th><th style={{textAlign:'right'}}>Días col.</th><th style={{textAlign:'right'}}>BE</th><th style={{textAlign:'right'}}>kg/bolsa</th><th style={{textAlign:'right'}}>Costo/kg</th><th style={{textAlign:'center'}}>Score</th><th>Veredicto</th></tr></thead><tbody>{lotesConDatos.map(lote=>{const stats=calcLoteStats(lote.id);const score=calcLoteScore(stats);const VC={'prometedora':'var(--moss-500)','descartar':'var(--coral-700)','buena para escalar':'var(--moss-700)','riesgo contaminación':'var(--ochre-500)','repetir':'var(--ink-600)','ajustar humedad':'var(--ochre-600)'};return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}><div style={{fontWeight:700,color:'var(--ink-900)'}}>{lote.codigo}</div>{lote.recipeRef&&<div style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.recipeRef.name}</div>}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>{lote.especie}</td><td style={{textAlign:'right',color:stats?.contPct>20?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.diasCol!=null?stats.diasCol.toFixed(1)+'d':'—'}</td><td style={{textAlign:'right',fontWeight:700,color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)'}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.bolsasSanas>0&&stats.totalFresco?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'}</td><td style={{textAlign:'right'}}>{stats?.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—'}</td><td style={{textAlign:'center',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--coral-700)',fontWeight:700}}>{score!==null?score:'—'}</td><td><select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} style={{padding:'4px 7px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--border-soft)',borderRadius:4,background:'var(--paper-50)',color:VC[lote.veredicto]||'var(--ink-700)',width:'100%'}}><option value="">— sin veredicto —</option>{['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}</select></td></tr>);})}</tbody></table></div>)}
                 </div>
               );
             })()}
@@ -3145,11 +3147,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.24em',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Bitácora experimental</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Bitácora experimental</div>
                       <div style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:700,color:'var(--ink-900)',lineHeight:1.1,marginTop:2}}>Ficha experimental</div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:14,color:'var(--ink-900)',marginTop:2}}>{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--ink-900)',marginTop:2}}>{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div>
                     </div>
-                    <div style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-500)'}}>
+                    <div style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                       <div>Lote: <b style={{color:'var(--ink-900)'}}>{lote.codigo}</b></div>
                       <div>Inoculación: {lote.fechaInoculacion}</div>
                       <div>{lote.numBolsas} bolsas × {lote.pesoHumedo} kg · {lote.humedad}% H₂O</div>
@@ -3158,20 +3160,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-800)',marginBottom:6}}>Datos del experimento</div>
-                      {[['Cepa/proveedor',lote.cepa||'—'],['Operador',lote.operador||'—'],['Humedad obj.',lote.humedad+'%'],['Tratamiento',lote.tratamiento||'—'],['Objetivo',lote.objetivo||'—']].map(([lb,v])=>(<div key={lb} style={{display:'flex',gap:8,padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:11,color:'var(--ink-700)',width:110,flexShrink:0}}>{lb}</span><span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-900)'}}>{v}</span></div>))}
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',marginBottom:6}}>Datos del experimento</div>
+                      {[['Cepa/proveedor',lote.cepa||'—'],['Operador',lote.operador||'—'],['Humedad obj.',lote.humedad+'%'],['Tratamiento',lote.tratamiento||'—'],['Objetivo',lote.objetivo||'—']].map(([lb,v])=>(<div key={lb} style={{display:'flex',gap:8,padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",color:'var(--ink-700)',width:110,flexShrink:0}}>{lb}</span><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900)'}}>{v}</span></div>))}
                     </div>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-800)',marginBottom:6}}>Resultados</div>
-                      {[['Bolsas sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['Contaminación',stats?stats.contPct.toFixed(0)+'%':'—'],['BE estimada',stats?.be!=null?stats.be.toFixed(1)+'%':'—'],['Total cosechado',stats?stats.totalFresco.toFixed(3)+' kg':'—'],['Score',score!==null?score+'/100':'—']].map(([lb,v])=>(<div key={lb} style={{display:'flex',gap:8,padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:11,color:'var(--ink-700)',width:110,flexShrink:0}}>{lb}</span><span style={{fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-900)'}}>{v}</span></div>))}
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',marginBottom:6}}>Resultados</div>
+                      {[['Bolsas sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['Contaminación',stats?stats.contPct.toFixed(0)+'%':'—'],['BE estimada',stats?.be!=null?stats.be.toFixed(1)+'%':'—'],['Total cosechado',stats?stats.totalFresco.toFixed(3)+' kg':'—'],['Score',score!==null?score+'/100':'—']].map(([lb,v])=>(<div key={lb} style={{display:'flex',gap:8,padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",color:'var(--ink-700)',width:110,flexShrink:0}}>{lb}</span><span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",color:'var(--ink-900)'}}>{v}</span></div>))}
                     </div>
                   </div>
-                  {lote.recipeRef&&(<div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:14,background:'var(--paper-50)'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:5}}>Receta vinculada — {lote.recipeRef.name}</div><div style={{display:'flex',flexWrap:'wrap',gap:3,marginBottom:5}}>{lote.recipeRef.recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'2px 6px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',borderRadius:3}}>{g.name} {parseFloat(r.p).toFixed(1)}%</span>:null;})}</div><div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-500)'}}>C:N {lote.recipeRef.cn} · EB ~{lote.recipeRef.eb}% · Score {lote.recipeRef.score}/100{lote.recipeRef.cost?` · $${lote.recipeRef.cost.toLocaleString('es-CO')}/kg`:''}</div></div>)}
-                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:10}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:10}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:10,color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
-                  {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:12,color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
+                  {lote.recipeRef&&(<div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:14,background:'var(--paper-50)'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:5}}>Receta vinculada — {lote.recipeRef.name}</div><div style={{display:'flex',flexWrap:'wrap',gap:3,marginBottom:5}}>{lote.recipeRef.recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',borderRadius:3}}>{g.name} {parseFloat(r.p).toFixed(1)}%</span>:null;})}</div><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>C:N {lote.recipeRef.cn} · EB ~{lote.recipeRef.eb}% · Score {lote.recipeRef.score}/100{lote.recipeRef.cost?` · $${lote.recipeRef.cost.toLocaleString('es-CO')}/kg`:''}</div></div>)}
+                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
+                  {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
-                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.06em',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
+                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
                   </div>
                 </div>
               );
@@ -3188,7 +3190,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,height:106,display:'block'}}>
           <span style={{textAlign:'center',fontStyle:'normal',fontSize:17,display:'block'}}>Setas</span>
-          <div style={{fontSize:16,lineHeight:0.95,position:'absolute',left:30,top:49,fontStyle:'italic',letterSpacing:'-0.1px'}}>de la</div>
+          <div style={{fontSize:"var(--text-md)",lineHeight:0.95,position:'absolute',left:30,top:49,fontStyle:'italic',letterSpacing:'-0.1px'}}>de la</div>
           <div style={{fontSize:18,lineHeight:1,position:'absolute',left:27,top:65}}>Peña</div>
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
@@ -3200,7 +3202,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="hero-copy">
             <div className="hero-eyebrow">Setas de la Peña — Simulador de recetas</div>
             <div className="hero-title">Diseño de<br/>Sustratos</div>
-            <div className="hero-lede" style={{display:'block',marginTop:14,fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cálculo, optimización y trazabilidad de mezclas.</div>
+            <div className="hero-lede" style={{display:'block',marginTop:14,fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Cálculo, optimización y trazabilidad de mezclas.</div>
           </div>
           <div className="hero-art">
             <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" />
@@ -3221,9 +3223,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='inicio'&&(()=>{
           const TILES=[
-            {t:'Formular una receta',s:'Mezcla · C:N · humedad · optimizador',tb:'formular',pri:true},
+            {t:'Formular una receta',s:'Mezcla · C:N · humedad · generador automático',tb:'formular',pri:true},
             {t:'Catálogo de especies',s:'Elegir o cambiar la especie activa',tb:'catalogo'},
-            {t:'Generar receta',s:'Crear combinaciones nuevas desde cero',tb:'optimizar'},
             {t:'Preparar un lote',s:'Ficha de producción del día · báscula',tb:'produccion'},
             {t:'Cronograma',s:'Fechas de siembra y cosecha',tb:'schedule'},
             {t:'Revisar bodega',s:'Stock · compras · proveedores',tb:'inventario'},
@@ -3252,7 +3253,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="fos-species-dot"></span>
               <span>Especie activa</span>
               <b>{sp.name}</b><em>{sp.scientific}</em>
-              <button className="bridge-cambiar" onClick={()=>goTab('catalogo')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',padding:'6px 12px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-500)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>Cambiar especie</button>
+              <button className="bridge-cambiar" onClick={()=>goTab('catalogo')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-500)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>Cambiar especie</button>
             </div>
           </div>);
         })()}
@@ -3272,7 +3273,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const num=String(idx+1).padStart(2,'0');
                 return(
                   <button key={k} className={`spp-card${(isOn&&hasPickedSpecies)?' on':''}`} aria-pressed={isOn&&hasPickedSpecies} onClick={()=>{setSKey(k);setCatalogModalOpen(true);}}>
-                    <div style={{position:'relative',display:'flex',flexDirection:'column',flex:1,overflow:'hidden',borderRadius:'4px'}}>
+                    <div style={{position:'relative',display:'flex',flexDirection:'column',flex:1,overflow:'hidden',borderRadius:'var(--r-xs)'}}>
                     <div className="p-family-strip"><span>{SPP_FAMILY[k]||''}</span></div>
                     <div className="p-arch-head">
                       <div className="p-arch-left"><span className="p-arch-num">{num}</span><span className="p-arch-code">{SPP_CODE[k]}</span></div>
@@ -3321,8 +3322,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:12,paddingBottom:12,borderBottom:'1px solid color-mix(in oklab,var(--moss-400) 20%,transparent)'}}>
                       <div style={{display:'flex',gap:12}}>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:9,fontWeight:800,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:4}}>Característica</div>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:14,lineHeight:1.4,color:'var(--ink-900)'}}>{sp.notes.split('.')[0]+'.'}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:4}}>Característica</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",lineHeight:1.4,color:'var(--ink-900)'}}>{sp.notes.split('.')[0]+'.'}</div>
                         </div>
                       </div>
                     </div>
@@ -3330,8 +3331,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
                         {det.hechos.map((h,i)=>(
                           <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:'var(--coral-500)',background:'color-mix(in oklab,var(--coral-200) 40%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:3,padding:'2px 6px',flexShrink:0,marginTop:1,lineHeight:1.6}}>{String(i+1).padStart(2,'0')}</span>
-                            <p style={{fontFamily:'var(--font-body)',fontSize:12,lineHeight:1.65,color:'var(--ink-700)',margin:0,textWrap:'pretty'}}>{h}</p>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--coral-500)',background:'color-mix(in oklab,var(--coral-200) 40%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:3,padding:'2px 6px',flexShrink:0,marginTop:1,lineHeight:1.6}}>{String(i+1).padStart(2,'0')}</span>
+                            <p style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",lineHeight:1.65,color:'var(--ink-700)',margin:0,textWrap:'pretty'}}>{h}</p>
                           </div>
                         ))}
                       </div>
@@ -3347,7 +3348,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       ];
                       return(
                         <div style={{marginTop:20,padding:'14px 0 2px',borderTop:'1px solid color-mix(in oklab,var(--moss-400) 30%,transparent)'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.18em',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:8}}>Parámetros de cultivo</div>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:8}}>Parámetros de cultivo</div>
                           <div style={{display:'flex',flexDirection:'column',gap:5}}>
                             {bars.map(b=>{
                               const lo=Math.min(b.min,b.max)/b.abs*100;
@@ -3355,22 +3356,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const w=Math.max(hi-lo,4);
                               return(
                                 <div key={b.lbl} style={{display:'flex',alignItems:'center',gap:8}}>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:'var(--ink-800)',width:90,flexShrink:0}}>{b.lbl}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-800)',width:90,flexShrink:0}}>{b.lbl}</span>
                                   <div style={{flex:1,height:5,background:'var(--paper-300)',borderRadius:3,position:'relative',overflow:'hidden'}}>
                                     <div style={{position:'absolute',left:`${lo}%`,width:`${w}%`,height:'100%',background:b.color,borderRadius:3,transition:'width .5s cubic-bezier(.32,.72,.36,1)'}}></div>
                                   </div>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',width:54,textAlign:'right',flexShrink:0}}>{b.min===b.max?`${b.min}${b.unit}`:`${b.min}–${b.max}${b.unit}`}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',width:54,textAlign:'right',flexShrink:0}}>{b.min===b.max?`${b.min}${b.unit}`:`${b.min}–${b.max}${b.unit}`}</span>
                                 </div>
                               );
                             })}
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:'var(--ink-800)',width:90,flexShrink:0}}>Dificultad</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-800)',width:90,flexShrink:0}}>Dificultad</span>
                               <div style={{flex:1,display:'flex',gap:3}}>
                                 {[1,2,3,4].map(d=>(
                                   <div key={d} style={{flex:1,height:5,borderRadius:3,background:d<=diff?'var(--coral-500)':'var(--paper-300)',transition:'background .3s'}}></div>
                                 ))}
                               </div>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',width:54,textAlign:'right',flexShrink:0}}>{SPP_DIFFICULTY[sKey]||'Media'}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',width:54,textAlign:'right',flexShrink:0}}>{SPP_DIFFICULTY[sKey]||'Media'}</span>
                             </div>
                           </div>
                         </div>
@@ -3408,23 +3409,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ...(recipe.length>0?[{id:'bl-perito',l:'Score / Perito'},{id:'bl-batch',l:'Batch'}]:[]),
               ...(recipe.length>0&&tr?[{id:'bl-tratamiento',l:'Tratamiento'}]:[]),
             ].map(s=>(
-              <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-100)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+              <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,letterSpacing:'var(--tracking-label)',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-100)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
             ))}
           </div>
           {recipe.length>0&&(()=>{
             const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
             return(
               <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:6,fontFamily:'var(--font-body)'}}>
-                <span style={{fontSize:12,fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
-                <span style={{fontSize:10,color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
+                <span style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
+                <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                   <div style={{width:60,height:6,background:'var(--paper-300)',borderRadius:3,overflow:'hidden'}}>
                     <div style={{width:`${Math.max(0,Math.min(100,opt.score))}%`,height:'100%',background:sm2.badge}}></div>
                   </div>
-                  <span style={{fontSize:11,fontWeight:800,color:sm2.badge}}>{Math.round(opt.score)}</span>
-                  <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',color:sm2.txt}}>{sm2.label}</span>
+                  <span style={{fontSize:"var(--text-sm)",fontWeight:800,color:sm2.badge}}>{Math.round(opt.score)}</span>
+                  <span style={{fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color:sm2.txt}}>{sm2.label}</span>
                 </div>
-                <span style={{fontSize:10,color:'var(--ink-500)'}}>{numBags}×{kgBag}kg = {(numBags*kgBag).toFixed(1)}kg</span>
+                <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{numBags}×{kgBag}kg = {(numBags*kgBag).toFixed(1)}kg</span>
               </div>
             );
           })()}
@@ -3441,9 +3442,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {showPrices&&(
                 <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
                   <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
+                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
                     {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:10,padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
                   <div style={{maxHeight:260,overflowY:'auto'}}>
@@ -3453,8 +3454,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       return(
                         <div key={ing.id} className="price-row">
                           <div>
-                            <div style={{fontSize:13,fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
-                            {isEdited&&<div style={{fontSize:11,color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
+                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
+                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
                           </div>
                           <input type="number" min="0" step="100"
                             className={`price-inp${isEdited?' edited':''}`}
@@ -3556,12 +3557,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
                       <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
                         <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:7,color:'rgba(255,255,255,.7)',letterSpacing:'.1em',marginTop:1}}>SCORE</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
                         <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
                           {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
                           {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
                           {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
@@ -3569,13 +3570,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
-                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -3626,22 +3627,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
                         ].map((m,i)=>(
                           <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:16,color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
+                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
                         ))}
                       </div>
                       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:10,color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:8,letterSpacing:'.18em',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:12,padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:10}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:10,color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:11,color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</details>}
+                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
 
@@ -3662,7 +3663,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   {dg.sugs.length>0&&(<>
                     <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
                   </>)}
                 </div>
               );
@@ -3673,7 +3674,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
                 <div style={{display:'flex',alignItems:'baseline',gap:8}}>
                   <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Receta activa</span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
                 </div>
                 {recipe.length>0&&<div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap'}}>
                   {an&&Math.abs(an.tot-100)>0.5&&(
@@ -3695,9 +3696,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="rec-empty-hed">Sin ingredientes aún.</div>
                   <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>setTab('optimizar')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
+                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
+                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -3718,22 +3719,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
                         <div style={{flex:1}}>
                           <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
-                            <div style={{fontSize:14,fontWeight:500}}>{g.name}</div>
-                            <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{fontSize:11,padding:'2px 4px',flexShrink:0}}>
+                            <div style={{fontSize:"var(--text-base)",fontWeight:500}}>{g.name}</div>
+                            <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{fontSize:"var(--text-sm)",padding:'2px 4px',flexShrink:0}}>
                               {isLocked?'●':'○'}
                             </button>
                           </div>
-                          <div className="imeta" style={{fontSize:10}}>C:N {g.cn||'—'} · N {g.n||'—'}%</div>
-                          {rowFlag&&<div style={{marginTop:4,fontSize:10,fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}><span>{rowFlag.priority==='critical'?'⚠':'!'}</span><span>{rowFlag.label}</span></div>}
+                          <div className="imeta" style={{fontSize:"var(--text-xs)"}}>C:N {g.cn||'—'} · N {g.n||'—'}%</div>
+                          {rowFlag&&<div style={{marginTop:4,fontSize:"var(--text-xs)",fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}><span>{rowFlag.priority==='critical'?'⚠':'!'}</span><span>{rowFlag.label}</span></div>}
                         </div>
-                        <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0,fontSize:13,padding:'4px 8px'}}>✕</button>
+                        <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0,fontSize:"var(--text-base)",padding:'4px 8px'}}>✕</button>
                       </div>
                       {/* Controls: slider + number input */}
                       <div style={{display:'flex',flexDirection:'column',gap:4}}>
                         <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
                         <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:12,textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'3px'}}/>
-                          <span className="pct" style={{fontSize:12,fontWeight:600,color:'var(--ink-600)'}}>%</span>
+                          <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
+                          <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
                         </div>
                       </div>
                     </div>
@@ -3752,12 +3753,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'all .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.22em',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
-                      <div style={{fontFamily:'var(--font-display)',fontSize:13,fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
+                      <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
                     </div>
                     <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'-.02em',transition:'all .4s ease'}}>{sc}</span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
+                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'all .4s ease'}}>{sc}</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
                     </div>
                   </div>
                   <div style={{height:3,background:'rgba(26,20,16,0.08)',borderRadius:2,overflow:'hidden'}}>
@@ -3780,15 +3781,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     return(
                       <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
-                          <span style={{fontFamily:"var(--font-body)",fontSize:10,textTransform:'uppercase',letterSpacing:'.1em',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
-                          <span style={{fontFamily:"var(--font-num)",fontSize:16,color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
+                          <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
+                          <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
                         </div>
                         <div style={{position:'relative',height:6,background:'#e0dbd3',borderRadius:3}}>
                           <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
                           <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
                           <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
                         </div>
-                        <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontFamily:"var(--font-mono)",fontSize:9,color:'var(--ink-700)',fontWeight:500}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>
                           <span>{m.fmt(m.min)}</span><span style={{opacity:.7}}>↑{m.fmt(m.ideal)}</span><span>{m.fmt(m.max)}</span>
                         </div>
                       </div>
@@ -3841,11 +3842,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
                         <div style={{background:'var(--paper-100)',padding:'8px 12px',border:'1px solid var(--border-soft)'}}>
-                          <div style={{fontFamily:"var(--font-body)",fontSize:9,textTransform:'uppercase',letterSpacing:'.1em',color:'var(--ink-500)',marginBottom:3}}>Costo por bolsa</div>
+                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-500)',marginBottom:3}}>Costo por bolsa</div>
                           <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.costPerBag).toLocaleString()}</div>
                         </div>
                         <div style={{background:'var(--paper-100)',padding:'8px 12px',border:'1px solid var(--border-soft)'}}>
-                          <div style={{fontFamily:"var(--font-body)",fontSize:9,textTransform:'uppercase',letterSpacing:'.1em',color:'var(--ink-500)',marginBottom:3}}>Costo / kg sustrato</div>
+                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-500)',marginBottom:3}}>Costo / kg sustrato</div>
                           <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.cost/bd.wet).toLocaleString()}</div>
                         </div>
                       </div>
@@ -3857,7 +3858,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const positive=margin>=0;
                         return(
                           <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'#F2F5EE':'#F9EDEA'}}>
-                            <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:9,letterSpacing:'.2em',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
+                            <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:positive?'var(--moss-500)':'var(--coral-500)'}}>
                               {[
                                 {l:'Cosecha est.',v:`${yieldKg.toFixed(1)} kg`},
@@ -3865,12 +3866,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {l:`Margen ${marginPct}%`,v:`$${Math.round(margin).toLocaleString()}`,bold:true,good:positive},
                               ].map((cell,i)=>(
                                 <div key={i} style={{background:'var(--paper-50)',padding:'10px 12px',textAlign:'center'}}>
-                                  <div style={{fontFamily:"var(--font-body)",fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{cell.l}</div>
+                                  <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{cell.l}</div>
                                   <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:cell.bold?(cell.good?'var(--moss-500)':'var(--coral-500)'):'var(--ink-900)'}}>{cell.v}</div>
                                 </div>
                               ))}
                             </div>
-                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:11,color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
+                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
                           </div>
                         );
                       })()}
@@ -3882,13 +3883,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button className="btn" onClick={()=>window.print()}>Imprimir ficha</button>
                 <button className="btn pri" onClick={exportR}>↓ Exportar .txt</button>
                 <button className="btn" onClick={()=>{
-                  if(typeof html2pdf==='undefined'){alert('html2pdf no disponible');return;}
+                  if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible'});return;}
                   const el=document.querySelector('.print-panel');
-                  if(!el){alert('Genera análisis primero');return;}
+                  if(!el){setNoticeDlg({msg:'Genera análisis primero'});return;}
                   html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
                 }}>↓ PDF</button>
                 <button className="btn" onClick={()=>{
-                  if(!recipe.length){alert('No hay receta');return;}
+                  if(!recipe.length){setNoticeDlg({msg:'No hay receta'});return;}
                   const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}>↓ JSON</button>
@@ -3923,7 +3924,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                 </div>
               )}
             </div>
@@ -3945,22 +3946,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="tparams">{[tr.temp,tr.time,`Spawn ${tr.spawn}%`].map((p,i)=><span key={i} className="tp">{p}</span>)}</div>
                 <div className="twhy">{tr.reasons.map((r,i)=><span key={i}>{r}</span>)}</div>
                 <div className="tproc">{tr.prep}</div>
-                {tr.alt&&<div style={{marginTop:10,fontSize:12,color:'var(--ink-500)',background:'var(--paper-200)',border:'1px solid var(--paper-300)',padding:'6px 10px',borderLeft:'2px solid var(--border-soft)'}}>{tr.alt}</div>}
+                {tr.alt&&<div style={{marginTop:10,fontSize:"var(--text-sm)",color:'var(--ink-500)',background:'var(--paper-200)',border:'1px solid var(--paper-300)',padding:'6px 10px',borderLeft:'2px solid var(--border-soft)'}}>{tr.alt}</div>}
                 {tr.energy&&(
                   <div style={{marginTop:10,display:'flex',gap:12,alignItems:'center',padding:'7px 10px',background:'rgba(0,0,0,.04)',borderRadius:'var(--r-xs)',borderTop:'1px solid rgba(0,0,0,.08)'}}>
-                    <span style={{fontSize:16}}>⚡</span>
+                    <span style={{fontSize:"var(--text-md)"}}>⚡</span>
                     <div style={{flex:1}}>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700}}>
                         {tr.energy.cop_per_kg_humedo>0
                           ?`Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString('es-CO')} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco||0).toLocaleString('es-CO')} COP/kg seco`
                           :'Sin consumo eléctrico — proceso en frío'}
                       </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:9,opacity:.7,marginTop:2}}>{tr.energy.detalle}</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",opacity:.7,marginTop:2}}>{tr.energy.detalle}</div>
                     </div>
                     {an&&an.cost>0&&tr.energy.cop_per_kg_seco>0&&(
                       <div style={{textAlign:'right',flexShrink:0}}>
-                        <div style={{fontFamily:'var(--font-num)',fontSize:15,fontWeight:700}}>${(Math.round(an.cost)+tr.energy.cop_per_kg_seco).toLocaleString('es-CO')}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:8,opacity:.7}}>COP/kg total</div>
+                        <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",fontWeight:700}}>${(Math.round(an.cost)+tr.energy.cop_per_kg_seco).toLocaleString('es-CO')}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",opacity:.7}}>COP/kg total</div>
                       </div>
                     )}
                   </div>
@@ -3973,7 +3974,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div className="panel rec-panel" style={{display:'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>
-                  Recetario <span style={{fontFamily:"var(--font-mono)",fontSize:12,color:'var(--ink-500)',fontWeight:400}}>({saved.length})</span>
+                  Recetario <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({saved.length})</span>
                 </div>
               </div>
               {showSaved&&<div style={{marginTop:0}}>
@@ -3985,18 +3986,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
                         <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB {e.eb}%</span>
-                            {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
-                            {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB {e.eb}%</span>
+                            {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
+                            {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
                           <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
-                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:9,fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
-                            <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:9,fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
+                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
+                            <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
                           </div>
                         </div>
                       </div>
@@ -4010,21 +4011,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         )}
 
-        {tab==='optimizar'&&(
+        {tab==='formular'&&(
           <div>
 {/* ── GENERADOR DE RECETAS ── */}
-            <div className="panel opt-panel" style={{marginTop:18}}>
+            <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:20,background:'var(--paper-50,#fff)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
                 <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
-                  <div style={{display:'flex',gap:0,marginBottom:14,border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
-                    <button style={{flex:1,padding:'8px 12px',fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',border:formularMode==='auto'?'1px solid var(--coral-500)':'1px solid var(--border-soft)',background:formularMode==='auto'?'var(--paper-100)':'transparent',color:formularMode==='auto'?'var(--coral-500)':'var(--ink-500)'}} onClick={()=>setFormularMode('auto')}>Automática</button>
-                    <button style={{flex:1,padding:'8px 12px',fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',borderLeft:'none',border:formularMode==='manual'?'1px solid var(--coral-500)':'1px solid var(--border-soft)',background:formularMode==='manual'?'var(--paper-100)':'transparent',color:formularMode==='manual'?'var(--coral-600)':'var(--ink-500)'}} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
+                  <div className="seg-row" style={{marginBottom:14}}>
+                    <button className={'seg'+(formularMode==='auto'?' on':'')} onClick={()=>setFormularMode('auto')}>Automática</button>
+                    <button className={'seg'+(formularMode==='manual'?' on':'')} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
                   </div>
-                  <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
                     {formularMode==='auto'
                       ?'Genera combinaciones base×suplemento óptimas para tu especie — desde tu bodega o toda la paleta.'
                       :'Elige dos ingredientes y un C:N objetivo. El sistema calcula las proporciones exactas.'}
@@ -4035,42 +4036,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <select style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:16,color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
+                                <select style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
                                   value={optTarget} onChange={e=>setOptTarget(e.target.value)}>
                                   {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                                 </select>
                               </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máx. $/kg</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máx. $/kg</div>
                                 <input type="number" min="0" step="100" value={optMaxCost} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
-                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:15,color:'var(--ink-900)',outline:'none',padding:'2px 0'}} placeholder="Sin límite"/>
+                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0'}} placeholder="Sin límite"/>
                               </div>
                             </div>
                             {/* fuente + perfil en una sola fila compacta */}
                             <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.08em',textTransform:'uppercase',color:'#8B8682'}}>Origen</div>
-                                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
+                                <div className="chip-row">
                                   {[['stock','Solo bodega',true],['full','Paleta completa',false]].map(([k,l,v])=>(
-                                    <button key={k} onClick={()=>setOptUseStock(v)} style={{background:'none',border:'none',padding:'2px 0',fontFamily:'var(--font-body)',fontWeight:optUseStock===v?800:400,fontSize:11,letterSpacing:'.08em',color:optUseStock===v?'var(--ink-900)':'var(--ink-500)',cursor:'pointer',borderBottom:optUseStock===v?'1.5px solid var(--coral-500)':'1.5px solid transparent',transition:'all .12s'}}>
-                                      {l}
-                                    </button>
+                                    <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
                                   ))}
                                 </div>
                               </div>
                               <div style={{width:1,height:16,background:'var(--border-soft)'}}></div>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.08em',textTransform:'uppercase',color:'#8B8682'}}>Nivel</div>
-                                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
+                                <div className="chip-row">
                                   {Object.entries(OPT_PROFILES).map(([k,p])=>(
-                                    <button key={k} onClick={()=>setOptProfile(k)} style={{background:'none',border:'none',padding:'2px 0',fontFamily:'var(--font-body)',fontWeight:optProfile===k?800:400,fontSize:11,color:optProfile===k?p.color:'var(--ink-500)',cursor:'pointer',borderBottom:`1.5px solid ${optProfile===k?p.color:'transparent'}`,transition:'all .12s'}}>
-                                      {p.label}
-                                    </button>
+                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
                                   ))}
                                 </div>
                               </div>
                               <button
+                                className="btn dark"
                                 onClick={()=>{
                                   setOptRunning(true);setOptResults(null);
                                   setTimeout(()=>{
@@ -4088,28 +4086,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     setOptRunning(false);
                                   },50);
                                 }}
-                                style={{marginLeft:'auto',padding:'6px 16px',background:'var(--ink-900)',color:'var(--paper-50)',border:'none',fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',cursor:'pointer'}}>
+                                style={{marginLeft:'auto',flex:'none',minWidth:0,padding:'6px 16px'}}>
                                 {optRunning?<span><span className="spin">↻</span> …</span>:'Calcular'}
                               </button>
                             </div>
                             {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
                               return sc>0?(
-                                <div style={{padding:'8px 12px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:11,color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
+                                <div style={{padding:'8px 12px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
                                   Usando solo ingredientes en stock · {sc} disponibles en inventario
                                 </div>
                               ):(
-                                <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:11,color:'#7A5A10',marginBottom:12}}>
+                                <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'#7A5A10',marginBottom:12}}>
                                   Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
                                 </div>
                               );
                             })():(
-                              <div style={{padding:'8px 12px',background:'var(--coral-50,#FCEEE9)',border:'1px solid var(--coral-300,#E8B4A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:11,color:'var(--coral-600,#B5451F)',marginBottom:12}}>
+                              <div style={{padding:'8px 12px',background:'var(--coral-50,#FCEEE9)',border:'1px solid var(--coral-300,#E8B4A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',marginBottom:12}}>
                                 Generando con toda la paleta compatible con {SPP[optTarget]?.name} · ignora inventario · ideal para diseñar la receta antes de comprar
                               </div>
                             )}
                             {optResults&&optResults[optProfile]&&(
                               <div>
-                                <div style={{fontFamily:"var(--font-body)",fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
+                                <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
                                   {optResults[optProfile].length} combinaciones exclusivas · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · C:N objetivo {SPP[optTarget]?.cn_optimal.ideal}:1
                                 </div>
                                 {optResults[optProfile].map((r,i)=>{
@@ -4147,20 +4145,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           <div key={m.l} className="opt-met">
                                             <div className="opt-met-lbl">{m.l}</div>
                                             <div className="opt-met-val" style={{fontSize:m.v&&m.v.length>6?14:18}}>{m.v}</div>
-                                            {m.sub&&<div style={{fontFamily:'var(--font-mono)',fontSize:7,color:'var(--ink-500)',lineHeight:1.3,marginTop:1}}>{m.sub}</div>}
+                                            {m.sub&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',lineHeight:1.3,marginTop:1}}>{m.sub}</div>}
                                           </div>
                                         ))}
                                       </div>
                                       {/* Riesgo + bodega produce */}
                                       <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
                                         <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
-                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
-                                          <div style={{fontFamily:'var(--font-mono)',fontSize:14,fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500,#A07828)':'#C53030'}}>{r.riskScore??'—'}/100</div>
+                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
+                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500,#A07828)':'#C53030'}}>{r.riskScore??'—'}/100</div>
                                         </div>
                                         {r.maxKgWet!=null&&(
                                           <div style={{flex:2,padding:'7px 10px'}}>
-                                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Bodega produce</div>
-                                            <div style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:700,color:'var(--slate-700,var(--accent-blue-grey))'}}>{r.maxKgWet>0?`hasta ${r.maxKgWet} kg húmedos`:'stock insuficiente'}</div>
+                                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Bodega produce</div>
+                                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:'var(--slate-700,var(--accent-blue-grey))'}}>{r.maxKgWet>0?`hasta ${r.maxKgWet} kg húmedos`:'stock insuficiente'}</div>
                                           </div>
                                         )}
                                       </div>
@@ -4180,9 +4178,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                               const costBolsa=Math.round((r.an.cost+eCost2)*kgSeco);
                                               return(
                                                 <div key={b.nom} style={{flex:1,padding:'5px 8px',borderRight:'1px solid var(--border-soft)',textAlign:'center',background:'var(--paper-50)'}}>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-700)',marginBottom:2,letterSpacing:'.08em',fontWeight:600}}>{b.nom}</div>
-                                                  <div style={{fontFamily:'var(--font-num)',fontSize:13,color:'var(--coral-700)',fontWeight:700}}>${costBolsa.toLocaleString('es-CO')}</div>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-600)',fontWeight:500}}>COP / bolsa</div>
+                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginBottom:2,letterSpacing:'var(--tracking-label)',fontWeight:600}}>{b.nom}</div>
+                                                  <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",color:'var(--coral-700)',fontWeight:700}}>${costBolsa.toLocaleString('es-CO')}</div>
+                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>COP / bolsa</div>
                                                 </div>
                                               );
                                             })}
@@ -4199,8 +4197,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:9,color:tc.fg,opacity:.8}}>Spawn {t.spawn}%</span>
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,opacity:.8}}>Spawn {t.spawn}%</span>
                                           </div>
                                         );
                                       })()}
@@ -4210,10 +4208,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
-                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:12,color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
+                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
                                 {(()=>{const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};const diag=d?.diag;return diag?(
                                   <div>
-                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
+                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
                                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',marginBottom:12}}>
                                       {[
                                         ['Stock en bodega',diag.stockIds],
@@ -4241,7 +4239,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <div role="button" tabIndex={0} onClick={()=>{goTab('inventario');setInvTab('compra');}} onKeyDown={e=>{if(e.key==='Enter'){goTab('inventario');setInvTab('compra');}}} style={{cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:12,color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <div role="button" tabIndex={0} onClick={()=>{goTab('inventario');setInvTab('compra');}} onKeyDown={e=>{if(e.key==='Enter'){goTab('inventario');setInvTab('compra');}}} style={{cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </div>
                             )}
@@ -4250,26 +4248,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}                              {formularMode==='manual'&&(
               <div className="panel panel-accent">
                           <div className="sec">Formulación por Objetivo C:N</div>
-                          <div style={{marginBottom:16,padding:'8px 12px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',fontFamily:"var(--font-body)",fontWeight:800,fontSize:10,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',lineHeight:1.6}}>
+                          <div style={{marginBottom:16,padding:'8px 12px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',fontFamily:"var(--font-body)",fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',lineHeight:1.6}}>
                             Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
                           </div>
                           {sp&&(
                             <div style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
-                                <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:16,color:'var(--ink-900)'}}>{sp.name}</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
+                                <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.name}</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:15,color:'var(--ink-900)'}}>{sp.cn_optimal.ideal}:1</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
+                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.ideal}:1</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:15,color:'var(--ink-900)'}}>{sp.cn_optimal.min}–{sp.cn_optimal.max}</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
+                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.min}–{sp.cn_optimal.max}</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>N objetivo</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:15,color:'var(--ink-900)'}}>{sp.n_optimal.min}–{sp.n_optimal.max}%</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>N objetivo</div>
+                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.n_optimal.min}–{sp.n_optimal.max}%</div>
                               </div>
                             </div>
                           )}
@@ -4314,7 +4312,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           <div style={{marginBottom:18}}>
                             <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-                              <span style={{fontFamily:"var(--font-body)",fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N objetivo</span>
+                              <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N objetivo</span>
                               <span style={{fontFamily:"var(--font-num)",fontSize:28,fontWeight:600,color:sp&&invTargetCN>=sp.cn_optimal.min&&invTargetCN<=sp.cn_optimal.max?'var(--moss-500)':'var(--coral-500)'}}>{invTargetCN}:1</span>
                             </div>
                             <input type="range" min="10" max="120" step="1" value={invTargetCN} onChange={e=>setInvTargetCN(parseInt(e.target.value))} aria-label="Relación C:N objetivo" aria-valuetext={`${invTargetCN}:1`} style={{width:'100%',accentColor:'var(--coral-500)',marginBottom:6}}/>
@@ -4324,13 +4322,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div style={{position:'absolute',left:`${((sp.cn_optimal.ideal-10)/110)*100}%`,width:2,height:'220%',top:'-60%',background:'var(--moss-500)',borderRadius:1}}/>
                               </div>
                             )}
-                            <div style={{display:'flex',justifyContent:'space-between',marginTop:7,fontFamily:"var(--font-mono)",fontSize:9,color:'var(--border-soft)'}}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginTop:7,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>
                               <span>10</span>
                               {sp&&<span style={{color:'var(--moss-500)'}}>óptimo {sp.cn_optimal.min}–{sp.cn_optimal.max}</span>}
                               <span>120</span>
                             </div>
                           </div>
-                          <button className="btn pri" style={{width:'100%',padding:13,fontSize:11,letterSpacing:'.16em'}} disabled={!invBase||!invSupp}
+                          <button className="btn pri" style={{width:'100%',padding:13,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)'}} disabled={!invBase||!invSupp}
                             onClick={()=>{
                               const bI=INGS.find(i=>i.id===invBase);
                               const sI=INGS.find(i=>i.id===invSupp);
@@ -4368,8 +4366,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       const g=INGS.find(i=>i.id===r.id);
                                       return g?(
                                         <div key={r.id} style={{padding:'10px 16px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',minWidth:100,textAlign:'center'}}>
-                                          <div style={{fontFamily:"var(--font-body)",fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{g.name.length>18?g.name.slice(0,18)+'…':g.name}</div>
-                                          <div style={{fontFamily:"var(--font-num)",fontSize:32,fontWeight:300,color:'var(--coral-500)',lineHeight:1}}>{r.p}<span style={{fontSize:14,color:'var(--ink-500)',marginLeft:1}}>%</span></div>
+                                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{g.name.length>18?g.name.slice(0,18)+'…':g.name}</div>
+                                          <div style={{fontFamily:"var(--font-num)",fontSize:32,fontWeight:300,color:'var(--coral-500)',lineHeight:1}}>{r.p}<span style={{fontSize:"var(--text-base)",color:'var(--ink-500)',marginLeft:1}}>%</span></div>
                                         </div>
                                       ):null;
                                     })}
@@ -4383,7 +4381,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         {l:'Costo/kg',v:`${Math.round(invResult.an.cost)}`,ok:invResult.an.cost<1000},
                                       ].map((m,i)=>(
                                         <div key={i} style={{background:'var(--paper-50)',border:`1px solid ${m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
-                                          <div style={{fontFamily:"var(--font-body)",fontSize:9,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{m.l}</div>
+                                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{m.l}</div>
                                           <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
                                         </div>
                                       ))}
@@ -4407,7 +4405,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="schctrl">
               <div className="schctl"><label htmlFor="sch-date">Fecha de inoculación</label><input id="sch-date" type="date" value={schDate} onChange={e=>setSchDate(e.target.value)}/></div>
               <div className="schctl"><label htmlFor="sch-key">Especie</label><select id="sch-key" value={schKey} onChange={e=>setSchKey(e.target.value)}>{Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</select></div>
-              {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:12,color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
+              {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
             </div>
             {sch&&(<>
               <div className="schsum">
@@ -4434,14 +4432,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
-              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
+              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:10}}>
                 {BAG_TYPES.map(bt=>{
                   const on=prodBagType===bt.id;
                   return(
                     <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'all .12s'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
                     </button>
                   );
                 })}
@@ -4456,13 +4454,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 15 PSI'};
                 return(
                   <div>
-                    <div style={{padding:'7px 11px',background:tc.bg,border:`1px solid ${tc.br}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:10,color:tc.fg,marginBottom:7}}>
+                    <div style={{padding:'7px 11px',background:tc.bg,border:`1px solid ${tc.br}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,marginBottom:7}}>
                       {tc.icon} <b>Tratamiento:</b> {tc.lbl}
                     </div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',lineHeight:1.5}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.5}}>
                       <b style={{color:'var(--ink-900)'}}>Uso:</b> {bt.notas}
                     </div>
-                    {bt.produccion&&<div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-700)',lineHeight:1.5,marginTop:4}}>
+                    {bt.produccion&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.5,marginTop:4}}>
                       <b style={{color:'var(--ink-900)'}}>Producción:</b> {bt.produccion}
                     </div>}
                   </div>
@@ -4472,56 +4470,56 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
             {/* Controles del lote (no se imprimen) */}
             <div className="panel no-print" style={{marginBottom:14}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{padding:'14px',fontFamily:'var(--font-mono)',fontSize:12,color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                <div style={{padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
                   No hay receta activa. Arma una en <strong>Formulador</strong> o genera una automáticamente en <strong>Generar</strong>.
                 </div>
               ):(
                 <>
                 {an&&!balanced&&(
-                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:12,color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
+                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
                     ⚠ {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label htmlFor="prod-skey" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Especie</label>
-                    <select id="prod-skey" value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:13}}>
+                    <label htmlFor="prod-skey" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Especie</label>
+                    <select id="prod-skey" value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>
                       {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <input id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>{const v=e.target.value;setProdBags(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodBags===''||isNaN(prodBags))setProdBags(1);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
+                    <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
+                    <input id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>{const v=e.target.value;setProdBags(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodBags===''||isNaN(prodBags))setProdBags(1);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
-                    <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <input id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>{const v=e.target.value;setProdKg(v===''?'':(parseFloat(v)||''));}} onBlur={()=>{if(prodKg===''||isNaN(prodKg))setProdKg(1.5);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
+                    <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
+                    <input id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>{const v=e.target.value;setProdKg(v===''?'':(parseFloat(v)||''));}} onBlur={()=>{if(prodKg===''||isNaN(prodKg))setProdKg(1.5);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
-                    <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
+                    <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
-                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:11}}/>
+                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="prod-scale" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Báscula (g)</label>
-                    <select id="prod-scale" value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}>
+                    <label htmlFor="prod-scale" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Báscula (g)</label>
+                    <select id="prod-scale" value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}>
                       {[['0.1','0.1 g (100 mg)'],['1','1 g'],['5','5 g'],['10','10 g'],['50','50 g']].map(([v,l])=><option key={v} value={v}>{l}</option>)}
                     </select>
                   </div>
                   <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
                     <div style={{flex:1,minWidth:140}}>
-                      <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
-                      <input id="prod-lote" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="L-2026-047" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+                      <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
+                      <input id="prod-lote" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="L-2026-047" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",outline:'none',boxSizing:'border-box'}}/>
                     </div>
-                    {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:11,cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
-                    <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.06em',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
-                    <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.06em',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar kg comerciales del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:11,letterSpacing:'.06em',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
-                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
+                    {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
+                    <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
+                    <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
+                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar kg comerciales del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
+                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
                   </div>
                 </div>
                 </>
@@ -4579,11 +4577,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
                   <div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:9,letterSpacing:'.24em',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
                     <div style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:700,color:'var(--ink-900,#222)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:14,color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i>{an.sp?.scientific}</i></div>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i>{an.sp?.scientific}</i></div>
                   </div>
-                  <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-500)'}}>
+                  <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>
                     <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo</div>
                     <div>{(()=>{const bt=BAG_TYPES.find(b=>b.id===prodBagType);return bt?<span>{bt.icon} {bt.name.split('·')[0].trim()} · {bt.dim}</span>:null;})()}</div>
@@ -4600,9 +4598,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['Costo/kg','$'+Math.round(an.cost).toLocaleString('es-CO'),'estimado'],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{background:'var(--paper-50)',padding:'10px 6px',textAlign:'center'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{l}</div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{l}</div>
                       <div style={{fontFamily:'var(--font-num)',fontSize:20,color:'var(--ink-900)',lineHeight:1,marginBottom:2}}>{v}</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:8,color:'var(--ink-400)'}}>{s}</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",color:'var(--ink-400)'}}>{s}</div>
                     </div>
                   ))}
                 </div>
@@ -4610,23 +4608,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>1</span>
                   <div>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Pesado de ingredientes</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',marginTop:1}}>b\u00e1scula · res. {resG} g</div>
+                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Pesado de ingredientes</div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>b\u00e1scula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
                     {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null;return(
                       <tr key={i}>
-                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:9}}> · ajustado</span>:null}</td>
+                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · ajustado</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
                           <input type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
                             onChange={e=>{const v=e.target.value;setProdMoist(prev=>{const n={...prev};if(v==='')delete n[id];else n[id]=Math.min(92,Math.max(0,parseFloat(v)||0));return n;});}}
-                            style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:11,background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
+                            style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
                         </td>
                         <td className="num">{Math.round(x.grR).toLocaleString()}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
@@ -4639,7 +4637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </table>
                 </div>
                 {/* C:N efectivo tras redondeo / humedad real */}
-                <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:cnDrift>0.5?'var(--coral-600,#B5451F)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300,#E8B4A0)':'var(--paper-300)'}`}}>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600,#B5451F)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300,#E8B4A0)':'var(--paper-300)'}`}}>
                   C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · ⚠ el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
                 </div>
                 {/* Agua / spawn / húmedo */}
@@ -4650,9 +4648,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['Sustrato húmedo final',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:10,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
                       <div style={{fontFamily:'var(--font-num)',fontSize:20,fontWeight:600,color:'var(--ink-900,#222)'}}>{v}</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-600)',marginTop:1,fontWeight:500}}>{s}</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:1,fontWeight:500}}>{s}</div>
                     </div>
                   ))}
                 </div>
@@ -4661,16 +4659,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:18,background:'var(--paper-50)'}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:6}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:20,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>2</span>
-                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Tratamiento — {ptr.name}</span>
+                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Tratamiento — {ptr.name}</span>
                     </div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-900)'}}>{ptr.temp} · {ptr.time} · Spawn {ptr.spawn}%</div>
-                    {ptr.reasons?.length>0&&<div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-500)',marginTop:4}}>{ptr.reasons.join(' · ')}</div>}
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900)'}}>{ptr.temp} · {ptr.time} · Spawn {ptr.spawn}%</div>
+                    {ptr.reasons?.length>0&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:4}}>{ptr.reasons.join(' · ')}</div>}
                   </div>
                 )}
                 {/* Pasos */}
                 <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>3</span>
-                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Procedimiento</span>
+                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Procedimiento</span>
                 </div>
                 <div style={{marginBottom:18}}>
                   {steps.map((t,i)=>(
@@ -4687,15 +4685,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>4</span>
                       <div>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Fechas clave</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',marginTop:1}}>estimadas · EB {an.eb.toFixed(0)}%</div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Fechas clave</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>estimadas · EB {an.eb.toFixed(0)}%</div>
                       </div>
                     </div>
                     <div className="ps-fechas-wrap"><div className="ps-fechas" style={{display:'grid',gridTemplateColumns:`repeat(${fechas.length},1fr)`,gap:1,background:'var(--paper-300)',border:'1px solid var(--paper-300)'}}>
                       {fechas.map(([l,v])=>(
                         <div key={l} style={{background:'var(--paper-0)',padding:'8px 6px',textAlign:'center'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:8,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{l}</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-900,#222)'}}>{v}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{l}</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900,#222)'}}>{v}</div>
                         </div>
                       ))}
                     </div></div>
@@ -4705,17 +4703,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="ps-sig" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:20,marginBottom:18}}>
                     {[['Operario'],['Hora inicio'],['Verificado por']].map(([l])=>(
                       <div key={l}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:6}}>{l}</div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:6}}>{l}</div>
                         <div style={{borderBottom:'1px solid var(--ink-600)',height:26}}></div>
                       </div>
                     ))}
                   </div>
                   <div>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:6}}>Observaciones del lote</div>
+                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:6}}>Observaciones del lote</div>
                     <div style={{borderBottom:'1px solid var(--paper-400)',height:22,marginBottom:10}}></div>
                     <div style={{borderBottom:'1px solid var(--paper-400)',height:22}}></div>
                   </div>
-                  <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)',textAlign:'right',letterSpacing:'.04em'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
+                  <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',textAlign:'right',letterSpacing:'var(--tracking-label)'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
                 </div>
               </div>
               );
@@ -4729,7 +4727,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div>
             <div className="panel">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:8,letterSpacing:'.2em',textTransform:'uppercase',color:'var(--ink-400)'}}>{saved.length} receta{saved.length!==1?'s':''}</span>
+                <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)'}}>{saved.length} receta{saved.length!==1?'s':''}</span>
                 <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                   {['all',...Object.keys(SPP)].map(k=>(
                     <button key={k} className={`cat${dashFilter===k?' on':''}`} onClick={()=>setDashFilter(k)}>
@@ -4771,7 +4769,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                               {sc>0&&<div className="dash-kv">
                                 <span className="dk">Score</span>
-                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:11,color:'var(--border-soft)'}}>/100</span></span>
+                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
                               </div>}
                               <div className="dash-kv">
                                 <span className="dk">C:N</span>
@@ -4784,7 +4782,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:13}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -4792,17 +4790,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <div style={{display:'flex',gap:0,borderTop:'1px solid var(--paper-300)'}}>
                                 {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
                                   <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:7.5,color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
-                                    <div style={{fontFamily:'var(--font-num)',fontSize:12,color:'var(--coral-700)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:7,color:'var(--ink-500)'}}>COP/bolsa</div>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
+                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--coral-700)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
                                   </div>
                                 ))}
                               </div>
                             )}
                             <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
                               <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
-                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:9,padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
-                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:9,color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
+                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
+                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
                             <div className="dash-card-foot">
@@ -4832,21 +4830,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
             <div className="inv-modal" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:12,marginBottom:12}}>
-                <thead><tr>{['Ingrediente','Requerido kg','Stock kg',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido kg'||h==='Stock kg'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
+              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
+                <thead><tr>{['Ingrediente','Requerido kg','Stock kg',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido kg'||h==='Stock kg'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
                 <tbody>
                   {loteBatchConfirm.preview.map(row=>(
                     <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{row.krKg.toFixed(3)}</td>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{row.stockActual.toFixed(3)}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:13}}>{row.ok?'✓':'⚠'}</td>
+                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
                 <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
@@ -4883,10 +4881,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div style={{marginBottom:12}}><label className="inv-label">Objetivo de la prueba</label><input className="inv-input" placeholder="ej. Comparar humedad 63% vs 66%" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
               <div style={{marginBottom:16}}><label className="inv-label">Notas</label><textarea className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
-              {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
+              {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){alert('Completa código y especie.');return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
             </div>
           </div>
@@ -4904,11 +4902,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
                 <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:16,cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){alert('Selecciona bolsa y peso.');return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
+                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
               </div>
             </div>
           </div>
@@ -4927,7 +4925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
                 Ver catálogo
               </button>
             </div>
@@ -4944,10 +4942,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
-            <span style={{color:'var(--paper-0)',opacity:.6,fontSize:11,lineHeight:1,transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
+            <span style={{color:'var(--paper-0)',opacity:.6,fontSize:"var(--text-sm)",lineHeight:1,transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
           </div>
           </>)}
         </div>
