@@ -162,9 +162,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
       <span>Catálogo</span>
     </button>
-    <button class="rail-btn {{ navSimCls }}" onClick="{{ goSimDirect }}" aria-current="{{ curSim }}">
+    <button class="rail-btn {{ navFormularCls }}" onClick="{{ goSimFormular }}" aria-current="{{ curFormular }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
-      <span>Laboratorio</span>
+      <span>Formular</span>
+    </button>
+    <button class="rail-btn {{ navRecetarioCls }}" onClick="{{ goSimDashboard }}" aria-current="{{ curRecetario }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"></path><path d="M14 2v5h5"></path><path d="M8 13h8M8 17h5"></path></svg>
+      <span>Recetario</span>
     </button>
 
     <div class="rail-sep"></div>
@@ -189,7 +193,7 @@
 
   </nav>
 
-  <main class="app-main fos-scroll" style="height:100vh;overflow-y:auto;position:relative;">
+  <main class="app-main fos-scroll" style="height:100vh;overflow-y:auto;overflow-x:hidden;position:relative;">
 
     <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
       <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
@@ -357,7 +361,7 @@
               <span style="font:var(--t-label);color:var(--ink-0);">{{ simCardLabel }}</span>
               <span style="font:var(--t-caption);color:var(--text-metadata);">{{ simCardSub }}</span>
             </span>
-            <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);">Laboratorio →</span>
+            <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);">→</span>
           </button>
         </div>
 
@@ -513,7 +517,7 @@
 
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Referencia de receta <span style="font-weight:400;color:var(--text-metadata);">· validada por especie</span></div>
-            <button onClick="{{ formularSelected }}" disabled="{{ formularDisabled }}" style="{{ formularStyle }}">Formular en Laboratorio →</button>
+            <button onClick="{{ formularSelected }}" disabled="{{ formularDisabled }}" style="{{ formularStyle }}">Formular receta →</button>
           </div>
           <sc-if value="{{ needsSpeciesFirst }}" hint-placeholder-val="{{ false }}"><p style="font:var(--t-caption);color:var(--text-metadata);margin:0 0 8px;">Elige una especie para ver las recetas compatibles.</p></sc-if>
           <sc-if value="{{ noRecipeForSpecies }}" hint-placeholder-val="{{ false }}"><p style="font:var(--t-caption);color:var(--accent-terracotta);margin:0 0 8px;">Sin receta específica documentada para esta especie — usa la experimental cuando aparezca.</p></sc-if>
@@ -1079,41 +1083,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <sc-if value="{{ simTabIsNotInicio }}" hint-placeholder-val="{{ false }}">
-      
-      </sc-if>
-
-      <sc-if value="{{ simTabIsInicio }}" hint-placeholder-val="{{ true }}">
-      <div class="col" style="max-width:820px;margin:0 auto;padding:38px 24px 70px;">
-        <div>
-            
-            
-            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:54px;line-height:.98;letter-spacing:-.02em;color:var(--ink-0);margin:8px 0 0;">Laboratorio SdlP<br></h1><span style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--text-metadata);">Herramienta de especulación e investigación</span>
-          </div><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;">
-          
-          <div style="flex:none;"><img src="{{ bannerBotanicoImg }}" alt="" aria-hidden="true" style="height: 314px; width: 751px; mix-blend-mode: multiply; opacity: .85; filter: saturate(.6) contrast(1.05); display: block"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:11px;margin-top:36px;">
-          <sc-for list="{{ simTilesNative }}" as="ti" hint-placeholder-count="8">
-            <button onClick="{{ ti.go }}" style="{{ ti.style }}">
-              <span><span style="{{ ti.titleStyle }}">{{ ti.t }}</span><span style="{{ ti.subStyle }}">{{ ti.s }}</span></span>
-              <span style="{{ ti.arrowStyle }}">→</span>
-            </button>
-          </sc-for>
-        </div>
-      </div>
-      </sc-if>
-
-      <sc-if value="{{ simShowSubnav }}" hint-placeholder-val="{{ false }}">
-      <div class="fos-scroll" style="display:flex;gap:2px;overflow-x:auto;padding:0 24px;max-width:1280px;margin:0 auto;background:var(--paper-0);border-bottom:1px solid var(--border-strong);">
-        <sc-for list="{{ simTabsNav }}" as="t" hint-placeholder-count="5">
-          <button onClick="{{ t.go }}" aria-current="{{ t.on }}" style="{{ t.style }}">{{ t.label }}</button>
-        </sc-for>
-      </div>
-      </sc-if>
-      <sc-if value="{{ simTabIsNotInicio }}" hint-placeholder-val="{{ false }}">
       <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" hint-size="100%,100vh"></x-import>
-      </sc-if>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -2282,12 +2252,12 @@ class Component extends DCLogic {
     rCount: 1,
     climaBadge: 0,
     simRecipes: [],
-    simTab: 'inicio',
+    simTab: 'formular',
     simTabNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
     simFlyoutOpen: false,
-    simPendingTab: 'inicio',
+    simPendingTab: 'formular',
     role: 'operator',
     operator: 'Germán', operatorKey: 'inigo', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
     reviewTab: 'eventos',
@@ -3092,8 +3062,6 @@ class Component extends DCLogic {
     const navCls = m => s.module===m ? 'on' : '';
     const PROD_MODS = ['camaras','plan','inventario','calidad','costes','revision','aprender','comercial'];
     const REG_MODS = [];
-    const LAB_TABS = ['inicio','formular','dashboard'];
-    const isLabScope = s.module==='sim' && LAB_TABS.includes(s.simTab);
     const tabStyle = on => 'cursor:pointer;flex:none;border:1px solid '+(on?'var(--ink-0)':'var(--border-soft)')+';background:'+(on?'var(--ink-0)':'var(--paper-0)')+';color:'+(on?'var(--paper-0)':'var(--ink-1)')+';border-radius:999px;padding:8px 16px;font:var(--t-label);white-space:nowrap;';
     const gated = pairs => pairs.filter(([m])=>!ROLE_GATE[m]||ROLE_GATE[m].includes(s.role));
     const ageMs = since=>Date.now()-since;
@@ -3113,11 +3081,12 @@ class Component extends DCLogic {
       isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
-      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navSimCls:navCls('sim'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
+      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
       curInicio:s.module==='inicio'?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
-      curSim:s.module==='sim'?'page':undefined, curRevision:s.module==='revision'?'page':undefined,
-      navSimCls: isLabScope?'on':'', curSim: isLabScope?'page':undefined,
+      curRevision:s.module==='revision'?'page':undefined,
+      navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
+      navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
       navCatalogoCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curCatalogo:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navFichaCls:(s.module==='sim'&&s.simTab==='produccion')?'on':'', curFicha:(s.module==='sim'&&s.simTab==='produccion')?'page':undefined,
       navBitacoraCls:(s.module==='sim'&&s.simTab==='bitacora')?'on':'', curBitacora:(s.module==='sim'&&s.simTab==='bitacora')?'page':undefined,
@@ -3129,20 +3098,16 @@ class Component extends DCLogic {
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
       goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null,climaBadge:0}),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
-      goSimDirect:()=>{ this.refreshSim(); this.goSimTab('inicio'); },
       prodTabs: mkTabs([['camaras','Cámaras'],['plan','Plan'],['inventario','Inventario'],['costes','Costes'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]),
       regTabs: mkTabs([['revision','Revisión'],['aprender','Aprender'],['comercial','Comercial']]),
-      simTabsNav: [['inicio','Inicio'],['formular','Receta'],['dashboard','Recetario']].map(t=>({ label:t[1], on:s.simTab===t[0], style:'cursor:pointer;flex:none;display:flex;align-items:center;gap:6px;background:'+(s.simTab===t[0]?'var(--paper-2)':'none')+';border:none;border-bottom:3px solid '+(s.simTab===t[0]?'var(--accent-terracotta)':'transparent')+';padding:9px 14px;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:'+(s.simTab===t[0]?'var(--ink-0)':'var(--ink-2)')+';transition:color .15s;', go:()=>{ this.refreshSim(); this.goSimTab(t[0]); } })),
-      simShowSubnav: s.module==='sim' && LAB_TABS.includes(s.simTab) && s.simTab!=='inicio',
       goInicio:()=>this.setState({module:'inicio',capture:false}),
       goSesion:()=>this.setState({module:'sesion',capture:false}),
-      goSim:()=>{ this.refreshSim(); this.setState({module:'sim',capture:false}); },
+      goSim:()=>{ this.refreshSim(); this.goSimTab((s.simRecipes||[]).length>0?'dashboard':'formular'); },
       toggleSimFlyout:()=>this.setState(s=>({simFlyoutOpen:!s.simFlyoutOpen})),
       openSimFlyout:()=>this.setState({simFlyoutOpen:true}),
       closeSimFlyout:()=>this.setState({simFlyoutOpen:false}),
       handleSimMenuClick:(e)=>{ if(e.target.closest('.rail-flyout-item')) this.setState({simFlyoutOpen:false}); },
       simFlyoutOpen:s.simFlyoutOpen,
-      goSimInicio:()=>this.goSimTab('inicio'),
       goSimCatalogo:()=>this.goSimTab('catalogo'),
       goSimFormular:()=>this.goSimTab('formular'),
       goSimBitacora:()=>this.goSimTab('bitacora'),
@@ -3190,16 +3155,6 @@ class Component extends DCLogic {
       camaras: camView.map(c=>({ ...c, ...this.liveMonitor(c), open:()=>this.setState({camDetail:c.id}) })),
       hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
       simTab:s.simTab, simTabNonce:s.simTabNonce, simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
-      simTabIsInicio: s.simTab==='inicio', simTabIsNotInicio: s.simTab!=='inicio',
-      simTilesNative: [
-        {t:'Formular una receta',s:'Mezcla · C:N · humedad · generador automático',tb:'formular',pri:true},
-        {t:'Recetario',s:'Repositorio de recetas',tb:'dashboard'},
-      ].map(ti=>({ ...ti, go:()=>this.goSimTab(ti.tb),
-        style:'cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;width:100%;border:1px solid var(--border-strong);background:'+(ti.pri?'var(--ink-0)':'var(--paper-0)')+';border-radius:0;padding:18px 20px;',
-        titleStyle:'font-family:var(--font-sans);font-weight:700;font-size:21px;letter-spacing:-.01em;display:block;line-height:1.1;color:'+(ti.pri?'var(--paper-0)':'var(--ink-0)'),
-        subStyle:'font-family:var(--font-sans);font-size:13px;display:block;margin-top:3px;color:'+(ti.pri?'color-mix(in oklab, var(--paper-0) 70%, transparent)':'var(--text-secondary)'),
-        arrowStyle:'font-size:20px;flex-shrink:0;color:'+(ti.pri?'var(--paper-0)':'var(--text-metadata)'),
-      })),
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimSaved:(list)=>{ if(Array.isArray(list)) this.setState({ simRecipes:list }); },
       historicalYieldsJson: JSON.stringify(s.yields||[]),
@@ -3211,7 +3166,7 @@ class Component extends DCLogic {
       openSession:()=>this.setState({module:'sesion',screen:'home',capture:false}),
       simRecipeCount:(s.simRecipes||[]).length,
       simCardLabel: (s.simRecipes||[]).length>0 ? ((s.simRecipes||[]).length+' recetas guardadas') : 'Formular un sustrato',
-      simCardSub: (s.simRecipes||[]).length>0 ? 'Abrir en el Laboratorio' : 'A\u00fan no hay recetas \u00b7 empieza una',
+      simCardSub: (s.simRecipes||[]).length>0 ? 'Abrir el recetario' : 'A\u00fan no hay recetas \u00b7 empieza una',
       camarasQuick: CAMARAS.filter(cm=>cm.estado==='activo').map(cm=>{
         const r=this.liveMonitor(cm);
         return { name:cm.name, zona:cm.zona, sppName: cm.spp?spName(cm.spp):'Mixto / sin asignar',
@@ -3401,7 +3356,7 @@ class Component extends DCLogic {
       reviewTab:s.reviewTab, isTabEventos:s.reviewTab==='eventos', isTabRend:s.reviewTab==='rendimiento', isTabSalidas:s.reviewTab==='salidas', isTabConoc:s.reviewTab==='conocimiento',
       tabEventosStyle:this.tabStyle(s.reviewTab==='eventos'), tabRendStyle:this.tabStyle(s.reviewTab==='rendimiento'), tabSalidasStyle:this.tabStyle(s.reviewTab==='salidas'), tabConocStyle:this.tabStyle(s.reviewTab==='conocimiento'),
       setTabEventos:()=>this.setState({reviewTab:'eventos'}), setTabRend:()=>this.setState({reviewTab:'rendimiento'}), setTabSalidas:()=>this.setState({reviewTab:'salidas'}), setTabConoc:()=>this.setState({reviewTab:'conocimiento'}),
-      reviewSessions:s.reviewSessions.map(r=>r.label==='Sesión de laboratorio'?{...r,go:()=>{this.refreshSim();this.goSimTab('inicio');}}:{...r,noGo:true}),
+      reviewSessions:s.reviewSessions.map(r=>r.label==='Sesión de laboratorio'?{...r,go:()=>{this.refreshSim();this.goSimTab('formular');}}:{...r,noGo:true}),
       reviewEvents: s.reviewEvents.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
       // rendimiento
       beOverall, beTarget:KPI.beTarget, beOptimal:KPI.beOptimal, beAlert:KPI.beAlert,
@@ -3665,8 +3620,8 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma' };
-    const crumbMap = { inicio:'', sesion:'Hoy · Sesión', sim:(SIM_CRUMB[s.simTab]||'Laboratorio'), camaras:'Producción · Cámaras', plan:'Producción · Plan',
+    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega' };
+    const crumbMap = { inicio:'', sesion:'Hoy · Sesión', sim:(SIM_CRUMB[s.simTab]||''), camaras:'Producción · Cámaras', plan:'Producción · Plan',
       inventario:'Producción · Inventario', calidad:'Producción · Calidad', costes:'Producción · Costes',
       revision:'Registro · Revisión', aprender:'Registro · Aprender', comercial:'Registro · Comercial' };
     const undoOpen = s.ledger.length>0 && (Date.now()-(s.lastPushAt||0) < 30000);

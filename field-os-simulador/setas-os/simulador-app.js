@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 058abf6f9d8a8810d525cbe1b6cfe1bcf9967863be025ada320fcc33e2de5003
+// source-hash: 3ae079cf2db666711e34f2d73997b359734d641a3c152290a4b432527fc389f9
 const {
   useState,
   useMemo,
@@ -4982,13 +4982,15 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
     // scoring.js) para que el score no dependa de si el llamador se acuerda
     // de pasarlo — eso fue justo lo que causó una divergencia real de 3
     // puntos entre esta función y generateOptimizer durante la migración.
+    // stockIds solo aplica en modo bodega — en "paleta completa" el pool ya ignora
+    // el inventario, así que scoreStock no debe penalizar cobertura que nunca se buscó.
     const {
       score: resultScore,
       breakdown
     } = scoreAn(an, {
       treatment: tr,
       recipe: rec,
-      stockIds
+      stockIds: useStock ? stockIds : undefined
     });
     const maxKgWet = Object.keys(stockMap).length > 0 ? calcMaxBatchFromStock(rec, stockMap, 10, sp.moisture?.ideal || 65, effectiveINGS) : null;
     results.push({
@@ -6044,35 +6046,10 @@ const RecipeGauges = ({
     }
   }, "Estimaci\xF3n te\xF3rica \u2014 sin lotes previos de ", sp.name, " en el registro para proyectar EB real.")));
 };
-const MobileQuickJump = ({
-  recipeCount = 0,
-  total = 0
-}) => {
-  const [mode, setMode] = useState('down');
-  useEffect(() => {
-    const onScroll = () => {
-      const right = document.querySelector('.builder-right');
-      if (!right) return;
-      setMode(right.getBoundingClientRect().top < window.innerHeight * 0.35 ? 'up' : 'down');
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, {
-      passive: true
-    });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  if (!recipeCount) return null;
-  const jump = () => {
-    document.querySelector(mode === 'down' ? '.builder-right' : '.builder-left')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
-  };
-  return /*#__PURE__*/React.createElement("button", {
-    className: "mobile-quickjump",
-    onClick: jump
-  }, mode === 'down' ? `Receta (${recipeCount}) · ${total.toFixed(0)}% ↓` : '↑ Ingredientes');
-};
+
+// MobileQuickJump se retiró — los chips de .builder-subnav (Ingredientes/Receta/
+// Score·Perito/Batch/Tratamiento) ya cubren la misma navegación con destinos
+// explícitos, sin duplicar el patrón con un botón flotante ambiguo.
 
 // ── v4: INVENTARIO helpers ──
 // Duplicados a propósito respecto a inventario.js (mismo patrón que MASS_BALANCE_TOL
@@ -6266,6 +6243,31 @@ const historicalEBFor = (sKey, historicalYields) => {
 };
 function App(props) {
   const [bridgeOpen, setBridgeOpen] = useState(true);
+  // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
+  // ya compite con el rail inferior) y la reaparece al subir o cerca del tope.
+  const [bridgeHidden, setBridgeHidden] = useState(false);
+  useEffect(() => {
+    const scroller = document.querySelector('.app-main') || window;
+    let lastY = scroller === window ? window.scrollY : scroller.scrollTop;
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const y = scroller === window ? window.scrollY : scroller.scrollTop;
+        const delta = y - lastY;
+        if (y < 80) setBridgeHidden(false);else if (delta > 16) setBridgeHidden(true);else if (delta < -8) setBridgeHidden(false);
+        lastY = y;
+      });
+    };
+    scroller.addEventListener('scroll', onScroll, {
+      passive: true
+    });
+    return () => {
+      scroller.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
   const [hasPickedSpecies, setHasPickedSpecies] = useState(() => {
     try {
       const p = normSpp(props.preselectSpecies);
@@ -6319,7 +6321,7 @@ function App(props) {
   const [loteSyncErr, setLoteSyncErr] = useState('');
   const [cmpRecipe, setCmpRecipe] = useState([]);
   const [cmpKey, setCmpKey] = useState('p_ostreatus_gris');
-  const [tab, setTab] = useState('inicio');
+  const [tab, setTab] = useState('formular');
   const TAB_LABELS = {
     inicio: 'Inicio',
     catalogo: 'Especies',
@@ -6938,9 +6940,13 @@ function App(props) {
     const a2 = analyze(e.recipe, e.sKey, effectiveINGS);
     if (!a2) return 0;
     const tr2 = calcTreatment(a2, e.sKey);
+    // stockIds debe pasarse igual que en el Perito (línea ~768) — de lo contrario
+    // scoreStock cae siempre en el guard "sin restricción" y la misma receta
+    // guardada muestra un score distinto en el Recetario que al abrirla en el Formulador.
     return scoreAn(a2, {
       treatment: tr2,
-      recipe: e.recipe
+      recipe: e.recipe,
+      stockIds
     }).score;
   };
   const addI = id => {
@@ -10535,10 +10541,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   })()), tab === 'formular' && /*#__PURE__*/React.createElement("div", {
     className: "builder-wrap",
     "data-tab": tab
-  }, /*#__PURE__*/React.createElement(MobileQuickJump, {
-    recipeCount: recipe.length,
-    total: an ? an.tot : 0
-  }), loadedFlash && /*#__PURE__*/React.createElement("div", {
+  }, loadedFlash && /*#__PURE__*/React.createElement("div", {
     className: "loaded-toast"
   }, "\u2713 Receta cargada"), /*#__PURE__*/React.createElement("div", {
     className: "builder-subnav",
@@ -10591,12 +10594,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   }, s.l))), recipe.length > 0 && (() => {
     const sm2 = PERITO_STATUS[opt.status] || PERITO_STATUS.sin_receta;
+    const limiter = peritoMainLimiter(opt, an);
     return /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        flexWrap: 'wrap',
+        flexDirection: 'column',
+        gap: 4,
         padding: '8px 12px',
         background: 'var(--paper-100)',
         border: '1px solid var(--border-soft)',
@@ -10605,6 +10608,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
         top: 37,
         zIndex: 6,
         fontFamily: 'var(--font-body)'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        flexWrap: 'wrap'
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -10656,7 +10666,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
         fontSize: "var(--text-xs)",
         color: 'var(--ink-500)'
       }
-    }, numBags, "\xD7", kgBag, "kg = ", (numBags * kgBag).toFixed(1), "kg"));
+    }, numBags, "\xD7", kgBag, "kg = ", (numBags * kgBag).toFixed(1), "kg")), limiter && /*#__PURE__*/React.createElement("button", {
+      onClick: () => document.getElementById('bl-perito')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      }),
+      style: {
+        textAlign: 'left',
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        color: sm2.txt,
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        lineHeight: 1.4
+      }
+    }, "\u2192 ", limiter));
   })(), /*#__PURE__*/React.createElement("div", {
     className: "builder-cols"
   }, /*#__PURE__*/React.createElement("div", {
@@ -15714,7 +15740,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       height: 40
     }
   })), (RECETA_TABS.includes(tab) || tab === 'produccion' || tab === 'schedule') && /*#__PURE__*/React.createElement("div", {
-    className: "species-bridge",
+    className: 'species-bridge' + (bridgeHidden ? ' bridge-hidden' : ''),
     style: {
       cursor: 'pointer'
     },

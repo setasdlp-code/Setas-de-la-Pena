@@ -1765,7 +1765,8 @@
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;}
+.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;transition:transform .22s ease;}
+@media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
 .sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
@@ -2057,11 +2058,6 @@
   .sim-root .prod-batch-grid{ grid-template-columns:1fr!important; }
 }
 
-/* ── FAB: salto rápido entre Ingredientes ↔ Receta activa en Formular (móvil) ── */
-.sim-root .mobile-quickjump{display:none;position:fixed;right:16px;bottom:20px;z-index:65;align-items:center;gap:6px;padding:13px 18px;border-radius:999px;background:var(--ink-900);color:var(--paper-50);border:none;font-family:var(--font-mono);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 6px 18px rgba(26,20,16,.3);cursor:pointer;}
-.sim-root .mobile-quickjump:active{transform:scale(.96);}
-@media(max-width:900px){.sim-root .mobile-quickjump{display:inline-flex;}}
-@media(max-width:800px){.sim-root .mobile-quickjump{bottom:calc(78px + env(safe-area-inset-bottom));}}
 
 /* ── Hoja de Producción: compactar en móvil (screen-only, no afecta impresión) ── */
 @media screen and (max-width:900px){
@@ -2295,17 +2291,17 @@
 }
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
-    min-width:14px!important;
-    min-height:14px!important;
+    min-width:18px!important;
+    min-height:18px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-14px;}
+  .sim-root .qa-mini-btn::before{inset:-12px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
-    min-width:13px!important;
-    min-height:13px!important;
+    min-width:20px!important;
+    min-height:20px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-15px;}
+  .sim-root .qa-mini-btn::before{inset:-11px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
