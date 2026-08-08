@@ -31,20 +31,24 @@ Filosofía: **cada color es funcional (clasificación o estado), nunca decorativ
 #### Line (reglas y bordes)
 | Token | Hex | Rol |
 |-------|-----|------|
-| `line-0` | #C9C1A9 | Hairline por defecto |
-| `line-1` | #A69E86 | Borde de tabla, subrayado activo |
+| `line-0` | #988C6C | Hairline por defecto — auditado 2026: oscurecido desde #C9C1A9 (1.64:1) para cumplir el piso WCAG 1.4.11 de 3:1 no-texto (ahora 3.03:1) |
+| `line-1` | #8C7F5B | Borde de tabla, subrayado activo — oscurecido desde #A69E86 (2.43:1) a 3.6:1; se mantiene `line-1` > `line-0` |
 | `line-2` | #1E1D19 | Divisor de sección, borde de impresión |
 
-#### Accents — solo clasificación y estado
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `accent-olive` | #5B6B44 | Activo / positivo |
-| `accent-terracotta` | #A85C32 | Atención |
-| `accent-blue-grey` | #5E7080 | Informativo, enlaces |
-| `accent-mushroom` | #7A6A52 | Archivado |
-| `accent-rust` | #8C3223 | **Reservado exclusivamente para error / contaminación** |
+**Nota de accesibilidad (`ink-3`)**: #96907C da 2.90:1 sobre `paper-0`, por debajo del WCAG 4.5:1. Auditado 2026 y aceptable únicamente porque todo uso actual (`.fos-annot__blank`, placeholder de `.fos-market__img`, guías de llenado manual en fichas) es contenido no esencial/placeholder, nunca información que el usuario deba leer. Si un nuevo uso lleva información requerida, no reusar `ink-3` — usar `ink-2`.
 
-Cada accent tiene su variante `-dim` (tinte suave para fondos/chips).
+#### Accents — solo clasificación y estado
+| Token | Hex | Hover/pressed | Uso |
+|-------|-----|-----|-----|
+| `accent-olive` | #5B6B44 | #4A5737 | Activo / positivo |
+| `accent-terracotta` | #A85C32 | #894B29 | Atención |
+| `accent-blue-grey` | #5E7080 | #4D5B68 | Informativo, enlaces |
+| `accent-mushroom` | #7A6A52 | #645643 | Archivado |
+| `accent-rust` | #8C3223 | #72291C | **Reservado exclusivamente para error / contaminación** |
+
+Cada accent tiene su variante `-dim` (tinte suave para fondos/chips) y su variante `-hover` (FOS-09, auditado 2026: ~18% más oscuro, mismo pigmento — sin tonos nuevos, sin degradados — para estados hover/pressed de cualquier control interactivo construido sobre un fill de accent).
+
+**Regla de contraste sobre fill sólido (FOS-07, auditado 2026)**: sobre un fill sólido de accent, texto o logo deben usar `paper-0`, nunca `ink-0` (`ink-0` sobre `accent-olive` = 2.92:1, falla WCAG incluso en texto grande; `paper-0` sobre `accent-olive` = 5.26:1, pasa).
 
 ### Semantic aliases
 - `surface-page` / `surface-panel` / `surface-recessed` / `surface-pressed` → escala paper

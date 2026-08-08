@@ -112,35 +112,10 @@
   text-rendering: optimizeLegibility;
 }
 
-/* ── TOP BAR (field notebook cover) ─────────────────────────────────────── */
-.sim-root .topbar{
-  position:sticky; top:0; z-index:50;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 32px; height:68px;
-  background: #fff;
-  backdrop-filter: blur(8px) saturate(1.05);
-  border-bottom:1px solid rgba(26,20,16,0.22);
-}
-.sim-root .topbar-mark{font-family:var(--font-display);font-size:28px;color:var(--coral-500);letter-spacing:-0.02em;line-height:1;font-weight:400;}
-.sim-root .topbar-mark em{font-style:italic;font-weight:400;color:var(--ink-2);}
-.sim-root .topbar-right{font-family:var(--font-mono);font-weight:700;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-2);}
+/* ── TOP BAR: oculta permanentemente — Setas OS (shell externo) provee su propio header. Ver .sim-root .topbar{display:none!important} más abajo. ── */
 
-/* ── HERO ───────────────────────────────────────────────────────── */
-.sim-root .hero{ border-bottom:1px solid var(--border-soft); overflow:hidden; background:var(--paper-0); }
-.sim-root .hero-inner{
-  max-width:1180px; margin:0 auto; padding:52px 28px 56px;
-  display:grid; grid-template-columns:1.05fr 0.95fr; gap:34px; align-items:center;
-}
-.sim-root .hero-copy{ max-width:460px; }
-.sim-root .hero-eyebrow{ font-weight:800; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--coral-700); margin-bottom:16px; }
-.sim-root .hero-title{ font-family:var(--font-display); font-size:68px; font-weight:400; line-height:0.95; color:var(--ink-0); letter-spacing:-0.02em; margin-bottom:6px; font-style:italic; }
-.sim-root .hero-sub{ font-family:var(--font-display); font-style:italic; font-size:24px; color:var(--coral-500); margin-bottom:18px; font-weight:400; }
-.sim-root .hero-lede{ font-size:16.5px; line-height:1.6; color:var(--ink-700); text-wrap:pretty; }
-.sim-root .hero-lede em{ font-style:italic; color:var(--moss-700); }
-.sim-root .hero-art{ display:flex; justify-content:flex-end; }
-.sim-root .hero-art img{ width:100%; max-width:var(--hero-img-w,560px); height:auto; display:block; transition:max-width .3s var(--ease); }
+/* ── HERO: oculto permanentemente — mismo motivo. Ver .sim-root .hero{display:none!important} más abajo. ── */
 .sim-root.no-grain body{ background-image:none; }
-.sim-root.hide-hero .hero{ display:none; }
 
 /* ── LA PÁGINA (hoja abierta del cuaderno) ──────────────────── */
 .sim-root .wrap{
@@ -149,12 +124,6 @@
 }
 /* Margen del cuaderno retirado — el OS usa lienzo plano */
 .sim-root .wrap::before{ display:none; }
-@media(max-width:900px){
-  .sim-root .hero-inner{ grid-template-columns:1fr; gap:14px; padding:26px 20px 18px; text-align:left; }
-  .sim-root .hero-art{ justify-content:center; order:-1; }
-  .sim-root .hero-art img{ max-width:78%; }
-  .sim-root .hero-title{ font-size:42px; }
-}
 
 /* ── LAYOUT ─────────────────────────────────────────────────────── */
 .sim-root .wrap{ max-width:1280px; margin:0 auto; padding:0 20px; }
@@ -1057,10 +1026,6 @@
 /* ── TABLET LANDSCAPE (850px—1200px) ────────────────────────────── */
 @media(max-width:1200px) and (min-width:851px){
   .sim-root .wrap{ padding:0 18px; }
-  .sim-root .topbar{ padding:0 18px; }
-  .sim-root .hero-inner{ grid-template-columns:1fr; gap:12px; padding:24px 18px; }
-  .sim-root .hero-art{ max-width:280px; justify-self:center; }
-  .sim-root .hero-title{ font-size:48px; }
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:12px; }
   .sim-root .cols{ gap:16px; }
 }
@@ -1068,19 +1033,8 @@
 /* ── TABLET PORTRAIT / LARGE MOBILE (569px—850px) ────────────────── */
 @media(max-width:850px) and (min-width:569px){
   .sim-root .wrap{ padding:0 16px; }
-  .sim-root .topbar{ padding:0 16px; height:56px; }
-  .sim-root .topbar-mark{ font-size:20px; }
-  .sim-root .topbar-right{ font-size:10px; }
   .sim-root .nav-wrap{ top:56px; }
-  
-  /* ── Hero ── */
-  .sim-root .hero-inner{ grid-template-columns:1fr; gap:8px; padding:20px 16px 18px; }
-  .sim-root .hero-art{ display:flex; justify-content:center; max-width:100%; }
-  .sim-root .hero-art img{ max-width:260px; }
-  .sim-root .hero-title{ font-size:38px; line-height:0.98; }
-  .sim-root .hero-sub{ font-size:18px; }
-  .sim-root .hero-lede{ font-size:14px; }
-  
+
   /* ── Species grid ── */
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
   .sim-root .p-common{ font-size:18px; }
@@ -1107,19 +1061,8 @@
 @media(max-width:568px) and (min-width:420px){
   .sim-root{ font-size:87%; }
   .sim-root .wrap{ padding:0 12px; }
-  .sim-root .topbar{ padding:0 12px; height:48px; }
-  .sim-root .topbar-mark{ font-size:16px; }
-  .sim-root .topbar-right{ font-size:8px; }
   .sim-root .nav-wrap{ top:48px; }
-  
-  /* ── Hero ── */
-  .sim-root .hero-inner{ grid-template-columns:1fr; gap:0; padding:16px 12px 12px; }
-  .sim-root .hero-art{ display:none; }
-  .sim-root .hero-title{ font-size:32px; line-height:1.05; }
-  .sim-root .hero-sub{ font-size:14px; margin-top:3px; }
-  .sim-root .hero-lede{ font-size:12px; line-height:1.5; }
-  .sim-root .hero-eyebrow{ font-size:7px; margin-bottom:8px; }
-  
+
   /* ── Nav ── */
   .sim-root .mode-btn{ font-size:18px; padding:9px 14px; }
   .sim-root .sub-tabs{ padding:0 6px; }
@@ -1245,20 +1188,8 @@
 @media(max-width:419px){
   .sim-root{ font-size:85%; }
   .sim-root .wrap{ padding:0 10px; }
-  .sim-root .topbar{ padding:0 10px; height:44px; }
-  .sim-root .topbar-mark{ font-size:14px; }
-  .sim-root .topbar-right{ font-size:7px; letter-spacing:0; }
   .sim-root .nav-wrap{ top:44px; }
-  
-  /* ── Hero ── */
-  .sim-root .hero-inner{ grid-template-columns:1fr; gap:0; padding:12px 10px 10px; }
-  .sim-root .hero-art{ display:none; }
-  .sim-root .hero-title{ font-size:26px; line-height:1.08; letter-spacing:-0.01em; }
-  .sim-root .hero-sub{ font-size:12px; margin-top:2px; }
-  .sim-root .hero-lede{ font-size:11px; line-height:1.45; }
-  .sim-root .hero-eyebrow{ font-size:6px; margin-bottom:6px; }
-  .sim-root .hero-cta{ padding:8px 14px; font-size:8px; margin-top:10px; }
-  
+
   /* ── Nav ── */
   .sim-root .mode-btn{ font-size:16px; padding:8px 12px; }
   .sim-root .sub-tabs{ padding:0 4px; }
@@ -1526,25 +1457,11 @@
 /* ===== inline <style> from simulador.html (scoped) ===== */
 
 .sim-root{font-size:90%;}.sim-root{background:var(--paper-0);margin:0;padding:0;}
-/* ── FIELD OS SHELL (v20) ─────────────────────────────────────── */
+/* ── FIELD OS SHELL (v20): Setas OS (shell externo) ya provee header y navegación,
+   así que el hero, topbar y rail internos del simulador se ocultan para no duplicarlos. ── */
 .sim-root .hero{display:none!important;}
-.sim-root .fos-rail{position:fixed;z-index:60;background:var(--paper-50);display:flex;}
-.sim-root .fos-rail-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:var(--ink-500);position:relative;padding:13px 4px;transition:color .15s;}
-.sim-root .fos-rail-btn:hover{color:var(--ink-800);}
-.sim-root .fos-rail-btn.on{color:var(--ink-0);}
-.sim-root .fos-rail-btn svg{width:20px;height:20px;flex-shrink:0;}
-.sim-root .fos-rail-btn span{font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
-.sim-root .fos-rail-mark{font-family:var(--font-display);font-style:italic;font-weight:700;font-size:21px;color:var(--ink-0);text-align:center;padding:20px 0 16px;display:block;}
-/* Rail integrado en Setas OS: la navegación del simulador vive en el menú principal, este rail interno se oculta para no duplicarla. */
 .sim-root .fos-rail{display:none!important;}
 .sim-root .topbar{display:none!important;}
-@media(max-width:800px){
-  .sim-root .fos-rail{display:none!important;position:fixed;bottom:0;left:0;right:0;width:100%;height:auto;flex-direction:row;z-index:60;background:var(--paper-50);border-top:1px solid var(--border-soft);padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));}
-  .sim-root .fos-rail-btn{flex:1;padding:12px 8px;gap:4px;font-size:11px;}
-  .sim-root .fos-rail-btn span{font-size:10px;}
-  .sim-root .fos-rail-mark{display:none;}
-  .sim-root .wrap{padding-bottom:80px!important;}
-}
 .sim-root .fos-home-back{display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);background:none;border:none;cursor:pointer;padding:10px 24px 0;}
 .sim-root .fos-home-back:hover{color:var(--ink-900);}
 @media(min-width:801px){
@@ -1553,18 +1470,6 @@
 @media(max-width:800px){
   .sim-root .fos-home-back{display:inline-flex;}
   .sim-root .wrap{padding-bottom:24px!important;}
-}
-.sim-root .fos-rail-item{position:relative;}
-.sim-root .fos-rail-sub{display:flex;flex-direction:column;gap:2px;background:var(--paper-50);border:1px solid var(--border-strong);min-width:168px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:70;padding:4px;}
-.sim-root .fos-rail-sub button{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:9px 12px;border:none;background:transparent;color:var(--ink-600);cursor:pointer;transition:all .12s;}
-.sim-root .fos-rail-sub button:hover{background:var(--paper-200);color:var(--ink-900);}
-.sim-root .fos-rail-sub button.on{background:var(--ink-0);color:var(--paper-0);}
-@media(min-width:801px){
-  .sim-root .fos-rail-sub{position:absolute;left:100%;top:0;}
-}
-@media(max-width:800px){
-  .sim-root .fos-rail-item{flex:1;display:flex;}
-  .sim-root .fos-rail-sub{position:absolute;left:0;right:0;bottom:100%;margin-bottom:4px;}
 }
 .sim-root .fos-home{padding:38px 24px 70px;max-width:820px;margin:0 auto;}
 .sim-root .fos-eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);}
@@ -1673,7 +1578,6 @@
 .sim-root .step-title{font-family:var(--font-body);font-weight:800;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-700);}
 
 .sim-root .builder-wrap{}
-.sim-root .builder-cols{display:grid;grid-template-columns:0.85fr 1.15fr;gap:18px;align-items:start;}
 .sim-root .builder-subnav{display:none;}
 @media(max-width:900px){.sim-root .builder-subnav{display:flex;}}
 
@@ -1786,6 +1690,20 @@
 /* ── v4 INVENTARIO & COMPRAS ─────────────────────────────────────── */
 .sim-root .inv-section{background:var(--paper-50);border:1px solid var(--border-soft);border-radius:var(--r-sm);overflow:hidden;margin-bottom:14px;}
 @media(max-width:768px){.sim-root .inv-section:has(.inv-table){overflow-x:auto;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);}}
+/* ── Tabla de bolsas (bitácora): es un formulario de captura, no solo lectura —
+   en móvil se apila como tarjetas en vez de depender del scroll horizontal,
+   para no obligar a desplazar la pantalla mientras se llenan fechas por bolsa. ── */
+@media(max-width:768px){
+  .sim-root .inv-section:has(.bolsas-table){overflow-x:visible;mask-image:none;-webkit-mask-image:none;}
+  .sim-root .bolsas-table thead{display:none;}
+  .sim-root .bolsas-table, .sim-root .bolsas-table tbody{display:block;width:100%;}
+  .sim-root .bolsas-table tr{display:block;border:1px solid var(--border-soft);border-radius:var(--r-sm);margin-bottom:10px;padding:6px 10px;}
+  .sim-root .bolsas-table td{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--paper-300);}
+  .sim-root .bolsas-table td:last-child{border-bottom:none;}
+  .sim-root .bolsas-table td::before{content:attr(data-label);flex:0 0 auto;font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);}
+  .sim-root .bolsas-table td > *{flex:1 1 auto;max-width:60%;}
+  .sim-root .bolsas-table input, .sim-root .bolsas-table select{font-size:16px!important;padding:8px 10px!important;min-height:40px;box-sizing:border-box;}
+}
 @media(max-width:600px){.sim-root .cmp-b-row{flex-direction:column;align-items:flex-start!important;}.sim-root .cmp-b-row > span{margin-right:0!important;margin-bottom:4px;}}
 .sim-root .inv-table{width:100%;border-collapse:collapse;}
 .sim-root .inv-table th{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);padding:8px 12px;background:var(--paper-200);border-bottom:1px solid var(--border-soft);text-align:left;}
@@ -1839,34 +1757,11 @@
 .sim-root .inv-stat-val{font-family:var(--font-display);font-style:italic;font-size:32px;color:var(--ink-900);line-height:1;}
 .sim-root .inv-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-400);margin-top:4px;}
 
-/* ── HERO SECTION ──────────────────────────────────────────────── */
-.sim-root .hero{background:var(--paper-50);border-bottom:1px solid rgba(26,20,16,0.18);overflow:hidden;position:relative;}
-
-.sim-root .hero-inner{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0;display:grid;grid-template-columns:1fr auto;align-items:center;gap:0;}
-.sim-root .hero-copy{padding:110px 35px 96.8px;}
-.sim-root .hero-eyebrow{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--coral-500);margin-bottom:14px;}
-.sim-root .hero-title{font-family:var(--font-display);font-size:97px;line-height:0.9;color:var(--ink-900);letter-spacing:-.02em;margin-bottom:0;}
-.sim-root .hero-rule{height:1.5px;background:var(--coral-500);opacity:0.65;width:52px;margin:20px 0 0;position:absolute;bottom:0;left:32px;}
-.sim-root .hero-sub{font-family:var(--font-display);font-style:italic;font-size:22px;color:var(--coral-500);margin-bottom:0;font-weight:400;}
-.sim-root .hero-lede{display:none;}
-.sim-root .hero-art{height:clamp(200px,30vw,350px);width:clamp(220px,35vw,400px);display:flex;align-items:flex-end;justify-content:flex-end;overflow:visible;position:relative;flex-shrink:0;}
-.sim-root .hero-art img{height:clamp(220px,32vw,380px);width:auto;mix-blend-mode:multiply;opacity:0.82;object-fit:contain;margin-right:0;margin-top:60px;margin-bottom:0;filter:saturate(0.6) contrast(1.05);}
-
-@media(max-width:1000px){.sim-root .hero-inner{grid-template-columns:1fr auto;padding:0;}.sim-root .hero-copy{padding:24px 20px;}.sim-root .hero-title{font-size:65px;}}
-@media(max-width:600px){.sim-root .hero-art{height:140px;width:160px;}.sim-root .hero-art img{height:160px;margin-right:-8px;}.sim-root .hero-inner{gap:0;padding:0;}.sim-root .hero-copy{padding:20px 16px 16px;}.sim-root .hero-title{font-size:45px;}}
-@media(max-width:420px){.sim-root .hero-art{display:flex!important;height:80px!important;width:100%!important;position:absolute!important;bottom:0!important;left:0!important;right:0!important;justify-content:center!important;align-items:center!important;overflow:hidden!important;opacity:0.15!important;z-index:0!important;}.sim-root .hero-art img{height:120px!important;width:auto!important;margin:0!important;}.sim-root .hero-inner{position:relative!important;}.sim-root .hero-copy{position:relative!important;z-index:1!important;}.sim-root .hero-title{font-size:32px;}}
-.sim-root .hero-lede em{font-style:italic;color:var(--moss-700);font-weight:800;}
-.sim-root .hero-cta{display:inline-block;margin-top:20px;padding:14px 28px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s cubic-bezier(0.32,0.72,0.36,1);text-decoration:none;}
-.sim-root .hero-cta:hover{background:var(--coral-700);}
-
-
 .sim-root .inv-link-btn{background:none;border:none;cursor:pointer;font-family:var(--font-mono);font-size:10px;color:var(--coral-500);text-decoration:underline;padding:0;}
 .sim-root .inv-link-btn:hover{color:var(--coral-700);}
 .sim-root .inv-radio-group{display:flex;gap:12px;margin-bottom:0;}
 .sim-root .inv-radio-opt{display:flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--font-mono);font-size:12px;color:var(--ink-700);font-weight:600;}
 .sim-root .inv-radio-opt input[type=radio]{accent-color:var(--coral-500);}
-/* auto-collapse hero al scroll */
-.sim-root.hero-auto-hidden .hero{ display:none; }
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
@@ -2070,23 +1965,15 @@
   /* 11. Recipe row: ingrediente rediseñado como flexbox column */
   .sim-root .rec-row{ display:flex!important; flex-direction:column!important; gap:8px!important; padding:12px 14px!important; }
 
-  /* 12. Hero: ocultar ilustración */
-  .sim-root .hero-art{ display:none!important; }
-  .sim-root .hero-inner{ grid-template-columns:1fr!important; }
-
-  /* 13. Topbar: compactar */
-  .sim-root .topbar{ padding:0 12px!important; height:50px!important; }
-  .sim-root .topbar-mark{ font-size:18px!important; }
-  .sim-root .topbar-right{ display:none; }
-
   /* 14. Wrap: sin padding lateral (paneles ya tienen el suyo); conserva el padding-bottom que reserva espacio para el rail fijo */
   .sim-root .wrap{ padding:0 0 96px!important; }
 
   /* 15. Panels: padding reducido */
   .sim-root .panel, .sim-root .spp-sect{ padding:14px!important; margin-bottom:12px!important; }
 
-  /* 16. Search/inputs: font 16px evita zoom en iOS */
-  .sim-root .search, .sim-root .sbar input, .sim-root .inv-input, .sim-root .inv-field input, .sim-root .inv-field select, .sim-root .bf input, .sim-root .price-inp, .sim-root .rec-pct-input{ font-size:16px!important; }
+  /* 16. Search/inputs: font 16px evita zoom en iOS. Ampliado a Producción y, en general,
+     a cualquier input/select suelto dentro de panel/inv-section que no lleve una clase específica. */
+  .sim-root .search, .sim-root .sbar input, .sim-root .inv-input, .sim-root .inv-field input, .sim-root .inv-field select, .sim-root .bf input, .sim-root .price-inp, .sim-root .rec-pct-input, .sim-root .panel input[type], .sim-root .panel select, .sim-root .inv-section input[type], .sim-root .inv-section select{ font-size:16px!important; }
 
   /* 16b. Species detail card: stack en móvil */
   .sim-root .cat-modal-bg{padding:0!important;align-items:flex-end!important;}
@@ -2133,8 +2020,11 @@
   .sim-root .price-row{ flex-direction:column; align-items:flex-start; gap:4px; }
   .sim-root .price-inp{ width:100%!important; }
 
-  /* 23. Modal: full ancho */
-  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:16px!important; }
+  /* 22b. Producción: grid de lote — 2 col en tablet, 1 col en 480px (ver bloque abajo) */
+  .sim-root .prod-batch-grid{ grid-template-columns:1fr 1fr!important; }
+
+  /* 23. Modal: full ancho + alto seguro con scroll interno (aplica a todos los modales, no solo los que traen override inline) */
+  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:16px!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
   .sim-root .inv-modal-bg{ padding-top:50px; }
 
   /* 24. Botones de acción: ancho completo */
@@ -2154,6 +2044,17 @@
   .sim-root .rec-pct-input{ min-height:44px!important; padding:8px!important; }
   .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:44px!important; }
   .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:44px!important; min-height:44px!important; }
+
+  /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil mayor */
+  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:40px!important; min-width:40px!important; }
+  .sim-root .cat-modal-close{ width:40px!important; height:40px!important; }
+}
+
+/* Producción: grid de lote a 1 columna en teléfonos angostos — debe ir DESPUÉS del
+   bloque de 768px de arriba para ganar la cascada en el rango ≤480px (mismo peso
+   !important, gana el que aparece después en el archivo). */
+@media(max-width:480px){
+  .sim-root .prod-batch-grid{ grid-template-columns:1fr!important; }
 }
 
 /* ── FAB: salto rápido entre Ingredientes ↔ Receta activa en Formular (móvil) ── */
@@ -2187,8 +2088,6 @@
   .sim-root .mode-btn{ font-size:15px!important; padding:8px 12px!important; }
 }
 
-/* ── TOPBAR MARK ─────────────────────────────────────────────── */
-.sim-root .topbar-mark{font-family:var(--font-display);letter-spacing:-.01em;}
 /* ── PAGE TITLE BAR ──────────────────────────────────────────── */
 .sim-root .page-title-bar{padding:12px 24px 0;max-width:1280px;margin:0 auto;}
 .sim-root .page-title-eyebrow{font-family:var(--font-body);font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-700);display:block;margin-bottom:6px;}
