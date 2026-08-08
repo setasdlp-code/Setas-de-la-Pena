@@ -6,6 +6,17 @@
 //
 // Consumido por simulador-app.jsx vía <script src="./scoring.js"> (global
 // SetasScoring) y por scoring.test.js vía require() en Node.
+//
+// IIFE: el runtime .dc de "Setas OS v5.dc.html" clona el <body> original
+// (donde vive este <script>, dentro de <x-dc><helmet>) dentro de #dc-root
+// para hidratarlo — ver el mismo comentario en firebase/auth-gate.js. Esa
+// clonación reinserta el <script> en el DOM y el navegador lo re-ejecuta,
+// así que sin este wrapper los `const` de nivel superior chocaban en la
+// segunda ejecución ("Identifier 'clamp01to100' has already been declared").
+// Al envolver todo en una función, cada ejecución tiene su propio scope de
+// bloque — la segunda solo vuelve a asignar globalThis.SetasScoring, sin
+// redeclarar nada.
+(function () {
 
 const clamp01to100 = (v) => Math.max(0, Math.min(100, v));
 
@@ -125,11 +136,20 @@ const scoreStock = (ctx) => {
 // Corrige el bug de recipeScore: sin Math.max(0,…), un EB muy por debajo
 // de eb_baseline producía un componente negativo que arrastraba el score
 // total a valores negativos.
-const scoreYield = (an) => {
+// ctx.blendedEB: override opcional — EB mezclado con el promedio real de
+// lotes históricos de la especie (ver blendEBWithHistory en
+// simulador-app.jsx), ponderado por cuántos lotes reales hay registrados.
+// Antes este componente siempre usaba an.eb puro (100% teórico) aunque el
+// usuario ya tuviera cosechas reales registradas para esa especie — el
+// gauge del Formulador sí mostraba el EB mezclado, pero el score del
+// Perito lo ignoraba. Sin ctx.blendedEB (caso por defecto, todos los
+// llamadores existentes) el comportamiento es idéntico a antes.
+const scoreYield = (an, ctx = {}) => {
   const sp = an.sp;
   if (!sp) return 0;
   const range = Math.max(1, sp.eb_optimal - sp.eb_baseline);
-  const norm = (an.eb - sp.eb_baseline) / range;
+  const ebUsed = ctx.blendedEB != null ? ctx.blendedEB : an.eb;
+  const norm = (ebUsed - sp.eb_baseline) / range;
   return clamp01to100(norm * 100);
 };
 
@@ -156,7 +176,7 @@ const SEVERITY_CAPS = { critical: 55, warning: 88 };
 const scoreRecipe = (an, ctx = {}) => {
   const breakdown = {
     nutrition: scoreNutrition(an),
-    yield: scoreYield(an),
+    yield: scoreYield(an, ctx),
     cost: scoreCost(an),
     risk: scoreRisk(an, ctx.treatment),
     treatment: scoreTreatment(an, ctx.treatment),
@@ -170,13 +190,25 @@ const scoreRecipe = (an, ctx = {}) => {
   );
   const criticals = ctx.criticals || 0;
   const warnings = ctx.warnings || 0;
+  // severity: 0..1, qué tan lejos está el peor parámetro fuera de su rango
+  // óptimo (ver detectSeverity.overDist). Antes el techo era un valor fijo
+  // (55/88) sin importar si el C:N estaba apenas fuera de rango o el doble
+  // del máximo — dos recetas muy distintas caían en el mismo score. Ahora el
+  // techo baja proporcionalmente a esa distancia, así que la magnitud real
+  // del problema se refleja en el número, no solo en si cruzó el umbral.
+  const severity = clamp01to100((ctx.severity || 0) * 100) / 100;
   // Techos por severidad: viven aquí, no en cada llamador, para que el
   // Perito y el optimizador queden protegidos por igual (bug original:
   // runAutoOptimizer no aplicaba estos clamps y podía rankear #1 una receta
   // que el Perito marcaría crítica).
   let score = Math.round(clamp01to100(raw));
-  if (criticals > 0) score = Math.min(score, SEVERITY_CAPS.critical);
-  else if (warnings > 0) score = Math.min(score, SEVERITY_CAPS.warning);
+  if (criticals > 0) {
+    const cap = Math.round(SEVERITY_CAPS.critical - severity * 30); // 55 → hasta 25
+    score = Math.min(score, Math.max(10, cap));
+  } else if (warnings > 0) {
+    const cap = Math.round(SEVERITY_CAPS.warning - severity * 15); // 88 → hasta 73
+    score = Math.min(score, cap);
+  }
 
   // status coherente con los techos: 'excellent' es inalcanzable si hay
   // warnings (techo 88 < 85 no aplica, así que se excluye explícitamente) y
@@ -218,15 +250,38 @@ const detectSeverity = (an) => {
 
   const cnInRange = an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max;
   const cnDist = Math.abs(an.cn - sp.cn_optimal.ideal) / Math.max(0.01, sp.cn_optimal.max - sp.cn_optimal.min);
-  const cnWarn = cnInRange && cnDist > 0.08;
+  // Umbral bajado de 0.08 a 0.05: la banda anterior dejaba en silencio (sin
+  // ítem ni penalización) recetas moderadamente desviadas del ideal, lo que
+  // se percibía como "el Perito no dice nada distinto" entre recetas que en
+  // realidad sí variaban.
+  const cnWarn = cnInRange && cnDist > 0.05;
 
   const nInRange = an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max;
   const nDist = Math.abs(an.avgN - sp.n_optimal.ideal) / Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);
-  const nWarn = nInRange && nDist > 0.1;
+  const nWarn = nInRange && nDist > 0.06;
 
   const ebWarn = an.eb < sp.eb_optimal * 0.95 && an.suppP < sp.supplementation_max - 3;
 
-  return { cnHigh, cnLow, nLow, nHigh, trichoderma, phLow, phHigh, cnWarn, nWarn, ebWarn, cnDist, nDist };
+  // overDist (0..1+): qué tan lejos está el peor parámetro FUERA de su rango
+  // óptimo, normalizado por el ancho del rango. 0 = justo en el borde, 1 =
+  // desviado un rango completo más allá del borde. Antes ningún consumidor
+  // sabía si un "crítico" apenas cruzó el límite o lo duplicó — el techo de
+  // score y los deltas de corrección trataban ambos casos igual.
+  const cnWidth = Math.max(0.01, sp.cn_optimal.max - sp.cn_optimal.min);
+  const cnOverDist = cnHigh ? (an.cn - sp.cn_optimal.max) / cnWidth
+    : cnLow ? (sp.cn_optimal.min - an.cn) / cnWidth : 0;
+  const nWidth = Math.max(0.01, sp.n_optimal.max - sp.n_optimal.min);
+  const nOverDist = nHigh ? (an.avgN - sp.n_optimal.max) / nWidth
+    : nLow ? (sp.n_optimal.min - an.avgN) / nWidth : 0;
+  const phWidth = sp.ph_optimal ? Math.max(0.01, sp.ph_optimal.max - sp.ph_optimal.min) : 1;
+  const phOverDist = phHigh ? (an.avgPh - sp.ph_optimal.max) / phWidth
+    : phLow ? (sp.ph_optimal.min - an.avgPh) / phWidth : 0;
+  const overDist = Math.max(cnOverDist, nOverDist, phOverDist);
+
+  return {
+    cnHigh, cnLow, nLow, nHigh, trichoderma, phLow, phHigh, cnWarn, nWarn, ebWarn,
+    cnDist, nDist, cnOverDist, nOverDist, phOverDist, overDist,
+  };
 };
 
 // ── assessSeverity: criticals/warnings derivables solo de an/sp ──
@@ -236,7 +291,7 @@ const detectSeverity = (an) => {
 // como warning siempre, sin importar si hay un insumo a mano para corregirlo.
 const assessSeverity = (an) => {
   const f = detectSeverity(an);
-  if (!f) return { criticals: 0, warnings: 0 };
+  if (!f) return { criticals: 0, warnings: 0, severity: 0 };
   let criticals = 0;
   let warnings = 0;
 
@@ -252,7 +307,12 @@ const assessSeverity = (an) => {
   if (f.nWarn) warnings++;
   if (f.ebWarn) warnings++;
 
-  return { criticals, warnings };
+  // severity: 0..1+, qué tan lejos del borde está el peor parámetro fuera de
+  // rango (ver detectSeverity.overDist). Trichoderma no tiene magnitud propia
+  // — se trata como el caso más severo posible.
+  const severity = f.trichoderma ? 1 : Math.min(1, f.overDist || 0);
+
+  return { criticals, warnings, severity };
 };
 
 const api = { scoreRecipe, assessSeverity, detectSeverity };
@@ -263,3 +323,5 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined') {
   globalThis.SetasScoring = api;
 }
+
+})();

@@ -154,11 +154,13 @@ const INGS=[
   {id:'aserrin_alamo',name:'Aserrín de álamo/sauce (Sabana)',cat:'base',cn:200,n:.20,c:45,moisture:12,cra:3.5,ph:5.5,dig:4,role:'base_carbono',tags:['Base','Madera','Sabana','Fácil conseguir'],cost:1800,cs:['p_ostreatus_gris','p_ostreatus_blanco','lions_mane','shiitake','reishi','nameko','enoki']},
   {id:'cascarilla_arroz',name:'Cascarilla de arroz',cat:'base',cn:80,n:.5,c:40,moisture:10,cra:1.5,ph:6.8,dig:3,role:'aireador',tags:['Aireador','Local'],cost:4000,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
   {id:'tamo_trigo',name:'Tamo de trigo',cat:'base',cn:100,n:.4,c:40,moisture:10,cra:2,ph:6.8,dig:5,role:'aireador',tags:['Aireador','Carbono'],cost:1600,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
-  {id:'cascarilla_coco',name:'Fibra de coco',cat:'base',cn:80,n:.5,c:42,moisture:20,cra:3,ph:5.8,dig:4,role:'aireador',tags:['Aireador','Tropical'],cost:8500,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','lions_mane']},
+  {id:'cascarilla_coco',name:'Fibra de coco',cat:'base',cn:93,n:.5,c:47,moisture:13,cra:3,ph:6.0,dig:3,role:'aireador',tags:['Aireador','Tropical'],cost:8500,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','lions_mane'],notes:'Ficha técnica del usuario: N 0.4–0.6%, C 45–48%, C:N 75–110:1, celulosa 20–30%, hemicelulosa 15–20%, lignina 40–50%, cenizas 2–6%, pH 5.5–6.5, CE 1.5–3.0 mS/cm (alto K⁺/Na⁺ residual — sin lavar), humedad 10–15%. dig bajado de 4→3 por la lignina alta (40–50%) frente a la turba de coco buferizada.'},
+  {id:'turba_coco_buferizada',name:'Turba de coco buferizada',cat:'base',cn:75,n:.6,c:46,moisture:11,cra:4,ph:6.5,dig:4,role:'aireador',tags:['Aireador','Tropical','Buferizada','Precio no confirmado — actualizar en Precios'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','lions_mane'],notes:'Ficha técnica del usuario: N 0.5–0.7% (incremento leve por remanente de Ca(NO₃)₂), C 44–47%, C:N 65–85:1, celulosa 15–25%, hemicelulosa 10–18%, lignina 35–45%, cenizas 4–8% (intercambio catiónico Ca²⁺/Mg²⁺), pH 6.2–6.8, CE <0.5–0.8 mS/cm (sales lavadas y estabilizadas — mucho más baja que la fibra de coco sin procesar), humedad 10–12%. CRA más alta (4) que fibra de coco por el buferizado; dig levemente mejor (4) por su procesamiento.'},
   {id:'tusa_maiz',name:'Tusa de maíz',cat:'base',cn:70,n:.7,c:45,moisture:15,cra:3,ph:6.5,dig:6,role:'base_carbono',tags:['Base','Local'],cost:1500,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
   {id:'rastrojo_maiz',name:'Rastrojo de maíz',cat:'base',cn:60,n:.6,c:45,moisture:15,cra:3.5,ph:6.5,dig:6,role:'base_carbono',tags:['Base','Local'],cost:1200,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
   {id:'kikuyo',name:'Kikuyo seco',cat:'base',cn:25,n:1.8,c:45,moisture:12,cra:4,ph:6.5,dig:8,role:'base_carbono',tags:['Local','Sabana'],cost:1400,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
   {id:'hojarasca',name:'Hojarasca de bosque',cat:'base',cn:50,n:.9,c:45,moisture:20,cra:3.5,ph:5.8,dig:5,role:'base_carbono',tags:['Local','Gratis'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
+  {id:'retamo_espinoso',name:'Retamo espinoso',cat:'base',cn:32,n:1.5,c:47,moisture:11,cra:3,ph:6.0,dig:5,role:'base_carbono',tags:['Base','Local','Precio no confirmado — actualizar en Precios'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa'],notes:'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar.'},
   {id:'guadua',name:'Guadua astillada',cat:'base',cn:120,n:.35,c:42,moisture:15,cra:3,ph:6.0,dig:4,role:'base_carbono',tags:['Base','Bambú'],cost:2500,cs:['p_ostreatus_gris','shiitake','lions_mane']},
   {id:'heno_pangola',name:'Heno de pangola',cat:'base',cn:60,n:.8,c:48,moisture:12,cra:4,ph:6.5,dig:7,role:'base_carbono',tags:['Base','Local'],cost:6500,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
   {id:'chips_poda_urbana',name:'Chips poda urbana (sauce/fresno)',cat:'base',cn:150,n:.30,c:45,moisture:15,cra:3,ph:6.2,dig:5,role:'base_carbono',tags:['Base','Gratis','Tenjo'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco','shiitake','lions_mane']},
@@ -508,10 +510,24 @@ const setPctProportional=(recipe,id,v,lockedIds=[])=>{
 // Busca el % exacto de un ingrediente que lleva una métrica (cn|n|ph) a su objetivo
 const solveTargetPct=(recipe,sKey,ings,id,metric,target,lockedIds=[])=>{
   const readM=a=>!a?null:(metric==='cn'?a.cn:metric==='n'?a.avgN:a.avgPh);
+  const g=ings.find(i=>i.id===id);
+  const sp=SPP[sKey];
+  // Techo de búsqueda: sin esto, el solver persigue el % que más acerca la
+  // métrica al ideal sin mirar si ese % es agronómicamente razonable — para
+  // un suplemento de N esto proponía 45–55% de un solo insumo (ej. Afrecho de
+  // cervecería) para corregir un C:N alto, muy por encima del máximo de
+  // suplementación real de la especie (sp.supplementation_max — el mismo
+  // límite que ya usa scoreRisk/runAutoOptimizer para penalizar exceso de N)
+  // y de lo que muestran las recetas de referencia del catálogo (8–22%
+  // típico). Otros roles usan el mismo techo que ya protege applyOptToRecipe
+  // en los modos add/increase (ROLE_CAP_INCREASE).
+  const vMax=g&&(g.role==='suplemento_n'||g.role==='suplemento_medio')&&sp
+    ? Math.min(55,sp.supplementation_max||20)
+    : (g&&ROLE_CAP_INCREASE[g.role]!=null?ROLE_CAP_INCREASE[g.role]:55);
   let best=null,bestDist=Infinity;
   const evalAt=v=>{const cand=setPctProportional(recipe,id,v,lockedIds);const a=analyze(cand,sKey,ings);const val=readM(a);if(val==null) return;const d=Math.abs(val-target);if(d<bestDist){bestDist=d;best={pct:Math.round(v*10)/10,val,an:a};}};
-  for(let v=0.5;v<=55;v+=1) evalAt(v);
-  if(best){const c=best.pct;for(let v=Math.max(0,c-1.5);v<=c+1.5;v+=0.1) evalAt(v);}
+  for(let v=0.5;v<=vMax;v+=1) evalAt(v);
+  if(best){const c=best.pct;for(let v=Math.max(0,c-1.5);v<=Math.min(vMax,c+1.5);v+=0.1) evalAt(v);}
   return best;
 };
 const METRIC_LABEL={cn:'C:N',n:'N',ph:'pH'};
@@ -527,7 +543,7 @@ const fmtMetric=(metric,v)=>metric==='cn'?`${v.toFixed(1)}:1`:metric==='n'?`${v.
 const scoreAn=(an,extraCtx={})=>{
   if(!an||!an.sp) return{score:0,status:'sin_receta',breakdown:null,weights:null,caps:null};
   const sev=SetasScoring.assessSeverity(an);
-  return SetasScoring.scoreRecipe(an,{...extraCtx,criticals:sev.criticals,warnings:sev.warnings});
+  return SetasScoring.scoreRecipe(an,{...extraCtx,criticals:sev.criticals,warnings:sev.warnings,severity:sev.severity});
 };
 
 // ── v13: normalizeRecipe — rebalancear a 100% respetando bloqueos ──
@@ -565,6 +581,59 @@ const capFreeIngredient=(rec,id,cap,lockedIds=[])=>{
   });
 };
 
+// Techo físico razonable por rol de ingrediente para el modo 'add'/'increase'
+// de applyOptToRecipe. Antes el tope era una constante (45% add / 60%
+// increase) igual para cualquier insumo — un aditivo de pH o un arrancador
+// terminaba con el mismo límite que una base de carbono, cuando en la
+// práctica un suplemento de N por encima de ~20% o un aditivo de pH por
+// encima de ~10% ya son composiciones poco realistas para producción.
+const ROLE_CAP_ADD={base_carbono:80,suplemento_n:20,suplemento_medio:30,aditivo_ph:10,aditivo_arrancador:10,aditivo_estructura:15,aditivo_micronutriente:5,aireador:15};
+const ROLE_CAP_INCREASE={base_carbono:90,suplemento_n:25,suplemento_medio:35,aditivo_ph:12,aditivo_arrancador:12,aditivo_estructura:18,aditivo_micronutriente:6,aireador:18};
+const capForRole=(id,map,fallback,ings=INGS)=>{
+  const g=ings.find(x=>x.id===id);
+  return (g&&map[g.role]!=null)?map[g.role]:fallback;
+};
+// Pure: aplica una sugerencia del Perito a una receta dada y retorna la nueva.
+// No muta estado. Vivía dentro del componente SimuladorApp (nueva closure en
+// cada render) — se movió a nivel de módulo para que generateOptimizer pueda
+// simular "qué pasaría si aplico este ítem" y mostrar el score resultante
+// antes de que el usuario decida aplicarlo (ver predictedScore más abajo).
+const applyOptToRecipe=(rec,apply,locked=[],ings=INGS)=>{
+  if(!apply) return rec;
+  // Corrección combinada (ver comboApply en generateOptimizer): un array de
+  // operaciones se aplica en secuencia, cada una sobre el resultado de la
+  // anterior — misma función, sin lógica nueva para el caso multi-ingrediente.
+  if(Array.isArray(apply)) return apply.reduce((r,a)=>applyOptToRecipe(r,a,locked,ings),rec);
+  const {mode,id,delta,value}=apply;
+  const existing=rec.find(r=>r.id===id);
+  if(mode==='set'){
+    return setPctProportional(rec,id,value,locked);
+  }
+  if(mode==='add'){
+    if(existing){
+      const curP=parseFloat(existing.p)||0;
+      // Clamp DESPUÉS de normalizar — ver comentario en capFreeIngredient: si se
+      // clampea antes, la reescala proporcional de normalizeRecipe puede volver a
+      // empujar el valor por encima del tope cuando es el único ingrediente libre.
+      const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:curP+delta}:r),locked);
+      return capFreeIngredient(normalized,id,capForRole(id,ROLE_CAP_ADD,45,ings),locked);
+    } else {
+      const free=rec.filter(r=>!locked.includes(r.id));
+      const sumFree=free.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
+      const scale=Math.max(0,sumFree-delta)/Math.max(1,sumFree);
+      return [...rec.map(r=>locked.includes(r.id)?r:{...r,p:Math.round((parseFloat(r.p)||0)*scale*10)/10}),{id,p:delta}];
+    }
+  } else if(mode==='increase'){
+    const cur=existing?(parseFloat(existing.p)||0):0;
+    const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:cur+delta}:r),locked);
+    return capFreeIngredient(normalized,id,capForRole(id,ROLE_CAP_INCREASE,60,ings),locked);
+  } else if(mode==='decrease'){
+    const cur=existing?(parseFloat(existing.p)||0):0;
+    return normalizeRecipe(rec.map(r=>r.id===id?{...r,p:Math.max(0,cur-delta)}:r).filter(r=>r.p>0.1),locked);
+  }
+  return normalizeRecipe(rec,locked);
+};
+
 // ── v13: calcMaxBatchFromStock — kg húmedos máximos producibles con bodega ──
 const calcMaxBatchFromStock=(recipe,stockMap,batchKgWet=10,hObj=65,ings=INGS)=>{
   const dry=batchKgWet*(1-hObj/100);
@@ -595,18 +664,34 @@ const quantifyItem=(item,recipe,sKey,ings,lockedIds)=>{
   return item;
 };
 
-const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedIds=[])=>{
+const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedIds=[],blendedEB=null)=>{
   if(!an||!an.sp) return{score:0,status:'sin_receta',items:[]};
   const sp=an.sp;const items=[];
   // flags: única fuente de qué es crítico/warning, compartida con assessSeverity
   // (scoring.js) — ver comentario ahí. Este bloque solo decide texto/acción por
   // cada bandera en true, nunca redefine la condición.
   const flags=SetasScoring.detectSeverity(an);
-  // Helper: mejor ingrediente en stock para un filtro+sort dados
+  // Escala un delta base según qué tan lejos está el parámetro fuera de su
+  // rango (flags.*OverDist, 0 = justo en el borde, 1 = un rango completo más
+  // allá). Solo importa cuando todavía no hay receta cargada o el ingrediente
+  // sugerido no está en ella: si hay receta, quantifyItem() más abajo
+  // recalcula el % exacto vía solveTargetPct y sobreescribe este valor. Antes
+  // este delta era la misma constante sin importar la magnitud del problema.
+  const scaledDelta=(base,overDist)=>Math.round(base*(1+Math.min(1.5,Math.max(0,overDist||0))));
+  // Helper: mejor ingrediente en stock para un filtro+sort dados. Antes
+  // siempre devolvía "el mejor" del catálogo global según sortFn, sin mirar
+  // si la receta activa ya usa alguno de los candidatos válidos — dos recetas
+  // muy distintas para la misma especie recibían siempre la misma sugerencia
+  // de ingrediente. Ahora, entre los candidatos igualmente válidos, prefiere
+  // uno que ya está en la receta (ajustar % en vez de sumar un insumo nuevo:
+  // menos cambios, más fácil de ejecutar en bodega).
   const bestStock=(filter,sortFn=(a,b)=>0)=>{
     const candidates=ings.filter(g=>g.cs.includes(sKey)&&filter(g)).sort(sortFn);
     const inStock=candidates.filter(g=>stockIds.size===0||stockIds.has(g.id));
-    return (inStock.length>0?inStock:candidates)[0]||null;
+    const pool=inStock.length>0?inStock:candidates;
+    if(!pool.length) return null;
+    const inRecipe=recipe&&recipe.length?pool.find(g=>recipe.some(r=>r.id===g.id)):null;
+    return inRecipe||pool[0];
   };
 
   // ── CRÍTICOS: fuera de rango ──
@@ -618,7 +703,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:best?`Aumentar <b>${best.name}</b> (N=${best.n}%) — ${inRec?'ya en receta, sube %':'agregar a receta'}`:`Reducir base de carbono`,
       effect:`C:N ${an.cn.toFixed(1)}:1 > máximo ${sp.cn_optimal.max}:1 · ideal ${sp.cn_optimal.ideal}:1 · colonización tardía`,
       delta:`C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
-      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:7}:null});
+      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:scaledDelta(7,flags.cnOverDist)}:null});
   }
   if(flags.cnLow){
     const best=bestStock(g=>g.cn>60&&g.role==='base_carbono',(a,b)=>b.cn-a.cn);
@@ -628,7 +713,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:best?`Aumentar <b>${best.name}</b> (C:N ${best.cn}:1)`:`Reducir suplementos N`,
       effect:`C:N ${an.cn.toFixed(1)}:1 < mínimo ${sp.cn_optimal.min}:1 · exceso N → riesgo contaminación`,
       delta:`C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
-      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:8}:null});
+      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:scaledDelta(8,flags.cnOverDist)}:null});
   }
   if(flags.nLow){
     const best=bestStock(g=>g.n>=2&&g.role!=='base_carbono',(a,b)=>a.cost-b.cost);
@@ -638,7 +723,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:best?`${inRec?'Aumentar':'Agregar'} <b>${best.name}</b> (N=${best.n}%, $${best.cost}/kg)`:'Agregar suplemento nitrogenado',
       effect:`N ${an.avgN.toFixed(2)}% < mínimo ${sp.n_optimal.min}% · colonización lenta y EB reducida`,
       delta:`N ${an.avgN.toFixed(2)}% → objetivo >${sp.n_optimal.min}%`,
-      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:8}:null});
+      apply:best?{mode:inRec?'increase':'add',id:best.id,delta:scaledDelta(8,flags.nOverDist)}:null});
   }
   if(flags.nHigh){
     const base=bestStock(g=>g.cn>80&&g.role==='base_carbono',(a,b)=>b.cn-a.cn);
@@ -648,7 +733,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:suppInRec.length>0?`Reducir <b>${ings.find(g=>g.id===suppInRec[0]?.id)?.name||'suplementos'}</b> en 5–8%`:`Aumentar base de carbono`,
       effect:`N ${an.avgN.toFixed(2)}% > máximo ${sp.n_optimal.max}% · riesgo bacterias y moho verde`,
       delta:`N ${an.avgN.toFixed(2)}% → objetivo <${sp.n_optimal.max}%`,
-      apply:suppInRec.length>0?{mode:'decrease',id:suppInRec[0].id,delta:6}:(base?{mode:'increase',id:base.id,delta:8}:null)});
+      apply:suppInRec.length>0?{mode:'decrease',id:suppInRec[0].id,delta:scaledDelta(6,flags.nOverDist)}:(base?{mode:'increase',id:base.id,delta:scaledDelta(8,flags.nOverDist)}:null)});
   }
   if(flags.trichoderma){
     items.push({priority:'critical',icon:'⚠',
@@ -664,7 +749,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:best?`Agregar <b>${best.name}</b> 1–3% (pH ${best.ph})`:'Agregar carbonato de calcio 1–2%',
       effect:`pH ${an.avgPh.toFixed(1)} < mínimo ${sp.ph_optimal.min} · enzimas del micelio trabajan a rendimiento parcial`,
       delta:`pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min+sp.ph_optimal.max)/2).toFixed(1)}`,
-      apply:best?{mode:'add',id:best.id,delta:2}:null});
+      apply:best?{mode:'add',id:best.id,delta:scaledDelta(2,flags.phOverDist)}:null});
   }
   if(flags.phHigh){
     const cafe=bestStock(g=>g.ph<6&&g.n>=0.5,(a,b)=>a.ph-b.ph);
@@ -673,7 +758,7 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       action:cafe?`Agregar <b>${cafe.name}</b> 8–15% (pH ${cafe.ph})`:'Incorporar borra de café o aserrín (ácidos)',
       effect:`pH ${an.avgPh.toFixed(1)} > máximo ${sp.ph_optimal.max} · inhibe enzimas y favorece bacterias`,
       delta:`pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min+sp.ph_optimal.max)/2).toFixed(1)}`,
-      apply:cafe?{mode:'add',id:cafe.id,delta:10}:null});
+      apply:cafe?{mode:'add',id:cafe.id,delta:scaledDelta(10,flags.phOverDist)}:null});
   }
 
   // ── MEJORAS: dentro de rango pero lejos del ideal ──
@@ -782,15 +867,96 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
   // ── v13: enriquecer ítems con "por qué" y "riesgo si no se corrige" ──
   const WHY_MAP={'↓C:N':'La relación C:N determina velocidad de colonización y rendimiento. Alto C:N = carbono sin aprovechar.','↑C:N':'C:N bajo = exceso de nitrógeno, el nutriente que activa mohos competidores.','↑N':'El nitrógeno es el nutriente limitante para el crecimiento del micelio.','↓N':'Exceso de N activa bacterias y Trichoderma que colonizan más rápido que el micelio.','⚠':'Trichoderma colapsa el bloque — compite más rápido que cualquier micelio de seta.','↑pH':'pH ácido bloquea enzimas hidrolíticas del micelio que degradan la lignina.','↓pH':'pH alcalino inhibe el crecimiento y favorece bacterias contaminantes.','↑EB':'EB no explotada = dinero en el sustrato que el hongo no puede aprovechar.','Ca':'Sin minerales, el pH cae durante la incubación y el micelio pierde vigor a mitad del ciclo.','$↓':'El costo de ingredientes es el mayor gasto variable de la producción.','Dig':'Baja digestibilidad requiere más energía del micelio, aumentando el riesgo de contaminación.','→N':'N y C:N están relacionados: ajustar uno afecta el otro en la misma receta.','→C':'La base de carbono define la estructura física y el C:N base del sustrato.'};
   const RISK_MAP={'↓C:N':'Colonización lenta, EB reducida, mayor ventana de contaminación.','↑C:N':'Exceso de N → bacterias → olor a amoniaco → contaminación del lote completo.','↑N':'EB reducida 30–50%. En casos extremos, colapso completo del bloque.','↓N':'Sin corrección: probabilidad alta de Trichoderma y pérdida del lote.','⚠':'Sin autoclave: pérdida del lote completo en 5–10 días de colonización.','↑pH':'Colonización parcial, EB reducida, mayor riesgo bacteriano.','↓pH':'Bloqueo enzimático completo en pH>8 para la mayoría de Pleurotus.','↑EB':'Receta subóptima — EB 20–40% menor a lo posible con los ingredientes disponibles.','Ca':'pH variable lote-a-lote — resultados inconsistentes.','Dig':'Colonización 50–100% más lenta; mayor riesgo de contaminación por exposición prolongada.','→N':'EB por debajo del potencial óptimo de la especie.','→C':'C:N alejado del ideal reduce la eficiencia biológica estimada.'};
+  // Cuánto se sale cada métrica de su rango (0=en el borde, 1+=un rango
+  // completo más allá), por ícono — para anotar el riesgo con la magnitud
+  // real en vez de un texto idéntico sin importar qué tan grave es el caso.
+  const OVERDIST_BY_ICON={'↓C:N':flags.cnOverDist,'↑C:N':flags.cnOverDist,'↑N':flags.nOverDist,'↓N':flags.nOverDist,'↑pH':flags.phOverDist,'↓pH':flags.phOverDist};
   items.forEach(it=>{
     if(!it.why&&WHY_MAP[it.icon]) it.why=WHY_MAP[it.icon];
     if(!it.riskIfIgnored&&RISK_MAP[it.icon]) it.riskIfIgnored=RISK_MAP[it.icon];
+    const od=OVERDIST_BY_ICON[it.icon];
+    if(od!=null&&od>0&&it.riskIfIgnored){
+      it.riskIfIgnored+=` · desviación actual: ${Math.round(Math.min(150,od*100))}% más allá del límite.`;
+    }
   });
   // ── Score: única fuente de verdad, compartida con runAutoOptimizer ──
   // (ver scoring.js). Perito y Optimizador ya no pueden divergir para la
   // misma receta porque ambos llaman a scoreAn/SetasScoring.scoreRecipe.
   const tr13=calcTreatment(an,sKey);
-  const {score,status:statusFromScore}=scoreAn(an,{treatment:tr13,recipe,stockIds});
+  // blendedEB: override opcional de scoreYield con el EB mezclado con lotes
+  // reales de esta especie (ver blendEBWithHistory). null/undefined = mismo
+  // comportamiento de siempre (usa an.eb puro) — es estrictamente aditivo,
+  // ningún llamador existente que no lo pase cambia de resultado.
+  const {score,status:statusFromScore}=scoreAn(an,{treatment:tr13,recipe,stockIds,blendedEB});
+  // ── Predicción: score resultante si se aplica cada ítem accionable ──
+  // Antes cada sugerencia solo describía el ajuste ("sube X en Y%") sin decir
+  // cuánto mejora realmente el score — dos ítems con texto de longitud/tono
+  // parecido podían tener impacto muy distinto y no había forma de saberlo
+  // sin aplicar y recalcular a mano. Simula con la misma función que usa el
+  // botón "Aplicar" (applyOptToRecipe) y guarda el score resultante.
+  // Bandera crítica → qué otra bandera crítica vigilar como posible efecto
+  // colateral (mismo ingrediente/mecanismo puede mover más de una métrica:
+  // subir un suplemento de N para arreglar N bajo también sube C:N hacia
+  // abajo y puede pasar a "C:N demasiado bajo"). Antes cada ítem se
+  // calculaba de forma aislada — nada avisaba si "arreglar" uno rompía otro.
+  const SIDE_EFFECT_FLAGS=['cnHigh','cnLow','nLow','nHigh','phLow','phHigh'];
+  const FLAG_OWNER_ICON={cnHigh:'↓C:N',cnLow:'↑C:N',nLow:'↑N',nHigh:'↓N',phLow:'↑pH',phHigh:'↓pH'};
+  const FLAG_LABEL={cnHigh:'C:N demasiado alto',cnLow:'C:N demasiado bajo',nLow:'N insuficiente',nHigh:'exceso de N',phLow:'pH ácido',phHigh:'pH alcalino'};
+  // Corrección combinada: el mismo ingrediente/mecanismo que arregla un flag
+  // puede empeorar otro (ver sideEffect abajo). Antes el Perito solo avisaba
+  // del problema sin ofrecer la solución conjunta — el usuario tenía que
+  // iterar manualmente. FLAG_FIX describe, por bandera, qué ingrediente y
+  // qué métrica/objetivo usar para corregirla (mismos filtros que ya usan
+  // los bloques CRÍTICOS de arriba para elegir ingrediente por bandera).
+  const phIdealForCombo=sp.ph_optimal?(sp.ph_optimal.min+sp.ph_optimal.max)/2:null;
+  const FLAG_FIX={
+    cnHigh:()=>({ing:bestStock(g=>g.n>=1.5&&g.role!=='base_carbono',(a,b)=>b.n-a.n),metric:'cn',target:sp.cn_optimal.ideal}),
+    cnLow:()=>({ing:bestStock(g=>g.cn>60&&g.role==='base_carbono',(a,b)=>b.cn-a.cn),metric:'cn',target:sp.cn_optimal.ideal}),
+    nLow:()=>({ing:bestStock(g=>g.n>=2&&g.role!=='base_carbono',(a,b)=>a.cost-b.cost),metric:'n',target:sp.n_optimal.ideal}),
+    nHigh:()=>({ing:bestStock(g=>g.cn>80&&g.role==='base_carbono',(a,b)=>b.cn-a.cn),metric:'n',target:sp.n_optimal.ideal}),
+    phLow:()=>({ing:bestStock(g=>g.ph>7.5,(a,b)=>b.ph-a.ph),metric:'ph',target:phIdealForCombo}),
+    phHigh:()=>({ing:bestStock(g=>g.ph<6&&g.n>=0.5,(a,b)=>a.ph-b.ph),metric:'ph',target:phIdealForCombo}),
+  };
+  if(recipe&&recipe.length){
+    items.forEach(it=>{
+      if(!it.apply||(it.priority!=='critical'&&it.priority!=='warning')) return;
+      try{
+        const candidate=applyOptToRecipe(recipe,it.apply,lockedIds,ings);
+        const a2=analyze(candidate,sKey,ings);
+        if(!a2) return;
+        const s2=scoreAn(a2,{treatment:calcTreatment(a2,sKey),recipe:candidate,stockIds});
+        it.predictedScore=s2.score;
+        const newFlags=SetasScoring.detectSeverity(a2)||{};
+        const worsened=SIDE_EFFECT_FLAGS.filter(k=>newFlags[k]&&!flags[k]&&FLAG_OWNER_ICON[k]!==it.icon);
+        if(worsened.length){
+          it.sideEffect=`Ojo: aplicar esto puede generar ${worsened.map(k=>FLAG_LABEL[k]).join(' y ')}.`;
+          // Intenta un segundo ajuste, resuelto sobre la receta YA corregida
+          // por el primero, que apague el efecto colateral sin deshacer el
+          // arreglo original — no es una regresión simultánea de las dos
+          // métricas, es un solve en dos pasos, pero cada paso usa el mismo
+          // solveTargetPct exacto que ya usa "Aplicar" individualmente.
+          const fixKey=worsened[0];
+          const fix=FLAG_FIX[fixKey]?FLAG_FIX[fixKey]():null;
+          if(fix&&fix.ing&&fix.target!=null){
+            const res2=solveTargetPct(candidate,sKey,ings,fix.ing.id,fix.metric,fix.target,lockedIds);
+            if(res2){
+              const secondApply={mode:'set',id:fix.ing.id,value:res2.pct};
+              const candidate2=applyOptToRecipe(candidate,secondApply,lockedIds,ings);
+              const a3=analyze(candidate2,sKey,ings);
+              if(a3){
+                const s3=scoreAn(a3,{treatment:calcTreatment(a3,sKey),recipe:candidate2,stockIds});
+                if(s3.score>it.predictedScore){
+                  it.comboApply=[it.apply,secondApply];
+                  it.comboPredictedScore=s3.score;
+                  it.comboLabel=`Aplicar junto con ${fix.ing.name} — evita ${FLAG_LABEL[fixKey]}`;
+                }
+              }
+            }
+          }
+        }
+      }catch(e){/* candidato inválido (p.ej. ingrediente sin datos) — se omite la predicción */}
+    });
+  }
   // Garantía: si la receta es casi-óptima pero no hay tips útiles, sugerir refinamiento mineral.
   const hasTips=items.some(s=>s.priority==='tip');
   if(score>=85&&!hasTips&&recipe&&recipe.length){
@@ -1299,9 +1465,29 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
   const results=[];
   const tried=new Set();
 
+  // Costo real de bodega (precio ponderado FIFO, precioPonderado) en vez del
+  // costo de catálogo — mismo ajuste que ya se muestra en el Perito
+  // (realCostPerKg). Antes runAutoOptimizer siempre rankeaba con g.cost de
+  // catálogo aunque estuviera generando "solo bodega": dos ingredientes del
+  // mismo rol con costo de compra distinto en la bodega real puntuaban igual
+  // aquí, y el ranking de "mejores recetas" podía no coincidir con el costo
+  // real que se ve en el Perito al cargar esa misma receta.
+  const realCostFor=(rec)=>{
+    let known=false;
+    const total=rec.reduce((s,r)=>{
+      const pp=precioPonderado(r.id,invLotes);
+      const g=effectiveINGS.find(i=>i.id===r.id);
+      if(pp!=null) known=true;
+      const price=pp!=null?pp:(g?g.cost:0);
+      return s+price*(parseFloat(r.p)||0)/100;
+    },0);
+    return known?Math.round(total):null;
+  };
   const evalRec=(rec)=>{
-    const an=analyze(rec,targetKey,effectiveINGS);
-    if(!an) return;
+    const an0=analyze(rec,targetKey,effectiveINGS);
+    if(!an0) return;
+    const realCost=useStock?realCostFor(rec):null;
+    const an=realCost!=null?{...an0,cost:realCost}:an0;
     const suppOverLimit=an.suppP>suppLimit;
     if(suppOverLimit&&profileKey==='rescate') return;
     if(an.cafeP>cafeLimit) return;
@@ -1320,7 +1506,7 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
     // el inventario, así que scoreStock no debe penalizar cobertura que nunca se buscó.
     const {score:resultScore,breakdown}=scoreAn(an,{treatment:tr,recipe:rec,stockIds:useStock?stockIds:undefined});
     const maxKgWet=Object.keys(stockMap).length>0?calcMaxBatchFromStock(rec,stockMap,10,sp.moisture?.ideal||65,effectiveINGS):null;
-    results.push({recipe:rec,an,score:resultScore,riskScore:breakdown.risk,treatmentName:tr?.name||'',maxKgWet,suppOverLimit});
+    results.push({recipe:rec,an,score:resultScore,riskScore:breakdown.risk,treatmentName:tr?.name||'',maxKgWet,suppOverLimit,realCostKnown:realCost!=null});
   };
 
   const aerOpts=[null,...aers.slice(0,2)];
@@ -1476,7 +1662,10 @@ const peritoCorreccionMinima=(opt)=>{
   if(!first) return null;
   return first.action.replace(/<[^>]+>/g,'');
 };
-const PeritoItem=React.memo(({item,onApply})=>(
+const PeritoItem=React.memo(({item,onApply,baseScore})=>{
+  const hasPrediction=item.predictedScore!=null&&baseScore!=null;
+  const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
+  return(
   <div className={`perito-item pi-${item.priority}`}>
     <div className="pi-icon-col">
       <span className="pi-icon">{item.icon}</span>
@@ -1490,6 +1679,13 @@ const PeritoItem=React.memo(({item,onApply})=>(
       <div className="pi-effect">{item.effect}</div>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>⚠ {item.sideEffect}</div>}
+      {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
+        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
+        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(item.comboPredictedScore)}/100</div>
+        <button onClick={()=>onApply(item.comboApply)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
+      </div>}
     </div>
     <div className="pi-actions">
       {item.apply
@@ -1497,7 +1693,8 @@ const PeritoItem=React.memo(({item,onApply})=>(
         :<div className="pi-spacer"/>}
     </div>
   </div>
-));
+  );
+});
 
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
 const ConfirmModal=({dlg,onClose})=>(
@@ -1697,10 +1894,22 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
   );
 };
 
+// Mezcla el EB teórico de an.eb con el EB real promedio de lotes históricos
+// de la misma especie (historicalEBFor), ponderado por cuántos lotes reales
+// hay (historical.weight, hasta 70%). Antes esta fórmula solo vivía inline
+// en RecipeGauges y solo pintaba el gauge — el score del Perito (scoreAn)
+// seguía usando an.eb puro, ignorando por completo los lotes reales que el
+// usuario ya tenía registrados. Se extrajo aquí para reusarla también como
+// override de scoreYield (ver ctx.blendedEB en scoring.js).
+const blendEBWithHistory=(an,historical)=>{
+  const hasHist=historical&&historical.n>0&&historical.avg!=null;
+  return hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
+};
+
 const RecipeGauges=({an,sp,optimalAn,historical})=>{
   if(!sp||!an||!an.cn) return null;
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
-  const blendedEB=hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
+  const blendedEB=blendEBWithHistory(an,historical);
   return (
     <div className="bg-wrap">
       <div className="bg-eyebrow">Parámetros de sustrato</div>
@@ -1723,7 +1932,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft, #ddd)')}}>
         {hasHist?(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800,#333)',lineHeight:1.5}}>
-            <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
+            <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}{historical.matched?' del mismo sustrato':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
           </div>
         ):(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700,#666)',lineHeight:1.5}}>
@@ -1821,18 +2030,36 @@ const normSpp=k=>{ if(!k) return k; if(SPP[k]) return k; return SPP_KEY_ALIAS[k]
 
 // Nombres legibles de sustratos históricos (yields.sub del shell / batch_tracking.md)
 const HIST_SUB_NAME={ wheat_straw:'paja de trigo', coffee_shiitake:'sustrato maestro shiitake', masters_mix:"master's mix" };
+// Mapa de códigos de sustrato histórico -> id real en INGS, para poder saber
+// si la receta activa usa ese mismo sustrato. Solo cubre los códigos con
+// correspondencia 1:1 clara — códigos como 'masters_mix' son una mezcla sin
+// un ingrediente único al que mapear, así que se quedan sin match (no rompen
+// nada, simplemente no participan en el filtro por similitud).
+const HIST_SUB_TO_ING={ wheat_straw:'paja_trigo' };
 
 // Proyección de EB real: agrega lotes históricos (yields del shell) por especie (y sustrato si coincide)
 // para dar una EB proyectada distinta de la fórmula teórica C:N/N — "no solo texto estático".
-const historicalEBFor=(sKey,historicalYields)=>{
-  if(!sKey||!Array.isArray(historicalYields)||!historicalYields.length) return {n:0,avg:null,subs:[],weight:0};
-  const rows=historicalYields.filter(y=>normSpp(y.spp)===sKey&&y.dryKg>0);
-  if(!rows.length) return {n:0,avg:null,subs:[],weight:0};
+// `recipe` (opcional): si se pasa y hay lotes históricos cuyo sustrato
+// coincide con algún ingrediente de la receta activa, el promedio se calcula
+// SOLO con esos lotes en vez de con todos los de la especie — antes un lote
+// de "master's mix" y uno de "paja de trigo" pesaban igual en el promedio
+// aunque la receta activa fuera puramente de paja de trigo. `matched:true`
+// en el resultado indica que se usó este filtro más preciso.
+const historicalEBFor=(sKey,historicalYields,recipe=null)=>{
+  if(!sKey||!Array.isArray(historicalYields)||!historicalYields.length) return {n:0,avg:null,subs:[],weight:0,matched:false};
+  let rows=historicalYields.filter(y=>normSpp(y.spp)===sKey&&y.dryKg>0);
+  if(!rows.length) return {n:0,avg:null,subs:[],weight:0,matched:false};
+  let matched=false;
+  if(recipe&&recipe.length){
+    const recipeIds=new Set(recipe.map(r=>r.id));
+    const matchedRows=rows.filter(y=>HIST_SUB_TO_ING[y.sub]&&recipeIds.has(HIST_SUB_TO_ING[y.sub]));
+    if(matchedRows.length){rows=matchedRows;matched=true;}
+  }
   const ebs=rows.map(y=>y.freshG/(y.dryKg*1000)*100);
   const avg=ebs.reduce((a,b)=>a+b,0)/ebs.length;
   const subs=[...new Set(rows.map(y=>HIST_SUB_NAME[y.sub]||y.sub))];
   const weight=Math.min(0.7,0.25*rows.length);
-  return {n:rows.length,avg,subs,weight};
+  return {n:rows.length,avg,subs,weight,matched};
 };
 
 function App(props){
@@ -2173,6 +2400,24 @@ function App(props){
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}}});
   };
+  // Registra el EB real observado tras cosechar un lote de una prueba guardada.
+  // Antes cada análisis del Perito/Formulador era puramente teórico (fórmulas
+  // fijas) sin retroalimentación de qué pasó realmente en producción — esto
+  // no cambia el score todavía, pero deja el dato (eb estimado vs ebReal)
+  // visible en el Recetario para que el usuario vea qué tan bien predice el
+  // modelo en su bodega concreta, y es la base para calibrar la matriz más
+  // adelante con datos reales en vez de solo teoría.
+  const setEbRealFor=id=>{
+    const entry=saved.find(s=>s.id===id);
+    if(!entry) return;
+    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Guardar',onSubmit:val=>{
+      const n=parseFloat(val);
+      if(!Number.isFinite(n)) return;
+      const u=saved.map(s=>s.id===id?{...s,ebReal:Math.round(n*10)/10}:s);
+      setSaved(u);
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+    }});
+  };
 
   const sp=SPP[sKey];
   const effectiveINGS=useMemo(()=>INGS.map(ing=>{
@@ -2189,7 +2434,7 @@ function App(props){
   }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
 
   const historicalYields=useMemo(()=>{try{const v=JSON.parse(props.historicalYields||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}},[props.historicalYields]);
-  const histStats=useMemo(()=>historicalEBFor(sKey,historicalYields),[sKey,historicalYields]);
+  const histStats=useMemo(()=>historicalEBFor(sKey,historicalYields,recipe),[sKey,historicalYields,recipe]);
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
@@ -2217,7 +2462,57 @@ function App(props){
   },[recipe,effectiveINGS,prodMoist,prodBags,prodKg,prodH,spawnCost,prodScaleG,an]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds]);
+  // Mismo EB mezclado con historial real que ya se pinta en el gauge
+  // (RecipeGauges/blendEBWithHistory) — se pasa como override al score del
+  // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
+  // por lotes reales pero el score de al lado seguía siendo 100% teórico.
+  const blendedEB=an?blendEBWithHistory(an,histStats):null;
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB]);
+  // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
+  // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
+  // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
+  // de compra distinto en bodega — se muestra aparte, sin tocar el score, para
+  // no introducir un cambio de comportamiento en runAutoOptimizer/scoreCost
+  // que ya son consumidos en varios sitios con el costo de catálogo.
+  const realCostPerKg=useMemo(()=>{
+    if(!recipe.length) return null;
+    let known=false;
+    const total=recipe.reduce((s,r)=>{
+      const pp=precioPonderado(r.id,invLotes);
+      const g=effectiveINGS.find(i=>i.id===r.id);
+      if(pp!=null) known=true;
+      const price=pp!=null?pp:(g?g.cost:0);
+      return s+price*(parseFloat(r.p)||0)/100;
+    },0);
+    return known?Math.round(total):null;
+  },[recipe,invLotes,effectiveINGS]);
+  // Similitud de Jaccard entre conjuntos de ingredientes (ignora %, solo IDs).
+  const recipeSimilarity=(recA,recB)=>{
+    const a=new Set(recA.map(r=>r.id)),b=new Set(recB.map(r=>r.id));
+    const inter=[...a].filter(x=>b.has(x)).length;
+    const union=new Set([...a,...b]).size;
+    return union?inter/union:0;
+  };
+  // Historial de resultados reales para esta especie: antes cada diagnóstico
+  // del Perito era puramente teórico — ahora, si ya se registró EB real (ver
+  // setEbRealFor) en pruebas guardadas de la misma especie, se usa para (a)
+  // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
+  // si la receta activa se parece a una prueba ya hecha, con su resultado real.
+  const trialsWithReal=useMemo(()=>saved.filter(s=>s.sKey===sKey&&s.ebReal!=null),[saved,sKey]);
+  const modelAccuracy=useMemo(()=>{
+    if(!trialsWithReal.length) return null;
+    const avgAbsDiff=trialsWithReal.reduce((s,t)=>s+Math.abs(t.ebReal-parseFloat(t.eb)),0)/trialsWithReal.length;
+    return Math.round(avgAbsDiff*10)/10;
+  },[trialsWithReal]);
+  const similarTrial=useMemo(()=>{
+    if(!recipe.length||!trialsWithReal.length) return null;
+    let best=null,bestSim=0;
+    trialsWithReal.forEach(t=>{
+      const sim=recipeSimilarity(recipe,t.recipe||[]);
+      if(sim>bestSim){bestSim=sim;best=t;}
+    });
+    return bestSim>=0.5?{...best,similarity:bestSim}:null;
+  },[recipe,trialsWithReal]);
   const cAn=useMemo(()=>analyze(cmpRecipe,cmpKey,effectiveINGS),[cmpRecipe,cmpKey,effectiveINGS]);
   const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb),[schKey,schDate,an]);
   // Score de una receta guardada (Recetario/Dashboard), recalculado en vivo con
@@ -2236,43 +2531,11 @@ function App(props){
   };
 
   const addI=id=>{if(recipe.find(r=>r.id===id)) return;setRecipe([...recipe,{id,p:10}]);};
-  // Pure: aplica una sugerencia a una receta dada y retorna la nueva. No muta estado.
-  const applyOptToRecipe=(rec,apply,locked=[])=>{
-    if(!apply) return rec;
-    const {mode,id,delta,value}=apply;
-    const existing=rec.find(r=>r.id===id);
-    if(mode==='set'){
-      return setPctProportional(rec,id,value,locked);
-    }
-    if(mode==='add'){
-      if(existing){
-        const curP=parseFloat(existing.p)||0;
-        // Clamp DESPUÉS de normalizar — ver comentario en capFreeIngredient: si se
-        // clampea antes, la reescala proporcional de normalizeRecipe puede volver a
-        // empujar el valor por encima del tope cuando es el único ingrediente libre.
-        const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:curP+delta}:r),locked);
-        return capFreeIngredient(normalized,id,45,locked);
-      } else {
-        const free=rec.filter(r=>!locked.includes(r.id));
-        const sumFree=free.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
-        const scale=Math.max(0,sumFree-delta)/Math.max(1,sumFree);
-        return [...rec.map(r=>locked.includes(r.id)?r:{...r,p:Math.round((parseFloat(r.p)||0)*scale*10)/10}),{id,p:delta}];
-      }
-    } else if(mode==='increase'){
-      const cur=existing?(parseFloat(existing.p)||0):0;
-      const normalized=normalizeRecipe(rec.map(r=>r.id===id?{...r,p:cur+delta}:r),locked);
-      return capFreeIngredient(normalized,id,60,locked);
-    } else if(mode==='decrease'){
-      const cur=existing?(parseFloat(existing.p)||0):0;
-      return normalizeRecipe(rec.map(r=>r.id===id?{...r,p:Math.max(0,cur-delta)}:r).filter(r=>r.p>0.1),locked);
-    }
-    return normalizeRecipe(rec,locked);
-  };
   const [recipeHistory,setRecipeHistory]=React.useState([]);
   const applyOptStep=(apply)=>{
     if(!apply) return;
     setRecipeHistory(h=>[...h,recipe]);
-    setRecipe(applyOptToRecipe(recipe,apply,lockedIds));
+    setRecipe(applyOptToRecipe(recipe,apply,lockedIds,optimizerINGS));
   };
   const undoLastRec=()=>{
     if(recipeHistory.length===0) return;
@@ -2281,20 +2544,39 @@ function App(props){
   };
   // Auto-mejorar: itera aplicando la mejor sugerencia válida, recalcula y para cuando
   // el score deja de subir. Máximo 6 vueltas. Evita el ciclo "aplico la 1 → la 2 ya no aplica".
+  // Antes siempre tomaba el PRIMER ítem accionable de la lista (orden fijo por
+  // tipo de bandera, no por impacto real) — dos recetas con el mismo conjunto
+  // de problemas podían converger a resultados distintos según en qué orden
+  // aparecían los flags. Ahora, en cada vuelta, prueba los hasta 3 ítems
+  // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
+  // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
+  // no solo el primero de la lista.
   const autoImprove=()=>{
     let cur=recipe;let bestScore=-1;
     for(let i=0;i<6;i++){
       const a=analyze(cur,sKey,effectiveINGS);
       if(!a) break;
-      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds);
+      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats));
       if(o.score<=bestScore) break;
       bestScore=o.score;
-      const next=o.items.find(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'));
-      if(!next) break;
-      const candidate=applyOptToRecipe(cur,next.apply,lockedIds);
-      const a2=analyze(candidate,sKey,effectiveINGS);
+      const candidates=o.items
+        .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
+        .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
+        .slice(0,3);
+      if(!candidates.length) break;
+      let bestCandScore=-1,bestCandidate=null,bestA2=null,bestO2=null;
+      for(const cand of candidates){
+        const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
+        const tryA=analyze(tryRec,sKey,effectiveINGS);
+        if(!tryA) continue;
+        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats));
+        if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestA2=tryA;bestO2=tryO;}
+      }
+      if(!bestCandidate) break;
+      const candidate=bestCandidate;
+      const a2=bestA2;
       if(!a2) break;
-      const o2=generateOptimizer(a2,sKey,stockIds,candidate,optimizerINGS,lockedIds);
+      const o2=bestO2;
       if(o2.score<=o.score) break; // no aceptar si no mejora el score global
       cur=candidate;
     }
@@ -3729,6 +4011,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         ))}
                       </div>
+                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
+                        </div>}
+                      {histStats&&histStats.n>0&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' del mismo sustrato':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
+                        </div>}
+                      {modelAccuracy!=null&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                        </div>}
+                      {similarTrial&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
+                        </div>}
                       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
@@ -3736,9 +4034,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep}/>)}</details>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -4087,13 +4385,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB {e.eb}%</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB estimada {e.eb}%</span>
+                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'#C53030'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
                             {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
                             {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
                           <div style={{display:'flex',gap:6,alignItems:'center'}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
                             <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
+                            <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
                           </div>
                         </div>
