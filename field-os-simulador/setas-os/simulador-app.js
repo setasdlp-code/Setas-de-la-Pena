@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 53d6d9887bf99a85f73b37957d29457f4deae9de4581cc30f3969e50bbd777e4
+// source-hash: c7c7b23b2acd022457bc1b109de75fef2ea46b2586ad9e7a831077e812394d78
 const {
   useState,
   useMemo,
@@ -3262,17 +3262,38 @@ const quantifyItem = (item, recipe, sKey, ings, lockedIds) => {
   if (!res) return item;
   const cur = recipe.find(r => r.id === id);
   const curP = cur ? parseFloat(cur.p) || 0 : 0;
-  const verb = !cur ? 'Agregar' : res.pct > curP ? 'Subir' : 'Bajar';
+  // Si el % ya solucionado (curP===res.pct, p.ej. el suplemento ya está en su
+  // techo de suplementación) es prácticamente el mismo de antes, no hay nada
+  // nuevo que aplicar — sin esto el verbo por defecto caía en 'Bajar' aunque
+  // curP y res.pct fueran iguales, y el ítem seguía mostrándose como una
+  // acción pendiente indefinidamente (la sensación de "loop" reportada).
+  const noChange = cur && Math.abs(res.pct - curP) < 0.15;
+  const verb = !cur ? 'Agregar' : noChange ? 'Ya está en' : res.pct > curP ? 'Subir' : 'Bajar';
   item.action = `${verb} <b>${g.name}</b> a <b>${res.pct}%</b>${cur ? ` (actual ${curP.toFixed(0)}%)` : ' (nuevo)'}`;
   item.delta = `→ ${METRIC_LABEL[metric]} ${fmtMetric(metric, res.val)}`;
-  item.apply = {
+  item.apply = noChange ? null : {
     mode: 'set',
     id,
     value: res.pct
   };
+  // Techo de suplementación alcanzado sin llegar al rango óptimo: antes el
+  // ítem se veía idéntico a una corrección normal, así que aplicar (o ver
+  // que ya estaba aplicado) no cambiaba nada — el usuario lo percibía como
+  // que el Perito insistía en lo mismo sin avanzar. Ahora se marca
+  // explícitamente que este insumo, solo, no alcanza para cerrar el
+  // problema dentro del límite seguro.
+  const sp = SPP[sKey];
+  let inRange = true;
+  if (sp) {
+    if (metric === 'cn' && sp.cn_optimal) inRange = res.val >= sp.cn_optimal.min && res.val <= sp.cn_optimal.max;else if (metric === 'n' && sp.n_optimal) inRange = res.val >= sp.n_optimal.min && res.val <= sp.n_optimal.max;else if (metric === 'ph' && sp.ph_optimal) inRange = res.val >= sp.ph_optimal.min && res.val <= sp.ph_optimal.max;
+  }
+  if (!inRange) {
+    item.capped = true;
+    item.riskIfIgnored = (item.riskIfIgnored ? item.riskIfIgnored + ' · ' : '') + `${g.name} solo no alcanza el rango seguro (tope de suplementación) — se necesita un segundo ingrediente o ampliar bodega.`;
+  }
   return item;
 };
-const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = [], blendedEB = null) => {
+const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = [], blendedEB = null, useStock = true) => {
   if (!an || !an.sp) return {
     score: 0,
     status: 'sin_receta',
@@ -3298,13 +3319,42 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
   // de ingrediente. Ahora, entre los candidatos igualmente válidos, prefiere
   // uno que ya está en la receta (ajustar % en vez de sumar un insumo nuevo:
   // menos cambios, más fácil de ejecutar en bodega).
+  // recommendedIds: qué ingredientes ya se sugirieron para OTRA bandera en
+  // este mismo diagnóstico. Con bodegas chicas, el mismo insumo (el único
+  // con N alto, p.ej.) suele ser el "mejor" candidato para C:N, N y EB a la
+  // vez — antes bestStock lo devolvía siempre, así que el veredicto entero
+  // terminaba apuntando a un solo ingrediente para todo. Ahora, si el top
+  // candidato ya fue usado por otra bandera, se prueba una alternativa
+  // razonable antes de repetirlo — solo si no hay alternativa, se repite
+  // (mejor repetir lo correcto que forzar algo peor).
+  const recommendedIds = new Set();
+  // useStock=false ("Todo el catálogo"): ignora stockIds por completo, busca
+  // en toda la paleta compatible con la especie. Antes bestStock SIEMPRE
+  // priorizaba bodega si había aunque sea 1 coincidencia — "alternativas
+  // razonables" terminaba significando "las mismas 4 cosas que ya tienes",
+  // nunca un ingrediente mejor que simplemente no está en stock hoy. Mismo
+  // estado (optUseStock) que ya usa el Generador de recetas, para que Perito
+  // y Generador nunca queden desincronizados sobre qué modo se está usando.
   const bestStock = (filter, sortFn = (a, b) => 0) => {
     const candidates = ings.filter(g => g.cs.includes(sKey) && filter(g)).sort(sortFn);
-    const inStock = candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id));
+    const inStock = useStock ? candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
     const pool = inStock.length > 0 ? inStock : candidates;
     if (!pool.length) return null;
     const inRecipe = recipe && recipe.length ? pool.find(g => recipe.some(r => r.id === g.id)) : null;
-    return inRecipe || pool[0];
+    if (inRecipe) {
+      recommendedIds.add(inRecipe.id);
+      return inRecipe;
+    }
+    const top = pool[0];
+    if (recommendedIds.has(top.id) && pool.length > 1) {
+      const alt = pool.find(g => !recommendedIds.has(g.id));
+      if (alt) {
+        recommendedIds.add(alt.id);
+        return alt;
+      }
+    }
+    recommendedIds.add(top.id);
+    return top;
   };
 
   // ── CRÍTICOS: fuera de rango ──
@@ -3801,6 +3851,16 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
         apply: null
       });
     }
+  }
+  // Marca genérica "no está en bodega hoy": en modo catálogo (useStock=false)
+  // el ingrediente elegido puede no estar en stock — sin esto, el veredicto
+  // mezclaba sugerencias ejecutables ahora mismo con sugerencias que en
+  // realidad son "comprar esto primero", indistinguibles en la UI.
+  if (stockIds && stockIds.size > 0) {
+    items.forEach(it => {
+      const apOps = Array.isArray(it.apply) ? it.apply : it.apply ? [it.apply] : [];
+      if (apOps.some(op => op.id && !stockIds.has(op.id))) it.notInStock = true;
+    });
   }
   return {
     score,
@@ -5655,7 +5715,27 @@ const PeritoItem = React.memo(({
     className: "pi-head"
   }, /*#__PURE__*/React.createElement("span", {
     className: "pi-label"
-  }, item.label), item.delta && /*#__PURE__*/React.createElement("span", {
+  }, item.label), item.capped && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "var(--text-2xs)",
+      fontWeight: 700,
+      color: '#8C4020',
+      background: 'rgba(200,112,64,.12)',
+      border: '1px solid rgba(200,112,64,.3)',
+      borderRadius: 3,
+      padding: '1px 6px'
+    }
+  }, "tope alcanzado"), item.notInStock && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "var(--text-2xs)",
+      fontWeight: 700,
+      color: '#7A5A10',
+      background: 'rgba(160,120,40,.12)',
+      border: '1px solid rgba(160,120,40,.3)',
+      borderRadius: 3,
+      padding: '1px 6px'
+    }
+  }, "\uD83D\uDED2 no en bodega \u2014 a comprar"), item.delta && /*#__PURE__*/React.createElement("span", {
     className: "pi-delta"
   }, item.delta)), /*#__PURE__*/React.createElement("div", {
     className: "pi-action",
@@ -6877,7 +6957,24 @@ function App(props) {
   const [optMaxCost, setOptMaxCost] = useState(0);
   const [optResults, setOptResults] = useState(null);
   const [optRunning, setOptRunning] = useState(false);
-  const [optUseStock, setOptUseStock] = useState(true);
+  // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
+  // completo. Antes solo alimentaba el Generador automático — ahora también
+  // controla las sugerencias individuales del Perito (bestStock en
+  // generateOptimizer), para que ambos exploren siempre el mismo universo de
+  // ingredientes y no queden desincronizados. Persistido: es una preferencia
+  // de cómo el usuario quiere trabajar, no un dato de la receta activa.
+  const [optUseStock, setOptUseStock] = useState(() => {
+    try {
+      const v = localStorage.getItem('setas_workmode');
+      if (v === 'catalogo') return false;
+    } catch (e) {}
+    return true;
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('setas_workmode', optUseStock ? 'bodega' : 'catalogo');
+    } catch (e) {}
+  }, [optUseStock]);
   const [optProfile, setOptProfile] = useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags, setProdBags] = useState(6);
@@ -7396,7 +7493,7 @@ function App(props) {
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
   // por lotes reales pero el score de al lado seguía siendo 100% teórico.
   const blendedEB = an ? blendEBWithHistory(an, histStats) : null;
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock]);
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -7503,7 +7600,7 @@ function App(props) {
     for (let i = 0; i < 6; i++) {
       const a = analyze(cur, sKey, effectiveINGS);
       if (!a) break;
-      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats));
+      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), optUseStock);
       if (o.score <= bestScore) break;
       bestScore = o.score;
       const candidates = o.items.filter(it => it.apply && (it.priority === 'critical' || it.priority === 'warning')).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
@@ -7516,7 +7613,7 @@ function App(props) {
         const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
         const tryA = analyze(tryRec, sKey, effectiveINGS);
         if (!tryA) continue;
-        const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats));
+        const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), optUseStock);
         if (tryO.score > bestCandScore) {
           bestCandScore = tryO.score;
           bestCandidate = tryRec;
@@ -11855,6 +11952,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, oMin, "\u2013", oMax), /*#__PURE__*/React.createElement("span", null, "150+"))), /*#__PURE__*/React.createElement(NitrogenChart, {
       recipe: recipe
     }), hasPer && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 6,
+        alignItems: 'center',
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-2xs)",
+        letterSpacing: 'var(--tracking-wide)',
+        textTransform: 'uppercase',
+        color: 'var(--ink-500)'
+      }
+    }, "Modo:"), [['stock', 'Solo bodega', true], ['full', 'Todo el catálogo', false]].map(([k, l, v]) => /*#__PURE__*/React.createElement("button", {
+      key: k,
+      className: 'chip' + (optUseStock === v ? ' on' : ''),
+      onClick: () => setOptUseStock(v)
+    }, l))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         gap: 0,
