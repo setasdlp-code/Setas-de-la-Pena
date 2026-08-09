@@ -17,11 +17,11 @@ test('el bridge queda cargado por el runtime sin tocar el JSX', () => {
   assert.match(hook, /setas-perito-model/);
 });
 
-test('el hook se vuelve a enganchar si el runtime .dc reemplaza SetasScoring', () => {
+test('el hook se vuelve a enganchar si el runtime .dc reemplaza SetasScoring sin sondeo continuo', () => {
   assert.match(hook, /lastApi/);
-  assert.match(hook, /setInterval/);
-  assert.match(hook, /attempts\s*>\s*120/);
-  assert.doesNotMatch(hook, /if\s*\(attach\(\)\)\s*return/);
+  assert.match(hook, /\[100,\s*400,\s*1200,\s*3000\]/);
+  assert.match(hook, /setTimeout\(attach/);
+  assert.doesNotMatch(hook, /setInterval/);
 });
 
 test('Bodega usa cantidades reales persistidas y no solo presencia de IDs', () => {
