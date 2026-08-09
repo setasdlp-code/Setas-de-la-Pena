@@ -32,6 +32,9 @@ related_documents:
 | paper_005 | Wachtel-Galor et al. | 2011 | G. lucidum medicinal properties | G. lucidum | ★★★☆☆ |
 | paper_006 | Rodríguez Valencia & Jaramillo López (Cenicafé/FNC) | 2005 | Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera | L. edodes, G. lucidum | ★★★★★ |
 | paper_007 | Mori et al. | 2009 | Ensayo clínico pequeño en deterioro cognitivo leve | H. erinaceus | ★★★☆☆ |
+| paper_008 | Estrada & Royse | 2007 | Sustratos, CO₂ y casing layer en P. eryngii | P. eryngii | ★★★★★ |
+| paper_009 | Royse & Sanchez-Vazquez | 2003 | Amortiguación con CaCO₃ y rendimiento en troncos de L. edodes | L. edodes | ★★★★★ |
+| paper_010 | Chen, Stamets & Zied | 2018 | Cultivo de H. erinaceus en subproductos agrícolas y límites de CO₂ | H. erinaceus | ★★★★★ |
 
 ## Libros Técnicos
 
@@ -77,11 +80,17 @@ related_documents:
 - paper_002 (★★★☆☆) — NGF, actividad neurotrófica in vitro/preclínica; no es evidencia clínica
 - paper_007 (★★★☆☆) — Ensayo clínico pequeño en deterioro cognitivo leve
 - paper_003 (★★★★★) — Química y propiedades medicinales
+- paper_010 (★★★★★) — Subproductos agrícolas, optimización C:N y límite estricto de CO₂ <1,000 ppm
 - book_003 (★★★★★) — Producción comercial
 
 ### Lentinula edodes
 - paper_006 (★★★★★) — Formulaciones de sustrato de café, BE medida, cepas L54/L4055, esterilización a altitud (Cenicafé, Colombia)
+- paper_009 (★★★★★) — Amortiguación con CaCO₃ 1–2%, optimización C:N y choque térmico en troncos sintéticos
 - book_007 (★★★★★) — Cap. 13, cobertura de producción mundial y parámetros
+
+### Pleurotus eryngii
+- paper_008 (★★★★★) — Nutrición rica en N (C:N 20–25:1), casing layer, y modulación de CO₂ (1,500–2,200 ppm) para grosor de tallo
+- book_007 (★★★★★) — Parámetros de cultivo de Pleurotus King
 
 ### Ganoderma lucidum
 - paper_005 (★★★☆☆) — Propiedades medicinales

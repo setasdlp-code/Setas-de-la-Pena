@@ -92,35 +92,34 @@ Supported by:
 | Ciclo fruiting | 21–35 días a cosecha |
 | Flushes esperados | 3–6 (bloques duran meses) |
 
-## Sustratos Compatibles
-| Sustrato | BE Esperada | Tratamiento |
-|---|---|---|
-| Master's Mix (50/50) | 80–120% | Esterilización obligatoria |
-| Serrín madera dura + salvado | 60–100% | Esterilización |
-| Troncos de roble/aliso | 40–80% | Sin tratamiento (natural) |
-| Serrín sin suplementar | 40–60% | Pasteurización puede funcionar |
-| Subproductos de café — formulación T2 (Colombia) | ~57% rendimiento medio | Esterilización (Cenicafé) |
+## Sustratos Compatibles y Formulación (C:N Óptimo 35:1 – 50:1)
+| Sustrato | Relación C:N | BE Esperada | Tratamiento |
+|---|---|---|---|
+| Master's Mix (50/50 serrín roble + cascarilla soya) | 28:1 – 32:1 | 80–120% | Esterilización obligatoria |
+| Serrín de roble / álamo (78%) + salvado de trigo (20%) + CaCO₃ (2%) | 38:1 – 44:1 | 70–100% | Esterilización (Autoclave 121 °C / 2.5 h) |
+| Subproductos de café — formulación T2 (Cenicafé Colombia) | ~40:1 | 55–60% | Esterilización (28% aserrín tallo + 50% borra + 19% salvado maíz) |
+| Troncos naturales de roble (*Quercus humboldtii*) / aliso | 150:1 – 300:1 | 40–70% | Inoculación con taquetes; ciclo 9–18 meses |
 
-**Formulación T2 (Cenicafé):** 28% aserrín de tallo de café + 50% borra + 19% salvado de maíz (+Ca ≥0,6%), C/N≈40. Borra sola ~17% BE; **pulpa sola no fructifica**. Detalle en `02_substrates/substrate_library.md`.
+**Efecto Buffering de CaCO₃ (Royse & Sanchez-Vazquez 2003):** La incorporación de 1.0%–2.0% de CaCO₃ estabiliza el pH entre 5.5 y 6.2 frente a la secreción ácida micelial, aumentando la EB en ~18% y reduciendo la tasa de contaminación por *Trichoderma* durante los 60–90 días de incubación.
 
 ## Viabilidad en Tenjo
 - Temperatura Tenjo: 12–18°C típico, puede bajar a 8–10°C en noches de enero–febrero.
-- En meses fríos (jun–ago, dic–feb): temperatura exterior puede ser suficiente para fructificación.
-- En meses cálidos: requeriría refrigeración o cámara fría → costo significativo.
+- En meses fríos (jun–ago, dic–feb): temperatura exterior puede ser suficiente para fructificación natural sin refrigeración activa.
+- En meses cálidos: requeriría cámara fría o el uso de cepas termotolerantes (como L54/L4055 de Cenicafé).
 - **Estrategia recomendada:** producción estacional Shiitake (temporada fría) + P. djamor todo el año.
 
 # Best Practices
-- Esperar confirmación de "full colonization" (corteza marrón uniforme) antes de iniciar inducción.
+- **Fase de Pardeamiento (*Browning*):** No apresurar la apertura de la bolsa. Esperar que el 70–80% del bloque desarrolle la corteza marrón gruesa (*barking*).
+- **Choque Térmico Eficiente:** Inmersión en agua a 10–12 °C por 2–6 horas (sumergir completamente con pesos) para romper la latencia e hidratar el bloque para el primer flush.
 - Registrar duración de incubación por lote — varía mucho entre sustratos.
-- Cold shock más efectivo: sumergir en agua a 10–12°C por 12–24 horas (Cenicafé documenta variante corta: inmersión a 12°C por 2–4 h, con hielo; reducción de ~5°C respecto al bloque).
 - Semilla de siembra: usar con <15 días de elaborada, color uniforme (vetas = contaminación); si viene de nevera, atemperar 1 día antes.
 
 # Common Failure Modes
 | Problema | Causa | Solución |
 |---|---|---|
 | Micelio no coloniza | Contaminación inicial | Verificar esterilización y ambiente aséptico |
-| No hace pins después de inducción | Temperatura >18°C sostenida | Bajar T° o esperar temporada fría |
-| Caps muy pequeños | HR insuficiente durante fruiting | Verificar sensores; ajustar humidificación |
+| No hace pins después de inducción | Temperatura >18°C sostenida o browning incompleto | Choque frío a 10–12 °C; dar luz difusa antes de abrir |
+| Caps muy pequeños | HR insuficiente durante fruiting | Verificar sensores; ajustar humidificación a 85–90% |
 | Ciclos muy lentos | Temperatura incubación subóptima | Mantener 20–24°C en incubación |
 
 # Open Questions
@@ -130,8 +129,9 @@ Supported by:
 - ¿Requerimientos INVIMA para claims medicinales de lentinano en Colombia?
 
 # References
+- Royse, D. J., & Sanchez-Vazquez, J. E. (2003). Influence of precipitated calcium carbonate (CaCO3) on shiitake (*Lentinula edodes*) yield and biological efficiency on synthetic logs. *Bioresource Technology*, 88(1), 43–49. [paper_009]
+- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 289–308.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Field & Forest Products. *Shiitake cultivation guide*. https://fieldforest.net
 - Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
-- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]

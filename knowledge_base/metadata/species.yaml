@@ -103,3 +103,22 @@ species:
     cycle_days: [90, 180]
     requires_active_heating_tenjo: true   # fruiting 27-32°C inviable en Tenjo (12-18°C) sin calefaccion
     status_notes: "Solo mercado medicinal. Fase 3. Fruiting óptimo 27–32°C → requiere calefacción activa en Tenjo (confirmado, Cenicafe paper_006). HR escalonada 90→70-80→30-40%. Nota nomenclatural: material comercial = G. lingzhi (book_005)."
+
+  - id: pleurotus_eryngii
+    common_name: King Oyster / Seta de Cardo
+    scientific_name: Pleurotus eryngii
+    priority: 6
+    phase: target_phase_2
+    document: 01_species/pleurotus_eryngii.md
+    fruiting_temp_c: [13, 17]
+    incubation_temp_c: [22, 25]
+    humidity_percent: [85, 92]
+    co2_target_ppm: [1500, 2500]       # CO2 moderadamente alto para hipertrofia del estípite
+    co2_alarm_ppm: 3000
+    fae_per_hour: [4, 7]
+    substrate_primary: supplemented_sawdust_corncob
+    substrate_alternatives: [masters_mix, wheat_straw_supplemented]
+    substrate_incompatible: [unpasteurized_straw]
+    be_range_percent: [60, 110]
+    cycle_days: [45, 65]
+    status_notes: "Especie gourmet de alto valor y larga vida útil poscosecha (14–21 d). Exige esterilización en autoclave (N alto 1.5–2.0%) y T° fresca (13–17°C, ideal para Tenjo)."
