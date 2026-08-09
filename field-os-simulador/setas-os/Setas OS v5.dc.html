@@ -3,32 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Setas OS v5 — Setas de la Peña</title>
-<meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<script>
-// Buffer de errores tempranos — debe ir ANTES de cualquier otro script.
-// firebase/error-monitor.js es type="module" y por eso siempre se ejecuta
-// después de los scripts clásicos de abajo (react, support.js, scoring.js…);
-// sin este buffer sincrónico, cualquier error que ocurra durante esa carga
-// temprana (el más probable de romper la app entera) nunca llegaría a
-// reportarse. error-monitor.js drena __errorLog en cuanto Firebase está listo.
-(function(){
-  window.__errorLog = [];
-  function push(entry){
-    window.__errorLog.push(entry);
-    if (window.__errorSink) { try { window.__errorSink(entry); } catch(_){} }
-  }
-  window.addEventListener('error', function(e){
-    push({ message:e.message, stack:e.error&&e.error.stack, source:e.filename||null, line:e.lineno||null, col:e.colno||null });
-  });
-  window.addEventListener('unhandledrejection', function(e){
-    var r=e.reason;
-    push({ message:(r&&r.message)||String(r), stack:r&&r.stack||null, source:'unhandledrejection' });
-  });
-})();
-</script>
+<script src="./error-buffer.js"></script>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
@@ -37,6 +12,10 @@
 <x-dc>
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#4a5d3a"></rect><text x="40" y="34" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="800" font-size="16" fill="#f5f1e8">SO</text></svg></template>
 <helmet>
+<title>Setas OS v5 — Setas de la Peña</title>
+<meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -50,9 +29,13 @@
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
 <script type="module" src="firebase/firebase-init.js"></script>
+<script type="module" src="firebase/error-monitor.js"></script>
 <script type="module" src="firebase/db.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
-<script type="module" src="firebase/error-monitor.js"></script>
+<!-- error-monitor.js va ANTES de db.js/auth-gate.js a propósito: cuando era
+     el último <script> de <helmet>, el runtime .dc lo descartaba (ver
+     compile()'s "mayBePartial" en support.js — trata al último hijo distinto
+     mientras streaming). Puesto en medio, sobrevive. -->
 <meta name="ext-resource-dependency" content="climate-bench.html" data-resource-id="climaBenchHtml">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-rosa.png" data-resource-id="imgOrellanaRosa">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-blanca.png" data-resource-id="imgOrellanaBlanca">

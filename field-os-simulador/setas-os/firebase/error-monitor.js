@@ -3,12 +3,13 @@
 // offline persistente (ver firebase-init.js), así que un error capturado
 // sin conexión igual queda encolado y se sincroniza solo al reconectar.
 //
-// Los listeners de window.onerror/unhandledrejection viven en un <script>
-// clásico al inicio de <head> (ver Setas OS v5.dc.html), no aquí — este
-// módulo se ejecuta después de todos los scripts clásicos (type="module"
-// siempre se aplaza), así que por su cuenta se perdería los errores más
-// tempranos y más graves. Aquí solo se drena ese buffer (window.__errorLog)
-// y se registra como su "sink" para lo que ocurra de ahora en adelante.
+// Los listeners de window.onerror/unhandledrejection viven en ../error-buffer.js
+// (cargado como <script src> al inicio de <head> en Setas OS v5.dc.html),
+// no aquí — este módulo se ejecuta después de todos los scripts clásicos
+// (type="module" siempre se aplaza), así que por su cuenta se perdería los
+// errores más tempranos y más graves. Aquí solo se drena ese buffer
+// (window.__errorLog) y se registra como su "sink" para lo que ocurra de
+// ahora en adelante.
 import { db, auth } from "./firebase-init.js";
 import { collection, addDoc, serverTimestamp } from "../vendor/firebase/firebase-firestore.js";
 
