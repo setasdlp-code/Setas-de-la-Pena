@@ -3,11 +3,11 @@ name: Field OS Simulador Quality
 on:
   pull_request:
     paths:
-      - "field_os/20_product_design/PROTOTYPES/field-os-simulador-app/**"
+      - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
   push:
     paths:
-      - "field_os/20_product_design/PROTOTYPES/field-os-simulador-app/**"
+      - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
 
 permissions:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: field_os/20_product_design/PROTOTYPES/field-os-simulador-app
+        working-directory: field-os-simulador/setas-os
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,9 +26,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: field_os/20_product_design/PROTOTYPES/field-os-simulador-app/package-lock.json
-      - name: Install locked dependencies
-        run: npm ci
+      # No build step and no package-lock.json here (static HTML/JS/CSS, no
+      # bundler) — the test suite is pure Node built-ins, so it runs directly
+      # with no npm install needed.
       - name: Run quality gate
-        run: npm run quality
+        run: npm run test

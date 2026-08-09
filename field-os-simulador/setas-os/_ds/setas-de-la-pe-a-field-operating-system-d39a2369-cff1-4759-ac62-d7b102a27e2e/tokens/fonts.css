@@ -1,14 +1,14 @@
 /* Gaya — primary typeface, provided by Setas de la Peña. */
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
 
 /* IBM Plex Mono — intentional addition for tabular data, metadata, codes, SOP numbers.
    No mono face was supplied; this is the nearest CDN match to the technical-manual /

@@ -1,0 +1,42 @@
+name: Setas OS v5 — Lighthouse CWV
+
+on:
+  pull_request:
+    paths:
+      - "field-os-simulador/setas-os/**"
+      - ".github/workflows/setas-os-v5-lighthouse.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse CWV (login screen)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: field-os-simulador/setas-os
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install @lhci/cli
+        run: npm install --no-save @lhci/cli
+
+      # Setas OS v5 has no build step (static HTML/JS/CSS, vendored deps) —
+      # lighthouserc.cjs uses staticDistDir to serve this folder directly,
+      # no dev/prod server to start first.
+      - name: Run Lighthouse CI
+        run: npx lhci autorun --config=./lighthouserc.cjs
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: setas-os-v5-lighthouse-reports
+          path: field-os-simulador/setas-os/.lighthouseci
+          if-no-files-found: ignore

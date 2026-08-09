@@ -1,8 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setas OS v5 — Setas de la Peña</title>
+<meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+// Buffer de errores tempranos — debe ir ANTES de cualquier otro script.
+// firebase/error-monitor.js es type="module" y por eso siempre se ejecuta
+// después de los scripts clásicos de abajo (react, support.js, scoring.js…);
+// sin este buffer sincrónico, cualquier error que ocurra durante esa carga
+// temprana (el más probable de romper la app entera) nunca llegaría a
+// reportarse. error-monitor.js drena __errorLog en cuanto Firebase está listo.
+(function(){
+  window.__errorLog = [];
+  function push(entry){
+    window.__errorLog.push(entry);
+    if (window.__errorSink) { try { window.__errorSink(entry); } catch(_){} }
+  }
+  window.addEventListener('error', function(e){
+    push({ message:e.message, stack:e.error&&e.error.stack, source:e.filename||null, line:e.lineno||null, col:e.colno||null });
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r=e.reason;
+    push({ message:(r&&r.message)||String(r), stack:r&&r.stack||null, source:'unhandledrejection' });
+  });
+})();
+</script>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
@@ -26,6 +52,7 @@
 <script type="module" src="firebase/firebase-init.js"></script>
 <script type="module" src="firebase/db.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
+<script type="module" src="firebase/error-monitor.js"></script>
 <meta name="ext-resource-dependency" content="climate-bench.html" data-resource-id="climaBenchHtml">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-rosa.png" data-resource-id="imgOrellanaRosa">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-blanca.png" data-resource-id="imgOrellanaBlanca">
@@ -130,6 +157,20 @@
     .rail-btn.on { background:var(--paper-2); }
     .rail-btn span { font-size:8.5px; }
     .app-main { margin-left:0; padding-bottom:62px; }
+
+    /* Header simplificado: el clima completo, el nombre del operador y el
+       hint "⌘K" no son esenciales en móvil — sobran espacio vertical/horizontal
+       en una fila que ya compite con el breadcrumb y los botones de acción. */
+    .fos-weather-text { display:none; }
+    .fos-hide-guantes { display:none; }
+    .fos-btn-label { display:none; }
+    /* Botón flotante de dev (firebase/auth-gate.js) — en móvil la acción de
+       cerrar sesión vive dentro del menú del operador (ver signOutApp). */
+    #setas-auth-signout { display:none !important; }
+    /* Lotes activos (Hoy): 2 columnas fijas no dejaban espacio para el texto
+       (nombre, contenedores, etapa/receta) junto a la miniatura de 101px —
+       el texto se salía de la tarjeta. A 1 columna cabe todo sin envolver mal. */
+    .lotes-quick-grid { grid-template-columns:1fr !important; }
   }
   .col { max-width:640px; margin:0 auto; }
   .gloves button, .gloves label { min-height:56px; }
@@ -193,11 +234,14 @@
 
   </nav>
 
-  <main class="app-main fos-scroll" style="height:100vh;overflow-y:auto;overflow-x:hidden;position:relative;">
+  <main class="app-main fos-scroll" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
 
     <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
       <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex">{{ weatherIcon }}</span>{{ weatherText }}</div><div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
+        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
+          <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
+        </button>
         <div style="position:relative;display:inline-block;">
           <button onClick="{{ togglePicker }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:999px;padding:4px 10px 4px 4px;">
             <span style="width:18px;height:18px;border-radius:50%;background:var(--ink-0);color:var(--paper-0);font-family:var(--font-sans);font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center;flex:none;">{{ operatorInitial }}</span>
@@ -214,16 +258,17 @@
                 <span style="font:var(--t-caption);color:var(--text-metadata);">{{ op.role }}</span>
               </button>
             </sc-for>
+            <button onClick="{{ signOutApp }}" style="cursor:pointer;display:block;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border-strong);padding:9px 14px;font:var(--t-caption);font-weight:700;color:var(--status-error, #C53030);">Cerrar sesión</button>
           </div>
           </sc-if>
         </div>
-        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:14px;height:14px;"><path d="M6 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V5.5a1.5 1.5 0 0 1 3 0V12"></path><path d="M15 12V8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-3"></path></svg>
-          Guantes
+          <span class="fos-btn-label">Guantes</span>
         </button>
-        <button onClick="{{ openCmd }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button onClick="{{ openCmd }}" aria-label="Buscar" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          Buscar <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
+          <span class="fos-btn-label">Buscar</span> <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
         </button>
       </div>
     </div>
@@ -316,9 +361,9 @@
 
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 12px;">Lotes activos</div>
         <sc-if value="{{ hasLotesQuick }}" hint-placeholder-val="{{ true }}">
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <div class="lotes-quick-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
           <sc-for list="{{ lotesQuick }}" as="l" hint-placeholder-count="4">
-            <button onClick="{{ l.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px 10px 10px;display:flex;align-items:center;gap:12px;justify-content:space-between;">
+            <button onClick="{{ l.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px 10px 10px;display:flex;align-items:center;gap:12px;justify-content:space-between;min-width:0;overflow:hidden;">
               <span style="display:flex;align-items:center;gap:12px;min-width:0;">
                 <sc-if value="{{ l.img }}" hint-placeholder-val="{{ false }}"><img ref="{{ l.imgRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="{{ l.sppName }}" style="width: 101px; height: 100px; border-radius: 6px; object-fit: cover; flex: none"></sc-if>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
@@ -344,7 +389,7 @@
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
           <sc-for list="{{ tasksToday }}" as="t" hint-placeholder-count="3">
             <div style="{{ t.rowStyle }}">
-              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}">✓</button>
+              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}"><span style="{{ t.boxInnerStyle }}">✓</span></button>
               <button onClick="{{ t.go }}" style="cursor:pointer;flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;display:flex;flex-direction:column;gap:3px;">
                 <span style="{{ t.titleStyle }}">{{ t.title }}</span>
                 <span style="font:var(--t-caption);color:var(--text-metadata);"><span style="font-family:var(--font-mono);">{{ t.id }}</span> · {{ t.why }}</span>
@@ -932,8 +977,8 @@
                 <span style="font:var(--t-caption);color:var(--text-metadata);">{{ al.note }} · {{ al.ageLabel }}</span>
               </div>
               <div style="display:flex;gap:8px;flex:none;">
-                <button onClick="{{ al.dismiss }}" style="cursor:pointer;background:none;border:none;padding:6px 4px;font:var(--t-caption);color:var(--text-metadata);">Descartar</button>
-                <button onClick="{{ al.resolve }}" style="cursor:pointer;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-sm);padding:8px 12px;font:var(--t-caption);font-weight:600;">Resolver</button>
+                <button onClick="{{ al.dismiss }}" style="cursor:pointer;background:none;border:none;padding:6px 4px;font:var(--t-caption);color:var(--text-metadata);min-height:44px;display:inline-flex;align-items:center;">Descartar</button>
+                <button onClick="{{ al.resolve }}" style="cursor:pointer;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-sm);padding:8px 12px;font:var(--t-caption);font-weight:600;min-height:44px;display:inline-flex;align-items:center;">Resolver</button>
               </div>
             </div>
           </sc-for>
@@ -1083,7 +1128,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -2124,10 +2169,16 @@ const DESTINOS = [
 ];
 const destLabel = k => (DESTINOS.find(d=>d.key===k)||{label:k}).label;
 // Operadores (README.md: Sebastián remoto + cuidador in situ)
+// admin:true habilita acciones destructivas en la UI (borrar receta, borrar
+// lote, editar catálogo de ingredientes) — espejo, del lado del cliente, de
+// isAdmin() en firestore.rules. Protección de UI únicamente: como toda la
+// app comparte una sola cuenta de Firebase, el servidor no puede saber cuál
+// operador está "puesto" — solo evita errores por clic accidental, no
+// sustituye login real por operador (mejora futura pendiente).
 const OPERATORS = [
   { key:'inigo',     name:'Germán',    role:'Operador in situ' },
   { key:'sebastian', name:'Sebastián', role:'Operador remoto' },
-  { key:'ana',       name:'Maritza',   role:'Administradora' },
+  { key:'ana',       name:'Maritza',   role:'Administradora', admin:true },
   { key:'andrea',    name:'Andrea',    role:'Mercadeo y Ventas' },
   { key:'carolina',  name:'Carolina',  role:'Operador remoto' },
 ];
@@ -2650,7 +2701,10 @@ class Component extends DCLogic {
           }, 350);
           return;
         }
-      } catch(e){ /* camera denied — fall back to simulated match below */ }
+      } catch(e){
+        this.toast('No se pudo abrir la cámara · usando búsqueda manual.');
+        /* fall back to simulated match below */
+      }
     }
     this._scanT = setTimeout(()=>{
       const act=this.state.containers.filter(c=>c.status==='activo');
@@ -3271,7 +3325,9 @@ class Component extends DCLogic {
         rowStyle:'cursor:pointer;display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;background:'+(sel?'var(--paper-1)':'none')+';border:none;border-top:1px solid var(--border-soft);padding:9px 14px;color:'+(sel?'var(--ink-0)':'var(--ink-1)')+';',
         pick:()=>this.setState({operator:o.name, operatorKey:o.key, pickerOpen:false}) }; }),
       pickerOpen: s.pickerOpen, togglePicker:()=>this.setState(s2=>({pickerOpen:!s2.pickerOpen})), closePicker:()=>this.setState({pickerOpen:false}),
+      signOutApp:()=>{ this.setState({pickerOpen:false}); if(typeof window.__setasSignOut==='function') window.__setasSignOut(); },
       operatorInitial: (s.operator||'')[0]||'', operatorRole: (OPERATORS.find(o=>o.key===s.operatorKey)||{}).role||'',
+      isAdminOperator: !!(OPERATORS.find(o=>o.key===s.operatorKey)||{}).admin,
       pickerChevron: s.pickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
       sessionLoading: s.sessionLoading, loadingLabel: s.pendingSessionType==='lab' ? 'laboratorio' : 'cultivo',
       greeting:this.greetingStr(),
@@ -3456,8 +3512,9 @@ class Component extends DCLogic {
     return out.sort((a,b)=>P[a.prio]-P[b.prio]).map(t=>({ ...t,
       done:!!s.taskDone[t.key],
       toggle:()=>this.setState(x=>({ taskDone:{...x.taskDone, [t.key]:!x.taskDone[t.key]} })),
-      boxStyle:'cursor:pointer;flex:none;width:20px;height:20px;border-radius:4px;border:1.5px solid '+(s.taskDone[t.key]?'var(--accent-olive)':'var(--border-strong)')+';background:'+(s.taskDone[t.key]?'var(--accent-olive)':'transparent')+';display:grid;place-items:center;padding:0;color:var(--paper-0);font-size:12px;',
-      rowStyle:'display:flex;align-items:flex-start;gap:11px;padding:12px 13px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);opacity:'+(s.taskDone[t.key]?'.5':'1')+';',
+      boxStyle:'cursor:pointer;flex:none;width:44px;height:44px;display:grid;place-items:center;padding:0;background:none;border:none;',
+      boxInnerStyle:'width:20px;height:20px;border-radius:4px;border:1.5px solid '+(s.taskDone[t.key]?'var(--accent-olive)':'var(--border-strong)')+';background:'+(s.taskDone[t.key]?'var(--accent-olive)':'transparent')+';display:grid;place-items:center;color:var(--paper-0);font-size:12px;',
+      rowStyle:'display:flex;align-items:center;gap:2px;padding:4px 13px 4px 4px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);opacity:'+(s.taskDone[t.key]?'.5':'1')+';',
       titleStyle:'font:var(--t-label);color:var(--ink-0);text-decoration:'+(s.taskDone[t.key]?'line-through':'none')+';',
       prioAccent: t.prio==='alta'?'var(--status-error)':(t.prio==='media'?'var(--accent-mushroom)':'var(--ink-2)') }));
   }

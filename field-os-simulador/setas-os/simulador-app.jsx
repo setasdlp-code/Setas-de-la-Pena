@@ -2486,6 +2486,15 @@ function App(props){
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
+  // Protección de UI: solo evita el clic accidental de un operador de campo en
+  // una acción destructiva e irreversible — no es seguridad real (toda la app
+  // comparte una sola cuenta de Firebase; ver nota junto a OPERATORS en
+  // "Setas OS v5.dc.html"). props.isAdmin viene del operador elegido en el
+  // picker del encabezado.
+  const requireAdmin=fn=>(...args)=>{
+    if(!props.isAdmin){ setNoticeDlg({title:'Acción restringida',msg:'Solo un administrador puede hacer esto. Si te corresponde, cámbiate de operador en el encabezado (ícono de usuario).'}); return; }
+    fn(...args);
+  };
   const delR=id=>{
     setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}}});
   };
@@ -3271,7 +3280,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div>
                   <div style={{display:'flex',gap:6,marginBottom:14}}>
                     {[['manual','✎ Manual'],['foto','📷 Foto / PDF de recibo'],['texto','✉ Pegar texto']].map(([v,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
+                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,whiteSpace:'normal',lineHeight:1.25,textAlign:'center',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
                     ))}
                   </div>
 
@@ -3436,7 +3445,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="prov-name">{p.nombre}</div>
                             <div className="prov-muni">{p.municipio}</div>
                           </div>
-                          <button className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>eliminarProveedor(p.id)}>✕</button>
+                          <button className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)}>✕</button>
                         </div>
                       ))}
                     </div>
@@ -3541,7 +3550,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitLote(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3692,6 +3701,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <h2 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h2>
           <div className="page-title-rule"></div>
         </div>
+        {tab!=='inicio'&&(()=>{
+          const activeGroup=NAV_GROUPS.find(g=>g.tabs.includes(tab));
+          // El grupo "recetas" ya tiene su propio selector (catálogo/formular/optimizar arriba,
+          // vía el shell externo Setas OS v5.dc.html) — evita duplicar esa sub-navegación aquí.
+          if(!activeGroup||activeGroup.key==='recetas'||activeGroup.tabs.length<2) return null;
+          return(
+          <div className="fos-chips">
+            {activeGroup.tabs.map(t=>(
+              <button key={t} className={t===tab?'on':''} onClick={()=>goTab(t)}>{TAB_LABELS[t]}</button>
+            ))}
+          </div>
+          );
+        })()}
 
         {tab==='inicio'&&(()=>{
           const TILES=[
@@ -3752,7 +3774,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="p-activa">Activa</span>
                     </div>
                     {hasImg
-                      ?<div className="p-img"><img src={IMG[k]} alt={d.name}/></div>
+                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} loading="lazy" decoding="async"/></div>
                       :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--accent-blue-grey)':'var(--accent-mushroom)'}/></div>
                     }
                     <div className="p-body">
@@ -3855,7 +3877,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* RIGHT: Ilustración full-bleed + CTA */}
                 <div className="spp-info-center" style={{display:'flex',flexDirection:'column'}}>
                   <div className="spp-img-wrap" style={{flex:1,position:'relative',minHeight:320}}>
-                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}}/>}
+                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
@@ -5075,7 +5097,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 `Incubar en oscuridad${an.sp?.temp_fruit?` · fructificación ${an.sp.temp_fruit}`:''}. Seguir cronograma de abajo.`,
               ];
               const fechas=psch?psch.evts.filter(e=>['in','c1','pr','f1'].includes(e.key)).map(e=>[e.title,`${e.ds} · día ${e.day}`]):[];
+              // Progreso del checklist en pantalla — la hoja sigue siendo un documento imprimible
+              // de una sola página (uso en campo/papel), así que esto se agrega como ayuda de
+              // navegación no impresa en vez de partirla en pasos/wizard.
+              const totalChecks=rows.length+steps.length;
+              const doneChecks=rows.reduce((s,_,i)=>s+(checkedSteps['ing_'+i]?1:0),0)+steps.reduce((s,_,i)=>s+(checkedSteps['step_'+i]?1:0),0);
+              const psSections=[
+                {id:'ps-sec-1',l:'1 · Pesado'},
+                ...(ptr?[{id:'ps-sec-2',l:'2 · Tratamiento'}]:[]),
+                {id:'ps-sec-3',l:'3 · Procedimiento'},
+                ...(fechas.length>0?[{id:'ps-sec-4',l:'4 · Fechas'}]:[]),
+              ];
               return(
+              <div>
+                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
+                    {psSections.map(s=>(
+                      <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                    <div style={{width:70,height:6,background:'var(--paper-300)',borderRadius:3,overflow:'hidden'}}>
+                      <div style={{width:`${totalChecks>0?Math.round(doneChecks/totalChecks*100):0}%`,height:'100%',background:doneChecks===totalChecks&&totalChecks>0?'var(--moss-600,var(--accent-olive))':'var(--coral-500)',transition:'width .2s'}}></div>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-700)',whiteSpace:'nowrap'}}>{doneChecks}/{totalChecks} pasos</span>
+                  </div>
+                </div>
               <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
@@ -5108,11 +5155,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ))}
                 </div>
                 {/* Tabla de pesado — kg comerciales reales (báscula) por balance de masas */}
-                <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
+                <div id="ps-sec-1" style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8,scrollMarginTop:52}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>1</span>
                   <div>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Pesado de ingredientes</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>b\u00e1scula · res. {resG} g</div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
@@ -5159,7 +5206,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* Tratamiento */}
                 {ptr&&(
-                  <div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:18,background:'var(--paper-50)'}}>
+                  <div id="ps-sec-2" style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:18,background:'var(--paper-50)',scrollMarginTop:52}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:6}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:20,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>2</span>
                       <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Tratamiento — {ptr.name}</span>
@@ -5169,7 +5216,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
                 {/* Pasos */}
-                <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
+                <div id="ps-sec-3" style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8,scrollMarginTop:52}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>3</span>
                   <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>Procedimiento</span>
                 </div>
@@ -5184,7 +5231,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* Fechas */}
                 {fechas.length>0&&(
-                  <div>
+                  <div id="ps-sec-4" style={{scrollMarginTop:52}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>4</span>
                       <div>
@@ -5218,6 +5265,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',textAlign:'right',letterSpacing:'var(--tracking-label)'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
                 </div>
+              </div>
               </div>
               );
             })()}
@@ -5312,8 +5360,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             </div>
                             <div className="dash-card-foot">
-                              <button className="sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button className="sdel" onClick={()=>delR(e.id)}>✕</button>
+                              <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
+                              <button className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)}>✕</button>
                             </div>
                           </div>
                         );
