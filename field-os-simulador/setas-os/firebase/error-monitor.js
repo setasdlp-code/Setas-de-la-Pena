@@ -14,6 +14,7 @@
 // Los bridges del Perito/Recetario viven fuera del JSX monolítico para mantener
 // SetasScoring como única fuente de reglas y añadir trazabilidad sin duplicación.
 import "../perito-scoring-hook.js";
+import "../perito-economy-bridge.js";
 import "../recetario-model-bridge.js";
 import "../recetario-firestore-snapshot.js";
 import { db, auth } from "./firebase-init.js";
