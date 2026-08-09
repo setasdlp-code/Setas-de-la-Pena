@@ -1,0 +1,16 @@
+{
+  "product": "Setas OS",
+  "canonical": true,
+  "status": "active-development",
+  "repository": "setasdlp-code/Setas-de-la-Pena",
+  "branch": "main",
+  "applicationRoot": "field-os-simulador/setas-os/",
+  "primaryShell": "Setas OS v5.dc.html",
+  "version": "5.0.0-dev",
+  "sourceOfTruth": "Git main",
+  "historicalRepositories": [
+    "setasdlp-code/Field-OS",
+    "setasdlp-code/simulador"
+  ],
+  "note": "Do not select a Setas OS version by filename alone. Verify this manifest and current main before editing."
+}
