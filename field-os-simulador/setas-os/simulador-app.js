@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 00719cce643fc8f02f106b888ebe18654bdb82019da1a8eeba4d2e806d950046
+// source-hash: 87a02931541f759eb9e64e4cb13cf6a4582bf6b5368c4fa12efab5ed4498f91d
 const {
   useState,
   useMemo,
@@ -2741,8 +2741,7 @@ const analyze = (recipe, sKey, ings = INGS) => {
       eb *= .45;
     } else if (avgN > nThresh && needsAutoclave) {
       eb *= .80;
-    }
-    if (suppP > sp.supplementation_max && !needsAutoclave) eb *= .85;
+    } else if (needsAutoclave) eb *= .85;
     if (incompat.length) eb *= .9;
     if (tot < 95 || tot > 105) eb *= .95;
     // ── Modificadores multifactor de EB (penalizaciones ≤1: una receta en óptimo no se ve afectada) ──
@@ -5394,6 +5393,7 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
       ...an0,
       cost: realCost
     } : an0;
+    if (profile.spawnOverride != null) an.dynSpawn = profile.spawnOverride;
     const suppOverLimit = an.suppP > suppLimit;
     if (suppOverLimit && profileKey === 'rescate') return;
     if (an.cafeP > cafeLimit) return;
@@ -5459,7 +5459,7 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
             if (Math.abs(denom) < 0.001) return;
             const ps = remaining * (bCe1 - T * bNe1) / denom;
             const pb = remaining - ps;
-            if (ps < 2 || pb < 15 || ps > 40 || pb > 95) return;
+            if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
             const rec = [{
               id: base.id,
               p: Math.round(pb * 10) / 10
@@ -5516,7 +5516,7 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
             if (Math.abs(denom) < 0.001) return;
             const ps = remaining * (cBlend - T * nBlend) / denom;
             const pb = remaining - ps;
-            if (ps < 2 || pb < 15 || ps > 40 || pb > 95) return;
+            if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
             const rec = [{
               id: b1.id,
               p: Math.round(pb * f1 * 10) / 10
@@ -14455,10 +14455,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
         return;
       }
-      const cb = bI.c,
-        nb = bI.n,
-        cs = sI.c,
-        ns = sI.n;
+      const bDry = 1 - Math.min(0.92, Math.max(0, (bI.moisture || 0) / 100));
+      const sDry = 1 - Math.min(0.92, Math.max(0, (sI.moisture || 0) / 100));
+      const cb = bI.c * bDry,
+        nb = bI.n * bDry,
+        cs = sI.c * sDry,
+        ns = sI.n * sDry;
       const denom = cb - cs - T * (nb - ns);
       if (Math.abs(denom) < 0.001) {
         setInvResult({
@@ -15787,13 +15789,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const band = BANDS[e.sKey] || 'var(--ink-700)';
       const eb = parseFloat(e.eb) || 0;
       const sc = liveScoreFor(e);
-      // Costo ingredientes: guardado o recalculado al vuelo
-      const costIngKg = e.cost > 0 ? e.cost : (() => {
-        const a2 = analyze(e.recipe, e.sKey, effectiveINGS);
-        return a2 ? Math.round(a2.cost) : 0;
+      // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
+      const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
+      const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
+      const costIngKg = e.cost > 0 ? e.cost : a2 ? Math.round(a2.cost) : 0;
+      // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
+      const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
+        const tr2 = a2 ? calcTreatment(a2, e.sKey) : null;
+        const col = tr2?.col || (['shiitake', 'lions_mane', 'reishi', 'nameko'].includes(e.sKey) ? 'autoclave' : 'thermal');
+        return energyCostPerKgSeco(col, e.sKey);
       })();
-      // Costo energético: guardado (recetas nuevas) o estimado por especie (recetas antiguas)
-      const eDash = e.energyCopKg != null ? e.energyCopKg : energyCostPerKgSeco(['shiitake', 'lions_mane', 'reishi', 'nameko'].includes(e.sKey) ? 'autoclave' : 'thermal', e.sKey);
       const costKg = costIngKg + eDash;
       const hFactor = e.sKey === 'shiitake' || e.sKey === 'lions_mane' || e.sKey === 'reishi' ? 0.40 : 0.35;
       return /*#__PURE__*/React.createElement("div", {
