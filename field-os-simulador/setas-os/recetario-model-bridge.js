@@ -94,8 +94,6 @@
     globalThis.__setasLastPeritoSnapshot = latest;
   });
 
-  // The economy bridge finishes asynchronously after reading catalog moisture.
-  // Merge that immutable context into the active snapshot before a recipe is saved.
   window.addEventListener('setas-perito-economy', e => {
     if (!latest || !e.detail?.economics) return;
     const signature = sig(e.detail.recipe || []);
@@ -110,8 +108,6 @@
     queueRender();
   });
 
-  // Enrich only the setas_v6 recipe array. The React state remains backward
-  // compatible; persisted records gain immutable evaluation context.
   const originalSetItem = Storage.prototype.setItem;
   if (!originalSetItem.__setasRecipeSnapshotWrapped) {
     const wrapped = function(key, value) {
@@ -156,12 +152,13 @@
     const hist = s.historyCalibration;
     const eco = s.economics;
     const ecoLine = eco ? ` · mezcla ${money(eco.recipeCost?.copPerKg)}/kg${eco.lot?.costPerFreshKgCOP?.low!=null?` · sustrato/kg hongo ${money(eco.lot.costPerFreshKgCOP.low)}–${money(eco.lot.costPerFreshKgCOP.high)}`:''}` : '';
-    return `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px 9px;font-family:var(--font-mono);font-size:10px;line-height:1.35">
+    return `<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px 9px;font-family:var(--font-mono);font-size:10px;line-height:1.35">
       <div><b>Viabilidad</b><br>${VIAB[s.dimensions?.safety?.status] || 'REVISAR'}</div>
       <div><b>EB</b><br>${eb.low ?? '—'}–${eb.high ?? '—'}%</div>
       <div><b>Confianza</b><br>${CONF[s.confidence] || 'BAJA'}</div>
       <div><b>Economía</b><br>${s.dimensions?.economy?.score ?? '—'}/100</div>
-      <div style="grid-column:1/-1;color:var(--ink-500)">${fmtDiff(r)} · modelo ${s.modelVersion}${hist?.n!=null?` · ${hist.n} comparables`:''}${hist?.similarity!=null?` · similitud ${Math.round(hist.similarity*100)}%`:''}${ecoLine}</div>
+      <div><b>Comparables</b><br>${hist?.n ?? 0}</div>
+      <div style="grid-column:1/-1;color:var(--ink-500)">${fmtDiff(r)} · modelo ${s.modelVersion}${hist?.similarity!=null?` · similitud ${Math.round(hist.similarity*100)}%`:''}${ecoLine}</div>
     </div>`;
   };
 
