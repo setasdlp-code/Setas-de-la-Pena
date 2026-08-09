@@ -1,17 +1,20 @@
 'use strict';
 import './perito-ui-bridge.js';
 
-// Observa solo la evaluación principal del Perito. Las simulaciones internas
-// no pasan blendedEB, por lo que no disparan renders ni lecturas de Bodega.
 (function attachPeritoScoringHook() {
-  if (globalThis.__setasPeritoScoringHooked) return;
+  let lastApi = null;
+  let attempts = 0;
+
   const attach = () => {
     const api = globalThis.SetasScoring;
     if (!api || typeof api.scoreRecipe !== 'function') return false;
+    if (api === lastApi && api.scoreRecipe.__setasPeritoWrapped) return true;
     if (api.scoreRecipe.__setasPeritoWrapped) {
+      lastApi = api;
       globalThis.__setasPeritoScoringHooked = true;
       return true;
     }
+
     const original = api.scoreRecipe.bind(api);
     const wrapped = (an, ctx = {}) => {
       const result = original(an, ctx);
@@ -31,14 +34,15 @@ import './perito-ui-bridge.js';
     };
     wrapped.__setasPeritoWrapped = true;
     api.scoreRecipe = wrapped;
+    lastApi = api;
     globalThis.__setasPeritoScoringHooked = true;
     return true;
   };
 
-  if (attach()) return;
-  let attempts = 0;
+  attach();
   const timer = setInterval(() => {
     attempts += 1;
-    if (attach() || attempts > 100) clearInterval(timer);
+    attach();
+    if (attempts > 120) clearInterval(timer);
   }, 50);
 })();
