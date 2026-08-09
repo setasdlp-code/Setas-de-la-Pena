@@ -54,6 +54,25 @@
 /* All fonts and color tokens are imported from design system CSS */
 
 .sim-root{
+  /* ── DENSE UI TYPE SCALE — extends the DS's --text-2xs..3xl (11.5px+) with the
+     finer steps this data-dense lab UI actually uses (labels, badges, pills,
+     table cells). Use these instead of a raw fontSize:N px value inline. ── */
+  --text-micro: 7px;   /* smallest metadata (rare — prefer --text-2xs) */
+  --text-2xs: 8px;     /* eyebrow labels, small-caps section headers */
+  --text-xs: 9.5px;    /* button/tab/badge labels (uppercase, tracked) — absorbs former 9/9.5/10/10.5 */
+  --text-sm: 11.5px;   /* secondary body text, table cells — absorbs former 11/12 */
+  --text-base: 13px;   /* default UI body text — absorbs former 13/14 */
+  --text-md: 15px;     /* emphasized labels, form values — absorbs former 15/16 */
+  --text-lg: 20px;     /* card/panel headings */
+  --text-xl: 28px;     /* score/metric displays */
+
+  /* ── TRACKING SCALE — pick by role, not by feel ── */
+  --tracking-body: 0;         /* running body text */
+  --tracking-label: .08em;    /* inline labels, section eyebrows */
+  --tracking-button: .14em;   /* uppercase buttons, tabs, toggles */
+  --tracking-wide: .2em;      /* rare — large sparse headers only */
+  --tracking-tight: -.02em;   /* large display numerals/headings */
+
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
      Remove after verifying no external script reads them. */
@@ -578,6 +597,8 @@
   background:var(--moss-700); color:var(--paper-50); border-color:var(--moss-700);
 }
 .sim-root .btn.pri:hover{ background:var(--moss-900); border-color:var(--moss-900); color:var(--paper-50); }
+.sim-root .btn.dark{ background:var(--ink-900); color:var(--paper-50); border-color:var(--ink-900); }
+.sim-root .btn.dark:hover{ background:var(--ink-700); border-color:var(--ink-700); }
 
 /* ── SAVE BAR ───────────────────────────────────────────────────── */
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
@@ -1500,7 +1521,29 @@
 .sim-root .opt-score{font-family:var(--font-num);font-size:34px;line-height:1;color:var(--coral-700);}
 .sim-root .opt-score-lbl{font-family:var(--font-mono);font-size:11px;color:var(--ink-700);font-weight:700;}
 .sim-root .opt-pills{display:flex;flex-wrap:wrap;gap:4px;flex:1;}
-.sim-root .opt-pill{font-family:var(--font-mono);font-size:12px;padding:5px 10px;background:var(--paper-200);border:1px solid var(--ink-400);border-radius:3px;color:var(--ink-700);font-weight:600;}
+.sim-root .opt-pill{font-family:var(--font-mono);font-size:12px;padding:5px 10px;background:var(--paper-200);border:1px solid var(--ink-400);border-radius:var(--r-xs);color:var(--ink-700);font-weight:600;}
+
+/* ── CHIP GROUP — text-label selector (Origen/Nivel/mode switchers).
+   Reuse instead of hand-rolling inline button+underline styles per section. ── */
+.sim-root .chip-row{ display:flex; gap:10px; align-items:center; }
+.sim-root .chip{
+  background:none; border:none; padding:2px 0; cursor:pointer;
+  font-family:var(--font-body); font-weight:400; font-size:var(--text-sm);
+  letter-spacing:var(--tracking-label); color:var(--ink-500);
+  border-bottom:1.5px solid transparent; transition:all .12s var(--ease);
+}
+.sim-root .chip:hover{ color:var(--ink-900); }
+.sim-root .chip.on{ font-weight:800; color:var(--ink-900); border-bottom-color:var(--coral-500); }
+
+/* ── SEGMENTED — two/three-way mode switcher (Automática / Por objetivo, etc). ── */
+.sim-root .seg-row{ display:flex; gap:0; border:1px solid var(--border-soft); border-radius:var(--r-sm); overflow:hidden; }
+.sim-root .seg{
+  flex:1; padding:8px 12px; cursor:pointer; border:1px solid transparent; border-left:1px solid var(--border-soft);
+  font-family:var(--font-body); font-weight:800; font-size:var(--text-xs); letter-spacing:var(--tracking-button); text-transform:uppercase;
+  background:transparent; color:var(--ink-500); transition:all .15s var(--ease);
+}
+.sim-root .seg:first-child{ border-left:none; }
+.sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
 .sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;white-space:nowrap;}
 .sim-root .opt-load:hover{background:var(--coral-700);}
 .sim-root .opt-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-soft);border-top:none;}
@@ -1713,7 +1756,8 @@
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;}
+.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;transition:transform .22s ease;}
+@media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
 .sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
@@ -2256,17 +2300,17 @@
 }
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
-    min-width:14px!important;
-    min-height:14px!important;
+    min-width:18px!important;
+    min-height:18px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-14px;}
+  .sim-root .qa-mini-btn::before{inset:-12px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
-    min-width:13px!important;
-    min-height:13px!important;
+    min-width:20px!important;
+    min-height:20px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-15px;}
+  .sim-root .qa-mini-btn::before{inset:-11px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
