@@ -17,6 +17,13 @@ test('el bridge queda cargado por el runtime sin tocar el JSX', () => {
   assert.match(hook, /setas-perito-model/);
 });
 
+test('el hook se vuelve a enganchar si el runtime .dc reemplaza SetasScoring', () => {
+  assert.match(hook, /lastApi/);
+  assert.match(hook, /setInterval/);
+  assert.match(hook, /attempts\s*>\s*120/);
+  assert.doesNotMatch(hook, /if\s*\(attach\(\)\)\s*return/);
+});
+
 test('Bodega usa cantidades reales persistidas y no solo presencia de IDs', () => {
   assert.match(bridge, /sdp_lotes/);
   assert.match(bridge, /cantidadKgDisponible/);
