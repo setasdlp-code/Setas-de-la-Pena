@@ -10,6 +10,10 @@
 // errores más tempranos y más graves. Aquí solo se drena ese buffer
 // (window.__errorLog) y se registra como su "sink" para lo que ocurra de
 // ahora en adelante.
+//
+// El hook del Perito vive fuera del JSX monolítico: observa SetasScoring y
+// conecta sus salidas con Bodega/Recetario sin duplicar fórmulas en React.
+import "../perito-scoring-hook.js";
 import { db, auth } from "./firebase-init.js";
 import { collection, addDoc, serverTimestamp } from "../vendor/firebase/firebase-firestore.js";
 
