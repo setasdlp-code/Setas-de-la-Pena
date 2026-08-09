@@ -687,7 +687,7 @@ const quantifyItem=(item,recipe,sKey,ings,lockedIds)=>{
   return item;
 };
 
-const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedIds=[],blendedEB=null,useStock=true)=>{
+const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedIds=[],blendedEB=null,useStock=true,appliedIcons={})=>{
   if(!an||!an.sp) return{score:0,status:'sin_receta',items:[]};
   const sp=an.sp;const items=[];
   // flags: única fuente de qué es crítico/warning, compartida con assessSeverity
@@ -1032,6 +1032,25 @@ const generateOptimizer=(an,sKey,stockIds=new Set(),recipe=[],ings=INGS,lockedId
       if(apOps.some(op=>op.id&&!stockIds.has(op.id))) it.notInStock=true;
     });
   }
+  // "Ya aplicaste esto y el problema sigue": appliedIcons cuenta, por
+  // ícono/bandera (no por operación exacta — un refinamiento legítimo del
+  // mismo ingrediente, ej. subir Harina de Pescado de 8%→9.4% para afinar N
+  // después de haberla usado para C:N, NO es "lo mismo otra vez"), cuántas
+  // veces se aplicó una corrección apuntando a ESE problema en la sesión
+  // activa (ver applyOptStep). Si la bandera sigue activa después de
+  // haberla atacado antes, antes se veía idéntica a la primera vez —
+  // sensación de estancamiento sin ninguna señal de que ya se intentó.
+  items.forEach(it=>{
+    if(it.apply&&appliedIcons[it.icon]>0) it.repeatedApply=appliedIcons[it.icon];
+  });
+  // Orden por impacto real (predictedScore), no por el orden fijo en que se
+  // evalúan las banderas (cnHigh, cnLow, nLow...). Antes la lista se veía con
+  // la misma forma sesión tras sesión aunque el problema más urgente
+  // cambiara — el usuario lo percibía como sugerencias "formulaicas". Los
+  // grupos criticals/warnings/tips se separan después con items.filter()
+  // (preserva orden) — sort() es estable, así que items sin predictedScore
+  // mantienen su orden relativo entre sí.
+  items.sort((a,b)=>(b.predictedScore??-1)-(a.predictedScore??-1));
   return{score,status:statusFromScore,items};
 };
 
@@ -1733,6 +1752,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
         {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a "Todo el catálogo".</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
@@ -1742,12 +1762,12 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(item.comboPredictedScore)}/100</div>
-        <button onClick={()=>onApply(item.comboApply)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
+        <button onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
     </div>
     <div className="pi-actions">
       {item.apply
-        ?<button onClick={()=>onApply(item.apply)} className="pi-apply">Aplicar</button>
+        ?<button onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar</button>
         :<div className="pi-spacer"/>}
     </div>
   </div>
@@ -2535,7 +2555,13 @@ function App(props){
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
   // por lotes reales pero el score de al lado seguía siendo 100% teórico.
   const blendedEB=an?blendEBWithHistory(an,histStats):null;
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock]);
+  // Memoria de sesión de qué bandera/ícono se atacó desde el Perito — ver
+  // repeatedApply en generateOptimizer. Por ícono, no por operación exacta:
+  // refinar el mismo ingrediente para un problema distinto no cuenta como
+  // repetición. Se reinicia al cambiar de especie (contexto nuevo).
+  const [appliedIcons,setAppliedIcons]=React.useState({});
+  React.useEffect(()=>{setAppliedIcons({});},[sKey]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons]);
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -2600,10 +2626,11 @@ function App(props){
 
   const addI=id=>{if(recipe.find(r=>r.id===id)) return;setRecipe([...recipe,{id,p:10}]);};
   const [recipeHistory,setRecipeHistory]=React.useState([]);
-  const applyOptStep=(apply)=>{
+  const applyOptStep=(apply,icon)=>{
     if(!apply) return;
     setRecipeHistory(h=>[...h,recipe]);
     setRecipe(applyOptToRecipe(recipe,apply,lockedIds,optimizerINGS));
+    if(icon) setAppliedIcons(s=>({...s,[icon]:(s[icon]||0)+1}));
   };
   const undoLastRec=()=>{
     if(recipeHistory.length===0) return;

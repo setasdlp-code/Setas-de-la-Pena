@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: c7c7b23b2acd022457bc1b109de75fef2ea46b2586ad9e7a831077e812394d78
+// source-hash: 00719cce643fc8f02f106b888ebe18654bdb82019da1a8eeba4d2e806d950046
 const {
   useState,
   useMemo,
@@ -3293,7 +3293,7 @@ const quantifyItem = (item, recipe, sKey, ings, lockedIds) => {
   }
   return item;
 };
-const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = [], blendedEB = null, useStock = true) => {
+const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}) => {
   if (!an || !an.sp) return {
     score: 0,
     status: 'sin_receta',
@@ -3862,6 +3862,25 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       if (apOps.some(op => op.id && !stockIds.has(op.id))) it.notInStock = true;
     });
   }
+  // "Ya aplicaste esto y el problema sigue": appliedIcons cuenta, por
+  // ícono/bandera (no por operación exacta — un refinamiento legítimo del
+  // mismo ingrediente, ej. subir Harina de Pescado de 8%→9.4% para afinar N
+  // después de haberla usado para C:N, NO es "lo mismo otra vez"), cuántas
+  // veces se aplicó una corrección apuntando a ESE problema en la sesión
+  // activa (ver applyOptStep). Si la bandera sigue activa después de
+  // haberla atacado antes, antes se veía idéntica a la primera vez —
+  // sensación de estancamiento sin ninguna señal de que ya se intentó.
+  items.forEach(it => {
+    if (it.apply && appliedIcons[it.icon] > 0) it.repeatedApply = appliedIcons[it.icon];
+  });
+  // Orden por impacto real (predictedScore), no por el orden fijo en que se
+  // evalúan las banderas (cnHigh, cnLow, nLow...). Antes la lista se veía con
+  // la misma forma sesión tras sesión aunque el problema más urgente
+  // cambiara — el usuario lo percibía como sugerencias "formulaicas". Los
+  // grupos criticals/warnings/tips se separan después con items.filter()
+  // (preserva orden) — sort() es estable, así que items sin predictedScore
+  // mantienen su orden relativo entre sí.
+  items.sort((a, b) => (b.predictedScore ?? -1) - (a.predictedScore ?? -1));
   return {
     score,
     status: statusFromScore,
@@ -5737,7 +5756,14 @@ const PeritoItem = React.memo(({
     }
   }, "\uD83D\uDED2 no en bodega \u2014 a comprar"), item.delta && /*#__PURE__*/React.createElement("span", {
     className: "pi-delta"
-  }, item.delta)), /*#__PURE__*/React.createElement("div", {
+  }, item.delta)), item.repeatedApply && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: '#7A5A10',
+      fontFamily: 'var(--font-mono)',
+      marginBottom: 2
+    }
+  }, "\u21BB Ya aplicaste esto ", item.repeatedApply, "x en esta sesi\xF3n y el problema sigue \u2014 considera un ingrediente distinto o cambia a \"Todo el cat\xE1logo\"."), /*#__PURE__*/React.createElement("div", {
     className: "pi-action",
     dangerouslySetInnerHTML: {
       __html: item.action
@@ -5805,7 +5831,7 @@ const PeritoItem = React.memo(({
       fontFamily: 'var(--font-mono)'
     }
   }, "Score si se aplica junto: ", Math.round(item.comboPredictedScore), "/100"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => onApply(item.comboApply),
+    onClick: () => onApply(item.comboApply, item.icon),
     className: "pi-apply",
     style: {
       marginTop: 4
@@ -5813,7 +5839,7 @@ const PeritoItem = React.memo(({
   }, "Aplicar correcci\xF3n combinada"))), /*#__PURE__*/React.createElement("div", {
     className: "pi-actions"
   }, item.apply ? /*#__PURE__*/React.createElement("button", {
-    onClick: () => onApply(item.apply),
+    onClick: () => onApply(item.apply, item.icon),
     className: "pi-apply"
   }, "Aplicar") : /*#__PURE__*/React.createElement("div", {
     className: "pi-spacer"
@@ -7493,7 +7519,15 @@ function App(props) {
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
   // por lotes reales pero el score de al lado seguía siendo 100% teórico.
   const blendedEB = an ? blendEBWithHistory(an, histStats) : null;
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock]);
+  // Memoria de sesión de qué bandera/ícono se atacó desde el Perito — ver
+  // repeatedApply en generateOptimizer. Por ícono, no por operación exacta:
+  // refinar el mismo ingrediente para un problema distinto no cuenta como
+  // repetición. Se reinicia al cambiar de especie (contexto nuevo).
+  const [appliedIcons, setAppliedIcons] = React.useState({});
+  React.useEffect(() => {
+    setAppliedIcons({});
+  }, [sKey]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons]);
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -7575,10 +7609,14 @@ function App(props) {
     }]);
   };
   const [recipeHistory, setRecipeHistory] = React.useState([]);
-  const applyOptStep = apply => {
+  const applyOptStep = (apply, icon) => {
     if (!apply) return;
     setRecipeHistory(h => [...h, recipe]);
     setRecipe(applyOptToRecipe(recipe, apply, lockedIds, optimizerINGS));
+    if (icon) setAppliedIcons(s => ({
+      ...s,
+      [icon]: (s[icon] || 0) + 1
+    }));
   };
   const undoLastRec = () => {
     if (recipeHistory.length === 0) return;
