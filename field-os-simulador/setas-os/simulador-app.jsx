@@ -1876,6 +1876,8 @@ function App(props){
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Recetas',tabs:['catalogo','formular','optimizar'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'bodega',label:'Bodega',tabs:['inventario'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-6 9 6M4 9v11h16V9M9 20v-6h6v6"/></svg>},
+    {key:'produccion',label:'Producción',tabs:['produccion','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16v4H4zM4 12h10M4 16h10M4 20h10M17 12l3 3-3 3"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
   ];
   const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',optimizar:'Generador de recetas',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
@@ -3286,6 +3288,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <h2 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h2>
           <div className="page-title-rule"></div>
         </div>
+        {tab!=='inicio'&&(()=>{
+          const activeGroup=NAV_GROUPS.find(g=>g.tabs.includes(tab));
+          // El grupo "recetas" ya tiene su propio selector (catálogo/formular/optimizar arriba,
+          // vía el shell externo Setas OS v5.dc.html) — evita duplicar esa sub-navegación aquí.
+          if(!activeGroup||activeGroup.key==='recetas'||activeGroup.tabs.length<2) return null;
+          return(
+          <div className="fos-chips">
+            {activeGroup.tabs.map(t=>(
+              <button key={t} className={t===tab?'on':''} onClick={()=>goTab(t)}>{TAB_LABELS[t]}</button>
+            ))}
+          </div>
+          );
+        })()}
 
         {tab==='inicio'&&(()=>{
           const TILES=[
@@ -4642,7 +4657,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 `Incubar en oscuridad${an.sp?.temp_fruit?` · fructificación ${an.sp.temp_fruit}`:''}. Seguir cronograma de abajo.`,
               ];
               const fechas=psch?psch.evts.filter(e=>['in','c1','pr','f1'].includes(e.key)).map(e=>[e.title,`${e.ds} · día ${e.day}`]):[];
+              // Progreso del checklist en pantalla — la hoja sigue siendo un documento imprimible
+              // de una sola página (uso en campo/papel), así que esto se agrega como ayuda de
+              // navegación no impresa en vez de partirla en pasos/wizard.
+              const totalChecks=rows.length+steps.length;
+              const doneChecks=rows.reduce((s,_,i)=>s+(checkedSteps['ing_'+i]?1:0),0)+steps.reduce((s,_,i)=>s+(checkedSteps['step_'+i]?1:0),0);
+              const psSections=[
+                {id:'ps-sec-1',l:'1 · Pesado'},
+                ...(ptr?[{id:'ps-sec-2',l:'2 · Tratamiento'}]:[]),
+                {id:'ps-sec-3',l:'3 · Procedimiento'},
+                ...(fechas.length>0?[{id:'ps-sec-4',l:'4 · Fechas'}]:[]),
+              ];
               return(
+              <div>
+                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
+                    {psSections.map(s=>(
+                      <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                    <div style={{width:70,height:6,background:'var(--paper-300)',borderRadius:3,overflow:'hidden'}}>
+                      <div style={{width:`${totalChecks>0?Math.round(doneChecks/totalChecks*100):0}%`,height:'100%',background:doneChecks===totalChecks&&totalChecks>0?'var(--moss-600,var(--accent-olive))':'var(--coral-500)',transition:'width .2s'}}></div>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-700)',whiteSpace:'nowrap'}}>{doneChecks}/{totalChecks} pasos</span>
+                  </div>
+                </div>
               <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
@@ -4675,11 +4715,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ))}
                 </div>
                 {/* Tabla de pesado — kg comerciales reales (báscula) por balance de masas */}
-                <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
+                <div id="ps-sec-1" style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8,scrollMarginTop:52}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>1</span>
                   <div>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Pesado de ingredientes</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',marginTop:1}}>b\u00e1scula · res. {resG} g</div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
                 <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
@@ -4726,7 +4766,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* Tratamiento */}
                 {ptr&&(
-                  <div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:18,background:'var(--paper-50)'}}>
+                  <div id="ps-sec-2" style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:18,background:'var(--paper-50)',scrollMarginTop:52}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:6}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:20,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>2</span>
                       <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Tratamiento — {ptr.name}</span>
@@ -4736,7 +4776,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
                 {/* Pasos */}
-                <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
+                <div id="ps-sec-3" style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8,scrollMarginTop:52}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>3</span>
                   <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:10,letterSpacing:'.16em',textTransform:'uppercase',color:'var(--ink-900)'}}>Procedimiento</span>
                 </div>
@@ -4751,7 +4791,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* Fechas */}
                 {fechas.length>0&&(
-                  <div>
+                  <div id="ps-sec-4" style={{scrollMarginTop:52}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
                       <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>4</span>
                       <div>
@@ -4785,6 +4825,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-400)',textAlign:'right',letterSpacing:'.04em'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
                 </div>
+              </div>
               </div>
               );
             })()}

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: ad38a9e226314368aed4c3c8f62327b9703743ae939c8ee6cb526471db6cf039
+// source-hash: 43281afdc658160a852cefee74e3498a219b0d28ed5356c8a1662377f021ba66
 const {
   useState,
   useMemo,
@@ -6356,6 +6356,30 @@ function App(props) {
       d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"
     }))
   }, {
+    key: 'bodega',
+    label: 'Bodega',
+    tabs: ['inventario'],
+    icon: /*#__PURE__*/React.createElement("svg", {
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.5"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M3 9l9-6 9 6M4 9v11h16V9M9 20v-6h6v6"
+    }))
+  }, {
+    key: 'produccion',
+    label: 'Producción',
+    tabs: ['produccion', 'schedule'],
+    icon: /*#__PURE__*/React.createElement("svg", {
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.5"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M4 4h16v4H4zM4 12h10M4 16h10M4 20h10M17 12l3 3-3 3"
+    }))
+  }, {
     key: 'registro',
     label: 'Bitácora',
     tabs: ['bitacora', 'dashboard'],
@@ -10017,7 +10041,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
     className: "page-title-h"
   }, TAB_PAGE_TITLES[tab]), /*#__PURE__*/React.createElement("div", {
     className: "page-title-rule"
-  })), tab === 'inicio' && (() => {
+  })), tab !== 'inicio' && (() => {
+    const activeGroup = NAV_GROUPS.find(g => g.tabs.includes(tab));
+    // El grupo "recetas" ya tiene su propio selector (catálogo/formular/optimizar arriba,
+    // vía el shell externo Setas OS v5.dc.html) — evita duplicar esa sub-navegación aquí.
+    if (!activeGroup || activeGroup.key === 'recetas' || activeGroup.tabs.length < 2) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "fos-chips"
+    }, activeGroup.tabs.map(t => /*#__PURE__*/React.createElement("button", {
+      key: t,
+      className: t === tab ? 'on' : '',
+      onClick: () => goTab(t)
+    }, TAB_LABELS[t])));
+  })(), tab === 'inicio' && (() => {
     const TILES = [{
       t: 'Formular una receta',
       s: 'Mezcla · C:N · humedad · optimizador',
@@ -14547,7 +14583,97 @@ body{margin:0;padding:20px 24px;background:#fff;}
     };
     const steps = [`Pesar los ingredientes según la tabla (báscula ${resG} g · total seco ${dryR.toFixed(2)} kg). Verificar cada peso.`, `Mezclar en seco hasta color y textura homogéneos.`, `Hidratar: añadir ${aguaR.toFixed(2)} L de agua limpia. Humedad objetivo ${prodH}%. Prueba de puño: al apretar caen 1–2 gotas.`, trSteps[ptr?.col] || 'Aplicar tratamiento térmico/químico recomendado.', `Escurrir y enfriar a <25°C (mín. 4–6 h) en superficie limpia tapada.`, `Inocular spawn ${spn}% (${pb.spawn.toFixed(2)} kg) con manos/superficies desinfectadas (alcohol 70%). ${ptr?.col === 'autoclave' ? 'Usar flujo laminar o caja SAB.' : ''}`, `Embolsar ${prodBags} bolsas × ${prodKg} kg. Cerrar con filtro. Rotular lote y fecha (${prodDate}).`, `Incubar en oscuridad${an.sp?.temp_fruit ? ` · fructificación ${an.sp.temp_fruit}` : ''}. Seguir cronograma de abajo.`];
     const fechas = psch ? psch.evts.filter(e => ['in', 'c1', 'pr', 'f1'].includes(e.key)).map(e => [e.title, `${e.ds} · día ${e.day}`]) : [];
-    return /*#__PURE__*/React.createElement("div", {
+    // Progreso del checklist en pantalla — la hoja sigue siendo un documento imprimible
+    // de una sola página (uso en campo/papel), así que esto se agrega como ayuda de
+    // navegación no impresa en vez de partirla en pasos/wizard.
+    const totalChecks = rows.length + steps.length;
+    const doneChecks = rows.reduce((s, _, i) => s + (checkedSteps['ing_' + i] ? 1 : 0), 0) + steps.reduce((s, _, i) => s + (checkedSteps['step_' + i] ? 1 : 0), 0);
+    const psSections = [{
+      id: 'ps-sec-1',
+      l: '1 · Pesado'
+    }, ...(ptr ? [{
+      id: 'ps-sec-2',
+      l: '2 · Tratamiento'
+    }] : []), {
+      id: 'ps-sec-3',
+      l: '3 · Procedimiento'
+    }, ...(fechas.length > 0 ? [{
+      id: 'ps-sec-4',
+      l: '4 · Fechas'
+    }] : [])];
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "no-print",
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        flexWrap: 'wrap',
+        padding: '8px 12px',
+        background: 'var(--paper-100)',
+        border: '1px solid var(--border-soft)',
+        borderBottom: 'none',
+        position: 'sticky',
+        top: 0,
+        zIndex: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        flex: 1
+      }
+    }, psSections.map(s => /*#__PURE__*/React.createElement("button", {
+      key: s.id,
+      onClick: () => document.getElementById(s.id)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      }),
+      style: {
+        fontFamily: 'var(--font-body)',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '.06em',
+        textTransform: 'uppercase',
+        padding: '6px 10px',
+        background: 'var(--paper-50)',
+        color: 'var(--ink-700)',
+        border: '1px solid var(--border-soft)',
+        borderRadius: 'var(--r-xs)',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap'
+      }
+    }, s.l))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 70,
+        height: 6,
+        background: 'var(--paper-300)',
+        borderRadius: 3,
+        overflow: 'hidden'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: `${totalChecks > 0 ? Math.round(doneChecks / totalChecks * 100) : 0}%`,
+        height: '100%',
+        background: doneChecks === totalChecks && totalChecks > 0 ? 'var(--moss-600,var(--accent-olive))' : 'var(--coral-500)',
+        transition: 'width .2s'
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
+        fontWeight: 700,
+        color: 'var(--ink-700)',
+        whiteSpace: 'nowrap'
+      }
+    }, doneChecks, "/", totalChecks, " pasos"))), /*#__PURE__*/React.createElement("div", {
       className: "panel prod-sheet",
       style: {
         padding: '26px 28px'
@@ -14650,11 +14776,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
         color: 'var(--ink-400)'
       }
     }, s)))), /*#__PURE__*/React.createElement("div", {
+      id: "ps-sec-1",
       style: {
         display: 'flex',
         alignItems: 'baseline',
         gap: 10,
-        marginBottom: 8
+        marginBottom: 8,
+        scrollMarginTop: 52
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -14680,7 +14808,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         color: 'var(--ink-500)',
         marginTop: 1
       }
-    }, "b\\u00e1scula \xB7 res. ", resG, " g"))), /*#__PURE__*/React.createElement("div", {
+    }, "b\xE1scula \xB7 res. ", resG, " g"))), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: 'var(--font-mono)',
         fontSize: 9.5,
@@ -14863,11 +14991,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
         fontWeight: 500
       }
     }, s)))), ptr && /*#__PURE__*/React.createElement("div", {
+      id: "ps-sec-2",
       style: {
         border: '1px solid var(--paper-300)',
         padding: '10px 14px',
         marginBottom: 18,
-        background: 'var(--paper-50)'
+        background: 'var(--paper-50)',
+        scrollMarginTop: 52
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -14907,11 +15037,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
         marginTop: 4
       }
     }, ptr.reasons.join(' · '))), /*#__PURE__*/React.createElement("div", {
+      id: "ps-sec-3",
       style: {
         display: 'flex',
         alignItems: 'baseline',
         gap: 10,
-        marginBottom: 8
+        marginBottom: 8,
+        scrollMarginTop: 52
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -14963,7 +15095,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       style: {
         textDecoration: checkedSteps['step_' + i] ? 'line-through' : 'none'
       }
-    }, t)))), fechas.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, t)))), fechas.length > 0 && /*#__PURE__*/React.createElement("div", {
+      id: "ps-sec-4",
+      style: {
+        scrollMarginTop: 52
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         alignItems: 'baseline',
@@ -15088,7 +15225,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         textAlign: 'right',
         letterSpacing: '.04em'
       }
-    }, "Setas de la Pe\\u00f1a \xB7 Tenjo 2.600 msnm \xB7 simulador v9.1")));
+    }, "Setas de la Pe\\u00f1a \xB7 Tenjo 2.600 msnm \xB7 simulador v9.1"))));
   })()), tab === 'inventario' && BodegaSection(), tab === 'dashboard' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "panel"
   }, /*#__PURE__*/React.createElement("div", {
