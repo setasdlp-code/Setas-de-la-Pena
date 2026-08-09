@@ -11,20 +11,22 @@
 // (window.__errorLog) y se registra como su "sink" para lo que ocurra de
 // ahora en adelante.
 //
-// El hook del Perito vive fuera del JSX monolítico: observa SetasScoring y
-// conecta sus salidas con Bodega/Recetario sin duplicar fórmulas en React.
+// Los bridges del Perito/Recetario viven fuera del JSX monolítico para mantener
+// SetasScoring como única fuente de reglas y añadir trazabilidad sin duplicación.
 import "../perito-scoring-hook.js";
+import "../recetario-model-bridge.js";
+import "../recetario-firestore-snapshot.js";
 import { db, auth } from "./firebase-init.js";
 import { collection, addDoc, serverTimestamp } from "../vendor/firebase/firebase-firestore.js";
 
-const MAX_LOGS_PER_SESSION = 20; // cortafuego ante un error en bucle (p.ej. en un render)
+const MAX_LOGS_PER_SESSION = 20;
 const seen = new Set();
 let sent = 0;
 
 function report(entry) {
   if (sent >= MAX_LOGS_PER_SESSION) return;
   const key = (entry.message || "") + "@" + (entry.stack || "").slice(0, 200);
-  if (seen.has(key)) return; // no duplicar el mismo error repetido en la misma sesión
+  if (seen.has(key)) return;
   seen.add(key);
   sent++;
 
@@ -41,7 +43,6 @@ function report(entry) {
     createdAt: serverTimestamp(),
   };
 
-  // Nunca debe este módulo generar un error no capturado propio.
   addDoc(collection(db, "app_errors"), payload).catch(() => {});
 }
 
