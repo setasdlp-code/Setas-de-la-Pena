@@ -386,7 +386,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     const nThresh=needsAutoclave?sp.n_optimal.max*1.2:sp.n_optimal.max*1.15;
     if(avgN>nThresh&&!needsAutoclave){trichoderma=true;eb*=.45;}
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
-    if(suppP>sp.supplementation_max&&!needsAutoclave) eb*=.85;
+    else if(needsAutoclave) eb*=.85;
     if(incompat.length) eb*=.9;
     if(tot<95||tot>105) eb*=.95;
     // ── Modificadores multifactor de EB (penalizaciones ≤1: una receta en óptimo no se ve afectada) ──
@@ -1563,6 +1563,7 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
     if(!an0) return;
     const realCost=useStock?realCostFor(rec):null;
     const an=realCost!=null?{...an0,cost:realCost}:an0;
+    if(profile.spawnOverride!=null) an.dynSpawn=profile.spawnOverride;
     const suppOverLimit=an.suppP>suppLimit;
     if(suppOverLimit&&profileKey==='rescate') return;
     if(an.cafeP>cafeLimit) return;
@@ -1606,7 +1607,7 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
             const denom=(bCe1-sCe1)-T*(bNe1-sNe1);
             if(Math.abs(denom)<0.001) return;
             const ps=remaining*(bCe1-T*bNe1)/denom;const pb=remaining-ps;
-            if(ps<2||pb<15||ps>40||pb>95) return;
+            if(ps<2||pb<15||ps>suppLimit||pb>95) return;
             const rec=[{id:base.id,p:Math.round(pb*10)/10},{id:supp.id,p:Math.round(ps*10)/10}];
             if(calP>0) rec.push({id:'carbonato_calcio',p:calP});
             if(yesoP>0) rec.push({id:'yeso',p:yesoP});
@@ -1639,7 +1640,7 @@ const runAutoOptimizer=(targetKey,invLotes,maxCost,effectiveINGS,useStock=true,p
             const denom=(cBlend-sCe2)-T*(nBlend-sNe2);
             if(Math.abs(denom)<0.001) return;
             const ps=remaining*(cBlend-T*nBlend)/denom;const pb=remaining-ps;
-            if(ps<2||pb<15||ps>40||pb>95) return;
+            if(ps<2||pb<15||ps>suppLimit||pb>95) return;
             const rec=[{id:b1.id,p:Math.round(pb*f1*10)/10},{id:b2.id,p:Math.round(pb*f2*10)/10},{id:supp.id,p:Math.round(ps*10)/10}];
             if(calP>0) rec.push({id:'carbonato_calcio',p:calP});
             if(yesoP>0) rec.push({id:'yeso',p:yesoP});
@@ -4836,7 +4837,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const T=invTargetCN, pMin=invMin, pAer=invAer?invAerPct:0;
                               const pRem=100-pMin-pAer;
                               if(pRem<=2){setInvResult({error:'Los porcentajes fijos superan 98%. Reduce mineral o aireador.'});return;}
-                              const cb=bI.c, nb=bI.n, cs=sI.c, ns=sI.n;
+                              const bDry=1-Math.min(0.92,Math.max(0,(bI.moisture||0)/100));
+                              const sDry=1-Math.min(0.92,Math.max(0,(sI.moisture||0)/100));
+                              const cb=bI.c*bDry, nb=bI.n*bDry, cs=sI.c*sDry, ns=sI.n*sDry;
                               const denom=(cb-cs)-T*(nb-ns);
                               if(Math.abs(denom)<0.001){setInvResult({error:'Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N.'});return;}
                               const ps=pRem*(cb-T*nb)/denom;
@@ -5249,11 +5252,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const band=BANDS[e.sKey]||'var(--ink-700)';
                         const eb=parseFloat(e.eb)||0;
                         const sc=liveScoreFor(e);
-                        // Costo ingredientes: guardado o recalculado al vuelo
-                        const costIngKg=e.cost>0?e.cost:(()=>{const a2=analyze(e.recipe,e.sKey,effectiveINGS);return a2?Math.round(a2.cost):0;})();
-                        // Costo energético: guardado (recetas nuevas) o estimado por especie (recetas antiguas)
-                        const eDash=e.energyCopKg!=null?e.energyCopKg:energyCostPerKgSeco(
-                          ['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal',e.sKey);
+                        // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
+                        const needsA2=!(e.cost>0)||e.energyCopKg==null;
+                        const a2=needsA2?analyze(e.recipe,e.sKey,effectiveINGS):null;
+                        const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
+                        // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
+                        const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
+                          const tr2=a2?calcTreatment(a2,e.sKey):null;
+                          const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                          return energyCostPerKgSeco(col,e.sKey);
+                        })();
                         const costKg=costIngKg+eDash;
                         const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
                         return(
