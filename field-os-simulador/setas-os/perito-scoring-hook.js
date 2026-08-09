@@ -3,7 +3,6 @@ import './perito-ui-bridge.js';
 
 (function attachPeritoScoringHook() {
   let lastApi = null;
-  let attempts = 0;
 
   const attach = () => {
     const api = globalThis.SetasScoring;
@@ -39,10 +38,8 @@ import './perito-ui-bridge.js';
     return true;
   };
 
+  // El runtime .dc puede sustituir SetasScoring durante la hidratación. Unas
+  // pocas comprobaciones escalonadas cubren esa ventana sin sondeo continuo.
   attach();
-  const timer = setInterval(() => {
-    attempts += 1;
-    attach();
-    if (attempts > 120) clearInterval(timer);
-  }, 50);
+  [100, 400, 1200, 3000].forEach(ms => setTimeout(attach, ms));
 })();
