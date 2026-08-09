@@ -1,0 +1,80 @@
+'use strict';
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { scoreRecipe } = require('./scoring.js');
+
+const SP = {
+  cn_optimal: { min: 25, max: 50, ideal: 35 },
+  n_optimal: { min: 0.8, max: 2.0, ideal: 1.4 },
+  ph_optimal: { min: 6.0, max: 7.5 },
+  eb_baseline: 90,
+  eb_optimal: 130,
+  supplementation_max: 20,
+};
+
+const baseAn = (overrides = {}) => ({
+  sp: SP,
+  cn: 35,
+  avgN: 1.4,
+  avgPh: 6.7,
+  eb: 110,
+  cost: 1000,
+  tot: 100,
+  suppP: 10,
+  cafeP: 0,
+  densaP: 0,
+  airP: 20,
+  trichoderma: false,
+  incompat: [],
+  ...overrides,
+});
+
+const baseCtx = (overrides = {}) => ({
+  treatment: { col: 'thermal' },
+  stockIds: new Set(),
+  recipe: [{ id: 'base', p: 80 }, { id: 'supp', p: 20 }],
+  ...overrides,
+});
+
+test('separa seguridad, aptitud agronómica y economía', () => {
+  const r = scoreRecipe(baseAn(), baseCtx());
+  assert.ok(r.dimensions.safety.score >= 0);
+  assert.ok(r.dimensions.agronomy.score >= 0);
+  assert.ok(r.dimensions.economy.score >= 0);
+  assert.equal(typeof r.dimensions.safety.status, 'string');
+});
+
+test('pH se reporta como tendencia de confianza baja, no como medición', () => {
+  const r = scoreRecipe(baseAn({ avgPh: 5.5 }), baseCtx());
+  assert.equal(r.uncertainty.ph.trend, 'tendencia ácida');
+  assert.equal(r.uncertainty.ph.confidence, 'low');
+  assert.equal(r.provenance.ph.requiresMeasurement, true);
+});
+
+test('EB con historia comparable gana confianza y se mezcla con datos reales', () => {
+  const r = scoreRecipe(baseAn({ eb: 100 }), baseCtx({
+    historyCalibration: { n: 12, meanEB: 140, sd: 8, similarity: 0.9 },
+  }));
+  assert.equal(r.calibration.source, 'history-blend');
+  assert.ok(r.calibration.eb > 100 && r.calibration.eb < 140);
+  assert.equal(r.uncertainty.eb.confidence, 'high');
+  assert.equal(r.provenance.eb.sampleSize, 12);
+});
+
+test('stock cuantitativo detecta cantidad insuficiente aunque el ID exista', () => {
+  const r = scoreRecipe(baseAn(), baseCtx({
+    batchDryKg: 10,
+    stockKgById: { base: 8, supp: 0.2 },
+    ingredientMoistureById: { base: 0, supp: 0 },
+  }));
+  assert.equal(r.stockDetail.mode, 'quantity');
+  assert.ok(r.breakdown.stock < 100);
+  assert.ok(r.stockDetail.limiting.some((x) => x.id === 'supp'));
+});
+
+test('riesgo inferido no se presenta como contaminación observada', () => {
+  const r = scoreRecipe(baseAn({ trichoderma: true }), baseCtx());
+  assert.equal(r.uncertainty.risk.observed, false);
+  assert.equal(r.provenance.risk.type, 'rule-inference');
+  assert.equal(r.dimensions.safety.status, 'hold');
+});
