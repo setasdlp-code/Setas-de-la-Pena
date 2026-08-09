@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 44a15c53e0ef05f289c2a716ea768b9b3d7f13b7d67031ca62982ff01aa01798
+// source-hash: 00719cce643fc8f02f106b888ebe18654bdb82019da1a8eeba4d2e806d950046
 const {
   useState,
   useMemo,
@@ -548,17 +548,34 @@ const INGS = [
   id: 'cascarilla_coco',
   name: 'Fibra de coco',
   cat: 'base',
-  cn: 80,
+  cn: 93,
   n: .5,
-  c: 42,
-  moisture: 20,
+  c: 47,
+  moisture: 13,
   cra: 3,
-  ph: 5.8,
-  dig: 4,
+  ph: 6.0,
+  dig: 3,
   role: 'aireador',
   tags: ['Aireador', 'Tropical'],
   cost: 8500,
-  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa', 'lions_mane']
+  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa', 'lions_mane'],
+  notes: 'Ficha técnica del usuario: N 0.4–0.6%, C 45–48%, C:N 75–110:1, celulosa 20–30%, hemicelulosa 15–20%, lignina 40–50%, cenizas 2–6%, pH 5.5–6.5, CE 1.5–3.0 mS/cm (alto K⁺/Na⁺ residual — sin lavar), humedad 10–15%. dig bajado de 4→3 por la lignina alta (40–50%) frente a la turba de coco buferizada.'
+}, {
+  id: 'turba_coco_buferizada',
+  name: 'Turba de coco buferizada',
+  cat: 'base',
+  cn: 75,
+  n: .6,
+  c: 46,
+  moisture: 11,
+  cra: 4,
+  ph: 6.5,
+  dig: 4,
+  role: 'aireador',
+  tags: ['Aireador', 'Tropical', 'Buferizada', 'Precio no confirmado — actualizar en Precios'],
+  cost: 0,
+  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa', 'lions_mane'],
+  notes: 'Ficha técnica del usuario: N 0.5–0.7% (incremento leve por remanente de Ca(NO₃)₂), C 44–47%, C:N 65–85:1, celulosa 15–25%, hemicelulosa 10–18%, lignina 35–45%, cenizas 4–8% (intercambio catiónico Ca²⁺/Mg²⁺), pH 6.2–6.8, CE <0.5–0.8 mS/cm (sales lavadas y estabilizadas — mucho más baja que la fibra de coco sin procesar), humedad 10–12%. CRA más alta (4) que fibra de coco por el buferizado; dig levemente mejor (4) por su procesamiento.'
 }, {
   id: 'tusa_maiz',
   name: 'Tusa de maíz',
@@ -619,6 +636,22 @@ const INGS = [
   tags: ['Local', 'Gratis'],
   cost: 0,
   cs: ['p_ostreatus_gris', 'p_ostreatus_blanco']
+}, {
+  id: 'retamo_espinoso',
+  name: 'Retamo espinoso',
+  cat: 'base',
+  cn: 32,
+  n: 1.5,
+  c: 47,
+  moisture: 11,
+  cra: 3,
+  ph: 6.0,
+  dig: 5,
+  role: 'base_carbono',
+  tags: ['Base', 'Local', 'Precio no confirmado — actualizar en Precios'],
+  cost: 0,
+  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa'],
+  notes: 'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar.'
 }, {
   id: 'guadua',
   name: 'Guadua astillada',
@@ -2998,6 +3031,18 @@ const setPctProportional = (recipe, id, v, lockedIds = []) => {
 // Busca el % exacto de un ingrediente que lleva una métrica (cn|n|ph) a su objetivo
 const solveTargetPct = (recipe, sKey, ings, id, metric, target, lockedIds = []) => {
   const readM = a => !a ? null : metric === 'cn' ? a.cn : metric === 'n' ? a.avgN : a.avgPh;
+  const g = ings.find(i => i.id === id);
+  const sp = SPP[sKey];
+  // Techo de búsqueda: sin esto, el solver persigue el % que más acerca la
+  // métrica al ideal sin mirar si ese % es agronómicamente razonable — para
+  // un suplemento de N esto proponía 45–55% de un solo insumo (ej. Afrecho de
+  // cervecería) para corregir un C:N alto, muy por encima del máximo de
+  // suplementación real de la especie (sp.supplementation_max — el mismo
+  // límite que ya usa scoreRisk/runAutoOptimizer para penalizar exceso de N)
+  // y de lo que muestran las recetas de referencia del catálogo (8–22%
+  // típico). Otros roles usan el mismo techo que ya protege applyOptToRecipe
+  // en los modos add/increase (ROLE_CAP_INCREASE).
+  const vMax = g && (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && sp ? Math.min(55, sp.supplementation_max || 20) : g && ROLE_CAP_INCREASE[g.role] != null ? ROLE_CAP_INCREASE[g.role] : 55;
   let best = null,
     bestDist = Infinity;
   const evalAt = v => {
@@ -3015,10 +3060,10 @@ const solveTargetPct = (recipe, sKey, ings, id, metric, target, lockedIds = []) 
       };
     }
   };
-  for (let v = 0.5; v <= 55; v += 1) evalAt(v);
+  for (let v = 0.5; v <= vMax; v += 1) evalAt(v);
   if (best) {
     const c = best.pct;
-    for (let v = Math.max(0, c - 1.5); v <= c + 1.5; v += 0.1) evalAt(v);
+    for (let v = Math.max(0, c - 1.5); v <= Math.min(vMax, c + 1.5); v += 0.1) evalAt(v);
   }
   return best;
 };
@@ -3048,7 +3093,8 @@ const scoreAn = (an, extraCtx = {}) => {
   return SetasScoring.scoreRecipe(an, {
     ...extraCtx,
     criticals: sev.criticals,
-    warnings: sev.warnings
+    warnings: sev.warnings,
+    severity: sev.severity
   });
 };
 
@@ -3096,6 +3142,97 @@ const capFreeIngredient = (rec, id, cap, lockedIds = []) => {
   });
 };
 
+// Techo físico razonable por rol de ingrediente para el modo 'add'/'increase'
+// de applyOptToRecipe. Antes el tope era una constante (45% add / 60%
+// increase) igual para cualquier insumo — un aditivo de pH o un arrancador
+// terminaba con el mismo límite que una base de carbono, cuando en la
+// práctica un suplemento de N por encima de ~20% o un aditivo de pH por
+// encima de ~10% ya son composiciones poco realistas para producción.
+const ROLE_CAP_ADD = {
+  base_carbono: 80,
+  suplemento_n: 20,
+  suplemento_medio: 30,
+  aditivo_ph: 10,
+  aditivo_arrancador: 10,
+  aditivo_estructura: 15,
+  aditivo_micronutriente: 5,
+  aireador: 15
+};
+const ROLE_CAP_INCREASE = {
+  base_carbono: 90,
+  suplemento_n: 25,
+  suplemento_medio: 35,
+  aditivo_ph: 12,
+  aditivo_arrancador: 12,
+  aditivo_estructura: 18,
+  aditivo_micronutriente: 6,
+  aireador: 18
+};
+const capForRole = (id, map, fallback, ings = INGS) => {
+  const g = ings.find(x => x.id === id);
+  return g && map[g.role] != null ? map[g.role] : fallback;
+};
+// Pure: aplica una sugerencia del Perito a una receta dada y retorna la nueva.
+// No muta estado. Vivía dentro del componente SimuladorApp (nueva closure en
+// cada render) — se movió a nivel de módulo para que generateOptimizer pueda
+// simular "qué pasaría si aplico este ítem" y mostrar el score resultante
+// antes de que el usuario decida aplicarlo (ver predictedScore más abajo).
+const applyOptToRecipe = (rec, apply, locked = [], ings = INGS) => {
+  if (!apply) return rec;
+  // Corrección combinada (ver comboApply en generateOptimizer): un array de
+  // operaciones se aplica en secuencia, cada una sobre el resultado de la
+  // anterior — misma función, sin lógica nueva para el caso multi-ingrediente.
+  if (Array.isArray(apply)) return apply.reduce((r, a) => applyOptToRecipe(r, a, locked, ings), rec);
+  const {
+    mode,
+    id,
+    delta,
+    value
+  } = apply;
+  const existing = rec.find(r => r.id === id);
+  if (mode === 'set') {
+    return setPctProportional(rec, id, value, locked);
+  }
+  if (mode === 'add') {
+    if (existing) {
+      const curP = parseFloat(existing.p) || 0;
+      // Clamp DESPUÉS de normalizar — ver comentario en capFreeIngredient: si se
+      // clampea antes, la reescala proporcional de normalizeRecipe puede volver a
+      // empujar el valor por encima del tope cuando es el único ingrediente libre.
+      const normalized = normalizeRecipe(rec.map(r => r.id === id ? {
+        ...r,
+        p: curP + delta
+      } : r), locked);
+      return capFreeIngredient(normalized, id, capForRole(id, ROLE_CAP_ADD, 45, ings), locked);
+    } else {
+      const free = rec.filter(r => !locked.includes(r.id));
+      const sumFree = free.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
+      const scale = Math.max(0, sumFree - delta) / Math.max(1, sumFree);
+      return [...rec.map(r => locked.includes(r.id) ? r : {
+        ...r,
+        p: Math.round((parseFloat(r.p) || 0) * scale * 10) / 10
+      }), {
+        id,
+        p: delta
+      }];
+    }
+  } else if (mode === 'increase') {
+    const cur = existing ? parseFloat(existing.p) || 0 : 0;
+    const normalized = normalizeRecipe(rec.map(r => r.id === id ? {
+      ...r,
+      p: cur + delta
+    } : r), locked);
+    return capFreeIngredient(normalized, id, capForRole(id, ROLE_CAP_INCREASE, 60, ings), locked);
+  } else if (mode === 'decrease') {
+    const cur = existing ? parseFloat(existing.p) || 0 : 0;
+    return normalizeRecipe(rec.map(r => r.id === id ? {
+      ...r,
+      p: Math.max(0, cur - delta)
+    } : r).filter(r => r.p > 0.1), locked);
+  }
+  return normalizeRecipe(rec, locked);
+};
+
 // ── v13: calcMaxBatchFromStock — kg húmedos máximos producibles con bodega ──
 const calcMaxBatchFromStock = (recipe, stockMap, batchKgWet = 10, hObj = 65, ings = INGS) => {
   const dry = batchKgWet * (1 - hObj / 100);
@@ -3125,17 +3262,38 @@ const quantifyItem = (item, recipe, sKey, ings, lockedIds) => {
   if (!res) return item;
   const cur = recipe.find(r => r.id === id);
   const curP = cur ? parseFloat(cur.p) || 0 : 0;
-  const verb = !cur ? 'Agregar' : res.pct > curP ? 'Subir' : 'Bajar';
+  // Si el % ya solucionado (curP===res.pct, p.ej. el suplemento ya está en su
+  // techo de suplementación) es prácticamente el mismo de antes, no hay nada
+  // nuevo que aplicar — sin esto el verbo por defecto caía en 'Bajar' aunque
+  // curP y res.pct fueran iguales, y el ítem seguía mostrándose como una
+  // acción pendiente indefinidamente (la sensación de "loop" reportada).
+  const noChange = cur && Math.abs(res.pct - curP) < 0.15;
+  const verb = !cur ? 'Agregar' : noChange ? 'Ya está en' : res.pct > curP ? 'Subir' : 'Bajar';
   item.action = `${verb} <b>${g.name}</b> a <b>${res.pct}%</b>${cur ? ` (actual ${curP.toFixed(0)}%)` : ' (nuevo)'}`;
   item.delta = `→ ${METRIC_LABEL[metric]} ${fmtMetric(metric, res.val)}`;
-  item.apply = {
+  item.apply = noChange ? null : {
     mode: 'set',
     id,
     value: res.pct
   };
+  // Techo de suplementación alcanzado sin llegar al rango óptimo: antes el
+  // ítem se veía idéntico a una corrección normal, así que aplicar (o ver
+  // que ya estaba aplicado) no cambiaba nada — el usuario lo percibía como
+  // que el Perito insistía en lo mismo sin avanzar. Ahora se marca
+  // explícitamente que este insumo, solo, no alcanza para cerrar el
+  // problema dentro del límite seguro.
+  const sp = SPP[sKey];
+  let inRange = true;
+  if (sp) {
+    if (metric === 'cn' && sp.cn_optimal) inRange = res.val >= sp.cn_optimal.min && res.val <= sp.cn_optimal.max;else if (metric === 'n' && sp.n_optimal) inRange = res.val >= sp.n_optimal.min && res.val <= sp.n_optimal.max;else if (metric === 'ph' && sp.ph_optimal) inRange = res.val >= sp.ph_optimal.min && res.val <= sp.ph_optimal.max;
+  }
+  if (!inRange) {
+    item.capped = true;
+    item.riskIfIgnored = (item.riskIfIgnored ? item.riskIfIgnored + ' · ' : '') + `${g.name} solo no alcanza el rango seguro (tope de suplementación) — se necesita un segundo ingrediente o ampliar bodega.`;
+  }
   return item;
 };
-const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = []) => {
+const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = INGS, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}) => {
   if (!an || !an.sp) return {
     score: 0,
     status: 'sin_receta',
@@ -3147,11 +3305,56 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
   // (scoring.js) — ver comentario ahí. Este bloque solo decide texto/acción por
   // cada bandera en true, nunca redefine la condición.
   const flags = SetasScoring.detectSeverity(an);
-  // Helper: mejor ingrediente en stock para un filtro+sort dados
+  // Escala un delta base según qué tan lejos está el parámetro fuera de su
+  // rango (flags.*OverDist, 0 = justo en el borde, 1 = un rango completo más
+  // allá). Solo importa cuando todavía no hay receta cargada o el ingrediente
+  // sugerido no está en ella: si hay receta, quantifyItem() más abajo
+  // recalcula el % exacto vía solveTargetPct y sobreescribe este valor. Antes
+  // este delta era la misma constante sin importar la magnitud del problema.
+  const scaledDelta = (base, overDist) => Math.round(base * (1 + Math.min(1.5, Math.max(0, overDist || 0))));
+  // Helper: mejor ingrediente en stock para un filtro+sort dados. Antes
+  // siempre devolvía "el mejor" del catálogo global según sortFn, sin mirar
+  // si la receta activa ya usa alguno de los candidatos válidos — dos recetas
+  // muy distintas para la misma especie recibían siempre la misma sugerencia
+  // de ingrediente. Ahora, entre los candidatos igualmente válidos, prefiere
+  // uno que ya está en la receta (ajustar % en vez de sumar un insumo nuevo:
+  // menos cambios, más fácil de ejecutar en bodega).
+  // recommendedIds: qué ingredientes ya se sugirieron para OTRA bandera en
+  // este mismo diagnóstico. Con bodegas chicas, el mismo insumo (el único
+  // con N alto, p.ej.) suele ser el "mejor" candidato para C:N, N y EB a la
+  // vez — antes bestStock lo devolvía siempre, así que el veredicto entero
+  // terminaba apuntando a un solo ingrediente para todo. Ahora, si el top
+  // candidato ya fue usado por otra bandera, se prueba una alternativa
+  // razonable antes de repetirlo — solo si no hay alternativa, se repite
+  // (mejor repetir lo correcto que forzar algo peor).
+  const recommendedIds = new Set();
+  // useStock=false ("Todo el catálogo"): ignora stockIds por completo, busca
+  // en toda la paleta compatible con la especie. Antes bestStock SIEMPRE
+  // priorizaba bodega si había aunque sea 1 coincidencia — "alternativas
+  // razonables" terminaba significando "las mismas 4 cosas que ya tienes",
+  // nunca un ingrediente mejor que simplemente no está en stock hoy. Mismo
+  // estado (optUseStock) que ya usa el Generador de recetas, para que Perito
+  // y Generador nunca queden desincronizados sobre qué modo se está usando.
   const bestStock = (filter, sortFn = (a, b) => 0) => {
     const candidates = ings.filter(g => g.cs.includes(sKey) && filter(g)).sort(sortFn);
-    const inStock = candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id));
-    return (inStock.length > 0 ? inStock : candidates)[0] || null;
+    const inStock = useStock ? candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
+    const pool = inStock.length > 0 ? inStock : candidates;
+    if (!pool.length) return null;
+    const inRecipe = recipe && recipe.length ? pool.find(g => recipe.some(r => r.id === g.id)) : null;
+    if (inRecipe) {
+      recommendedIds.add(inRecipe.id);
+      return inRecipe;
+    }
+    const top = pool[0];
+    if (recommendedIds.has(top.id) && pool.length > 1) {
+      const alt = pool.find(g => !recommendedIds.has(g.id));
+      if (alt) {
+        recommendedIds.add(alt.id);
+        return alt;
+      }
+    }
+    recommendedIds.add(top.id);
+    return top;
   };
 
   // ── CRÍTICOS: fuera de rango ──
@@ -3168,7 +3371,7 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: best ? {
         mode: inRec ? 'increase' : 'add',
         id: best.id,
-        delta: 7
+        delta: scaledDelta(7, flags.cnOverDist)
       } : null
     });
   }
@@ -3185,7 +3388,7 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: best ? {
         mode: inRec ? 'increase' : 'add',
         id: best.id,
-        delta: 8
+        delta: scaledDelta(8, flags.cnOverDist)
       } : null
     });
   }
@@ -3202,7 +3405,7 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: best ? {
         mode: inRec ? 'increase' : 'add',
         id: best.id,
-        delta: 8
+        delta: scaledDelta(8, flags.nOverDist)
       } : null
     });
   }
@@ -3222,11 +3425,11 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: suppInRec.length > 0 ? {
         mode: 'decrease',
         id: suppInRec[0].id,
-        delta: 6
+        delta: scaledDelta(6, flags.nOverDist)
       } : base ? {
         mode: 'increase',
         id: base.id,
-        delta: 8
+        delta: scaledDelta(8, flags.nOverDist)
       } : null
     });
   }
@@ -3253,7 +3456,7 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: best ? {
         mode: 'add',
         id: best.id,
-        delta: 2
+        delta: scaledDelta(2, flags.phOverDist)
       } : null
     });
   }
@@ -3269,7 +3472,7 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       apply: cafe ? {
         mode: 'add',
         id: cafe.id,
-        delta: 10
+        delta: scaledDelta(10, flags.phOverDist)
       } : null
     });
   }
@@ -3464,22 +3667,161 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
     '→N': 'EB por debajo del potencial óptimo de la especie.',
     '→C': 'C:N alejado del ideal reduce la eficiencia biológica estimada.'
   };
+  // Cuánto se sale cada métrica de su rango (0=en el borde, 1+=un rango
+  // completo más allá), por ícono — para anotar el riesgo con la magnitud
+  // real en vez de un texto idéntico sin importar qué tan grave es el caso.
+  const OVERDIST_BY_ICON = {
+    '↓C:N': flags.cnOverDist,
+    '↑C:N': flags.cnOverDist,
+    '↑N': flags.nOverDist,
+    '↓N': flags.nOverDist,
+    '↑pH': flags.phOverDist,
+    '↓pH': flags.phOverDist
+  };
   items.forEach(it => {
     if (!it.why && WHY_MAP[it.icon]) it.why = WHY_MAP[it.icon];
     if (!it.riskIfIgnored && RISK_MAP[it.icon]) it.riskIfIgnored = RISK_MAP[it.icon];
+    const od = OVERDIST_BY_ICON[it.icon];
+    if (od != null && od > 0 && it.riskIfIgnored) {
+      it.riskIfIgnored += ` · desviación actual: ${Math.round(Math.min(150, od * 100))}% más allá del límite.`;
+    }
   });
   // ── Score: única fuente de verdad, compartida con runAutoOptimizer ──
   // (ver scoring.js). Perito y Optimizador ya no pueden divergir para la
   // misma receta porque ambos llaman a scoreAn/SetasScoring.scoreRecipe.
   const tr13 = calcTreatment(an, sKey);
+  // blendedEB: override opcional de scoreYield con el EB mezclado con lotes
+  // reales de esta especie (ver blendEBWithHistory). null/undefined = mismo
+  // comportamiento de siempre (usa an.eb puro) — es estrictamente aditivo,
+  // ningún llamador existente que no lo pase cambia de resultado.
   const {
     score,
     status: statusFromScore
   } = scoreAn(an, {
     treatment: tr13,
     recipe,
-    stockIds
+    stockIds,
+    blendedEB
   });
+  // ── Predicción: score resultante si se aplica cada ítem accionable ──
+  // Antes cada sugerencia solo describía el ajuste ("sube X en Y%") sin decir
+  // cuánto mejora realmente el score — dos ítems con texto de longitud/tono
+  // parecido podían tener impacto muy distinto y no había forma de saberlo
+  // sin aplicar y recalcular a mano. Simula con la misma función que usa el
+  // botón "Aplicar" (applyOptToRecipe) y guarda el score resultante.
+  // Bandera crítica → qué otra bandera crítica vigilar como posible efecto
+  // colateral (mismo ingrediente/mecanismo puede mover más de una métrica:
+  // subir un suplemento de N para arreglar N bajo también sube C:N hacia
+  // abajo y puede pasar a "C:N demasiado bajo"). Antes cada ítem se
+  // calculaba de forma aislada — nada avisaba si "arreglar" uno rompía otro.
+  const SIDE_EFFECT_FLAGS = ['cnHigh', 'cnLow', 'nLow', 'nHigh', 'phLow', 'phHigh'];
+  const FLAG_OWNER_ICON = {
+    cnHigh: '↓C:N',
+    cnLow: '↑C:N',
+    nLow: '↑N',
+    nHigh: '↓N',
+    phLow: '↑pH',
+    phHigh: '↓pH'
+  };
+  const FLAG_LABEL = {
+    cnHigh: 'C:N demasiado alto',
+    cnLow: 'C:N demasiado bajo',
+    nLow: 'N insuficiente',
+    nHigh: 'exceso de N',
+    phLow: 'pH ácido',
+    phHigh: 'pH alcalino'
+  };
+  // Corrección combinada: el mismo ingrediente/mecanismo que arregla un flag
+  // puede empeorar otro (ver sideEffect abajo). Antes el Perito solo avisaba
+  // del problema sin ofrecer la solución conjunta — el usuario tenía que
+  // iterar manualmente. FLAG_FIX describe, por bandera, qué ingrediente y
+  // qué métrica/objetivo usar para corregirla (mismos filtros que ya usan
+  // los bloques CRÍTICOS de arriba para elegir ingrediente por bandera).
+  const phIdealForCombo = sp.ph_optimal ? (sp.ph_optimal.min + sp.ph_optimal.max) / 2 : null;
+  const FLAG_FIX = {
+    cnHigh: () => ({
+      ing: bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n),
+      metric: 'cn',
+      target: sp.cn_optimal.ideal
+    }),
+    cnLow: () => ({
+      ing: bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn),
+      metric: 'cn',
+      target: sp.cn_optimal.ideal
+    }),
+    nLow: () => ({
+      ing: bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost),
+      metric: 'n',
+      target: sp.n_optimal.ideal
+    }),
+    nHigh: () => ({
+      ing: bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn),
+      metric: 'n',
+      target: sp.n_optimal.ideal
+    }),
+    phLow: () => ({
+      ing: bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph),
+      metric: 'ph',
+      target: phIdealForCombo
+    }),
+    phHigh: () => ({
+      ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph),
+      metric: 'ph',
+      target: phIdealForCombo
+    })
+  };
+  if (recipe && recipe.length) {
+    items.forEach(it => {
+      if (!it.apply || it.priority !== 'critical' && it.priority !== 'warning') return;
+      try {
+        const candidate = applyOptToRecipe(recipe, it.apply, lockedIds, ings);
+        const a2 = analyze(candidate, sKey, ings);
+        if (!a2) return;
+        const s2 = scoreAn(a2, {
+          treatment: calcTreatment(a2, sKey),
+          recipe: candidate,
+          stockIds
+        });
+        it.predictedScore = s2.score;
+        const newFlags = SetasScoring.detectSeverity(a2) || {};
+        const worsened = SIDE_EFFECT_FLAGS.filter(k => newFlags[k] && !flags[k] && FLAG_OWNER_ICON[k] !== it.icon);
+        if (worsened.length) {
+          it.sideEffect = `Ojo: aplicar esto puede generar ${worsened.map(k => FLAG_LABEL[k]).join(' y ')}.`;
+          // Intenta un segundo ajuste, resuelto sobre la receta YA corregida
+          // por el primero, que apague el efecto colateral sin deshacer el
+          // arreglo original — no es una regresión simultánea de las dos
+          // métricas, es un solve en dos pasos, pero cada paso usa el mismo
+          // solveTargetPct exacto que ya usa "Aplicar" individualmente.
+          const fixKey = worsened[0];
+          const fix = FLAG_FIX[fixKey] ? FLAG_FIX[fixKey]() : null;
+          if (fix && fix.ing && fix.target != null) {
+            const res2 = solveTargetPct(candidate, sKey, ings, fix.ing.id, fix.metric, fix.target, lockedIds);
+            if (res2) {
+              const secondApply = {
+                mode: 'set',
+                id: fix.ing.id,
+                value: res2.pct
+              };
+              const candidate2 = applyOptToRecipe(candidate, secondApply, lockedIds, ings);
+              const a3 = analyze(candidate2, sKey, ings);
+              if (a3) {
+                const s3 = scoreAn(a3, {
+                  treatment: calcTreatment(a3, sKey),
+                  recipe: candidate2,
+                  stockIds
+                });
+                if (s3.score > it.predictedScore) {
+                  it.comboApply = [it.apply, secondApply];
+                  it.comboPredictedScore = s3.score;
+                  it.comboLabel = `Aplicar junto con ${fix.ing.name} — evita ${FLAG_LABEL[fixKey]}`;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {/* candidato inválido (p.ej. ingrediente sin datos) — se omite la predicción */}
+    });
+  }
   // Garantía: si la receta es casi-óptima pero no hay tips útiles, sugerir refinamiento mineral.
   const hasTips = items.some(s => s.priority === 'tip');
   if (score >= 85 && !hasTips && recipe && recipe.length) {
@@ -3510,6 +3852,35 @@ const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings = I
       });
     }
   }
+  // Marca genérica "no está en bodega hoy": en modo catálogo (useStock=false)
+  // el ingrediente elegido puede no estar en stock — sin esto, el veredicto
+  // mezclaba sugerencias ejecutables ahora mismo con sugerencias que en
+  // realidad son "comprar esto primero", indistinguibles en la UI.
+  if (stockIds && stockIds.size > 0) {
+    items.forEach(it => {
+      const apOps = Array.isArray(it.apply) ? it.apply : it.apply ? [it.apply] : [];
+      if (apOps.some(op => op.id && !stockIds.has(op.id))) it.notInStock = true;
+    });
+  }
+  // "Ya aplicaste esto y el problema sigue": appliedIcons cuenta, por
+  // ícono/bandera (no por operación exacta — un refinamiento legítimo del
+  // mismo ingrediente, ej. subir Harina de Pescado de 8%→9.4% para afinar N
+  // después de haberla usado para C:N, NO es "lo mismo otra vez"), cuántas
+  // veces se aplicó una corrección apuntando a ESE problema en la sesión
+  // activa (ver applyOptStep). Si la bandera sigue activa después de
+  // haberla atacado antes, antes se veía idéntica a la primera vez —
+  // sensación de estancamiento sin ninguna señal de que ya se intentó.
+  items.forEach(it => {
+    if (it.apply && appliedIcons[it.icon] > 0) it.repeatedApply = appliedIcons[it.icon];
+  });
+  // Orden por impacto real (predictedScore), no por el orden fijo en que se
+  // evalúan las banderas (cnHigh, cnLow, nLow...). Antes la lista se veía con
+  // la misma forma sesión tras sesión aunque el problema más urgente
+  // cambiara — el usuario lo percibía como sugerencias "formulaicas". Los
+  // grupos criticals/warnings/tips se separan después con items.filter()
+  // (preserva orden) — sort() es estable, así que items sin predictedScore
+  // mantienen su orden relativo entre sí.
+  items.sort((a, b) => (b.predictedScore ?? -1) - (a.predictedScore ?? -1));
   return {
     score,
     status: statusFromScore,
@@ -4996,9 +5367,33 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
   const cafeLimit = profile.maxCafe != null ? profile.maxCafe : 30;
   const results = [];
   const tried = new Set();
+
+  // Costo real de bodega (precio ponderado FIFO, precioPonderado) en vez del
+  // costo de catálogo — mismo ajuste que ya se muestra en el Perito
+  // (realCostPerKg). Antes runAutoOptimizer siempre rankeaba con g.cost de
+  // catálogo aunque estuviera generando "solo bodega": dos ingredientes del
+  // mismo rol con costo de compra distinto en la bodega real puntuaban igual
+  // aquí, y el ranking de "mejores recetas" podía no coincidir con el costo
+  // real que se ve en el Perito al cargar esa misma receta.
+  const realCostFor = rec => {
+    let known = false;
+    const total = rec.reduce((s, r) => {
+      const pp = precioPonderado(r.id, invLotes);
+      const g = effectiveINGS.find(i => i.id === r.id);
+      if (pp != null) known = true;
+      const price = pp != null ? pp : g ? g.cost : 0;
+      return s + price * (parseFloat(r.p) || 0) / 100;
+    }, 0);
+    return known ? Math.round(total) : null;
+  };
   const evalRec = rec => {
-    const an = analyze(rec, targetKey, effectiveINGS);
-    if (!an) return;
+    const an0 = analyze(rec, targetKey, effectiveINGS);
+    if (!an0) return;
+    const realCost = useStock ? realCostFor(rec) : null;
+    const an = realCost != null ? {
+      ...an0,
+      cost: realCost
+    } : an0;
     const suppOverLimit = an.suppP > suppLimit;
     if (suppOverLimit && profileKey === 'rescate') return;
     if (an.cafeP > cafeLimit) return;
@@ -5031,7 +5426,8 @@ const runAutoOptimizer = (targetKey, invLotes, maxCost, effectiveINGS, useStock 
       riskScore: breakdown.risk,
       treatmentName: tr?.name || '',
       maxKgWet,
-      suppOverLimit
+      suppOverLimit,
+      realCostKnown: realCost != null
     });
   };
   const aerOpts = [null, ...aers.slice(0, 2)];
@@ -5321,59 +5717,134 @@ const peritoCorreccionMinima = opt => {
 };
 const PeritoItem = React.memo(({
   item,
-  onApply
-}) => /*#__PURE__*/React.createElement("div", {
-  className: `perito-item pi-${item.priority}`
-}, /*#__PURE__*/React.createElement("div", {
-  className: "pi-icon-col"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "pi-icon"
-}, item.icon)), /*#__PURE__*/React.createElement("div", {
-  className: "pi-body"
-}, /*#__PURE__*/React.createElement("div", {
-  className: "pi-head"
-}, /*#__PURE__*/React.createElement("span", {
-  className: "pi-label"
-}, item.label), item.delta && /*#__PURE__*/React.createElement("span", {
-  className: "pi-delta"
-}, item.delta)), /*#__PURE__*/React.createElement("div", {
-  className: "pi-action",
-  dangerouslySetInnerHTML: {
-    __html: item.action
-  }
-}), /*#__PURE__*/React.createElement("div", {
-  className: "pi-effect"
-}, item.effect), item.why && /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "var(--text-sm)",
-    color: 'var(--ink-600)',
-    fontFamily: 'var(--font-mono)',
-    marginTop: 3,
-    opacity: .85
-  }
-}, /*#__PURE__*/React.createElement("span", {
-  style: {
-    fontWeight: 700
-  }
-}, "Por qu\xE9:"), " ", item.why), item.riskIfIgnored && /*#__PURE__*/React.createElement("div", {
-  style: {
-    fontSize: "var(--text-sm)",
-    color: 'var(--coral-600,#B5451F)',
-    fontFamily: 'var(--font-mono)',
-    marginTop: 2
-  }
-}, /*#__PURE__*/React.createElement("span", {
-  style: {
-    fontWeight: 700
-  }
-}, "Riesgo:"), " ", item.riskIfIgnored)), /*#__PURE__*/React.createElement("div", {
-  className: "pi-actions"
-}, item.apply ? /*#__PURE__*/React.createElement("button", {
-  onClick: () => onApply(item.apply),
-  className: "pi-apply"
-}, "Aplicar") : /*#__PURE__*/React.createElement("div", {
-  className: "pi-spacer"
-}))));
+  onApply,
+  baseScore
+}) => {
+  const hasPrediction = item.predictedScore != null && baseScore != null;
+  const scoreDelta = hasPrediction ? Math.round(item.predictedScore - baseScore) : null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: `perito-item pi-${item.priority}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "pi-icon-col"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pi-icon"
+  }, item.icon)), /*#__PURE__*/React.createElement("div", {
+    className: "pi-body"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "pi-head"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pi-label"
+  }, item.label), item.capped && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "var(--text-2xs)",
+      fontWeight: 700,
+      color: '#8C4020',
+      background: 'rgba(200,112,64,.12)',
+      border: '1px solid rgba(200,112,64,.3)',
+      borderRadius: 3,
+      padding: '1px 6px'
+    }
+  }, "tope alcanzado"), item.notInStock && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "var(--text-2xs)",
+      fontWeight: 700,
+      color: '#7A5A10',
+      background: 'rgba(160,120,40,.12)',
+      border: '1px solid rgba(160,120,40,.3)',
+      borderRadius: 3,
+      padding: '1px 6px'
+    }
+  }, "\uD83D\uDED2 no en bodega \u2014 a comprar"), item.delta && /*#__PURE__*/React.createElement("span", {
+    className: "pi-delta"
+  }, item.delta)), item.repeatedApply && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: '#7A5A10',
+      fontFamily: 'var(--font-mono)',
+      marginBottom: 2
+    }
+  }, "\u21BB Ya aplicaste esto ", item.repeatedApply, "x en esta sesi\xF3n y el problema sigue \u2014 considera un ingrediente distinto o cambia a \"Todo el cat\xE1logo\"."), /*#__PURE__*/React.createElement("div", {
+    className: "pi-action",
+    dangerouslySetInnerHTML: {
+      __html: item.action
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "pi-effect"
+  }, item.effect), item.why && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: 'var(--ink-600)',
+      fontFamily: 'var(--font-mono)',
+      marginTop: 3,
+      opacity: .85
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700
+    }
+  }, "Por qu\xE9:"), " ", item.why), item.riskIfIgnored && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: 'var(--coral-600,#B5451F)',
+      fontFamily: 'var(--font-mono)',
+      marginTop: 2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700
+    }
+  }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: scoreDelta > 0 ? 'var(--accent-olive)' : 'var(--ink-600)',
+      fontFamily: 'var(--font-mono)',
+      marginTop: 2,
+      fontWeight: 700
+    }
+  }, "Score si se aplica: ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? '+' : '', scoreDelta, ")"), item.sideEffect && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: 'var(--coral-600,#B5451F)',
+      fontFamily: 'var(--font-mono)',
+      marginTop: 2,
+      fontWeight: 700
+    }
+  }, "\u26A0 ", item.sideEffect), item.comboApply && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4,
+      padding: '6px 8px',
+      background: 'rgba(74,107,74,.08)',
+      border: '1px solid rgba(74,107,74,.2)',
+      borderRadius: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: 'var(--accent-olive)',
+      fontFamily: 'var(--font-mono)',
+      fontWeight: 700
+    }
+  }, item.comboLabel), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "var(--text-sm)",
+      color: 'var(--accent-olive)',
+      fontFamily: 'var(--font-mono)'
+    }
+  }, "Score si se aplica junto: ", Math.round(item.comboPredictedScore), "/100"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => onApply(item.comboApply, item.icon),
+    className: "pi-apply",
+    style: {
+      marginTop: 4
+    }
+  }, "Aplicar correcci\xF3n combinada"))), /*#__PURE__*/React.createElement("div", {
+    className: "pi-actions"
+  }, item.apply ? /*#__PURE__*/React.createElement("button", {
+    onClick: () => onApply(item.apply, item.icon),
+    className: "pi-apply"
+  }, "Aplicar") : /*#__PURE__*/React.createElement("div", {
+    className: "pi-spacer"
+  })));
+});
 
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
 const ConfirmModal = ({
@@ -5986,6 +6457,18 @@ const BandGauge = ({
     }
   }, "ideal ", ideal, unit), /*#__PURE__*/React.createElement("span", null, max, unit)));
 };
+
+// Mezcla el EB teórico de an.eb con el EB real promedio de lotes históricos
+// de la misma especie (historicalEBFor), ponderado por cuántos lotes reales
+// hay (historical.weight, hasta 70%). Antes esta fórmula solo vivía inline
+// en RecipeGauges y solo pintaba el gauge — el score del Perito (scoreAn)
+// seguía usando an.eb puro, ignorando por completo los lotes reales que el
+// usuario ya tenía registrados. Se extrajo aquí para reusarla también como
+// override de scoreYield (ver ctx.blendedEB en scoring.js).
+const blendEBWithHistory = (an, historical) => {
+  const hasHist = historical && historical.n > 0 && historical.avg != null;
+  return hasHist ? an.eb * (1 - historical.weight) + historical.avg * historical.weight : an.eb;
+};
 const RecipeGauges = ({
   an,
   sp,
@@ -5994,7 +6477,7 @@ const RecipeGauges = ({
 }) => {
   if (!sp || !an || !an.cn) return null;
   const hasHist = historical && historical.n > 0 && historical.avg != null;
-  const blendedEB = hasHist ? an.eb * (1 - historical.weight) + historical.avg * historical.weight : an.eb;
+  const blendedEB = blendEBWithHistory(an, historical);
   return /*#__PURE__*/React.createElement("div", {
     className: "bg-wrap"
   }, /*#__PURE__*/React.createElement("div", {
@@ -6068,7 +6551,7 @@ const RecipeGauges = ({
       color: 'var(--ink-800,#333)',
       lineHeight: 1.5
     }
-  }, /*#__PURE__*/React.createElement("b", null, "Proyecci\xF3n ajustada con ", historical.n, " lote", historical.n > 1 ? 's' : '', " real", historical.n > 1 ? 'es' : ''), " \xB7 EB hist\xF3rica ", historical.avg.toFixed(0), "% (", historical.subs.join(', '), ") \xB7 mezcla ", Math.round(historical.weight * 100), "% hist\xF3rico / ", Math.round((1 - historical.weight) * 100), "% f\xF3rmula") : /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("b", null, "Proyecci\xF3n ajustada con ", historical.n, " lote", historical.n > 1 ? 's' : '', " real", historical.n > 1 ? 'es' : '', historical.matched ? ' del mismo sustrato' : ''), " \xB7 EB hist\xF3rica ", historical.avg.toFixed(0), "% (", historical.subs.join(', '), ") \xB7 mezcla ", Math.round(historical.weight * 100), "% hist\xF3rico / ", Math.round((1 - historical.weight) * 100), "% f\xF3rmula") : /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: 'var(--font-mono)',
       fontSize: "var(--text-xs)",
@@ -6244,23 +6727,48 @@ const HIST_SUB_NAME = {
   coffee_shiitake: 'sustrato maestro shiitake',
   masters_mix: "master's mix"
 };
+// Mapa de códigos de sustrato histórico -> id real en INGS, para poder saber
+// si la receta activa usa ese mismo sustrato. Solo cubre los códigos con
+// correspondencia 1:1 clara — códigos como 'masters_mix' son una mezcla sin
+// un ingrediente único al que mapear, así que se quedan sin match (no rompen
+// nada, simplemente no participan en el filtro por similitud).
+const HIST_SUB_TO_ING = {
+  wheat_straw: 'paja_trigo'
+};
 
 // Proyección de EB real: agrega lotes históricos (yields del shell) por especie (y sustrato si coincide)
 // para dar una EB proyectada distinta de la fórmula teórica C:N/N — "no solo texto estático".
-const historicalEBFor = (sKey, historicalYields) => {
+// `recipe` (opcional): si se pasa y hay lotes históricos cuyo sustrato
+// coincide con algún ingrediente de la receta activa, el promedio se calcula
+// SOLO con esos lotes en vez de con todos los de la especie — antes un lote
+// de "master's mix" y uno de "paja de trigo" pesaban igual en el promedio
+// aunque la receta activa fuera puramente de paja de trigo. `matched:true`
+// en el resultado indica que se usó este filtro más preciso.
+const historicalEBFor = (sKey, historicalYields, recipe = null) => {
   if (!sKey || !Array.isArray(historicalYields) || !historicalYields.length) return {
     n: 0,
     avg: null,
     subs: [],
-    weight: 0
+    weight: 0,
+    matched: false
   };
-  const rows = historicalYields.filter(y => normSpp(y.spp) === sKey && y.dryKg > 0);
+  let rows = historicalYields.filter(y => normSpp(y.spp) === sKey && y.dryKg > 0);
   if (!rows.length) return {
     n: 0,
     avg: null,
     subs: [],
-    weight: 0
+    weight: 0,
+    matched: false
   };
+  let matched = false;
+  if (recipe && recipe.length) {
+    const recipeIds = new Set(recipe.map(r => r.id));
+    const matchedRows = rows.filter(y => HIST_SUB_TO_ING[y.sub] && recipeIds.has(HIST_SUB_TO_ING[y.sub]));
+    if (matchedRows.length) {
+      rows = matchedRows;
+      matched = true;
+    }
+  }
   const ebs = rows.map(y => y.freshG / (y.dryKg * 1000) * 100);
   const avg = ebs.reduce((a, b) => a + b, 0) / ebs.length;
   const subs = [...new Set(rows.map(y => HIST_SUB_NAME[y.sub] || y.sub))];
@@ -6269,7 +6777,8 @@ const historicalEBFor = (sKey, historicalYields) => {
     n: rows.length,
     avg,
     subs,
-    weight
+    weight,
+    matched
   };
 };
 function App(props) {
@@ -6474,7 +6983,24 @@ function App(props) {
   const [optMaxCost, setOptMaxCost] = useState(0);
   const [optResults, setOptResults] = useState(null);
   const [optRunning, setOptRunning] = useState(false);
-  const [optUseStock, setOptUseStock] = useState(true);
+  // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
+  // completo. Antes solo alimentaba el Generador automático — ahora también
+  // controla las sugerencias individuales del Perito (bestStock en
+  // generateOptimizer), para que ambos exploren siempre el mismo universo de
+  // ingredientes y no queden desincronizados. Persistido: es una preferencia
+  // de cómo el usuario quiere trabajar, no un dato de la receta activa.
+  const [optUseStock, setOptUseStock] = useState(() => {
+    try {
+      const v = localStorage.getItem('setas_workmode');
+      if (v === 'catalogo') return false;
+    } catch (e) {}
+    return true;
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('setas_workmode', optUseStock ? 'bodega' : 'catalogo');
+    } catch (e) {}
+  }, [optUseStock]);
   const [optProfile, setOptProfile] = useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags, setProdBags] = useState(6);
@@ -6882,6 +7408,35 @@ function App(props) {
       }
     });
   };
+  // Registra el EB real observado tras cosechar un lote de una prueba guardada.
+  // Antes cada análisis del Perito/Formulador era puramente teórico (fórmulas
+  // fijas) sin retroalimentación de qué pasó realmente en producción — esto
+  // no cambia el score todavía, pero deja el dato (eb estimado vs ebReal)
+  // visible en el Recetario para que el usuario vea qué tan bien predice el
+  // modelo en su bodega concreta, y es la base para calibrar la matriz más
+  // adelante con datos reales en vez de solo teoría.
+  const setEbRealFor = id => {
+    const entry = saved.find(s => s.id === id);
+    if (!entry) return;
+    setPromptDlg({
+      title: 'Registrar EB real',
+      label: `EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,
+      placeholder: String(entry.eb),
+      confirmLabel: 'Guardar',
+      onSubmit: val => {
+        const n = parseFloat(val);
+        if (!Number.isFinite(n)) return;
+        const u = saved.map(s => s.id === id ? {
+          ...s,
+          ebReal: Math.round(n * 10) / 10
+        } : s);
+        setSaved(u);
+        try {
+          localStorage.setItem('setas_v6', JSON.stringify(u));
+        } catch (e) {}
+      }
+    });
+  };
   const sp = SPP[sKey];
   const effectiveINGS = useMemo(() => INGS.map(ing => {
     const invPr = precioPonderado(ing.id, invLotes);
@@ -6909,7 +7464,7 @@ function App(props) {
       return [];
     }
   }, [props.historicalYields]);
-  const histStats = useMemo(() => historicalEBFor(sKey, historicalYields), [sKey, historicalYields]);
+  const histStats = useMemo(() => historicalEBFor(sKey, historicalYields, recipe), [sKey, historicalYields, recipe]);
   const an = useMemo(() => analyze(recipe, sKey, effectiveINGS), [recipe, sKey, effectiveINGS]);
   const balanced = isMassBalanced(an);
   const balMsg = balanced ? '' : massBalanceMsg(an);
@@ -6959,7 +7514,73 @@ function App(props) {
     });
     return m;
   }, [invLotes]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds]);
+  // Mismo EB mezclado con historial real que ya se pinta en el gauge
+  // (RecipeGauges/blendEBWithHistory) — se pasa como override al score del
+  // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
+  // por lotes reales pero el score de al lado seguía siendo 100% teórico.
+  const blendedEB = an ? blendEBWithHistory(an, histStats) : null;
+  // Memoria de sesión de qué bandera/ícono se atacó desde el Perito — ver
+  // repeatedApply en generateOptimizer. Por ícono, no por operación exacta:
+  // refinar el mismo ingrediente para un problema distinto no cuenta como
+  // repetición. Se reinicia al cambiar de especie (contexto nuevo).
+  const [appliedIcons, setAppliedIcons] = React.useState({});
+  React.useEffect(() => {
+    setAppliedIcons({});
+  }, [sKey]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons]);
+  // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
+  // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
+  // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
+  // de compra distinto en bodega — se muestra aparte, sin tocar el score, para
+  // no introducir un cambio de comportamiento en runAutoOptimizer/scoreCost
+  // que ya son consumidos en varios sitios con el costo de catálogo.
+  const realCostPerKg = useMemo(() => {
+    if (!recipe.length) return null;
+    let known = false;
+    const total = recipe.reduce((s, r) => {
+      const pp = precioPonderado(r.id, invLotes);
+      const g = effectiveINGS.find(i => i.id === r.id);
+      if (pp != null) known = true;
+      const price = pp != null ? pp : g ? g.cost : 0;
+      return s + price * (parseFloat(r.p) || 0) / 100;
+    }, 0);
+    return known ? Math.round(total) : null;
+  }, [recipe, invLotes, effectiveINGS]);
+  // Similitud de Jaccard entre conjuntos de ingredientes (ignora %, solo IDs).
+  const recipeSimilarity = (recA, recB) => {
+    const a = new Set(recA.map(r => r.id)),
+      b = new Set(recB.map(r => r.id));
+    const inter = [...a].filter(x => b.has(x)).length;
+    const union = new Set([...a, ...b]).size;
+    return union ? inter / union : 0;
+  };
+  // Historial de resultados reales para esta especie: antes cada diagnóstico
+  // del Perito era puramente teórico — ahora, si ya se registró EB real (ver
+  // setEbRealFor) en pruebas guardadas de la misma especie, se usa para (a)
+  // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
+  // si la receta activa se parece a una prueba ya hecha, con su resultado real.
+  const trialsWithReal = useMemo(() => saved.filter(s => s.sKey === sKey && s.ebReal != null), [saved, sKey]);
+  const modelAccuracy = useMemo(() => {
+    if (!trialsWithReal.length) return null;
+    const avgAbsDiff = trialsWithReal.reduce((s, t) => s + Math.abs(t.ebReal - parseFloat(t.eb)), 0) / trialsWithReal.length;
+    return Math.round(avgAbsDiff * 10) / 10;
+  }, [trialsWithReal]);
+  const similarTrial = useMemo(() => {
+    if (!recipe.length || !trialsWithReal.length) return null;
+    let best = null,
+      bestSim = 0;
+    trialsWithReal.forEach(t => {
+      const sim = recipeSimilarity(recipe, t.recipe || []);
+      if (sim > bestSim) {
+        bestSim = sim;
+        best = t;
+      }
+    });
+    return bestSim >= 0.5 ? {
+      ...best,
+      similarity: bestSim
+    } : null;
+  }, [recipe, trialsWithReal]);
   const cAn = useMemo(() => analyze(cmpRecipe, cmpKey, effectiveINGS), [cmpRecipe, cmpKey, effectiveINGS]);
   const sch = useMemo(() => calcSchedule(schKey, schDate, an?.eb), [schKey, schDate, an]);
   // Score de una receta guardada (Recetario/Dashboard), recalculado en vivo con
@@ -6987,63 +7608,15 @@ function App(props) {
       p: 10
     }]);
   };
-  // Pure: aplica una sugerencia a una receta dada y retorna la nueva. No muta estado.
-  const applyOptToRecipe = (rec, apply, locked = []) => {
-    if (!apply) return rec;
-    const {
-      mode,
-      id,
-      delta,
-      value
-    } = apply;
-    const existing = rec.find(r => r.id === id);
-    if (mode === 'set') {
-      return setPctProportional(rec, id, value, locked);
-    }
-    if (mode === 'add') {
-      if (existing) {
-        const curP = parseFloat(existing.p) || 0;
-        // Clamp DESPUÉS de normalizar — ver comentario en capFreeIngredient: si se
-        // clampea antes, la reescala proporcional de normalizeRecipe puede volver a
-        // empujar el valor por encima del tope cuando es el único ingrediente libre.
-        const normalized = normalizeRecipe(rec.map(r => r.id === id ? {
-          ...r,
-          p: curP + delta
-        } : r), locked);
-        return capFreeIngredient(normalized, id, 45, locked);
-      } else {
-        const free = rec.filter(r => !locked.includes(r.id));
-        const sumFree = free.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
-        const scale = Math.max(0, sumFree - delta) / Math.max(1, sumFree);
-        return [...rec.map(r => locked.includes(r.id) ? r : {
-          ...r,
-          p: Math.round((parseFloat(r.p) || 0) * scale * 10) / 10
-        }), {
-          id,
-          p: delta
-        }];
-      }
-    } else if (mode === 'increase') {
-      const cur = existing ? parseFloat(existing.p) || 0 : 0;
-      const normalized = normalizeRecipe(rec.map(r => r.id === id ? {
-        ...r,
-        p: cur + delta
-      } : r), locked);
-      return capFreeIngredient(normalized, id, 60, locked);
-    } else if (mode === 'decrease') {
-      const cur = existing ? parseFloat(existing.p) || 0 : 0;
-      return normalizeRecipe(rec.map(r => r.id === id ? {
-        ...r,
-        p: Math.max(0, cur - delta)
-      } : r).filter(r => r.p > 0.1), locked);
-    }
-    return normalizeRecipe(rec, locked);
-  };
   const [recipeHistory, setRecipeHistory] = React.useState([]);
-  const applyOptStep = apply => {
+  const applyOptStep = (apply, icon) => {
     if (!apply) return;
     setRecipeHistory(h => [...h, recipe]);
-    setRecipe(applyOptToRecipe(recipe, apply, lockedIds));
+    setRecipe(applyOptToRecipe(recipe, apply, lockedIds, optimizerINGS));
+    if (icon) setAppliedIcons(s => ({
+      ...s,
+      [icon]: (s[icon] || 0) + 1
+    }));
   };
   const undoLastRec = () => {
     if (recipeHistory.length === 0) return;
@@ -7052,21 +7625,45 @@ function App(props) {
   };
   // Auto-mejorar: itera aplicando la mejor sugerencia válida, recalcula y para cuando
   // el score deja de subir. Máximo 6 vueltas. Evita el ciclo "aplico la 1 → la 2 ya no aplica".
+  // Antes siempre tomaba el PRIMER ítem accionable de la lista (orden fijo por
+  // tipo de bandera, no por impacto real) — dos recetas con el mismo conjunto
+  // de problemas podían converger a resultados distintos según en qué orden
+  // aparecían los flags. Ahora, en cada vuelta, prueba los hasta 3 ítems
+  // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
+  // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
+  // no solo el primero de la lista.
   const autoImprove = () => {
     let cur = recipe;
     let bestScore = -1;
     for (let i = 0; i < 6; i++) {
       const a = analyze(cur, sKey, effectiveINGS);
       if (!a) break;
-      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds);
+      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), optUseStock);
       if (o.score <= bestScore) break;
       bestScore = o.score;
-      const next = o.items.find(it => it.apply && (it.priority === 'critical' || it.priority === 'warning'));
-      if (!next) break;
-      const candidate = applyOptToRecipe(cur, next.apply, lockedIds);
-      const a2 = analyze(candidate, sKey, effectiveINGS);
+      const candidates = o.items.filter(it => it.apply && (it.priority === 'critical' || it.priority === 'warning')).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
+      if (!candidates.length) break;
+      let bestCandScore = -1,
+        bestCandidate = null,
+        bestA2 = null,
+        bestO2 = null;
+      for (const cand of candidates) {
+        const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
+        const tryA = analyze(tryRec, sKey, effectiveINGS);
+        if (!tryA) continue;
+        const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), optUseStock);
+        if (tryO.score > bestCandScore) {
+          bestCandScore = tryO.score;
+          bestCandidate = tryRec;
+          bestA2 = tryA;
+          bestO2 = tryO;
+        }
+      }
+      if (!bestCandidate) break;
+      const candidate = bestCandidate;
+      const a2 = bestA2;
       if (!a2) break;
-      const o2 = generateOptimizer(a2, sKey, stockIds, candidate, optimizerINGS, lockedIds);
+      const o2 = bestO2;
       if (o2.score <= o.score) break; // no aceptar si no mejora el score global
       cur = candidate;
     }
@@ -11395,6 +11992,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }), hasPer && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
+        gap: 6,
+        alignItems: 'center',
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-2xs)",
+        letterSpacing: 'var(--tracking-wide)',
+        textTransform: 'uppercase',
+        color: 'var(--ink-500)'
+      }
+    }, "Modo:"), [['stock', 'Solo bodega', true], ['full', 'Todo el catálogo', false]].map(([k, l, v]) => /*#__PURE__*/React.createElement("button", {
+      key: k,
+      className: 'chip' + (optUseStock === v ? ' on' : ''),
+      onClick: () => setOptUseStock(v)
+    }, l))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
         gap: 0,
         margin: '10px 0 8px',
         border: '1px solid rgba(26,20,16,.1)',
@@ -11442,7 +12058,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
         color: m.ok ? '#3D5A38' : m.w ? '#7A5A10' : 'var(--coral-500)',
         lineHeight: 1
       }
-    }, m.v)))), /*#__PURE__*/React.createElement("div", {
+    }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        color: 'var(--ink-600)',
+        marginBottom: 8
+      }
+    }, "Costo real de bodega (precio ponderado de tus lotes): ", /*#__PURE__*/React.createElement("b", null, "$", realCostPerKg.toLocaleString('es-CO'), "/kg"), " \xB7 cat\xE1logo: $", Math.round(an.cost || 0).toLocaleString('es-CO'), "/kg"), histStats && histStats.n > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        color: 'var(--ink-600)',
+        marginBottom: 8
+      }
+    }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? 's' : '', " real", histStats.n !== 1 ? 'es' : '', histStats.matched ? ' del mismo sustrato' : ' de la especie', " (", histStats.subs.join(', '), ") \u2014 peso ", Math.round(histStats.weight * 100), "% hist\xF3rico / ", Math.round((1 - histStats.weight) * 100), "% f\xF3rmula"), modelAccuracy != null && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        color: 'var(--ink-600)',
+        marginBottom: 8
+      }
+    }, "Precisi\xF3n del modelo para ", sp?.name || 'esta especie', " en tu bodega: \xB1", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? 's' : '', " con EB real registrado)"), similarTrial && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        color: '#7A5A10',
+        background: 'rgba(160,120,40,.08)',
+        border: '1px solid rgba(160,120,40,.2)',
+        borderRadius: 4,
+        padding: '6px 9px',
+        marginBottom: 8
+      }
+    }, "Ya probaste algo parecido (", /*#__PURE__*/React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), " de ingredientes en com\xFAn, \"", similarTrial.name, "\"): dio ", /*#__PURE__*/React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         gap: 6,
@@ -11521,7 +12169,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "Cr\xEDticos (", criticals.length, ")"), criticals.map((item, i) => /*#__PURE__*/React.createElement(PeritoItem, {
       key: i,
       item: item,
-      onApply: applyOptStep
+      onApply: applyOptStep,
+      baseScore: opt.score
     }))), warnings.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 8
@@ -11539,7 +12188,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /*#__PURE__*/React.createElement(PeritoItem, {
       key: i,
       item: item,
-      onApply: applyOptStep
+      onApply: applyOptStep,
+      baseScore: opt.score
     }))), tips.length > 0 && /*#__PURE__*/React.createElement("details", {
       open: true,
       style: {
@@ -11565,7 +12215,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "\u25BE")), tips.map((item, i) => /*#__PURE__*/React.createElement(PeritoItem, {
       key: i,
       item: item,
-      onApply: applyOptStep
+      onApply: applyOptStep,
+      baseScore: opt.score
     }))), infos.map((item, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
@@ -12818,7 +13469,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
         fontWeight: 700,
         color: e.eb >= 100 ? 'var(--accent-olive)' : e.eb >= 70 ? 'var(--ochre-500,#A07828)' : '#C53030'
       }
-    }, "EB ", e.eb, "%"), liveScoreFor(e) > 0 && /*#__PURE__*/React.createElement("span", {
+    }, "EB estimada ", e.eb, "%"), e.ebReal != null && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: 'var(--font-mono)',
+        fontSize: "var(--text-xs)",
+        fontWeight: 700,
+        color: Math.abs(e.ebReal - parseFloat(e.eb)) <= 10 ? 'var(--accent-olive)' : '#C53030'
+      }
+    }, "EB real ", e.ebReal, "% (", e.ebReal >= parseFloat(e.eb) ? '+' : '', Math.round((e.ebReal - parseFloat(e.eb)) * 10) / 10, ")"), liveScoreFor(e) > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: 'var(--font-mono)',
         fontSize: "var(--text-xs)",
@@ -12860,6 +13518,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
         cursor: 'pointer'
       }
     }, "Cargar"), /*#__PURE__*/React.createElement("button", {
+      className: "sebreal",
+      onClick: () => setEbRealFor(e.id),
+      style: {
+        fontFamily: 'var(--font-body)',
+        fontSize: "var(--text-xs)",
+        fontWeight: 700,
+        padding: '3px 8px',
+        background: 'transparent',
+        color: 'var(--ink-700)',
+        border: '1px solid var(--paper-300)',
+        borderRadius: 'var(--r-xs)',
+        cursor: 'pointer'
+      }
+    }, e.ebReal != null ? 'Editar EB real' : '+ EB real'), /*#__PURE__*/React.createElement("button", {
       className: "sdel",
       onClick: () => delR(e.id),
       style: {

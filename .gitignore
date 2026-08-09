@@ -45,6 +45,15 @@ captura-compra.html
 knowledge_base/09_research/source_pdfs/
 
 # ─────────────────────────────────────────────
+# Node / build tooling — reconstruibles (npm install, netlify link, lhci
+# autorun); no versionar binarios/config específicos de máquina ni reportes
+# de una corrida puntual.
+# ─────────────────────────────────────────────
+node_modules/
+.netlify/
+.lighthouseci/
+
+# ─────────────────────────────────────────────
 # Python
 # ─────────────────────────────────────────────
 __pycache__/
