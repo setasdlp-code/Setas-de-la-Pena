@@ -6,7 +6,7 @@
   if (globalThis.__setasRecetarioModelBridgeLoaded) return;
   globalThis.__setasRecetarioModelBridgeLoaded = true;
 
-  const MODEL_VERSION = 'perito-model-v2.1';
+  const MODEL_VERSION = 'perito-model-v2.2';
   const CONF = { low: 'BAJA', medium: 'MEDIA', high: 'ALTA' };
   const VIAB = { approved: 'APROBADA', review: 'REVISAR', hold: 'NO EJECUTAR' };
   let latest = null;
@@ -17,6 +17,7 @@
     catch (_) { return fallback; }
   };
   const num = v => Number.isFinite(Number(v)) ? Number(v) : null;
+  const money = v => num(v) == null ? '—' : '$' + Math.round(Number(v)).toLocaleString('es-CO');
   const sig = recipe => (recipe || []).map(r => `${r.id}:${Number(r.p || r.pct || 0).toFixed(2)}`).sort().join('|');
   const similarity = (a = [], b = []) => {
     const aa = new Set(a.map(x => x.id)), bb = new Set(b.map(x => x.id));
@@ -84,12 +85,29 @@
         mode: model.stockDetail?.mode || 'presence'
       },
       historyCalibration: history,
+      economics: model.economics ? JSON.parse(JSON.stringify(model.economics)) : null,
     };
   };
 
   window.addEventListener('setas-perito-model', e => {
     latest = buildSnapshot(e.detail);
     globalThis.__setasLastPeritoSnapshot = latest;
+  });
+
+  // The economy bridge finishes asynchronously after reading catalog moisture.
+  // Merge that immutable context into the active snapshot before a recipe is saved.
+  window.addEventListener('setas-perito-economy', e => {
+    if (!latest || !e.detail?.economics) return;
+    const signature = sig(e.detail.recipe || []);
+    if (signature && signature !== latest.recipeSignature) return;
+    latest = {
+      ...latest,
+      dimensions: e.detail.model?.dimensions || latest.dimensions,
+      economics: JSON.parse(JSON.stringify(e.detail.economics)),
+      modelVersion: MODEL_VERSION,
+    };
+    globalThis.__setasLastPeritoSnapshot = latest;
+    queueRender();
   });
 
   // Enrich only the setas_v6 recipe array. The React state remains backward
@@ -136,18 +154,19 @@
     if (!s) return `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Modelo: receta legacy · carga y vuelve a guardar para crear snapshot trazable. ${fmtDiff(r)}</div>`;
     const eb = s.uncertainty?.eb || {};
     const hist = s.historyCalibration;
+    const eco = s.economics;
+    const ecoLine = eco ? ` · mezcla ${money(eco.recipeCost?.copPerKg)}/kg${eco.lot?.costPerFreshKgCOP?.low!=null?` · sustrato/kg hongo ${money(eco.lot.costPerFreshKgCOP.low)}–${money(eco.lot.costPerFreshKgCOP.high)}`:''}` : '';
     return `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px 9px;font-family:var(--font-mono);font-size:10px;line-height:1.35">
       <div><b>Viabilidad</b><br>${VIAB[s.dimensions?.safety?.status] || 'REVISAR'}</div>
       <div><b>EB</b><br>${eb.low ?? '—'}–${eb.high ?? '—'}%</div>
       <div><b>Confianza</b><br>${CONF[s.confidence] || 'BAJA'}</div>
-      <div><b>Comparables</b><br>${hist?.n ?? 0}</div>
-      <div style="grid-column:1/-1;color:var(--ink-500)">${fmtDiff(r)} · modelo ${s.modelVersion}${hist?.similarity!=null?` · similitud ${Math.round(hist.similarity*100)}%`:''}</div>
+      <div><b>Economía</b><br>${s.dimensions?.economy?.score ?? '—'}/100</div>
+      <div style="grid-column:1/-1;color:var(--ink-500)">${fmtDiff(r)} · modelo ${s.modelVersion}${hist?.n!=null?` · ${hist.n} comparables`:''}${hist?.similarity!=null?` · similitud ${Math.round(hist.similarity*100)}%`:''}${ecoLine}</div>
     </div>`;
   };
 
   const findCard = (name) => {
     const nodes = [...document.querySelectorAll('div,article,section,tr')].filter(el => (el.textContent || '').includes(name));
-    // Prefer the smallest visible container that also contains a recipe action.
     return nodes.sort((a,b)=>(a.textContent||'').length-(b.textContent||'').length)
       .find(el => /cargar|eliminar|eb real|editar/i.test(el.textContent || '')) || nodes[0] || null;
   };
