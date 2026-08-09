@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 41bf79289180a5393e08bde0e3f621037ab496b32c2565ba5ba3af927d88aa65
+// source-hash: f952e221643f70c5ff35564e08ac81d031ef1ed2d6a37acdd4abf18c736b4fd6
 const {
   useState,
   useMemo,
@@ -578,7 +578,7 @@ const INGS = [
   notes: 'Ficha técnica del usuario: N 0.5–0.7% (incremento leve por remanente de Ca(NO₃)₂), C 44–47%, C:N 65–85:1, celulosa 15–25%, hemicelulosa 10–18%, lignina 35–45%, cenizas 4–8% (intercambio catiónico Ca²⁺/Mg²⁺), pH 6.2–6.8, CE <0.5–0.8 mS/cm (sales lavadas y estabilizadas — mucho más baja que la fibra de coco sin procesar), humedad 10–12%. CRA más alta (4) que fibra de coco por el buferizado; dig levemente mejor (4) por su procesamiento.'
 }, {
   id: 'tusa_maiz',
-  name: 'Tusa de maíz',
+  name: 'Tuza de maíz (Tusa / Zuro)',
   cat: 'base',
   cn: 70,
   n: .7,
@@ -588,9 +588,10 @@ const INGS = [
   ph: 6.5,
   dig: 6,
   role: 'base_carbono',
-  tags: ['Base', 'Local'],
+  tags: ['Base', 'Local', 'Tuza', 'Tusa', 'Zuro', 'Maíz'],
   cost: 1500,
-  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco']
+  cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa', 'p_eryngii'],
+  notes: 'Excelente sustrato base rico en hemicelulosa (C:N 70:1). Muy abundante en la Sabana de Bogotá y Cundinamarca.'
 }, {
   id: 'rastrojo_maiz',
   name: 'Rastrojo de maíz',
@@ -2020,6 +2021,27 @@ const PRESETS = {
     }, {
       id: 'yeso',
       p: 2
+    }]
+  },
+  // Tuza de maíz: tusa_maiz(c45,n0.7)×60 + salvado(c45,n2.8)×25 + borra(c47,n2.0)×8 → C:N≈35.2 ✓
+  'tuza_maiz_sabana': {
+    name: '★ Tuza de Maíz — Estándar Sabana (C:N≈35)',
+    s: 'p_ostreatus_gris',
+    i: [{
+      id: 'tusa_maiz',
+      p: 60
+    }, {
+      id: 'salvado_trigo',
+      p: 25
+    }, {
+      id: 'borra_cafe',
+      p: 8
+    }, {
+      id: 'carbonato_calcio',
+      p: 4
+    }, {
+      id: 'yeso',
+      p: 3
     }]
   },
   // Circular: chips_poda×35 + raices_hidrop×15 + roble×25 + cascarilla_soya×8 + salvado×10 → C:N≈39 ✓

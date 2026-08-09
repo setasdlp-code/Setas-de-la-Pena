@@ -61,6 +61,21 @@ substrates:
     evidence_rating: 3
     notes: "Menor BE que paja de trigo para P. djamor. Alternativa si paja de trigo escasea."
 
+  - id: corn_cob_tuza_maiz
+    name: Tuza de Maíz (Zuro / Olote)
+    type: pasteurized
+    nitrogen_percent: [0.5, 0.8]
+    requires_autoclave: false
+    field_capacity_percent: 65
+    treatment_temp_c: 80
+    treatment_time_min: 60
+    compatible_species: [pleurotus_djamor, pleurotus_ostreatus, pleurotus_eryngii]
+    incompatible_species: []
+    availability: local_cundinamarca
+    cost_estimate_cop_per_kg: 1500
+    evidence_rating: 4
+    notes: "Excelente sustrato base rico en hemicelulosa (C:N 70:1). Muy abundante en la Sabana de Bogotá y Cundinamarca."
+
   - id: coffee_substrate_shiitake_t2
     name: "Subproductos de café — formulación T2 (Shiitake)"
     type: sterilized
