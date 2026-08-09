@@ -15,6 +15,7 @@
 // SetasScoring como única fuente de reglas y añadir trazabilidad sin duplicación.
 import "../perito-scoring-hook.js";
 import "../recetario-model-bridge.js";
+import "../recetario-firestore-snapshot.js";
 import { db, auth } from "./firebase-init.js";
 import { collection, addDoc, serverTimestamp } from "../vendor/firebase/firebase-firestore.js";
 
