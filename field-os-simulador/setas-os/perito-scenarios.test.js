@@ -1,0 +1,123 @@
+'use strict';
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const {
+  normalizeRecipe,
+  recipeDistance,
+  noveltyScore,
+  applyMutation,
+  paretoFront,
+  searchScenarios,
+} = require('./perito-scenarios.js');
+
+const ingredients = [
+  { id: 'sawdust', name: 'Aserrín', role: 'base' },
+  { id: 'bran', name: 'Salvado', role: 'supplement' },
+  { id: 'husk', name: 'Cascarilla', role: 'air' },
+  { id: 'corncob', name: 'Tuza', role: 'air' },
+];
+
+const analyze = (recipe) => {
+  const p = Object.fromEntries(recipe.map(r => [r.id, r.p]));
+  const bran = p.bran || 0;
+  const air = (p.husk || 0) + (p.corncob || 0);
+  const base = p.sawdust || 0;
+  return {
+    bran,
+    air,
+    base,
+    sp: { supplementation_max: 20 },
+    trichoderma: bran > 28,
+    suppP: bran,
+    tot: recipe.reduce((s, r) => s + r.p, 0),
+  };
+};
+
+const score = (an) => {
+  const safety = an.trichoderma ? 35 : Math.max(55, 96 - Math.max(0, an.bran - 20) * 3);
+  const agronomy = Math.max(0, 65 + Math.min(an.bran, 20) * 1.4 + Math.min(an.air, 15) * 0.7 - Math.max(0, an.air - 25));
+  const economy = Math.max(0, 95 - an.bran * 1.4);
+  return {
+    score: Math.round((safety + agronomy + economy) / 3),
+    dimensions: {
+      safety: { score: Math.round(safety), status: safety >= 80 ? 'approved' : 'review' },
+      agronomy: { score: Math.round(agronomy), status: 'acceptable' },
+      economy: { score: Math.round(economy), status: 'acceptable' },
+    },
+    uncertainty: {
+      eb: { confidence: 'medium' },
+      risk: { confidence: 'medium' },
+    },
+    provenance: { score: { type: 'test-model' } },
+  };
+};
+
+test('normaliza receta a 100 sin perder proporciones', () => {
+  const r = normalizeRecipe([{ id: 'a', p: 70 }, { id: 'b', p: 20 }]);
+  assert.ok(Math.abs(r.reduce((s, x) => s + x.p, 0) - 100) < 0.02);
+  assert.ok(r[0].p > r[1].p);
+});
+
+test('distancia y novedad detectan recetas diferentes', () => {
+  const a = [{ id: 'a', p: 80 }, { id: 'b', p: 20 }];
+  const b = [{ id: 'a', p: 50 }, { id: 'c', p: 50 }];
+  assert.ok(recipeDistance(a, b) > 0.4);
+  assert.equal(noveltyScore(a, [{ recipe: a }]), 0);
+  assert.ok(noveltyScore(b, [{ recipe: a }]) > 50);
+});
+
+test('mutación reequilibra el resto de la receta', () => {
+  const r = applyMutation(
+    [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    { type: 'set', id: 'husk', value: 10 }
+  );
+  const m = Object.fromEntries(r.map(x => [x.id, x.p]));
+  assert.ok(Math.abs(r.reduce((s, x) => s + x.p, 0) - 100) < 0.02);
+  assert.equal(Math.round(m.husk), 10);
+  assert.ok(m.sawdust < 90);
+});
+
+test('Pareto conserva tradeoffs reales', () => {
+  const cs = [
+    { id: 'a', evaluation: { dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 60 } } } },
+    { id: 'b', evaluation: { dimensions: { safety: { score: 80 }, agronomy: { score: 90 }, economy: { score: 60 } } } },
+    { id: 'c', evaluation: { dimensions: { safety: { score: 70 }, agronomy: { score: 70 }, economy: { score: 50 } } } },
+  ];
+  const ids = paretoFront(cs).map(x => x.id);
+  assert.deepEqual(ids.sort(), ['a', 'b']);
+});
+
+test('búsqueda explora escenarios completos y devuelve alternativas', () => {
+  const recipe = [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }];
+  const out = searchScenarios({
+    recipe,
+    ingredients,
+    analyze,
+    score,
+    history: [{ recipe }],
+    generations: 3,
+    beamWidth: 12,
+    stepPct: 5,
+    roleCaps: { supplement: 20, air: 20, base: 100 },
+    ingredientCaps: { bran: 20, husk: 20, corncob: 20 },
+  });
+  assert.ok(out.explored > 5);
+  assert.ok(out.pareto.length > 0);
+  assert.ok(out.best.utility >= out.baseline.utility || out.best.evaluation.novelty > 0);
+  assert.ok(out.recommended.length > 0);
+  assert.ok(out.recommended.every(x => x.path.length > 0));
+});
+
+test('modo solo bodega no propone ingredientes fuera de stock', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients,
+    analyze,
+    score,
+    generations: 1,
+    stepPct: 5,
+    useStock: true,
+    stockIds: new Set(['sawdust', 'bran', 'husk']),
+  });
+  assert.equal(out.pareto.some(x => x.recipe.some(r => r.id === 'corncob')), false);
+});
