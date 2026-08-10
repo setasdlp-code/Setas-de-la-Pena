@@ -167,6 +167,9 @@ test('bridge del Formulador carga searchScenarios, filtra compatibilidad y permi
   assert.match(bridge, /data-scenario-action=\"apply\"/);
   assert.match(bridge, /data-scenario-action=\"undo\"/);
   assert.match(bridge, /applyRecipeViaDom/);
+  assert.match(bridge, /rawTotal < 99 \|\| rawTotal > 101/);
+  assert.match(bridge, /after:\s*result\.recipe/);
+  assert.match(bridge, /const liveAutoBtn = autoAdjustButton\(\)/);
   assert.match(bridge, /__bridgeRecompute:\s*true/);
   assert.match(bridge, /historyCalibrationFor\(context\.sKey/);
   assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
