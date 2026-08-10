@@ -264,7 +264,6 @@ import './perito-scenarios.js';
 
       const beforeMap = Object.fromEntries(current.map(r => [r.id, r.p]));
       const targetMap = Object.fromEntries(targetRecipe.map(r => [r.id, Number(r.p) || 0]));
-      const reverse = reverseNames(names);
       const locked = lockedIdsFromDom(names);
 
       for (const id of locked) {
@@ -318,7 +317,8 @@ import './perito-scenarios.js';
     } catch (err) {
       return { ok: false, message: err?.message || 'No se pudo aplicar el escenario.' };
     } finally {
-      if (autoWasOn && autoBtn && !autoBtn.classList.contains('on')) { autoBtn.click(); await waitFrame(); }
+      const liveAutoBtn = autoAdjustButton();
+      if (autoWasOn && liveAutoBtn && !liveAutoBtn.classList.contains('on')) { liveAutoBtn.click(); await waitFrame(); }
       await restoreCatalog(filters);
     }
   };
@@ -347,7 +347,7 @@ import './perito-scenarios.js';
       setStatus(result.message, 'error');
       return;
     }
-    lastApplied = { before, after: scenario.recipe, type: scenario.type };
+    lastApplied = { before, after: result.recipe, type: scenario.type };
     applying = false;
     setStatus(`${TYPE_LABEL[scenario.type] || 'Escenario'} aplicado.`, 'ok');
     await waitFrame();
@@ -405,7 +405,7 @@ import './perito-scenarios.js';
           <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500);margin-top:3px">Ruta: ${c.path.map(x => esc(x.label || `${x.id} ${x.delta || x.value || ''}`)).join(' → ')}</div>
           <div style="display:flex;justify-content:flex-end;margin-top:7px"><button data-scenario-action="apply" data-scenario-id="${esc(c.id)}" style="cursor:pointer;border:1px solid ${experimental ? 'var(--accent-terracotta)' : 'var(--accent-olive)'};background:${experimental ? 'transparent' : 'var(--accent-olive)'};color:${experimental ? 'var(--accent-terracotta)' : 'var(--paper-0)'};padding:6px 10px;border-radius:4px;font-family:var(--font-mono);font-size:10px;font-weight:700">${experimental ? 'Probar escenario' : 'Aplicar escenario'}</button></div>
         </article>`;
-      }).join('') : '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-500)">No apareció una alternativa viable que domine suficientemente a la receta actual bajo las restricciones activas.</div>'}
+      }).join('') : `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-500)">${esc(result.blockedReason || 'No apareció una alternativa viable que domine suficientemente a la receta actual bajo las restricciones activas.')}</div>`}
       <div id="perito-scenarios-status" style="min-height:14px;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-500)"></div>
       <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Escenarios calculados con el mismo analyze() y SetasScoring del Formulador. Se respetan ingredientes fijados y compatibilidad por especie. Experimental = propuesta para ensayo, no rendimiento garantizado.</div>`;
 
@@ -427,6 +427,22 @@ import './perito-scenarios.js';
     const stockIds = activeStockIds(lots);
     const history = historyFor(sKey);
     const names = catalogNames(ings);
+    const rawTotal = detail.recipe.reduce((sum, r) => sum + (Number(r.p) || 0), 0);
+    if (rawTotal < 99 || rawTotal > 101) {
+      const blocked = {
+        baseline: { recipe: detail.recipe, evaluation: { dimensions: {} } },
+        explored: 0,
+        pareto: [],
+        recommended: [],
+        blockedReason: `La receta suma ${rawTotal.toFixed(1)}%. Llévala a 100% (±1%) antes de explorar escenarios para no normalizar cambios de forma implícita.`,
+      };
+      lastResult = blocked;
+      catalogCache = names;
+      globalThis.__setasLastScenarios = blocked;
+      if (!render(blocked, names)) requestAnimationFrame(() => render(blocked, names));
+      return;
+    }
+
     const lockedIds = lockedIdsFromDom(names);
     const compatibleIngs = ings.filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(sKey));
     const context = {
