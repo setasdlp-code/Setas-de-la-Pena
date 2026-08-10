@@ -164,6 +164,9 @@ test('bridge del Formulador carga searchScenarios, filtra compatibilidad y permi
   assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);
   assert.match(bridge, /g\.cs\.includes\(sKey\)/);
   assert.match(bridge, /lockedIdsFromDom/);
+  assert.match(bridge, /aria-label\^=\"Porcentaje de /);
+  assert.match(bridge, /Agregar \$\{name\} a la receta/);
+  assert.match(bridge, /Quitar \$\{name\} de la receta/);
   assert.match(bridge, /data-scenario-action=\"apply\"/);
   assert.match(bridge, /data-scenario-action=\"undo\"/);
   assert.match(bridge, /applyRecipeViaDom/);
