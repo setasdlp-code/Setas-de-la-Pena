@@ -1,6 +1,8 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   normalizeRecipe,
   recipeDistance,
@@ -120,4 +122,14 @@ test('modo solo bodega no propone ingredientes fuera de stock', () => {
     stockIds: new Set(['sawdust', 'bran', 'husk']),
   });
   assert.equal(out.pareto.some(x => x.recipe.some(r => r.id === 'corncob')), false);
+});
+
+test('bridge del Formulador carga searchScenarios y respeta setas_workmode', () => {
+  const bridge = fs.readFileSync(path.join(__dirname, 'perito-scenarios-bridge.js'), 'utf8');
+  const hook = fs.readFileSync(path.join(__dirname, 'perito-scoring-hook.js'), 'utf8');
+  assert.match(bridge, /SetasPeritoScenarios\.searchScenarios/);
+  assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);
+  assert.match(bridge, /__bridgeRecompute:\s*true/);
+  assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
+  assert.match(hook, /import '\.\/perito-scenarios-bridge\.js';/);
 });
