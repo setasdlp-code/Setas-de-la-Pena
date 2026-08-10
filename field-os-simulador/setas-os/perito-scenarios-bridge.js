@@ -54,22 +54,18 @@ import './perito-scenarios.js';
 
   const catalogNames = ingredients => Object.fromEntries((ingredients || []).map(g => [g.id, g.name || g.id]));
 
-  const activeStockIds = () => new Set(
-    readJson('sdp_lotes', [])
-      .filter(l => l?.activo && Number(l.cantidadKgDisponible) > 0 && l.ingredienteId)
-      .map(l => l.ingredienteId)
-  );
+  const activeLots = () => readJson('sdp_lotes', [])
+    .filter(l => l?.activo && Number(l.cantidadKgDisponible) > 0 && l.ingredienteId);
+
+  const activeStockIds = lots => new Set((lots || activeLots()).map(l => l.ingredienteId));
 
   const historyFor = sKey => readJson('setas_v6', [])
     .filter(r => r?.sKey === sKey && Array.isArray(r.recipe))
     .map(r => ({ recipe: r.recipe }));
 
   const useStockMode = () => {
-    try {
-      const raw = localStorage.getItem('setas_opt_use_stock');
-      if (raw == null) return true;
-      return raw === 'true' || raw === '1';
-    } catch (_) { return true; }
+    try { return localStorage.getItem('setas_workmode') !== 'catalogo'; }
+    catch (_) { return true; }
   };
 
   const roleCaps = an => ({
@@ -102,7 +98,15 @@ import './perito-scenarios.js';
     if (typeof calcTreatmentFn === 'function' && context.sKey) {
       try { treatment = calcTreatmentFn(analysis, context.sKey) || treatment; } catch (_) {}
     }
-    return scoring.scoreRecipe(analysis, {
+    let scoredAnalysis = analysis;
+    if (globalThis.SetasEconomy && Array.isArray(context.recipe)) {
+      try {
+        const prices = globalThis.SetasEconomy.priceMapFromLots(activeLots());
+        const real = globalThis.SetasEconomy.recipeCostPerKgAsFormulated(context.recipe, prices);
+        if (real.copPerKg != null) scoredAnalysis = { ...analysis, cost: real.copPerKg };
+      } catch (_) {}
+    }
+    return scoring.scoreRecipe(scoredAnalysis, {
       ...context,
       treatment,
       criticals: sev.criticals,
@@ -136,9 +140,8 @@ import './perito-scenarios.js';
       box = document.createElement('section');
       box.id = 'perito-scenarios-v1';
       box.style.cssText = 'margin:12px 0 14px;padding:12px 14px;border:1px solid rgba(26,20,16,.14);border-radius:6px;background:var(--paper-50);font-family:var(--font-body);';
-      const economy = document.getElementById('perito-economy-v1');
-      const anchor = economy?.parentElement || document.getElementById('perito-model-v2');
-      if (anchor?.parentElement === root) root.insertBefore(box, anchor.nextSibling);
+      const model = document.getElementById('perito-model-v2');
+      if (model?.parentElement === root) root.insertBefore(box, model.nextSibling);
       else root.insertBefore(box, root.firstChild?.nextSibling || null);
     }
     const rows = result.recommended || [];
@@ -168,14 +171,14 @@ import './perito-scenarios.js';
     const runtime = resolveRuntime(detail.an);
     if (!runtime) return;
     const { analyzeFn, ings, sKey } = runtime;
-    const stockIds = activeStockIds();
+    const lots = activeLots();
+    const stockIds = activeStockIds(lots);
     const history = historyFor(sKey);
     const context = {
       sKey,
       treatment: detail.treatment || null,
       stockIds,
       historyCalibration: detail.baseline?.calibration?.history || null,
-      blendedEB: detail.baseline?.calibration?.source === 'preblended' ? detail.baseline.calibration.eb : null,
     };
     const analyzeAdapter = recipe => analyzeFn(recipe, sKey, ings);
     const scoreAdapter = (analysis, ctx) => scoreCandidate(analysis, { ...context, ...ctx, sKey });
