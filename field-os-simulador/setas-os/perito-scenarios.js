@@ -36,44 +36,71 @@
     const map = recipeMap(recipe);
     const id = mutation.id;
     if (!id) return normalizeRecipe(recipe);
+    const locked = new Set(mutation.lockedIds || []);
+    if (locked.has(id)) return normalizeRecipe(recipe);
+
     const current = map[id] || 0;
-    const target = mutation.type === 'set'
+    const requested = mutation.type === 'set'
       ? Number(mutation.value)
       : current + Number(mutation.delta || 0);
+    const lockedTotal = Object.keys(map)
+      .filter(k => k !== id && locked.has(k))
+      .reduce((s, k) => s + map[k], 0);
     const cap = Number.isFinite(caps[id]) ? caps[id] : 100;
-    map[id] = clamp(target, 0, cap);
+    const target = clamp(requested, 0, Math.min(cap, Math.max(0, 100 - lockedTotal)));
+    map[id] = target;
 
-    const locked = new Set(mutation.lockedIds || []);
-    const fixed = map[id];
     const otherIds = Object.keys(map).filter(k => k !== id);
     const adjustable = otherIds.filter(k => !locked.has(k));
-    const lockedTotal = otherIds.filter(k => locked.has(k)).reduce((s, k) => s + map[k], 0);
-    const room = Math.max(0, 100 - fixed - lockedTotal);
+    const room = Math.max(0, 100 - target - lockedTotal);
     const adjustableTotal = adjustable.reduce((s, k) => s + map[k], 0);
-    adjustable.forEach(k => { map[k] = adjustableTotal > 0 ? map[k] / adjustableTotal * room : 0; });
 
-    if (!(id in recipeMap(recipe)) && fixed > 0 && otherIds.length === 0) map[id] = 100;
+    if (!adjustable.length && room > 0.01) return normalizeRecipe(recipe);
+    adjustable.forEach(k => {
+      map[k] = adjustableTotal > 0
+        ? map[k] / adjustableTotal * room
+        : room / Math.max(1, adjustable.length);
+    });
+
     return normalizeRecipe(Object.entries(map).map(([rid, p]) => ({ id: rid, p })));
   };
 
-  const makeMutations = ({ recipe = [], ingredients = [], stepPct = 4, useStock = false, stockIds = new Set(), roleCaps = {} } = {}) => {
+  const makeMutations = ({
+    recipe = [],
+    ingredients = [],
+    stepPct = 4,
+    useStock = false,
+    stockIds = new Set(),
+    roleCaps = {},
+    lockedIds = new Set(),
+  } = {}) => {
     const current = recipeMap(recipe);
     const out = [];
     const deltas = [-stepPct, stepPct];
+    const locked = lockedIds instanceof Set ? lockedIds : new Set(lockedIds || []);
 
     Object.keys(current).forEach(id => {
+      if (locked.has(id)) return;
       deltas.forEach(delta => {
         if (current[id] + delta <= 0) return;
-        out.push({ type: 'delta', id, delta, label: `${delta > 0 ? '+' : ''}${delta}% ${id}` });
+        out.push({
+          type: 'delta', id, delta,
+          lockedIds: [...locked],
+          label: `${delta > 0 ? '+' : ''}${delta}% ${id}`,
+        });
       });
     });
 
     ingredients.forEach(g => {
-      if (!g?.id || current[g.id] > 0) return;
+      if (!g?.id || current[g.id] > 0 || locked.has(g.id)) return;
       if (useStock && stockIds.size && !stockIds.has(g.id)) return;
       const cap = Number.isFinite(roleCaps[g.role]) ? roleCaps[g.role] : 20;
       const value = Math.min(stepPct * 2, cap);
-      if (value > 0) out.push({ type: 'set', id: g.id, value, label: `Añadir ${value}% ${g.name || g.id}` });
+      if (value > 0) out.push({
+        type: 'set', id: g.id, value,
+        lockedIds: [...locked],
+        label: `Añadir ${value}% ${g.name || g.id}`,
+      });
     });
     return out;
   };
@@ -156,9 +183,11 @@
     stockIds = new Set(),
     roleCaps = {},
     ingredientCaps = {},
+    lockedIds = new Set(),
     weights = {},
   }) => {
     const baseRecipe = normalizeRecipe(recipe);
+    const locked = lockedIds instanceof Set ? lockedIds : new Set(lockedIds || []);
     const baseline = {
       id: 'baseline',
       recipe: baseRecipe,
@@ -174,7 +203,15 @@
     for (let gen = 0; gen < generations; gen++) {
       const next = [];
       beam.forEach(parent => {
-        const mutations = makeMutations({ recipe: parent.recipe, ingredients, stepPct, useStock, stockIds, roleCaps });
+        const mutations = makeMutations({
+          recipe: parent.recipe,
+          ingredients,
+          stepPct,
+          useStock,
+          stockIds,
+          roleCaps,
+          lockedIds: locked,
+        });
         mutations.forEach(mutation => {
           const candidateRecipe = applyMutation(parent.recipe, mutation, ingredientCaps);
           const key = JSON.stringify(recipeMap(candidateRecipe));
@@ -211,6 +248,7 @@
       pareto,
       recommended,
       best: pareto[0] || baseline,
+      lockedIds: [...locked],
     };
   };
 
