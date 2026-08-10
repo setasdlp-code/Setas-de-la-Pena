@@ -157,23 +157,32 @@ test('modo solo bodega no propone ingredientes fuera de stock', () => {
   assert.equal(out.pareto.some(x => x.recipe.some(r => r.id === 'corncob')), false);
 });
 
-test('bridge del Formulador carga searchScenarios, filtra compatibilidad y permite aplicar/deshacer', () => {
+test('Perito consume SetasFormulatorAPI y no conoce controles internos del Formulador', () => {
   const bridge = fs.readFileSync(path.join(__dirname, 'perito-scenarios-bridge.js'), 'utf8');
+  const formulatorApi = fs.readFileSync(path.join(__dirname, 'formulator-api.js'), 'utf8');
   const hook = fs.readFileSync(path.join(__dirname, 'perito-scoring-hook.js'), 'utf8');
+
+  assert.match(bridge, /import '\.\/formulator-api\.js';/);
+  assert.match(bridge, /SetasFormulatorAPI/);
+  assert.match(bridge, /formulator\.applyRecipe/);
+  assert.match(bridge, /formulator\.undoRecipe/);
+  assert.match(bridge, /formulator\.getState/);
+  assert.doesNotMatch(bridge, /applyRecipeViaDom/);
+  assert.doesNotMatch(bridge, /aria-label\^=\"Porcentaje de /);
+  assert.doesNotMatch(bridge, /Agregar \$\{name\} a la receta/);
+  assert.doesNotMatch(bridge, /Quitar \$\{name\} de la receta/);
+
+  assert.match(formulatorApi, /globalThis\.SetasFormulatorAPI/);
+  assert.match(formulatorApi, /registerNativeAdapter/);
+  assert.match(formulatorApi, /const applyRecipe = async/);
+  assert.match(formulatorApi, /const undoRecipe = async/);
+  assert.match(formulatorApi, /adapterType/);
+  assert.match(formulatorApi, /mutateDom/); // fallback encapsulado, no contrato del Perito
+
   assert.match(bridge, /SetasPeritoScenarios\.searchScenarios/);
   assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);
   assert.match(bridge, /g\.cs\.includes\(sKey\)/);
-  assert.match(bridge, /lockedIdsFromDom/);
-  assert.match(bridge, /aria-label\^=\"Porcentaje de /);
-  assert.match(bridge, /Agregar \$\{name\} a la receta/);
-  assert.match(bridge, /Quitar \$\{name\} de la receta/);
-  assert.match(bridge, /data-scenario-action=\"apply\"/);
-  assert.match(bridge, /data-scenario-action=\"undo\"/);
-  assert.match(bridge, /applyRecipeViaDom/);
   assert.match(bridge, /rawTotal < 99 \|\| rawTotal > 101/);
-  assert.match(bridge, /Llévala a 100%/);
-  assert.match(bridge, /after:\s*result\.recipe/);
-  assert.match(bridge, /const liveAutoBtn = autoAdjustButton\(\)/);
   assert.match(bridge, /__bridgeRecompute:\s*true/);
   assert.match(bridge, /historyCalibrationFor\(context\.sKey/);
   assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
