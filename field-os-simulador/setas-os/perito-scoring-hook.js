@@ -1,5 +1,6 @@
 'use strict';
 import './perito-ui-bridge.js';
+import './perito-scenarios-bridge.js';
 
 (function attachPeritoScoringHook() {
   let lastApi = null;
