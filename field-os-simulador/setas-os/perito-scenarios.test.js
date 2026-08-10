@@ -79,6 +79,17 @@ test('mutación reequilibra el resto de la receta', () => {
   assert.ok(m.sawdust < 90);
 });
 
+test('mutación preserva ingredientes fijados', () => {
+  const r = applyMutation(
+    [{ id: 'sawdust', p: 70 }, { id: 'bran', p: 20 }, { id: 'husk', p: 10 }],
+    { type: 'set', id: 'corncob', value: 8, lockedIds: ['bran'] },
+    { bran: 20, corncob: 20 }
+  );
+  const m = Object.fromEntries(r.map(x => [x.id, x.p]));
+  assert.ok(Math.abs(m.bran - 20) < 0.05);
+  assert.ok(Math.abs(r.reduce((s, x) => s + x.p, 0) - 100) < 0.05);
+});
+
 test('Pareto conserva tradeoffs reales', () => {
   const cs = [
     { id: 'a', evaluation: { dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 60 } } } },
@@ -110,6 +121,28 @@ test('búsqueda explora escenarios completos y devuelve alternativas', () => {
   assert.ok(out.recommended.every(x => x.path.length > 0));
 });
 
+test('búsqueda completa conserva porcentaje de ingrediente fijado', () => {
+  const recipe = [{ id: 'sawdust', p: 70 }, { id: 'bran', p: 20 }, { id: 'husk', p: 10 }];
+  const out = searchScenarios({
+    recipe,
+    ingredients,
+    analyze,
+    score,
+    generations: 2,
+    beamWidth: 10,
+    stepPct: 4,
+    lockedIds: new Set(['bran']),
+    roleCaps: { supplement: 20, air: 20, base: 100 },
+    ingredientCaps: { bran: 20, husk: 20, corncob: 20 },
+  });
+  assert.deepEqual(out.lockedIds, ['bran']);
+  for (const c of out.pareto) {
+    const bran = c.recipe.find(r => r.id === 'bran');
+    assert.ok(bran);
+    assert.ok(Math.abs(bran.p - 20) < 0.05);
+  }
+});
+
 test('modo solo bodega no propone ingredientes fuera de stock', () => {
   const out = searchScenarios({
     recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
@@ -124,12 +157,18 @@ test('modo solo bodega no propone ingredientes fuera de stock', () => {
   assert.equal(out.pareto.some(x => x.recipe.some(r => r.id === 'corncob')), false);
 });
 
-test('bridge del Formulador carga searchScenarios y respeta setas_workmode', () => {
+test('bridge del Formulador carga searchScenarios, filtra compatibilidad y permite aplicar/deshacer', () => {
   const bridge = fs.readFileSync(path.join(__dirname, 'perito-scenarios-bridge.js'), 'utf8');
   const hook = fs.readFileSync(path.join(__dirname, 'perito-scoring-hook.js'), 'utf8');
   assert.match(bridge, /SetasPeritoScenarios\.searchScenarios/);
   assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);
+  assert.match(bridge, /g\.cs\.includes\(sKey\)/);
+  assert.match(bridge, /lockedIdsFromDom/);
+  assert.match(bridge, /data-scenario-action=\"apply\"/);
+  assert.match(bridge, /data-scenario-action=\"undo\"/);
+  assert.match(bridge, /applyRecipeViaDom/);
   assert.match(bridge, /__bridgeRecompute:\s*true/);
+  assert.match(bridge, /historyCalibrationFor\(context\.sKey/);
   assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
   assert.match(hook, /import '\.\/perito-scenarios-bridge\.js';/);
 });
