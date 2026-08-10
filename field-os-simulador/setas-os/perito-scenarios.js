@@ -203,15 +203,7 @@
     for (let gen = 0; gen < generations; gen++) {
       const next = [];
       beam.forEach(parent => {
-        const mutations = makeMutations({
-          recipe: parent.recipe,
-          ingredients,
-          stepPct,
-          useStock,
-          stockIds,
-          roleCaps,
-          lockedIds: locked,
-        });
+        const mutations = makeMutations({ recipe: parent.recipe, ingredients, stepPct, useStock, stockIds, roleCaps, lockedIds: locked });
         mutations.forEach(mutation => {
           const candidateRecipe = applyMutation(parent.recipe, mutation, ingredientCaps);
           const key = JSON.stringify(recipeMap(candidateRecipe));
