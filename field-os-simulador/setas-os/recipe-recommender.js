@@ -131,7 +131,7 @@ function tryBuildRecipe(available, species, allIngredients) {
 /**
  * PDF Export: Generate printable PDF of recipe
  */
-function generatePDF(recipe, species, allIngredients, totalKg) {
+function generatePDF(recipe, species, allIngredients, totalKg, bagSizeKg = 1.5) {
   // Uses html2pdf library — must be loaded separately
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 800px; padding: 20px; color: #333;">
@@ -156,7 +156,7 @@ function generatePDF(recipe, species, allIngredients, totalKg) {
           ${recipe.map(item => {
             const ing = allIngredients.find(i => i.id === item.id);
             if (!ing) return '';
-            const kgPerBag = (item.pct / 100) * 1.5; // assuming 1.5kg per bag
+            const kgPerBag = (item.pct / 100) * bagSizeKg;
             const kgTotal = kgPerBag * totalKg;
             return `
               <tr style="border: 1px solid #ddd;">
