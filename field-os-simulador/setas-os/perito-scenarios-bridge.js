@@ -93,22 +93,28 @@ import './formulator-api.js';
   };
 
   const roleCaps = an => ({
-    supplement: Number(an?.sp?.supplementation_max) || 20,
-    suplemento: Number(an?.sp?.supplementation_max) || 20,
-    mineral: 8,
-    air: 30,
+    base_carbono: 100,
+    suplemento_n: Number(an?.sp?.supplementation_max) || 20,
+    suplemento_medio: Number(an?.sp?.supplementation_max) || 20,
+    aditivo_ph: 8,
+    aditivo_estructura: 15,
+    aditivo_micronutriente: 5,
     aireador: 30,
-    base: 100,
   });
 
   const ingredientCaps = (ings, an) => {
     const caps = {};
     const suppMax = Number(an?.sp?.supplementation_max) || 20;
     (ings || []).forEach(g => {
-      const role = String(g.role || '').toLowerCase();
-      if (role.includes('supp') || role.includes('supl')) caps[g.id] = suppMax;
-      else if (role.includes('mineral')) caps[g.id] = 8;
-      else if (role.includes('air') || role.includes('aire')) caps[g.id] = 30;
+      switch (g.role) {
+        case 'suplemento_n':
+        case 'suplemento_medio': caps[g.id] = suppMax; break;
+        case 'aditivo_ph': caps[g.id] = 8; break;
+        case 'aditivo_estructura': caps[g.id] = 15; break;
+        case 'aditivo_micronutriente': caps[g.id] = 5; break;
+        case 'aireador': caps[g.id] = 30; break;
+        default: break;
+      }
     });
     return caps;
   };
