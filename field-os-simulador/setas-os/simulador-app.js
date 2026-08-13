@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b3dc1578706a3582e804c20b77b1a7ec02893788b65f3fef86ea24d714c2ba00
+// source-hash: 1e41c57a230e30e22dc8c9692aa68f7186bed5db5d4222bab4102ff3d8bc4bad
 const {
   useState,
   useMemo,
@@ -6053,7 +6053,7 @@ function App(props) {
   const saveR = () => {
     const nm = saveName.trim();
     if (!nm || !recipe.length || !balanced) return;
-    const trSave = an ? calcTreatment(an, sKey) : null;
+    const trSave = an ? calcTreatment(an, sKey, SPP) : null;
     const e = {
       id: Date.now(),
       name: nm,
@@ -6211,7 +6211,7 @@ function App(props) {
     return null;
   }, [sKey, invLotes, optimizerINGS]);
   const dg = useMemo(() => diagnose(an, sKey), [an, sKey]);
-  const tr = useMemo(() => calcTreatment(an, sKey), [an, sKey]);
+  const tr = useMemo(() => calcTreatment(an, sKey, SPP), [an, sKey]);
   const bd = useMemo(() => showBatch ? calcBatch(recipe, numBags, kgBag, hObj, spawnCost, effectiveINGS, an?.dynSpawn) : null, [recipe, numBags, kgBag, showBatch, hObj, spawnCost, effectiveINGS, an?.dynSpawn]);
   // ── Ficha: rows precalculados para botón Ejecutar Lote ──
   const prodRows = useMemo(() => {
@@ -6326,7 +6326,7 @@ function App(props) {
     if (!e?.recipe?.length) return 0;
     const a2 = analyze(e.recipe, e.sKey, effectiveINGS);
     if (!a2) return 0;
-    const tr2 = calcTreatment(a2, e.sKey);
+    const tr2 = calcTreatment(a2, e.sKey, SPP);
     // stockIds debe pasarse igual que en el Perito (línea ~768) — de lo contrario
     // scoreStock cae siempre en el guard "sin restricción" y la misma receta
     // guardada muestra un score distinto en el Recetario que al abrirla en el Formulador.
@@ -6560,7 +6560,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const buildBitNuevoForm = () => {
     const today = new Date().toISOString().split('T')[0];
     const sp = SPP[sKey];
-    const tr = an ? calcTreatment(an, sKey) : null;
+    const tr = an ? calcTreatment(an, sKey, SPP) : null;
     const SC = {
       p_ostreatus_gris: 'OST',
       p_ostreatus_blanco: 'OBL',
@@ -7121,7 +7121,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR = () => {
     if (!recipe.length) return;
-    const t = calcTreatment(an, sKey);
+    const t = calcTreatment(an, sKey, SPP);
     const batch = calcBatch(recipe, numBags, kgBag, 67, 12000, INGS, an?.dynSpawn);
     let txt = `SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r => {
@@ -10635,7 +10635,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           placeholder: 'ej. Ostra gris — ajuste C:N lote 12',
           confirmLabel: 'Guardar prueba',
           onSubmit: nm => {
-            const trSave = calcTreatment(an, sKey);
+            const trSave = calcTreatment(an, sKey, SPP);
             const e = {
               id: Date.now(),
               name: nm,
@@ -12651,7 +12651,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "Producir"))), /*#__PURE__*/React.createElement("div", {
       className: "opt-metrics"
     }, (() => {
-      const tOpt = calcTreatment(r.an, optTarget);
+      const tOpt = calcTreatment(r.an, optTarget, SPP);
       const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
       const totalCost = Math.round(r.an.cost) + eCost;
       return [{
@@ -12739,7 +12739,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         color: 'var(--slate-700,var(--accent-blue-grey))'
       }
     }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : 'stock insuficiente'))), r.an.cost > 0 && (() => {
-      const tOpt2 = calcTreatment(r.an, optTarget);
+      const tOpt2 = calcTreatment(r.an, optTarget, SPP);
       const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
       const bags = [{
         nom: 'Bolsa 20×50',
@@ -12797,7 +12797,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }, "COP / bolsa"));
       }));
     })(), (() => {
-      const t = calcTreatment(r.an, optTarget);
+      const t = calcTreatment(r.an, optTarget, SPP);
       if (!t) return null;
       const tc = t.col === 'autoclave' ? {
         bg: '#FCEEE9',
@@ -13914,7 +13914,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       moisture: prodMoist[g.id]
     } : g);
     const pb = calcBatch(recipe, prodBags || 1, prodKg || 1.5, prodH || 67, spawnCost, prodIngs, an?.dynSpawn);
-    const ptr = calcTreatment(an, sKey);
+    const ptr = calcTreatment(an, sKey, SPP);
     const psch = calcSchedule(sKey, prodDate, an?.eb);
     const spn = an?.dynSpawn || ptr?.spawn || 8;
     if (!pb) return null;
@@ -14650,7 +14650,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const costIngKg = e.cost > 0 ? e.cost : a2 ? Math.round(a2.cost) : 0;
       // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
       const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
-        const tr2 = a2 ? calcTreatment(a2, e.sKey) : null;
+        const tr2 = a2 ? calcTreatment(a2, e.sKey, SPP) : null;
         const col = tr2?.col || (['shiitake', 'lions_mane', 'reishi', 'nameko'].includes(e.sKey) ? 'autoclave' : 'thermal');
         return energyCostPerKgSeco(col, e.sKey);
       })();

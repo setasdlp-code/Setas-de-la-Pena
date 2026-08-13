@@ -1697,7 +1697,7 @@ function App(props){
 
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced) return;
-    const trSave=an?calcTreatment(an,sKey):null;
+    const trSave=an?calcTreatment(an, sKey, SPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
@@ -1767,7 +1767,7 @@ function App(props){
   const balMsg=balanced?'':massBalanceMsg(an);
   const optimalAn=useMemo(()=>{try{const r=runAutoOptimizer(sKey,invLotes,0,optimizerINGS,false);if(r.results?.length) return analyze(r.results[0].recipe,sKey,optimizerINGS);}catch(e){}return null;},[sKey,invLotes,optimizerINGS]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
-  const tr=useMemo(()=>calcTreatment(an,sKey),[an,sKey]);
+  const tr=useMemo(()=>calcTreatment(an, sKey, SPP),[an,sKey]);
   const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn]);
   // ── Ficha: rows precalculados para botón Ejecutar Lote ──
   const prodRows=useMemo(()=>{
@@ -1856,7 +1856,7 @@ function App(props){
     if(!e?.recipe?.length) return 0;
     const a2=analyze(e.recipe,e.sKey,effectiveINGS);
     if(!a2) return 0;
-    const tr2=calcTreatment(a2,e.sKey);
+    const tr2=calcTreatment(a2, e.sKey, SPP);
     // stockIds debe pasarse igual que en el Perito (línea ~768) — de lo contrario
     // scoreStock cae siempre en el guard "sin restricción" y la misma receta
     // guardada muestra un score distinto en el Recetario que al abrirla en el Formulador.
@@ -2025,7 +2025,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // ── Bitácora helpers ──
   const buildBitNuevoForm=()=>{
     const today=new Date().toISOString().split('T')[0];
-    const sp=SPP[sKey];const tr=an?calcTreatment(an,sKey):null;
+    const sp=SPP[sKey];const tr=an?calcTreatment(an, sKey, SPP):null;
     const SC={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
     const sppCode=SC[sKey]||'EXP';const dc=today.replace(/-/g,'').slice(2);
     const cnt=bitLotes.length+1;const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
@@ -2269,7 +2269,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR=()=>{
     if(!recipe.length) return;
-    const t=calcTreatment(an,sKey);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
+    const t=calcTreatment(an, sKey, SPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
     let txt=`SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r=>{const g=INGS.find(i=>i.id===r.id);if(g) txt+=`  ${g.name.padEnd(32)}${r.p}%\n`;});
     if(an) txt+=`\nANÁLISIS:\n  C:N ${an.cn.toFixed(1)}:1  ·  N ${an.avgN.toFixed(2)}%  ·  EB ${an.eb.toFixed(0)}%  ·  $${Math.round(an.cost)}/kg\n`;
@@ -3302,7 +3302,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an,sKey);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -3883,7 +3883,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       </div>
                                       <div className="opt-metrics">
                                         {(()=>{
-                                          const tOpt=calcTreatment(r.an,optTarget);
+                                          const tOpt=calcTreatment(r.an, optTarget, SPP);
                                           const eCost=tOpt?.energy?.cop_per_kg_seco||0;
                                           const totalCost=Math.round(r.an.cost)+eCost;
                                           return[
@@ -3915,7 +3915,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         )}
                                       </div>
                                       {r.an.cost>0&&(()=>{
-                                        const tOpt2=calcTreatment(r.an,optTarget);
+                                        const tOpt2=calcTreatment(r.an, optTarget, SPP);
                                         const eCost2=tOpt2?.energy?.cop_per_kg_seco||0;
                                         const bags=[
                                           {nom:'Bolsa 20×50',kgH:1.8},
@@ -3940,7 +3940,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         );
                                       })()}
                                       {(()=>{
-                                        const t=calcTreatment(r.an,optTarget);
+                                        const t=calcTreatment(r.an, optTarget, SPP);
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 15 PSI'}
@@ -4285,7 +4285,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               // Override de humedad por insumo: usa el valor real medido del lote del día
               const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
               const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn);
-              const ptr=calcTreatment(an,sKey);
+              const ptr=calcTreatment(an, sKey, SPP);
               const psch=calcSchedule(sKey,prodDate,an?.eb);
               const spn=an?.dynSpawn||ptr?.spawn||8;
               if(!pb) return null;
@@ -4535,7 +4535,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
                         // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
                         const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
-                          const tr2=a2?calcTreatment(a2,e.sKey):null;
+                          const tr2=a2?calcTreatment(a2, e.sKey, SPP):null;
                           const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
                           return energyCostPerKgSeco(col,e.sKey);
                         })();
