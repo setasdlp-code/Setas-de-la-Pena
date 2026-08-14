@@ -870,6 +870,8 @@
 .sim-root .tle.inoculation::before{ background:var(--coral-500); }
 .sim-root .tle.harvest{ border-color:var(--moss-300); }
 .sim-root .tle.harvest::before{ border-color:var(--moss-500); background:var(--moss-500); }
+.sim-root .tle.warning{ border-color:var(--status-attention, #C5562D); background:var(--status-attention-bg, #FCEEE9); }
+.sim-root .tle.warning::before{ border-color:var(--status-attention, #C5562D); background:var(--status-attention, #C5562D); }
 .sim-root .tle-dt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-500); margin-bottom:3px; }
 .sim-root .tle-t{ font-size:14px; font-weight:700; color:var(--ink-900); }
 .sim-root .tle-d{ font-size:13px; color:var(--ink-500); margin-top:3px; font-style:italic; }

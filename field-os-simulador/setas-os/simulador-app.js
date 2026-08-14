@@ -649,10 +649,10 @@ const INGS = [
   ph: 6.0,
   dig: 5,
   role: 'base_carbono',
-  tags: ['Base', 'Local', 'Precio no confirmado — actualizar en Precios'],
-  cost: 0,
+  tags: ['Base', 'Local', 'Tenjo'],
+  cost: 400,
   cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa'],
-  notes: 'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar.'
+  notes: 'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar. Costo $400/kg procesado (recolección + molienda) — evita distorsión del optimizador de costos al no tratarlo como insumo gratuito.'
 }, {
   id: 'guadua',
   name: 'Guadua astillada',
@@ -695,8 +695,9 @@ const INGS = [
   ph: 6.2,
   dig: 5,
   role: 'base_carbono',
-  tags: ['Base', 'Gratis', 'Tenjo'],
-  cost: 0,
+  tags: ['Base', 'Tenjo'],
+  cost: 300,
+  notes: 'Costo $300/kg procesado (recolección + astillado de poda urbana) — insumo no es gratuito, incluye alistamiento.',
   cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'shiitake', 'lions_mane']
 },
 // === CELULÓSICOS / PAPEL ===
@@ -1663,7 +1664,8 @@ const INGS = [
   dig: 4,
   role: 'base_carbono',
   tags: ['Sin estudiar', 'Sabana 85%', 'Potencial alto', 'Nuevo'],
-  cost: 100,
+  cost: 200,
+  notes: 'Costo $200/kg procesado (recolección + alistamiento de tallos de floricultura) — evita subestimar el costo real frente a residuo "gratis".',
   cs: ['p_ostreatus_gris', 'p_ostreatus_blanco', 'p_djamor_rosa']
 }, {
   id: 'raices_hidroponicas',
@@ -3201,6 +3203,13 @@ const calcSchedule = (sKey, dateStr, eb) => {
   };
   const d = T[sKey] || T.p_ostreatus_gris;
   const adj = n => Math.round(n / Math.max(.85, Math.min(1.2, (eb || 100) / 100)));
+  // Especies sensibles a bajas temperaturas: fructifican mal o no fructifican bajo el
+  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico
+  // activo. p_djamor_rosa es cálida-estricta (28–30°C ideal).
+  const COLD_SENSITIVE = { p_djamor_rosa: '28–30°C' };
+  const coldWarn = COLD_SENSITIVE[sKey]
+    ? ` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
+    : '';
   const evts = [{
     key: 'in',
     type: 'inoculation',
@@ -3215,10 +3224,10 @@ const calcSchedule = (sKey, dateStr, eb) => {
     detail: 'Micelio blanco visible en la bolsa.'
   }, {
     key: 'c1',
-    type: 'normal',
+    type: coldWarn ? 'warning' : 'normal',
     day: adj(d.c100),
     title: 'Colonización completa',
-    detail: `Pasar a cámara de fructificación. ${sp.temp_fruit}.`
+    detail: `Pasar a cámara de fructificación. ${sp.temp_fruit}.${coldWarn}`
   }, {
     key: 'pr',
     type: 'normal',
@@ -3278,7 +3287,7 @@ const PasteGuide = ({
     }, {
       n: 4,
       t: 'Esteriliza',
-      d: `Mantén 121°C / 15 PSI durante 90–120 min. A 2.580 msnm la presión del autoclave compensa la altitud — los parámetros son los mismos que a nivel del mar.`
+      d: `Mantén 121°C / 18.5–19 PSI manométricos durante 90–120 min. A 2.580 msnm 15 PSI NO alcanzan 121°C reales — usa 18.5–19 PSI manométricos, o valida con sensor de núcleo que el sustrato llegue a 121°C real.`
     }, {
       n: 5,
       t: 'Enfría (crítico)',
@@ -12803,7 +12812,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         bg: '#FCEEE9',
         br: '#E8B4A0',
         fg: '#B5451F',
-        lbl: 'Autoclave 121°C / 15 PSI'
+        lbl: 'Autoclave 121°C / 18.5–19 PSI'
       } : t.col === 'thermal' ? {
         bg: 'var(--status-attention-bg)',
         br: 'var(--status-attention)',
@@ -13516,7 +13525,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       bg: '#FCEEE9',
       br: '#E8B4A0',
       fg: '#B5451F',
-      lbl: 'Requiere autoclave 121°C / 15 PSI'
+      lbl: 'Requiere autoclave 121°C / 18.5–19 PSI'
     };
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -13950,7 +13959,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const aguaR = Math.max(0, aguaTotR - aguaInhR);
     const cnDrift = Math.abs(anR.cn - an.cn);
     const trSteps = {
-      autoclave: `Esterilizar en autoclave a ${ptr?.temp || '121°C/15 PSI'} durante ${ptr?.time || '90–120 min'}. Purgar aire al inicio. A 2.600 msnm la presión compensa la altitud.`,
+      autoclave: `Esterilizar en autoclave a ${ptr?.temp || '121°C/18.5–19 PSI'} durante ${ptr?.time || '90–120 min'}. Purgar aire al inicio. A 2.600 msnm, 15 PSI no alcanza 121°C real — usar 18.5–19 PSI manométricos o sensor de núcleo.`,
       thermal: `Pasteurizar sosteniendo el núcleo del sustrato a 65–75°C por ${ptr?.time || '6–8 h'} (factor +25% por altitud, agua ~91°C a 2.580 msnm). Medir el centro de la masa con termómetro de pincho, no solo el agua.`,
       cwlp: `Inmersión en cal hidratada (150–200 g/100 L, pH≥12) por ${ptr?.time || '18–24 h'}. No requiere calor.`
     };

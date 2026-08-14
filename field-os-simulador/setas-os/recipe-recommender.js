@@ -10,14 +10,15 @@ function recommendRecipes(available, targetSpecies, allIngredients, allSpecies) 
   // targetSpecies = null (find all) or speciesKey
   // Returns: [ { species, ingredients: [{id, amt, pct}], score, notes } ]
   
-  const candidates = targetSpecies ? [allSpecies[targetSpecies]] : Object.values(allSpecies);
+  const candidateKeys = targetSpecies ? [targetSpecies] : Object.keys(allSpecies);
   const results = [];
-  
-  for (const species of candidates) {
+
+  for (const sKey of candidateKeys) {
+    const species = allSpecies[sKey];
     if (!species) continue;
-    
+
     // Try to build a recipe with available ingredients
-    const recipe = tryBuildRecipe(available, species, allIngredients);
+    const recipe = tryBuildRecipe(available, species, allIngredients, sKey);
     if (recipe) {
       results.push({
         speciesKey: species.name,
@@ -35,96 +36,118 @@ function recommendRecipes(available, targetSpecies, allIngredients, allSpecies) 
   return results.sort((a, b) => b.score - a.score);
 }
 
-function tryBuildRecipe(available, species, allIngredients) {
+function tryBuildRecipe(available, species, allIngredients, sKey) {
   // Greedy algorithm: fill recipe proportions using available ingredients
   // Prioritize: base carbon > supplements > aerators
-  
+  // Alineado con recipe-optimizer.js: respeta sp.supplementation_max, compatibilidad
+  // biológica (ing.cs) y calcula C:N sobre base seca real (descontando humedad).
+
   const cn_target = species.cn_optimal.ideal;
-  const n_target = species.n_optimal.ideal;
-  
-  // Separate available by role
+  // Tope real de suplementación N: por debajo de este umbral no hace falta autoclave.
+  // Si el perfil no define supplementation_max, se usa 20% como valor conservador.
+  const suppMax = species.supplementation_max != null ? species.supplementation_max : 20;
+
+  // Separate available by role, descartando ingredientes biológicamente incompatibles
+  // con la especie objetivo (ing.cs = lista de especies compatibles, si existe).
   const byRole = {};
   for (const [ingId, qty] of Object.entries(available)) {
     if (qty <= 0) continue;
     const ing = allIngredients.find(i => i.id === ingId);
     if (!ing) continue;
-    
+    if (sKey && ing.cs && !ing.cs.includes(sKey)) continue;
+
     if (!byRole[ing.role]) byRole[ing.role] = [];
     byRole[ing.role].push({ ...ing, availableQty: qty });
   }
-  
+
   // Must have base carbon
   if (!byRole.base_carbono || byRole.base_carbono.length === 0) {
     return null;
   }
-  
+
+  // dryFrac: fracción de materia seca real de un ingrediente al pct de la receta,
+  // igual que analyze() en recipe-optimizer.js.
+  const dryFrac = (ing, pct) => pct * (1 - Math.min(0.92, Math.max(0, (ing.moisture || 0) / 100)));
+
   // Try to hit C:N by mixing base + supplement
   let recipe = [];
-  let totalC = 0, totalN = 0, totalQty = 0;
+  let totalC = 0, totalN = 0, totalDry = 0;
   let usedQty = {};
-  
+
   // Start with base (70% of dry matter)
   const baseIng = byRole.base_carbono[0];
   const baseQty = 70;
   recipe.push({ id: baseIng.id, name: baseIng.name, pct: 70, kg: 0 });
-  totalC += baseIng.c * 0.7;
-  totalN += baseIng.n * 0.7;
+  {
+    const df = dryFrac(baseIng, baseQty);
+    totalC += baseIng.c * df; totalN += baseIng.n * df; totalDry += df;
+  }
   usedQty[baseIng.id] = baseQty;
-  
-  // Fill remaining 30% with supplements
+
+  // Fill remaining 30% with supplements, sin superar sp.supplementation_max
   let remaining = 30;
+  let suppUsed = 0;
   if (byRole.suplemento_n && byRole.suplemento_n.length > 0) {
     const suppIng = byRole.suplemento_n[0];
-    const suppQty = Math.min(remaining, 20);
-    recipe.push({ id: suppIng.id, name: suppIng.name, pct: suppQty, kg: 0 });
-    totalC += suppIng.c * (suppQty / 100);
-    totalN += suppIng.n * (suppQty / 100);
-    usedQty[suppIng.id] = suppQty;
-    remaining -= suppQty;
+    const suppQty = Math.min(remaining, Math.max(0, suppMax));
+    if (suppQty > 0) {
+      recipe.push({ id: suppIng.id, name: suppIng.name, pct: suppQty, kg: 0 });
+      const df = dryFrac(suppIng, suppQty);
+      totalC += suppIng.c * df; totalN += suppIng.n * df; totalDry += df;
+      usedQty[suppIng.id] = suppQty;
+      remaining -= suppQty;
+      suppUsed = suppQty;
+    }
   }
-  
+
   if (remaining > 0 && byRole.aireador && byRole.aireador.length > 0) {
     const aerIng = byRole.aireador[0];
     recipe.push({ id: aerIng.id, name: aerIng.name, pct: remaining, kg: 0 });
-    totalC += aerIng.c * (remaining / 100);
-    totalN += aerIng.n * (remaining / 100);
+    const df = dryFrac(aerIng, remaining);
+    totalC += aerIng.c * df; totalN += aerIng.n * df; totalDry += df;
     usedQty[aerIng.id] = remaining;
   }
-  
+
   // Validate against available qty
   let canMake = 1000; // max bags
   for (const [ingId, pctUsed] of Object.entries(usedQty)) {
-    const ing = allIngredients.find(i => i.id === ingId);
     const availableKg = available[ingId] || 0;
     const bagsWithThisIng = Math.floor((availableKg * 100) / pctUsed);
     canMake = Math.min(canMake, bagsWithThisIng);
   }
-  
+
   if (canMake <= 0) return null;
-  
-  // Calculate actual C:N
-  const actualCN = totalC > 0 ? totalC / (totalN || 0.001) : 0;
+
+  // Calculate actual C:N sobre base seca real
+  const avgN = totalDry > 0 ? totalN / totalDry : 0;
+  const actualCN = avgN > 0 ? (totalDry ? totalC / totalDry : 0) / avgN : 0;
   const cnError = Math.abs(actualCN - cn_target);
   const cnScore = Math.max(0, 100 - (cnError * 10)); // deduct 10 points per CN unit of error
-  
+
   // Calculate cost
   let totalCost = 0;
   for (const item of recipe) {
     const ing = allIngredients.find(i => i.id === item.id);
     if (ing) totalCost += ing.cost * (item.pct / 100);
   }
-  
+
   const costPerKg = totalCost > 0 ? totalCost : 0;
-  const score = Math.max(0, cnScore - (totalCost / 100)); // slight penalty for cost
-  
+  let score = Math.max(0, cnScore - (totalCost / 100)); // slight penalty for cost
+  const needsAutoclave = suppUsed > suppMax;
+  if (needsAutoclave) score *= 0.85; // penaliza recetas que exigen autoclave por exceso de N
+
+  const notes = [];
+  if (canMake < 5) notes.push(`⚠️ Solo puedes hacer ~${canMake} bolsas con estos ingredientes`);
+  else if (canMake < 20) notes.push(`⚠️ Limitado a ~${canMake} bolsas`);
+  if (needsAutoclave) notes.push(`⚠️ Suplementación ${suppUsed.toFixed(0)}% supera el máximo seguro (${suppMax}%) — requiere autoclave, no pasteurización.`);
+
   return {
     ingredients: recipe,
     cn: actualCN,
     totalKg: canMake,
     costPerKg: costPerKg,
     score: Math.round(score),
-    notes: canMake < 5 ? `⚠️ Solo puedes hacer ~${canMake} bolsas con estos ingredientes` : 
-           canMake < 20 ? `⚠️ Limitado a ~${canMake} bolsas` : ''
+    notes: notes.join(' ')
   };
 }
 
@@ -177,7 +200,7 @@ function generatePDF(recipe, species, allIngredients, totalKg) {
         <li>Mezclar ingredientes en seco. Homogenizar bien.</li>
         <li>Ajustar humedad a ${species.moisture?.ideal || 65}% (escurrir con presión moderada).</li>
         <li>Empacar en bolsas perforadas de ${totalKg > 10 ? '5–10kg' : '1.5–2kg'}.</li>
-        <li>Esterilizar a 15 PSI, 121°C durante 2.5 horas.</li>
+        <li>Esterilizar a 18.5–19 PSI manométricos, 121°C reales, durante 2.5 horas (en Tenjo/Sabana, 15 PSI no alcanza 121°C — validar con sensor de núcleo si es posible).</li>
         <li>Enfriar completamente antes de inocular.</li>
         <li>Inocular con spawn @ 5–10% en peso seco.</li>
         <li>Incubar a ${species.temp_fruit} en oscuridad, 70–80% humedad.</li>
