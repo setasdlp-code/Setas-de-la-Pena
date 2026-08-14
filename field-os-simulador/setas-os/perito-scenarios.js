@@ -388,6 +388,7 @@
     stockIds = new Set(),
     roleCaps = {},
     lockedIds = new Set(),
+    addIngredientCap = 20,
   } = {}) => {
     const current = recipeMap(recipe);
     const out = [];
@@ -409,9 +410,22 @@
       });
     });
 
-    ingredients.forEach(g => {
-      if (!g?.id || current[g.id] > 0 || locked.has(g.id)) return;
-      if (useStock && !stock.has(g.id)) return;
+    // "Add a new ingredient" mutations scale with catalog size (one per
+    // compatible ingredient not already in the recipe), which is fine for a
+    // small palette but explodes the beam's per-generation branching factor
+    // on the real production catalog (dozens of compatible ingredients per
+    // species). Rank candidates by cost first (cheapest options are more
+    // likely to be operationally interesting anyway) and cap how many get
+    // turned into mutations — this bounds branching factor without
+    // depending on catalog size.
+    const addCandidates = ingredients.filter(g =>
+      g?.id && !(current[g.id] > 0) && !locked.has(g.id) &&
+      !(useStock && !stock.has(g.id))
+    );
+    addCandidates.sort((a, b) =>
+      (Number(a.cost) || 0) - (Number(b.cost) || 0) || String(a.id).localeCompare(String(b.id))
+    );
+    addCandidates.slice(0, addIngredientCap).forEach(g => {
       const cap = Number.isFinite(roleCaps[g.role]) ? roleCaps[g.role] : 20;
       const value = Math.min(stepPct * 2, cap);
       if (value > 0) out.push({
@@ -658,6 +672,32 @@
     return selected.slice(0, limit);
   };
 
+  // Cheap pre-rank for structural seeds, used only to cap how many seeds
+  // reach the expensive evaluate() call (analyze + SetasScoring). This is
+  // NOT a quality judgment — every seed already hits the target C:N almost
+  // exactly by construction (that's what the closed-form solver in
+  // generateStructuralSeeds guarantees), so C:N proximity cannot discriminate
+  // between them. Instead this ranks by ingredient cost (cheaper mixes first)
+  // and recipe simplicity (fewer distinct ingredients first), both readable
+  // straight off the seed without touching the scoring engine, then breaks
+  // ties by canonical composition for determinism.
+  const cheapSeedRank = (seeds, ingredients) => {
+    const costById = new Map((ingredients || []).map(g => [g.id, Number(g.cost) || 0]));
+    const scored = seeds.map(seed => {
+      const estimatedCost = seed.recipe.reduce(
+        (sum, r) => sum + (costById.get(r.id) || 0) * (Number(r.p) || 0) / 100,
+        0
+      );
+      return { seed, estimatedCost, complexity: seed.recipe.length };
+    });
+    scored.sort((a, b) =>
+      a.estimatedCost - b.estimatedCost ||
+      a.complexity - b.complexity ||
+      canonicalRecipeKey(a.seed.recipe).localeCompare(canonicalRecipeKey(b.seed.recipe))
+    );
+    return scored.map(s => s.seed);
+  };
+
   const searchScenarios = ({
     recipe,
     context = {},
@@ -686,6 +726,7 @@
     forceLowRisk = null,
     spawnOverride = undefined,
     structuralRootLimit = 4,
+    structuralSeedCap = 300,
   }) => {
     if (!['local', 'global', 'hybrid'].includes(searchMode)) {
       throw new Error(`searchMode inválido: ${searchMode}`);
@@ -746,7 +787,7 @@
         noStock: true,
         explored: 0,
         evaluations: evaluationCount,
-        structural: { evaluated: 0, refinedRoots: [], rootLimit: structuralRootLimit },
+        structural: { generated: 0, evaluated: 0, capped: false, seedCap: structuralSeedCap, refinedRoots: [], rootLimit: structuralRootLimit },
         ranked: [],
         pareto: [],
         recommended: [],
@@ -773,8 +814,10 @@
     const all = [baseline];
     let structuralCandidates = [];
 
+    let structuralSeedsGenerated = 0;
+    let structuralSeedsCapped = false;
     if (searchMode === 'global' || searchMode === 'hybrid') {
-      const structuralSeeds = generateStructuralSeeds({
+      let structuralSeeds = generateStructuralSeeds({
         targetKey,
         ingredients,
         spp,
@@ -783,10 +826,26 @@
         profileKey,
         maxSupp: profile.maxSupp,
       });
+      structuralSeedsGenerated = structuralSeeds.length;
 
-      // Gate requirement: every structural seed is evaluated before any beam
-      // pruning. This prevents topology changes from being discarded only
-      // because they begin outside the current local neighborhood.
+      // Full catalogs can generate tens of thousands of structural seeds
+      // (bases × supplements grows quadratically for the 2-base/2-supplement
+      // spaces). Evaluating every one against SetasScoring is what caused a
+      // measured 60s+ stall on the real production ingredient catalog. Cap
+      // to the cheapest/simplest structuralSeedCap seeds BEFORE the
+      // expensive evaluate() call — the "evaluate before pruning" gate still
+      // holds for whatever reaches evaluate(), it just no longer means
+      // "literally every mathematically valid combination" once the
+      // catalog is large enough to make that combinatorially unsafe.
+      if (structuralSeeds.length > structuralSeedCap) {
+        structuralSeeds = cheapSeedRank(structuralSeeds, ingredients).slice(0, structuralSeedCap);
+        structuralSeedsCapped = true;
+      }
+
+      // Gate requirement: every (post-cap) structural seed is evaluated
+      // before any beam pruning. This prevents topology changes from being
+      // discarded only because they begin outside the current local
+      // neighborhood.
       structuralSeeds.forEach((seed, i) => {
         const key = canonicalRecipeKey(seed.recipe);
         if (!key || seen.has(key)) return;
@@ -872,7 +931,10 @@
       explored: all.length - 1,
       evaluations: evaluationCount,
       structural: {
+        generated: structuralSeedsGenerated,
         evaluated: structuralCandidates.length,
+        capped: structuralSeedsCapped,
+        seedCap: structuralSeedCap,
         refinedRoots: searchMode === 'hybrid'
           ? selectStructuralRoots(structuralCandidates, structuralRootLimit).map(c => c.id)
           : [],
@@ -910,6 +972,7 @@
     realCostFor,
     resolveProfile,
     generateStructuralSeeds,
+    cheapSeedRank,
     applyMutation,
     makeMutations,
     dimensionVector,

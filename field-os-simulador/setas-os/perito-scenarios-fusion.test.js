@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const {
   canonicalRecipeKey,
   generateStructuralSeeds,
+  cheapSeedRank,
   searchScenarios,
 } = require('./perito-scenarios.js');
 
@@ -440,4 +441,80 @@ test('precio ponderado de lotes solo sustituye costo en modo stock', () => {
   assert.equal(catalog.baseline.evaluation.analysis.cost, 777);
   assert.notEqual(stock.baseline.evaluation.analysis.cost, 777);
   assert.equal(stock.baseline.evaluation.analysis.realCostKnown, true);
+});
+
+// Regression coverage for the production incident found manually: with the
+// real ~87-ingredient catalog, generateStructuralSeeds() produced 47,401
+// seeds for a single species/profile, and searchScenarios({searchMode:
+// 'hybrid'}) took 61.8s / 50,099 evaluations to finish because it evaluated
+// every seed against SetasScoring before pruning, plus makeMutations() added
+// one "insert ingredient" mutation per compatible catalog ingredient per
+// beam member per generation on top of that. Both are now capped.
+const LARGE_SPP = {
+  test: SPP.test,
+};
+const LARGE_INGS = (() => {
+  const list = [];
+  for (let i = 0; i < 15; i++) {
+    list.push({ id: `lbase_${i}`, name: `Base ${i}`, role: 'base_carbono', c: 46 + (i % 5), n: 0.4 + i * 0.03, cn: 60 + i * 2, moisture: 10 + (i % 4), cost: 300 + i * 20, cs: ['test'] });
+  }
+  for (let i = 0; i < 15; i++) {
+    list.push({ id: `lsupp_${i}`, name: `Supp ${i}`, role: i % 2 === 0 ? 'suplemento_n' : 'suplemento_medio', c: 44 + (i % 3), n: 2 + i * 0.1, cn: 12 + i, moisture: 8 + (i % 5), cost: 700 + i * 30, cs: ['test'] });
+  }
+  return list;
+})();
+
+test('generateStructuralSeeds genera muchas más semillas que un cap razonable con catálogos de tamaño realista', () => {
+  const seeds = generateStructuralSeeds({ targetKey: 'test', ingredients: LARGE_INGS, spp: LARGE_SPP, profileKey: 'produccion' });
+  // 15 bases x 15 suplementos ya produce ~150 semillas con solo 1b1s/2b1s/1b2s
+  // — el catálogo real (34 bases x 33 suplementos para orellana gris) llegó
+  // a 47,401. No hace falta reproducir esa escala aquí: basta con confirmar
+  // que un catálogo de tamaño moderado ya excede con holgura un cap chico,
+  // para que el siguiente test pueda fijar structuralSeedCap explícitamente
+  // y probar que el motor respeta ese cap en vez de evaluarlas todas.
+  assert.ok(seeds.length > 50, `se esperaban >50 semillas con 15 bases x 15 suplementos, hubo ${seeds.length}`);
+});
+
+test('searchScenarios en modo hybrid acota semillas evaluadas y no explota con catálogos grandes', () => {
+  const base = LARGE_INGS.find(g => g.id === 'lbase_0');
+  const supp = LARGE_INGS.find(g => g.id === 'lsupp_0');
+  const t0 = Date.now();
+  const out = searchScenarios({
+    recipe: [{ id: base.id, p: 82 }, { id: supp.id, p: 18 }],
+    context: { sKey: 'test' },
+    targetKey: 'test',
+    spp: LARGE_SPP,
+    ingredients: LARGE_INGS,
+    analyze,
+    score,
+    searchMode: 'hybrid',
+    generations: 3,
+    beamWidth: 14,
+    stepPct: 4,
+    profileKey: 'produccion',
+    forceLowRisk: false,
+    structuralSeedCap: 40,
+    roleCaps: { base_carbono: 100, suplemento_n: 24, suplemento_medio: 24 },
+  });
+  const ms = Date.now() - t0;
+
+  assert.equal(out.structural.capped, true);
+  assert.equal(out.structural.seedCap, 40);
+  assert.equal(out.structural.evaluated, 40);
+  assert.ok(out.structural.generated > out.structural.seedCap, 'el cap solo tiene sentido si de verdad se generaron más semillas de las evaluadas');
+  // Bound, not a strict perf assertion (machine-dependent): this used to take
+  // 61.8s / 50k+ evaluations on the real catalog before capping. A few
+  // hundred ms / a few thousand evaluations on a synthetic 30-ingredient
+  // catalog confirms the cap is actually engaged, not just present in the API.
+  assert.ok(ms < 10000, `la búsqueda tardó ${ms}ms — el cap no está evitando la explosión combinatoria`);
+  assert.ok(out.evaluations < 5000, `${out.evaluations} evaluaciones — demasiadas para un catálogo de 30 ingredientes con el cap activo`);
+  assert.ok(out.ranked.length > 0);
+});
+
+test('cheapSeedRank ordena de forma determinista sin llamar al motor de scoring', () => {
+  const seeds = generateStructuralSeeds({ targetKey: 'test', ingredients: LARGE_INGS, spp: LARGE_SPP, profileKey: 'produccion' }).slice(0, 50);
+  const ranked1 = cheapSeedRank(seeds, LARGE_INGS);
+  const ranked2 = cheapSeedRank(seeds, LARGE_INGS);
+  assert.deepEqual(ranked1.map(s => canonicalRecipeKey(s.recipe)), ranked2.map(s => canonicalRecipeKey(s.recipe)));
+  assert.equal(ranked1.length, seeds.length);
 });
