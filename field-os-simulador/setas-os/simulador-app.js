@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 1e41c57a230e30e22dc8c9692aa68f7186bed5db5d4222bab4102ff3d8bc4bad
+// source-hash: 6a437bc7ba24093a4ac73a7718c305132e71692479e9e020e37836a37d299c72
 const {
   useState,
   useMemo,
@@ -12508,7 +12508,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         Object.keys(OPT_PROFILES).forEach(pk => {
           const r = runAutoOptimizer(optTarget, invLotes, optMaxCost, optimizerINGS, optUseStock, pk, stockMap);
           noStock = noStock || r.noStock;
-          byProfile[pk] = r.results.slice(0, 6);
+          byProfile[pk] = r.results;
           byProfile[`_diag_${pk}`] = {
             stockCount: r.stockCount,
             diag: r.diag

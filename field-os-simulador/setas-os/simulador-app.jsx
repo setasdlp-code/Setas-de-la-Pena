@@ -3829,7 +3829,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     Object.keys(OPT_PROFILES).forEach(pk=>{
                                       const r=runAutoOptimizer(optTarget,invLotes,optMaxCost,optimizerINGS,optUseStock,pk,stockMap);
                                       noStock=noStock||r.noStock;
-                                      byProfile[pk]=r.results.slice(0,6);
+                                      byProfile[pk]=r.results;
                                       byProfile[`_diag_${pk}`]={stockCount:r.stockCount,diag:r.diag};
                                       if(pk===optProfile)_diag={stockCount:r.stockCount,diag:r.diag};
                                     });

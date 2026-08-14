@@ -622,10 +622,11 @@
   };
 
   // ── Perfiles de optimización ──
+  // Antes había un tercer perfil "premium" casi idéntico a "producción" (mismo suppLimit,
+  // mismo espacio de combinaciones) — se fusionó porque no aportaba resultados distintos.
   const OPT_PROFILES = {
-    rescate: { label: 'Rescate', maxSupp: 8, maxCafe: 8, forceLowRisk: true, preferTreatment: ['autoclave', 'thermal'], spawnOverride: 20, description: 'Spón viejo, sustrato dudoso o primera prueba. Minimiza contaminación.', color: 'var(--accent-blue-grey)' },
-    produccion: { label: 'Producción', maxSupp: null, maxCafe: 15, forceLowRisk: true, preferTreatment: ['thermal', 'autoclave'], spawnOverride: null, description: 'Balance entre rendimiento, costo y estabilidad.', color: 'var(--accent-olive)' },
-    premium: { label: 'Premium', maxSupp: null, maxCafe: 20, forceLowRisk: false, preferTreatment: ['autoclave'], spawnOverride: null, description: 'Maximiza EB y calidad. Acepta más costo y autoclave.', color: 'var(--coral-500)' },
+    rescate: { label: 'Rescate', maxSupp: 8, maxCafe: 8, forceLowRisk: true, spawnOverride: 20, description: 'Spón viejo, sustrato dudoso o primera prueba. Minimiza contaminación.', color: 'var(--accent-blue-grey)' },
+    produccion: { label: 'Producción', maxSupp: null, maxCafe: 20, forceLowRisk: false, spawnOverride: null, description: 'Explora todo el espacio de recetas viables — EB, costo y estabilidad, sin recorte artificial.', color: 'var(--accent-olive)' },
   };
 
   const precioPonderado = (ingredienteId, lotes) => {
@@ -796,10 +797,15 @@
       ? (() => { const hi = results.filter(r => r.riskScore >= 30); return hi.length > 0 ? hi : results; })()
       : results;
 
+    // Dedup por composición real (ids + % redondeado al entero), no por score/cn/costo —
+    // ese bucketing colapsaba recetas con ingredientes distintos que caían en el mismo rango.
     const seen = new Set();
     const top = filteredResults.sort((a, b) => b.score - a.score)
-      .filter(r => { const k = `${r.score}_${Math.round(r.an.cn)}_${Math.round(r.an.cost / 100)}`; if (seen.has(k)) return false; seen.add(k); return true; })
-      .slice(0, 12);
+      .filter(r => {
+        const k = r.recipe.map(i => `${i.id}:${Math.round(parseFloat(i.p) || 0)}`).sort().join('|');
+        if (seen.has(k)) return false; seen.add(k); return true;
+      })
+      .slice(0, 30);
     const diag = {
       stockIds: stockIds.size,
       poolSize: pool.length,
