@@ -1,9 +1,11 @@
-name: Deploy to GitHub Pages
+# Legado/inactivo: la app canónica en producción es Setas OS v5
+# (field-os-simulador/setas-os/), desplegada vía Netlify. Este workflow
+# publicaba el index.html de la raíz del repo por GitHub Pages, que ya no
+# es el sitio real. Se deja solo con disparo manual por si hace falta
+# recuperar ese sitio legado deliberadamente.
+name: Deploy to GitHub Pages (legado, desactivado)
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
