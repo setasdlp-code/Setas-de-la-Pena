@@ -389,3 +389,55 @@ test('todas las semillas se evalúan antes de reducir a cuatro raíces de refina
   assert.equal(out.evaluations, 1 + seeds.length);
   assert.ok(out.structural.refinedRoots.length <= 4);
 });
+
+test('modo bodega con stock vacío devuelve noStock sin caer al catálogo', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'base_a', p: 82 }, { id: 'supp_a', p: 18 }],
+    context: { sKey: 'test' },
+    targetKey: 'test',
+    spp: SPP,
+    ingredients: INGS,
+    analyze,
+    score,
+    searchMode: 'hybrid',
+    generations: 3,
+    useStock: true,
+    stockIds: new Set(),
+    profileKey: 'produccion',
+  });
+  assert.equal(out.noStock, true);
+  assert.deepEqual(out.ranked, []);
+  assert.deepEqual(out.pareto, []);
+  assert.equal(out.evaluations, 1);
+});
+
+test('precio ponderado de lotes solo sustituye costo en modo stock', () => {
+  const analyzeWithCost = recipe => ({ ...analyze(recipe), cost: 777 });
+  const lots = [
+    { ingredienteId: 'base_a', activo: true, cantidadKgDisponible: 100, precioPorKgCOP: 5000 },
+    { ingredienteId: 'supp_a', activo: true, cantidadKgDisponible: 100, precioPorKgCOP: 9000 },
+  ];
+  const common = {
+    recipe: [{ id: 'base_a', p: 80 }, { id: 'supp_a', p: 20 }],
+    context: { sKey: 'test' },
+    targetKey: 'test',
+    spp: SPP,
+    ingredients: INGS,
+    analyze: analyzeWithCost,
+    score,
+    searchMode: 'local',
+    generations: 0,
+    invLotes: lots,
+    profileKey: 'premium',
+    forceLowRisk: false,
+  };
+  const catalog = searchScenarios({ ...common, useStock: false });
+  const stock = searchScenarios({
+    ...common,
+    useStock: true,
+    stockIds: new Set(['base_a', 'supp_a']),
+  });
+  assert.equal(catalog.baseline.evaluation.analysis.cost, 777);
+  assert.notEqual(stock.baseline.evaluation.analysis.cost, 777);
+  assert.equal(stock.baseline.evaluation.analysis.realCostKnown, true);
+});

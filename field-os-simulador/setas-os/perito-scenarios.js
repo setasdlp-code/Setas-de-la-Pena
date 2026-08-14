@@ -411,7 +411,7 @@
 
     ingredients.forEach(g => {
       if (!g?.id || current[g.id] > 0 || locked.has(g.id)) return;
-      if (useStock && stock.size && !stock.has(g.id)) return;
+      if (useStock && !stock.has(g.id)) return;
       const cap = Number.isFinite(roleCaps[g.role]) ? roleCaps[g.role] : 20;
       const value = Math.min(stepPct * 2, cap);
       if (value > 0) out.push({
@@ -522,7 +522,7 @@
     const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
     const map = recipeMap(recipe);
 
-    if (useStock && stock.size && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
+    if (useStock && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
 
     Object.entries(ingredientCaps || {}).forEach(([id, cap]) => {
       if (Number.isFinite(cap) && (map[id] || 0) > cap + 0.011) failures.push(`ingredient:${id}`);
@@ -533,7 +533,11 @@
       if (Number.isFinite(cap) && Number(totals[role] || 0) > cap + 0.011) failures.push(`role:${role}`);
     });
 
-    if (Number(analysis?.suppP || 0) > Number(profile.maxSupp) + 0.011) failures.push('maxSupp');
+    // analyze() historically reports suppP from suplemento_n only. The unified
+    // constraint must also count suplemento_medio or that role can bypass the
+    // species/profile supplementation ceiling.
+    const totalSupplementPct = Number(totals.suplemento_n || 0) + Number(totals.suplemento_medio || 0);
+    if (totalSupplementPct > Number(profile.maxSupp) + 0.011) failures.push('maxSupp');
     if (Number(analysis?.cafeP || 0) > Number(profile.maxCafe) + 0.011) failures.push('maxCafe');
     if (Number(maxCost || 0) > 0 && Number(analysis?.cost || 0) > Number(maxCost)) failures.push('maxCost');
 
@@ -577,7 +581,7 @@
       };
     }
 
-    if (invLotes.length) {
+    if (useStock && invLotes.length) {
       const real = realCostFor(normalized, ingredients, invLotes);
       analysis = { ...analysis, cost: real.cost, realCostKnown: real.realCostKnown };
     }
@@ -731,6 +735,40 @@
     };
     baseline.utility = weightedUtility(baseline.evaluation, weights);
 
+    // Legacy parity + inventory safety: when the operator explicitly requests
+    // stock-only search and there is no active stock, there is no candidate
+    // universe to explore. Keep the baseline for diagnostics/UI, but return no
+    // alternatives instead of silently falling back to catalog ingredients.
+    if (useStock && stock.size === 0) {
+      return {
+        baseline,
+        searchMode,
+        noStock: true,
+        explored: 0,
+        evaluations: evaluationCount,
+        structural: { evaluated: 0, refinedRoots: [], rootLimit: structuralRootLimit },
+        ranked: [],
+        pareto: [],
+        recommended: [],
+        best: baseline,
+        lockedIds: [...locked],
+        profile: {
+          profileKey: profile.profileKey,
+          maxSupp: profile.maxSupp,
+          maxCafe: profile.maxCafe,
+          forceLowRisk: profile.forceLowRisk,
+          spawnOverride: profile.spawnOverride,
+        },
+        diagnostics: {
+          stockCount: 0,
+          useStock: true,
+          maxCost,
+          stockMapKeys: Object.keys(stockMap || {}).length,
+          allowedCount: 0,
+        },
+      };
+    }
+
     const seen = new Set([canonicalRecipeKey(baseRecipe)]);
     const all = [baseline];
     let structuralCandidates = [];
@@ -830,6 +868,7 @@
     return {
       baseline,
       searchMode,
+      noStock: false,
       explored: all.length - 1,
       evaluations: evaluationCount,
       structural: {
@@ -856,6 +895,7 @@
         useStock,
         maxCost,
         stockMapKeys: Object.keys(stockMap || {}).length,
+        allowedCount: allowed.length,
       },
     };
   };

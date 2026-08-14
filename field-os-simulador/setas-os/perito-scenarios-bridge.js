@@ -56,7 +56,7 @@ import './formulator-api.js';
       const name = an?.sp?.name || an?.sp?.common || an?.sp?.label;
       sKey = SPECIES_KEY_BY_NAME[name] || null;
     }
-    return sKey ? { analyzeFn, ings, sKey } : null;
+    return sKey ? { analyzeFn, ings, spp, sKey } : null;
   };
 
   const catalogNames = ingredients => Object.fromEntries((ingredients || []).map(g => [g.id, g.name || g.id]));
@@ -128,15 +128,7 @@ import './formulator-api.js';
     if (typeof calcTreatmentFn === 'function' && context.sKey) {
       try { treatment = calcTreatmentFn(analysis, context.sKey) || treatment; } catch (_) {}
     }
-    let scoredAnalysis = analysis;
-    if (globalThis.SetasEconomy && Array.isArray(context.recipe)) {
-      try {
-        const prices = globalThis.SetasEconomy.priceMapFromLots(activeLots());
-        const real = globalThis.SetasEconomy.recipeCostPerKgAsFormulated(context.recipe, prices);
-        if (real.copPerKg != null) scoredAnalysis = { ...analysis, cost: real.copPerKg };
-      } catch (_) {}
-    }
-    return scoring.scoreRecipe(scoredAnalysis, {
+    return scoring.scoreRecipe(analysis, {
       ...context,
       treatment,
       historyCalibration: historyCalibrationFor(context.sKey, context.recipe || []),
@@ -249,9 +241,10 @@ import './formulator-api.js';
     if (applying || !formulator || !detail?.an || !detail?.recipe?.length || !globalThis.SetasPeritoScenarios || !globalThis.SetasScoring) return;
     const runtime = resolveRuntime(detail.an);
     if (!runtime) return;
-    const { analyzeFn, ings, sKey } = runtime;
+    const { analyzeFn, ings, spp, sKey } = runtime;
     const lots = activeLots();
     const stockIds = activeStockIds(lots);
+    const useStock = useStockMode();
     const history = historyFor(sKey);
     const names = catalogNames(ings);
     const formState = formulator.getState(names);
@@ -269,6 +262,8 @@ import './formulator-api.js';
     const compatibleIngs = ings.filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(sKey));
     const context = {
       sKey,
+      spp,
+      useStock,
       treatment: detail.treatment || null,
       stockIds,
       stockKgById: stockKgById(lots),
@@ -281,6 +276,9 @@ import './formulator-api.js';
     const result = globalThis.SetasPeritoScenarios.searchScenarios({
       recipe: liveRecipe,
       context,
+      searchMode: 'hybrid',
+      targetKey: sKey,
+      spp,
       ingredients: compatibleIngs,
       analyze: analyzeAdapter,
       score: scoreAdapter,
@@ -288,12 +286,18 @@ import './formulator-api.js';
       generations: 3,
       beamWidth: 14,
       stepPct: 4,
-      useStock: useStockMode(),
+      useStock,
       stockIds,
+      invLotes: lots,
+      stockMap: context.stockKgById,
       roleCaps: roleCaps(detail.an),
       ingredientCaps: ingredientCaps(compatibleIngs, detail.an),
       lockedIds: formState.lockedIds,
     });
+    // SetasFormulatorAPI does not expose optimizer profile, maxCost, maxSupp,
+    // maxCafe, forceLowRisk or spawnOverride here. Do not synthesize operator
+    // choices; the engine keeps its documented production-profile defaults
+    // until those constraints are part of the formulator state/API.
     lastResult = result;
     catalogCache = names;
     globalThis.__setasLastScenarios = result;

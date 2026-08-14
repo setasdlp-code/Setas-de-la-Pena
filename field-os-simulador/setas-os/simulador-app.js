@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 1e41c57a230e30e22dc8c9692aa68f7186bed5db5d4222bab4102ff3d8bc4bad
+// source-hash: e1bf5c58e9422c89b67877b4465d9cd6812e24b54011b543aaf1dcaf598aeebd
 const {
   useState,
   useMemo,
@@ -3032,8 +3032,7 @@ const {
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
-  OPT_PROFILES,
-  runAutoOptimizer
+  OPT_PROFILES
 } = typeof SetasRecipeOptimizer !== 'undefined' ? SetasRecipeOptimizer : typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {};
 const METRIC_LABEL = {
   cn: 'C:N',
@@ -5501,6 +5500,138 @@ const historicalEBFor = (sKey, historicalYields, recipe = null) => {
     matched
   };
 };
+
+// ── Hybrid recipe-search adapter for the React simulator ───────────────────
+// Keep the React call sites small while the legacy optimizer remains available
+// only as a parity oracle in recipe-optimizer.test.js / parity tests.
+const hybridRoleCaps = sp => ({
+  base_carbono: 100,
+  suplemento_n: Number(sp?.supplementation_max) || 20,
+  suplemento_medio: Number(sp?.supplementation_max) || 20,
+  aditivo_ph: 8,
+  aditivo_estructura: 15,
+  aditivo_micronutriente: 5,
+  aireador: 30
+});
+const hybridIngredientCaps = (ings, sp) => {
+  const caps = {};
+  const suppMax = Number(sp?.supplementation_max) || 20;
+  (ings || []).forEach(g => {
+    if (g.role === 'suplemento_n' || g.role === 'suplemento_medio') caps[g.id] = suppMax;else if (g.role === 'aditivo_ph') caps[g.id] = 8;else if (g.role === 'aditivo_estructura') caps[g.id] = 15;else if (g.role === 'aditivo_micronutriente') caps[g.id] = 5;else if (g.role === 'aireador') caps[g.id] = 30;
+  });
+  return caps;
+};
+const hybridSupplementPct = (rec, ings) => {
+  const byId = new Map((ings || []).map(g => [g.id, g]));
+  return (rec || []).reduce((sum, r) => {
+    const role = byId.get(r.id)?.role;
+    return sum + (role === 'suplemento_n' || role === 'suplemento_medio' ? Number(r.p) || 0 : 0);
+  }, 0);
+};
+const runHybridRecipeSearch = ({
+  targetKey,
+  recipe = [],
+  invLotes = [],
+  maxCost = 0,
+  ingredients = [],
+  useStock = false,
+  profileKey = 'produccion',
+  stockMap = {},
+  lockedIds = []
+}) => {
+  const engine = globalThis.SetasPeritoScenarios;
+  if (!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
+  const target = SPP[targetKey];
+  if (!target) return {
+    ranked: [],
+    pareto: [],
+    recommended: [],
+    noStock: false,
+    diagnostics: {
+      error: 'Especie no encontrada'
+    }
+  };
+  const stockIds = new Set((invLotes || []).filter(l => l?.activo && Number(l.cantidadKgDisponible) > 0).map(l => l.ingredienteId));
+  const compatible = (ingredients || []).filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+  const analyzeAdapter = rec => analyze(rec, targetKey, ingredients);
+  const scoreAdapter = (analysis, ctx) => {
+    const treatment = calcTreatment(analysis, targetKey, SPP);
+    return scoreAn(analysis, {
+      treatment,
+      recipe: ctx.recipe,
+      stockIds: useStock ? stockIds : undefined
+    });
+  };
+  return engine.searchScenarios({
+    recipe,
+    context: {
+      sKey: targetKey,
+      spp: SPP,
+      stockIds
+    },
+    searchMode: 'hybrid',
+    targetKey,
+    spp: SPP,
+    ingredients: compatible,
+    analyze: analyzeAdapter,
+    score: scoreAdapter,
+    history: [],
+    generations: 3,
+    beamWidth: 14,
+    stepPct: 4,
+    useStock,
+    stockIds,
+    invLotes,
+    stockMap,
+    profileKey,
+    maxCost,
+    roleCaps: hybridRoleCaps(target),
+    ingredientCaps: hybridIngredientCaps(compatible, target),
+    lockedIds: new Set(lockedIds || [])
+  });
+};
+const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
+  const an = candidate?.evaluation?.analysis;
+  const sp = SPP[targetKey];
+  const profile = OPT_PROFILES[profileKey] || OPT_PROFILES.produccion;
+  const speciesSupp = Number(sp?.supplementation_max) || 20;
+  const suppLimit = profile.maxSupp != null ? Math.min(speciesSupp, profile.maxSupp) : speciesSupp;
+  const suppPct = hybridSupplementPct(candidate?.recipe || [], ingredients);
+  const maxKgWet = Object.keys(stockMap || {}).length && candidate?.recipe?.length ? calcMaxBatchFromStock(candidate.recipe, stockMap, 10, sp?.moisture?.ideal || 65, ingredients) : null;
+  return {
+    recipe: candidate.recipe,
+    an,
+    score: Number(candidate.evaluation?.score) || 0,
+    riskScore: Number(candidate.evaluation?.riskScore ?? candidate.evaluation?.breakdown?.risk ?? 50),
+    maxKgWet,
+    suppPct,
+    suppOverLimit: suppPct > suppLimit,
+    realCostKnown: !!an?.realCostKnown,
+    scenario: candidate
+  };
+};
+const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, profileKey) => {
+  const stockIds = new Set((invLotes || []).filter(l => l?.activo && Number(l.cantidadKgDisponible) > 0).map(l => l.ingredienteId));
+  const pool = useStock ? (ingredients || []).filter(g => stockIds.has(g.id)) : (ingredients || []).filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+  const compatible = g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey);
+  const bases = pool.filter(g => g.role === 'base_carbono' && compatible(g) && Number(g.cn) > 0 && Number(g.n) > 0);
+  const supps = pool.filter(g => (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && compatible(g) && Number(g.cn) > 0 && Number(g.n) > 0);
+  const aers = pool.filter(g => g.role === 'aireador');
+  return {
+    stockIds: stockIds.size,
+    poolSize: pool.length,
+    bases: bases.length,
+    supps: supps.length,
+    aers: aers.length,
+    tried: Number(out?.explored) || 0,
+    resultsRaw: Number(out?.diagnostics?.allowedCount ?? out?.ranked?.length ?? 0),
+    suppLimit: Number(out?.profile?.maxSupp ?? SPP[targetKey]?.supplementation_max ?? 20),
+    profileKey,
+    targetKey,
+    baseNames: bases.map(g => g.name),
+    suppNames: supps.map(g => g.name)
+  };
+};
 function App(props) {
   const [bridgeOpen, setBridgeOpen] = useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
@@ -6205,10 +6336,20 @@ function App(props) {
   const balMsg = balanced ? '' : massBalanceMsg(an);
   const optimalAn = useMemo(() => {
     try {
-      const r = runAutoOptimizer(sKey, invLotes, 0, optimizerINGS, false);
-      if (r.results?.length) return analyze(r.results[0].recipe, sKey, optimizerINGS);
-    } catch (e) {}
-    return null;
+      const r = runHybridRecipeSearch({
+        targetKey: sKey,
+        recipe: [],
+        invLotes,
+        maxCost: 0,
+        ingredients: optimizerINGS,
+        useStock: false,
+        profileKey: 'produccion',
+        stockMap: {}
+      });
+      return r.ranked?.[0]?.evaluation?.analysis || null;
+    } catch (e) {
+      return null;
+    }
   }, [sKey, invLotes, optimizerINGS]);
   const dg = useMemo(() => diagnose(an, sKey), [an, sKey]);
   const tr = useMemo(() => calcTreatment(an, sKey, SPP), [an, sKey]);
@@ -6773,13 +6914,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   // Genera la receta óptima para la especie activa con toda la paleta y la carga
   const loadOptimal = () => {
-    const r = runAutoOptimizer(sKey, invLotes, 0, optimizerINGS, false);
-    if (r.results && r.results.length) {
-      setRecipe(r.results[0].recipe);
-      setLockedIds([]);
-    } else setNoticeDlg({
-      msg: 'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'
-    });
+    try {
+      const r = runHybridRecipeSearch({
+        targetKey: sKey,
+        recipe: [],
+        invLotes,
+        maxCost: 0,
+        ingredients: optimizerINGS,
+        useStock: false,
+        profileKey: 'produccion',
+        stockMap: {}
+      });
+      if (r.ranked?.length) {
+        setRecipe(r.ranked[0].recipe);
+        setLockedIds([]);
+      } else setNoticeDlg({
+        msg: 'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'
+      });
+    } catch (e) {
+      setNoticeDlg({
+        msg: 'No se pudo ejecutar el optimizador híbrido: ' + (e.message || 'error desconocido')
+      });
+    }
   };
   const updP = (id, p) => {
     if (!normMode) {
@@ -12506,17 +12662,45 @@ body{margin:0;padding:20px 24px;background:#fff;}
         let _diag = null;
         const byProfile = {};
         Object.keys(OPT_PROFILES).forEach(pk => {
-          const r = runAutoOptimizer(optTarget, invLotes, optMaxCost, optimizerINGS, optUseStock, pk, stockMap);
-          noStock = noStock || r.noStock;
-          byProfile[pk] = r.results.slice(0, 6);
-          byProfile[`_diag_${pk}`] = {
-            stockCount: r.stockCount,
-            diag: r.diag
-          };
-          if (pk === optProfile) _diag = {
-            stockCount: r.stockCount,
-            diag: r.diag
-          };
+          try {
+            const out = runHybridRecipeSearch({
+              targetKey: optTarget,
+              recipe: [],
+              invLotes,
+              maxCost: optMaxCost,
+              ingredients: optimizerINGS,
+              useStock: optUseStock,
+              profileKey: pk,
+              stockMap
+            });
+            noStock = noStock || !!out.noStock;
+            byProfile[pk] = (out.ranked || []).slice(0, 6).map(c => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk));
+            const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
+            const stockCount = diag.stockIds;
+            byProfile[`_diag_${pk}`] = {
+              stockCount,
+              diag
+            };
+            if (pk === optProfile) _diag = {
+              stockCount,
+              diag
+            };
+          } catch (e) {
+            byProfile[pk] = [];
+            const diag = {
+              error: e.message || String(e),
+              profileKey: pk,
+              targetKey: optTarget
+            };
+            byProfile[`_diag_${pk}`] = {
+              stockCount: 0,
+              diag
+            };
+            if (pk === optProfile) _diag = {
+              stockCount: 0,
+              diag
+            };
+          }
         });
         // Sin fallback — cada perfil muestra solo lo que le corresponde
         setOptResults({
@@ -12619,7 +12803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         borderColor: 'var(--status-attention)',
         color: 'var(--status-attention)'
       }
-    }, "\u26A0 Supl. ", r.an.suppP.toFixed(0), "% > l\xEDmite")), /*#__PURE__*/React.createElement("div", {
+    }, "\u26A0 Supl. ", r.suppPct.toFixed(0), "% > l\xEDmite")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         flexDirection: 'column',
