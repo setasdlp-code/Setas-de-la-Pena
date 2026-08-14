@@ -160,10 +160,10 @@ const INGS=[
   {id:'rastrojo_maiz',name:'Rastrojo de maíz',cat:'base',cn:60,n:.6,c:45,moisture:15,cra:3.5,ph:6.5,dig:6,role:'base_carbono',tags:['Base','Local'],cost:1200,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
   {id:'kikuyo',name:'Kikuyo seco',cat:'base',cn:25,n:1.8,c:45,moisture:12,cra:4,ph:6.5,dig:8,role:'base_carbono',tags:['Local','Sabana'],cost:1400,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
   {id:'hojarasca',name:'Hojarasca de bosque',cat:'base',cn:50,n:.9,c:45,moisture:20,cra:3.5,ph:5.8,dig:5,role:'base_carbono',tags:['Local','Gratis'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco']},
-  {id:'retamo_espinoso',name:'Retamo espinoso',cat:'base',cn:32,n:1.5,c:47,moisture:11,cra:3,ph:6.0,dig:5,role:'base_carbono',tags:['Base','Local','Precio no confirmado — actualizar en Precios'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa'],notes:'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar.'},
+  {id:'retamo_espinoso',name:'Retamo espinoso',cat:'base',cn:32,n:1.5,c:47,moisture:11,cra:3,ph:6.0,dig:5,role:'base_carbono',tags:['Base','Local','Tenjo'],cost:400,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa'],notes:'Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar. Costo $400/kg procesado (recolección + molienda) — evita distorsión del optimizador de costos al no tratarlo como insumo gratuito.'},
   {id:'guadua',name:'Guadua astillada',cat:'base',cn:120,n:.35,c:42,moisture:15,cra:3,ph:6.0,dig:4,role:'base_carbono',tags:['Base','Bambú'],cost:2500,cs:['p_ostreatus_gris','shiitake','lions_mane']},
   {id:'heno_pangola',name:'Heno de pangola',cat:'base',cn:60,n:.8,c:48,moisture:12,cra:4,ph:6.5,dig:7,role:'base_carbono',tags:['Base','Local'],cost:6500,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
-  {id:'chips_poda_urbana',name:'Chips poda urbana (sauce/fresno)',cat:'base',cn:150,n:.30,c:45,moisture:15,cra:3,ph:6.2,dig:5,role:'base_carbono',tags:['Base','Gratis','Tenjo'],cost:0,cs:['p_ostreatus_gris','p_ostreatus_blanco','shiitake','lions_mane']},
+  {id:'chips_poda_urbana',name:'Chips poda urbana (sauce/fresno)',cat:'base',cn:150,n:.30,c:45,moisture:15,cra:3,ph:6.2,dig:5,role:'base_carbono',tags:['Base','Tenjo'],cost:300,notes:'Costo $300/kg procesado (recolección + astillado de poda urbana) — insumo no es gratuito, incluye alistamiento.',cs:['p_ostreatus_gris','p_ostreatus_blanco','shiitake','lions_mane']},
   // === CELULÓSICOS / PAPEL ===
   {id:'carton_corrugado',name:'Cartón corrugado troceado',cat:'base',cn:350,n:.13,c:45,moisture:8,cra:3.5,ph:7.0,dig:9,role:'base_carbono',tags:['Base','Gratis','Celulosa'],cost:800,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','shiitake','lions_mane']},
   {id:'carton_huevo',name:'Cartón de huevo',cat:'base',cn:150,n:.28,c:42,moisture:8,cra:4,ph:7.0,dig:8,role:'base_carbono',tags:['Base','Gratis','Aireador'],cost:1200,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
@@ -237,7 +237,7 @@ const INGS=[
   /* ── NUEVOS v3.1 — Investigación Sabana de Bogotá 2026 ──────────────── */
   {id:'pulpa_alfalfa',name:'Pulpa de Alfalfa (fresca/henificada)',cat:'local',cn:11,n:3.0,c:33,moisture:72,cra:4.8,ph:6.9,dig:9,role:'suplemento_n',tags:['EB 166%','Sabana','N Alto','Nuevo'],cost:4000,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','lions_mane','nameko']},
   {id:'cascara_uchuva',name:'Cáscara de Uchuva (capacho)',cat:'local',cn:30,n:1.2,c:35,moisture:10,cra:3.5,ph:6.1,dig:5,role:'base_carbono',tags:['EB 76%','Cundinamarca','Validado CO','Nuevo'],cost:500,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','p_eryngii']},
-  {id:'tallo_floricultura',name:'Tallo de Rosa / Clavel (Sabana)',cat:'local',cn:48,n:0.9,c:42,moisture:80,cra:3.0,ph:6.3,dig:4,role:'base_carbono',tags:['Sin estudiar','Sabana 85%','Potencial alto','Nuevo'],cost:100,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
+  {id:'tallo_floricultura',name:'Tallo de Rosa / Clavel (Sabana)',cat:'local',cn:48,n:0.9,c:42,moisture:80,cra:3.0,ph:6.3,dig:4,role:'base_carbono',tags:['Sin estudiar','Sabana 85%','Potencial alto','Nuevo'],cost:200,notes:'Costo $200/kg procesado (recolección + alistamiento de tallos de floricultura) — evita subestimar el costo real frente a residuo "gratis".',cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa']},
   {id:'raices_hidroponicas',name:'Raíces Hidropónicas + SMS',cat:'circ',cn:14,n:2.1,c:29,moisture:88,cra:3.8,ph:6.5,dig:7,role:'suplemento_n',tags:['EB 61%','Economía Circular','Nuevo'],cost:1800,cs:['p_ostreatus_blanco','lions_mane','nameko','p_eryngii']},
   {id:'hemp_hurds',name:'Hemp Hurds (cáñamo industrial)',cat:'sup',cn:70,n:0.5,c:47,moisture:10,cra:4.0,ph:6.8,dig:3,role:'base_carbono',tags:['Mejor Pleurotus EU','Aireador','Premium','Nuevo'],cost:28000,cs:['p_ostreatus_gris','p_ostreatus_blanco','lions_mane','shiitake']},
 ];
@@ -509,7 +509,6 @@ const {
   energyCostPerKgSeco,
   calcTreatment,
   OPT_PROFILES,
-  runAutoOptimizer,
 } = (typeof SetasRecipeOptimizer !== 'undefined'
   ? SetasRecipeOptimizer
   : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
@@ -563,10 +562,15 @@ const calcSchedule=(sKey,dateStr,eb)=>{
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
   const d=T[sKey]||T.p_ostreatus_gris;
   const adj=n=>Math.round(n/Math.max(.85,Math.min(1.2,(eb||100)/100)));
+  // Especies sensibles a bajas temperaturas: fructifican mal o no fructifican bajo el
+  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico
+  // activo. p_djamor_rosa es cálida-estricta (28–30°C ideal).
+  const COLD_SENSITIVE={p_djamor_rosa:'28–30°C'};
+  const coldWarn=COLD_SENSITIVE[sKey]?` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`:'';
   const evts=[
     {key:'in',type:'inoculation',day:0,title:'Inoculación',detail:`Empacar bolsas. Spawn ${sp.spawn_rate}%.`},
     {key:'c5',type:'normal',day:adj(d.c50),title:'Colonización 50%',detail:'Micelio blanco visible en la bolsa.'},
-    {key:'c1',type:'normal',day:adj(d.c100),title:'Colonización completa',detail:`Pasar a cámara de fructificación. ${sp.temp_fruit}.`},
+    {key:'c1',type:coldWarn?'warning':'normal',day:adj(d.c100),title:'Colonización completa',detail:`Pasar a cámara de fructificación. ${sp.temp_fruit}.${coldWarn}`},
     {key:'pr',type:'normal',day:adj(d.pr),title:'Primordios',detail:'HR 90–95%. Abrir bolsa o cortar.'},
     {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*.55).toFixed(0):'?'}% EB.`},
     {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*.35).toFixed(0):'?'}% EB.`},
@@ -583,7 +587,7 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
       {n:1,t:'Empaque las bolsas',d:`Llena cada bolsa PP hasta ${kgBag} kg de sustrato húmedo. Cierra con filtro 0.2 µm o algodón + papel kraft + cinta autoclave. No comprimas.`},
       {n:2,t:'Carga el autoclave',d:'Apila las bolsas sin sobrecargar. Deja espacio para circulación de vapor. Coloca indicador de esterilización (tira o pellet).' },
       {n:3,t:'Purga de aire',d:'Al iniciar, abre la válvula de purga 2–3 min para expulsar el aire frío. El vapor debe salir continuo antes de cerrar.'},
-      {n:4,t:'Esteriliza',d:`Mantén 121°C / 15 PSI durante 90–120 min. A 2.580 msnm la presión del autoclave compensa la altitud — los parámetros son los mismos que a nivel del mar.`},
+      {n:4,t:'Esteriliza',d:`Mantén 121°C / 18.5–19 PSI manométricos durante 90–120 min. A 2.580 msnm 15 PSI NO alcanzan 121°C reales — usa 18.5–19 PSI manométricos, o valida con sensor de núcleo que el sustrato llegue a 121°C real.`},
       {n:5,t:'Enfría (crítico)',d:`Deja enfriar dentro del autoclave apagado. Saca las bolsas cuando estén a <35°C (mínimo 4–6 h). Nunca abras caliente — la condensación abre los poros y contamina.`},
       {n:6,t:'Inocula en condiciones estériles',d:`Usa cámara de flujo laminar o caja SAB. Alcohol 70% en todas las superficies. Spawn rate: ${tr.spawn}%. Sella inmediatamente.`},
     ],
@@ -1370,6 +1374,133 @@ const historicalEBFor=(sKey,historicalYields,recipe=null)=>{
   return {n:rows.length,avg,subs,weight,matched};
 };
 
+// ── Hybrid recipe-search adapter for the React simulator ───────────────────
+// Keep the React call sites small while the legacy optimizer remains available
+// only as a parity oracle in recipe-optimizer.test.js / parity tests.
+const hybridRoleCaps=sp=>({
+  base_carbono:100,
+  suplemento_n:Number(sp?.supplementation_max)||20,
+  suplemento_medio:Number(sp?.supplementation_max)||20,
+  aditivo_ph:8,
+  aditivo_estructura:15,
+  aditivo_micronutriente:5,
+  aireador:30,
+});
+const hybridIngredientCaps=(ings,sp)=>{
+  const caps={};const suppMax=Number(sp?.supplementation_max)||20;
+  (ings||[]).forEach(g=>{
+    if(g.role==='suplemento_n'||g.role==='suplemento_medio') caps[g.id]=suppMax;
+    else if(g.role==='aditivo_ph') caps[g.id]=8;
+    else if(g.role==='aditivo_estructura') caps[g.id]=15;
+    else if(g.role==='aditivo_micronutriente') caps[g.id]=5;
+    else if(g.role==='aireador') caps[g.id]=30;
+  });
+  return caps;
+};
+const hybridSupplementPct=(rec,ings)=>{
+  const byId=new Map((ings||[]).map(g=>[g.id,g]));
+  return (rec||[]).reduce((sum,r)=>{
+    const role=byId.get(r.id)?.role;
+    return sum+((role==='suplemento_n'||role==='suplemento_medio')?(Number(r.p)||0):0);
+  },0);
+};
+const runHybridRecipeSearch=({
+  targetKey,
+  recipe=[],
+  invLotes=[],
+  maxCost=0,
+  ingredients=[],
+  useStock=false,
+  profileKey='produccion',
+  stockMap={},
+  lockedIds=[],
+})=>{
+  const engine=globalThis.SetasPeritoScenarios;
+  if(!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
+  const target=SPP[targetKey];
+  if(!target) return{ranked:[],pareto:[],recommended:[],noStock:false,diagnostics:{error:'Especie no encontrada'}};
+  const stockIds=new Set((invLotes||[]).filter(l=>l?.activo&&Number(l.cantidadKgDisponible)>0).map(l=>l.ingredienteId));
+  const compatible=(ingredients||[]).filter(g=>!Array.isArray(g.cs)||g.cs.length===0||g.cs.includes(targetKey));
+  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
+  const scoreAdapter=(analysis,ctx)=>{
+    const treatment=calcTreatment(analysis,targetKey,SPP);
+    return scoreAn(analysis,{
+      treatment,
+      recipe:ctx.recipe,
+      stockIds:useStock?stockIds:undefined,
+    });
+  };
+  return engine.searchScenarios({
+    recipe,
+    context:{sKey:targetKey,spp:SPP,stockIds},
+    searchMode:'hybrid',
+    targetKey,
+    spp:SPP,
+    ingredients:compatible,
+    analyze:analyzeAdapter,
+    score:scoreAdapter,
+    history:[],
+    generations:3,
+    beamWidth:14,
+    stepPct:4,
+    useStock,
+    stockIds,
+    invLotes,
+    stockMap,
+    profileKey,
+    maxCost,
+    roleCaps:hybridRoleCaps(target),
+    ingredientCaps:hybridIngredientCaps(compatible,target),
+    lockedIds:new Set(lockedIds||[]),
+  });
+};
+const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
+  const an=candidate?.evaluation?.analysis;
+  const sp=SPP[targetKey];
+  const profile=OPT_PROFILES[profileKey]||OPT_PROFILES.produccion;
+  const speciesSupp=Number(sp?.supplementation_max)||20;
+  const suppLimit=profile.maxSupp!=null?Math.min(speciesSupp,profile.maxSupp):speciesSupp;
+  const suppPct=hybridSupplementPct(candidate?.recipe||[],ingredients);
+  const maxKgWet=Object.keys(stockMap||{}).length&&candidate?.recipe?.length
+    ?calcMaxBatchFromStock(candidate.recipe,stockMap,10,sp?.moisture?.ideal||65,ingredients)
+    :null;
+  return{
+    recipe:candidate.recipe,
+    an,
+    score:Number(candidate.evaluation?.score)||0,
+    riskScore:Number(candidate.evaluation?.riskScore??candidate.evaluation?.breakdown?.risk??50),
+    maxKgWet,
+    suppPct,
+    suppOverLimit:suppPct>suppLimit,
+    realCostKnown:!!an?.realCostKnown,
+    scenario:candidate,
+  };
+};
+const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey)=>{
+  const stockIds=new Set((invLotes||[]).filter(l=>l?.activo&&Number(l.cantidadKgDisponible)>0).map(l=>l.ingredienteId));
+  const pool=useStock
+    ?(ingredients||[]).filter(g=>stockIds.has(g.id))
+    :(ingredients||[]).filter(g=>!Array.isArray(g.cs)||g.cs.length===0||g.cs.includes(targetKey));
+  const compatible=g=>!Array.isArray(g.cs)||g.cs.length===0||g.cs.includes(targetKey);
+  const bases=pool.filter(g=>g.role==='base_carbono'&&compatible(g)&&Number(g.cn)>0&&Number(g.n)>0);
+  const supps=pool.filter(g=>(g.role==='suplemento_n'||g.role==='suplemento_medio')&&compatible(g)&&Number(g.cn)>0&&Number(g.n)>0);
+  const aers=pool.filter(g=>g.role==='aireador');
+  return{
+    stockIds:stockIds.size,
+    poolSize:pool.length,
+    bases:bases.length,
+    supps:supps.length,
+    aers:aers.length,
+    tried:Number(out?.explored)||0,
+    resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
+    suppLimit:Number(out?.profile?.maxSupp??SPP[targetKey]?.supplementation_max??20),
+    profileKey,
+    targetKey,
+    baseNames:bases.map(g=>g.name),
+    suppNames:supps.map(g=>g.name),
+  };
+};
+
 function App(props){
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
@@ -1765,7 +1896,19 @@ function App(props){
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
-  const optimalAn=useMemo(()=>{try{const r=runAutoOptimizer(sKey,invLotes,0,optimizerINGS,false);if(r.results?.length) return analyze(r.results[0].recipe,sKey,optimizerINGS);}catch(e){}return null;},[sKey,invLotes,optimizerINGS]);
+  const optimalAn=useMemo(()=>{try{
+    const r=runHybridRecipeSearch({
+      targetKey:sKey,
+      recipe:[],
+      invLotes,
+      maxCost:0,
+      ingredients:optimizerINGS,
+      useStock:false,
+      profileKey:'produccion',
+      stockMap:{},
+    });
+    return r.ranked?.[0]?.evaluation?.analysis||null;
+  }catch(e){return null;}},[sKey,invLotes,optimizerINGS]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
   const tr=useMemo(()=>calcTreatment(an, sKey, SPP),[an,sKey]);
   const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn]);
@@ -2087,9 +2230,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   // Genera la receta óptima para la especie activa con toda la paleta y la carga
   const loadOptimal=()=>{
-    const r=runAutoOptimizer(sKey,invLotes,0,optimizerINGS,false);
-    if(r.results&&r.results.length){setRecipe(r.results[0].recipe);setLockedIds([]);}
-    else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
+    try{
+      const r=runHybridRecipeSearch({
+        targetKey:sKey,
+        recipe:[],
+        invLotes,
+        maxCost:0,
+        ingredients:optimizerINGS,
+        useStock:false,
+        profileKey:'produccion',
+        stockMap:{},
+      });
+      if(r.ranked?.length){setRecipe(r.ranked[0].recipe);setLockedIds([]);}
+      else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
+    }catch(e){
+      setNoticeDlg({msg:'No se pudo ejecutar el optimizador híbrido: '+(e.message||'error desconocido')});
+    }
   };
   const updP=(id,p)=>{
     if(!normMode){setRecipe(recipe.map(r=>r.id===id?{...r,p}:r));return;}
@@ -3827,11 +3983,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
                                     Object.keys(OPT_PROFILES).forEach(pk=>{
-                                      const r=runAutoOptimizer(optTarget,invLotes,optMaxCost,optimizerINGS,optUseStock,pk,stockMap);
-                                      noStock=noStock||r.noStock;
-                                      byProfile[pk]=r.results;
-                                      byProfile[`_diag_${pk}`]={stockCount:r.stockCount,diag:r.diag};
-                                      if(pk===optProfile)_diag={stockCount:r.stockCount,diag:r.diag};
+                                      try{
+                                        const out=runHybridRecipeSearch({
+                                          targetKey:optTarget,
+                                          recipe:[],
+                                          invLotes,
+                                          maxCost:optMaxCost,
+                                          ingredients:optimizerINGS,
+                                          useStock:optUseStock,
+                                          profileKey:pk,
+                                          stockMap,
+                                        });
+                                        noStock=noStock||!!out.noStock;
+                                        byProfile[pk]=(out.ranked||[]).slice(0,6).map(c=>
+                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
+                                        );
+                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
+                                        const stockCount=diag.stockIds;
+                                        byProfile[`_diag_${pk}`]={stockCount,diag};
+                                        if(pk===optProfile)_diag={stockCount,diag};
+                                      }catch(e){
+                                        byProfile[pk]=[];
+                                        const diag={error:e.message||String(e),profileKey:pk,targetKey:optTarget};
+                                        byProfile[`_diag_${pk}`]={stockCount:0,diag};
+                                        if(pk===optProfile)_diag={stockCount:0,diag};
+                                      }
                                     });
                                     // Sin fallback — cada perfil muestra solo lo que le corresponde
                                     setOptResults({...byProfile,noStock,_diag});
@@ -3874,7 +4050,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.an.suppP.toFixed(0)}% &gt; límite</span>}
+                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('formular');;setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>Cargar</button>
@@ -3943,7 +4119,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         const t=calcTreatment(r.an, optTarget, SPP);
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
-                                          ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 15 PSI'}
+                                          ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
                                           ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention)',lbl:'Pasteurización 65–75°C núcleo'}
                                           :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
@@ -4205,7 +4381,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'♨',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
                   :bt.tratamiento==='cwlp_thermal'
                   ?{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
-                  :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 15 PSI'};
+                  :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
                 return(
                   <div>
                     <div style={{padding:'7px 11px',background:tc.bg,border:`1px solid ${tc.br}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,marginBottom:7}}>
@@ -4311,7 +4487,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const aguaR=Math.max(0,aguaTotR-aguaInhR);
               const cnDrift=Math.abs(anR.cn-an.cn);
               const trSteps={
-                autoclave:`Esterilizar en autoclave a ${ptr?.temp||'121°C/15 PSI'} durante ${ptr?.time||'90–120 min'}. Purgar aire al inicio. A 2.600 msnm la presión compensa la altitud.`,
+                autoclave:`Esterilizar en autoclave a ${ptr?.temp||'121°C/18.5–19 PSI'} durante ${ptr?.time||'90–120 min'}. Purgar aire al inicio. A 2.600 msnm, 15 PSI no alcanza 121°C real — usar 18.5–19 PSI manométricos o sensor de núcleo.`,
                 thermal:`Pasteurizar sosteniendo el núcleo del sustrato a 65–75°C por ${ptr?.time||'6–8 h'} (factor +25% por altitud, agua ~91°C a 2.580 msnm). Medir el centro de la masa con termómetro de pincho, no solo el agua.`,
                 cwlp:`Inmersión en cal hidratada (150–200 g/100 L, pH≥12) por ${ptr?.time||'18–24 h'}. No requiere calor.`,
               };
