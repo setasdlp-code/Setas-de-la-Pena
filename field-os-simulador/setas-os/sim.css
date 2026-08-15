@@ -1579,7 +1579,7 @@
 @media(max-width:900px){.sim-root .builder-subnav{display:flex;}}
 
 .sim-root .builder-cols > *{min-width:0;}
-@media(max-width:900px){.sim-root .builder-cols{grid-template-columns:1fr;gap:12px;}}
+@media(max-width:900px){.sim-root .builder-cols{gap:12px;}}
 @media(max-width:600px){.sim-root .ing-meta{flex-wrap:wrap!important;}.sim-root .ing-meta span{flex:1 1 50%!important;border-bottom:1px solid rgba(26,20,16,0.07)!important;}}
 /* ── Builder sub-tabs ── */
 .sim-root .builder-subtabs{display:flex;gap:0;border-bottom:2px solid var(--border-soft);margin-bottom:20px;background:var(--paper-100);}
