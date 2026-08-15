@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d903605a031fda1ec1e8410976826e30b35968a8369a61163b599f9da1d7048c
+// source-hash: a9ec90cf6e4d0e4d11d627785d883ef44d4d75a4261e7231ca5e693d80544ef6
 const {
   useState,
   useMemo,
@@ -4769,10 +4769,11 @@ const IcoWarn = () => /*#__PURE__*/React.createElement("svg", {
   y2: "17"
 }));
 const IcoBox = ({
-  color = 'currentColor'
+  color = 'currentColor',
+  size = 13
 }) => /*#__PURE__*/React.createElement("svg", {
-  width: "13",
-  height: "13",
+  width: size,
+  height: size,
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: color,
@@ -4791,44 +4792,6 @@ const IcoBox = ({
   x1: "12",
   y1: "22.08",
   x2: "12",
-  y2: "12"
-}));
-const IcoCheck = () => /*#__PURE__*/React.createElement("svg", {
-  width: "6",
-  height: "6",
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: "3",
-  strokeLinecap: "round",
-  style: {
-    maxWidth: '70%',
-    maxHeight: '70%'
-  }
-}, /*#__PURE__*/React.createElement("polyline", {
-  points: "20 6 9 17 4 12"
-}));
-const IcoPlus = () => /*#__PURE__*/React.createElement("svg", {
-  width: "6",
-  height: "6",
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: "3",
-  strokeLinecap: "round",
-  style: {
-    maxWidth: '70%',
-    maxHeight: '70%'
-  }
-}, /*#__PURE__*/React.createElement("line", {
-  x1: "12",
-  y1: "5",
-  x2: "12",
-  y2: "19"
-}), /*#__PURE__*/React.createElement("line", {
-  x1: "5",
-  y1: "12",
-  x2: "19",
   y2: "12"
 }));
 const parseIngName = name => {
@@ -5904,6 +5867,24 @@ function App(props) {
   const [showOptimizer, setShowOptimizer] = useState(true);
   const [builderSubTab, setBuilderSubTab] = useState('formular');
   const [loadedFlash, setLoadedFlash] = useState(false);
+  const subnavRef = useRef(null);
+  const summaryRef = useRef(null);
+  const [stickyH, setStickyH] = useState({
+    subnav: 0,
+    summary: 0
+  });
+  useEffect(() => {
+    if (tab !== 'formular') return;
+    const measure = () => setStickyH({
+      subnav: subnavRef.current?.offsetHeight || 0,
+      summary: summaryRef.current?.offsetHeight || 0
+    });
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (subnavRef.current) ro.observe(subnavRef.current);
+    if (summaryRef.current) ro.observe(summaryRef.current);
+    return () => ro.disconnect();
+  }, [tab, recipe.length]);
   const [cmpFecha, setCmpFecha] = useState((() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -10092,10 +10073,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }, "Formular con ", sp.name, " \u2192"))))));
   })()), tab === 'formular' && /*#__PURE__*/React.createElement("div", {
     className: "builder-wrap",
-    "data-tab": tab
+    "data-tab": tab,
+    style: {
+      '--subnav-h': stickyH.subnav + 'px',
+      '--summary-h': stickyH.summary + 'px'
+    }
   }, loadedFlash && /*#__PURE__*/React.createElement("div", {
     className: "loaded-toast"
   }, "\u2713 Receta cargada"), /*#__PURE__*/React.createElement("div", {
+    ref: subnavRef,
     className: "builder-subnav",
     style: {
       gap: 6,
@@ -10148,6 +10134,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const sm2 = PERITO_STATUS[opt.status] || PERITO_STATUS.sin_receta;
     const limiter = peritoMainLimiter(opt, an);
     return /*#__PURE__*/React.createElement("div", {
+      ref: summaryRef,
       style: {
         display: 'flex',
         flexDirection: 'column',
@@ -10157,7 +10144,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         border: '1px solid var(--border-soft)',
         borderTop: 'none',
         position: 'sticky',
-        top: 37,
+        top: 'var(--subnav-h, 37px)',
         zIndex: 6,
         fontFamily: 'var(--font-body)'
       }
@@ -10528,6 +10515,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       style: {
         display: 'flex',
         justifyContent: 'flex-end',
+        alignItems: 'center',
         gap: 6,
         padding: '4px 4px 6px'
       }
@@ -10555,7 +10543,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
         fontWeight: 700,
         flexShrink: 0
       }
-    }, disabledIngIds.includes(ing.id) ? '⊘' : '–'), /*#__PURE__*/React.createElement("button", {
+    }, disabledIngIds.includes(ing.id) ? '⊘' : '–'), /*#__PURE__*/React.createElement("span", {
+      "aria-hidden": "true",
+      style: {
+        width: 1,
+        alignSelf: 'stretch',
+        minHeight: 13,
+        background: 'var(--border-soft)',
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("button", {
       className: "qa-mini-btn",
       onClick: e => {
         e.stopPropagation();
@@ -10568,17 +10565,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
         height: 'clamp(13px,3vw,15px)',
         borderRadius: '50%',
         background: inPantry ? 'var(--moss-500)' : 'var(--border-soft)',
-        color: 'var(--paper-0)',
+        color: inPantry ? 'var(--paper-0)' : 'rgba(26,20,16,.5)',
         border: 'none',
         cursor: 'pointer',
-        fontSize: 'clamp(6px,1.4vw,7px)',
         lineHeight: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0
       }
-    }, inPantry ? /*#__PURE__*/React.createElement(IcoCheck, null) : /*#__PURE__*/React.createElement(IcoPlus, null)), !inR && /*#__PURE__*/React.createElement("button", {
+    }, /*#__PURE__*/React.createElement(IcoBox, {
+      color: "currentColor",
+      size: 8
+    })), !inR && /*#__PURE__*/React.createElement("button", {
       className: 'qa-mini-btn qa-add-btn' + (justAddedIds.includes(ing.id) ? ' qa-pulse' : ''),
       onClick: e => {
         e.stopPropagation();
