@@ -458,7 +458,7 @@
 .sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, var(--paper-1) 100%); pointer-events:none; z-index:10; }
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
-  text-transform:uppercase; padding:8px 14px; min-height:42px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
+  text-transform:uppercase; padding:8px 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300,#9BB5C4); border-radius:0;
   background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:all .12s var(--ease); white-space:nowrap;
 }
 .sim-root .cat:hover{ 
@@ -1092,7 +1092,7 @@
   /* ── Search & filters ── */
   .sim-root .search{ font-size:16px; padding:10px 12px; margin-bottom:10px; }
   .sim-root .cats{ gap:3px; margin-bottom:10px; }
-  .sim-root .cat{ font-size:8px; padding:4px 8px; min-height:36px; }
+  .sim-root .cat{ font-size:8px; padding:4px 8px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:320px; }
@@ -1102,11 +1102,11 @@
 
   /* ── Recipe row ── */
   .sim-root .rec-row{ grid-template-columns:1fr 80px 24px; gap:8px; padding:10px 11px; }
-  .sim-root .rec-row input[type=number]{ font-size:16px; padding:8px 6px; min-height:42px; }
+  .sim-root .rec-row input[type=number]{ font-size:16px; padding:8px 6px; min-height:44px; }
   .sim-root .imeta{ font-size:8px; }
   
   /* ── Buttons ── */
-  .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:9px; padding:9px 12px; min-height:42px; }
+  .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:9px; padding:9px 12px; min-height:44px; }
   .sim-root .pre{ font-size:8px; padding:4px 8px; }
   
   /* ── Metrics ── */
@@ -1224,7 +1224,7 @@
   /* ── Search ── */
   .sim-root .search{ font-size:16px; padding:9px 10px; margin-bottom:8px; }
   .sim-root .cats{ gap:2px; margin-bottom:8px; }
-  .sim-root .cat{ font-size:7px; padding:3px 7px; min-height:34px; }
+  .sim-root .cat{ font-size:7px; padding:3px 7px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:240px; }
@@ -1232,12 +1232,12 @@
 
   /* ── Recipe row ── */
   .sim-root .rec-row{ grid-template-columns:1fr 70px 20px; gap:6px; padding:8px 10px; }
-  .sim-root .rec-row input[type=number]{ font-size:16px; padding:7px 5px; min-height:40px; }
+  .sim-root .rec-row input[type=number]{ font-size:16px; padding:7px 5px; min-height:44px; }
   .sim-root .pct{ font-size:11px; }
   .sim-root .imeta{ font-size:7px; }
   
   /* ── Buttons ── */
-  .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:8px; padding:8px 10px; min-height:40px; letter-spacing:.08em; }
+  .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:8px; padding:8px 10px; min-height:44px; letter-spacing:.08em; }
   .sim-root .pre{ font-size:7px; padding:3px 6px; }
   
   /* ── Metrics ── */
@@ -1695,7 +1695,7 @@
   .sim-root .bolsas-table td:last-child{border-bottom:none;}
   .sim-root .bolsas-table td::before{content:attr(data-label);flex:0 0 auto;font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);}
   .sim-root .bolsas-table td > *{flex:1 1 auto;max-width:60%;}
-  .sim-root .bolsas-table input, .sim-root .bolsas-table select{font-size:16px!important;padding:8px 10px!important;min-height:40px;box-sizing:border-box;}
+  .sim-root .bolsas-table input, .sim-root .bolsas-table select{font-size:16px!important;padding:8px 10px!important;min-height:44px;box-sizing:border-box;}
 }
 @media(max-width:600px){.sim-root .cmp-b-row{flex-direction:column;align-items:flex-start!important;}.sim-root .cmp-b-row > span{margin-right:0!important;margin-bottom:4px;}}
 .sim-root .inv-table{width:100%;border-collapse:collapse;}
@@ -2049,7 +2049,7 @@
   .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:44px!important; min-height:44px!important; }
 
   /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil mayor */
-  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:40px!important; min-width:40px!important; }
+  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:44px!important; min-width:44px!important; }
   .sim-root .cat-modal-close{ width:44px!important; height:44px!important; }
 }
 
@@ -2285,7 +2285,7 @@
 @keyframes rowFlash{0%{background:color-mix(in oklab,var(--moss-500) 18%,var(--paper-50));}100%{background:transparent;}}
 .sim-root .ing-row-flash > div:first-child{animation:rowFlash .65s ease-out;}
 
-/* Hit-area táctil ampliada para los mini-botones de ingrediente (visual pequeño, toque ≥40px vía ::before) */
+/* Hit-area táctil ampliada para los mini-botones de ingrediente (visual pequeño, toque ≥44px vía ::before) */
 .sim-root .qa-mini-btn{
   position:relative;
   min-width:15px!important;
@@ -2298,21 +2298,21 @@
 .sim-root .qa-mini-btn::before{
   content:'';
   position:absolute;
-  inset:-13px;
+  inset:-15px;
 }
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
     min-width:18px!important;
     min-height:18px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-12px;}
+  .sim-root .qa-mini-btn::before{inset:-13px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
     min-width:20px!important;
     min-height:20px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-11px;}
+  .sim-root .qa-mini-btn::before{inset:-12px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
