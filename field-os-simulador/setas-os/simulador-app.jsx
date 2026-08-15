@@ -1066,9 +1066,7 @@ const CAT_COLORS={
 // ── MICRO SVG ICONS (sin emojis) ──────────────────────────────
 const IcoBlock=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent-terracotta)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>);
 const IcoWarn=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const IcoBox=({color='currentColor'})=>(<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
-const IcoCheck=()=>(<svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{maxWidth:'70%',maxHeight:'70%'}}><polyline points="20 6 9 17 4 12"/></svg>);
-const IcoPlus=()=>(<svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{maxWidth:'70%',maxHeight:'70%'}}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
+const IcoBox=({color='currentColor',size=13})=>(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
 const parseIngName=(name)=>{const hasBlock=name.includes('⛔');const hasWarn=name.includes('⚠️')||name.includes('⚠');const clean=name.replace(/⛔\s*/g,'').replace(/⚠️\s*/g,'').replace(/⚠\s*/g,'').trim();return{hasBlock,hasWarn,clean};};
 
 // ── INGREDIENT ITEM with expandable profile ──
@@ -1665,6 +1663,18 @@ function App(props){
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
   const [loadedFlash,setLoadedFlash]=useState(false);
+  const subnavRef=useRef(null);
+  const summaryRef=useRef(null);
+  const [stickyH,setStickyH]=useState({subnav:0,summary:0});
+  useEffect(()=>{
+    if(tab!=='formular')return;
+    const measure=()=>setStickyH({subnav:subnavRef.current?.offsetHeight||0,summary:summaryRef.current?.offsetHeight||0});
+    measure();
+    const ro=new ResizeObserver(measure);
+    if(subnavRef.current)ro.observe(subnavRef.current);
+    if(summaryRef.current)ro.observe(summaryRef.current);
+    return()=>ro.disconnect();
+  },[tab,recipe.length]);
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [cmpProvId,setCmpProvId]=useState('');
   const [cmpFuente,setCmpFuente]=useState('manual');
@@ -3278,9 +3288,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-        <div className="builder-wrap" data-tab={tab}>
+        <div className="builder-wrap" data-tab={tab} style={{'--subnav-h':stickyH.subnav+'px','--summary-h':stickyH.summary+'px'}}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
-          <div className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+          <div ref={subnavRef} className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
             {[
               {id:'bl-ingredientes',l:'Ingredientes'},
               {id:'bl-receta',l:'Receta'},
@@ -3294,7 +3304,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
             const limiter=peritoMainLimiter(opt,an);
             return(
-              <div style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:6,fontFamily:'var(--font-body)'}}>
+              <div ref={summaryRef} style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:'var(--subnav-h, 37px)',zIndex:6,fontFamily:'var(--font-body)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
                   <span style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
                   <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
@@ -3392,18 +3402,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0}/>
                         {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
                       </div>
-                      <div style={{display:'flex',justifyContent:'flex-end',gap:6,padding:'4px 4px 6px'}}>
+                      <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
                         <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
                           title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
                           aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
                           style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
                           {disabledIngIds.includes(ing.id)?'⊘':'–'}
                         </button>
+                        <span aria-hidden="true" style={{width:1,alignSelf:'stretch',minHeight:13,background:'var(--border-soft)',flexShrink:0}}/>
                         <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
                           title={inPantry?'Quitar de bodega':'Agregar a bodega'}
                           aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
-                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(6px,1.4vw,7px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                          {inPantry?<IcoCheck/>:<IcoPlus/>}
+                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:inPantry?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          <IcoBox color="currentColor" size={8}/>
                         </button>
                         {!inR&&(
                           <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
