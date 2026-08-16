@@ -1828,13 +1828,6 @@ function App(props){
       localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
     } catch(e) {}
   };
-  useEffect(() => {
-    setOptUseStock(globalMode === 'produccion');
-    try {
-      localStorage.setItem('setas_global_workmode', globalMode);
-      localStorage.setItem('setas_workmode', globalMode === 'produccion' ? 'bodega' : 'catalogo');
-    } catch(e) {}
-  }, [globalMode]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -4378,12 +4371,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
                         </span>
                       </div>
-
-                      {/* Costo kg */}
-                      <div className="live-dash-pill" style={{display:'none'}} id="live-cost-pill" title={`Costo: $${an&&an.cost!=null?Math.round(an.cost).toLocaleString():'0'} / kg seco`}>
-                        <span className="live-dash-pill-label">$</span>
-                        <span>{an&&an.cost!=null?Math.round(an.cost):'0'}</span>
-                      </div>
                     </div>
 
                     {/* Acciones compactas */}
@@ -4651,39 +4638,49 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       label:'Bases de Carbono',
                       icon:'🌾',
                       desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
-                      filter:g=>g.role==='base_carbono'||g.cat==='base'||g.cn>=40
+                      primary:g=>g.role==='base_carbono',
+                      fallback:g=>g.cat==='base'||g.cn>=40
                     },
                     {
                       key:'suplemento_n',
                       label:'Suplementos Nitrogenados',
                       icon:'🥜',
                       desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
-                      filter:g=>g.role==='suplemento_n'||g.role==='suplemento_medio'||g.n>=1.4
+                      primary:g=>g.role==='suplemento_n'||g.role==='suplemento_medio',
+                      fallback:g=>g.n>=1.4
                     },
                     {
                       key:'aditivo',
                       label:'Minerales y Tampones de pH',
                       icon:'⚖️',
                       desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
-                      filter:g=>g.role?.startsWith('aditivo_')||g.cat==='adit'||g.cn===0
+                      primary:g=>!!g.role?.startsWith('aditivo_'),
+                      fallback:g=>g.cat==='adit'||g.cn===0
                     },
                     {
                       key:'aireador',
                       label:'Aireadores y Estructurantes',
                       icon:'💨',
                       desc:'Porosidad y difusión de oxígeno gaseoso',
-                      filter:g=>g.role==='aireador'||g.cat==='trop'||g.cat==='circ'
+                      primary:g=>g.role==='aireador',
+                      fallback:g=>g.cat==='trop'||g.cat==='circ'
                     }
                   ];
 
-                  const assigned=new Set();
+                  // Dos pasadas: el rol explícito del catálogo siempre gana sobre las
+                  // heurísticas de cat/cn — evita que un insumo con role='aireador' pero
+                  // cn===0 (o similar solape) caiga en el grupo equivocado solo por el
+                  // orden en que se evalúan los grupos.
+                  const roleAssignment={};
+                  ROLE_GROUPS.forEach(grp=>{
+                    base.forEach(g=>{ if(!roleAssignment[g.id]&&grp.primary(g)) roleAssignment[g.id]=grp.key; });
+                  });
+                  ROLE_GROUPS.forEach(grp=>{
+                    base.forEach(g=>{ if(!roleAssignment[g.id]&&grp.fallback(g)) roleAssignment[g.id]=grp.key; });
+                  });
+
                   return ROLE_GROUPS.map(grp=>{
-                    const grpIngs=base.filter(g=>{
-                      if(assigned.has(g.id)) return false;
-                      const match=grp.filter(g);
-                      if(match) assigned.add(g.id);
-                      return match;
-                    });
+                    const grpIngs=base.filter(g=>roleAssignment[g.id]===grp.key);
                     if(grpIngs.length===0) return null;
                     const isCollapsed=collapsedRoles[grp.key];
                     const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;

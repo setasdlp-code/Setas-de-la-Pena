@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5133fea10efa1880f791bd63a73b9c839c3dfdf7ff7571e3054ecdac4e65bef4
+// source-hash: 457262ad28d169456dd6e23bbe89f95b6e87cdb6a952174c49d1b0b969e6a18c
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1359,14 +1359,6 @@ function App(props) {
     } catch (e) {
     }
   };
-  useEffect(() => {
-    setOptUseStock(globalMode === "produccion");
-    try {
-      localStorage.setItem("setas_global_workmode", globalMode);
-      localStorage.setItem("setas_workmode", globalMode === "produccion" ? "bodega" : "catalogo");
-    } catch (e) {
-    }
-  }, [globalMode]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== "undefined" ? navigator.onLine : true);
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -3154,7 +3146,7 @@ Click para ver análisis completo`
         title: `Balance de masa: ${an ? an.tot.toFixed(1) : "0"}% (ideal 100%)`
       },
       /* @__PURE__ */ React.createElement("span", { style: { color: totColor, display: "inline-flex", alignItems: "center", gap: 3 } }, an ? an.tot.toFixed(0) : "0", "%", totOk ? /* @__PURE__ */ React.createElement(IconCheck, { size: 10, color: totColor }) : /* @__PURE__ */ React.createElement(IconAlert, { size: 10, color: totColor }))
-    ), /* @__PURE__ */ React.createElement("div", { className: "live-dash-pill", style: { display: "none" }, id: "live-cost-pill", title: `Costo: $${an && an.cost != null ? Math.round(an.cost).toLocaleString() : "0"} / kg seco` }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-pill-label" }, "$"), /* @__PURE__ */ React.createElement("span", null, an && an.cost != null ? Math.round(an.cost) : "0"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, an && !totOk && /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, an && !totOk && /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => autoBalance(balanceMode),
@@ -3375,38 +3367,47 @@ Click para editar`
         label: "Bases de Carbono",
         icon: "🌾",
         desc: "Estructura primaria de lignina y celulosa (60–85% de la receta)",
-        filter: (g) => g.role === "base_carbono" || g.cat === "base" || g.cn >= 40
+        primary: (g) => g.role === "base_carbono",
+        fallback: (g) => g.cat === "base" || g.cn >= 40
       },
       {
         key: "suplemento_n",
         label: "Suplementos Nitrogenados",
         icon: "🥜",
         desc: "Aporte de proteína y arranque micelial (5–20% máx según especie)",
-        filter: (g) => g.role === "suplemento_n" || g.role === "suplemento_medio" || g.n >= 1.4
+        primary: (g) => g.role === "suplemento_n" || g.role === "suplemento_medio",
+        fallback: (g) => g.n >= 1.4
       },
       {
         key: "aditivo",
         label: "Minerales y Tampones de pH",
         icon: "⚖️",
         desc: "Estabilizadores de acidez, calcio y estructura (1–4%)",
-        filter: (g) => g.role?.startsWith("aditivo_") || g.cat === "adit" || g.cn === 0
+        primary: (g) => !!g.role?.startsWith("aditivo_"),
+        fallback: (g) => g.cat === "adit" || g.cn === 0
       },
       {
         key: "aireador",
         label: "Aireadores y Estructurantes",
         icon: "💨",
         desc: "Porosidad y difusión de oxígeno gaseoso",
-        filter: (g) => g.role === "aireador" || g.cat === "trop" || g.cat === "circ"
+        primary: (g) => g.role === "aireador",
+        fallback: (g) => g.cat === "trop" || g.cat === "circ"
       }
     ];
-    const assigned = /* @__PURE__ */ new Set();
-    return ROLE_GROUPS.map((grp) => {
-      const grpIngs = base.filter((g) => {
-        if (assigned.has(g.id)) return false;
-        const match = grp.filter(g);
-        if (match) assigned.add(g.id);
-        return match;
+    const roleAssignment = {};
+    ROLE_GROUPS.forEach((grp) => {
+      base.forEach((g) => {
+        if (!roleAssignment[g.id] && grp.primary(g)) roleAssignment[g.id] = grp.key;
       });
+    });
+    ROLE_GROUPS.forEach((grp) => {
+      base.forEach((g) => {
+        if (!roleAssignment[g.id] && grp.fallback(g)) roleAssignment[g.id] = grp.key;
+      });
+    });
+    return ROLE_GROUPS.map((grp) => {
+      const grpIngs = base.filter((g) => roleAssignment[g.id] === grp.key);
       if (grpIngs.length === 0) return null;
       const isCollapsed = collapsedRoles[grp.key];
       const compatCount = grpIngs.filter((g) => g.cs && g.cs.includes(sKey)).length;
