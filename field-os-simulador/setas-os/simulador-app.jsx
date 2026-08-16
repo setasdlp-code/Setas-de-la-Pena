@@ -4252,7 +4252,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
 
           {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:globalMode==='produccion'?'var(--paper-100)':'#F5F0EB',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600, #4D6235)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:'var(--paper-100)',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <span style={{fontSize:22}}>{globalMode==='produccion'?'🏭':'🔬'}</span>
               <div>
