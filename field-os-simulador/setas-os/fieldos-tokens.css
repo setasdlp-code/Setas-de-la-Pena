@@ -16,8 +16,11 @@
   --paper-300: var(--paper-2);
 
   --ink-900: var(--ink-0);
+  --ink-800: var(--ink-0);
   --ink-700: var(--ink-1);
+  --ink-600: var(--ink-2);
   --ink-500: var(--ink-2);
+  --ink-400: var(--ink-3);
   --ink-300: var(--ink-3);
 
   /* ── EARTH PIGMENTS — consolidated onto the DS's 5 real accents ──
@@ -26,15 +29,18 @@
      ochre (caution) -> terracotta (DS's single attention hue)          */
   --moss-900: var(--accent-olive);
   --moss-700: var(--accent-olive);
+  --moss-600: var(--accent-olive);
   --moss-500: var(--accent-olive);
   --moss-300: var(--accent-olive-dim);
   --moss-200: var(--accent-olive-dim);
 
   --coral-900: var(--accent-terracotta);
   --coral-700: var(--accent-terracotta);
+  --coral-600: var(--accent-terracotta);
   --coral-500: var(--accent-terracotta);
   --coral-300: var(--accent-terracotta-dim);
   --coral-200: var(--accent-terracotta-dim);
+  --coral-100: var(--accent-terracotta-dim);
 
   --sand-500: var(--accent-mushroom);
   --sand-300: var(--accent-mushroom-dim);

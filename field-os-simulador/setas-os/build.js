@@ -21,13 +21,26 @@ function sourceHash(src) {
 }
 
 function build() {
-  const Babel = require('./vendor/babel.min.js');
+  let code;
+  try {
+    const esbuild = require('esbuild');
+    const result = esbuild.transformSync(fs.readFileSync(SRC, 'utf8'), {
+      loader: 'jsx',
+      target: 'es2020',
+      jsx: 'transform',
+      charset: 'utf8',
+    });
+    code = result.code;
+  } catch (err) {
+    const Babel = require('./vendor/babel.min.js');
+    const src = fs.readFileSync(SRC, 'utf8');
+    const res = Babel.transform(src, {
+      filename: 'simulador-app.jsx',
+      presets: ['react', 'typescript'],
+    });
+    code = res.code;
+  }
   const src = fs.readFileSync(SRC, 'utf8');
-  const { code } = Babel.transform(src, {
-    filename: 'simulador-app.jsx',
-    presets: ['react', 'typescript'],
-  });
-
   const banner =
     '// AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.\n' +
     '// Run `node build.js` after changing simulador-app.jsx and commit this file.\n' +
