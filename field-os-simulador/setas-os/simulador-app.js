@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 9dadbc885118768b3813bc475653cb730eb3db40282322587bc6e64ad6f23331
+// source-hash: ffad33e6d47b417b657eef23684651601891f2b0cd331d1d5eecb9802cd94d02
 const {
   useState,
   useMemo,
@@ -4511,7 +4511,7 @@ const RadarChart = ({
       position: 'fixed',
       inset: 0,
       background: 'rgba(0,0,0,.8)',
-      zIndex: 1000,
+      zIndex: 'var(--z-overlay)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -4959,7 +4959,7 @@ const SpeciesGuide = ({
     style: {
       position: 'sticky',
       top: 54,
-      zIndex: 20,
+      zIndex: 'var(--z-sticky-panel)',
       marginBottom: 12,
       borderRadius: 5,
       border: `1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,
@@ -5019,7 +5019,7 @@ const SpeciesGuide = ({
     style: {
       position: 'sticky',
       top: 54,
-      zIndex: 20,
+      zIndex: 'var(--z-sticky-panel)',
       marginBottom: 12,
       borderRadius: 5,
       border: '1px solid rgba(26,20,16,0.11)',
@@ -5108,7 +5108,7 @@ const SpeciesGuide = ({
     style: {
       padding: '14px 16px 16px',
       position: 'relative',
-      zIndex: 1,
+      zIndex: 'var(--z-local)',
       maxWidth: img ? '60%' : '100%'
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -11247,7 +11247,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       borderBottom: 'none',
       position: 'sticky',
       top: 0,
-      zIndex: 6
+      zIndex: 'var(--z-sticky-sub)'
     }
   }, [{
     id: 'bl-ingredientes',
@@ -11298,7 +11298,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         borderTop: 'none',
         position: 'sticky',
         top: 37,
-        zIndex: 6,
+        zIndex: 'var(--z-sticky-sub)',
         fontFamily: 'var(--font-body)'
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -13483,7 +13483,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         background: 'var(--coral-500)',
         border: '2px solid var(--paper-50)',
         borderRadius: '50%',
-        zIndex: 10
+        zIndex: 'var(--z-sticky)'
       }
     }), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -13621,7 +13621,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       borderBottom: '1px solid rgba(26,20,16,.1)',
       position: 'sticky',
       top: 0,
-      zIndex: 20,
+      zIndex: 'var(--z-sticky-panel)',
       background: 'var(--paper-50,#fff)'
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -13742,7 +13742,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       flexWrap: 'wrap',
       position: 'sticky',
       top: 0,
-      zIndex: 10,
+      zIndex: 'var(--z-sticky)',
       background: 'var(--paper-50,#fff)',
       padding: '10px 0 10px',
       borderBottom: '1px solid var(--border-soft)',
@@ -15292,7 +15292,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         borderBottom: 'none',
         position: 'sticky',
         top: 0,
-        zIndex: 6
+        zIndex: 'var(--z-sticky-sub)'
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {

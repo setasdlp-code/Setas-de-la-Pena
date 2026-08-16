@@ -1241,7 +1241,7 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
   
   if(fullscreen) return(
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
       <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
       <RadarSVG size={600}/>
       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
@@ -1407,7 +1407,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   const catEntries=catOrder.filter(k=>bycat[k]).map(k=>[k,bycat[k]]);
 
   if(!open) return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
+    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
       <div style={{width:20,height:4,borderRadius:2,background:band,flexShrink:0}}/>
       <span style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
@@ -1418,7 +1418,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   );
 
   return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
+    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
       {/* Franja lateral familia */}
       <div className="p-family-strip" style={{background:`color-mix(in oklab,${band} 10%,var(--paper-100))`,borderRight:`1px solid color-mix(in oklab,${band} 25%,transparent)`}}>
         <span style={{color:band}}>{family}</span>
@@ -1438,7 +1438,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
           {img&&<img src={img} alt={sp.name} style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
-          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
+          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:'var(--z-local)',maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
             {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
@@ -3898,7 +3898,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='formular'&&(
         <div className="builder-wrap" data-tab={tab}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
-          <div className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+          <div className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
             {[
               {id:'bl-ingredientes',l:'Ingredientes'},
               {id:'bl-receta',l:'Receta'},
@@ -3912,7 +3912,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
             const limiter=peritoMainLimiter(opt,an);
             return(
-              <div style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:6,fontFamily:'var(--font-body)'}}>
+              <div style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:'var(--z-sticky-sub)',fontFamily:'var(--font-body)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
                   <span style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
                   <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
@@ -4508,7 +4508,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{position:'absolute',left:15,top:0,bottom:0,width:'1px',background:'var(--border-soft)',opacity:0}}/>
                     {saved.map((e,idx)=>{const s2=SPP[e.sKey];const isEven=idx%2===0;return(
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
-                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
+                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
@@ -4541,7 +4541,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div>
 {/* ── GENERADOR DE RECETAS ── */}
             <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:20,background:'var(--paper-50,#fff)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
                 <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
@@ -4575,7 +4575,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             </div>
                             {/* fuente + perfil en una sola fila compacta */}
-                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
+                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
                                 <div className="chip-row">
@@ -5113,7 +5113,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ];
               return(
               <div>
-                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
                       <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
