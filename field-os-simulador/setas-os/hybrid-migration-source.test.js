@@ -24,7 +24,7 @@ test('simulador deja de consumir runAutoOptimizer y enruta los tres flujos al he
   const calls = jsx.match(/runHybridRecipeSearch\(\{/g) || [];
   assert.ok(calls.length >= 3, `esperaba >=3 call sites hybrid, vi ${calls.length}`);
   assert.match(jsx, /r\.ranked\?\.\[0\]\?\.evaluation\?\.analysis/);
-  assert.match(jsx, /\(out\.ranked\|\|\[\]\)\.slice\(0,6\)/);
+  assert.match(jsx, /\(out\.ranked\|\|\[\]\)\.slice\(0,12\)/);
 });
 
 test('HTML carga perito-scenarios antes del bundle que consume el global', () => {
