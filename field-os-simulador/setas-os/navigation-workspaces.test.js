@@ -60,3 +60,10 @@ test('role restrictions cannot be bypassed through the Production workspace', ()
   assert.match(shell, /goWorkspaceProduccion:\(\)=>ROLE_GATE\.plan\.includes\(s\.role\)/);
   assert.match(shell, /:this\.goSimTab\('produccion'\)/);
 });
+
+test('loading a saved recipe from Recetario notifies the shell instead of desyncing it', () => {
+  const loadR = jsx.match(/const loadR=e=>\{[\s\S]*?\n  \};/);
+  assert.ok(loadR, 'loadR function not found');
+  assert.doesNotMatch(loadR[0], /setTab\(/);
+  assert.match(loadR[0], /goTab\('formular'\)/);
+});

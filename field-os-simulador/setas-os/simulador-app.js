@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 1b02863e6b46b05fe034d8372aec59a4a99d476df2f9a0a495600f2562c944ff
+// source-hash: 999ff9b3d5040398900c130690141a702074e093944b5dae80e8835fa91016b6
 const {
   useState,
   useMemo,
@@ -6263,7 +6263,7 @@ function App(props) {
       setSKey(e.sKey);
       setRecipe(e.recipe);
       setLockedIds([]);
-      setTab('formular');
+      goTab('formular');
       setLoadedFlash(true);
       setTimeout(() => setLoadedFlash(false), 2200);
       setNavOpen(false);
