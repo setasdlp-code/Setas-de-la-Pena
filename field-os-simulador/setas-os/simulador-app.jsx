@@ -1061,9 +1061,7 @@ const CAT_COLORS={
 // ── MICRO SVG ICONS (sin emojis) ──────────────────────────────
 const IcoBlock=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent-terracotta)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>);
 const IcoWarn=()=>(<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" strokeWidth="2" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:4,flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>);
-const IcoBox=({color='currentColor'})=>(<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
-const IcoCheck=()=>(<svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{maxWidth:'70%',maxHeight:'70%'}}><polyline points="20 6 9 17 4 12"/></svg>);
-const IcoPlus=()=>(<svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{maxWidth:'70%',maxHeight:'70%'}}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>);
+const IcoBox=({color='currentColor',size=13})=>(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{display:'inline-block',verticalAlign:'middle',flexShrink:0}}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>);
 const parseIngName=(name)=>{const hasBlock=name.includes('⛔');const hasWarn=name.includes('⚠️')||name.includes('⚠');const clean=name.replace(/⛔\s*/g,'').replace(/⚠️\s*/g,'').replace(/⚠\s*/g,'').trim();return{hasBlock,hasWarn,clean};};
 
 // ── INGREDIENT ITEM with expandable profile ──
@@ -1212,6 +1210,200 @@ const blendEBWithHistory=(an,historical)=>{
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   return hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
 };
+
+// ── Minimalist SVG Icons (Design System compliant) ──
+const IconTarget = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <circle cx="8" cy="8" r="7" />
+    <circle cx="8" cy="8" r="3" />
+    <path d="M8 1v2M8 13v2M1 8h2M13 8h2" />
+  </svg>
+);
+const IconBolt = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polygon points="9 1 2 9 8 9 7 15 14 7 8 7 9 1" fill="currentColor" stroke="none" />
+  </svg>
+);
+const IconRecipe = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 2h8l3 3v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
+    <path d="M11 2v4h4" />
+    <path d="M5 8h6M5 11h4" />
+  </svg>
+);
+const IconDisk = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 2h8l3 3v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
+    <rect x="5" y="9" width="6" height="5" />
+    <rect x="5" y="2" width="5" height="3" />
+  </svg>
+);
+const IconCheck = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="3 8.5 6.5 12 13 4" />
+  </svg>
+);
+const IconAlert = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 2L1 14h14L8 2z" />
+    <line x1="8" y1="6" x2="8" y2="10" />
+    <circle cx="8" cy="12" r="0.5" fill={color} stroke="none" />
+  </svg>
+);
+const IconLock = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="3" y="7" width="10" height="8" rx="1.5" />
+    <path d="M5 7V4.5a3 3 0 0 1 6 0V7" />
+  </svg>
+);
+const IconSprout = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 14c2-4 5-6 10-6" />
+    <path d="M12 8c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6z" />
+    <path d="M9 8c0-2-1.5-3.5-3.5-3.5 0 2 1.5 3.5 3.5 3.5z" />
+  </svg>
+);
+const IconBox = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 4.5L8 1.5l6 3v7l-6 3-6-3v-7z" />
+    <path d="M2 4.5L8 7.5l6-3M8 7.5v7" />
+  </svg>
+);
+const IconFlame = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1c.5 2.5 3 4 3 7a5 5 0 0 1-10 0c0-3 2.5-4.5 3-7 1 2 2 3 4 0z" />
+  </svg>
+);
+const IconChevronDown = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="4 6 8 10 12 6" />
+  </svg>
+);
+const IconChevronUp = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="4 10 8 6 12 10" />
+  </svg>
+);
+const IconClose = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="3" y1="3" x2="13" y2="13" />
+    <line x1="13" y1="3" x2="3" y2="13" />
+  </svg>
+);
+const IconMountain = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 14L6 4l4 8 2-4 3 6H1z" />
+  </svg>
+);
+const IconDroplet = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1.5C8 1.5 3 7 3 10.5a5 5 0 0 0 10 0C13 7 8 1.5 8 1.5z" />
+  </svg>
+);
+const IconClipboard = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M10 2H6a1 1 0 0 0-1 1v1h6V3a1 1 0 0 0-1-1z" />
+    <path d="M5 4H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2" />
+    <line x1="5" y1="8" x2="11" y2="8" />
+    <line x1="5" y1="11" x2="9" y2="11" />
+  </svg>
+);
+const IconMushroom = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 2a6 6 0 0 0-6 6h12a6 6 0 0 0-6-6z" />
+    <path d="M6 8v5a2 2 0 0 0 4 0V8" />
+  </svg>
+);
+const IconMicroscope = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M6 1h4M8 1v4M5 5h6v3H5zM8 8v3M4 14h8M4 11h8" />
+    <path d="M12 8a4 4 0 0 1-4 4" />
+  </svg>
+);
+const IconBook = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 3h5a2 2 0 0 1 2 2v9a2 2 0 0 0-2-2H2V3z" />
+    <path d="M14 3H9a2 2 0 0 0-2 2v9a2 2 0 0 1 2-2h5V3z" />
+  </svg>
+);
+const IconFactory = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 14h14V7l-4 3V7L7 10V2L1 5v9z" />
+  </svg>
+);
+const IconSeed = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 13c1-4 4-7 10-10 0 6-3 9-10 10z" />
+    <path d="M3 13l5-5" />
+  </svg>
+);
+const IconScale = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="8" y1="1" x2="8" y2="14" />
+    <line x1="2" y1="4" x2="14" y2="4" />
+    <path d="M2 4l2 5h-4l2-5zM14 4l2 5h-4l2-5zM5 14h6" />
+  </svg>
+);
+const IconWind = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 5h9a2 2 0 1 0-2-2" />
+    <path d="M1 9h12a2 2 0 1 0-2-2" />
+    <path d="M3 13h6a2 2 0 1 0-2-2" />
+  </svg>
+);
+const IconSnowflake = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="8" y1="1" x2="8" y2="15" />
+    <line x1="1" y1="8" x2="15" y2="8" />
+    <path d="M3 3l10 10M13 3L3 13" />
+  </svg>
+);
+const IconEdit = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M11 2l3 3-8 8H3v-3l8-8z" />
+  </svg>
+);
+const IconCamera = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 5a1 1 0 0 1 1-1h2.5l1.5-2h4l1.5 2H14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5z" />
+    <circle cx="8" cy="9" r="3" />
+  </svg>
+);
+const IconMail = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="2" y="3" width="12" height="10" rx="1.5" />
+    <path d="M2 4l6 5 6-5" />
+  </svg>
+);
+const IconSparkles = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z" />
+  </svg>
+);
+const IconStar = ({ size = 12, color = 'currentColor', fill = 'none' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill={fill} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polygon points="8 1.5 10 6 15 6.5 11.5 10 12.5 15 8 12.5 3.5 15 4.5 10 1 6.5 6 6 8 1.5" />
+  </svg>
+);
+const IconCart = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <circle cx="6" cy="13" r="1.5" />
+    <circle cx="13" cy="13" r="1.5" />
+    <path d="M1 2h2.5l1.6 7h8.5l1.4-5H4" />
+  </svg>
+);
+const IconRotate = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1.5 2.5v4h4" />
+    <path d="M2.5 10a6 6 0 1 0 1.2-6.5L1.5 6.5" />
+  </svg>
+);
+const IconPause = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="3.5" y="3" width="3" height="10" rx="0.5" />
+    <rect x="9.5" y="3" width="3" height="10" rx="0.5" />
+  </svg>
+);
 
 const RecipeGauges=({an,sp,optimalAn,historical})=>{
   if(!sp||!an||!an.cn) return null;
@@ -1617,11 +1809,47 @@ function App(props){
   // generateOptimizer), para que ambos exploren siempre el mismo universo de
   // ingredientes y no queden desincronizados. Persistido: es una preferencia
   // de cómo el usuario quiere trabajar, no un dato de la receta activa.
-  const [optUseStock,setOptUseStock]=useState(()=>{
-    try{const v=localStorage.getItem('setas_workmode');if(v==='catalogo') return false;}catch(e){}
-    return true;
+  // Modo de trabajo global del Formulador: 'produccion' (Bodega, stock real, lotes) vs. 'investigacion' (Catálogo completo, I+D)
+  const [globalMode, setGlobalMode] = useState(() => {
+    try {
+      const v = localStorage.getItem('setas_global_workmode');
+      if (v === 'investigacion' || v === 'catalogo') return 'investigacion';
+      const w = localStorage.getItem('setas_workmode');
+      if (w === 'catalogo') return 'investigacion';
+    } catch(e) {}
+    return 'produccion';
   });
-  useEffect(()=>{try{localStorage.setItem('setas_workmode',optUseStock?'bodega':'catalogo');}catch(e){}},[optUseStock]);
+  const [optUseStock, setOptUseStock] = useState(globalMode === 'produccion');
+  const setGlobalWorkMode = (mode) => {
+    setGlobalMode(mode);
+    setOptUseStock(mode === 'produccion');
+    try {
+      localStorage.setItem('setas_global_workmode', mode);
+      localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
+    } catch(e) {}
+  };
+  useEffect(() => {
+    setOptUseStock(globalMode === 'produccion');
+    try {
+      localStorage.setItem('setas_global_workmode', globalMode);
+      localStorage.setItem('setas_workmode', globalMode === 'produccion' ? 'bodega' : 'catalogo');
+    } catch(e) {}
+  }, [globalMode]);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  const [showLiveChips,setShowLiveChips]=useState(false);
+  const [groupByRole,setGroupByRole]=useState(true);
+  const [collapsedRoles,setCollapsedRoles]=useState({});
+  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const [optProfile,setOptProfile]=useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
@@ -1850,6 +2078,52 @@ function App(props){
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
         cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
+    }
+  };
+  const promoverReceta=(recetaObj)=>{
+    const targetRecipe=recetaObj?.recipe||recipe;
+    const targetSKey=recetaObj?.sKey||sKey;
+    const targetName=recetaObj?.name||'Receta activa';
+
+    if(!targetRecipe.length){
+      setNoticeDlg({title:'Sin receta',msg:'No hay ingredientes en la receta para promover a producción.'});
+      return;
+    }
+
+    const missingStock=[];
+    targetRecipe.forEach(r=>{
+      const g=effectiveINGS.find(x=>x.id===r.id);
+      const inStockKg=stockMap[r.id]||0;
+      if(inStockKg<=0||!stockIds.has(r.id)){
+        missingStock.push({name:g?.name||r.id,pct:r.p,inStockKg});
+      }
+    });
+
+    const executePromotion=()=>{
+      setGlobalWorkMode('produccion');
+      if(recetaObj&&recetaObj.id){
+        const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
+        setSaved(u);
+        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      }
+      setSKey(targetSKey);
+      setRecipe(targetRecipe);
+      goTab('produccion');
+      setNoticeDlg({
+        title:'⭐ Receta promovida a Producción',
+        msg:`La receta "${targetName}" ha sido promovida a Producción oficial. Se han cargado los parámetros en la Hoja de Producción lista para lote.`
+      });
+    };
+
+    if(missingStock.length>0){
+      setConfirmDlg({
+        title:'⭐ Promover a Producción — Insumos Faltantes',
+        msg:`La receta "${targetName}" incluye ingredientes sin stock suficiente en Bodega Tenjo:\n\n• ${missingStock.map(m=>`${m.name} (${m.pct}%) — Stock actual: ${m.inStockKg.toFixed(1)} kg`).join('\n• ')}\n\n¿Deseas promoverla para planificar la producción y compra de insumos?`,
+        confirmLabel:'Promover y planificar',
+        onConfirm:executePromotion,
+      });
+    }else{
+      executePromotion();
     }
   };
   const loadR=e=>{
@@ -3983,37 +4257,275 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='formular'&&(
         <div className="builder-wrap" data-tab={tab}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
-          <div className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
-            {[
-              {id:'bl-ingredientes',l:'Ingredientes'},
-              {id:'bl-receta',l:'Receta'},
-              ...(recipe.length>0?[{id:'bl-perito',l:'Score / Perito'},{id:'bl-batch',l:'Batch'}]:[]),
-              ...(recipe.length>0&&tr?[{id:'bl-tratamiento',l:'Tratamiento'}]:[]),
-            ].map(s=>(
-              <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,letterSpacing:'var(--tracking-label)',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-100)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
-            ))}
-          </div>
-          {recipe.length>0&&(()=>{
-            const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
-            const limiter=peritoMainLimiter(opt,an);
-            return(
-              <div style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:6,fontFamily:'var(--font-body)'}}>
-                <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
-                  <span style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
-                  <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
-                  <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <div style={{width:60,height:6,background:'var(--paper-300)',borderRadius:3,overflow:'hidden'}}>
-                      <div style={{width:`${Math.max(0,Math.min(100,opt.score))}%`,height:'100%',background:sm2.badge}}></div>
-                    </div>
-                    <span style={{fontSize:"var(--text-sm)",fontWeight:800,color:sm2.badge}}>{Math.round(opt.score)}</span>
-                    <span style={{fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color:sm2.txt}}>{sm2.label}</span>
-                  </div>
-                  <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{numBags}×{kgBag}kg = {(numBags*kgBag).toFixed(1)}kg</span>
+
+          {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:globalMode==='produccion'?'var(--paper-100)':'#F5F0EB',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600, #4D6235)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:22}}>{globalMode==='produccion'?'🏭':'🔬'}</span>
+              <div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>
+                    Modo {globalMode==='produccion'?'Producción Oficial (Bodega Tenjo)':'Investigación y Desarrollo (I+D Catálogo)'}
+                  </span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:globalMode==='produccion'?'var(--moss-200)':'var(--coral-100)',borderRadius:3,color:'var(--ink-900)',fontWeight:600}}>
+                    {globalMode==='produccion'?'Stock Bodega Restringido':'Catálogo Abierto sin límites'}
+                  </span>
                 </div>
-                {limiter&&<button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{textAlign:'left',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm2.txt,background:'none',border:'none',padding:0,cursor:'pointer',lineHeight:1.4}}>→ {limiter}</button>}
+                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:2}}>
+                  {globalMode==='produccion'
+                    ? 'Optimiza formulaciones con insumos disponibles en Bodega Tenjo y planifica hojas de lote de producción.'
+                    : 'Libre exploración botánica sin límite de stock para maximizar Eficiencia Biológica (EB) y crear fórmulas experimentales.'}
+                </div>
               </div>
-            );
-          })()}
+            </div>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              <button
+                onClick={()=>setGlobalWorkMode('produccion')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
+                  background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
+                  color:globalMode==='produccion'?'var(--paper-0)':'var(--ink-700)',
+                  border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
+                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                }}>
+                🏭 Producción
+              </button>
+              <button
+                onClick={()=>setGlobalWorkMode('investigacion')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
+                  background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
+                  color:globalMode==='investigacion'?'var(--paper-0)':'var(--ink-700)',
+                  border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
+                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                }}>
+                🔬 Investigación
+              </button>
+              {recipe.length>0&&(
+                <button
+                  onClick={()=>promoverReceta()}
+                  title="Promover esta receta a Producción oficial (alerta si faltan insumos)"
+                  style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',padding:'6px 12px',background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                  ⭐ Promover
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
+              Decisión de diseño:
+              El dashboard pegajoso superior (sim-live-dashboard) centraliza en tiempo real:
+              1) Especie activa y modo de trabajo global (PROD / INV).
+              2) Score Perito interactivo con acceso directo al dictamen.
+              3) Eficiencia Biológica (EB) y Balance de masa (%) con auto-balance 100%.
+              4) Conexión en vivo (online/offline) e insumos con edición/eliminación directa.
+              5) Sub-navegación contextual por anclas (Insumos, Receta, Perito, Batch, Tratamiento).
+              Esto sustituye y unifica sin pérdida las barras estáticas previas, manteniendo
+              en bl-perito los análisis profundos (mgrid, EBDial, rangos C:N/N%, nitrógeno y sugerencias).
+          ── */}
+          <div className="sim-live-dashboard" id="sim-live-dash">
+            {recipe.length>0 ? (()=>{
+              const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
+              const limiter=peritoMainLimiter(opt,an);
+              const ebVal=an?blendEBWithHistory(an,histStats):0;
+              const ebOpt=sp?.eb_optimal||100;
+              const ebBase=sp?.eb_baseline||80;
+              const ebOk=ebVal>=ebOpt;
+              const ebMid=ebVal>=ebBase;
+              const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
+              const totOk=an?Math.abs(an.tot-100)<=0.5:false;
+              const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+
+              return(
+                <div>
+                  {/* Fila única ultra-compacta (~38px) */}
+                  <div className="live-dash-bar">
+                    {/* Especie y modo */}
+                    <div className="live-dash-left">
+                      <span className="live-dash-species" title={sp?.name||'Pleurotus ostreatus'}>
+                        {sp?.name||'Pleurotus'}
+                      </span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:globalMode==='produccion'?'rgba(77,98,53,.15)':'rgba(200,90,50,.15)',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-500)',fontWeight:700,textTransform:'uppercase'}}>
+                        {globalMode==='produccion'?'PROD':'INV'}
+                      </span>
+                    </div>
+
+                    {/* Métricas clave en micro-píldoras */}
+                    <div className="live-dash-metrics">
+                      {/* Score Perito */}
+                      <button
+                        onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                        className="live-dash-pill"
+                        style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
+                        title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
+                        <IconTarget size={11} color={sm2.badge} />
+                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                      </button>
+
+                      {/* EB */}
+                      <div className="live-dash-pill" title={`Eficiencia Biológica Estimada: ${Math.round(ebVal)}% (Meta: ${ebOpt}%)`}>
+                        <span className="live-dash-pill-label">EB</span>
+                        <span style={{color:ebColor}}>{Math.round(ebVal)}%</span>
+                      </div>
+
+                      {/* Masa Total % */}
+                      <div
+                        className="live-dash-pill"
+                        style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
+                        title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
+                        <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
+                          {an?an.tot.toFixed(0):'0'}%
+                          {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
+                        </span>
+                      </div>
+
+                      {/* Costo kg */}
+                      <div className="live-dash-pill" style={{display:'none'}} id="live-cost-pill" title={`Costo: $${an&&an.cost!=null?Math.round(an.cost).toLocaleString():'0'} / kg seco`}>
+                        <span className="live-dash-pill-label">$</span>
+                        <span>{an&&an.cost!=null?Math.round(an.cost):'0'}</span>
+                      </div>
+                    </div>
+
+                    {/* Acciones compactas */}
+                    <div className="live-dash-actions">
+                      {an&&!totOk&&(
+                        <button
+                          onClick={()=>autoBalance(balanceMode)}
+                          className="live-dash-btn"
+                          style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                          title="Ajustar ingredientes libres al 100%">
+                          <IconBolt size={10} color="#fff" />
+                          <span>100%</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={()=>setShowLiveChips(!showLiveChips)}
+                        className="live-dash-btn"
+                        style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
+                        title={showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}>
+                        <IconRecipe size={11} color="var(--ink-700)" />
+                        <span>{recipe.length}</span>
+                        {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
+                      </button>
+                      <button
+                        onClick={()=>{
+                          if(saveName.trim()){
+                            saveR();
+                          } else {
+                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
+                            setTimeout(()=>{
+                              const inp=document.querySelector('.sbar input');
+                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
+                            },300);
+                          }
+                        }}
+                        className="live-dash-btn"
+                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
+                        title="Guardar receta en Recetario">
+                        {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bandeja expandible con detalle, chips e hipervínculos */}
+                  {showLiveChips&&(
+                    <div className="live-dash-tray">
+                      {/* Sub-navegación rápida */}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
+                        <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                          {[
+                            {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
+                            {id:'bl-receta',l:'Receta',icon:IconRecipe},
+                            {id:'bl-perito',l:'Perito',icon:IconTarget},
+                            {id:'bl-batch',l:'Batch',icon:IconBox},
+                            ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
+                          ].map(s=>{
+                            const IconComp=s.icon;
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+                                style={{
+                                  fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,
+                                  textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
+                                  color:'var(--ink-700)',border:'1px solid var(--border-soft)',
+                                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4
+                                }}>
+                                <IconComp size={10} color="var(--ink-600)" />
+                                <span>{s.l}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'10px',padding:'2px 6px'}}>
+                          <span className="offline-status-dot"></span>
+                          <span>{isOnline ? 'En línea' : 'Sin conexión'}</span>
+                        </div>
+                      </div>
+
+                      {/* Observación perito si aplica */}
+                      {limiter&&(
+                        <div style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+                            <IconAlert size={11} color={sm2.txt} />
+                            <span>{limiter}</span>
+                          </span>
+                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'10px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
+                        </div>
+                      )}
+
+                      {/* Fila horizontal de chips de insumos */}
+                      <div className="live-dash-chips-row">
+                        <span style={{fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginRight:2,flexShrink:0}}>
+                          Fórmula:
+                        </span>
+                        {recipe.map(r=>{
+                          const g=INGS.find(i=>i.id===r.id);
+                          if(!g) return null;
+                          const isLocked=lockedIds.includes(r.id);
+                          const roleCol=ROLE_COLORS[g.role]||'var(--ink-500)';
+                          return(
+                            <div
+                              key={r.id}
+                              className="live-ing-chip"
+                              onClick={()=>document.getElementById(`rec-row-${r.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})}
+                              title={`${g.name} (${ROLE_LABELS[g.role]||g.role}) · ${r.p}%\nClick para editar`}>
+                              <span style={{width:6,height:6,borderRadius:'50%',background:roleCol,flexShrink:0}}></span>
+                              <span style={{fontWeight:600}}>{g.name}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,color:isLocked?'var(--coral-600)':'var(--ink-800)',display:'inline-flex',alignItems:'center',gap:2}}>
+                                {r.p}%{isLocked ? <IconLock size={9} color="var(--coral-600)" /> : null}
+                              </span>
+                              <button
+                                className="live-ing-chip-del"
+                                onClick={(e)=>{e.stopPropagation();remI(r.id);}}
+                                title={`Quitar ${g.name}`}>
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })() : (
+              <div className="live-dash-bar" style={{background:'var(--paper-50)'}}>
+                <div className="live-dash-left">
+                  <span className="live-dash-species">{sp?.name||'Pleurotus ostreatus'}</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-500)'}}>
+                    · Sin receta activa
+                  </span>
+                </div>
+                <button
+                  onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                  className="live-dash-btn"
+                  style={{fontSize:'10.5px'}}>
+                  + Agregar insumos
+                </button>
+              </div>
+            )}
+          </div>
           <div className="builder-cols">
             <div className="builder-left">
             <div className="panel" id="bl-ingredientes">
@@ -4082,44 +4594,146 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="cats">
                 {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} onClick={()=>setCat(k)}>{l}</button>)}
                 <button className={`cat${showCompatOnly?' on':''}`} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
               </div>
               <div className="ing-list">
-                {((()=>{let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;if(showCompatOnly){const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));base=base.filter(g=>compat.has(g.id));}return base;})()).map(ing=>{
-                  const inR=recipe.find(r=>r.id===ing.id);
-                  const inPantry=pantryIds.includes(ing.id);
-                  const compatSet=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
-                  const isCompat=compatSet.has(ing.id);
-                  return(
-                    <div key={ing.id} className={justAddedIds.includes(ing.id)?'ing-row-flash':''} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
-                      <div style={{position:'relative'}}>
-                        <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0}/>
-                        {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
-                      </div>
-                      <div style={{display:'flex',justifyContent:'flex-end',gap:6,padding:'4px 4px 6px'}}>
-                        <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
-                          title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
-                          aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
-                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
-                          {disabledIngIds.includes(ing.id)?'⊘':'–'}
-                        </button>
-                        <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
-                          title={inPantry?'Quitar de bodega':'Agregar a bodega'}
-                          aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
-                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(6px,1.4vw,7px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                          {inPantry?<IcoCheck/>:<IcoPlus/>}
-                        </button>
-                        {!inR&&(
-                          <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
-                            title="Agregar a receta"
-                            aria-label={`Agregar ${ing.name} a la receta`}
-                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(8px,1.8vw,9px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                            +
+                {(()=>{
+                  let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;
+                  if(showCompatOnly){
+                    const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
+                    base=base.filter(g=>compat.has(g.id));
+                  }
+
+                  const renderIngRow=(ing)=>{
+                    const inR=recipe.find(r=>r.id===ing.id);
+                    const inPantry=pantryIds.includes(ing.id);
+                    const isCompat=ing.cs&&ing.cs.includes(sKey);
+                    return(
+                      <div key={ing.id} className={`ing-card-item${justAddedIds.includes(ing.id)?' ing-row-flash':''}`} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
+                        <div style={{position:'relative'}}>
+                          <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0} isCompat={isCompat} spName={sp?.name}/>
+                          {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
+                        </div>
+                        <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
+                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
+                            title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
+                            aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
+                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
+                            {disabledIngIds.includes(ing.id)?'⊘':'–'}
                           </button>
+                          <span aria-hidden="true" style={{width:1,alignSelf:'stretch',minHeight:13,background:'var(--border-soft)',flexShrink:0}}/>
+                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
+                            title={inPantry?'Quitar de bodega':'Agregar a bodega'}
+                            aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
+                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:inPantry?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            <IcoBox color="currentColor" size={8}/>
+                          </button>
+                          {!inR&&(
+                            <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
+                              title="Agregar a receta"
+                              aria-label={`Agregar ${ing.name} a la receta`}
+                              style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(8px,1.8vw,9px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                              +
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  if(!groupByRole || cat!=='all' || search.trim().length>0){
+                    return base.map(renderIngRow);
+                  }
+
+                  const ROLE_GROUPS=[
+                    {
+                      key:'base_carbono',
+                      label:'Bases de Carbono',
+                      icon:'🌾',
+                      desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
+                      filter:g=>g.role==='base_carbono'||g.cat==='base'||g.cn>=40
+                    },
+                    {
+                      key:'suplemento_n',
+                      label:'Suplementos Nitrogenados',
+                      icon:'🥜',
+                      desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
+                      filter:g=>g.role==='suplemento_n'||g.role==='suplemento_medio'||g.n>=1.4
+                    },
+                    {
+                      key:'aditivo',
+                      label:'Minerales y Tampones de pH',
+                      icon:'⚖️',
+                      desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
+                      filter:g=>g.role?.startsWith('aditivo_')||g.cat==='adit'||g.cn===0
+                    },
+                    {
+                      key:'aireador',
+                      label:'Aireadores y Estructurantes',
+                      icon:'💨',
+                      desc:'Porosidad y difusión de oxígeno gaseoso',
+                      filter:g=>g.role==='aireador'||g.cat==='trop'||g.cat==='circ'
+                    }
+                  ];
+
+                  const assigned=new Set();
+                  return ROLE_GROUPS.map(grp=>{
+                    const grpIngs=base.filter(g=>{
+                      if(assigned.has(g.id)) return false;
+                      const match=grp.filter(g);
+                      if(match) assigned.add(g.id);
+                      return match;
+                    });
+                    if(grpIngs.length===0) return null;
+                    const isCollapsed=collapsedRoles[grp.key];
+                    const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;
+
+                    return(
+                      <div key={grp.key} className="role-group-box" style={{marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',overflow:'hidden'}}>
+                        <div
+                          onClick={()=>toggleRoleCollapse(grp.key)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={e=>{if(e.key==='Enter') toggleRoleCollapse(grp.key);}}
+                          style={{
+                            padding:'8px 10px',
+                            background:'var(--paper-100)',
+                            borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',
+                            display:'flex',
+                            justifyContent:'space-between',
+                            alignItems:'center',
+                            cursor:'pointer',
+                            userSelect:'none'
+                          }}>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontSize:16}}>{grp.icon}</span>
+                            <div>
+                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
+                                {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
+                              </div>
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.2}}>
+                                {grp.desc}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
+                              {compatCount} comp.
+                            </span>
+                            <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+                        {!isCollapsed&&(
+                          <div style={{padding:'4px 6px'}}>
+                            {grpIngs.map(renderIngRow)}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </div>
             </div>
