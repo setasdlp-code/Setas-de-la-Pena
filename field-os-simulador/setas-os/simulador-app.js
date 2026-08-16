@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f952e221643f70c5ff35564e08ac81d031ef1ed2d6a37acdd4abf18c736b4fd6
+// source-hash: 9dadbc885118768b3813bc475653cb730eb3db40282322587bc6e64ad6f23331
 const {
   useState,
   useMemo,
@@ -7304,14 +7304,23 @@ function App(props) {
         if (c) setInvCompras(JSON.parse(c));
         if (l) setInvLotes(JSON.parse(l));
         if (m) setInvMovimientos(JSON.parse(m));
-        const bl = localStorage.getItem('sdp_bit_lotes');
-        const bb = localStorage.getItem('sdp_bit_bolsas');
-        const bc = localStorage.getItem('sdp_bit_cosechas');
-        if (bl) setBitLotes(JSON.parse(bl));
-        if (bb) setBitBolsas(JSON.parse(bb));
-        if (bc) setBitCosechas(JSON.parse(bc));
       }
     } catch (e) {}
+    // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
+    // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
+    try {
+      const bl = localStorage.getItem('sdp_bit_lotes');
+      const bb = localStorage.getItem('sdp_bit_bolsas');
+      const bc = localStorage.getItem('sdp_bit_cosechas');
+      if (bl) setBitLotes(JSON.parse(bl));
+      if (bb) setBitBolsas(JSON.parse(bb));
+      if (bc) setBitCosechas(JSON.parse(bc));
+    } catch (e) {
+      setNoticeDlg({
+        title: 'No se pudo cargar la Bitácora',
+        msg: 'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'
+      });
+    }
   }, []);
 
   // ── v4: sincronizar pantry con stock
@@ -7911,6 +7920,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
       } : null
     };
   };
+  const bitQuotaWarn = () => setNoticeDlg({
+    title: 'No se pudo guardar',
+    msg: 'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'
+  });
   const crearBitLote = form => {
     const lote = {
       ...form,
@@ -7940,14 +7953,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const upd = [lote, ...prev];
       try {
         localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd));
-      } catch (e) {}
+      } catch (e) {
+        bitQuotaWarn();
+      }
       return upd;
     });
     setBitBolsas(prev => {
       const upd = [...prev, ...bolsas];
       try {
         localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd));
-      } catch (e) {}
+      } catch (e) {
+        bitQuotaWarn();
+      }
       return upd;
     });
     return lote.id;
@@ -7960,11 +7977,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
       } : l);
       try {
         localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd));
-      } catch (e) {}
+      } catch (e) {
+        bitQuotaWarn();
+      }
       return upd;
     });
   };
   const updateBitBolsa = (bolsaId, fields) => {
+    const fechaKey = ['col25', 'col50', 'col100'].find(k => k in fields);
+    if (fechaKey && fields[fechaKey]) {
+      const bolsa = bitBolsas.find(b => b.id === bolsaId);
+      const lote = bolsa && bitLotes.find(l => l.id === bolsa.loteId);
+      if (lote && !window.SetasBitacora.isFechaColValida(fields[fechaKey], lote.fechaInoculacion)) {
+        setNoticeDlg({
+          title: 'Fecha inválida',
+          msg: 'La fecha de colonización no puede ser anterior a la fecha de inoculación del lote (' + lote.fechaInoculacion + ').'
+        });
+        return;
+      }
+    }
     setBitBolsas(prev => {
       const upd = prev.map(b => b.id === bolsaId ? {
         ...b,
@@ -7973,10 +8004,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       try {
         localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd));
       } catch (e) {
-        setNoticeDlg({
-          title: 'No se pudo guardar',
-          msg: 'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'
-        });
+        bitQuotaWarn();
       }
       return upd;
     });
@@ -7989,7 +8017,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }];
       try {
         localStorage.setItem('sdp_bit_cosechas', JSON.stringify(upd));
-      } catch (e) {}
+      } catch (e) {
+        bitQuotaWarn();
+      }
       return upd;
     });
   };
@@ -8038,41 +8068,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
       onConfirm: doDelete
     });
   };
+  // Cálculo puro en bitacora-model.js (testeado por separado) — aquí solo se
+  // resuelve el loteId contra el estado de React y se delega.
   const calcLoteStats = loteId => {
     const lote = bitLotes.find(lt => lt.id === loteId);
     if (!lote) return null;
-    const bolsas = bitBolsas.filter(b => b.loteId === loteId);
-    if (!bolsas.length) return null;
-    const cosechas = bitCosechas.filter(c => c.loteId === loteId);
-    const bolsasSanas = bolsas.filter(b => b.estado === 'sana').length;
-    const bolsasContaminadas = bolsas.filter(b => b.estado === 'contaminada').length;
-    const contPct = bolsas.length ? bolsasContaminadas / bolsas.length * 100 : 0;
-    const totalFresco = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0) / 1000;
-    const peseSeco = parseFloat(lote.peseSeco) || 0;
-    const be = peseSeco > 0 ? totalFresco / peseSeco * 100 : null;
-    const col100s = bolsas.filter(b => b.col100 && lote.fechaInoculacion).map(b => Math.round((new Date(b.col100) - new Date(lote.fechaInoculacion)) / 86400000));
-    const diasCol = col100s.length ? col100s.reduce((s, d) => s + d, 0) / col100s.length : null;
-    const costoKg = totalFresco > 0 && lote.costoIngKg > 0 ? lote.costoIngKg * peseSeco / totalFresco : null;
-    return {
-      bolsasSanas,
-      bolsasContaminadas,
-      contPct,
-      totalFresco,
-      be,
-      diasCol,
-      costoKg,
-      numBolsas: bolsas.length
-    };
+    return window.SetasBitacora.calcLoteStats(lote, bitBolsas.filter(b => b.loteId === loteId), bitCosechas.filter(c => c.loteId === loteId));
   };
-  const calcLoteScore = stats => {
-    if (!stats || stats.totalFresco === 0) return null;
-    let s = 0;
-    if (stats.be != null) s += Math.min(40, stats.be / 150 * 40);
-    s += (1 - stats.contPct / 100) * 30;
-    s += stats.diasCol != null ? stats.diasCol <= 18 ? 15 : stats.diasCol <= 25 ? 10 : 5 : 7;
-    s += stats.costoKg != null ? stats.costoKg <= 2000 ? 15 : stats.costoKg <= 4000 ? 10 : 5 : 7;
-    return Math.round(s);
-  };
+  const calcLoteScore = stats => window.SetasBitacora.calcLoteScore(stats);
   // Genera la receta óptima para la especie activa con toda la paleta y la carga
   const loadOptimal = () => {
     const r = runAutoOptimizer(sKey, invLotes, 0, optimizerINGS, false);
