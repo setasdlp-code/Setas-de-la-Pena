@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: e1bf5c58e9422c89b67877b4465d9cd6812e24b54011b543aaf1dcaf598aeebd
+// source-hash: 999ff9b3d5040398900c130690141a702074e093944b5dae80e8835fa91016b6
 const {
   useState,
   useMemo,
@@ -5715,12 +5715,12 @@ function App(props) {
   const [tab, setTab] = useState('formular');
   const TAB_LABELS = {
     inicio: 'Inicio',
-    catalogo: 'Especies',
+    catalogo: 'Catálogo',
     formular: 'Formular',
     inventario: 'Bodega',
-    produccion: 'Ficha',
+    produccion: 'Preparar mezcla',
     schedule: 'Cronograma',
-    dashboard: 'Dashboard',
+    dashboard: 'Recetario',
     bitacora: 'Bitácora'
   };
   const NAV_GROUPS = [{
@@ -5737,8 +5737,8 @@ function App(props) {
     }))
   }, {
     key: 'recetas',
-    label: 'Recetas',
-    tabs: ['catalogo', 'formular'],
+    label: 'Formular',
+    tabs: ['catalogo', 'formular', 'dashboard'],
     icon: /*#__PURE__*/React.createElement("svg", {
       viewBox: "0 0 24 24",
       fill: "none",
@@ -5748,9 +5748,21 @@ function App(props) {
       d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"
     }))
   }, {
+    key: 'produccion',
+    label: 'Producción',
+    tabs: ['produccion', 'inventario', 'schedule'],
+    icon: /*#__PURE__*/React.createElement("svg", {
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.5"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"
+    }))
+  }, {
     key: 'registro',
     label: 'Bitácora',
-    tabs: ['bitacora', 'dashboard'],
+    tabs: ['bitacora'],
     icon: /*#__PURE__*/React.createElement("svg", {
       viewBox: "0 0 24 24",
       fill: "none",
@@ -5765,24 +5777,29 @@ function App(props) {
     catalogo: 'Catálogo de especies',
     formular: 'Formulador de receta',
     inventario: 'Bodega',
-    produccion: 'Ficha de producción',
+    produccion: 'Preparar mezcla',
     schedule: 'Cronograma de cultivo',
-    dashboard: 'Dashboard',
+    dashboard: 'Recetario',
     bitacora: 'Bitácora de pruebas'
   };
   const [mode, setMode] = useState('receta');
-  const RECETA_TABS = ['catalogo', 'formular'];
-  const CULTIVO_TABS = ['inventario', 'produccion', 'schedule', 'dashboard', 'bitacora'];
+  const RECETA_TABS = ['catalogo', 'formular', 'dashboard'];
+  const CULTIVO_TABS = ['inventario', 'produccion', 'schedule', 'bitacora'];
   const TAB_ALIASES = {
     optimizar: 'formular'
   };
-  const goTab = t => {
+  const applyTab = t => {
     t = TAB_ALIASES[t] || t;
     setTab(t);
     setMode(RECETA_TABS.includes(t) ? 'receta' : 'cultivo');
+    return t;
+  };
+  const goTab = t => {
+    const next = applyTab(t);
+    if (typeof props.onTabChange === 'function') props.onTabChange(next);
   };
   useEffect(() => {
-    if (props.tab) goTab(props.tab);
+    if (props.tab) applyTab(props.tab);
   }, [props.tab, props.tabNonce]);
   const _preInit = useRef(true);
   useEffect(() => {
@@ -5875,6 +5892,23 @@ function App(props) {
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTab, setBitTab] = useState('bit_dash');
   const [bitActiveLoteId, setBitActiveLoteId] = useState(null);
+  const applyBitTab = (raw, hasActiveLote = !!bitActiveLoteId) => {
+    const allowed = ['bit_dash', 'bit_bolsas', 'bit_cosechas', 'bit_comparador', 'bit_ficha'];
+    const requested = allowed.includes(raw) ? raw : 'bit_dash';
+    const needsLote = ['bit_bolsas', 'bit_cosechas', 'bit_ficha'].includes(requested);
+    const next = needsLote && !hasActiveLote ? 'bit_dash' : requested;
+    setBitTab(next);
+    return next;
+  };
+  const goBitTab = (raw, hasActiveLote) => {
+    const next = applyBitTab(raw, hasActiveLote);
+    if (typeof props.onBitSubtabChange === 'function') props.onBitSubtabChange(next);
+  };
+  useEffect(() => {
+    if (!props.bitSubtab) return;
+    const next = applyBitTab(props.bitSubtab);
+    if (next !== props.bitSubtab && typeof props.onBitSubtabChange === 'function') props.onBitSubtabChange(next);
+  }, [props.bitSubtab, props.bitSubtabNonce, bitActiveLoteId]);
   const [bitDashView, setBitDashView] = useState('grid');
   const [showBitNuevo, setShowBitNuevo] = useState(false);
   const [bitNuevoForm, setBitNuevoForm] = useState({});
@@ -6229,7 +6263,7 @@ function App(props) {
       setSKey(e.sKey);
       setRecipe(e.recipe);
       setLockedIds([]);
-      setTab('formular');
+      goTab('formular');
       setLoadedFlash(true);
       setTimeout(() => setLoadedFlash(false), 2200);
       setNavOpen(false);
@@ -6390,6 +6424,13 @@ function App(props) {
     });
     return m;
   }, [invLotes]);
+  const lowStockCount = useMemo(() => {
+    const registeredIds = [...new Set(invLotes.filter(l => l.activo).map(l => l.ingredienteId))];
+    return registeredIds.filter(id => (stockMap[id] || 0) < (alertaConfig[id] ?? 2)).length;
+  }, [invLotes, stockMap, alertaConfig]);
+  useEffect(() => {
+    if (typeof props.onStockAlertChange === 'function') props.onStockAlertChange(lowStockCount);
+  }, [lowStockCount]);
   // Mismo EB mezclado con historial real que ya se pinta en el gauge
   // (RecipeGauges/blendEBWithHistory) — se pasa como override al score del
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
@@ -6866,7 +6907,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
       if (bitActiveLoteId === loteId) {
         setBitActiveLoteId(null);
-        setBitTab('bit_dash');
+        goBitTab('bit_dash');
       }
     };
     setConfirmDlg({
@@ -8202,19 +8243,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
       marginBottom: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
-    className: "inv-subtab-bar",
+    className: "bit-context-actions",
     style: {
-      marginBottom: 0
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 44,
+      paddingBottom: 8
     }
-  }, [['bit_dash', 'Dashboard'], ['bit_bolsas', 'Bolsas'], ['bit_cosechas', 'Cosechas'], ['bit_comparador', 'Comparador'], ['bit_ficha', 'Ficha']].map(([k, label]) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    className: 'inv-subtab' + (bitTab === k ? ' on' : ''),
-    onClick: () => setBitTab(k),
-    disabled: k !== 'bit_dash' && k !== 'bit_comparador' && !bitActiveLoteId,
+  }, /*#__PURE__*/React.createElement("button", {
+    className: 'inv-btn inv-btn-sec inv-btn-sm' + (bitTab === 'bit_comparador' ? ' on' : ''),
+    onClick: () => goBitTab('bit_comparador')
+  }, "Comparar lotes"), /*#__PURE__*/React.createElement("button", {
+    className: 'inv-btn inv-btn-sec inv-btn-sm' + (bitTab === 'bit_ficha' ? ' on' : ''),
+    onClick: () => goBitTab('bit_ficha'),
+    disabled: !bitActiveLoteId,
     style: {
-      opacity: k !== 'bit_dash' && k !== 'bit_comparador' && !bitActiveLoteId ? 0.4 : 1
+      opacity: bitActiveLoteId ? 1 : 0.45
     }
-  }, label)), bitActiveLoteId && /*#__PURE__*/React.createElement("span", {
+  }, "Ficha experimental"), bitActiveLoteId && /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: 'var(--font-mono)',
       fontSize: "var(--text-xs)",
@@ -8375,7 +8422,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       },
       onClick: () => {
         setBitActiveLoteId(lote.id);
-        setBitTab('bit_bolsas');
+        goBitTab('bit_bolsas', true);
       },
       onMouseEnter: e => {
         e.currentTarget.style.boxShadow = 'var(--shadow-lift)';
@@ -8531,7 +8578,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       },
       onClick: () => {
         setBitActiveLoteId(lote.id);
-        setBitTab('bit_bolsas');
+        goBitTab('bit_bolsas', true);
       }
     }, /*#__PURE__*/React.createElement("td", {
       style: {
@@ -15342,7 +15389,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const newId = crearBitLote(bitNuevoForm);
       setBitActiveLoteId(newId);
       goTab('bitacora');
-      setBitTab('bit_bolsas');
+      goBitTab('bit_bolsas', true);
       setShowBitNuevo(false);
     },
     className: "inv-btn inv-btn-pri"
