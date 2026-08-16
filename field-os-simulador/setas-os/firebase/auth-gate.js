@@ -42,10 +42,22 @@ function buildGate() {
     </form>
   `;
 
+  const signoutBtn = document.createElement("button");
+  signoutBtn.id = "setas-auth-signout";
+  signoutBtn.textContent = "Cerrar sesión";
+  Object.assign(signoutBtn.style, {
+    position: "fixed", top: "8px", right: "8px", zIndex: "999998",
+    padding: "5px 10px", background: "#fff", border: "1px solid var(--border-hairline,#ddd8c8)",
+    borderRadius: "6px", fontFamily: "var(--font-mono,monospace)", fontSize: "10px",
+    color: "#8a8577", cursor: "pointer", display: "none",
+  });
+
   document.body.appendChild(gate);
+  document.body.appendChild(signoutBtn);
 
   return {
     gate,
+    signoutBtn,
     status: gate.querySelector("#setas-auth-status"),
     email: gate.querySelector("#setas-auth-email"),
     password: gate.querySelector("#setas-auth-password"),
@@ -62,8 +74,11 @@ function init() {
   onAuthStateChanged(auth, (user) => {
     if (user) {
       el.gate.style.display = "none";
+      el.signoutBtn.style.display = "block";
+      el.signoutBtn.title = user.email || "";
     } else {
       el.gate.style.display = "flex";
+      el.signoutBtn.style.display = "none";
       el.status.style.display = "none";
       el.email.style.display = "block";
       el.password.style.display = "block";
@@ -89,7 +104,10 @@ function init() {
     busy = false;
   });
 
-  // Función disponible globalmente si se requiere invocar programáticamente
+  el.signoutBtn.addEventListener("click", () => signOut(auth));
+
+  // Expuesto para que el menú de operador del shell (Setas OS v5.dc.html,
+  // fuera de este módulo) pueda cerrar sesión sin duplicar el botón flotante.
   window.__setasSignOut = () => signOut(auth);
 }
 
