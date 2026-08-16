@@ -1561,19 +1561,21 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState('formular');
-  const TAB_LABELS={inicio:'Inicio',catalogo:'Especies',formular:'Formular',inventario:'Bodega',produccion:'Ficha',schedule:'Cronograma',dashboard:'Dashboard',bitacora:'Bitácora'};
+  const TAB_LABELS={inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Recetas',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
+    {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
+    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
   ];
-  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Ficha de producción',schedule:'Cronograma de cultivo',dashboard:'Dashboard',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',bitacora:'Bitácora de pruebas'};
   const [mode,setMode]=useState('receta');
-  const RECETA_TABS=['catalogo','formular'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','dashboard','bitacora'];
+  const RECETA_TABS=['catalogo','formular','dashboard'];
+  const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
-  const goTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');};
-  useEffect(()=>{ if(props.tab) goTab(props.tab); },[props.tab, props.tabNonce]);
+  const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
+  const goTab=t=>{const next=applyTab(t);if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
     if(_preInit.current){ _preInit.current=false; return; }
@@ -1640,6 +1642,20 @@ function App(props){
   const [bitCosechas,setBitCosechas]=useState([]);
   const [bitTab,setBitTab]=useState('bit_dash');
   const [bitActiveLoteId,setBitActiveLoteId]=useState(null);
+  const applyBitTab=(raw,hasActiveLote=!!bitActiveLoteId)=>{
+    const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
+    const requested=allowed.includes(raw)?raw:'bit_dash';
+    const needsLote=['bit_bolsas','bit_cosechas','bit_ficha'].includes(requested);
+    const next=needsLote&&!hasActiveLote?'bit_dash':requested;
+    setBitTab(next);
+    return next;
+  };
+  const goBitTab=(raw,hasActiveLote)=>{const next=applyBitTab(raw,hasActiveLote);if(typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);};
+  useEffect(()=>{
+    if(!props.bitSubtab)return;
+    const next=applyBitTab(props.bitSubtab);
+    if(next!==props.bitSubtab&&typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);
+  },[props.bitSubtab,props.bitSubtabNonce,bitActiveLoteId]);
   const [bitDashView,setBitDashView]=useState('grid');
   const [showBitNuevo,setShowBitNuevo]=useState(false);
   const [bitNuevoForm,setBitNuevoForm]=useState({});
@@ -1927,6 +1943,11 @@ function App(props){
   },[recipe,effectiveINGS,prodMoist,prodBags,prodKg,prodH,spawnCost,prodScaleG,an]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
+  const lowStockCount=useMemo(()=>{
+    const registeredIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
+    return registeredIds.filter(id=>(stockMap[id]||0)<(alertaConfig[id]??2)).length;
+  },[invLotes,stockMap,alertaConfig]);
+  useEffect(()=>{if(typeof props.onStockAlertChange==='function')props.onStockAlertChange(lowStockCount);},[lowStockCount]);
   // Mismo EB mezclado con historial real que ya se pinta en el gauge
   // (RecipeGauges/blendEBWithHistory) — se pasa como override al score del
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
@@ -2195,7 +2216,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
+      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
@@ -2870,12 +2891,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
-              <div className="inv-subtab-bar" style={{marginBottom:0}}>
-                {[['bit_dash','Dashboard'],['bit_bolsas','Bolsas'],['bit_cosechas','Cosechas'],['bit_comparador','Comparador'],['bit_ficha','Ficha']].map(([k,label])=>(
-                  <button key={k} className={'inv-subtab'+(bitTab===k?' on':'')} onClick={()=>setBitTab(k)}
-                    disabled={k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId}
-                    style={{opacity:k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId?0.4:1}}>{label}</button>
-                ))}
+              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
+                <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
+                <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
               </div>
             </div>
@@ -2899,7 +2917,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
                         <div key={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'box-shadow .18s,transform .18s'}}
-                          onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}
+                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.boxShadow='var(--shadow-lift)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform='';}}
                         >
@@ -2930,7 +2948,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -4840,7 +4858,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
             </div>
           </div>
