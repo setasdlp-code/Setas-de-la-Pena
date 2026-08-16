@@ -1,9 +1,0 @@
-node_modules/
-data/state.json
-data/state.json.backup
-data/ledger.json
-data/ledger.json.backup
-data/inventory.json
-data/inventory.json.backup
-data/*.tmp
-data/photos/
