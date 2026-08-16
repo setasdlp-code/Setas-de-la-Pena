@@ -123,8 +123,8 @@ function tryBuildRecipe(available, species, allIngredients) {
     totalKg: canMake,
     costPerKg: costPerKg,
     score: Math.round(score),
-    notes: canMake < 5 ? `⚠️ Solo puedes hacer ~${canMake} bolsas con estos ingredientes` : 
-           canMake < 20 ? `⚠️ Limitado a ~${canMake} bolsas` : ''
+    notes: canMake < 5 ? `Solo puedes hacer ~${canMake} bolsas con estos ingredientes` : 
+           canMake < 20 ? `Limitado a ~${canMake} bolsas` : ''
   };
 }
 

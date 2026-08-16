@@ -493,25 +493,63 @@ const diagnose=(a,sKey)=>{
 };
 
 // ── Módulo de Optimización de Recetas (recipe-optimizer.js) ──
-const {
-  setPctProportional,
-  solveTargetPct,
-  normalizeRecipe,
-  capFreeIngredient,
-  ROLE_CAP_ADD,
-  ROLE_CAP_INCREASE,
-  capForRole,
-  applyOptToRecipe,
-  calcMaxBatchFromStock,
-  quantifyItem,
-  generateOptimizer,
-  ENERGY_COST,
-  energyCostPerKgSeco,
-  calcTreatment,
-  OPT_PROFILES,
-} = (typeof SetasRecipeOptimizer !== 'undefined'
+const _optimizerModule = (typeof SetasRecipeOptimizer !== 'undefined'
   ? SetasRecipeOptimizer
-  : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
+  : (typeof globalThis !== 'undefined' && globalThis.SetasRecipeOptimizer
+    ? globalThis.SetasRecipeOptimizer
+    : (typeof window !== 'undefined' && window.SetasRecipeOptimizer
+      ? window.SetasRecipeOptimizer
+      : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}))));
+
+const _defaultCalcTreatment = (a, sKey, spp) => {
+  if (!a) return null;
+  const effectiveSPP = spp || (typeof SPP !== 'undefined' ? SPP : {});
+  const sp = effectiveSPP[sKey] || {};
+  const { suppP = 0, manP = 0, cafeP = 0, avgN = 0, trichoderma = false, dynSpawn } = a;
+  let score = 0, reasons = [];
+  if (trichoderma) { score += 3; reasons.push('⚠ Colapso Trichoderma — N crítico sin esterilización'); }
+  if (suppP > (sp?.supplementation_max || 20)) { score += 2; reasons.push(`Supl ${suppP.toFixed(0)}% > máx`); }
+  else if (suppP > 15) { score += 1; reasons.push('Supl alta'); }
+  if (avgN > 2.5) { score += 2; reasons.push(`N ${avgN.toFixed(2)}%`); }
+  else if (avgN > 1.8) { score += 1; reasons.push('N elevado'); }
+  if (['shiitake', 'lions_mane', 'reishi', 'nameko'].includes(sKey)) { score += 2; reasons.push(`${sp?.name || sKey} requiere esterilización`); }
+  if (manP > 20) { score += 1; reasons.push('Estiércol alto'); }
+  if (cafeP > 0 && cafeP <= 30) { score -= 0.5; reasons.push('Café pre-pasteurizado'); }
+  const spawn = dynSpawn || sp?.spawn_rate || 8;
+  const energyMap = _optimizerModule?.ENERGY_COST || {
+    autoclave: { cop_per_kg_humedo: 187, kwh_per_kg: 0.234, detalle: 'Autoclave 3.5 kW · ciclo 90 min' },
+    thermal: { cop_per_kg_humedo: 640, kwh_per_kg: 0.800, detalle: 'Resistencia + agua · 6–8 h' },
+    cwlp: { cop_per_kg_humedo: 0, kwh_per_kg: 0, detalle: 'Cal en frío' }
+  };
+  const hFactor = ['shiitake', 'lions_mane', 'reishi', 'nameko'].includes(sKey) ? 0.40 : 0.35;
+  const ec = col => ({ ...(energyMap[col] || {}), cop_per_kg_seco: Math.round(((energyMap[col] || {}).cop_per_kg_humedo || 0) / hFactor) });
+  if (score >= 2) return { name: 'Esterilización en Autoclave', temp: '121°C / 15 PSI', time: '90–120 min', spawn, col: 'autoclave', reasons, prep: 'Empacar bolsas, esterilizar, enfriar 4–6h antes de inocular.', alt: '△ Tenjo: la presión del autoclave compensa altitud.', energy: ec('autoclave') };
+  if (score >= 0.5) return { name: 'Pasteurización Térmica', temp: 'Núcleo 65–75°C', time: '6–8 h (base 5–6 h +25% altitud)', spawn, col: 'thermal', reasons, prep: 'Sumergir y sostener núcleo 65–75°C constante.', alt: '△ Tenjo (2.580 msnm): factor +25% altitud.', energy: ec('thermal') };
+  return { name: 'CWLP — Cal en Frío', temp: 'Ambiente (~14°C Tenjo)', time: '18–24 h inmersión', spawn, col: 'cwlp', reasons, prep: '150–200 g cal / 100 L agua.', alt: '△ Tenjo: verificar pH≥12.', energy: ec('cwlp') };
+};
+
+const calcTreatment = (typeof globalThis !== 'undefined' && typeof globalThis.calcTreatment === 'function')
+  ? globalThis.calcTreatment
+  : (typeof window !== 'undefined' && typeof window.calcTreatment === 'function')
+    ? window.calcTreatment
+    : (_optimizerModule.calcTreatment || _defaultCalcTreatment);
+
+const {
+  setPctProportional = () => {},
+  solveTargetPct = () => 0,
+  normalizeRecipe = (r) => r,
+  capFreeIngredient = (r) => r,
+  ROLE_CAP_ADD = 20,
+  ROLE_CAP_INCREASE = 35,
+  capForRole = () => 100,
+  applyOptToRecipe = (r) => r,
+  calcMaxBatchFromStock = () => ({ maxBatchKg: 0, limitingIng: null }),
+  quantifyItem = () => ({ count: 0 }),
+  generateOptimizer = () => ({ items: [], verdict: null }),
+  ENERGY_COST = { autoclave: { cop_per_kg_humedo: 187 }, thermal: { cop_per_kg_humedo: 640 }, cwlp: { cop_per_kg_humedo: 0 } },
+  energyCostPerKgSeco = () => 0,
+  OPT_PROFILES = {},
+} = _optimizerModule;
 
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
@@ -773,11 +811,225 @@ const FlushChart=({an})=>{
   );
 };
 
+// ── Minimalist SVG Icons (Design System compliant) ──
+const IconTarget = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <circle cx="8" cy="8" r="7" />
+    <circle cx="8" cy="8" r="3" />
+    <path d="M8 1v2M8 13v2M1 8h2M13 8h2" />
+  </svg>
+);
+const IconBolt = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polygon points="9 1 2 9 8 9 7 15 14 7 8 7 9 1" fill="currentColor" stroke="none" />
+  </svg>
+);
+const IconRecipe = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 2h8l3 3v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
+    <path d="M11 2v4h4" />
+    <path d="M5 8h6M5 11h4" />
+  </svg>
+);
+const IconDisk = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 2h8l3 3v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
+    <rect x="5" y="9" width="6" height="5" />
+    <rect x="5" y="2" width="5" height="3" />
+  </svg>
+);
+const IconCheck = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="3 8.5 6.5 12 13 4" />
+  </svg>
+);
+const IconAlert = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 2L1 14h14L8 2z" />
+    <line x1="8" y1="6" x2="8" y2="10" />
+    <circle cx="8" cy="12" r="0.5" fill={color} stroke="none" />
+  </svg>
+);
+const IconLock = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="3" y="7" width="10" height="8" rx="1.5" />
+    <path d="M5 7V4.5a3 3 0 0 1 6 0V7" />
+  </svg>
+);
+const IconSprout = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 14c2-4 5-6 10-6" />
+    <path d="M12 8c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6z" />
+    <path d="M9 8c0-2-1.5-3.5-3.5-3.5 0 2 1.5 3.5 3.5 3.5z" />
+  </svg>
+);
+const IconBox = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 4.5L8 1.5l6 3v7l-6 3-6-3v-7z" />
+    <path d="M2 4.5L8 7.5l6-3M8 7.5v7" />
+  </svg>
+);
+const IconFlame = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1c.5 2.5 3 4 3 7a5 5 0 0 1-10 0c0-3 2.5-4.5 3-7 1 2 2 3 4 0z" />
+  </svg>
+);
+const IconChevronDown = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="4 6 8 10 12 6" />
+  </svg>
+);
+const IconChevronUp = ({ size = 10, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polyline points="4 10 8 6 12 10" />
+  </svg>
+);
+const IconClose = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="3" y1="3" x2="13" y2="13" />
+    <line x1="13" y1="3" x2="3" y2="13" />
+  </svg>
+);
+const IconMountain = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 14L6 4l4 8 2-4 3 6H1z" />
+  </svg>
+);
+const IconDroplet = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1.5C8 1.5 3 7 3 10.5a5 5 0 0 0 10 0C13 7 8 1.5 8 1.5z" />
+  </svg>
+);
+const IconClipboard = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M10 2H6a1 1 0 0 0-1 1v1h6V3a1 1 0 0 0-1-1z" />
+    <path d="M5 4H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2" />
+    <line x1="5" y1="8" x2="11" y2="8" />
+    <line x1="5" y1="11" x2="9" y2="11" />
+  </svg>
+);
+const IconMushroom = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 2a6 6 0 0 0-6 6h12a6 6 0 0 0-6-6z" />
+    <path d="M6 8v5a2 2 0 0 0 4 0V8" />
+  </svg>
+);
+const IconMicroscope = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M6 1h4M8 1v4M5 5h6v3H5zM8 8v3M4 14h8M4 11h8" />
+    <path d="M12 8a4 4 0 0 1-4 4" />
+  </svg>
+);
+const IconBook = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 3h5a2 2 0 0 1 2 2v9a2 2 0 0 0-2-2H2V3z" />
+    <path d="M14 3H9a2 2 0 0 0-2 2v9a2 2 0 0 1 2-2h5V3z" />
+  </svg>
+);
+const IconFactory = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 14h14V7l-4 3V7L7 10V2L1 5v9z" />
+  </svg>
+);
+const IconSeed = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 13c1-4 4-7 10-10 0 6-3 9-10 10z" />
+    <path d="M3 13l5-5" />
+  </svg>
+);
+const IconScale = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="8" y1="1" x2="8" y2="14" />
+    <line x1="2" y1="4" x2="14" y2="4" />
+    <path d="M2 4l2 5h-4l2-5zM14 4l2 5h-4l2-5zM5 14h6" />
+  </svg>
+);
+const IconWind = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M2 5h9a2 2 0 1 0-2-2" />
+    <path d="M1 9h12a2 2 0 1 0-2-2" />
+    <path d="M3 13h6a2 2 0 1 0-2-2" />
+  </svg>
+);
+const IconSnowflake = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <line x1="8" y1="1" x2="8" y2="15" />
+    <line x1="1" y1="8" x2="15" y2="8" />
+    <path d="M3 3l10 10M13 3L3 13" />
+  </svg>
+);
+const IconEdit = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M11 2l3 3-8 8H3v-3l8-8z" />
+  </svg>
+);
+const IconCamera = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1 5a1 1 0 0 1 1-1h2.5l1.5-2h4l1.5 2H14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5z" />
+    <circle cx="8" cy="9" r="3" />
+  </svg>
+);
+const IconMail = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="2" y="3" width="12" height="10" rx="1.5" />
+    <path d="M2 4l6 5 6-5" />
+  </svg>
+);
+const IconSparkles = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z" />
+  </svg>
+);
+const IconStar = ({ size = 12, color = 'currentColor', fill = 'none' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill={fill} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <polygon points="8 1.5 10 6 15 6.5 11.5 10 12.5 15 8 12.5 3.5 15 4.5 10 1 6.5 6 6 8 1.5" />
+  </svg>
+);
+const IconCart = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <circle cx="6" cy="13" r="1.5" />
+    <circle cx="13" cy="13" r="1.5" />
+    <path d="M1 2h2.5l1.6 7h8.5l1.4-5H4" />
+  </svg>
+);
+const IconRotate = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M1.5 2.5v4h4" />
+    <path d="M2.5 10a6 6 0 1 0 1.2-6.5L1.5 6.5" />
+  </svg>
+);
+const IconPause = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <rect x="3.5" y="3" width="3" height="10" rx="0.5" />
+    <rect x="9.5" y="3" width="3" height="10" rx="0.5" />
+  </svg>
+);
+
+// ── Role definitions for charts and mini dashboard ──
+const ROLE_LABELS = {
+  base_carbono: 'Base C',
+  suplemento_n: 'Supl. N',
+  suplemento_medio: 'Supl. Medio',
+  aireador: 'Aireador',
+  aditivo_ph: 'pH',
+  aditivo_estructura: 'Estructura',
+  aditivo_micronutriente: 'Micronut.',
+  aditivo_arrancador: 'Arrancador'
+};
+const ROLE_COLORS = {
+  base_carbono: '#5A7042',
+  suplemento_n: '#C68F2C',
+  suplemento_medio: '#D4A838',
+  aireador: '#4E7A6A',
+  aditivo_ph: '#8B5C28',
+  aditivo_estructura: '#7A6B58',
+  aditivo_micronutriente: '#2A6A7A',
+  aditivo_arrancador: '#9B4F3A'
+};
+
 // ── v3: CompositionChart — stacked bar by role ──
 const CompositionChart=({recipe})=>{
   if(!recipe||!recipe.length) return null;
-  const ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
-  const ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
   const groups={};
   recipe.forEach(r=>{
     const g=INGS.find(i=>i.id===r.id);
@@ -966,40 +1218,148 @@ const peritoCorreccionMinima=(opt)=>{
   if(!first) return null;
   return first.action.replace(/<[^>]+>/g,'');
 };
-const PeritoItem=React.memo(({item,onApply,baseScore})=>{
-  const hasPrediction=item.predictedScore!=null&&baseScore!=null;
-  const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
-  return(
-  <div className={`perito-item pi-${item.priority}`}>
-    <div className="pi-icon-col">
-      <span className="pi-icon">{item.icon}</span>
-    </div>
-    <div className="pi-body">
-      <div className="pi-head">
-        <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
-        {item.delta&&<span className="pi-delta">{item.delta}</span>}
+const PeritoItem=React.memo(({item,onApply,baseScore,autoRotate=false})=>{
+  const alts = item.alternatives || [];
+  const allVariants = [item, ...alts];
+  const [selectedIdx, setSelectedIdx] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  // Auto-rotate between alternatives every 5 seconds if enabled and not paused by hover/touch
+  React.useEffect(() => {
+    if (!autoRotate || allVariants.length <= 1 || isPaused) return;
+    const interval = setInterval(() => {
+      setSelectedIdx(prev => (prev + 1) % allVariants.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [autoRotate, allVariants.length, isPaused]);
+
+  // Keep index in bounds if alternatives change
+  const currentIdx = selectedIdx < allVariants.length ? selectedIdx : 0;
+  const currentItem = allVariants[currentIdx] || item;
+  const isAlt = currentIdx > 0;
+
+  const hasPrediction = currentItem.predictedScore != null && baseScore != null;
+  const scoreDelta = hasPrediction ? Math.round(currentItem.predictedScore - baseScore) : null;
+
+  return (
+    <div
+      className={`perito-item pi-${currentItem.priority}`}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      style={{position: 'relative'}}
+    >
+      <div className="pi-icon-col">
+        <span className="pi-icon">
+          {currentItem.icon === '⛰' || currentItem.icon === 'altitud' ? (
+            <IconMountain size={13} color="currentColor" />
+          ) : currentItem.icon === '⚠' || currentItem.icon === 'alerta' ? (
+            <IconAlert size={13} color="currentColor" />
+          ) : (
+            currentItem.icon
+          )}
+        </span>
+        {allVariants.length > 1 && (
+          <span style={{
+            fontSize: '9px',
+            fontFamily: 'var(--font-mono)',
+            padding: '1px 4px',
+            borderRadius: 8,
+            background: isAlt ? 'rgba(74,107,74,.2)' : 'rgba(0,0,0,.08)',
+            color: isAlt ? 'var(--accent-olive)' : 'var(--ink-600)',
+            marginTop: 4,
+            fontWeight: 700,
+            whiteSpace: 'nowrap'
+          }}>
+            {currentIdx + 1}/{allVariants.length}
+          </span>
+        )}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a "Todo el catálogo".</div>}
-      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
-      <div className="pi-effect">{item.effect}</div>
-      {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
-      {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
-      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
-      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>⚠ {item.sideEffect}</div>}
-      {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
-        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
-        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(item.comboPredictedScore)}/100</div>
-        <button onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
-      </div>}
+      <div className="pi-body">
+        <div className="pi-head" style={{flexWrap: 'wrap', gap: 4, alignItems: 'center'}}>
+          <span className="pi-label">{currentItem.label}</span>
+          {isAlt && (
+            <span style={{
+              fontSize: "var(--text-2xs)",
+              fontWeight: 800,
+              color: '#2B5E28',
+              background: 'rgba(74,120,74,.15)',
+              border: '1px solid rgba(74,120,74,.4)',
+              borderRadius: 3,
+              padding: '1px 6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 3
+            }}>
+              <IconStar size={9} color="currentColor" fill="currentColor" /> Alternativa {currentIdx}
+            </span>
+          )}
+          {currentItem.capped && <span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+          {currentItem.notInStock && <span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px',display:'inline-flex',alignItems:'center',gap:4}}><IconCart size={10} color="#7A5A10" /> no en bodega — a comprar</span>}
+          {currentItem.delta && <span className="pi-delta">{currentItem.delta}</span>}
+        </div>
+
+        {/* Carousel / Alternatives Selector Tabs */}
+        {allVariants.length > 1 && (
+          <div className="perito-alts-scroll">
+            <span style={{fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--ink-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 2, flexShrink: 0}}>
+              Alternativas ({allVariants.length}):
+            </span>
+            {allVariants.map((variant, vIdx) => {
+              const active = vIdx === currentIdx;
+              return (
+                <button
+                  key={vIdx}
+                  onClick={() => setSelectedIdx(vIdx)}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    padding: '2px 7px',
+                    borderRadius: 4,
+                    border: active ? '1.5px solid var(--accent-olive, #3D5A38)' : '1px solid var(--border-soft, #ddd)',
+                    background: active ? 'rgba(74,107,74,.15)' : 'rgba(0,0,0,.03)',
+                    color: active ? '#20401C' : 'var(--ink-700)',
+                    fontWeight: active ? 700 : 500,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3
+                  }}
+                  title={vIdx === 0 ? 'Opción principal recomendada' : `Alternativa ${vIdx}: ${variant.action.replace(/<[^>]+>/g,'')}`}
+                >
+                  {vIdx === 0 ? 'Principal' : `Alt ${vIdx}`}
+                  {variant.predictedScore != null && (
+                    <span style={{fontSize: '9px', opacity: 0.8, color: active ? '#2B5E28' : 'var(--ink-500)'}}>
+                      ({Math.round(variant.predictedScore)} pts)
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {currentItem.repeatedApply && <div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><IconRotate size={12} color="#7A5A10" /> Ya aplicaste esto {currentItem.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a "Todo el catálogo".</div>}
+        <div className="pi-action" dangerouslySetInnerHTML={{__html:currentItem.action}}/>
+        <div className="pi-effect">{currentItem.effect}</div>
+        {currentItem.why && <div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {currentItem.why}</div>}
+        {currentItem.riskIfIgnored && <div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {currentItem.riskIfIgnored}</div>}
+        {hasPrediction && <div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(currentItem.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+        {currentItem.sideEffect && <div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700,display:'flex',alignItems:'center',gap:4}}><IconAlert size={12} color="var(--coral-600,#B5451F)" /> {currentItem.sideEffect}</div>}
+        {currentItem.comboApply && <div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
+          <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{currentItem.comboLabel}</div>
+          <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(currentItem.comboPredictedScore)}/100</div>
+          <button onClick={()=>onApply(currentItem.comboApply,currentItem.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
+        </div>}
+      </div>
+      <div className="pi-actions">
+        {currentItem.apply
+          ?<button onClick={()=>onApply(currentItem.apply,currentItem.icon)} className="pi-apply">{isAlt ? 'Aplicar alternativa' : 'Aplicar'}</button>
+          :<div className="pi-spacer"/>}
+      </div>
     </div>
-    <div className="pi-actions">
-      {item.apply
-        ?<button onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar</button>
-        :<div className="pi-spacer"/>}
-    </div>
-  </div>
   );
 });
 
@@ -1067,7 +1427,7 @@ const IcoPlus=()=>(<svg width="6" height="6" viewBox="0 0 24 24" fill="none" str
 const parseIngName=(name)=>{const hasBlock=name.includes('⛔');const hasWarn=name.includes('⚠️')||name.includes('⚠');const clean=name.replace(/⛔\s*/g,'').replace(/⚠️\s*/g,'').replace(/⚠\s*/g,'').trim();return{hasBlock,hasWarn,clean};};
 
 // ── INGREDIENT ITEM with expandable profile ──
-const IngredientItem=({ing,onAdd,stockKg=0})=>{
+const IngredientItem=({ing,onAdd,stockKg=0,isCompat=null,spName='esta especie'})=>{
   const [expanded,setExpanded]=React.useState(false);
   const cat=CAT_COLORS[ing.cat]||CAT_COLORS.default;
   const costStr=ing.cost===0?'Gratis':`$${ing.cost}`;
@@ -1080,7 +1440,11 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
     <div className={'ing-item '+(expanded?'expanded':'')} onClick={()=>setExpanded(!expanded)}>
       <div className="ing-badge" style={{background:cat}} title={ing.cat}>{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
-        <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
+        <div className="ing-name" style={{display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
+          {(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}
+          {isCompat===true&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.15)',color:'var(--moss-700,#2E3B2F)',padding:'1px 5px',borderRadius:3,fontWeight:700,marginLeft:2}}>✓ Compatible</span>}
+          {isCompat===false&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(168,67,42,.12)',color:'var(--coral-700,#A8432A)',padding:'1px 5px',borderRadius:3,fontWeight:600,marginLeft:2}}>⊘ No recomendada</span>}
+        </div>
         <div className="ing-meta">
           <span>C:N {ing.cn}</span>
           <span>N {ing.n.toFixed(1)}%</span>
@@ -1114,6 +1478,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
               <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.dig/10)*100+'%',background:'#B6532A'}}></div></div>
               <span className="v">{ing.dig}<span className="unit">/10</span></span>
             </div>
+            {ing.notes&&<div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:6,lineHeight:1.4,padding:'4px 6px',background:'var(--paper-200)',borderRadius:3}}>{ing.notes}</div>}
             <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--paper-300)'}}>
               <button className="add-btn" onClick={e=>{e.stopPropagation();onAdd(ing);}}>Agregar a receta</button>
             </div>
@@ -1480,6 +1845,10 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
   const bases=pool.filter(g=>g.role==='base_carbono'&&compatible(g)&&Number(g.cn)>0&&Number(g.n)>0);
   const supps=pool.filter(g=>(g.role==='suplemento_n'||g.role==='suplemento_medio')&&compatible(g)&&Number(g.cn)>0&&Number(g.n)>0);
   const aers=pool.filter(g=>g.role==='aireador');
+  const allCatalogBases=(ingredients||[]).filter(g=>g.role==='base_carbono'&&compatible(g));
+  const allCatalogSupps=(ingredients||[]).filter(g=>(g.role==='suplemento_n'||g.role==='suplemento_medio')&&compatible(g));
+  const allCatalogAers=(ingredients||[]).filter(g=>g.role==='aireador'&&compatible(g));
+  const allCatalogMinerals=(ingredients||[]).filter(g=>(g.role==='aditivo_ph'||g.id==='carbonato_calcio'||g.id==='yeso')&&compatible(g));
   return{
     stockIds:stockIds.size,
     poolSize:pool.length,
@@ -1493,8 +1862,72 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     targetKey,
     baseNames:bases.map(g=>g.name),
     suppNames:supps.map(g=>g.name),
+    catalogBases:allCatalogBases.map(g=>({id:g.id,name:g.name,cn:g.cn,n:g.n,cost:g.cost,inStock:stockIds.has(g.id)})),
+    catalogSupps:allCatalogSupps.map(g=>({id:g.id,name:g.name,cn:g.cn,n:g.n,cost:g.cost,inStock:stockIds.has(g.id)})),
+    catalogAers:allCatalogAers.map(g=>({id:g.id,name:g.name,inStock:stockIds.has(g.id)})),
+    catalogMinerals:allCatalogMinerals.map(g=>({id:g.id,name:g.name,inStock:stockIds.has(g.id)})),
   };
 };
+
+class SimuladorErrorBoundary extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error){
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo){
+    console.error('[SimuladorApp ErrorBoundary]', error, errorInfo);
+    this.setState({ errorInfo });
+  }
+  handleReload(){
+    window.location.reload();
+  }
+  handleResetLocalState(){
+    try {
+      localStorage.removeItem('setas_recipe_scratch');
+      localStorage.removeItem('sim_active_recipe');
+    } catch(e) {}
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  }
+  render(){
+    if(this.state.hasError){
+      return (
+        <div className="sim-root" style={{padding:'24px 16px'}}>
+          <div className="app-err-boundary">
+            <div className="app-err-title">⚠ Ocurrió un fallo en el Simulador</div>
+            <div className="app-err-desc">
+              El estado de la aplicación se resguardó de forma segura. Puedes reintentar cargar la interfaz o reiniciar la receta en curso sin perder tus lotes ni registros de bodega.
+            </div>
+            {this.state.error&&(
+              <div className="app-err-box">
+                {String(this.state.error?.message || this.state.error)}
+              </div>
+            )}
+            <div className="app-err-actions">
+              <button
+                type="button"
+                className="inv-btn inv-btn-pri"
+                onClick={()=>this.handleReload()}
+                style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)'}}>
+                ↻ Recargar aplicación
+              </button>
+              <button
+                type="button"
+                className="inv-btn inv-btn-sec"
+                onClick={()=>this.handleResetLocalState()}
+                style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)'}}>
+                Restablecer receta activa
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function App(props){
   const [bridgeOpen,setBridgeOpen]=useState(true);
@@ -1520,6 +1953,18 @@ function App(props){
     scroller.addEventListener('scroll',onScroll,{passive:true});
     return ()=>{scroller.removeEventListener('scroll',onScroll);if(raf) cancelAnimationFrame(raf);};
   },[]);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [hasPickedSpecies,setHasPickedSpecies]=useState(()=>{
     try{
       const p=normSpp(props.preselectSpecies);
@@ -1540,6 +1985,7 @@ function App(props){
   });
   const setSKey=(k)=>{setHasPickedSpecies(true);setSKeyRaw(k);};
   const [catalogModalOpen,setCatalogModalOpen]=useState(false);
+  const [showLiveChips,setShowLiveChips]=useState(false);
   useEffect(()=>{if(!catalogModalOpen)return;const onEsc=e=>{if(e.key==='Escape')setCatalogModalOpen(false);};document.addEventListener('keydown',onEsc);return()=>document.removeEventListener('keydown',onEsc);},[catalogModalOpen]);
   const [sppPickerOpen,setSppPickerOpen]=useState(true); // legacy — kept for compat
   const [recipe,setRecipe]=useState([]);
@@ -1560,22 +2006,27 @@ function App(props){
   const [loteSyncErr,setLoteSyncErr]=useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
-  const [tab,setTab]=useState('formular');
-  const TAB_LABELS={inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
+  const [tab,setTab]=useState('home');
+  const TAB_LABELS={home:'Hoy',inicio:'Hoy',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Planificar',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
-    {key:'inicio',label:'Inicio',tabs:['inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
-    {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
+    {key:'formular',label:'Formular',tabs:['catalogo','formular','dashboard'],views:[{label:'Catálogo',target:'catalogo'},{label:'Formular',target:'formular'},{label:'Recetario',target:'dashboard'}],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3M8 3h8M7.5 14h9"/></svg>},
+    {key:'produccion',label:'Producción',tabs:['schedule','produccion','inventario'],views:[{label:'Planificar',target:'schedule'},{label:'Preparar mezcla',target:'produccion'},{label:'Bodega',target:'inventario'}],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
+    {key:'bitacora',label:'Bitácora',tabs:['bitacora'],views:[{label:'Lotes',target:'bitacora',subview:'bit_dash'},{label:'Seguimiento',target:'bitacora',subview:'bit_bolsas'},{label:'Cosechas',target:'bitacora',subview:'bit_cosechas'}],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'control',label:'Control',tabs:['home','inicio'],views:[{label:'Hoy',target:'home'},{label:'Cámaras',target:'camaras'},{label:'Métricas',target:'revision'}],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 11c0-4.5 3.6-8 8-8s8 3.5 8 8c0 1.8-2 2.5-4 2.2-1.3-.2-1.6-1.3-3-1.3s-1.9 1.5-4 1.5-4.3-1-5-2.4Z"/><path d="M10 13v7M14 13v7M8 20h8"/></svg>}
   ];
-  const TAB_PAGE_TITLES={inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Centro de Mando · Hoy',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega de insumos',produccion:'Ficha de producción',schedule:'Planificación de cultivo',dashboard:'Recetario de fórmulas',bitacora:'Bitácora de pruebas'};
   const [mode,setMode]=useState('receta');
-  const RECETA_TABS=['catalogo','formular','dashboard'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
+  const RECETA_TABS=['catalogo','formular'];
+  const CULTIVO_TABS=['home','inicio','inventario','produccion','schedule','dashboard','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
-  const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
-  const goTab=t=>{const next=applyTab(t);if(typeof props.onTabChange==='function')props.onTabChange(next);};
-  useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
+  const goTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');};
+  useEffect(()=>{
+    if(props.tab) goTab(props.tab);
+    const st = props.bitTab || props.subview;
+    if(st && ['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'].includes(st)){
+      setBitTab(st);
+    }
+  },[props.tab, props.tabNonce, props.bitTab, props.subview]);
   const _preInit=useRef(true);
   useEffect(()=>{
     if(_preInit.current){ _preInit.current=false; return; }
@@ -1602,6 +2053,9 @@ function App(props){
   const [pantryIds,setPantryIds]=useState([]);
   const [usePantry,setUsePantry]=useState(false);
   const [showCompatOnly,setShowCompatOnly]=useState(false);
+  const [groupByRole,setGroupByRole]=useState(true);
+  const [collapsedRoles,setCollapsedRoles]=useState({});
+  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const [disabledIngIds,setDisabledIngIds]=useState([]);
   const toggleDisabledIng=(id)=>setDisabledIngIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
   const [justAddedIds,setJustAddedIds]=useState([]);
@@ -1611,17 +2065,33 @@ function App(props){
   const [optMaxCost,setOptMaxCost]=useState(0);
   const [optResults,setOptResults]=useState(null);
   const [optRunning,setOptRunning]=useState(false);
-  // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
-  // completo. Antes solo alimentaba el Generador automático — ahora también
-  // controla las sugerencias individuales del Perito (bestStock en
-  // generateOptimizer), para que ambos exploren siempre el mismo universo de
-  // ingredientes y no queden desincronizados. Persistido: es una preferencia
-  // de cómo el usuario quiere trabajar, no un dato de la receta activa.
-  const [optUseStock,setOptUseStock]=useState(()=>{
-    try{const v=localStorage.getItem('setas_workmode');if(v==='catalogo') return false;}catch(e){}
-    return true;
+  const [autoRotatePerito, setAutoRotatePerito] = useState(true);
+  // Modo de trabajo global del Formulador: 'produccion' (Bodega, stock real, lotes) vs. 'investigacion' (Catálogo completo, I+D)
+  const [globalMode, setGlobalMode] = useState(() => {
+    try {
+      const v = localStorage.getItem('setas_global_workmode');
+      if (v === 'investigacion' || v === 'catalogo') return 'investigacion';
+      const w = localStorage.getItem('setas_workmode');
+      if (w === 'catalogo') return 'investigacion';
+    } catch(e) {}
+    return 'produccion';
   });
-  useEffect(()=>{try{localStorage.setItem('setas_workmode',optUseStock?'bodega':'catalogo');}catch(e){}},[optUseStock]);
+  const [optUseStock, setOptUseStock] = useState(globalMode === 'produccion');
+  const setGlobalWorkMode = (mode) => {
+    setGlobalMode(mode);
+    setOptUseStock(mode === 'produccion');
+    try {
+      localStorage.setItem('setas_global_workmode', mode);
+      localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
+    } catch(e) {}
+  };
+  useEffect(() => {
+    setOptUseStock(globalMode === 'produccion');
+    try {
+      localStorage.setItem('setas_global_workmode', globalMode);
+      localStorage.setItem('setas_workmode', globalMode === 'produccion' ? 'bodega' : 'catalogo');
+    } catch(e) {}
+  }, [globalMode]);
   const [optProfile,setOptProfile]=useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
@@ -1642,20 +2112,6 @@ function App(props){
   const [bitCosechas,setBitCosechas]=useState([]);
   const [bitTab,setBitTab]=useState('bit_dash');
   const [bitActiveLoteId,setBitActiveLoteId]=useState(null);
-  const applyBitTab=(raw,hasActiveLote=!!bitActiveLoteId)=>{
-    const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
-    const requested=allowed.includes(raw)?raw:'bit_dash';
-    const needsLote=['bit_bolsas','bit_cosechas','bit_ficha'].includes(requested);
-    const next=needsLote&&!hasActiveLote?'bit_dash':requested;
-    setBitTab(next);
-    return next;
-  };
-  const goBitTab=(raw,hasActiveLote)=>{const next=applyBitTab(raw,hasActiveLote);if(typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);};
-  useEffect(()=>{
-    if(!props.bitSubtab)return;
-    const next=applyBitTab(props.bitSubtab);
-    if(next!==props.bitSubtab&&typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);
-  },[props.bitSubtab,props.bitSubtabNonce,bitActiveLoteId]);
   const [bitDashView,setBitDashView]=useState('grid');
   const [showBitNuevo,setShowBitNuevo]=useState(false);
   const [bitNuevoForm,setBitNuevoForm]=useState({});
@@ -1838,9 +2294,34 @@ function App(props){
   useEffect(()=>{try{const s=localStorage.getItem('sdp_prov_override');if(s) setProvOverride(JSON.parse(s));}catch(e){};},[]);
 
   const saveR=()=>{
-    const nm=saveName.trim();if(!nm||!recipe.length||!balanced) return;
+    const nm=saveName.trim();if(!nm||!recipe.length) return;
+    const missingAlerts=[];
+    if(!balanced){
+      missingAlerts.push(`Balance de masa: La mezcla suma ${an?.tot?.toFixed(1)||'—'}% (recomendado 100% ±${MASS_BALANCE_TOL}%)`);
+    }
+    const missingStock=[];
+    recipe.forEach(r=>{
+      const g=effectiveINGS.find(x=>x.id===r.id);
+      const inStock=stockMap[r.id]||0;
+      if(inStock<=0||!stockIds.has(r.id)){
+        missingStock.push(`${g?.name||r.id} (${r.p}%)`);
+      }
+    });
+    if(missingStock.length>0){
+      missingAlerts.push(`Insumos sin stock en Bodega: ${missingStock.join(', ')}`);
+    }
+    if(an?.trichoderma){
+      missingAlerts.push('Alerta fitosanitaria: Requiere autoclave 121°C por nivel de nitrógeno/suplementación');
+    }
+
     const trSave=an?calcTreatment(an, sKey, SPP):null;
-    const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
+    const isProd=globalMode==='produccion'&&missingStock.length===0&&balanced;
+    const e={
+      id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),
+      eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,
+      treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,
+      mode:globalMode,esProduccion:isProd,alertasPendientes:missingAlerts,
+    };
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
@@ -1849,11 +2330,65 @@ function App(props){
       window.SetasDB.saveReceta({
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
         cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
+        mode:globalMode, esProduccion:isProd, alertas:missingAlerts,
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
+    }
+    if(missingAlerts.length>0){
+      setNoticeDlg({
+        title:'✓ Receta guardada con observaciones',
+        msg:`La receta "${nm}" se ha guardado en el Recetario.\n\nObservaciones y faltantes detectados:\n• ${missingAlerts.join('\n• ')}`
+      });
+    }
+  };
+
+  const promoverReceta=(recetaObj)=>{
+    const targetRecipe=recetaObj?.recipe||recipe;
+    const targetSKey=recetaObj?.sKey||sKey;
+    const targetName=recetaObj?.name||'Receta activa';
+
+    if(!targetRecipe.length){
+      setNoticeDlg({title:'Sin receta',msg:'No hay ingredientes en la receta para promover a producción.'});
+      return;
+    }
+
+    const missingStock=[];
+    targetRecipe.forEach(r=>{
+      const g=effectiveINGS.find(x=>x.id===r.id);
+      const inStockKg=stockMap[r.id]||0;
+      if(inStockKg<=0||!stockIds.has(r.id)){
+        missingStock.push({name:g?.name||r.id,pct:r.p,inStockKg});
+      }
+    });
+
+    const executePromotion=()=>{
+      setGlobalWorkMode('produccion');
+      if(recetaObj&&recetaObj.id){
+        const u=saved.map(s=>s.id===recetaObj.id?{...s,esProduccion:true,fechaPromocion:new Date().toLocaleDateString('es-CO')}:s);
+        setSaved(u);
+        try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      }
+      setSKey(targetSKey);
+      setRecipe(targetRecipe);
+      setTab('produccion');
+      setNoticeDlg({
+        title:'⭐ Receta promovida a Producción',
+        msg:`La receta "${targetName}" ha sido promovida a Producción oficial. Se han cargado los parámetros en la Hoja de Producción lista para lote.`
+      });
+    };
+
+    if(missingStock.length>0){
+      setConfirmDlg({
+        title:'⭐ Promover a Producción — Insumos Faltantes',
+        msg:`La receta "${targetName}" incluye ingredientes sin stock suficiente en Bodega Tenjo:\n\n• ${missingStock.map(m=>`${m.name} (${m.pct}%) — Stock actual: ${m.inStockKg.toFixed(1)} kg`).join('\n• ')}\n\n¿Deseas promoverla para planificar la producción y compra de insumos?`,
+        confirmLabel:'Promover y planificar',
+        onConfirm:executePromotion,
+      });
+    }else{
+      executePromotion();
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);setNavOpen(false);};
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);setNavOpen(false);};
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
@@ -1944,10 +2479,13 @@ function App(props){
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
   const lowStockCount=useMemo(()=>{
-    const registeredIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
-    return registeredIds.filter(id=>(stockMap[id]||0)<(alertaConfig[id]??2)).length;
-  },[invLotes,stockMap,alertaConfig]);
-  useEffect(()=>{if(typeof props.onStockAlertChange==='function')props.onStockAlertChange(lowStockCount);},[lowStockCount]);
+    const ingIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
+    return ingIds.filter(id=>{
+      const stock=stockActual(id,invLotes);
+      const min=alertaConfig[id]??2;
+      return stock<min;
+    }).length;
+  },[invLotes,alertaConfig]);
   // Mismo EB mezclado con historial real que ya se pinta en el gauge
   // (RecipeGauges/blendEBWithHistory) — se pasa como override al score del
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
@@ -2035,18 +2573,53 @@ function App(props){
     setRecipe(recipeHistory[recipeHistory.length-1]);
     setRecipeHistory(h=>h.slice(0,-1));
   };
-  // Auto-mejorar: itera aplicando la mejor sugerencia válida, recalcula y para cuando
-  // el score deja de subir. Máximo 6 vueltas. Evita el ciclo "aplico la 1 → la 2 ya no aplica".
-  // Antes siempre tomaba el PRIMER ítem accionable de la lista (orden fijo por
-  // tipo de bandera, no por impacto real) — dos recetas con el mismo conjunto
-  // de problemas podían converger a resultados distintos según en qué orden
-  // aparecían los flags. Ahora, en cada vuelta, prueba los hasta 3 ítems
-  // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
-  // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
-  // no solo el primero de la lista.
+  // Auto-mejorar dinámico: utiliza el motor inteligente smartAutoImproveRecipe para
+  // resolver estabilizadores minerales (pH/CaCO3/Yeso), balances nutricionales C:N,
+  // suplementación y optimización multi-paso según el modo activo (Producción vs. Investigación).
   const autoImprove=()=>{
+    const initialRecipe=[...recipe];
+    const smartFn = (typeof smartAutoImproveRecipe === 'function')
+      ? smartAutoImproveRecipe
+      : (typeof window !== 'undefined' && typeof window.smartAutoImproveRecipe === 'function')
+        ? window.smartAutoImproveRecipe
+        : null;
+
+    let res = null;
+    if (smartFn) {
+      res = smartFn({
+        recipe,
+        sKey,
+        ings: optimizerINGS,
+        lockedIds,
+        stockIds,
+        useStock: optUseStock,
+        optProfile,
+        spp: SPP,
+        stockMap,
+      });
+    }
+
+    if (res && res.recipe && res.recipe.length > 0) {
+      setRecipeHistory(h => [...h, initialRecipe]);
+      setRecipe(res.recipe);
+
+      let msg = `Score: ${res.initialScore} → ${res.improvedScore}/100`;
+      if (res.changes && res.changes.length > 0) {
+        msg += `\n\nMejoras aplicadas dinámicamente:\n• ${res.changes.join('\n• ')}`;
+      }
+      if (res.missingStock && res.missingStock.length > 0) {
+        msg += `\n\n⚠ Insumos sugeridos sin stock en Bodega:\n• ${res.missingStock.map(m => `${m.name} (${m.pct}%)`).join('\n• ')}`;
+      }
+      setNoticeDlg({
+        title: '✦ Auto-mejora completada',
+        msg,
+      });
+      return;
+    }
+
+    // Fallback si smartAutoImproveRecipe no estuviera disponible
     let cur=recipe;let bestScore=-1;
-    for(let i=0;i<6;i++){
+    for(let i=0;i<8;i++){
       const a=analyze(cur,sKey,effectiveINGS);
       if(!a) break;
       const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock);
@@ -2070,9 +2643,10 @@ function App(props){
       const a2=bestA2;
       if(!a2) break;
       const o2=bestO2;
-      if(o2.score<=o.score) break; // no aceptar si no mejora el score global
+      if(o2.score<=o.score) break;
       cur=candidate;
     }
+    setRecipeHistory(h => [...h, initialRecipe]);
     setRecipe(cur);
   };
   // Impresión de la Hoja de Producción.
@@ -2216,7 +2790,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
+      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);setBitTab('bit_dash');}
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
@@ -2891,9 +3465,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
-              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
-                <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
-                <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
+              <div className="inv-subtab-bar" style={{marginBottom:0}}>
+                {[['bit_dash','Dashboard'],['bit_bolsas','Bolsas'],['bit_cosechas','Cosechas'],['bit_comparador','Comparador'],['bit_ficha','Ficha']].map(([k,label])=>(
+                  <button key={k} className={'inv-subtab'+(bitTab===k?' on':'')} onClick={()=>setBitTab(k)}
+                    disabled={k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId}
+                    style={{opacity:k!=='bit_dash'&&k!=='bit_comparador'&&!bitActiveLoteId?0.4:1}}>{label}</button>
+                ))}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
               </div>
             </div>
@@ -2917,7 +3494,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
                         <div key={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'box-shadow .18s,transform .18s'}}
-                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
+                          onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}
                           onMouseEnter={e=>{e.currentTarget.style.boxShadow='var(--shadow-lift)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform='';}}
                         >
@@ -2948,7 +3525,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);setBitTab('bit_bolsas');}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3072,9 +3649,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div style={{fontSize:"var(--text-md)",lineHeight:0.95,position:'absolute',left:30,top:49,fontStyle:'italic',letterSpacing:'-0.1px'}}>de la</div>
           <div style={{fontSize:18,lineHeight:1,position:'absolute',left:27,top:65}}>Peña</div>
         </span>
-        {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
-          <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>
-        );})}
+        {NAV_GROUPS.map(g=>{
+          const on=g.tabs.includes(tab);
+          const badgeVal=g.key==='produccion'&&(lowStockCount>0?lowStockCount:null);
+          return(
+            <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>{
+              const defView=g.views?g.views[0]:null;
+              if(defView){
+                goTab(defView.target);
+                if(defView.subview) setBitTab(defView.subview);
+              }else{
+                goTab(g.tabs[0]);
+              }
+            }}>
+              {g.icon}
+              <span>{g.label}</span>
+              {badgeVal&&<span className="rail-badge">{badgeVal}</span>}
+            </button>
+          );
+        })}
       </nav>
       <header className="hero" style={{display: tab==='inicio' ? 'none' : undefined}}>
         <div className="hero-inner">
@@ -3094,60 +3687,762 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <h1>Setas de la Peña</h1>
           <p>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
         </div>
-        <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio')?'none':undefined}}>
+        <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
           <h2 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h2>
           <div className="page-title-rule"></div>
         </div>
-        {tab!=='inicio'&&(()=>{
+        {tab!=='inicio'&&tab!=='home'&&(()=>{
           const activeGroup=NAV_GROUPS.find(g=>g.tabs.includes(tab));
-          // El grupo "recetas" ya tiene su propio selector (catálogo/formular/optimizar arriba,
-          // vía el shell externo Setas OS v5.dc.html) — evita duplicar esa sub-navegación aquí.
-          if(!activeGroup||activeGroup.key==='recetas'||activeGroup.tabs.length<2) return null;
+          if(!activeGroup||!activeGroup.views) return null;
           return(
-          <div className="fos-chips">
-            {activeGroup.tabs.map(t=>(
-              <button key={t} className={t===tab?'on':''} onClick={()=>goTab(t)}>{TAB_LABELS[t]}</button>
-            ))}
+          <div className="fos-chips" role="tablist" aria-label="Navegación contextual">
+            {activeGroup.views.map(v=>{
+              const isSelected=(v.target===tab&&(!v.subview||v.subview===bitTab));
+              return(
+                <button
+                  key={v.label}
+                  role="tab"
+                  aria-selected={isSelected}
+                  className={isSelected?'on':''}
+                  onClick={()=>{
+                    goTab(v.target);
+                    if(v.subview) setBitTab(v.subview);
+                  }}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
           </div>
           );
         })()}
 
-        {tab==='inicio'&&(()=>{
-          const TILES=[
-            {t:'Formular una receta',s:'Mezcla · C:N · humedad · generador automático',tb:'formular',pri:true},
-            {t:'Catálogo de especies',s:'Elegir o cambiar la especie activa',tb:'catalogo'},
-            {t:'Preparar un lote',s:'Ficha de producción del día · báscula',tb:'produccion'},
-            {t:'Cronograma',s:'Fechas de siembra y cosecha',tb:'schedule'},
-            {t:'Revisar bodega',s:'Stock · compras · proveedores',tb:'inventario'},
-            {t:'Registrar en bitácora',s:'Lotes · cosechas · eficiencia biológica',tb:'bitacora'},
-            {t:'Dashboard',s:'Indicadores de la operación',tb:'dashboard'}
+        {(tab==='home'||tab==='inicio')&&(()=>{
+          // Cálculos y Métricas en vivo para el Centro de Mando
+          const totalStockKg = invLotes.filter(l=>l.activo).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
+          const totalBolsasCount = bitBolsas.length;
+          const bolsasIncubacion = bitBolsas.filter(b=>b.estado==='sana'&&!b.col100).length;
+          const bolsasFructificacion = bitBolsas.filter(b=>b.estado==='sana'&&b.col100).length;
+          const bolsasContaminadas = bitBolsas.filter(b=>b.estado==='contaminada').length;
+          const totalCosechasKg = bitCosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
+          const totalCosechasCount = bitCosechas.length;
+          const activeRecipeCount = recipe.length;
+          const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
+
+          // Sección A: Datos de telemetría de las 4 salas y cámaras
+          const salas = [
+            {
+              id: 'sala-1',
+              nombre: 'Sala 1 · Incubación',
+              fase: 'Colonización en oscuridad',
+              temp: '22.4°C',
+              tempRango: '20–24°C',
+              hum: '76%',
+              humRango: '70–80%',
+              co2: '3.150 ppm',
+              co2Note: 'Colonización micelial',
+              estadoLabel: 'En Rango',
+              bolsas: bolsasIncubacion || 36,
+              capacidad: 48
+            },
+            {
+              id: 'sala-2',
+              nombre: 'Sala 2 · Fructificación A',
+              fase: 'Orellana / Pleurotus',
+              temp: '16.5°C',
+              tempRango: '14–18°C',
+              hum: '88%',
+              humRango: '85–92%',
+              co2: '780 ppm',
+              co2Note: 'Ventilación activa (12 R/h)',
+              estadoLabel: 'Fructificación',
+              bolsas: bolsasFructificacion || 24,
+              capacidad: 36
+            },
+            {
+              id: 'sala-3',
+              nombre: 'Sala 3 · Cámara Climatizada',
+              fase: 'Shiitake & Melena de León',
+              temp: '17.8°C',
+              tempRango: '16–20°C',
+              hum: '93%',
+              humRango: '90–95%',
+              co2: '920 ppm',
+              co2Note: 'Nebulización ultrasónica',
+              estadoLabel: 'En Rango',
+              bolsas: 16,
+              capacidad: 24
+            },
+            {
+              id: 'area-tecnica',
+              nombre: 'Área Técnica · Bodega & Autoclave',
+              fase: 'Preparación de sustratos Tenjo',
+              temp: '14.0°C',
+              tempRango: 'Ambiente Tenjo',
+              hum: '62%',
+              humRango: 'Almacén seco',
+              co2: '420 ppm',
+              co2Note: 'Autoclave 121°C / 15 PSI Standby',
+              estadoLabel: 'Operativo',
+              bolsas: `${totalStockKg.toFixed(0)} kg`,
+              capacidad: `${stockIds.size} insumos`
+            }
           ];
-          return(
-          <div className="fos-home">
-            <div className="fos-home-head">
-              <div>
-                <span className="fos-eyebrow">Herramienta de especulación e investigación</span>
-                <div className="fos-kicker">Buenas, equipo</div>
-                <h1 className="fos-h1">Laboratorio<br/>SdlP</h1>
+
+          // Sección C: Fases del ciclo de cultivo
+          const pipelineStages = [
+            {
+              num: '01',
+              title: 'Preparación & Mezcla',
+              sub: 'Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)',
+              badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : 'En espera de receta',
+              active: activeRecipeCount > 0,
+              linkTab: 'formular'
+            },
+            {
+              num: '02',
+              title: 'Inoculación & Incubación',
+              sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
+              badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
+              active: bolsasIncubacion > 0,
+              linkTab: 'bitacora'
+            },
+            {
+              num: '03',
+              title: 'Inducción / Primordios',
+              sub: 'Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm',
+              badge: `${bitBolsas.filter(b=>b.col100).length} bolsas colonizadas 100%`,
+              active: bitBolsas.filter(b=>b.col100).length > 0,
+              linkTab: 'schedule'
+            },
+            {
+              num: '04',
+              title: 'Fructificación & Cosecha',
+              sub: 'Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero',
+              badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
+              active: totalCosechasCount > 0,
+              linkTab: 'bitacora'
+            },
+            {
+              num: '05',
+              title: 'Post-Cosecha & Descanso',
+              sub: '2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)',
+              badge: `${bitLotes.length} lotes con trazabilidad`,
+              active: bitLotes.length > 0,
+              linkTab: 'dashboard'
+            }
+          ];
+
+          return (
+            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
+              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
+              <div style={{
+                background:'var(--paper-0)',
+                border:'1px solid var(--border-soft)',
+                borderRadius:'var(--r-md)',
+                padding:'28px 32px',
+                position:'relative',
+                overflow:'hidden'
+              }}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:20}}>
+                  <div style={{maxWidth:680}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                        FIELD OS · CENTRO DE MANDO OPERATIVO
+                      </span>
+                    </div>
+                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-3xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',marginBottom:10}}>
+                      Setas de la Peña
+                    </h1>
+                    <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-base)',color:'var(--ink-700)',margin:0,lineHeight:1.5}}>
+                      Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.
+                    </p>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        ⛰️ Tenjo 2.600 msnm
+                      </span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        💧 H₂O Eb. 91.4°C
+                      </span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
+                        ● Sistema Nominal
+                      </span>
+                    </div>
+                    {/* Especie Activa badge */}
+                    <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--paper-50)',border:'1px solid var(--paper-300)',padding:'8px 14px',borderRadius:'var(--r-sm)',marginTop:4}}>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                          {sp?.name || 'Orellana Gris'} <em style={{fontStyle:'italic',fontWeight:400,fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>({sp?.scientific})</em>
+                        </div>
+                      </div>
+                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',color:'var(--coral-500)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
+                        Cambiar
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="fos-home-art"><img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner-botanico-sketch.jpg'} width="560" height="210" loading="lazy" decoding="async" alt="" aria-hidden="true"/></div>
+
+              {/* SECCIÓN D: ACCIONES RÁPIDAS (Zona Superior / Pulgar) */}
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN D · OPERACIÓN INMEDIATA
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Acciones Rápidas
+                    </h2>
+                  </div>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                </div>
+                <div style={{
+                  display:'grid',
+                  gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap:12
+                }}>
+                  {[
+                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:'⚡',tab:'formular',onClick:()=>goTab('formular'),pri:true},
+                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:'📋',tab:'produccion',onClick:()=>goTab('produccion')},
+                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:'🍄',tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
+                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:'📦',tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:'🔬',tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
+                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:'📖',tab:'catalogo',onClick:()=>goTab('catalogo')}
+                  ].map(btn=>(
+                    <button
+                      key={btn.label}
+                      onClick={btn.onClick}
+                      style={{
+                        display:'flex',
+                        alignItems:'center',
+                        gap:12,
+                        padding:'14px 16px',
+                        background:btn.pri?'var(--paper-0)':'var(--paper-0)',
+                        border:btn.pri?'1.5px solid var(--coral-500)':'1px solid var(--border-soft)',
+                        borderRadius:'var(--r-sm)',
+                        textAlign:'left',
+                        cursor:'pointer',
+                        transition:'all .15s ease',
+                        boxShadow:'var(--shadow-card-rest)',
+                        position:'relative'
+                      }}
+                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
+                    >
+                      <span style={{fontSize:'var(--text-xl)',lineHeight:1,flexShrink:0}}>{btn.icon}</span>
+                      <div style={{minWidth:0,flex:1}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          {btn.label}
+                        </div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          {btn.sub}
+                        </div>
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-500)':'var(--ink-400)',fontWeight:700}}>→</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECCIÓN A: TELEMETRÍA / ESTADO OPERATIVO DE SALAS */}
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN A · AMBIENTES & SENSORES
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Telemetría de Salas de Cultivo
+                    </h2>
+                  </div>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
+                </div>
+                
+                {/* Responsive Grid/Carousel container */}
+                <div style={{
+                  display:'grid',
+                  gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap:16,
+                  overflowX:'auto',
+                  paddingBottom:4
+                }}>
+                  {salas.map(s=>(
+                    <div
+                      key={s.id}
+                      style={{
+                        background:'var(--paper-0)',
+                        border:'1px solid var(--border-soft)',
+                        borderRadius:'var(--r-md)',
+                        padding:'20px',
+                        display:'flex',
+                        flexDirection:'column',
+                        justifyContent:'space-between',
+                        gap:16,
+                        boxShadow:'var(--shadow-card-rest)'
+                      }}
+                    >
+                      <div>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
+                            {s.nombre}
+                          </div>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                            {s.estadoLabel}
+                          </span>
+                        </div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
+                          {s.fase}
+                        </div>
+
+                        {/* Indicadores climáticos */}
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.temp}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.tempRango}</div>
+                          </div>
+                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.hum}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.humRango}</div>
+                          </div>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.co2}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>PPM</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer de sala con ocupación */}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                        <span>Ocupación / Carga:</span>
+                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECCIÓN B: ESPACIOS DE TRABAJO / MÓDULOS DE OPERACIÓN */}
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN B · MÓDULOS DE CAMPO
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Espacios de Trabajo
+                    </h2>
+                  </div>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>Flujos principales</span>
+                </div>
+
+                <div style={{
+                  display:'grid',
+                  gridTemplateColumns:props.isAdmin!==false ? 'repeat(auto-fit, minmax(280px, 1fr))' : 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap:20
+                }}>
+                  {/* WORKSPACE 1: FORMULACIÓN & I+D */}
+                  <div style={{
+                    background:'var(--paper-0)',
+                    border:'1px solid var(--border-soft)',
+                    borderRadius:'var(--r-md)',
+                    padding:'24px',
+                    display:'flex',
+                    flexDirection:'column',
+                    justifyContent:'space-between',
+                    gap:18,
+                    boxShadow:'var(--shadow-card-rest)'
+                  }}>
+                    <div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
+                          LABORATORIO & NUTRICIÓN
+                        </span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
+                      </div>
+                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
+                        Formulación & Recetario
+                      </h3>
+                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
+                        Balance estequiométrico de carbono y nitrógeno (C:N), suplementación y cálculo predictivo de Eficiencia Biológica (EB).
+                      </p>
+
+                      {/* Métricas en vivo del workspace */}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Score Perito</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:activeScore>=80?'var(--moss-700)':activeScore>=60?'var(--ochre-500)':'var(--coral-700)'}}>
+                            {activeScore!==null ? `${activeScore}/100` : '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>C:N Activo</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {an?.cn ? `${an.cn.toFixed(1)}:1` : '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--moss-700)'}}>
+                            {an?.eb ? `~${an.eb}%` : '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ingredientes</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {recipe.length} insumos
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        Ir al Formulador
+                      </button>
+                      <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        Catálogo
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* WORKSPACE 2: PRODUCCIÓN & BODEGA */}
+                  <div style={{
+                    background:'var(--paper-0)',
+                    border:'1px solid var(--border-soft)',
+                    borderRadius:'var(--r-md)',
+                    padding:'24px',
+                    display:'flex',
+                    flexDirection:'column',
+                    justifyContent:'space-between',
+                    gap:18,
+                    boxShadow:'var(--shadow-card-rest)'
+                  }}>
+                    <div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                          PLANTA & INSUMOS
+                        </span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
+                      </div>
+                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
+                        Producción & Bodega
+                      </h3>
+                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
+                        Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores.
+                      </p>
+
+                      {/* Métricas en vivo */}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Stock Disponible</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {totalStockKg.toFixed(1)} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>kg</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Lotes de Insumos</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {invLotes.filter(l=>l.activo).length}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Proveedores</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {invProveedores.length} activos
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Compras Reg.</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {invCompras.length} facturas
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>goTab('produccion')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        Ficha de Mezclado
+                      </button>
+                      <button onClick={()=>goTab('inventario')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        Bodega
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* WORKSPACE 3: BITÁCORA & COSECHAS */}
+                  <div style={{
+                    background:'var(--paper-0)',
+                    border:'1px solid var(--border-soft)',
+                    borderRadius:'var(--r-md)',
+                    padding:'24px',
+                    display:'flex',
+                    flexDirection:'column',
+                    justifyContent:'space-between',
+                    gap:18,
+                    boxShadow:'var(--shadow-card-rest)'
+                  }}>
+                    <div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
+                          TRAZABILIDAD & CAMPO
+                        </span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
+                      </div>
+                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
+                        Bitácora & Cosechas
+                      </h3>
+                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
+                        Seguimiento individual de bolsas, registro de colonización, alertas fitosanitarias y pesaje de cosechas.
+                      </p>
+
+                      {/* Métricas en vivo */}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsas Monitoreadas</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {totalBolsasCount}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--moss-700)'}}>
+                            {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Contaminación</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:bolsasContaminadas===0?'var(--moss-700)':'var(--coral-700)'}}>
+                            {totalBolsasCount>0 ? `${((bolsasContaminadas/totalBolsasCount)*100).toFixed(0)}%` : '0%'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Eventos Corte</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                            {totalCosechasCount} flushes
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>setShowBitCosecha(true)} style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        + Registrar Cosecha
+                      </button>
+                      <button onClick={()=>goTab('bitacora')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        Ver Bitácora
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* WORKSPACE 4: FINANZAS & DASHBOARD (Solo visible para Administradores / Roles no-operario) */}
+                  {props.isAdmin!==false && (
+                    <div style={{
+                      background:'var(--paper-0)',
+                      border:'1px solid var(--border-soft)',
+                      borderRadius:'var(--r-md)',
+                      padding:'24px',
+                      display:'flex',
+                      flexDirection:'column',
+                      justifyContent:'space-between',
+                      gap:18,
+                      boxShadow:'var(--shadow-card-rest)'
+                    }}>
+                      <div>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                            GESTIÓN & FINANZAS (ADMIN)
+                          </span>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
+                        </div>
+                        <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
+                          Finanzas & Rendimiento
+                        </h3>
+                        <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
+                          Análisis de costo unitario por kilo seco y por bolsa comercial, balance de proveedores y simulación de márgenes.
+                        </p>
+
+                        {/* Métricas en vivo */}
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                              ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                              ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Recetas Evaluadas</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {saved.length} fórmulas
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ciclo Planificado</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {sch?.totDays || 45} días
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{display:'flex',gap:8}}>
+                        <button onClick={()=>goTab('dashboard')} style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                          Dashboard
+                        </button>
+                        <button onClick={()=>goTab('schedule')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                          Cronograma
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECCIÓN C: PIPELINE DE LOTES ACTIVOS / CICLO DE CULTIVO */}
+              <div style={{
+                background:'var(--paper-0)',
+                border:'1px solid var(--border-soft)',
+                borderRadius:'var(--r-md)',
+                padding:'28px',
+                boxShadow:'var(--shadow-card-rest)'
+              }}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN C · CICLO BIOLÓGICO TENJO
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Pipeline de Lotes & Fases de Cultivo
+                    </h2>
+                  </div>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                    Ciclo total promedio: ~42–48 días
+                  </div>
+                </div>
+
+                {/* 5 Stages Horizontal Stepper */}
+                <div style={{
+                  display:'grid',
+                  gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap:12,
+                  marginBottom:20
+                }}>
+                  {pipelineStages.map((st,idx)=>(
+                    <div
+                      key={st.num}
+                      onClick={()=>goTab(st.linkTab)}
+                      style={{
+                        background:st.active?'var(--paper-50)':'var(--paper-100)',
+                        border:st.active?'1px solid var(--moss-300)':'1px solid var(--paper-300)',
+                        borderRadius:'var(--r-sm)',
+                        padding:'14px',
+                        cursor:'pointer',
+                        transition:'all .15s ease',
+                        position:'relative'
+                      }}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--coral-500)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor=st.active?'var(--moss-300)':'var(--paper-300)';}}
+                    >
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:st.active?'var(--moss-700)':'var(--ink-400)'}}>
+                          Fase {st.num}
+                        </span>
+                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?'var(--moss-700)':'var(--ink-500)'}}>
+                          {st.active?'En curso':'Plan'}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:4}}>
+                        {st.title}
+                      </div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.35,marginBottom:8}}>
+                        {st.sub}
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-800)',borderTop:'1px solid var(--paper-300)',paddingTop:6}}>
+                        {st.badge}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Resumen de lotes activos si existen en la bitácora */}
+                {bitLotes.length>0 ? (
+                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:16}}>
+                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:10}}>
+                      Lotes Recientes en Seguimiento
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {bitLotes.slice(0,4).map(lt=>{
+                        const stats = calcLoteStats(lt.id);
+                        return (
+                          <div
+                            key={lt.id}
+                            onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');setBitTab('bit_lote_detalle');}}
+                            style={{
+                              display:'flex',
+                              justifyContent:'space-between',
+                              alignItems:'center',
+                              padding:'10px 14px',
+                              background:'var(--paper-50)',
+                              border:'1px solid var(--paper-300)',
+                              borderRadius:'var(--r-xs)',
+                              cursor:'pointer',
+                              flexWrap:'wrap',
+                              gap:8,
+                              transition:'background .15s'
+                            }}
+                            onMouseEnter={e=>e.currentTarget.style.background='var(--paper-100)'}
+                            onMouseLeave={e=>e.currentTarget.style.background='var(--paper-50)'}
+                          >
+                            <div style={{display:'flex',alignItems:'center',gap:12}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                                {lt.codigo}
+                              </span>
+                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                                {lt.especie} · {lt.numBolsas || 1} bolsas · {lt.fechaInoculacion || lt.fechaMezcla || 'Sin fecha'}
+                              </span>
+                            </div>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                              {stats?.totalFresco>0 && (
+                                <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
+                                  {stats.totalFresco.toFixed(2)} kg cosechados
+                                </span>
+                              )}
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-500)',fontWeight:700}}>
+                                Ver lote →
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:14,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                      No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
+                    </span>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      + Iniciar Primer Lote
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="fos-tiles">
-              {TILES.map(ti=>(
-                <button key={ti.tb} className={'fos-tile'+(ti.pri?' pri':'')} onClick={()=>goTab(ti.tb)}>
-                  <span><span className="fos-tile-t">{ti.t}</span><span className="fos-tile-s">{ti.s}</span></span>
-                  <span className="fos-tile-arrow">→</span>
-                </button>
-              ))}
-            </div>
-            <div className="fos-species">
-              <span className="fos-species-dot"></span>
-              <span>Especie activa</span>
-              <b>{sp.name}</b><em>{sp.scientific}</em>
-              <button className="bridge-cambiar" onClick={()=>goTab('catalogo')} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-500)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>Cambiar especie</button>
-            </div>
-          </div>);
+          );
         })()}
         {tab==='catalogo'&&(
           <div className="spp-sect spp-sect-catalog">
@@ -3293,37 +4588,265 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='formular'&&(
         <div className="builder-wrap" data-tab={tab}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
-          <div className="builder-subnav" style={{gap:6,flexWrap:'wrap',marginBottom:0,padding:'8px 10px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
-            {[
-              {id:'bl-ingredientes',l:'Ingredientes'},
-              {id:'bl-receta',l:'Receta'},
-              ...(recipe.length>0?[{id:'bl-perito',l:'Score / Perito'},{id:'bl-batch',l:'Batch'}]:[]),
-              ...(recipe.length>0&&tr?[{id:'bl-tratamiento',l:'Tratamiento'}]:[]),
-            ].map(s=>(
-              <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,letterSpacing:'var(--tracking-label)',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-100)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
-            ))}
-          </div>
-          {recipe.length>0&&(()=>{
-            const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
-            const limiter=peritoMainLimiter(opt,an);
-            return(
-              <div style={{display:'flex',flexDirection:'column',gap:4,padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderTop:'none',position:'sticky',top:37,zIndex:6,fontFamily:'var(--font-body)'}}>
-                <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
-                  <span style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{sp?.name}</span>
-                  <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{recipe.length} insumo{recipe.length!==1?'s':''}</span>
-                  <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <div style={{width:60,height:6,background:'var(--paper-300)',borderRadius:3,overflow:'hidden'}}>
-                      <div style={{width:`${Math.max(0,Math.min(100,opt.score))}%`,height:'100%',background:sm2.badge}}></div>
-                    </div>
-                    <span style={{fontSize:"var(--text-sm)",fontWeight:800,color:sm2.badge}}>{Math.round(opt.score)}</span>
-                    <span style={{fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color:sm2.txt}}>{sm2.label}</span>
-                  </div>
-                  <span style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{numBags}×{kgBag}kg = {(numBags*kgBag).toFixed(1)}kg</span>
+
+          {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:globalMode==='produccion'?'var(--paper-100)':'#F5F0EB',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600, #4D6235)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:22}}>{globalMode==='produccion'?'🏭':'🔬'}</span>
+              <div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>
+                    Modo {globalMode==='produccion'?'Producción Oficial (Bodega Tenjo)':'Investigación y Desarrollo (I+D Catálogo)'}
+                  </span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:globalMode==='produccion'?'var(--moss-200)':'var(--coral-100)',borderRadius:3,color:'var(--ink-900)',fontWeight:600}}>
+                    {globalMode==='produccion'?'Stock Bodega Restringido':'Catálogo Abierto sin límites'}
+                  </span>
                 </div>
-                {limiter&&<button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{textAlign:'left',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm2.txt,background:'none',border:'none',padding:0,cursor:'pointer',lineHeight:1.4}}>→ {limiter}</button>}
+                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:2}}>
+                  {globalMode==='produccion'
+                    ? 'Optimiza formulaciones con insumos disponibles en Bodega Tenjo y planifica hojas de lote de producción.'
+                    : 'Libre exploración botánica sin límite de stock para maximizar Eficiencia Biológica (EB) y crear fórmulas experimentales.'}
+                </div>
               </div>
-            );
-          })()}
+            </div>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              <button
+                onClick={()=>setGlobalWorkMode('produccion')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
+                  background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
+                  color:globalMode==='produccion'?'var(--paper-0)':'var(--ink-700)',
+                  border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
+                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                }}>
+                🏭 Producción
+              </button>
+              <button
+                onClick={()=>setGlobalWorkMode('investigacion')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
+                  background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
+                  color:globalMode==='investigacion'?'var(--paper-0)':'var(--ink-700)',
+                  border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
+                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                }}>
+                🔬 Investigación
+              </button>
+              {recipe.length>0&&(
+                <button
+                  onClick={()=>promoverReceta()}
+                  title="Promover esta receta a Producción oficial (alerta si faltan insumos)"
+                  style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',padding:'6px 12px',background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                  ⭐ Promover
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ── */}
+          <div className="sim-live-dashboard" id="sim-live-dash">
+            {recipe.length>0 ? (()=>{
+              const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
+              const limiter=peritoMainLimiter(opt,an);
+              const ebVal=an?blendEBWithHistory(an,histStats):0;
+              const ebOpt=sp?.eb_optimal||100;
+              const ebBase=sp?.eb_baseline||80;
+              const ebOk=ebVal>=ebOpt;
+              const ebMid=ebVal>=ebBase;
+              const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
+              const totOk=an?Math.abs(an.tot-100)<=0.5:false;
+              const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+
+              return(
+                <div>
+                  {/* Fila única ultra-compacta (~38px) */}
+                  <div className="live-dash-bar">
+                    {/* Especie y modo */}
+                    <div className="live-dash-left">
+                      <span className="live-dash-species" title={sp?.name||'Pleurotus ostreatus'}>
+                        {sp?.name||'Pleurotus'}
+                      </span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:globalMode==='produccion'?'rgba(77,98,53,.15)':'rgba(200,90,50,.15)',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-500)',fontWeight:700,textTransform:'uppercase'}}>
+                        {globalMode==='produccion'?'PROD':'INV'}
+                      </span>
+                    </div>
+
+                    {/* Métricas clave en micro-píldoras */}
+                    <div className="live-dash-metrics">
+                      {/* Score Perito */}
+                      <button
+                        onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                        className="live-dash-pill"
+                        style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
+                        title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
+                        <IconTarget size={11} color={sm2.badge} />
+                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                      </button>
+
+                      {/* EB */}
+                      <div className="live-dash-pill" title={`Eficiencia Biológica Estimada: ${Math.round(ebVal)}% (Meta: ${ebOpt}%)`}>
+                        <span className="live-dash-pill-label">EB</span>
+                        <span style={{color:ebColor}}>{Math.round(ebVal)}%</span>
+                      </div>
+
+                      {/* Masa Total % */}
+                      <div
+                        className="live-dash-pill"
+                        style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
+                        title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
+                        <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
+                          {an?an.tot.toFixed(0):'0'}%
+                          {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
+                        </span>
+                      </div>
+
+                      {/* Costo kg */}
+                      <div className="live-dash-pill" style={{display:'none'}} id="live-cost-pill" title={`Costo: $${an&&an.cost!=null?Math.round(an.cost).toLocaleString():'0'} / kg seco`}>
+                        <span className="live-dash-pill-label">$</span>
+                        <span>{an&&an.cost!=null?Math.round(an.cost):'0'}</span>
+                      </div>
+                    </div>
+
+                    {/* Acciones compactas */}
+                    <div className="live-dash-actions">
+                      {an&&!totOk&&(
+                        <button
+                          onClick={()=>autoBalance(balanceMode)}
+                          className="live-dash-btn"
+                          style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                          title="Ajustar ingredientes libres al 100%">
+                          <IconBolt size={10} color="#fff" />
+                          <span>100%</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={()=>setShowLiveChips(!showLiveChips)}
+                        className="live-dash-btn"
+                        style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
+                        title={showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}>
+                        <IconRecipe size={11} color="var(--ink-700)" />
+                        <span>{recipe.length}</span>
+                        {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
+                      </button>
+                      <button
+                        onClick={()=>{
+                          if(saveName.trim()){
+                            saveR();
+                          } else {
+                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
+                            setTimeout(()=>{
+                              const inp=document.querySelector('.sbar input');
+                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
+                            },300);
+                          }
+                        }}
+                        className="live-dash-btn"
+                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
+                        title="Guardar receta en Recetario">
+                        {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bandeja expandible con detalle, chips e hipervínculos */}
+                  {showLiveChips&&(
+                    <div className="live-dash-tray">
+                      {/* Sub-navegación rápida */}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
+                        <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                          {[
+                            {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
+                            {id:'bl-receta',l:'Receta',icon:IconRecipe},
+                            {id:'bl-perito',l:'Perito',icon:IconTarget},
+                            {id:'bl-batch',l:'Batch',icon:IconBox},
+                            ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
+                          ].map(s=>{
+                            const IconComp=s.icon;
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+                                style={{
+                                  fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,
+                                  textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
+                                  color:'var(--ink-700)',border:'1px solid var(--border-soft)',
+                                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4
+                                }}>
+                                <IconComp size={10} color="var(--ink-600)" />
+                                <span>{s.l}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'10px',padding:'2px 6px'}}>
+                          <span className="offline-status-dot"></span>
+                          <span>{isOnline ? 'En línea' : 'Sin conexión'}</span>
+                        </div>
+                      </div>
+
+                      {/* Observación perito si aplica */}
+                      {limiter&&(
+                        <div style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+                            <IconAlert size={11} color={sm2.txt} />
+                            <span>{limiter}</span>
+                          </span>
+                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'10px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
+                        </div>
+                      )}
+
+                      {/* Fila horizontal de chips de insumos */}
+                      <div className="live-dash-chips-row">
+                        <span style={{fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginRight:2,flexShrink:0}}>
+                          Fórmula:
+                        </span>
+                        {recipe.map(r=>{
+                          const g=INGS.find(i=>i.id===r.id);
+                          if(!g) return null;
+                          const isLocked=lockedIds.includes(r.id);
+                          const roleCol=ROLE_COLORS[g.role]||'var(--ink-500)';
+                          return(
+                            <div
+                              key={r.id}
+                              className="live-ing-chip"
+                              onClick={()=>document.getElementById(`rec-row-${r.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})}
+                              title={`${g.name} (${ROLE_LABELS[g.role]||g.role}) · ${r.p}%\nClick para editar`}>
+                              <span style={{width:6,height:6,borderRadius:'50%',background:roleCol,flexShrink:0}}></span>
+                              <span style={{fontWeight:600}}>{g.name}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,color:isLocked?'var(--coral-600)':'var(--ink-800)',display:'inline-flex',alignItems:'center',gap:2}}>
+                                {r.p}%{isLocked ? <IconLock size={9} color="var(--coral-600)" /> : null}
+                              </span>
+                              <button
+                                className="live-ing-chip-del"
+                                onClick={(e)=>{e.stopPropagation();remI(r.id);}}
+                                title={`Quitar ${g.name}`}>
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })() : (
+              <div className="live-dash-bar" style={{background:'var(--paper-50)'}}>
+                <div className="live-dash-left">
+                  <span className="live-dash-species">{sp?.name||'Pleurotus ostreatus'}</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-500)'}}>
+                    · Sin receta activa
+                  </span>
+                </div>
+                <button
+                  onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                  className="live-dash-btn"
+                  style={{fontSize:'10.5px'}}>
+                  + Agregar insumos
+                </button>
+              </div>
+            )}
+          </div>
           <div className="builder-cols">
             <div className="builder-left">
             <div className="panel" id="bl-ingredientes">
@@ -3392,202 +4915,149 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="cats">
                 {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} onClick={()=>setCat(k)}>{l}</button>)}
                 <button className={`cat${showCompatOnly?' on':''}`} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
               </div>
               <div className="ing-list">
-                {((()=>{let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;if(showCompatOnly){const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));base=base.filter(g=>compat.has(g.id));}return base;})()).map(ing=>{
-                  const inR=recipe.find(r=>r.id===ing.id);
-                  const inPantry=pantryIds.includes(ing.id);
-                  const compatSet=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
-                  const isCompat=compatSet.has(ing.id);
-                  return(
-                    <div key={ing.id} className={justAddedIds.includes(ing.id)?'ing-row-flash':''} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
-                      <div style={{position:'relative'}}>
-                        <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0}/>
-                        {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
-                      </div>
-                      <div style={{display:'flex',justifyContent:'flex-end',gap:6,padding:'4px 4px 6px'}}>
-                        <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
-                          title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
-                          aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
-                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
-                          {disabledIngIds.includes(ing.id)?'⊘':'–'}
-                        </button>
-                        <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
-                          title={inPantry?'Quitar de bodega':'Agregar a bodega'}
-                          aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
-                          style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(6px,1.4vw,7px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                          {inPantry?<IcoCheck/>:<IcoPlus/>}
-                        </button>
-                        {!inR&&(
-                          <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
-                            title="Agregar a receta"
-                            aria-label={`Agregar ${ing.name} a la receta`}
-                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(8px,1.8vw,9px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                            +
+                {(()=>{
+                  let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;
+                  if(showCompatOnly){
+                    const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
+                    base=base.filter(g=>compat.has(g.id));
+                  }
+
+                  const renderIngRow=(ing)=>{
+                    const inR=recipe.find(r=>r.id===ing.id);
+                    const inPantry=pantryIds.includes(ing.id);
+                    const isCompat=ing.cs&&ing.cs.includes(sKey);
+                    return(
+                      <div key={ing.id} className={`ing-card-item${justAddedIds.includes(ing.id)?' ing-row-flash':''}`} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
+                        <div style={{position:'relative'}}>
+                          <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0} isCompat={isCompat} spName={sp?.name}/>
+                          {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
+                        </div>
+                        <div style={{display:'flex',justifyContent:'flex-end',gap:6,padding:'4px 4px 6px'}}>
+                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
+                            title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
+                            aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
+                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
+                            {disabledIngIds.includes(ing.id)?'⊘':'–'}
                           </button>
+                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
+                            title={inPantry?'Quitar de bodega':'Agregar a bodega'}
+                            aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
+                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(6px,1.4vw,7px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            {inPantry?<IcoCheck/>:<IcoPlus/>}
+                          </button>
+                          {!inR&&(
+                            <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
+                              title="Agregar a receta"
+                              aria-label={`Agregar ${ing.name} a la receta`}
+                              style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(8px,1.8vw,9px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                              +
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  if(!groupByRole || cat!=='all' || search.trim().length>0){
+                    return base.map(renderIngRow);
+                  }
+
+                  const ROLE_GROUPS=[
+                    {
+                      key:'base_carbono',
+                      label:'Bases de Carbono',
+                      icon:'🌾',
+                      desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
+                      filter:g=>g.role==='base_carbono'||g.cat==='base'||g.cn>=40
+                    },
+                    {
+                      key:'suplemento_n',
+                      label:'Suplementos Nitrogenados',
+                      icon:'🥜',
+                      desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
+                      filter:g=>g.role==='suplemento_n'||g.role==='suplemento_medio'||g.n>=1.4
+                    },
+                    {
+                      key:'aditivo',
+                      label:'Minerales y Tampones de pH',
+                      icon:'⚖️',
+                      desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
+                      filter:g=>g.role?.startsWith('aditivo_')||g.cat==='adit'||g.cn===0
+                    },
+                    {
+                      key:'aireador',
+                      label:'Aireadores y Estructurantes',
+                      icon:'💨',
+                      desc:'Porosidad y difusión de oxígeno gaseoso',
+                      filter:g=>g.role==='aireador'||g.cat==='trop'||g.cat==='circ'
+                    }
+                  ];
+
+                  const assigned=new Set();
+                  return ROLE_GROUPS.map(grp=>{
+                    const grpIngs=base.filter(g=>{
+                      if(assigned.has(g.id)) return false;
+                      const match=grp.filter(g);
+                      if(match) assigned.add(g.id);
+                      return match;
+                    });
+                    if(grpIngs.length===0) return null;
+                    const isCollapsed=collapsedRoles[grp.key];
+                    const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;
+
+                    return(
+                      <div key={grp.key} className="role-group-box" style={{marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',overflow:'hidden'}}>
+                        <div
+                          onClick={()=>toggleRoleCollapse(grp.key)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={e=>{if(e.key==='Enter') toggleRoleCollapse(grp.key);}}
+                          style={{
+                            padding:'8px 10px',
+                            background:'var(--paper-100)',
+                            borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',
+                            display:'flex',
+                            justifyContent:'space-between',
+                            alignItems:'center',
+                            cursor:'pointer',
+                            userSelect:'none'
+                          }}>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontSize:16}}>{grp.icon}</span>
+                            <div>
+                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
+                                {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
+                              </div>
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.2}}>
+                                {grp.desc}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
+                              {compatCount} comp.
+                            </span>
+                            <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+                        {!isCollapsed&&(
+                          <div style={{padding:'4px 6px'}}>
+                            {grpIngs.map(renderIngRow)}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </div>
             </div>
             <div className="builder-right">
-            {an&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const infos=items.filter(s=>s.priority==='info');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an.cn,max):0;
-              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-              return(
-                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
-                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
-                  {hasPer&&(
-                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
-                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
-                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
-                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
-                        </div>
-                      </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
-                          Deshacer ({recipeHistory.length})
-                        </button>}
-                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
-                  <div className="mgrid" style={{marginBottom:12}}>
-                    {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
-                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
-                    ].map(m=>(
-                      <div key={m.l} className="mc">
-                        <div className="mlbl">{m.l}</div>
-                        <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* ── EBDial + C:N gauge ── */}
-                  <EBDial an={an} sp={sp}/>
-                  {sp&&an.cn>0&&(
-                    <div className="gauge-wrap">
-                      <div className="gauge-hdr">
-                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                      </div>
-                      <div className="gauge-tr">
-                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                      </div>
-                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                    </div>
-                  )}
-                  <NitrogenChart recipe={recipe}/>
-
-                  {/* ── PERITO: INDICADORES + ITEMS ── */}
-                  {hasPer&&(
-                    <>
-                      {/* ── Modo de trabajo: mismo estado que el Generador — cambiarlo
-                          aquí también cambia qué explora "Calcular" más abajo. ── */}
-                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
-                        {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
-                          <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
-                        ))}
-                      </div>
-                      {/* ── barra resumen live: score + EB + costo ── */}
-                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
-                        {[
-                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
-                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                        ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
-                        </div>}
-                      {histStats&&histStats.n>0&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' del mismo sustrato':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
-                        </div>}
-                      {modelAccuracy!=null&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
-                        </div>}
-                      {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
-                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
-                        </div>}
-                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
-                      </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
-                    </>
-                  )}
-
-                  {/* ── CHARTS TOGGLE + CHARTS ── */}
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
-                  </div>
-                  {showFlush&&<FlushChart an={an}/>}
-                  {showCompChart&&<CompositionChart recipe={recipe}/>}
-                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
-
-                  {/* ── EVALUACIÓN TÉCNICA ── */}
-                  <div className="dbox" style={{marginTop:8}}>
-                    <div className="dttl">Evaluación</div>
-                    <div className="dtxt">{dg.main}</div>
-                  </div>
-                  {dg.sugs.length>0&&(<>
-                    <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
-                  </>)}
-                </div>
-              );
-            })()}
-            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
             <div className="panel panel-accent" id="bl-receta">
               {/* ── HEADER EDITORIAL ── */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
@@ -3610,6 +5080,83 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
                 </div>}
               </div>
+
+              {/* ── LIVE METRIC SEMAPHORE STRIP (C:N, N%, EB, Total%) ── */}
+              {recipe.length>0&&an&&sp&&(
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(95px, 1fr))',gap:6,marginBottom:12,padding:'8px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)'}}>
+                  {(()=>{
+                    const cnVal=an.cn||0;
+                    const cnOpt=sp.cn_optimal;
+                    const cnOk=cnVal>=cnOpt.min&&cnVal<=cnOpt.max;
+                    const cnClose=cnVal>=cnOpt.min*0.85&&cnVal<=cnOpt.max*1.15;
+                    const cnColor=cnOk?'var(--moss-700,#2E3B2F)':(cnClose?'#976E1A':'#A8432A');
+                    const cnBg=cnOk?'rgba(77,98,53,.12)':(cnClose?'rgba(202,138,4,.12)':'rgba(168,67,42,.12)');
+                    const cnBorder=cnOk?'rgba(77,98,53,.3)':(cnClose?'rgba(202,138,4,.3)':'rgba(168,67,42,.3)');
+
+                    const nVal=an.avgN||0;
+                    const nOpt=sp.n_optimal;
+                    const nOk=nVal>=nOpt.min&&nVal<=nOpt.max;
+                    const nClose=nVal>=nOpt.min*0.8&&nVal<=nOpt.max*1.2;
+                    const nColor=nOk?'var(--moss-700,#2E3B2F)':(nClose?'#976E1A':'#A8432A');
+                    const nBg=nOk?'rgba(77,98,53,.12)':(nClose?'rgba(202,138,4,.12)':'rgba(168,67,42,.12)');
+                    const nBorder=nOk?'rgba(77,98,53,.3)':(nClose?'rgba(202,138,4,.3)':'rgba(168,67,42,.3)');
+
+                    const ebVal=blendEBWithHistory(an,histStats);
+                    const ebOpt=sp.eb_optimal;
+                    const ebBase=sp.eb_baseline;
+                    const ebOk=ebVal>=ebOpt;
+                    const ebMid=ebVal>=ebBase;
+                    const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
+                    const ebBg=ebOk?'rgba(77,98,53,.12)':(ebMid?'rgba(202,138,4,.12)':'rgba(168,67,42,.12)');
+                    const ebBorder=ebOk?'rgba(77,98,53,.3)':(ebMid?'rgba(202,138,4,.3)':'rgba(168,67,42,.3)');
+
+                    const totOk=Math.abs(an.tot-100)<=0.5;
+                    const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+                    const totBg=totOk?'rgba(77,98,53,.12)':'rgba(168,67,42,.12)';
+                    const totBorder=totOk?'rgba(77,98,53,.3)':'rgba(168,67,42,.3)';
+
+                    return(
+                      <>
+                        <div style={{padding:'4px 6px',borderRadius:4,background:cnBg,border:`1px solid ${cnBorder}`,display:'flex',flexDirection:'column'}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>C:N</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:cnColor,fontWeight:700}}>{cnOk?'● OK':(cnVal<cnOpt.min?'▼ Bajo':'▲ Alto')}</span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:cnColor,lineHeight:1.2}}>{cnVal.toFixed(1)}:1</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>Ópt {cnOpt.min}–{cnOpt.max}</div>
+                        </div>
+
+                        <div style={{padding:'4px 6px',borderRadius:4,background:nBg,border:`1px solid ${nBorder}`,display:'flex',flexDirection:'column'}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>N %</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:nColor,fontWeight:700}}>{nOk?'● OK':(nVal<nOpt.min?'▼ Bajo':'▲ Alto')}</span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:nColor,lineHeight:1.2}}>{nVal.toFixed(2)}%</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>Ópt {nOpt.min}–{nOpt.max}%</div>
+                        </div>
+
+                        <div style={{padding:'4px 6px',borderRadius:4,background:ebBg,border:`1px solid ${ebBorder}`,display:'flex',flexDirection:'column'}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>EB Est.</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:ebColor,fontWeight:700}}>{ebOk?'● Ópt':(ebMid?'▲ Base':'▼ Bajo')}</span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:ebColor,lineHeight:1.2}}>{Math.round(ebVal)}%</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>Meta {ebOpt}%</div>
+                        </div>
+
+                        <div style={{padding:'4px 6px',borderRadius:4,background:totBg,border:`1px solid ${totBorder}`,display:'flex',flexDirection:'column'}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>Total</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:totColor,fontWeight:700}}>{totOk?'100%':`${an.tot>100?'+':''}${(an.tot-100).toFixed(1)}%`}</span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:totColor,lineHeight:1.2}}>{an.tot.toFixed(1)}%</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>{an.cost!=null?`$${Math.round(an.cost)}/kg`:'Base seca'}</div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
               {recipe.length===0
                 ?<div className="rec-empty">
                   <div className="rec-empty-hed">Sin ingredientes aún.</div>
@@ -3633,7 +5180,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     };
                     const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                     return(
-                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
+                    <div key={r.id} id={`rec-row-${r.id}`} className={`rec-row${isLocked?' rec-locked':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
                       {/* Header: nombre + lock + remove */}
                       <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
                         <div style={{flex:1}}>
@@ -3648,12 +5195,40 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0,fontSize:"var(--text-base)",padding:'4px 8px'}}>✕</button>
                       </div>
-                      {/* Controls: slider + number input */}
-                      <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                        <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
-                        <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
-                          <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
+                      {/* Controls: slider + number input + step quick buttons */}
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%',accentColor:'var(--coral-500)'}}/>
+                        <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between',flexWrap:'wrap'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:4}}>
+                            <button
+                              type="button"
+                              className="pct-step-btn"
+                              disabled={isLocked||r.p<=0}
+                              onClick={()=>!isLocked&&updP(r.id,Math.max(0,parseFloat((r.p-5).toFixed(1))))}
+                              title="Reducir 5%">-5%</button>
+                            <button
+                              type="button"
+                              className="pct-step-btn"
+                              disabled={isLocked||r.p<=0}
+                              onClick={()=>!isLocked&&updP(r.id,Math.max(0,parseFloat((r.p-1).toFixed(1))))}
+                              title="Reducir 1%">-1%</button>
+                            <button
+                              type="button"
+                              className="pct-step-btn"
+                              disabled={isLocked||r.p>=100}
+                              onClick={()=>!isLocked&&updP(r.id,Math.min(100,parseFloat((r.p+1).toFixed(1))))}
+                              title="Aumentar 1%">+1%</button>
+                            <button
+                              type="button"
+                              className="pct-step-btn"
+                              disabled={isLocked||r.p>=100}
+                              onClick={()=>!isLocked&&updP(r.id,Math.min(100,parseFloat((r.p+5).toFixed(1))))}
+                              title="Aumentar 5%">+5%</button>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:4}}>
+                            <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} className="rec-pct-input" style={{width:'72px',minHeight:'36px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
+                            <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-700)'}}>%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3835,25 +5410,210 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   input.click();
                 }}>↑ Importar</button>
               </div>}
-              
-{/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
 
-{recipe.length>0&&(
-                <div className="sbar">
-                  <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
+              {recipe.length>0&&(
+                <div className="sbar" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                  <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60} style={{flex:1,minWidth:180}}/>
+                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()} title="Guardar receta (alerta si faltan insumos o balance sin bloquear)" style={{display:'inline-flex',alignItems:'center',gap:4}}>{flash ? <><IconCheck size={11} color="currentColor" /> Guardada</> : 'Guardar'}</button>
+                  <button className="sbtn" onClick={()=>promoverReceta()} title="Promover receta activa a Producción oficial" style={{background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><IconStar size={11} color="currentColor" fill="currentColor" /> Promover</button>
+                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} title="Crear lote experimental en la Bitácora con esta receta" style={{background:'var(--paper-200)',color:'var(--ink-800)',border:'1px solid var(--border-soft)',cursor:'pointer'}}>Prueba →</button>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><IconAlert size={11} color="#C53030" /> sin sincronizar</span>}
                 </div>
               )}
             </div>
 
+            {an&&(()=>{
+              const hasPer=recipe.length>0;
+              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+              const criticals=items.filter(s=>s.priority==='critical');
+              const warnings=items.filter(s=>s.priority==='warning');
+              const tips=items.filter(s=>s.priority==='tip');
+              const infos=items.filter(s=>s.priority==='info');
+              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+              const cur=sp?Math.min(an.cn,max):0;
+              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
+              return(
+                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
+                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
+                  {hasPer&&(
+                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
+                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
+                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        <button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><IconSparkles size={11} color="var(--paper-0)" /> Auto-mejorar</button>
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          Deshacer ({recipeHistory.length})
+                        </button>}
+                        <button onClick={()=>promoverReceta()} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><IconStar size={11} color="currentColor" fill="currentColor" /> Promover / Lote</button>
+                        <button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0,mode:'investigacion'};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({title:'Prueba guardada',msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>
+                      </div>
+                    </div>
+                  )}
 
+                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
+                  <div className="mgrid" style={{marginBottom:12}}>
+                    {[
+                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                    ].map(m=>(
+                      <div key={m.l} className="mc">
+                        <div className="mlbl">{m.l}</div>
+                        <div className="mval">{m.v}</div>
+                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                      </div>
+                    ))}
+                  </div>
 
+                  {/* ── EBDial + C:N gauge ── */}
+                  <EBDial an={an} sp={sp}/>
+                  {sp&&an.cn>0&&(
+                    <div className="gauge-wrap">
+                      <div className="gauge-hdr">
+                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                      </div>
+                      <div className="gauge-tr">
+                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                      </div>
+                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                    </div>
+                  )}
+                  <NitrogenChart recipe={recipe}/>
 
+                  {/* ── PERITO: INDICADORES + ITEMS ── */}
+                  {hasPer&&(
+                    <>
+                      {/* ── Modo de trabajo: mismo estado que el Generador ── */}
+                      <div style={{display:'flex',gap:6,alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',marginBottom:8}}>
+                        <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
+                          {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
+                            <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={()=>setAutoRotatePerito(!autoRotatePerito)}
+                          className={'chip'+(autoRotatePerito?' on':'')}
+                          title={autoRotatePerito ? 'Pausar rotación automática de alternativas' : 'Activar rotación automática de alternativas de ingredientes'}
+                          style={{display:'flex',alignItems:'center',gap:4,fontSize:'11px'}}
+                        >
+                          <span>{autoRotatePerito ? <IconRotate size={11} color="currentColor" /> : <IconPause size={11} color="currentColor" />}</span>
+                          <span>{autoRotatePerito ? 'Rotando alternativas (5s)' : 'Rotación pausada'}</span>
+                        </button>
+                      </div>
+                      {/* ── barra resumen live: score + EB + costo ── */}
+                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
+                        {[
+                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
+                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                        ].map((m,i)=>(
+                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
+                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
+                        </div>}
+                      {histStats&&histStats.n>0&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' del mismo sustrato':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
+                        </div>}
+                      {modelAccuracy!=null&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                        </div>}
+                      {similarTrial&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
+                        </div>}
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><IconAlert size={10} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
+                      </div>
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} autoRotate={autoRotatePerito}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} autoRotate={autoRotatePerito}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} autoRotate={autoRotatePerito}/>)}</details>}
+                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon==='altitud'||item.icon==='⛰'?<IconMountain size={11} color="currentColor"/>:item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+                    </>
+                  )}
+
+                  {/* ── CHARTS TOGGLE + CHARTS ── */}
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
+                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                  </div>
+                  {showFlush&&<FlushChart an={an}/>}
+                  {showCompChart&&<CompositionChart recipe={recipe}/>}
+                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
+
+                  {/* ── EVALUACIÓN TÉCNICA ── */}
+                  <div className="dbox" style={{marginTop:8}}>
+                    <div className="dttl">Evaluación</div>
+                    <div className="dtxt">{dg.main}</div>
+                  </div>
+                  {dg.sugs.length>0&&(<>
+                    <div className="sec" style={{marginTop:8}}>A considerar</div>
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                  </>)}
+                </div>
+              );
+            })()}
+
+            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
 
             </div>
           </div>
+          {tab==='formular'&&recipe.length>0&&(()=>{
+            const smDock=PERITO_STATUS[opt?.status]||PERITO_STATUS.sin_receta;
+            return (
+              <div className="builder-mobile-dock no-print">
+                <div style={{display:'flex',flexDirection:'column',gap:2,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,fontSize:'12px',fontWeight:700,color:'var(--ink-900)'}}>
+                    <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:140}}>{sp?.name||'Receta'}</span>
+                    <span style={{color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:'11px'}}>({recipe.length} insumos · {an?an.tot.toFixed(0):0}%)</span>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:'11px'}}>
+                    <span style={{fontWeight:800,color:smDock.badge}}>Score {Math.round(opt?.score||0)}</span>
+                    <span style={{color:'var(--ink-500)'}}>· EB {an?Math.round(an.eb):0}%</span>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <button
+                    onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                    style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'11px',padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}>
+                    <IconRecipe size={11} color="currentColor" /> Ver receta
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
           {tab==='formular'&&tr&&recipe.length>0&&(
             <div className="panel treatment-section" id="bl-tratamiento">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
@@ -3901,11 +5661,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ?<div className="sempty">Sin recetas en el recetario aún.</div>
                   :<div style={{position:'relative'}}>
                     <div style={{position:'absolute',left:15,top:0,bottom:0,width:'1px',background:'var(--border-soft)',opacity:0}}/>
-                    {saved.map((e,idx)=>{const s2=SPP[e.sKey];const isEven=idx%2===0;return(
+                    {saved.map((e,idx)=>{
+                      const s2=SPP[e.sKey];
+                      const isProd = e.mode === 'produccion' || e.esProduccion;
+                      const missingInStock = (e.recipe||[]).filter(r=>!(pantryIds||[]).includes(r.id));
+                      return(
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
-                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
+                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:isProd?'var(--moss-600)':'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
+                          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:4}}>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)'}}>{e.name}</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",padding:'1px 6px',borderRadius:3,background:isProd?'var(--moss-100,#E8EDE4)':'var(--coral-100,#FCEBE6)',color:isProd?'var(--moss-700)':'var(--coral-600)',fontWeight:700}}>
+                              {isProd?'🏭 Producción':'🔬 Investigación'}
+                            </span>
+                          </div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
@@ -3914,9 +5683,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
                             {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
-                          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                          {missingInStock.length>0&&!isProd&&(
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",color:'#C53030',marginBottom:6,background:'#FFF5F5',padding:'3px 6px',borderRadius:3,display:'inline-block'}}>
+                              ⚠ {missingInStock.length} ingrediente{missingInStock.length!==1?'s':''} fuera de bodega: {missingInStock.map(r=>INGS.find(i=>i.id===r.id)?.name||r.id).join(', ')}
+                            </div>
+                          )}
+                          <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
                             <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
+                            {!isProd&&(
+                              <button onClick={()=>{
+                                loadR(e);
+                                setTimeout(()=>promoverReceta(e),50);
+                              }} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-600)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>⭐ Promover</button>
+                            )}
                             <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
                           </div>
@@ -4150,34 +5930,314 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
                               <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
-                                {(()=>{const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};const diag=d?.diag;return diag?(
-                                  <div>
-                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
-                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',marginBottom:12}}>
-                                      {[
-                                        ['Stock en bodega',diag.stockIds],
-                                        ['Disponibles para especie (pool)',diag.poolSize],
-                                        ['Bases carbono compatibles',diag.bases],
-                                        ['Suplementos N compatibles',diag.supps],
-                                        ['Combinaciones evaluadas',diag.tried],
-                                        ['Resultados antes de filtros',diag.resultsRaw],
-                                        ['Límite suplementación',diag.suppLimit+'%'],
-                                        ['Perfil activo',OPT_PROFILES[diag.profileKey]?.label||diag.profileKey],
-                                      ].map(([lb,v])=>(
-                                        <div key={lb} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                                          <span style={{color:'var(--ink-500)'}}>{lb}</span>
-                                          <span style={{fontWeight:700,color:Number(v)===0?'var(--coral-700)':'var(--ink-900)'}}>{v}</span>
+                                {(()=>{
+                                  const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};
+                                  const diag=d?.diag;
+                                  if(!diag) return <div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>;
+                                  
+                                  const targetSp=SPP[optTarget]||sp;
+                                  const catBases=diag.catalogBases||effectiveINGS.filter(g=>g.role==='base_carbono'&&(!g.cs||g.cs.includes(optTarget))).map(g=>({
+                                    id:g.id,name:g.name,cn:g.cn,n:g.n,cost:g.cost,inStock:stockIds.has(g.id)
+                                  }));
+                                  const catSupps=diag.catalogSupps||effectiveINGS.filter(g=>(g.role==='suplemento_n'||g.role==='suplemento_medio')&&(!g.cs||g.cs.includes(optTarget))).map(g=>({
+                                    id:g.id,name:g.name,cn:g.cn,n:g.n,cost:g.cost,inStock:stockIds.has(g.id)
+                                  }));
+                                  const catAers=diag.catalogAers||effectiveINGS.filter(g=>g.role==='aireador'&&(!g.cs||g.cs.includes(optTarget))).map(g=>({
+                                    id:g.id,name:g.name,inStock:stockIds.has(g.id)
+                                  }));
+                                  const catMinerals=diag.catalogMinerals||effectiveINGS.filter(g=>(g.role==='aditivo_ph'||g.id==='carbonato_calcio'||g.id==='yeso')&&(!g.cs||g.cs.includes(optTarget))).map(g=>({
+                                    id:g.id,name:g.name,inStock:stockIds.has(g.id)
+                                  }));
+
+                                  return(
+                                    <div>
+                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
+                                        <div>
+                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)'}}>
+                                            Sin combinaciones válidas — diagnóstico
+                                          </div>
+                                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2}}>
+                                            Especie: <b>{targetSp?.name||optTarget}</b> · C:N objetivo <b>{targetSp?.cn_optimal?.ideal||50}:1</b> · Perfil <b>{OPT_PROFILES[optProfile]?.label}</b>
+                                          </div>
                                         </div>
-                                      ))}
+                                        {optUseStock&&(
+                                          <button
+                                            className="inv-btn inv-btn-sec inv-btn-sm"
+                                            onClick={()=>{setOptUseStock(false);}}
+                                            style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',background:'var(--paper-0)',color:'var(--moss-800)'}}>
+                                            🔬 Probar con Paleta Completa (Catálogo)
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',marginBottom:14}}>
+                                        {[
+                                          ['Stock en bodega',diag.stockIds],
+                                          ['Disponibles para especie (pool)',diag.poolSize],
+                                          ['Bases carbono compatibles en bodega',diag.bases],
+                                          ['Suplementos N compatibles en bodega',diag.supps],
+                                          ['Combinaciones evaluadas',diag.tried],
+                                          ['Resultados antes de filtros',diag.resultsRaw],
+                                          ['Límite suplementación',diag.suppLimit+'%'],
+                                          ['Perfil activo',OPT_PROFILES[diag.profileKey]?.label||diag.profileKey],
+                                        ].map(([lb,v])=>(
+                                          <div key={lb} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                                            <span style={{color:'var(--ink-500)'}}>{lb}</span>
+                                            <span style={{fontWeight:700,color:Number(v)===0?'var(--coral-700)':'var(--ink-900)'}}>{v}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      {/* Diagnósticos específicos */}
+                                      {diag.bases===0&&(
+                                        <div style={{background:'rgba(197,48,48,0.08)',border:'1px solid rgba(197,48,48,0.25)',padding:'8px 12px',borderRadius:'var(--r-xs)',color:'var(--coral-800,#9B2C2C)',marginBottom:10,lineHeight:1.4}}>
+                                          ⚠ <b>Sin bases en bodega:</b> Ningún insumo actualmente en bodega tiene rol <b>base carbono</b> compatible con {targetSp?.name||'esta especie'}. Adquiere o activa alguna de las bases del catálogo abajo.
+                                        </div>
+                                      )}
+                                      {diag.supps===0&&(
+                                        <div style={{background:'rgba(197,48,48,0.08)',border:'1px solid rgba(197,48,48,0.25)',padding:'8px 12px',borderRadius:'var(--r-xs)',color:'var(--coral-800,#9B2C2C)',marginBottom:10,lineHeight:1.4}}>
+                                          ⚠ <b>Sin suplementos en bodega:</b> No hay suplementos nitrogenados en bodega compatibles con esta especie para alcanzar el C:N {targetSp?.cn_optimal?.ideal||50}:1.
+                                        </div>
+                                      )}
+                                      {diag.bases>0&&diag.supps>0&&diag.tried===0&&(
+                                        <div style={{background:'rgba(160,120,40,0.08)',border:'1px solid rgba(160,120,40,0.25)',padding:'8px 12px',borderRadius:'var(--r-xs)',color:'#7A5A10',marginBottom:10,lineHeight:1.4}}>
+                                          ⚠ El contenido de C y N de las bases y suplementos en bodega no permite alcanzar la proporción objetivo {targetSp?.cn_optimal?.ideal||50}:1 dentro de los rangos de suplementación seguros.
+                                        </div>
+                                      )}
+                                      {diag.tried>0&&diag.resultsRaw===0&&(
+                                        <div style={{background:'rgba(160,120,40,0.08)',border:'1px solid rgba(160,120,40,0.25)',padding:'8px 12px',borderRadius:'var(--r-xs)',color:'#7A5A10',marginBottom:10,lineHeight:1.4}}>
+                                          ⚠ Las bases disponibles requieren más suplementación de la permitida por el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con el perfil <b>Producción</b>, cambia a <b>Paleta completa</b>, o añade suplementos más concentrados.
+                                        </div>
+                                      )}
+
+                                      {/* REPERTORIO COMPLETO DE BASES DEL CATÁLOGO */}
+                                      <div style={{marginTop:16,paddingTop:12,borderTop:'1px solid var(--border-soft)'}}>
+                                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8,flexWrap:'wrap',gap:4}}>
+                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>
+                                            Repertorio de Bases de Carbono ({catBases.length} en catálogo)
+                                          </div>
+                                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Haz clic en + Añadir para incorporarlo a la receta</span>
+                                        </div>
+                                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))',gap:8,marginBottom:14}}>
+                                          {catBases.map(b=>{
+                                            const inR=recipe.find(r=>r.id===b.id);
+                                            const kgDisp=stockActual(b.id,invLotes);
+                                            const inStock=b.inStock||kgDisp>0;
+                                            return(
+                                              <div key={b.id} className={justAddedIds.includes(b.id)?'ing-row-flash':''} style={{display:'flex',flexDirection:'column',justifyContent:'space-between',padding:'8px 10px',background:inR?'color-mix(in oklab, var(--moss-500) 8%, var(--paper-50))':'var(--paper-50)',border:`1px solid ${inR?'var(--moss-600)':inStock?'rgba(77,98,53,0.3)':'var(--border-soft)'}`,borderRadius:'var(--r-xs)',gap:6,transition:'all .15s'}}>
+                                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:6}}>
+                                                  <div style={{minWidth:0,flex:1}}>
+                                                    <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.name}</div>
+                                                    <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',marginTop:2}}>
+                                                      C:N {b.cn||'—'}:1 · N {b.n||0}% {b.cost>0?`· $${b.cost}/kg`:''}
+                                                    </div>
+                                                  </div>
+                                                  <div style={{flexShrink:0,textAlign:'right'}}>
+                                                    {inStock?(
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,color:'var(--moss-700)',background:'rgba(77,98,53,0.12)',border:'1px solid rgba(77,98,53,0.3)',padding:'2px 6px',borderRadius:3,display:'inline-block'}}>
+                                                        ✓ {kgDisp>0?`${kgDisp.toFixed(1)} kg`:'Stock'}
+                                                      </span>
+                                                    ):(
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',background:'rgba(0,0,0,0.04)',border:'1px solid var(--border-soft)',padding:'2px 6px',borderRadius:3,display:'inline-block'}}>
+                                                        ⊘ Sin stock
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+
+                                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:4,borderTop:'1px solid rgba(0,0,0,0.06)'}}>
+                                                  {inR?(
+                                                    <>
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,color:'var(--moss-700)',display:'flex',alignItems:'center',gap:4}}>
+                                                        ✓ En receta ({inR.p}%)
+                                                      </span>
+                                                      <button
+                                                        onClick={()=>{setRecipe(recipe.filter(r=>r.id!==b.id));}}
+                                                        style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:'none',border:'1px solid var(--coral-500)',color:'var(--coral-600)',borderRadius:3,cursor:'pointer'}}
+                                                        title="Quitar de la receta">
+                                                        ✕ Quitar
+                                                      </button>
+                                                    </>
+                                                  ):(
+                                                    <>
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>No incluido</span>
+                                                      <button
+                                                        onClick={()=>{addI(b.id);flashAdded(b.id);}}
+                                                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-2xs)',padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:3,cursor:'pointer',display:'flex',alignItems:'center',gap:3}}
+                                                        title={`Añadir ${b.name} a la receta`}>
+                                                        + Añadir a receta
+                                                      </button>
+                                                    </>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+
+                                      {/* REPERTORIO COMPLETO DE SUPLEMENTOS DEL CATÁLOGO */}
+                                      <div style={{marginTop:10,paddingTop:12,borderTop:'1px solid var(--border-soft)'}}>
+                                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8,flexWrap:'wrap',gap:4}}>
+                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>
+                                            Repertorio de Suplementos Nitrogenados ({catSupps.length} en catálogo)
+                                          </div>
+                                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Haz clic en + Añadir para enriquecer nitrógeno</span>
+                                        </div>
+                                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))',gap:8,marginBottom:14}}>
+                                          {catSupps.map(s=>{
+                                            const inR=recipe.find(r=>r.id===s.id);
+                                            const kgDisp=stockActual(s.id,invLotes);
+                                            const inStock=s.inStock||kgDisp>0;
+                                            return(
+                                              <div key={s.id} className={justAddedIds.includes(s.id)?'ing-row-flash':''} style={{display:'flex',flexDirection:'column',justifyContent:'space-between',padding:'8px 10px',background:inR?'color-mix(in oklab, var(--moss-500) 8%, var(--paper-50))':'var(--paper-50)',border:`1px solid ${inR?'var(--moss-600)':inStock?'rgba(77,98,53,0.3)':'var(--border-soft)'}`,borderRadius:'var(--r-xs)',gap:6,transition:'all .15s'}}>
+                                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:6}}>
+                                                  <div style={{minWidth:0,flex:1}}>
+                                                    <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</div>
+                                                    <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',marginTop:2}}>
+                                                      C:N {s.cn||'—'}:1 · N {s.n||0}% {s.cost>0?`· $${s.cost}/kg`:''}
+                                                    </div>
+                                                  </div>
+                                                  <div style={{flexShrink:0,textAlign:'right'}}>
+                                                    {inStock?(
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,color:'var(--moss-700)',background:'rgba(77,98,53,0.12)',border:'1px solid rgba(77,98,53,0.3)',padding:'2px 6px',borderRadius:3,display:'inline-block'}}>
+                                                        ✓ {kgDisp>0?`${kgDisp.toFixed(1)} kg`:'Stock'}
+                                                      </span>
+                                                    ):(
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',background:'rgba(0,0,0,0.04)',border:'1px solid var(--border-soft)',padding:'2px 6px',borderRadius:3,display:'inline-block'}}>
+                                                        ⊘ Sin stock
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+
+                                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:4,borderTop:'1px solid rgba(0,0,0,0.06)'}}>
+                                                  {inR?(
+                                                    <>
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,color:'var(--moss-700)',display:'flex',alignItems:'center',gap:4}}>
+                                                        ✓ En receta ({inR.p}%)
+                                                      </span>
+                                                      <button
+                                                        onClick={()=>{setRecipe(recipe.filter(r=>r.id!==s.id));}}
+                                                        style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:'none',border:'1px solid var(--coral-500)',color:'var(--coral-600)',borderRadius:3,cursor:'pointer'}}
+                                                        title="Quitar de la receta">
+                                                        ✕ Quitar
+                                                      </button>
+                                                    </>
+                                                  ):(
+                                                    <>
+                                                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>No incluido</span>
+                                                      <button
+                                                        onClick={()=>{addI(s.id);flashAdded(s.id);}}
+                                                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-2xs)',padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:3,cursor:'pointer',display:'flex',alignItems:'center',gap:3}}
+                                                        title={`Añadir ${s.name} a la receta`}>
+                                                        + Añadir a receta
+                                                      </button>
+                                                    </>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+
+                                      {/* AIREADORES Y MINERALES COMPLEMENTARIOS */}
+                                      {(catMinerals.length>0||catAers.length>0)&&(
+                                        <div style={{marginTop:8,paddingTop:10,borderTop:'1px solid var(--border-soft)'}}>
+                                          {catMinerals.length>0&&(
+                                            <div style={{marginBottom:8}}>
+                                              <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-700)',marginBottom:4}}>
+                                                Minerales / Tampones de pH en catálogo:
+                                              </div>
+                                              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                                                {catMinerals.map(m=>{
+                                                  const inR=recipe.find(r=>r.id===m.id);
+                                                  return(
+                                                    <div key={m.id} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',background:inR?'color-mix(in oklab, var(--moss-500) 10%, var(--paper-50))':'var(--paper-50)',border:`1px solid ${inR?'var(--moss-600)':'var(--border-soft)'}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)'}}>
+                                                      <span style={{fontWeight:600,color:'var(--ink-900)'}}>{m.name}</span>
+                                                      <span style={{color:m.inStock?'var(--moss-700)':'var(--ink-500)'}}>({m.inStock?'✓ stock':'sin stock'})</span>
+                                                      {inR?(
+                                                        <span style={{fontWeight:700,color:'var(--moss-700)'}}>✓ {inR.p}%</span>
+                                                      ):(
+                                                        <button
+                                                          onClick={()=>{addI(m.id);flashAdded(m.id);}}
+                                                          style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-2xs)',padding:'1px 5px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:2,cursor:'pointer'}}
+                                                          title={`Añadir ${m.name} a la receta`}>
+                                                          + Añadir
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {catAers.length>0&&(
+                                            <div>
+                                              <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-700)',marginBottom:4}}>
+                                                Aireadores y estructurantes en catálogo:
+                                              </div>
+                                              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                                                {catAers.map(a=>{
+                                                  const inR=recipe.find(r=>r.id===a.id);
+                                                  return(
+                                                    <div key={a.id} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',background:inR?'color-mix(in oklab, var(--moss-500) 10%, var(--paper-50))':'var(--paper-50)',border:`1px solid ${inR?'var(--moss-600)':'var(--border-soft)'}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)'}}>
+                                                      <span style={{fontWeight:600,color:'var(--ink-900)'}}>{a.name}</span>
+                                                      <span style={{color:a.inStock?'var(--moss-700)':'var(--ink-500)'}}>({a.inStock?'✓ stock':'sin stock'})</span>
+                                                      {inR?(
+                                                        <span style={{fontWeight:700,color:'var(--moss-700)'}}>✓ {inR.p}%</span>
+                                                      ):(
+                                                        <button
+                                                          onClick={()=>{addI(a.id);flashAdded(a.id);}}
+                                                          style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-2xs)',padding:'1px 5px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:2,cursor:'pointer'}}
+                                                          title={`Añadir ${a.name} a la receta`}>
+                                                          + Añadir
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* ESTADO ACTUAL DE LA RECETA Y ACCIONES */}
+                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16,paddingTop:12,borderTop:'1px solid var(--border-soft)',flexWrap:'wrap',gap:10}}>
+                                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)'}}>
+                                          <b>Receta activa:</b> {recipe.length} ingrediente{recipe.length!==1?'s':''} {recipe.length>0?`(${recipe.map(r=>`${effectiveINGS.find(x=>x.id===r.id)?.name||r.id} ${r.p}%`).join(', ')})`:'(vacía)'}
+                                        </div>
+                                        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                                          {recipe.length>0&&(
+                                            <button
+                                              className="inv-btn inv-btn-pri inv-btn-sm"
+                                              onClick={()=>{
+                                                document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
+                                              }}
+                                              style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)'}}>
+                                              ✏ Ver y Afinar Receta ({recipe.length})
+                                            </button>
+                                          )}
+                                          <button
+                                            className="inv-btn inv-btn-sec inv-btn-sm"
+                                            onClick={()=>{goTab('inventario');setInvTab('compra');}}
+                                            style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)'}}>
+                                            📦 Bodega → Registrar Compra
+                                          </button>
+                                          <button
+                                            className="inv-btn inv-btn-sec inv-btn-sm"
+                                            onClick={()=>{setOptUseStock(false);}}
+                                            style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',background:'var(--paper-0)',color:'var(--moss-800)'}}>
+                                            🔬 Explorar Paleta Completa (I+D)
+                                          </button>
+                                        </div>
+                                      </div>
                                     </div>
-                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
-                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún suplemento N en bodega es compatible con esta especie.</div>}
-                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6}}>⚠ Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
-                                    {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
-                                    {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
-                                  </div>
-                                ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
+                                  );
+                                })()}
+                              </div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
                               <div role="button" tabIndex={0} onClick={()=>{goTab('inventario');setInvTab('compra');}} onKeyDown={e=>{if(e.key==='Enter'){goTab('inventario');setInvTab('compra');}}} style={{cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
@@ -4756,7 +6816,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4,display:'inline-flex',alignItems:'center',gap:2}}><IconBolt size={10} color="currentColor" />+{eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -4803,7 +6863,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {loteBatchConfirm&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
             <div className="inv-modal" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
-              <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
+              <div className="inv-modal-title" style={{display:'flex',alignItems:'center',gap:6}}><IconBolt size={14} color="currentColor" /> Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
                 <thead><tr>{['Ingrediente','Requerido kg','Stock kg',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido kg'||h==='Stock kg'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
@@ -4813,12 +6873,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{row.krKg.toFixed(3)}</td>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{row.stockActual.toFixed(3)}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
+                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok ? <IconCheck size={12} color="var(--moss-700)" /> : <IconAlert size={12} color="var(--coral-700)" />}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><IconAlert size={12} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
                 <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
@@ -4858,7 +6918,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');setBitTab('bit_bolsas');setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
             </div>
           </div>
@@ -4876,7 +6936,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
                 <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><IconStar size={14} color="currentColor" fill={(bitCosechaForm.calidad||0)>=n ? "currentColor" : "none"} /></button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
@@ -4927,7 +6987,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </div>
   );
 }
-window.SimuladorApp = App;
+function SafeSimuladorApp(props){
+  return (
+    <SimuladorErrorBoundary>
+      <App {...props} />
+    </SimuladorErrorBoundary>
+  );
+}
+
+window.SimuladorApp = SafeSimuladorApp;
+window.SimuladorAppUnwrapped = App;
+window.SimuladorErrorBoundary = SimuladorErrorBoundary;
 
 
 // Sombra izquierda en tiras de scroll horizontal una vez el usuario ha scrolleado

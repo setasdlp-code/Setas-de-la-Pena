@@ -269,10 +269,13 @@
     const flags = SetasScoring.detectSeverity ? SetasScoring.detectSeverity(an) : {};
     const scaledDelta = (base, overDist) => Math.round(base * (1 + Math.min(1.5, Math.max(0, overDist || 0))));
     const recommendedIds = new Set();
-    const bestStock = (filter, sortFn = (a, b) => 0) => {
+    const getStockPool = (filter, sortFn = (a, b) => 0) => {
       const candidates = effectiveINGS.filter(g => g.cs && g.cs.includes(sKey) && filter(g)).sort(sortFn);
       const inStock = useStock ? candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
-      const pool = inStock.length > 0 ? inStock : candidates;
+      return inStock.length > 0 ? inStock : candidates;
+    };
+    const bestStock = (filter, sortFn = (a, b) => 0) => {
+      const pool = getStockPool(filter, sortFn);
       if (!pool.length) return null;
       const inRecipe = recipe && recipe.length ? pool.find(g => recipe.some(r => r.id === g.id)) : null;
       if (inRecipe) { recommendedIds.add(inRecipe.id); return inRecipe; }
@@ -284,58 +287,100 @@
       recommendedIds.add(top.id);
       return top;
     };
+    const buildAlternatives = (filter, sortFn, primaryIng, buildItemFn) => {
+      const pool = getStockPool(filter, sortFn);
+      if (!pool.length) return [];
+      const primaryId = primaryIng?.id;
+      const otherIngs = pool.filter(g => g.id !== primaryId);
+      return otherIngs.slice(0, 4).map(ing => {
+        const inRec = recipe?.find(r => r.id === ing.id);
+        const altItem = buildItemFn(ing, inRec);
+        altItem.isAlternative = true;
+        altItem.alternativeOf = primaryIng ? primaryIng.name : '';
+        return altItem;
+      });
+    };
 
     if (flags.cnHigh) {
-      const best = bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n);
+      const filter = g => g.n >= 1.5 && g.role !== 'base_carbono';
+      const sortFn = (a, b) => b.n - a.n;
+      const best = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => best && r.id === best.id);
-      items.push({
+      const makeItem = (ing, rec) => ({
         priority: 'critical', icon: '↓C:N',
         label: 'C:N demasiado alto',
-        action: best ? `Aumentar <b>${best.name}</b> (N=${best.n}%) — ${inRec ? 'ya en receta, sube %' : 'agregar a receta'}` : `Reducir base de carbono`,
+        action: ing ? `Aumentar <b>${ing.name}</b> (N=${ing.n}%) — ${rec ? 'ya en receta, sube %' : 'agregar a receta'}` : `Reducir base de carbono`,
         effect: `C:N ${an.cn.toFixed(1)}:1 > máximo ${sp.cn_optimal.max}:1 · ideal ${sp.cn_optimal.ideal}:1 · colonización tardía`,
         delta: `C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
-        apply: best ? { mode: inRec ? 'increase' : 'add', id: best.id, delta: scaledDelta(7, flags.cnOverDist) } : null
+        apply: ing ? { mode: rec ? 'increase' : 'add', id: ing.id, delta: scaledDelta(7, flags.cnOverDist) } : null
       });
+      const item = makeItem(best, inRec);
+      item.alternatives = buildAlternatives(filter, sortFn, best, makeItem);
+      items.push(item);
     }
     if (flags.cnLow) {
-      const best = bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const filter = g => g.cn > 60 && g.role === 'base_carbono';
+      const sortFn = (a, b) => b.cn - a.cn;
+      const best = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => best && r.id === best.id);
-      items.push({
+      const makeItem = (ing, rec) => ({
         priority: 'critical', icon: '↑C:N',
         label: 'C:N demasiado bajo',
-        action: best ? `Aumentar <b>${best.name}</b> (C:N ${best.cn}:1)` : `Reducir suplementos N`,
+        action: ing ? `Aumentar <b>${ing.name}</b> (C:N ${ing.cn}:1)` : `Reducir suplementos N`,
         effect: `C:N ${an.cn.toFixed(1)}:1 < mínimo ${sp.cn_optimal.min}:1 · exceso N → riesgo contaminación`,
         delta: `C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
-        apply: best ? { mode: inRec ? 'increase' : 'add', id: best.id, delta: scaledDelta(8, flags.cnOverDist) } : null
+        apply: ing ? { mode: rec ? 'increase' : 'add', id: ing.id, delta: scaledDelta(8, flags.cnOverDist) } : null
       });
+      const item = makeItem(best, inRec);
+      item.alternatives = buildAlternatives(filter, sortFn, best, makeItem);
+      items.push(item);
     }
     if (flags.nLow) {
-      const best = bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost);
+      const filter = g => g.n >= 2 && g.role !== 'base_carbono';
+      const sortFn = (a, b) => a.cost - b.cost;
+      const best = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => best && r.id === best.id);
-      items.push({
+      const makeItem = (ing, rec) => ({
         priority: 'critical', icon: '↑N',
         label: 'Nitrógeno insuficiente',
-        action: best ? `${inRec ? 'Aumentar' : 'Agregar'} <b>${best.name}</b> (N=${best.n}%, $${best.cost}/kg)` : 'Agregar suplemento nitrogenado',
+        action: ing ? `${rec ? 'Aumentar' : 'Agregar'} <b>${ing.name}</b> (N=${ing.n}%, $${ing.cost}/kg)` : 'Agregar suplemento nitrogenado',
         effect: `N ${an.avgN.toFixed(2)}% < mínimo ${sp.n_optimal.min}% · colonización lenta y EB reducida`,
         delta: `N ${an.avgN.toFixed(2)}% → objetivo >${sp.n_optimal.min}%`,
-        apply: best ? { mode: inRec ? 'increase' : 'add', id: best.id, delta: scaledDelta(8, flags.nOverDist) } : null
+        apply: ing ? { mode: rec ? 'increase' : 'add', id: ing.id, delta: scaledDelta(8, flags.nOverDist) } : null
       });
+      const item = makeItem(best, inRec);
+      item.alternatives = buildAlternatives(filter, sortFn, best, makeItem);
+      items.push(item);
     }
     if (flags.nHigh) {
-      const base = bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const filter = g => g.cn > 80 && g.role === 'base_carbono';
+      const sortFn = (a, b) => b.cn - a.cn;
+      const base = bestStock(filter, sortFn);
       const suppInRec = recipe?.filter(r => { const g = effectiveINGS.find(i => i.id === r.id); return g && g.n >= 2 && g.role !== 'base_carbono'; }) || [];
-      items.push({
+      const makeItem = (baseIng) => ({
         priority: 'critical', icon: '↓N',
         label: 'Exceso de Nitrógeno',
         action: suppInRec.length > 0 ? `Reducir <b>${effectiveINGS.find(g => g.id === suppInRec[0]?.id)?.name || 'suplementos'}</b> en 5–8%` : `Aumentar base de carbono`,
         effect: `N ${an.avgN.toFixed(2)}% > máximo ${sp.n_optimal.max}% · riesgo bacterias y moho verde`,
         delta: `N ${an.avgN.toFixed(2)}% → objetivo <${sp.n_optimal.max}%`,
-        apply: suppInRec.length > 0 ? { mode: 'decrease', id: suppInRec[0].id, delta: scaledDelta(6, flags.nOverDist) } : (base ? { mode: 'increase', id: base.id, delta: scaledDelta(8, flags.nOverDist) } : null)
+        apply: suppInRec.length > 0 ? { mode: 'decrease', id: suppInRec[0].id, delta: scaledDelta(6, flags.nOverDist) } : (baseIng ? { mode: 'increase', id: baseIng.id, delta: scaledDelta(8, flags.nOverDist) } : null)
       });
+      const item = makeItem(base);
+      if (base) {
+        item.alternatives = buildAlternatives(filter, sortFn, base, (ing) => ({
+          priority: 'critical', icon: '↓N',
+          label: 'Exceso de Nitrógeno',
+          action: `Aumentar base <b>${ing.name}</b> (C:N ${ing.cn}:1)`,
+          effect: `N ${an.avgN.toFixed(2)}% > máximo ${sp.n_optimal.max}% · diluir nitrógeno con base alta en carbono`,
+          delta: `N → objetivo <${sp.n_optimal.max}%`,
+          apply: { mode: recipe?.some(r => r.id === ing.id) ? 'increase' : 'add', id: ing.id, delta: scaledDelta(8, flags.nOverDist) }
+        }));
+      }
+      items.push(item);
     }
     if (flags.trichoderma) {
       items.push({
-        priority: 'critical', icon: '⚠',
+        priority: 'critical', icon: 'alerta',
         label: 'Riesgo Trichoderma',
         action: 'Esterilizar en autoclave 121°C × 90 min, o reducir N total por debajo del umbral',
         effect: `N crítico sin esterilización → EB cae ~85% · Trichoderma compite activamente con el micelio`,
@@ -343,73 +388,103 @@
       });
     }
     if (flags.phLow) {
-      const best = bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph);
-      items.push({
+      const filter = g => g.ph > 7.5;
+      const sortFn = (a, b) => b.ph - a.ph;
+      const best = bestStock(filter, sortFn);
+      const makeItem = (ing) => ({
         priority: 'critical', icon: '↑pH',
         label: 'pH demasiado ácido',
-        action: best ? `Agregar <b>${best.name}</b> 1–3% (pH ${best.ph})` : 'Agregar carbonato de calcio 1–2%',
+        action: ing ? `Agregar <b>${ing.name}</b> 1–3% (pH ${ing.ph})` : 'Agregar carbonato de calcio 1–2%',
         effect: `pH ${an.avgPh.toFixed(1)} < mínimo ${sp.ph_optimal.min} · enzimas del micelio trabajan a rendimiento parcial`,
         delta: `pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min + sp.ph_optimal.max) / 2).toFixed(1)}`,
-        apply: best ? { mode: 'add', id: best.id, delta: scaledDelta(2, flags.phOverDist) } : null
+        apply: ing ? { mode: 'add', id: ing.id, delta: scaledDelta(2, flags.phOverDist) } : null
       });
+      const item = makeItem(best);
+      item.alternatives = buildAlternatives(filter, sortFn, best, makeItem);
+      items.push(item);
     }
     if (flags.phHigh) {
-      const cafe = bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph);
-      items.push({
+      const filter = g => g.ph < 6 && g.n >= 0.5;
+      const sortFn = (a, b) => a.ph - b.ph;
+      const cafe = bestStock(filter, sortFn);
+      const makeItem = (ing) => ({
         priority: 'critical', icon: '↓pH',
         label: 'pH demasiado alcalino',
-        action: cafe ? `Agregar <b>${cafe.name}</b> 8–15% (pH ${cafe.ph})` : 'Incorporar borra de café o aserrín (ácidos)',
+        action: ing ? `Agregar <b>${ing.name}</b> 8–15% (pH ${ing.ph})` : 'Incorporar borra de café o aserrín (ácidos)',
         effect: `pH ${an.avgPh.toFixed(1)} > máximo ${sp.ph_optimal.max} · inhibe enzimas y favorece bacterias`,
         delta: `pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min + sp.ph_optimal.max) / 2).toFixed(1)}`,
-        apply: cafe ? { mode: 'add', id: cafe.id, delta: scaledDelta(10, flags.phOverDist) } : null
+        apply: ing ? { mode: 'add', id: ing.id, delta: scaledDelta(10, flags.phOverDist) } : null
       });
+      const item = makeItem(cafe);
+      item.alternatives = buildAlternatives(filter, sortFn, cafe, makeItem);
+      items.push(item);
     }
 
     const cnDist = flags.cnDist;
     if (flags.cnWarn) {
       const subir = an.cn > sp.cn_optimal.ideal;
-      const ing = subir
-        ? bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n)
-        : bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const filter = subir
+        ? (g => g.n >= 1.5 && g.role !== 'base_carbono')
+        : (g => g.cn > 60 && g.role === 'base_carbono');
+      const sortFn = subir ? ((a, b) => b.n - a.n) : ((a, b) => b.cn - a.cn);
+      const ing = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => ing && r.id === ing.id);
-      if (ing) items.push({
+      const makeItem = (targetIng, rec) => ({
         priority: 'warning', icon: subir ? '→N' : '→C',
         label: 'Afinar C:N al ideal',
-        action: `${inRec ? 'Subir %' : 'Agregar'} <b>${ing.name}</b> en 3–5%`,
+        action: `${rec ? 'Subir %' : 'Agregar'} <b>${targetIng.name}</b> en 3–5%`,
         effect: `C:N ${an.cn.toFixed(1)}:1 · ideal ${sp.cn_optimal.ideal}:1 · acercarse al centro sube EB ~${Math.round(cnDist * 15)}%`,
         delta: `+${Math.round(cnDist * 15)}% EB estimada`,
-        apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: 4 }
+        apply: { mode: rec ? 'increase' : 'add', id: targetIng.id, delta: 4 }
       });
+      if (ing) {
+        const item = makeItem(ing, inRec);
+        item.alternatives = buildAlternatives(filter, sortFn, ing, makeItem);
+        items.push(item);
+      }
     }
     const nDist = flags.nDist;
     if (flags.nWarn) {
       const subir = an.avgN < sp.n_optimal.ideal;
-      const ing = subir
-        ? bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost)
-        : bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn);
+      const filter = subir
+        ? (g => g.n >= 2 && g.role !== 'base_carbono')
+        : (g => g.cn > 60 && g.role === 'base_carbono');
+      const sortFn = subir ? ((a, b) => a.cost - b.cost) : ((a, b) => b.cn - a.cn);
+      const ing = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => ing && r.id === ing.id);
-      if (ing) items.push({
+      const makeItem = (targetIng, rec) => ({
         priority: 'warning', icon: subir ? '→N+' : '→N-',
         label: 'Afinar Nitrógeno',
-        action: `${subir ? (inRec ? 'Aumentar' : 'Agregar') : 'Reducir'} <b>${ing.name}</b> en 3–5%`,
+        action: `${subir ? (rec ? 'Aumentar' : 'Agregar') : 'Reducir'} <b>${targetIng.name}</b> en 3–5%`,
         effect: `N ${an.avgN.toFixed(2)}% · ideal ${sp.n_optimal.ideal}% · diferencia del ${Math.round(nDist * 100)}% del rango`,
         delta: `N → ${sp.n_optimal.ideal}% (+EB)`,
-        apply: { mode: subir ? (inRec ? 'increase' : 'add') : 'decrease', id: ing.id, delta: 4 }
+        apply: { mode: subir ? (rec ? 'increase' : 'add') : 'decrease', id: targetIng.id, delta: 4 }
       });
+      if (ing) {
+        const item = makeItem(ing, inRec);
+        item.alternatives = buildAlternatives(filter, sortFn, ing, makeItem);
+        items.push(item);
+      }
     }
     if (flags.ebWarn) {
       const margen = sp.supplementation_max - an.suppP;
-      const ing = bestStock(g => g.n >= 2 && g.role === 'suplemento_n', (a, b) => a.cost - b.cost);
+      const filter = g => g.n >= 2 && g.role === 'suplemento_n';
+      const sortFn = (a, b) => a.cost - b.cost;
+      const ing = bestStock(filter, sortFn);
       const inRec = recipe?.find(r => ing && r.id === ing.id);
+      const d = Math.min(8, Math.round(margen));
+      const makeItem = (targetIng, rec) => ({
+        priority: 'warning', icon: '↑EB',
+        label: 'Potencial de EB sin explotar',
+        action: `${rec ? 'Aumentar' : 'Agregar'} <b>${targetIng.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
+        effect: `EB actual ${an.eb.toFixed(0)}% · máximo especie ${sp.eb_optimal}% · suplementación dentro de límite seguro`,
+        delta: `EB ${an.eb.toFixed(0)}% → ~${Math.min(sp.eb_optimal, an.eb + Math.round(margen * 1.5)).toFixed(0)}%`,
+        apply: { mode: rec ? 'increase' : 'add', id: targetIng.id, delta: d }
+      });
       if (ing) {
-        const d = Math.min(8, Math.round(margen)); items.push({
-          priority: 'warning', icon: '↑EB',
-          label: 'Potencial de EB sin explotar',
-          action: `${inRec ? 'Aumentar' : 'Agregar'} <b>${ing.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
-          effect: `EB actual ${an.eb.toFixed(0)}% · máximo especie ${sp.eb_optimal}% · suplementación dentro de límite seguro`,
-          delta: `EB ${an.eb.toFixed(0)}% → ~${Math.min(sp.eb_optimal, an.eb + Math.round(margen * 1.5)).toFixed(0)}%`,
-          apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: d }
-        });
+        const item = makeItem(ing, inRec);
+        item.alternatives = buildAlternatives(filter, sortFn, ing, makeItem);
+        items.push(item);
       }
     }
     if (sp.ph_optimal) {
@@ -465,7 +540,7 @@
     }
 
     items.push({
-      priority: 'info', icon: '⛰',
+      priority: 'info', icon: 'altitud',
       label: 'Tenjo 2.600 msnm',
       action: 'Pasteurización: extender tiempo +25% (agua hierve ~92°C). CWLP: verificar pH≥12 antes de sumergir.',
       effect: 'La altitud no afecta incubación ni fructificación — solo el tratamiento térmico.',
@@ -474,7 +549,14 @@
 
     if (recipe && recipe.length) {
       const phIdeal = sp.ph_optimal ? (sp.ph_optimal.min + sp.ph_optimal.max) / 2 : null;
+      const allItemsToQuantify = [];
       items.forEach(it => {
+        allItemsToQuantify.push(it);
+        if (it.alternatives && it.alternatives.length) {
+          it.alternatives.forEach(alt => allItemsToQuantify.push(alt));
+        }
+      });
+      allItemsToQuantify.forEach(it => {
         if (!it.apply || !it.apply.id) return;
         const ic = it.icon || '';
         let solve = null;
@@ -485,8 +567,8 @@
       });
     }
 
-    const WHY_MAP = { '↓C:N': 'La relación C:N determina velocidad de colonización y rendimiento. Alto C:N = carbono sin aprovechar.', '↑C:N': 'C:N bajo = exceso de nitrógeno, el nutriente que activa mohos competidores.', '↑N': 'El nitrógeno es el nutriente limitante para el crecimiento del micelio.', '↓N': 'Exceso de N activa bacterias y Trichoderma que colonizan más rápido que el micelio.', '⚠': 'Trichoderma colapsa el bloque — compite más rápido que cualquier micelio de seta.', '↑pH': 'pH ácido bloquea enzimas hidrolíticas del micelio que degradan la lignina.', '↓pH': 'pH alcalino inhibe el crecimiento y favorece bacterias contaminantes.', '↑EB': 'EB no explotada = dinero en el sustrato que el hongo no puede aprovechar.', 'Ca': 'Sin minerales, el pH cae durante la incubación y el micelio pierde vigor a mitad del ciclo.', '$↓': 'El costo de ingredientes es el mayor gasto variable de la producción.', 'Dig': 'Baja digestibilidad requiere más energía del micelio, aumentando el riesgo de contaminación.', '→N': 'N y C:N están relacionados: ajustar uno afecta el otro en la misma receta.', '→C': 'La base de carbono define la estructura física y el C:N base del sustrato.' };
-    const RISK_MAP = { '↓C:N': 'Colonización lenta, EB reducida, mayor ventana de contaminación.', '↑C:N': 'Exceso de N → bacterias → olor a amoniaco → contaminación del lote completo.', '↑N': 'EB reducida 30–50%. En casos extremos, colapso completo del bloque.', '↓N': 'Sin corrección: probabilidad alta de Trichoderma y pérdida del lote.', '⚠': 'Sin autoclave: pérdida del lote completo en 5–10 días de colonización.', '↑pH': 'Colonización parcial, EB reducida, mayor riesgo bacteriano.', '↓pH': 'Bloqueo enzimático completo en pH>8 para la mayoría de Pleurotus.', '↑EB': 'Receta subóptima — EB 20–40% menor a lo posible con los ingredientes disponibles.', 'Ca': 'pH variable lote-a-lote — resultados inconsistentes.', 'Dig': 'Colonización 50–100% más lenta; mayor riesgo de contaminación por exposición prolongada.', '→N': 'EB por debajo del potencial óptimo de la especie.', '→C': 'C:N alejado del ideal reduce la eficiencia biológica estimada.' };
+    const WHY_MAP = { '↓C:N': 'La relación C:N determina velocidad de colonización y rendimiento. Alto C:N = carbono sin aprovechar.', '↑C:N': 'C:N bajo = exceso de nitrógeno, el nutriente que activa mohos competidores.', '↑N': 'El nitrógeno es el nutriente limitante para el crecimiento del micelio.', '↓N': 'Exceso de N activa bacterias y Trichoderma que colonizan más rápido que el micelio.', 'alerta': 'Trichoderma colapsa el bloque — compite más rápido que cualquier micelio de seta.', '↑pH': 'pH ácido bloquea enzimas hidrolíticas del micelio que degradan la lignina.', '↓pH': 'pH alcalino inhibe el crecimiento y favorece bacterias contaminantes.', '↑EB': 'EB no explotada = dinero en el sustrato que el hongo no puede aprovechar.', 'Ca': 'Sin minerales, el pH cae durante la incubación y el micelio pierde vigor a mitad del ciclo.', '$↓': 'El costo de ingredientes es el mayor gasto variable de la producción.', 'Dig': 'Baja digestibilidad requiere más energía del micelio, aumentando el riesgo de contaminación.', '→N': 'N y C:N están relacionados: ajustar uno afecta el otro en la misma receta.', '→C': 'La base de carbono define la estructura física y el C:N base del sustrato.' };
+    const RISK_MAP = { '↓C:N': 'Colonización lenta, EB reducida, mayor ventana de contaminación.', '↑C:N': 'Exceso de N → bacterias → olor a amoniaco → contaminación del lote completo.', '↑N': 'EB reducida 30–50%. En casos extremos, colapso completo del bloque.', '↓N': 'Sin corrección: probabilidad alta de Trichoderma y pérdida del lote.', 'alerta': 'Sin autoclave: pérdida del lote completo en 5–10 días de colonización.', '↑pH': 'Colonización parcial, EB reducida, mayor riesgo bacteriano.', '↓pH': 'Bloqueo enzimático completo en pH>8 para la mayoría de Pleurotus.', '↑EB': 'Receta subóptima — EB 20–40% menor a lo posible con los ingredientes disponibles.', 'Ca': 'pH variable lote-a-lote — resultados inconsistentes.', 'Dig': 'Colonización 50–100% más lenta; mayor riesgo de contaminación por exposición prolongada.', '→N': 'EB por debajo del potencial óptimo de la especie.', '→C': 'C:N alejado del ideal reduce la eficiencia biológica estimada.' };
     const OVERDIST_BY_ICON = { '↓C:N': flags.cnOverDist, '↑C:N': flags.cnOverDist, '↑N': flags.nOverDist, '↓N': flags.nOverDist, '↑pH': flags.phOverDist, '↓pH': flags.phOverDist };
 
     items.forEach(it => {
@@ -515,7 +597,14 @@
     };
 
     if (recipe && recipe.length) {
+      const allItemsToPredict = [];
       items.forEach(it => {
+        allItemsToPredict.push(it);
+        if (it.alternatives && it.alternatives.length) {
+          it.alternatives.forEach(alt => allItemsToPredict.push(alt));
+        }
+      });
+      allItemsToPredict.forEach(it => {
         if (!it.apply || (it.priority !== 'critical' && it.priority !== 'warning')) return;
         try {
           const candidate = applyOptToRecipe(recipe, it.apply, lockedIds, effectiveINGS);
@@ -800,6 +889,11 @@
     const top = filteredResults.sort((a, b) => b.score - a.score)
       .filter(r => { const k = `${r.score}_${Math.round(r.an.cn)}_${Math.round(r.an.cost / 100)}`; if (seen.has(k)) return false; seen.add(k); return true; })
       .slice(0, 12);
+    const allCatalogBases = ings.filter(g => g.role === 'base_carbono' && (!g.cs || g.cs.includes(targetKey)));
+    const allCatalogSupps = ings.filter(g => (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && (!g.cs || g.cs.includes(targetKey)));
+    const allCatalogAers = ings.filter(g => g.role === 'aireador' && (!g.cs || g.cs.includes(targetKey)));
+    const allCatalogMinerals = ings.filter(g => (g.role === 'aditivo_ph' || g.id === 'carbonato_calcio' || g.id === 'yeso') && (!g.cs || g.cs.includes(targetKey)));
+
     const diag = {
       stockIds: stockIds.size,
       poolSize: pool.length,
@@ -811,10 +905,251 @@
       suppLimit,
       profileKey,
       targetKey,
+      targetCN: sp?.cn_optimal?.ideal || 50,
       baseNames: bases.map(g => g.name),
       suppNames: supps.map(g => g.name),
+      catalogBases: allCatalogBases.map(g => ({
+        id: g.id,
+        name: g.name,
+        cn: g.cn,
+        n: g.n,
+        cost: g.cost,
+        inStock: stockIds.has(g.id),
+      })),
+      catalogSupps: allCatalogSupps.map(g => ({
+        id: g.id,
+        name: g.name,
+        cn: g.cn,
+        n: g.n,
+        cost: g.cost,
+        inStock: stockIds.has(g.id),
+      })),
+      catalogAers: allCatalogAers.map(g => ({
+        id: g.id,
+        name: g.name,
+        inStock: stockIds.has(g.id),
+      })),
+      catalogMinerals: allCatalogMinerals.map(g => ({
+        id: g.id,
+        name: g.name,
+        inStock: stockIds.has(g.id),
+      })),
     };
     return { results: top, noStock: false, stockCount: stockIds.size, diag };
+  };
+
+  // ── smartAutoImproveRecipe — auto-mejorador dinámico y multivariable ──
+  const smartAutoImproveRecipe = ({
+    recipe = [],
+    sKey,
+    ings,
+    stockIds,
+    lockedIds = [],
+    optProfile = 'produccion',
+    useStock = false,
+    spp,
+    stockMap = {},
+  }) => {
+    const effectiveINGS = getEffectiveINGS(ings);
+    const effectiveSPP = getEffectiveSPP(spp);
+    const sp = effectiveSPP[sKey] || effectiveSPP.p_ostreatus_gris;
+    if (!sp) return { recipe, initialScore: 0, improvedScore: 0, changes: [], missingStock: [], summary: 'Especie no válida' };
+
+    const availableStockSet = stockIds ? (stockIds instanceof Set ? stockIds : new Set(stockIds)) : new Set();
+    const isStockOnly = useStock && availableStockSet.size > 0;
+
+    const initialAn = recipe.length > 0 ? analyze(recipe, sKey, effectiveINGS, effectiveSPP) : null;
+    const initialOpt = initialAn ? generateOptimizer(initialAn, sKey, availableStockSet, recipe, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP) : null;
+    const initialScore = initialOpt ? initialOpt.score : 0;
+
+    const getCandidatesByRole = (role) => {
+      let pool = effectiveINGS.filter(g => g.cs && g.cs.includes(sKey));
+      if (role === 'base') pool = pool.filter(g => g.role === 'base_carbono');
+      else if (role === 'supp') pool = pool.filter(g => g.role === 'suplemento_n' || g.role === 'suplemento_medio');
+      else if (role === 'mineral' || role === 'ph') pool = pool.filter(g => g.role === 'aditivo_ph' || g.id === 'carbonato_calcio' || g.id === 'yeso');
+      else if (role === 'aireador') pool = pool.filter(g => g.role === 'aireador');
+      else if (role) pool = pool.filter(g => g.role === role);
+
+      if (isStockOnly) {
+        const inStock = pool.filter(g => availableStockSet.has(g.id));
+        if (inStock.length > 0) return inStock;
+      }
+      return pool;
+    };
+
+    let currentRecipe = [...recipe];
+    const changes = [];
+
+    // Case 1: Empty recipe -> build from scratch
+    if (currentRecipe.length === 0) {
+      const bases = getCandidatesByRole('base');
+      const supps = getCandidatesByRole('supp');
+      const minerals = getCandidatesByRole('mineral');
+      const base = bases[0] || effectiveINGS.find(g => g.id === 'aserrin_roble' || g.id === 'paja_trigo') || effectiveINGS[0];
+      const supp = supps[0] || effectiveINGS.find(g => g.id === 'salvado_trigo') || effectiveINGS[1];
+      const mineral = minerals.find(g => g.id === 'carbonato_calcio') || minerals[0];
+
+      if (base && supp) {
+        const targetCN = sp.cn_optimal.ideal;
+        const mineralPct = mineral ? 2.0 : 0;
+        const remainingPct = 100.0 - mineralPct;
+
+        const bDry = 1 - Math.min(0.92, (base.moisture || 0) / 100);
+        const sDry = 1 - Math.min(0.92, (supp.moisture || 0) / 100);
+        const bC = (base.c || 45) * bDry, bN = (base.n || 0.6) * bDry;
+        const sC = (supp.c || 42) * sDry, sN = (supp.n || 2.4) * sDry;
+
+        let suppPct = 15;
+        const denom = (sC - targetCN * sN) - (bC - targetCN * bN);
+        if (Math.abs(denom) > 0.001) {
+          const rawS = (targetCN * bN - bC) * remainingPct / denom;
+          suppPct = Math.max(5, Math.min(sp.supplementation_max || 25, Math.round(rawS * 10) / 10));
+        }
+        const basePct = Math.round((remainingPct - suppPct) * 10) / 10;
+        currentRecipe = [{ id: base.id, p: basePct }, { id: supp.id, p: suppPct }];
+        if (mineral) currentRecipe.push({ id: mineral.id, p: mineralPct });
+        changes.push(`Inicializada receta balanceada con ${base.name} (${basePct}%), ${supp.name} (${suppPct}%)${mineral ? ` y ${mineral.name} (${mineralPct}%)` : ''}`);
+      }
+    }
+
+    // Iterative multi-variable optimization loop
+    for (let iter = 0; iter < 8; iter++) {
+      const an = analyze(currentRecipe, sKey, effectiveINGS, effectiveSPP);
+      const opt = generateOptimizer(an, sKey, availableStockSet, currentRecipe, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP);
+      
+      let bestCandidate = null;
+      let bestCandidateScore = opt.score;
+      let candidateDescription = '';
+
+      // Check 1: Mineral / pH stabilizer if missing or pH is suboptimal
+      const hasMineral = currentRecipe.some(r => {
+        const g = effectiveINGS.find(x => x.id === r.id);
+        return g && (g.role === 'aditivo_ph' || g.id === 'carbonato_calcio' || g.id === 'yeso');
+      });
+      if (!hasMineral && (an.avgPh < sp.ph_optimal.min || opt.score < 90 || sp.ph_optimal.ideal >= 6.5)) {
+        const mineralPool = getCandidatesByRole('mineral');
+        const bestMin = mineralPool.find(g => g.id === 'carbonato_calcio') || mineralPool[0];
+        if (bestMin && !lockedIds.includes(bestMin.id)) {
+          const testRec = applyOptToRecipe(currentRecipe, { mode: 'add', id: bestMin.id, delta: 2.0 }, lockedIds, effectiveINGS);
+          const testAn = analyze(testRec, sKey, effectiveINGS, effectiveSPP);
+          const testOpt = generateOptimizer(testAn, sKey, availableStockSet, testRec, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP);
+          if (testOpt.score >= bestCandidateScore - 0.5) {
+            bestCandidate = testRec;
+            bestCandidateScore = testOpt.score;
+            candidateDescription = `Incorporado ${bestMin.name} (2%) para estabilizar pH y buffer de incubación`;
+          }
+        }
+      }
+
+      // Check 2: Explore items generated by Perito optimizer engine
+      if (opt.items && opt.items.length > 0) {
+        for (const item of opt.items) {
+          if (!item.apply || !item.apply.id) continue;
+          if (lockedIds.includes(item.apply.id)) continue;
+          const testRec = applyOptToRecipe(currentRecipe, item.apply, lockedIds, effectiveINGS);
+          const testAn = analyze(testRec, sKey, effectiveINGS, effectiveSPP);
+          const testOpt = generateOptimizer(testAn, sKey, availableStockSet, testRec, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP);
+          if (testOpt.score > bestCandidateScore + 0.1) {
+            bestCandidate = testRec;
+            bestCandidateScore = testOpt.score;
+            candidateDescription = (item.action || 'Ajuste de proporciones').replace(/<[^>]+>/g, '');
+          }
+        }
+      }
+
+      // Check 3: If C:N is out of optimal range, solve target C:N directly
+      if (an.cn > sp.cn_optimal.max + 0.8 || an.cn < sp.cn_optimal.min - 0.8) {
+        const targetCN = sp.cn_optimal.ideal;
+        const suppsInRecipe = currentRecipe.filter(r => {
+          const g = effectiveINGS.find(x => x.id === r.id);
+          return g && (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && !lockedIds.includes(r.id);
+        });
+
+        let targetSuppId = suppsInRecipe[0]?.id;
+        if (!targetSuppId) {
+          const suppPool = getCandidatesByRole('supp');
+          const candSupp = suppPool.find(g => g.id === 'salvado_trigo') || suppPool[0];
+          if (candSupp && !lockedIds.includes(candSupp.id)) {
+            targetSuppId = candSupp.id;
+          }
+        }
+
+        if (targetSuppId) {
+          const solved = solveTargetPct(currentRecipe, sKey, effectiveINGS, targetSuppId, 'cn', targetCN, lockedIds, effectiveSPP);
+          if (solved && solved.pct > 0) {
+            const cappedPct = Math.min(sp.supplementation_max || 25, Math.max(1, solved.pct));
+            const testRec = setPctProportional(currentRecipe, targetSuppId, cappedPct, lockedIds);
+            const testAn = analyze(testRec, sKey, effectiveINGS, effectiveSPP);
+            const testOpt = generateOptimizer(testAn, sKey, availableStockSet, testRec, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP);
+            if (testOpt.score > bestCandidateScore + 0.1) {
+              const gName = effectiveINGS.find(x => x.id === targetSuppId)?.name || 'suplemento';
+              bestCandidate = testRec;
+              bestCandidateScore = testOpt.score;
+              candidateDescription = `Ajustado ${gName} a ${cappedPct}% para alcanzar C:N ideal (${targetCN}:1)`;
+            }
+          }
+        }
+      }
+
+      // Apply best candidate if found
+      if (bestCandidate && bestCandidateScore > opt.score + 0.05) {
+        currentRecipe = normalizeRecipe(bestCandidate, lockedIds);
+        if (candidateDescription && !changes.includes(candidateDescription)) {
+          changes.push(candidateDescription);
+        }
+      } else {
+        break;
+      }
+    }
+
+    currentRecipe = normalizeRecipe(currentRecipe, lockedIds).map(r => ({
+      id: r.id,
+      p: Math.round(parseFloat(r.p) * 10) / 10
+    })).filter(r => r.p > 0.05);
+
+    const totalP = currentRecipe.reduce((s, r) => s + r.p, 0);
+    if (Math.abs(totalP - 100) > 0.01 && currentRecipe.length > 0) {
+      const freeIdx = currentRecipe.findIndex(r => !lockedIds.includes(r.id));
+      if (freeIdx >= 0) {
+        currentRecipe[freeIdx].p = Math.round((currentRecipe[freeIdx].p + (100 - totalP)) * 10) / 10;
+      }
+    }
+
+    const finalAn = analyze(currentRecipe, sKey, effectiveINGS, effectiveSPP);
+    const finalOpt = generateOptimizer(finalAn, sKey, availableStockSet, currentRecipe, effectiveINGS, lockedIds, null, useStock, {}, effectiveSPP);
+    const improvedScore = finalOpt.score;
+
+    const missingStock = [];
+    currentRecipe.forEach(r => {
+      const g = effectiveINGS.find(x => x.id === r.id);
+      const stockKg = stockMap[r.id] || 0;
+      if (stockKg <= 0 || (availableStockSet.size > 0 && !availableStockSet.has(r.id))) {
+        missingStock.push({
+          id: r.id,
+          name: g?.name || r.id,
+          pct: r.p,
+          stockKg
+        });
+      }
+    });
+
+    let summary = '';
+    if (changes.length > 0) {
+      summary = `Score mejorado de ${Math.round(initialScore)} a ${Math.round(improvedScore)}/100 (C:N ${finalAn.cn.toFixed(1)}:1, EB est. ${finalAn.eb.toFixed(0)}%).`;
+    } else {
+      summary = `La receta ya se encuentra en balance óptimo (Score: ${Math.round(improvedScore)}/100, C:N ${finalAn.cn.toFixed(1)}:1).`;
+    }
+
+    return {
+      recipe: currentRecipe,
+      initialScore: Math.round(initialScore),
+      improvedScore: Math.round(improvedScore),
+      changes,
+      missingStock,
+      summary,
+      analysis: finalAn,
+      status: finalOpt.status
+    };
   };
 
   const api = {
@@ -830,6 +1165,7 @@
     calcMaxBatchFromStock,
     quantifyItem,
     generateOptimizer,
+    smartAutoImproveRecipe,
     ENERGY_COST,
     energyCostPerKgSeco,
     calcTreatment,
@@ -839,6 +1175,41 @@
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  if (typeof globalThis !== 'undefined') globalThis.SetasRecipeOptimizer = api;
+  if (typeof globalThis !== 'undefined') {
+    globalThis.SetasRecipeOptimizer = api;
+    globalThis.calcTreatment = calcTreatment;
+    globalThis.analyze = analyze;
+    globalThis.generateOptimizer = generateOptimizer;
+    globalThis.smartAutoImproveRecipe = smartAutoImproveRecipe;
+    globalThis.ENERGY_COST = ENERGY_COST;
+    globalThis.energyCostPerKgSeco = energyCostPerKgSeco;
+    globalThis.OPT_PROFILES = OPT_PROFILES;
+    globalThis.normalizeRecipe = normalizeRecipe;
+    globalThis.solveTargetPct = solveTargetPct;
+    globalThis.setPctProportional = setPctProportional;
+    globalThis.capFreeIngredient = capFreeIngredient;
+    globalThis.calcMaxBatchFromStock = calcMaxBatchFromStock;
+    globalThis.quantifyItem = quantifyItem;
+    globalThis.runAutoOptimizer = runAutoOptimizer;
+    globalThis.precioPonderado = precioPonderado;
+  }
+  if (typeof window !== 'undefined') {
+    window.SetasRecipeOptimizer = api;
+    window.calcTreatment = calcTreatment;
+    window.analyze = analyze;
+    window.generateOptimizer = generateOptimizer;
+    window.smartAutoImproveRecipe = smartAutoImproveRecipe;
+    window.ENERGY_COST = ENERGY_COST;
+    window.energyCostPerKgSeco = energyCostPerKgSeco;
+    window.OPT_PROFILES = OPT_PROFILES;
+    window.normalizeRecipe = normalizeRecipe;
+    window.solveTargetPct = solveTargetPct;
+    window.setPctProportional = setPctProportional;
+    window.capFreeIngredient = capFreeIngredient;
+    window.calcMaxBatchFromStock = calcMaxBatchFromStock;
+    window.quantifyItem = quantifyItem;
+    window.runAutoOptimizer = runAutoOptimizer;
+    window.precioPonderado = precioPonderado;
+  }
 
 })();

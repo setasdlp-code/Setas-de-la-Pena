@@ -1,21 +1,61 @@
-/* Gaya — primary typeface, provided by Setas de la Peña. */
+/* ════════════════════════════════════════════════════════════════════════════
+   Gaya Patched — Primary Display & Brand Typeface
+   WrittenShape (Raphaël de La Morinerie) · Patched for Spanish diacritics
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Gaya / Gaya Patched / GayaPatched — Thin (100) */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+
+/* Light (300) */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+
+/* Regular (400) */
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Regular.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Italic.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Regular.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Italic.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Regular.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Italic.woff2') format('woff2'), url('../assets/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+
+/* Medium (500) */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+
+/* Bold (700) */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+
+/* Black (900) */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
 
-/* IBM Plex Mono — intentional addition for tabular data, metadata, codes, SOP numbers.
-   No mono face was supplied; this is the nearest CDN match to the technical-manual /
-   lab-notebook register the brief calls for. Loaded from Google Fonts CDN. */
+/* IBM Plex Mono — tabular data, metadata, codes, SOP numbers */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 :root {
-  --font-sans: 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Gaya Patched', 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Gaya Patched', 'Gaya', 'Georgia', serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
 }

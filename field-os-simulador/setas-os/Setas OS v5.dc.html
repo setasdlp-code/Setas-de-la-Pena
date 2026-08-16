@@ -57,6 +57,33 @@
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner.png" data-resource-id="img_banner">
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner-botanico-sketch.jpg" data-resource-id="imgBannerBotanico">
 <style>
+  /* ── Gaya Patched Primary Display Typeface Declarations ── */
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Regular.woff2') format('woff2'), url('/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Italic.woff2') format('woff2'), url('/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya Patched'; src: url('/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Regular.woff2') format('woff2'), url('/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Italic.woff2') format('woff2'), url('/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Gaya'; src: url('/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+
   html, body { margin:0; background: var(--paper-1); }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
@@ -87,10 +114,8 @@
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:9px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
   .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
-  .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
-  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; border:0; background:none; cursor:pointer; }
-  .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--accent-terracotta); outline-offset:2px; }
+  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; }
   .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:.6; }
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
@@ -103,12 +128,6 @@
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
-  .workspace-subnav { position:sticky; top:43px; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
-  .workspace-subnav::-webkit-scrollbar { display:none; }
-  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
-  .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
-  .workspace-tab.secondary { color:var(--accent-blue-grey); }
-  .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
   @media (max-width:859px){
     .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:65; }
     .rail-flyout-title { display:none; }
@@ -139,16 +158,42 @@
     .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:2px 0 24px rgba(0,0,0,.12); }
   }
   @media (max-width:859px){
-    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow:visible; }
+    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .app-rail::before, .app-rail::after { content:''; position:absolute; top:0; bottom:0; width:16px; pointer-events:none; z-index:1; }
+    .app-rail::before { left:0; background:linear-gradient(to right, var(--paper-0), transparent); }
+    .app-rail::after { right:0; background:linear-gradient(to left, var(--paper-0), transparent); }
     .rail-mark { display:none; }
-    .rail-btn { flex:1 1 25%; min-width:0; padding:6px 4px; gap:2px; min-height:48px; }
+    .rail-btn { flex:0 0 auto; min-width:60px; padding:6px 8px; gap:2px; min-height:48px; }
     .rail-item { flex:0 0 auto; }
     .rail-item .rail-btn { width:auto; }
     .rail-btn.on { background:var(--paper-2); }
     .rail-btn span { font-size:8.5px; }
     .app-main { margin-left:0; padding-bottom:62px; }
-    .workspace-subnav { top:43px; min-height:44px; padding:0 10px; }
-    .workspace-tab { min-height:44px; padding:8px 10px; }
+
+    /* Mobile Header Styling */
+    .fos-header {
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:8px 24px;
+      background:color-mix(in oklab, var(--paper-1) 88%, transparent);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border-hairline);
+    }
+    .fos-crumb {
+      font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em;
+      text-transform:uppercase; color:var(--text-metadata);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;
+    }
+    .fos-header-actions {
+      display:flex; align-items:center; gap:6px; flex-shrink:0;
+    }
+    .fos-header-btn {
+      cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+      gap:6px; border:1px solid var(--border-soft); background:var(--paper-0);
+      border-radius:999px; padding:6px 10px; min-height:38px;
+      font-family:var(--font-mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase;
+      color:var(--ink-1); touch-action:manipulation;
+    }
 
     /* Header simplificado: el clima completo, el nombre del operador y el
        hint "⌘K" no son esenciales en móvil — sobran espacio vertical/horizontal
@@ -164,15 +209,81 @@
        el texto se salía de la tarjeta. A 1 columna cabe todo sin envolver mal. */
     .lotes-quick-grid { grid-template-columns:1fr !important; }
   }
+  @media (max-width:859px){
+    .fos-header { padding:6px 12px; gap:8px; }
+    .fos-crumb { max-width:140px; font-size:10px; }
+    .fos-weather-text { display:none !important; }
+    .fos-hide-guantes { display:none !important; }
+    .fos-btn-label { display:none !important; }
+    .fos-gloves-btn { display:none !important; }
+    .fos-header-btn { padding:6px 8px; min-height:42px; min-width:42px; }
+  }
+  @media (max-width:480px){
+    .fos-header { padding:5px 8px; gap:4px; }
+    .fos-crumb { max-width:100px; font-size:9px; }
+    .fos-header-actions { gap:4px; }
+    .fos-header-btn { padding:4px 6px; min-height:38px; min-width:38px; }
+  }
+
+  /* Tactile Spacing & Fast Action Buttons (48px minimum touch targets) */
+  button, input, select, textarea, label[role="button"] {
+    touch-action: manipulation;
+  }
+  .fos-action-btn, button[onClick*="openCapture"], button[onClick*="confirm"], button[onClick*="openSession"] {
+    min-height: 48px !important;
+  }
+  @media (max-width:859px){
+    .fos-header-actions button { min-height:44px; }
+    button, .rail-btn { touch-action: manipulation; }
+  }
+
+  /* Responsive Tables converted to Stacked Cards on Mobile */
+  @media (max-width: 640px) {
+    .fos-card-table, .fos-card-table thead, .fos-card-table tbody, .fos-card-table th, .fos-card-table td, .fos-card-table tr {
+      display: block !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .fos-card-table thead {
+      display: none !important;
+    }
+    .fos-card-table tr {
+      margin-bottom: 12px;
+      border: 1px solid var(--border-soft) !important;
+      border-radius: var(--radius-sm);
+      background: var(--paper-0);
+      padding: 10px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .fos-card-table td {
+      padding: 7px 0 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      border-bottom: 1px solid var(--border-hairline) !important;
+      text-align: right !important;
+    }
+    .fos-card-table td:last-child {
+      border-bottom: none !important;
+    }
+    .fos-card-table td::before {
+      content: attr(data-label);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-metadata);
+      text-align: left;
+      margin-right: 12px;
+      flex: 1;
+    }
+  }
+
   .col { max-width:640px; margin:0 auto; }
   .gloves button, .gloves label { min-height:56px; }
   .gloves .rail-btn { min-height:64px; }
   .gloves textarea, .gloves input { font-size:17px !important; }
   .gloves .fos-hide-guantes { display:none; }
-  @media (prefers-reduced-motion: reduce) {
-    .app-rail, .rail-btn, .workspace-tab { transition:none !important; }
-    .rail-badge { animation:none !important; }
-  }
   @media print {
     body * { visibility:hidden !important; }
     .qr-print, .qr-print * { visibility:visible !important; }
@@ -186,39 +297,47 @@
 <div class="app-shell {{ shellCls }}">
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
-  <nav class="app-rail" aria-label="Espacios de trabajo">
-    <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Ir a Control, Hoy"><span style="font-style: normal;">Setas </span><br>de la<br><span style="font-style: normal;">&nbsp;Peña</span></button>
-    <button class="rail-btn {{ navWorkspaceFormularCls }}" data-workspace="formular" onClick="{{ goWorkspaceFormular }}" aria-current="{{ curWorkspaceFormular }}">
+  <nav class="app-rail" aria-label="Navegación principal de espacios de trabajo">
+    <span class="rail-mark" onClick="{{ goControlHoy }}" style="cursor:pointer;" title="Setas de la Peña · Ir a Control Hoy">
+      <span style="font-style: normal;">Setas </span><br>de la<br><span style="font-style: normal;">&nbsp;Peña</span>
+    </span>
+
+    <button class="rail-btn {{ wsFormularCls }}" onClick="{{ goWsFormular }}" aria-current="{{ curFormularWs }}" title="Espacio Formular">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
       <span>Formular</span>
     </button>
-    <button class="rail-btn {{ navWorkspaceProduccionCls }}" data-workspace="produccion" onClick="{{ goWorkspaceProduccion }}" aria-current="{{ curWorkspaceProduccion }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"></path><path d="M3 21h18"></path><path d="M9 21v-6h6v6"></path><path d="M7 12h.01M17 12h.01"></path></svg>
+
+    <button class="rail-btn {{ wsProduccionCls }}" onClick="{{ goWsProduccion }}" aria-current="{{ curProduccionWs }}" title="Espacio Producción">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"></path><path d="M3 21h18"></path><path d="M9 21v-6h6v6"></path></svg>
       <span>Producción</span>
-      <sc-if value="{{ hasStockBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge attention" aria-label="{{ stockBadgeLabel }}">{{ stockBadge }}</span></sc-if>
+      <sc-if value="{{ hasLowStockBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ lowStockBadgeText }}">{{ lowStockCount }}</span></sc-if>
     </button>
-    <button class="rail-btn {{ navWorkspaceBitacoraCls }}" data-workspace="bitacora" onClick="{{ goWorkspaceBitacora }}" aria-current="{{ curWorkspaceBitacora }}">
+
+    <button class="rail-btn {{ wsBitacoraCls }}" onClick="{{ goWsBitacora }}" aria-current="{{ curBitacoraWs }}" title="Espacio Bitácora">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"></path><path d="M9 4V2h6v2M8 10h8M8 14h8M8 18h5"></path></svg>
       <span>Bitácora</span>
     </button>
-    <button class="rail-btn {{ navWorkspaceControlCls }}" data-workspace="control" onClick="{{ goWorkspaceControl }}" aria-current="{{ curWorkspaceControl }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18v-5M10 18V6M16 18v-9M22 18V3"></path><path d="M2 21h20"></path></svg>
+
+    <button class="rail-btn {{ wsControlCls }}" onClick="{{ goWsControl }}" aria-current="{{ curControlWs }}" title="Espacio Control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11c0-4.5 3.6-8 8-8s8 3.5 8 8c0 1.8-2 2.5-4 2.2-1.3-.2-1.6-1.3-3-1.3s-1.9 1.5-4 1.5-4.3-1-5-2.4Z"></path><path d="M10 13v7M14 13v7"></path><path d="M8 20h8"></path></svg>
       <span>Control</span>
-      <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadgeLabel }}">{{ climaBadge }}</span></sc-if>
+      <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadge }} alertas clima">{{ climaBadge }}</span></sc-if>
     </button>
+
   </nav>
 
   <main class="app-main fos-scroll" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
 
-    <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
-      <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
-        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
+    <div class="fos-header">
+      <span class="fos-crumb" title="{{ crumb }}">{{ crumb }}</span>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div>
+      <div class="fos-header-actions">
+        <button class="fos-header-btn" onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="color:{{ syncPillColor }};">
           <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
         </button>
         <div style="position:relative;display:inline-block;">
-          <button onClick="{{ togglePicker }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:999px;padding:4px 10px 4px 4px;">
-            <span style="width:18px;height:18px;border-radius:50%;background:var(--ink-0);color:var(--paper-0);font-family:var(--font-sans);font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center;flex:none;">{{ operatorInitial }}</span>
+          <button class="fos-header-btn" onClick="{{ togglePicker }}" style="padding:4px 10px 4px 4px;">
+            <span style="width:20px;height:20px;border-radius:50%;background:var(--ink-0);color:var(--paper-0);font-family:var(--font-sans);font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none;">{{ operatorInitial }}</span>
             <span class="fos-hide-guantes" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">{{ operator }}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;color:var(--text-metadata);transform:{{ pickerChevron }};transition:transform .15s ease;flex:none;"><path d="M6 9l6 6 6-6"></path></svg>
           </button>
@@ -232,35 +351,46 @@
                 <span style="font:var(--t-caption);color:var(--text-metadata);">{{ op.role }}</span>
               </button>
             </sc-for>
-            <button onClick="{{ signOutApp }}" style="cursor:pointer;display:block;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border-strong);padding:9px 14px;font:var(--t-caption);font-weight:700;color:var(--status-error, #C53030);">Cerrar sesión</button>
           </div>
           </sc-if>
         </div>
-        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button class="fos-header-btn fos-gloves-btn" onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:14px;height:14px;"><path d="M6 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V5.5a1.5 1.5 0 0 1 3 0V12"></path><path d="M15 12V8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-3"></path></svg>
-          <span class="fos-btn-label">Guantes</span>
+          <span class="fos-hide-guantes">Guantes</span>
         </button>
-        <button onClick="{{ openCmd }}" aria-label="Buscar" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
+        <button class="fos-header-btn" onClick="{{ openCmd }}" aria-label="Buscar" title="Buscar (⌘K)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <span class="fos-btn-label">Buscar</span> <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
+          <span class="fos-hide-guantes">Buscar</span>
         </button>
       </div>
     </div>
 
-    <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
-      <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
-        <button class="workspace-tab {{ t.cls }}" onClick="{{ t.go }}" role="tab" aria-selected="{{ t.on }}" tabindex="{{ t.tabIndex }}">{{ t.label }}</button>
-      </sc-for>
-      <sc-if value="{{ hasWorkspaceMore }}" hint-placeholder-val="{{ false }}">
-        <span class="workspace-more-sep" aria-hidden="true"></span>
-        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}">Más</button>
-        <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
-          <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
-            <button class="workspace-tab secondary {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
-          </sc-for>
-        </sc-if>
+    <!-- Contextual Workspace Sub-navigation Bar -->
+    <div class="fos-workspace-nav" role="tablist" aria-label="Navegación contextual del espacio de trabajo">
+      <sc-if value="{{ isWsFormular }}" hint-placeholder-val="{{ true }}">
+        <button role="tab" class="fos-workspace-tab {{ subCatOn ? 'on' : '' }}" aria-selected="{{ subCatOn }}" onClick="{{ goSimCatalogo }}">Catálogo</button>
+        <button role="tab" class="fos-workspace-tab {{ subFormOn ? 'on' : '' }}" aria-selected="{{ subFormOn }}" onClick="{{ goSimFormular }}">Formular</button>
+        <button role="tab" class="fos-workspace-tab {{ subRecipeOn ? 'on' : '' }}" aria-selected="{{ subRecipeOn }}" onClick="{{ goSimDashboard }}">Recetario</button>
       </sc-if>
-    </nav>
+      <sc-if value="{{ isWsProduccion }}" hint-placeholder-val="{{ false }}">
+        <button role="tab" class="fos-workspace-tab {{ subPlanOn ? 'on' : '' }}" aria-selected="{{ subPlanOn }}" onClick="{{ goPlan }}">Planificar</button>
+        <button role="tab" class="fos-workspace-tab {{ subPrepOn ? 'on' : '' }}" aria-selected="{{ subPrepOn }}" onClick="{{ goSimProduccion }}">Preparar mezcla</button>
+        <button role="tab" class="fos-workspace-tab {{ subBodegaOn ? 'on' : '' }}" aria-selected="{{ subBodegaOn }}" onClick="{{ goSimInventario }}">Bodega</button>
+      </sc-if>
+      <sc-if value="{{ isWsBitacora }}" hint-placeholder-val="{{ false }}">
+        <button role="tab" class="fos-workspace-tab {{ subLotesOn ? 'on' : '' }}" aria-selected="{{ subLotesOn }}" onClick="{{ goSimBitLotes }}">Lotes</button>
+        <button role="tab" class="fos-workspace-tab {{ subSegOn ? 'on' : '' }}" aria-selected="{{ subSegOn }}" onClick="{{ goSimBitSeguimiento }}">Seguimiento</button>
+        <button role="tab" class="fos-workspace-tab {{ subCosOn ? 'on' : '' }}" aria-selected="{{ subCosOn }}" onClick="{{ goSimBitCosechas }}">Cosechas</button>
+      </sc-if>
+      <sc-if value="{{ isWsControl }}" hint-placeholder-val="{{ false }}">
+        <button role="tab" class="fos-workspace-tab {{ subHoyOn ? 'on' : '' }}" aria-selected="{{ subHoyOn }}" onClick="{{ goControlHoy }}">Hoy</button>
+        <button role="tab" class="fos-workspace-tab {{ subCamOn ? 'on' : '' }}" aria-selected="{{ subCamOn }}" onClick="{{ goCamaras }}">Cámaras</button>
+        <button role="tab" class="fos-workspace-tab {{ subMetOn ? 'on' : '' }}" aria-selected="{{ subMetOn }}" onClick="{{ goRevision }}">Métricas</button>
+        <button role="tab" class="fos-workspace-tab {{ isCalidad ? 'on' : '' }}" onClick="{{ goCalidad }}">Calidad</button>
+        <button role="tab" class="fos-workspace-tab {{ isAprender ? 'on' : '' }}" onClick="{{ goAprender }}">Aprender</button>
+        <button role="tab" class="fos-workspace-tab {{ isComercial ? 'on' : '' }}" onClick="{{ goComercial }}">Comercial</button>
+      </sc-if>
+    </div>
 
     <!-- =================== INICIO / LAUNCHER =================== -->
     <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
@@ -1117,7 +1247,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -1413,7 +1543,7 @@
 
           <article style="border:1px solid var(--border-soft);padding:22px;">
             <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Próximos 14 días</div>
-            <div style="overflow-x:auto;"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px;">
+            <div style="overflow-x:auto;"><table class="fos-card-table" style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px;">
               <thead><tr style="border-bottom:1px solid var(--border-strong);">
                 <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Orden</th>
                 <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Especie</th>
@@ -1424,11 +1554,11 @@
               <tbody>
               <sc-for list="{{ scheduleRows }}" as="r" hint-placeholder-count="4">
                 <tr style="border-bottom:1px solid var(--border-soft);">
-                  <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.order }}</td>
-                  <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.species }}</td>
-                  <td style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.start }}</td>
-                  <td style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.chamber }}</td>
-                  <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+                  <td data-label="Orden" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.order }}</td>
+                  <td data-label="Especie" style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.species }}</td>
+                  <td data-label="Inicio" style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.start }}</td>
+                  <td data-label="Cámara" style="padding:12px 10px 12px 0;color:var(--ink-1);">{{ r.chamber }}</td>
+                  <td data-label="Estado" style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
                 </tr>
               </sc-for>
               </tbody>
@@ -1478,7 +1608,7 @@
 
         <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
           <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Stock por lote</div>
-          <div style="overflow-x:auto;"><table style="width:100%;min-width:560px;border-collapse:collapse;font-size:13px;">
+          <div style="overflow-x:auto;"><table class="fos-card-table" style="width:100%;min-width:560px;border-collapse:collapse;font-size:13px;">
             <thead><tr style="border-bottom:1px solid var(--border-strong);">
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Sustrato</th>
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Lote / proveedor</th>
@@ -1490,12 +1620,12 @@
             <tbody>
             <sc-for list="{{ inventoryRows }}" as="r" hint-placeholder-count="4">
               <tr style="border-bottom:1px solid var(--border-soft);">
-                <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.name }}</td>
-                <td style="padding:12px 10px 12px 0;color:var(--ink-1);font-family:var(--font-mono);font-size:12px;">{{ r.lot }}</td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.qty }}</td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.cost }}</td>
-                <td style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.coverage }}</td>
-                <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+                <td data-label="Sustrato" style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.name }}</td>
+                <td data-label="Lote / proveedor" style="padding:12px 10px 12px 0;color:var(--ink-1);font-family:var(--font-mono);font-size:12px;">{{ r.lot }}</td>
+                <td data-label="Disponible" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.qty }}</td>
+                <td data-label="Costo/kg" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.cost }}</td>
+                <td data-label="Cobertura" style="padding:12px 10px 12px 0;color:var(--ink-0);">{{ r.coverage }}</td>
+                <td data-label="Estado" style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
               </tr>
             </sc-for>
             </tbody>
@@ -1531,7 +1661,7 @@
 
         <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
           <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Por lote</div>
-          <div style="overflow-x:auto;"><table style="width:100%;min-width:640px;border-collapse:collapse;font-size:13px;">
+          <div style="overflow-x:auto;"><table class="fos-card-table" style="width:100%;min-width:640px;border-collapse:collapse;font-size:13px;">
             <thead><tr style="border-bottom:1px solid var(--border-strong);">
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Lote</th>
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Costo</th>
@@ -1543,12 +1673,12 @@
             <tbody>
             <sc-for list="{{ costeRows }}" as="r" hint-placeholder-count="4">
               <tr style="border-bottom:1px solid var(--border-soft);">
-                <td style="padding:12px 10px 12px 0;"><strong style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-0);">{{ r.lote }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ r.spp }} · {{ r.n }}</small></td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-1);">{{ r.total }}</td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-1);">{{ r.kg }}</td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.costoKg }}</td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--text-metadata);">{{ r.precio }}</td>
-                <td style="padding:12px 10px 12px 0;">
+                <td data-label="Lote" style="padding:12px 10px 12px 0;"><strong style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-0);">{{ r.lote }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ r.spp }} · {{ r.n }}</small></td>
+                <td data-label="Costo total" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-1);">{{ r.total }}</td>
+                <td data-label="Cosechado" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-1);">{{ r.kg }}</td>
+                <td data-label="Costo/kg" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.costoKg }}</td>
+                <td data-label="Precio" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--text-metadata);">{{ r.precio }}</td>
+                <td data-label="Margen" style="padding:12px 10px 12px 0;">
                   <span style="font-family:var(--font-mono);font-size:12.5px;color:{{ r.margenAccent }};">{{ r.margen }}</span>
                   <span style="display:block;height:4px;margin-top:5px;background:var(--paper-2);"><span style="display:block;height:4px;width:{{ r.barW }};background:{{ r.margenAccent }};"></span></span>
                 </td>
@@ -1853,7 +1983,7 @@
 
         <article style="border:1px solid var(--border-soft);padding:22px;margin-top:24px;">
           <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:14px;">Despachos recientes</div>
-          <div style="overflow-x:auto;"><table style="width:100%;min-width:520px;border-collapse:collapse;font-size:13px;">
+          <div style="overflow-x:auto;"><table class="fos-card-table" style="width:100%;min-width:520px;border-collapse:collapse;font-size:13px;">
             <thead><tr style="border-bottom:1px solid var(--border-strong);">
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Fecha</th>
               <th style="text-align:left;font:var(--t-caption);color:var(--text-metadata);text-transform:uppercase;padding:0 10px 8px 0;">Cliente</th>
@@ -1863,10 +1993,10 @@
             <tbody>
             <sc-for list="{{ commercialRows }}" as="r" hint-placeholder-count="3">
               <tr style="border-bottom:1px solid var(--border-soft);">
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.date }}</td>
-                <td style="padding:12px 10px 12px 0;"><strong style="font-size:13px;color:var(--ink-0);">{{ r.client }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ r.detail }}</small></td>
-                <td style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
-                <td style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.ref }}</td>
+                <td data-label="Fecha" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.date }}</td>
+                <td data-label="Cliente" style="padding:12px 10px 12px 0;"><strong style="font-size:13px;color:var(--ink-0);">{{ r.client }}</strong><small style="display:block;margin-top:2px;color:var(--text-metadata);font-size:11.5px;">{{ r.detail }}</small></td>
+                <td data-label="Estado" style="padding:12px 10px 12px 0;"><span style="{{ r.statusStyle }}">{{ r.status }}</span></td>
+                <td data-label="Lote" style="padding:12px 10px 12px 0;font-family:var(--font-mono);color:var(--ink-0);">{{ r.ref }}</td>
               </tr>
             </sc-for>
             </tbody>
@@ -2166,11 +2296,8 @@ const destLabel = k => (DESTINOS.find(d=>d.key===k)||{label:k}).label;
 // operador está "puesto" — solo evita errores por clic accidental, no
 // sustituye login real por operador (mejora futura pendiente).
 const OPERATORS = [
-  { key:'inigo',     name:'Germán',    role:'Operador in situ' },
-  { key:'sebastian', name:'Sebastián', role:'Operador remoto' },
-  { key:'ana',       name:'Maritza',   role:'Administradora', admin:true },
-  { key:'andrea',    name:'Andrea',    role:'Mercadeo y Ventas' },
-  { key:'carolina',  name:'Carolina',  role:'Operador remoto' },
+  { key:'inigo',     name:'Íñigo Pinzón',          role:'Dirección [Técnica/Comercial]', admin:true },
+  { key:'operario',  name:'Operario de Turno',     role:'Operario [Siembra/Cosecha]' },
 ];
 
 const RECIPES = [
@@ -2276,7 +2403,7 @@ class Component extends DCLogic {
     handoff:'', handoffDraft:'', lastPushAt:0, signed:{}, reviewed:{}, diagSymptom:null, planView:'semana',
     listening:false, voiceTarget:null,
     workLog:[ {op:'Germán', horas:6.5, kg:4.2, tareas:14}, {op:'Íñigo', horas:5.0, kg:2.6, tareas:9}, {op:'Ana', horas:3.5, kg:1.4, tareas:6} ],
-    module: 'inicio',
+    module: 'sim',
     screen: 'start',
     capture: false,
     online: true, pendingSync: 0, syncing: false, syncLog: [], syncQueueOpen: false,
@@ -2293,17 +2420,15 @@ class Component extends DCLogic {
     rCount: 1,
     climaBadge: 0,
     simRecipes: [],
-    simTab: 'formular',
+    simTab: 'home',
     simTabNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
     simFlyoutOpen: false,
-    bitSubtab: 'bit_dash',
-    bitSubtabNonce: 0,
-    stockAlertCount: 0,
-    workspaceMoreOpen: false,
+    simPendingTab: 'home',
     role: 'operator',
-    operator: 'Germán', operatorKey: 'inigo', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
+    operator: 'Operario de Turno', operatorKey: 'operario', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
+    lastSyncAt: Date.now(), lastSyncSecs: 0,
     reviewTab: 'eventos',
     camDetail: null,
     labelFor: null,
@@ -2384,10 +2509,18 @@ class Component extends DCLogic {
       else if(s.scanning) this.closeScan();
     };
     window.addEventListener('keydown', this._onKeyDown);
-    this._onOnline = ()=>this.setState({online:true}, ()=>this.drainSync());
+    this._onOnline = ()=>this.checkHealth(true);
     this._onOffline = ()=>this.setState({online:false});
     window.addEventListener('online', this._onOnline);
     window.addEventListener('offline', this._onOffline);
+    this.checkHealth(true);
+    this._healthTimer = setInterval(()=>this.checkHealth(), 30000);
+    this._syncSecsTicker = setInterval(()=>{
+      const now = Date.now();
+      const last = this.state.lastSyncAt || now;
+      const secs = Math.max(0, Math.floor((now - last)/1000));
+      this.setState({ lastSyncSecs: secs });
+    }, 1000);
     this.refreshSim();
     this._onStorage = (e)=>{ if(!e || e.key==='setas_v6' || e.key===null) this.refreshSim(); };
     window.addEventListener('storage', this._onStorage);
@@ -2413,6 +2546,8 @@ class Component extends DCLogic {
     clearInterval(this._t);
     clearInterval(this._wt);
     clearInterval(this._climaTick);
+    clearInterval(this._healthTimer);
+    clearInterval(this._syncSecsTicker);
     clearTimeout(this._scanT);
     clearTimeout(this._syncT);
     clearInterval(this._detectLoop);
@@ -2421,6 +2556,26 @@ class Component extends DCLogic {
     window.removeEventListener('message', this._onClimate);
     window.removeEventListener('online', this._onOnline);
     window.removeEventListener('offline', this._onOffline);
+  }
+  async checkHealth(immediateDrain){
+    const hasNav = typeof navigator !== 'undefined';
+    const isNavOnline = hasNav ? navigator.onLine : true;
+    if(!isNavOnline){
+      this.setState({ online:false });
+      return;
+    }
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(()=>ctrl.abort(), 4500);
+      const res = await fetch('/api/health', { signal:ctrl.signal, cache:'no-cache' }).catch(()=>null);
+      clearTimeout(tid);
+      const ok = !!(res && (res.ok || res.status < 500));
+      const now = Date.now();
+      this.setState({ online: ok, lastSyncAt: ok ? now : (this.state.lastSyncAt || now), lastSyncSecs: 0 });
+      if(ok && immediateDrain) this.drainSync();
+    } catch(e){
+      this.setState({ online:false });
+    }
   }
   componentDidUpdate(pp, ps){
     if(!ps) return;
@@ -2784,20 +2939,10 @@ class Component extends DCLogic {
     return (map[key]||cloud)();
   }
   goSimTab(tab){
-    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:tab, simTabNonce:s.simTabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, simPendingTab:tab, simTab:tab, simTabNonce:s.simTabNonce+1 }));
   }
-  goBitTab(bitSubtab){
-    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab, bitSubtabNonce:s.bitSubtabNonce+1 }));
-  }
-  handleWorkspaceKeys(e){
-    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
-    const tabs=Array.from(e.currentTarget.querySelectorAll('[role="tab"]'));
-    if(!tabs.length) return;
-    const current=Math.max(0,tabs.indexOf(document.activeElement));
-    const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:e.key==='ArrowRight'?(current+1)%tabs.length:(current-1+tabs.length)%tabs.length;
-    e.preventDefault();
-    tabs[next].focus();
-    tabs[next].click();
+  goSimBitSub(sub){
+    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, simPendingTab:'bitacora', simTab:'bitacora', simBitSub:sub, simTabNonce:s.simTabNonce+1 }));
   }
   refreshSim(){
     let list = [];
@@ -2855,7 +3000,7 @@ class Component extends DCLogic {
     } catch(e){ return ''; } }
 
   openSimForSpecies(key){
-    this.setState(s=>({ module:'sim', capture:false, simPreselect:key, simPreselectNonce:s.simPreselectNonce+1, simTab:'formular', simTabNonce:s.simTabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, simPreselect:key, simPreselectNonce:s.simPreselectNonce+1, simPendingTab:'formular', simTab:'formular', simTabNonce:s.simTabNonce+1 }));
   }
 
   confirmRegister(){
@@ -3135,68 +3280,73 @@ class Component extends DCLogic {
     const escalatedList = climateAlertList.filter(a=>a.escalated);
     const lowStockRows = INVENTORY_ROWS.filter(r=>r.status==='Reponer');
     const mkTabs = pairs => gated(pairs).map(([m,label])=>({ label, on:s.module===m, style:tabStyle(s.module===m), go:()=>this.setState(Object.assign({module:m,capture:false}, m==='camaras'?{camDetail:null,climaBadge:0}:{})) }));
-    const FORMULAR_SIM_TABS = ['catalogo','formular','dashboard'];
-    const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
-    const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
-    const activeWorkspace = s.module==='sim'
-      ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':(PRODUCCION_SIM_TABS.includes(s.simTab)?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
-      : (['plan','inventario'].includes(s.module)?'produccion':(s.module==='sesion'?'bitacora':(CONTROL_MODULES.includes(s.module)?'control':'control')));
-    const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
-    let workspaceTabs = [];
-    if(activeWorkspace==='formular') workspaceTabs = [
-      contextTab('Catálogo',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
-      contextTab('Formular',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
-      contextTab('Recetario',s.module==='sim'&&s.simTab==='dashboard',()=>this.goSimTab('dashboard')),
-    ];
-    if(activeWorkspace==='produccion') workspaceTabs = [
-      ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
-      contextTab('Preparar mezcla',s.module==='sim'&&s.simTab==='produccion',()=>this.goSimTab('produccion')),
-      contextTab('Bodega',(s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario',()=>this.goSimTab('inventario')),
-    ];
-    if(activeWorkspace==='bitacora') workspaceTabs = [
-      contextTab('Registrar evento',s.module==='sesion',()=>this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})),
-      contextTab('Lotes',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_dash',()=>this.goBitTab('bit_dash')),
-      contextTab('Seguimiento',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_bolsas',()=>this.goBitTab('bit_bolsas')),
-      contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
-    ];
-    if(activeWorkspace==='control') workspaceTabs = [
-      contextTab('Hoy',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
-      contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
-      contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
-    ];
-    if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
-    const workspaceMoreItems = gated([['costes','Costos'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]).map(([m,label])=>({
-      label, on:s.module===m, current:s.module===m?'page':undefined, cls:s.module===m?'on':'',
-      go:()=>this.setState({module:m,capture:false,workspaceMoreOpen:false}),
-    }));
+
+    const activeWs = (() => {
+      if (s.module === 'sim') {
+        if (['catalogo', 'formular', 'dashboard'].includes(s.simTab)) return 'formular';
+        if (['produccion', 'inventario', 'schedule'].includes(s.simTab)) return 'produccion';
+        if (s.simTab === 'bitacora') return 'bitacora';
+        if (s.simTab === 'home') return 'control';
+      }
+      if (['plan', 'inventario'].includes(s.module)) return 'produccion';
+      if (['inicio', 'camaras', 'revision', 'costes', 'calidad', 'aprender', 'comercial', 'sesion'].includes(s.module)) return 'control';
+      return 'control';
+    })();
 
     return {
+      activeWs,
+      wsFormularCls: activeWs === 'formular' ? 'on' : '',
+      curFormularWs: activeWs === 'formular' ? 'page' : undefined,
+      wsProduccionCls: activeWs === 'produccion' ? 'on' : '',
+      curProduccionWs: activeWs === 'produccion' ? 'page' : undefined,
+      wsBitacoraCls: activeWs === 'bitacora' ? 'on' : '',
+      curBitacoraWs: activeWs === 'bitacora' ? 'page' : undefined,
+      wsControlCls: activeWs === 'control' ? 'on' : '',
+      curControlWs: activeWs === 'control' ? 'page' : undefined,
+
+      goWsFormular: () => this.goSimTab('formular'),
+      goWsProduccion: () => this.goSimTab('produccion'),
+      goWsBitacora: () => this.goSimBitSub('bit_dash'),
+      goWsControl: () => this.setState({ module: 'inicio', capture: false }),
+      goControlHoy: () => this.setState({ module: 'inicio', capture: false }),
+
+      hasLowStockBadge: lowStockRows.length > 0,
+      lowStockCount: lowStockRows.length > 9 ? '9+' : lowStockRows.length,
+      lowStockBadgeText: `${lowStockRows.length} insumos bajo el mínimo`,
+
+      isWsFormular: activeWs === 'formular',
+      isWsProduccion: activeWs === 'produccion',
+      isWsBitacora: activeWs === 'bitacora',
+      isWsControl: activeWs === 'control',
+
+      subCatOn: s.module === 'sim' && s.simTab === 'catalogo',
+      subFormOn: s.module === 'sim' && s.simTab === 'formular',
+      subRecipeOn: s.module === 'sim' && s.simTab === 'dashboard',
+
+      subPlanOn: s.module === 'plan' || (s.module === 'sim' && s.simTab === 'schedule'),
+      subPrepOn: s.module === 'sim' && s.simTab === 'produccion',
+      subBodegaOn: (s.module === 'sim' && s.simTab === 'inventario') || s.module === 'inventario',
+
+      subLotesOn: s.module === 'sim' && s.simTab === 'bitacora' && (s.simBitSub || 'bit_dash') === 'bit_dash',
+      subSegOn: s.module === 'sim' && s.simTab === 'bitacora' && s.simBitSub === 'bit_bolsas',
+      subCosOn: s.module === 'sim' && s.simTab === 'bitacora' && s.simBitSub === 'bit_cosechas',
+
+      subHoyOn: s.module === 'inicio' || (s.module === 'sim' && s.simTab === 'home'),
+      subCamOn: s.module === 'camaras',
+      subMetOn: s.module === 'revision',
+
+      goSimBitLotes: () => this.goSimBitSub('bit_dash'),
+      goSimBitSeguimiento: () => this.goSimBitSub('bit_bolsas'),
+      goSimBitCosechas: () => this.goSimBitSub('bit_cosechas'),
+      simBitSub: s.simBitSub || 'bit_dash',
+
       // modules
       isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
-      workspaceLabel:'Navegación de '+({formular:'Formular',produccion:'Producción',bitacora:'Bitácora',control:'Control'}[activeWorkspace]),
-      workspaceTabs, activeWorkspace,
-      navWorkspaceFormularCls:activeWorkspace==='formular'?'on':'', curWorkspaceFormular:activeWorkspace==='formular'?'page':undefined,
-      navWorkspaceProduccionCls:activeWorkspace==='produccion'?'on':'', curWorkspaceProduccion:activeWorkspace==='produccion'?'page':undefined,
-      navWorkspaceBitacoraCls:activeWorkspace==='bitacora'?'on':'', curWorkspaceBitacora:activeWorkspace==='bitacora'?'page':undefined,
-      navWorkspaceControlCls:activeWorkspace==='control'?'on':'', curWorkspaceControl:activeWorkspace==='control'?'page':undefined,
-      goWorkspaceFormular:()=>this.goSimTab('formular'),
-      goWorkspaceProduccion:()=>ROLE_GATE.plan.includes(s.role)
-        ?this.setState({module:'plan',capture:false,workspaceMoreOpen:false})
-        :this.goSimTab('produccion'),
-      goWorkspaceBitacora:()=>s.sessionType
-        ?this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})
-        :this.goBitTab('bit_dash'),
-      goWorkspaceControl:()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false}),
-      hasWorkspaceMore:activeWorkspace==='control'&&workspaceMoreItems.length>0,
-      workspaceMoreOpen:s.workspaceMoreOpen, workspaceMoreItems,
-      workspaceMoreCls:s.workspaceMoreOpen?'on':'',
-      toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
-      onWorkspaceKeyDown:e=>this.handleWorkspaceKeys(e),
-      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
+      navInicioCls:(s.module==='inicio' || (s.module==='sim'&&s.simTab==='home'))?'on':'', navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
-      curInicio:s.module==='inicio'?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
+      curInicio:(s.module==='inicio' || (s.module==='sim'&&s.simTab==='home'))?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
       curRevision:s.module==='revision'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
       navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
@@ -3206,19 +3356,14 @@ class Component extends DCLogic {
       navScheduleCls:(s.module==='sim'&&s.simTab==='schedule')?'on':'', curSchedule:(s.module==='sim'&&s.simTab==='schedule')?'page':undefined,
       curPlan:s.module==='plan'?'page':undefined, curInventario:s.module==='inventario'?'page':undefined, curCalidad:s.module==='calidad'?'page':undefined,
       curAprender:s.module==='aprender'?'page':undefined, curComercial:s.module==='comercial'?'page':undefined,
-      hasClimaBadge:climateAlertList.length>0, climaBadge:climateAlertList.length>9?'9+':climateAlertList.length,
-      climaBadgeLabel:climateAlertList.length+' incidencias climáticas activas',
-      hasStockBadge:s.stockAlertCount>0, stockBadge:s.stockAlertCount>9?'9+':s.stockAlertCount,
-      stockBadgeLabel:s.stockAlertCount+' ingredientes bajo el mínimo local',
+      hasClimaBadge:s.climaBadge>0, climaBadge:s.climaBadge>9?'9+':s.climaBadge,
       navProdCls: PROD_MODS.includes(s.module)?'on':'', navRegCls: REG_MODS.includes(s.module)?'on':'',
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
-      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null,climaBadge:0}),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
-      // Las barras antiguas por pantalla quedan vacías: workspaceTabs es la única
-      // navegación contextual visible y evita dos fuentes de verdad.
-      prodTabs: [],
-      regTabs: [],
-      goInicio:()=>this.setState({module:'inicio',capture:false}),
+      prodTabs: mkTabs([['camaras','Cámaras'],['plan','Plan'],['inventario','Inventario'],['costes','Costes'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]),
+      regTabs: mkTabs([['revision','Revisión'],['aprender','Aprender'],['comercial','Comercial']]),
+      goInicio:()=>this.goSimTab('home'),
       goSesion:()=>this.setState({module:'sesion',capture:false}),
       goSim:()=>{ this.refreshSim(); this.goSimTab((s.simRecipes||[]).length>0?'dashboard':'formular'); },
       toggleSimFlyout:()=>this.setState(s=>({simFlyoutOpen:!s.simFlyoutOpen})),
@@ -3233,8 +3378,13 @@ class Component extends DCLogic {
       goSimInventario:()=>this.goSimTab('inventario'),
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
+      simSubOnInicio:s.simPendingTab==='inicio'?'on':undefined,
+      simSubOnCatalogo:s.simPendingTab==='catalogo'?'on':undefined,
+      simSubOnFormular:s.simPendingTab==='formular'?'on':undefined,
+      simSubOnBitacora:s.simPendingTab==='bitacora'?'on':undefined,
+      simSubOnDashboard:s.simPendingTab==='dashboard'?'on':undefined,
       goRevision:()=>this.setState({module:'revision',capture:false}),
-      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null,climaBadge:0}),
       goPlan:()=>this.setState({module:'plan',capture:false}),
       goInventario:()=>this.setState({module:'inventario',capture:false}),
       goCalidad:()=>this.setState({module:'calidad',capture:false}),
@@ -3267,21 +3417,8 @@ class Component extends DCLogic {
       zonas:ZONAS,
       camaras: camView.map(c=>({ ...c, ...this.liveMonitor(c), open:()=>this.setState({camDetail:c.id}) })),
       hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
-      simTab:s.simTab, simTabNonce:s.simTabNonce, bitSubtab:s.bitSubtab, bitSubtabNonce:s.bitSubtabNonce,
-      simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
+      simTab:s.simTab, simTabNonce:s.simTabNonce, simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
-      onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','bitacora'];
-        if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
-      },
-      onBitSubtabChange:(bitSubtab)=>{
-        const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
-        if(allowed.includes(bitSubtab)&&bitSubtab!==this.state.bitSubtab) this.setState({bitSubtab});
-      },
-      onStockAlertChange:(count)=>{
-        const next=Math.max(0,Number(count)||0);
-        if(next!==this.state.stockAlertCount) this.setState({stockAlertCount:next});
-      },
       onSimSaved:(list)=>{ if(Array.isArray(list)) this.setState({ simRecipes:list }); },
       historicalYieldsJson: JSON.stringify(s.yields||[]),
       climaSrc:(window.__resources && window.__resources.climaBenchHtml ? window.__resources.climaBenchHtml : 'climate-bench.html'),
@@ -3336,11 +3473,14 @@ class Component extends DCLogic {
       syncPillText: (()=>{
         const fails=s.syncLog.filter(l=>l.status==='fallido').length;
         const conflicts=s.syncLog.filter(l=>l.status==='conflicto').length;
+        const secs = s.lastSyncSecs != null ? s.lastSyncSecs : 0;
+        const timeAgo = secs < 5 ? 'hace un momento' : ('hace ' + secs + ' s');
         if(s.syncing) return 'Sincronizando…';
         if(conflicts>0) return conflicts+' conflicto'+(conflicts>1?'s':'')+' por resolver';
         if(fails>0) return fails+' evento'+(fails>1?'s':'')+' fallido'+(fails>1?'s':'');
-        if(!s.online) return s.pendingSync>0?(s.pendingSync+' en cola'):'Sin conexión';
-        return s.pendingSync>0?(s.pendingSync+' por sincronizar'):'Sincronizado';
+        if(!s.online) return s.pendingSync>0 ? ('Offline · '+s.pendingSync+' en cola') : 'Offline';
+        if(s.pendingSync>0) return 'Online · '+s.pendingSync+' pendientes ('+timeAgo+')';
+        return 'Online · sync ' + timeAgo;
       })(),
       syncPillColor: (()=>{
         if(s.syncLog.some(l=>l.status==='conflicto')) return 'var(--status-error)';
@@ -3749,11 +3889,10 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora'};
-    const crumbMap = { inicio:'Control · Hoy', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
-      inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
-      revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
+    const SIM_CRUMB = { home:'Centro de Mando', catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega' };
+    const crumbMap = { inicio:'Centro de Mando', sesion:'Hoy · Sesión', sim:(SIM_CRUMB[s.simTab]||''), camaras:'Producción · Cámaras', plan:'Producción · Plan',
+      inventario:'Producción · Inventario', calidad:'Producción · Calidad', costes:'Producción · Costes',
+      revision:'Registro · Revisión', aprender:'Registro · Aprender', comercial:'Registro · Comercial' };
     const undoOpen = s.ledger.length>0 && (Date.now()-(s.lastPushAt||0) < 30000);
     return {
       bannerBotanicoImg: this.bannerImgResolved(),
