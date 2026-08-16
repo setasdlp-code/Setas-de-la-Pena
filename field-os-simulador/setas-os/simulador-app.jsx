@@ -5314,7 +5314,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           stockMap,
                                         });
                                         noStock=noStock||!!out.noStock;
-                                        byProfile[pk]=(out.ranked||[]).slice(0,6).map(c=>
+                                        byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
                                           hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
                                         );
                                         const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);

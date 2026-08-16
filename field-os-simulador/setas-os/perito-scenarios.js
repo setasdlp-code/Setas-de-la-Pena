@@ -916,7 +916,28 @@
     let allowed = all.filter(c => c.id !== 'baseline' && c.evaluation?.allowed);
     allowed = applyForceLowRisk(allowed, profile.forceLowRisk);
 
-    const ranked = allowed.slice().sort(candidateSort).slice(0, 12);
+    // Diversidad estructural en el top-12: sin esto, el beam de mutaciones converge sobre
+    // el/los pocos roles estructurales (1b1s/2b1s/1b2s) que puntúan mejor y el ranking
+    // final queda dominado por variantes casi idénticas del mismo par/trío de ingredientes
+    // base con distintos suplementos secundarios. Se agrupa por la identidad de los
+    // ingredientes base_carbono de cada receta, se limita cuántos candidatos por grupo
+    // entran en una primera pasada, y se rellena con lo que sobre (mejor score primero) si
+    // aún hay espacio en el límite — así no se acorta la lista cuando de verdad no hay más
+    // variedad estructural disponible.
+    const roleByIdForRanking = new Map(ingredients.map(g => [g.id, g.role]));
+    const structKeyFor = c => c.recipe.filter(r => roleByIdForRanking.get(r.id) === 'base_carbono').map(r => r.id).sort().join('+') || 'sin_base';
+    const RANKED_LIMIT = 12;
+    const RANKED_PER_GROUP_CAP = 3;
+    const rankedGroupCounts = new Map();
+    const rankedDiverse = [];
+    const rankedLeftovers = [];
+    allowed.slice().sort(candidateSort).forEach(c => {
+      const k = structKeyFor(c);
+      const count = rankedGroupCounts.get(k) || 0;
+      if (count < RANKED_PER_GROUP_CAP) { rankedGroupCounts.set(k, count + 1); rankedDiverse.push(c); }
+      else rankedLeftovers.push(c);
+    });
+    const ranked = rankedDiverse.concat(rankedLeftovers).slice(0, RANKED_LIMIT).sort(candidateSort);
     const viable = allowed.filter(c => dimensionVector(c.evaluation).safety >= 60);
     const pareto = paretoFront(viable).sort(utilitySort);
 

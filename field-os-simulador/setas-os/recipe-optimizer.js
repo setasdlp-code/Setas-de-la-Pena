@@ -800,12 +800,33 @@
     // Dedup por composición real (ids + % redondeado al entero), no por score/cn/costo —
     // ese bucketing colapsaba recetas con ingredientes distintos que caían en el mismo rango.
     const seen = new Set();
-    const top = filteredResults.sort((a, b) => b.score - a.score)
+    const deduped = filteredResults.sort((a, b) => b.score - a.score)
       .filter(r => {
         const k = r.recipe.map(i => `${i.id}:${Math.round(parseFloat(i.p) || 0)}`).sort().join('|');
         if (seen.has(k)) return false; seen.add(k); return true;
-      })
-      .slice(0, 30);
+      });
+
+    // Diversidad estructural: sin esto, el top-30 quedaba dominado por 1-2 pares de
+    // ingredientes base que puntúan mejor, repetidos con variantes triviales de un solo
+    // suplemento distinto (el resto del score apenas se mueve). Se agrupa por la identidad
+    // de los ingredientes base_carbono de cada receta y se limita cuántos resultados puede
+    // aportar un mismo grupo en la primera pasada; si sobra espacio en el límite de 30, se
+    // rellena con lo que quede (mejor score primero) para no acortar la lista cuando la
+    // especie/catálogo realmente no ofrece más variedad estructural.
+    const roleById = new Map(ings.map(g => [g.id, g.role]));
+    const groupKeyFor = rec => rec.filter(i => roleById.get(i.id) === 'base_carbono').map(i => i.id).sort().join('+') || 'sin_base';
+    const RESULT_LIMIT = 30;
+    const PER_GROUP_CAP = 3;
+    const groupCounts = new Map();
+    const diverse = [];
+    const leftovers = [];
+    deduped.forEach(r => {
+      const k = groupKeyFor(r.recipe);
+      const count = groupCounts.get(k) || 0;
+      if (count < PER_GROUP_CAP) { groupCounts.set(k, count + 1); diverse.push(r); }
+      else leftovers.push(r);
+    });
+    const top = diverse.concat(leftovers).slice(0, RESULT_LIMIT).sort((a, b) => b.score - a.score);
     const diag = {
       stockIds: stockIds.size,
       poolSize: pool.length,

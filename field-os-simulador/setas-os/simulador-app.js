@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: fc691a037a7f54dc9e61eb107cbbf43b6d3edf5291db218807377c144151928b
+// source-hash: fe758debb3cd46c570f7023794490eecaa1b5667dc61b9a9c2c636d36875a052
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3630,7 +3630,7 @@ Click para editar`
                 stockMap
               });
               noStock = noStock || !!out.noStock;
-              byProfile[pk] = (out.ranked || []).slice(0, 6).map(
+              byProfile[pk] = (out.ranked || []).slice(0, 12).map(
                 (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk)
               );
               const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
