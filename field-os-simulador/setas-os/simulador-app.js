@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 98e3c3817376148d61efbee7d138bdedcf6d2cd42ee614ff80398f34f863f93e
+// source-hash: 1c42970944d95a21f8adc5b183780a430a328dad40ee60d96ace46d2dd390748
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3016,7 +3016,7 @@ BATCH (${numBags}×${kgBag} kg):
           onClick: () => {
             setBitActiveLoteId(lt.id);
             goTab("bitacora");
-            setBitTab("bit_lote_detalle");
+            goBitTab("bit_bolsas", true);
           },
           style: {
             display: "flex",
