@@ -4056,7 +4056,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         return (
                           <div
                             key={lt.id}
-                            onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');setBitTab('bit_lote_detalle');}}
+                            onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
                             style={{
                               display:'flex',
                               justifyContent:'space-between',
