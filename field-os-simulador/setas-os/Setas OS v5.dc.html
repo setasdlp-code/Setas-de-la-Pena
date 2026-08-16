@@ -2276,7 +2276,7 @@ class Component extends DCLogic {
     handoff:'', handoffDraft:'', lastPushAt:0, signed:{}, reviewed:{}, diagSymptom:null, planView:'semana',
     listening:false, voiceTarget:null,
     workLog:[ {op:'Germán', horas:6.5, kg:4.2, tareas:14}, {op:'Íñigo', horas:5.0, kg:2.6, tareas:9}, {op:'Ana', horas:3.5, kg:1.4, tareas:6} ],
-    module: 'inicio',
+    module: 'sim',
     screen: 'start',
     capture: false,
     online: true, pendingSync: 0, syncing: false, syncLog: [], syncQueueOpen: false,
@@ -2293,7 +2293,7 @@ class Component extends DCLogic {
     rCount: 1,
     climaBadge: 0,
     simRecipes: [],
-    simTab: 'formular',
+    simTab: 'home',
     simTabNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
@@ -3160,7 +3160,8 @@ class Component extends DCLogic {
       contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
     ];
     if(activeWorkspace==='control') workspaceTabs = [
-      contextTab('Hoy',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
+      contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
+      contextTab('Sesión',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
       contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
@@ -3188,7 +3189,7 @@ class Component extends DCLogic {
       goWorkspaceBitacora:()=>s.sessionType
         ?this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})
         :this.goBitTab('bit_dash'),
-      goWorkspaceControl:()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false}),
+      goWorkspaceControl:()=>this.goSimTab('home'),
       hasWorkspaceMore:activeWorkspace==='control'&&workspaceMoreItems.length>0,
       workspaceMoreOpen:s.workspaceMoreOpen, workspaceMoreItems,
       workspaceMoreCls:s.workspaceMoreOpen?'on':'',
