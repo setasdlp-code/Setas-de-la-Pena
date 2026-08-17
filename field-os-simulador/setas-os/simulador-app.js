@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 0bb535b563698793991d59b1ec48624557a72d37cab39b731d452d85d9db5d10
+// source-hash: 1f3e6911d370ff69cd15516af87d8ac3974459408e7ae729871da5cfa4dc6b0c
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -135,8 +135,8 @@ const SPP = {
 const INGS = [
   // cra=Capacidad Retención Agua 0-5 | ph=pH propio | dig=digestibilidad 1-10 (celulosa accesible/lignina)
   // === BASE CARBONO ===
-  { id: "paja_trigo", name: "Paja de trigo", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"] },
-  { id: "paja_cebada", name: "Paja de cebada", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"] },
+  { id: "paja_trigo", name: "Paja de trigo", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "Comparte cn/n/c con paja_cebada — a diferencia de otros grupos de valores idénticos hallados en el peritaje, este caso es agronómicamente plausible: paja de trigo y de cebada son cereales de paja muy similares en composición. No se trató como placeholder sin verificar." },
+  { id: "paja_cebada", name: "Paja de cebada", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "Ver nota en paja_trigo — mismo cn/n/c, plausible por similitud agronómica entre ambos cereales de paja." },
   { id: "paja_avena", name: "Paja de avena", cat: "base", cn: 75, n: 0.6, c: 45, moisture: 12, cra: 4.5, ph: 6.5, dig: 8, role: "base_carbono", tags: ["Base", "Cereales"], cost: 2200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"] },
   { id: "paja_arroz", name: "Paja de arroz", cat: "base", cn: 65, n: 0.7, c: 46, moisture: 12, cra: 2.5, ph: 6.8, dig: 4, role: "base_carbono", tags: ["Base", "Cereales"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "nameko", "enoki"] },
   { id: "bagazo_caña", name: "Bagazo de caña fresco", cat: "base", cn: 60, n: 0.7, c: 42, moisture: 55, cra: 4, ph: 5.5, dig: 7, role: "base_carbono", tags: ["Base", "Local", "Fresco 50–60% H₂O"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "shiitake"], notes: "Compatibilidad con shiitake verificada en literatura: bagazo+salvado de trigo+aserrín en mezcla optimizada (Frontiers in Microbiology 2024, PMC11151849)." },
