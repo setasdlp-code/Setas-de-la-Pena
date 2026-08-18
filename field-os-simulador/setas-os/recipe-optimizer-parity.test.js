@@ -170,6 +170,52 @@ for (const targetKey of ['p_ostreatus_gris', 'shiitake']) {
   }
 }
 
+test('searchScenarios diversifica el ranked del beam en vez de dejar que un solo par de bases lo acapare', () => {
+  // Catálogo con 6 bases y 6 suplementos intercambiables: el beam de mutaciones
+  // tiende a converger sobre el/los pocos roles estructurales que puntúan mejor
+  // (selectStructuralRoots solo toma 4 semillas), y sin diversidad en el ranking
+  // final el top-12 quedaba dominado por variantes casi idénticas de una sola
+  // combinación de bases con distinto suplemento secundario.
+  const diverseINGS = [
+    { id: 'paja_arroz', name: 'Paja de arroz', role: 'base_carbono', cn: 65, n: .7, c: 46, moisture: 12, cra: 2.5, ph: 6.8, dig: 4, tags: [], cs: ['p_ostreatus_gris'], cost: 1800 },
+    { id: 'aserrin_eucalipto', name: 'Aserrín de eucalipto', role: 'base_carbono', cn: 350, n: .15, c: 50, moisture: 12, cra: 3, ph: 5.0, dig: 3, tags: [], cs: ['p_ostreatus_gris'], cost: 2000 },
+    { id: 'kikuyo', name: 'Kikuyo seco', role: 'base_carbono', cn: 25, n: 1.8, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 8, tags: [], cs: ['p_ostreatus_gris'], cost: 1400 },
+    { id: 'retamo_espinoso', name: 'Retamo espinoso', role: 'base_carbono', cn: 32, n: 1.5, c: 47, moisture: 11, cra: 3, ph: 6.0, dig: 5, tags: [], cs: ['p_ostreatus_gris'], cost: 400 },
+    { id: 'heno_pangola', name: 'Heno de pangola', role: 'base_carbono', cn: 60, n: .8, c: 48, moisture: 12, cra: 4, ph: 6.5, dig: 7, tags: [], cs: ['p_ostreatus_gris'], cost: 6500 },
+    { id: 'fibra_palma', name: 'Fibra de palma de aceite', role: 'base_carbono', cn: 70, n: .7, c: 49, moisture: 18, cra: 3, ph: 5.8, dig: 4, tags: [], cs: ['p_ostreatus_gris'], cost: 1800 },
+    { id: 'salvado_trigo', name: 'Salvado de trigo', role: 'suplemento_n', cn: 16, n: 2.8, c: 45, moisture: 12, cra: 3, ph: 6.2, dig: 8, tags: [], cs: ['p_ostreatus_gris'], cost: 5200 },
+    { id: 'afrecho_cerveceria', name: 'Afrecho de cervecería', role: 'suplemento_n', cn: 11, n: 4.2, c: 46, moisture: 75, cra: 4.5, ph: 5.5, dig: 7, tags: [], cs: ['p_ostreatus_gris'], cost: 2500 },
+    { id: 'gallinaza', name: 'Gallinaza compostada', role: 'suplemento_n', cn: 10, n: 3.5, c: 35, moisture: 20, cra: 2.5, ph: 7.5, dig: 8, tags: [], cs: ['p_ostreatus_gris'], cost: 2500 },
+    { id: 'lombricompost', name: 'Lombricompost', role: 'suplemento_n', cn: 12, n: 3.0, c: 36, moisture: 35, cra: 3.5, ph: 7.0, dig: 8, tags: [], cs: ['p_ostreatus_gris'], cost: 5000 },
+    { id: 'compost_maduro', name: 'Compost maduro', role: 'suplemento_n', cn: 15, n: 2.8, c: 42, moisture: 35, cra: 3.5, ph: 7.0, dig: 8, tags: [], cs: ['p_ostreatus_gris'], cost: 2500 },
+    { id: 'harina_maiz', name: 'Harina de Maíz', role: 'suplemento_n', cn: 8, n: 3.2, c: 36, moisture: 12, cra: 3.0, ph: 6.8, dig: 7, tags: [], cs: ['p_ostreatus_gris'], cost: 1000 },
+    { id: 'carbonato_calcio', name: 'Carbonato de calcio', role: 'aditivo_ph', cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 9.5, dig: 0, tags: [], cs: ['p_ostreatus_gris'], cost: 3000 },
+    { id: 'yeso', name: 'Yeso agrícola', role: 'aditivo_estructura', cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 7.0, dig: 0, tags: [], cs: ['p_ostreatus_gris'], cost: 2200 },
+  ];
+  const sp = SPP.p_ostreatus_gris;
+  const out = scenarios.searchScenarios({
+    recipe: [], context: { sKey: 'p_ostreatus_gris', spp: SPP }, targetKey: 'p_ostreatus_gris', spp: SPP,
+    ingredients: diverseINGS,
+    analyze: recipe => legacy.analyze(recipe, 'p_ostreatus_gris', diverseINGS, SPP),
+    score: scoreAdapter('p_ostreatus_gris'), history: [], searchMode: 'hybrid',
+    generations: 3, beamWidth: 14, stepPct: 4, useStock: false, profileKey: 'produccion',
+    roleCaps: roleCaps(sp), ingredientCaps: ingredientCaps(diverseINGS, sp),
+  });
+
+  const roleById = new Map(diverseINGS.map(g => [g.id, g.role]));
+  const groupCounts = new Map();
+  out.ranked.forEach(c => {
+    const k = c.recipe.filter(r => roleById.get(r.id) === 'base_carbono').map(r => r.id).sort().join('+');
+    groupCounts.set(k, (groupCounts.get(k) || 0) + 1);
+  });
+  assert.ok(out.ranked.length > 0, 'esperaba al menos un resultado');
+  assert.ok(groupCounts.size >= 3, `esperaba al menos 3 combinaciones de bases distintas, hubo ${groupCounts.size}`);
+  for (const [key, count] of groupCounts) assert.ok(count <= 3, `el grupo "${key}" aporta ${count} resultados, más de los 3 permitidos por combinación de bases`);
+  for (let i = 1; i < out.ranked.length; i++) {
+    assert.ok(out.ranked[i - 1].evaluation.score >= out.ranked[i].evaluation.score, 'el ranked sigue ordenado de mayor a menor score');
+  }
+});
+
 // This test intentionally depends on runAutoOptimizer while it is the parity
 // oracle. After this gate passes in the complete checkout, freeze the observed
 // legacy top-12 compositions/scores as static golden fixtures; only then remove
