@@ -5,7 +5,7 @@ const { chromium } = require('@playwright/test');
 // con una cuenta de prueba, y guarda la sesión resultante para que todos los
 // specs la reutilicen sin volver a pasar por #setas-auth-gate.
 //
-// Requiere E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno (ver .env.example).
+// Requiere E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno (ver env.example).
 // No se toca auth-gate.js ni ninguna lógica de Firebase — esto solo automatiza
 // lo que un operador haría a mano en el formulario del gate.
 module.exports = async (config) => {
@@ -14,7 +14,7 @@ module.exports = async (config) => {
   if (!email || !password) {
     throw new Error(
       'Faltan E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno. ' +
-      'Copia .env.example a .env, complétalo con la cuenta de prueba de Firebase ' +
+      'Copia env.example a .env, complétalo con la cuenta de prueba de Firebase ' +
       '(console.firebase.google.com/project/sdlp-os/authentication/users) y vuelve a correr los tests.'
     );
   }
