@@ -261,7 +261,7 @@
   };
 
   // ── generateOptimizer — motor de diagnóstico basado en reglas ──
-  const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp) => {
+  const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp, usageCounts = {}) => {
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
     if (!an || !an.sp) return { score: 0, status: 'sin_receta', items: [] };
@@ -269,14 +269,26 @@
     const flags = SetasScoring.detectSeverity ? SetasScoring.detectSeverity(an) : {};
     const scaledDelta = (base, overDist) => Math.round(base * (1 + Math.min(1.5, Math.max(0, overDist || 0))));
     const recommendedIds = new Set();
+    // bestStock: el criterio (sortFn) decide el candidato "ideal" en teoría,
+    // pero Array.sort es estable — un empate exacto lo ganaba antes quien
+    // apareciera primero en el catálogo INGS, un artefacto de declaración sin
+    // significado de negocio. El desempate por id lo hace explícito y estable.
+    // Además, entre los top-3 candidatos igual de válidos, se prefiere el
+    // menos recomendado históricamente (usageCounts, opcional) para no
+    // converger siempre en el mismo ingrediente cuando hay alternativas
+    // igual de viables — sin usageCounts (default {}) el comportamiento es
+    // idéntico al original.
     const bestStock = (filter, sortFn = (a, b) => 0) => {
-      const candidates = effectiveINGS.filter(g => g.cs && g.cs.includes(sKey) && filter(g)).sort(sortFn);
+      const candidates = effectiveINGS
+        .filter(g => g.cs && g.cs.includes(sKey) && filter(g))
+        .sort((a, b) => sortFn(a, b) || a.id.localeCompare(b.id));
       const inStock = useStock ? candidates.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
       const pool = inStock.length > 0 ? inStock : candidates;
       if (!pool.length) return null;
       const inRecipe = recipe && recipe.length ? pool.find(g => recipe.some(r => r.id === g.id)) : null;
       if (inRecipe) { recommendedIds.add(inRecipe.id); return inRecipe; }
-      const top = pool[0];
+      const topPool = pool.slice(0, 3);
+      const top = topPool.reduce((least, g) => (usageCounts[g.id] || 0) < (usageCounts[least.id] || 0) ? g : least, topPool[0]);
       if (recommendedIds.has(top.id) && pool.length > 1) {
         const alt = pool.find(g => !recommendedIds.has(g.id));
         if (alt) { recommendedIds.add(alt.id); return alt; }

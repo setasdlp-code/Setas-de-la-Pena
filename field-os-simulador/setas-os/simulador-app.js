@@ -1839,10 +1839,12 @@ function App(props) {
   }, [lowStockCount]);
   const blendedEB = an ? blendEBWithHistory(an, histStats) : null;
   const [appliedIcons, setAppliedIcons] = React.useState({});
+  const [usageCounts, setUsageCounts] = React.useState({});
   React.useEffect(() => {
     setAppliedIcons({});
+    setUsageCounts({});
   }, [sKey]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, SPP, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, usageCounts]);
   const realCostPerKg = useMemo(() => {
     if (!recipe.length) return null;
     let known = false;
@@ -1898,6 +1900,12 @@ function App(props) {
     setRecipeHistory((h) => [...h, recipe]);
     setRecipe(applyOptToRecipe(recipe, apply, lockedIds, optimizerINGS));
     if (icon) setAppliedIcons((s) => ({ ...s, [icon]: (s[icon] || 0) + 1 }));
+    const appliedIds = (Array.isArray(apply) ? apply : [apply]).map((a) => a?.id).filter(Boolean);
+    if (appliedIds.length) setUsageCounts((s) => {
+      const next = { ...s };
+      appliedIds.forEach((id) => { next[id] = (next[id] || 0) + 1; });
+      return next;
+    });
   };
   const undoLastRec = () => {
     if (recipeHistory.length === 0) return;
