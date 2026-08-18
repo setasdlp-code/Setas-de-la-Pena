@@ -3187,7 +3187,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
-                        <div key={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'box-shadow .18s,transform .18s'}}
+                        <div key={lote.id} data-lote-id={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'box-shadow .18s,transform .18s'}}
                           onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.boxShadow='var(--shadow-lift)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform='';}}
@@ -3232,7 +3232,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const stats=calcLoteStats(bitActiveLoteId);
               const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
-                <div className="panel">
+                <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{lote.codigo}</div>
@@ -4056,6 +4056,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         return (
                           <div
                             key={lt.id}
+                            data-lote-id={lt.id}
                             onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
                             style={{
                               display:'flex',
