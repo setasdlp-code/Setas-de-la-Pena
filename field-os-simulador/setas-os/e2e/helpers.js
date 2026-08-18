@@ -36,4 +36,73 @@ async function activeContextTab(page) {
   return (await active.first().textContent())?.trim();
 }
 
-module.exports = { APP_PATH, openApp, goWorkspace, activeWorkspace, breadcrumbText, activeContextTab };
+/**
+ * Escribe datos en localStorage ANTES de que la app monte (via addInitScript),
+ * para que los useEffect de carga inicial (setas_v6, sdp_bit_lotes, etc.) los
+ * encuentren ya puestos. Debe llamarse antes de openApp().
+ * @param {import('@playwright/test').Page} page
+ * @param {Record<string, any>} data - clave de localStorage -> valor (se serializa a JSON)
+ */
+async function seedLocalStorage(page, data) {
+  await page.addInitScript((entries) => {
+    for (const [k, v] of entries) {
+      window.localStorage.setItem(k, JSON.stringify(v));
+    }
+  }, Object.entries(data));
+}
+
+/**
+ * Cierra el ConfirmDlg genérico de la app (reemplazo de window.confirm) si
+ * está visible — p.ej. "Reemplazar receta activa" al cargar una receta con
+ * cambios sin guardar. No falla si no aparece.
+ * @param {import('@playwright/test').Page} page
+ */
+async function confirmDialogIfPresent(page, label = 'Confirmar') {
+  const modal = page.locator('.inv-modal-bg');
+  try {
+    await modal.waitFor({ state: 'visible', timeout: 3000 });
+  } catch {
+    return; // no apareció — no había receta activa sin guardar, sigue de largo.
+  }
+  await modal.getByRole('button', { name: label, exact: true }).click();
+  await modal.waitFor({ state: 'hidden', timeout: 3000 });
+}
+
+/** Selecciona una especie desde el selector de la barra species-bridge. */
+async function selectSpecies(page, sKey) {
+  await page.locator('[data-testid="species-bridge"] select').selectOption(sKey);
+}
+
+/** Busca un ingrediente por nombre en el catálogo del Formulador y lo agrega a la receta activa. */
+async function addIngredientByName(page, name) {
+  await page.locator('.search').fill(name);
+  const card = page.locator('.ing-item', { hasText: name }).first();
+  await card.click(); // expande la ficha
+  await card.getByRole('button', { name: 'Agregar a receta' }).click();
+  await page.locator('.search').fill('');
+}
+
+/** Fija el porcentaje exacto de un ingrediente ya agregado a la receta (buscado por nombre visible, no hay id en el DOM). */
+async function setIngredientPct(page, ingredientName, pct) {
+  await page.locator('.rec-row', { hasText: ingredientName }).locator('input.rec-pct-input').fill(String(pct));
+}
+
+/** Lee el porcentaje actual mostrado para un ingrediente ya agregado a la receta. */
+async function getIngredientPct(page, ingredientName) {
+  return page.locator('.rec-row', { hasText: ingredientName }).locator('input.rec-pct-input').inputValue();
+}
+
+module.exports = {
+  APP_PATH,
+  openApp,
+  goWorkspace,
+  activeWorkspace,
+  breadcrumbText,
+  activeContextTab,
+  seedLocalStorage,
+  confirmDialogIfPresent,
+  selectSpecies,
+  addIngredientByName,
+  setIngredientPct,
+  getIngredientPct,
+};

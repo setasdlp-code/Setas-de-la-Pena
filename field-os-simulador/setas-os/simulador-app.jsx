@@ -2124,7 +2124,7 @@ function App(props){
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);setNavOpen(false);};
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
@@ -5359,8 +5359,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                                 {optResults[optProfile].map((r,i)=>{
                                   const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
+                                  const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
                                   return(
-                                    <div key={i} className="opt-result">
+                                    <div key={i} className="opt-result" data-result-id={i} data-base-signature={baseSig}>
                                       <div className="opt-result-head">
                                         <div className="opt-rank">#{i+1}</div>
                                         <div style={{display:'flex',flexDirection:'column',gap:1}}>
@@ -6037,7 +6038,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const costKg=costIngKg+eDash;
                         const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
                         return(
-                          <div key={e.id} className="dash-card" style={{borderTopColor:band}}>
+                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
                             <div className="dash-card-top">
                               <div className="dash-card-name">{e.name}</div>
                               <div className="dash-card-spp">{s2?.name} · {e.date}</div>
@@ -6195,7 +6196,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
       </div>
 
-      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)}>
+      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)}>
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>

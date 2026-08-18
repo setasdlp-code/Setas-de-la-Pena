@@ -1,6 +1,6 @@
-# Setas OS — catálogo de escenarios E2E (especificación, sin implementar aún)
+# Setas OS — catálogo de escenarios E2E
 
-Este documento es la especificación de la suite E2E propuesta para Setas OS, diseñada con Playwright en mente. **No hay código Playwright implementado todavía** — instalar Playwright agrega una devDependency nueva y un job de CI con descarga de binarios de navegador, lo cual es una decisión de infraestructura que debe aprobarse explícitamente antes de wirearlo a CI. Este archivo existe para no perder el diseño mientras se decide.
+Los 11 escenarios (E2E-01 a E2E-11) están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). E2E-08 se mantiene intencionalmente como `test.fail()` — ver su sección abajo. Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
 
 ## Convenciones de la suite
 
