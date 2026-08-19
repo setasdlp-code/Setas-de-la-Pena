@@ -512,6 +512,13 @@ const {
   ? SetasRecipeOptimizer
   : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
 
+// ── Calibración histórica — puente hacia historical-calibration.js ──
+// Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
+// alimentaba del array `yields` del shell, que son 5 filas de demo inventadas.
+const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 'undefined'
+  ? SetasHistoricalCalibration
+  : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
+
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
 
@@ -1435,7 +1442,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft, #ddd)')}}>
         {hasHist?(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800,#333)',lineHeight:1.5}}>
-            <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}{historical.matched?' del mismo sustrato':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
+            <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}{historical.matched?' con receta similar':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
           </div>
         ):(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700,#666)',lineHeight:1.5}}>
@@ -1531,39 +1538,11 @@ const SPP_KEY_ALIAS={
 };
 const normSpp=k=>{ if(!k) return k; if(SPP[k]) return k; return SPP_KEY_ALIAS[k]||k; };
 
-// Nombres legibles de sustratos históricos (yields.sub del shell / batch_tracking.md)
-const HIST_SUB_NAME={ wheat_straw:'paja de trigo', coffee_shiitake:'sustrato maestro shiitake', masters_mix:"master's mix" };
-// Mapa de códigos de sustrato histórico -> id real en INGS, para poder saber
-// si la receta activa usa ese mismo sustrato. Solo cubre los códigos con
-// correspondencia 1:1 clara — códigos como 'masters_mix' son una mezcla sin
-// un ingrediente único al que mapear, así que se quedan sin match (no rompen
-// nada, simplemente no participan en el filtro por similitud).
-const HIST_SUB_TO_ING={ wheat_straw:'paja_trigo' };
-
-// Proyección de EB real: agrega lotes históricos (yields del shell) por especie (y sustrato si coincide)
-// para dar una EB proyectada distinta de la fórmula teórica C:N/N — "no solo texto estático".
-// `recipe` (opcional): si se pasa y hay lotes históricos cuyo sustrato
-// coincide con algún ingrediente de la receta activa, el promedio se calcula
-// SOLO con esos lotes en vez de con todos los de la especie — antes un lote
-// de "master's mix" y uno de "paja de trigo" pesaban igual en el promedio
-// aunque la receta activa fuera puramente de paja de trigo. `matched:true`
-// en el resultado indica que se usó este filtro más preciso.
-const historicalEBFor=(sKey,historicalYields,recipe=null)=>{
-  if(!sKey||!Array.isArray(historicalYields)||!historicalYields.length) return {n:0,avg:null,subs:[],weight:0,matched:false};
-  let rows=historicalYields.filter(y=>normSpp(y.spp)===sKey&&y.dryKg>0);
-  if(!rows.length) return {n:0,avg:null,subs:[],weight:0,matched:false};
-  let matched=false;
-  if(recipe&&recipe.length){
-    const recipeIds=new Set(recipe.map(r=>r.id));
-    const matchedRows=rows.filter(y=>HIST_SUB_TO_ING[y.sub]&&recipeIds.has(HIST_SUB_TO_ING[y.sub]));
-    if(matchedRows.length){rows=matchedRows;matched=true;}
-  }
-  const ebs=rows.map(y=>y.freshG/(y.dryKg*1000)*100);
-  const avg=ebs.reduce((a,b)=>a+b,0)/ebs.length;
-  const subs=[...new Set(rows.map(y=>HIST_SUB_NAME[y.sub]||y.sub))];
-  const weight=Math.min(0.7,0.25*rows.length);
-  return {n:rows.length,avg,subs,weight,matched};
-};
+// HIST_SUB_NAME / HIST_SUB_TO_ING / historicalEBFor se eliminaron en 2026-08:
+// calibraban contra el array `yields` del shell, que son 5 filas de demo
+// inventadas (Setas OS v5.dc.html), presentadas en la UI como "lotes reales".
+// La calibración vive ahora en historical-calibration.js y se alimenta de
+// lotes de Bitácora con peso seco y cosechas registradas.
 
 // ── Hybrid recipe-search adapter for the React simulator ───────────────────
 // Keep the React call sites small while the legacy optimizer remains available
@@ -2173,8 +2152,11 @@ function App(props){
     return ms&&roleMatch;
   }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
 
-  const historicalYields=useMemo(()=>{try{const v=JSON.parse(props.historicalYields||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}},[props.historicalYields]);
-  const histStats=useMemo(()=>historicalEBFor(sKey,historicalYields,recipe),[sKey,historicalYields,recipe]);
+  // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
+  // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
+  // teórico en vez de mezclarse con las filas de demo del shell.
+  const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
+  const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
@@ -4847,7 +4829,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' del mismo sustrato':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
+                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
                         </div>}
                       {modelAccuracy!=null&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>

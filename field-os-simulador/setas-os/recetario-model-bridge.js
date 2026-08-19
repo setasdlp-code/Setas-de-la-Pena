@@ -40,9 +40,18 @@
     };
     return byName[detail?.an?.sp?.name] || null;
   };
+  // Lotes reales de Bitácora con cosechas registradas — evidencia auto-derivada,
+  // sin que el operador tenga que teclear un EB real a mano por prueba.
+  const bitacoraTrialRows = sKey => {
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!calib?.bitacoraAsTrialRows) return [];
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
+  };
+
   const historyFor = (sKey, recipe) => {
     if (!sKey) return null;
-    const rows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && num(r.ebReal) != null && Array.isArray(r.recipe));
+    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && num(r.ebReal) != null && Array.isArray(r.recipe));
+    const rows = [...bitacoraTrialRows(sKey), ...trialRows];
     if (!rows.length) return null;
     const ranked = rows.map(r => ({ r, sim: similarity(recipe, r.recipe) })).sort((a,b)=>b.sim-a.sim);
     const pool = ranked.filter(x => x.sim >= 0.35).slice(0,8);
