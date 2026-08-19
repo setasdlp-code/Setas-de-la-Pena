@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Banco climático virtual y portátil para Field OS.">
   <title>Monitoreo · Field OS</title>
+  <script src="bridge-protocol.js"></script>
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -669,13 +670,11 @@
       }
 
       function notifyParent(chamber, verdict) {
-        try {
-          window.parent && window.parent !== window && window.parent.postMessage({
-            source: "climate-bench", kind: "climate-alert",
-            chamber: chamber.name, phase: phases[chamber.phase].name, metric: METRIC_LABEL[verdict.metric] || "clima", detail: verdict.detail,
-            at: formatTime(state.minutes)
-          }, "*");
-        } catch (e) {}
+        if (!window.parent || window.parent === window) return;
+        SetasBridgeProtocol.sendBridgeMessage(window.parent, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMATE_ALERT, {
+          chamber: chamber.name, phase: phases[chamber.phase].name, metric: METRIC_LABEL[verdict.metric] || "clima", detail: verdict.detail,
+          at: formatTime(state.minutes)
+        });
       }
 
       // Abre / actualiza / cierra la incidencia de un contenedor+métrica. Deduplica: mientras
@@ -1164,9 +1163,10 @@
 
       // Visibilidad reportada por el shell padre (ver Setas OS v5.dc.html, renderVals()):
       // solo controla si step() pinta su DOM, nunca si simula ni si detecta incidentes.
+      // Contrato completo en bridge-protocol.js (BRIDGE_MESSAGES.CLIMA_VISIBILITY).
       window.addEventListener("message", event => {
         const d = event && event.data;
-        if (!d || d.source !== "setas-os-shell" || d.kind !== "clima-visibility") return;
+        if (!SetasBridgeProtocol.isBridgeMessage(d, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMA_VISIBILITY)) return;
         const wasVisible = state.parentVisible;
         state.parentVisible = !!d.active;
         if (state.parentVisible && !wasVisible) render();

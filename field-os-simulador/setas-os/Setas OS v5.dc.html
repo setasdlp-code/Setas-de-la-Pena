@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="fieldos-tokens.css">
 <script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
 <script src="qr-mini.js"></script>
+<script src="bridge-protocol.js"></script>
 <link rel="stylesheet" href="sim.css">
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
@@ -2396,7 +2397,7 @@ class Component extends DCLogic {
     this._climaTick = setInterval(()=>{ this.setState({ climaClock:Date.now() }); this.detectChamberAlerts(); }, 2000);
     this._onClimate = (e)=>{
       const d = e && e.data;
-      if(!d || d.source!=='climate-bench' || d.kind!=='climate-alert') return;
+      if(!SetasBridgeProtocol.isBridgeMessage(d, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMATE_ALERT)) return;
       this.onClimateAlert(d);
     };
     window.addEventListener('message', this._onClimate);
@@ -3150,7 +3151,7 @@ class Component extends DCLogic {
       this._climaActiveSent = climaActive;
       if(!this._climaFrameEl) this._climaFrameEl = document.querySelector('iframe[title="Banco Climático"]');
       if(this._climaFrameEl && this._climaFrameEl.contentWindow){
-        this._climaFrameEl.contentWindow.postMessage({ source:'setas-os-shell', kind:'clima-visibility', active:climaActive }, '*');
+        SetasBridgeProtocol.sendBridgeMessage(this._climaFrameEl.contentWindow, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMA_VISIBILITY, { active: climaActive });
       }
     }
     const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
