@@ -163,6 +163,50 @@ test('bitacoraAsTrialRows es [] sin lotes reales — no rompe a los bridges que 
   assert.deepEqual(bitacoraAsTrialRows('p_ostreatus_gris', [], []), []);
 });
 
+// ── weightedCalibration — fórmula única de calibración por similitud, para
+// que perito-scenarios-bridge.js, recetario-model-bridge.js y perito-ui-bridge.js
+// dejen de tener tres implementaciones divergentes (dos midiendo similitud
+// por solapamiento de IDs vía Jaccard, una por distancia L1 ponderada por
+// porcentaje) del mismo concepto. Se adopta recipeDistance — ya usado por el
+// motor de búsqueda del Perito para novelty — como la única métrica: dos
+// recetas con los mismos ingredientes pero proporciones muy distintas (que
+// Jaccard llamaría "idénticas") no deben pesar como evidencia fuerte para EB,
+// que depende de esas proporciones. ──
+const { weightedCalibration } = require('./historical-calibration.js');
+const distL1 = (a = [], b = []) => {
+  const mapOf = (r) => Object.fromEntries(r.map((x) => [x.id, Number(x.p ?? x.pct) || 0]));
+  const aa = mapOf(a), bb = mapOf(b);
+  const ids = new Set([...Object.keys(aa), ...Object.keys(bb)]);
+  let l1 = 0;
+  ids.forEach((id) => { l1 += Math.abs((aa[id] || 0) - (bb[id] || 0)); });
+  return Math.min(1, l1 / 200);
+};
+const trial = (recipe, ebReal) => ({ recipe, ebReal });
+
+test('weightedCalibration es null sin filas — no inventa evidencia de la nada', () => {
+  assert.equal(weightedCalibration([{ id: 'a', p: 100 }], [], distL1), null);
+});
+
+test('weightedCalibration pesa por similitud real de proporciones, no solo por ids compartidos', () => {
+  const activa = [{ id: 'paja_trigo', p: 80 }, { id: 'salvado_trigo', p: 20 }];
+  // Mismos ingredientes, proporciones invertidas: Jaccard los llamaría "idénticos" (1.0);
+  // la distancia L1 ponderada por % los ve como poco parecidos.
+  const invertida = trial([{ id: 'paja_trigo', p: 20 }, { id: 'salvado_trigo', p: 80 }], 90);
+  const idéntica = trial([{ id: 'paja_trigo', p: 80 }, { id: 'salvado_trigo', p: 20 }], 60);
+  const h = weightedCalibration(activa, [invertida, idéntica], distL1);
+  // Solo la idéntica cruza el umbral de selección — el promedio queda cerca de 60, no del punto medio (75).
+  assert.ok(Math.abs(h.meanEB - 60) < 5, `esperaba ~60 (dominado por la receta idéntica), hubo ${h.meanEB}`);
+  assert.equal(h.matched, true);
+});
+
+test('weightedCalibration usa el pool completo (sin recorte a top-N) cuando nada cruza el umbral', () => {
+  const activa = [{ id: 'x', p: 100 }];
+  const lejanas = Array.from({ length: 12 }, (_, i) => trial([{ id: 'y' + i, p: 100 }], 50 + i));
+  const h = weightedCalibration(activa, lejanas, distL1);
+  assert.equal(h.n, 12, 'no debe recortar el pool de respaldo a un top-N arbitrario');
+  assert.equal(h.matched, false);
+});
+
 // ── Contrato de cableado: el motor deja de calibrar con datos de demo ──
 const fs = require('node:fs');
 const path = require('node:path');

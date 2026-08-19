@@ -81,19 +81,11 @@ import './formulator-api.js';
 
   const historyCalibrationFor = (sKey, recipe) => {
     const engine = globalThis.SetasPeritoScenarios;
-    if (!engine?.recipeDistance) return null;
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
     const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
     const rows = [...bitacoraTrialRows(sKey), ...trialRows];
-    if (!rows.length) return null;
-    const comparable = rows.map(r => ({ ...r, similarity: Math.max(0, 1 - engine.recipeDistance(recipe, r.recipe)) }));
-    const selected = comparable.filter(r => r.similarity >= 0.55);
-    const pool = selected.length ? selected : comparable;
-    const weights = pool.map(r => Math.max(0.08, r.similarity));
-    const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
-    const meanEB = pool.reduce((sum, r, i) => sum + Number(r.ebReal) * weights[i], 0) / weightSum;
-    const variance = pool.reduce((sum, r, i) => sum + Math.pow(Number(r.ebReal) - meanEB, 2) * weights[i], 0) / weightSum;
-    const similarity = pool.reduce((sum, r, i) => sum + r.similarity * weights[i], 0) / weightSum;
-    return { n: pool.length, meanEB, sd: Math.sqrt(Math.max(0, variance)), similarity: Math.max(0, Math.min(1, similarity)) };
+    return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
   };
 
   const useStockMode = () => {
