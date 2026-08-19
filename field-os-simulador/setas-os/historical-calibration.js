@@ -97,7 +97,38 @@ const bitacoraAsTrialRows = (sKey, bitLotes, bitCosechas) =>
     .filter((r) => r.sKey === sKey)
     .map((r) => ({ recipe: r.recipe, ebReal: r.be, source: 'bitacora', loteId: r.loteId }));
 
-const api = { bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows };
+const CALIBRATION_SIMILARITY_THRESHOLD = 0.55;
+const CALIBRATION_WEIGHT_FLOOR = 0.08;
+
+// Fórmula única de calibración por similitud para los bridges de presentación
+// (perito-scenarios-bridge.js, recetario-model-bridge.js, perito-ui-bridge.js),
+// que antes tenían tres implementaciones divergentes: dos medían similitud por
+// solapamiento de IDs (Jaccard, ignora proporciones) y una por distancia L1
+// ponderada por porcentaje. Se adopta esta última — recipeDistanceFn se pasa
+// inyectada, normalmente SetasPeritoScenarios.recipeDistance, la misma métrica
+// que ya usa el motor de búsqueda para novelty — porque dos recetas con los
+// mismos ingredientes en proporciones muy distintas no son evidencia fuerte
+// entre sí para EB, que depende de esas proporciones.
+const weightedCalibration = (recipe, rows, recipeDistanceFn) => {
+  if (!Array.isArray(rows) || !rows.length || typeof recipeDistanceFn !== 'function') return null;
+  const comparable = rows.map((r) => ({ ...r, similarity: Math.max(0, 1 - recipeDistanceFn(recipe, r.recipe)) }));
+  const selected = comparable.filter((r) => r.similarity >= CALIBRATION_SIMILARITY_THRESHOLD);
+  const pool = selected.length ? selected : comparable;
+  const weights = pool.map((r) => Math.max(CALIBRATION_WEIGHT_FLOOR, r.similarity));
+  const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
+  const meanEB = pool.reduce((sum, r, i) => sum + Number(r.ebReal) * weights[i], 0) / weightSum;
+  const variance = pool.reduce((sum, r, i) => sum + (Number(r.ebReal) - meanEB) ** 2 * weights[i], 0) / weightSum;
+  const similarity = pool.reduce((sum, r, i) => sum + r.similarity * weights[i], 0) / weightSum;
+  return {
+    n: pool.length,
+    meanEB,
+    sd: Math.sqrt(Math.max(0, variance)),
+    similarity: Math.max(0, Math.min(1, similarity)),
+    matched: selected.length > 0,
+  };
+};
+
+const api = { bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

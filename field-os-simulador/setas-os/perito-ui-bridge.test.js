@@ -50,7 +50,7 @@ test('Recetario calibra EB real solo para la misma especie y pondera similitud',
   assert.match(bridge, /setas_v6/);
   assert.match(bridge, /r\.sKey\s*===\s*sKey/);
   assert.match(bridge, /ebReal/);
-  assert.match(bridge, /recipeSimilarity/);
+  assert.match(bridge, /weightedCalibration/);
   assert.match(bridge, /historyCalibration/);
 });
 
