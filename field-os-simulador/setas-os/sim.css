@@ -115,7 +115,7 @@
 /* ── TOP BAR: oculta permanentemente — Setas OS (shell externo) provee su propio header. Ver .sim-root .topbar{display:none!important} más abajo. ── */
 
 /* ── HERO: oculto permanentemente — mismo motivo. Ver .sim-root .hero{display:none!important} más abajo. ── */
-.sim-root.no-grain body{ background-image:none; }
+
 
 /* ── LA PÁGINA (hoja abierta del cuaderno) ──────────────────── */
 .sim-root .wrap{
@@ -130,51 +130,33 @@
 
 /* ── TABS ───────────────────────────────────────────────────────── */
 /* ── NAV: MODO + SUB-TABS ──────────────────────────────────────────────────── */
-.sim-root .nav-wrap{
-  position:sticky; top:58px; z-index:40;
-  border-bottom:1px solid rgba(26,20,16,0.18);
-  margin:0 0 40px;
-  background:var(--paper-100);
-}
+
 .sim-root .mode-switcher{
   display:flex; align-items:center; gap:0;
   padding:0;
 }
-.sim-root .mode-btn{
-  font-family:var(--font-display); font-weight:400; font-size:26px;
-  letter-spacing:-.01em; text-transform:none;
-  padding:12px 28px;
-  background:transparent; border:none; cursor:pointer;
-  color:var(--ink-200); position:relative;
-  transition:color .18s;
-  line-height:1;
-}
+
 .sim-root .mode-btn.on{ color:var(--ink-900); }
 .sim-root .mode-btn.on::after{
   content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px;
   background:var(--ink-900);
 }
 .sim-root .mode-btn:hover:not(.on){ color:var(--ink-500); }
-.sim-root .mode-sep{ width:1px; height:18px; background:var(--border-soft); align-self:center; margin:0 4px; }
+
 .sim-root .sub-tabs{
   display:flex; align-items:center; gap:0;
   padding:0 20px;
   border-top:1px solid var(--paper-300);
   background:var(--paper-50);
 }
-.sim-root .sub-tab{
-  font-family:var(--font-body); font-weight:800;
-  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-  padding:8px 12px; background:transparent; border:none; cursor:pointer;
-  color:rgba(26,20,16,0.38); position:relative; transition:color .15s; white-space:nowrap;
-}
+
 .sim-root .sub-tab.on{ color:var(--coral-600,#A8432A); }
 .sim-root .sub-tab.on::after{
   content:''; position:absolute; bottom:0; left:6px; right:6px; height:1.5px;
   background:var(--coral-500);
 }
 .sim-root .sub-tab:hover:not(.on){ color:var(--ink-600); }
-.sim-root .sub-sep{ font-family:var(--font-mono); font-size:12px; color:var(--border-soft); padding:0 2px; pointer-events:none; opacity:.5; }
+
 
 /* ── GRID ───────────────────────────────────────────────────────── */
 .sim-root .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
@@ -241,7 +223,7 @@
   border:none;
   border-radius:0;
 }
-.sim-root .plate, .sim-root .spp-card{
+.sim-root .spp-card{
   background: var(--paper-50);
   display: flex;
   flex-direction: column;
@@ -257,19 +239,12 @@
   text-align: left;
 }
 
-.sim-root .plate:hover, .sim-root .spp-card:hover{
+.sim-root .spp-card:hover{
   background: #FEFDF9;
 }
 
 /* header strip */
-.sim-root .p-strip{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 7px 14px;
-  border-bottom: 1px solid rgba(26, 20, 16, 0.09);
-  background: rgba(26, 20, 16, 0.045);
-}
+
 
 .sim-root .p-family{
   font-family: var(--font-body);
@@ -280,13 +255,7 @@
   color: var(--ink-600);
 }
 
-.sim-root .p-num{
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--ink-600);
-  letter-spacing: .04em;
-}
+
 
 /* image area */
 .sim-root .p-img{
@@ -320,20 +289,7 @@
 }
 
 /* anatomical annotation */
-.sim-root .p-ann{
-  position: absolute;
-  bottom: 9px;
-  left: 12px;
-  right: 12px;
-  font-family: var(--font-sci);
-  font-style: italic;
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgba(26, 20, 16, 0.72);
-  pointer-events: none;
-  z-index: 2;
-  text-wrap: pretty;
-}
+
 
 /* body */
 .sim-root .p-body{
@@ -361,68 +317,23 @@
   margin-top: 1px;
 }
 
-.sim-root .p-rule{
-  height: 1.5px;
-  background: var(--accent-terracotta);
-  opacity: 0.55;
-  margin: 10px 0 9px;
-}
+
 
 /* parameter grid */
-.sim-root .p-params{
-  display: grid;
-  grid-template-columns: auto 1fr;
-  row-gap: 6px;
-  column-gap: 12px;
-}
 
-.sim-root .p-params dt{
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ink-700);
-  align-self: center;
-  text-align: left;
-}
 
-.sim-root .p-params dd{
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-900);
-}
+
+
+
 
 /* footer */
-.sim-root .p-foot{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 9px 14px 11px;
-  margin-top: auto;
-}
 
-.sim-root .p-spec{
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-600);
-  letter-spacing: .04em;
-}
 
-.sim-root .p-open{
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: var(--accent-terracotta);
-  font-weight: 800;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--coral-500);
-  opacity: 0;
-  transition: opacity 0.18s;
-}
 
-.sim-root .plate:hover .p-open, .sim-root .spp-card:hover .p-open{
+
+
+
+.sim-root .spp-card:hover .p-open{
   opacity: 1;
 }
 
@@ -435,10 +346,10 @@
   margin-bottom:48px;
   position:relative;
 }
-.sim-root .info-row{ display:flex; flex-wrap:wrap; gap:24px; margin-top:16px; padding-left:16px; }
+
 .sim-root .kv .k{ font-family:var(--font-mono); font-weight:700; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-700); }
 .sim-root .kv .v{ font-family:var(--font-display); font-size:22px; color:var(--ink-1); line-height:1.1; margin-top:4px; font-weight:400; }
-.sim-root .spp-note{ font-family:var(--font-display); font-style:italic; font-size:16px; color:var(--ink-2); margin-top:16px; border-top:1px dashed var(--line-1); padding-top:12px; line-height:1.5; }
+
 
 /* ── INGREDIENT LIST (laboratory inventory) ────────────────────────── */
 .sim-root .search{ 
@@ -507,10 +418,10 @@
 .sim-root .ing-profile-row .unit{ font-family:var(--font-mono); font-size:11px; color:var(--ink-300); margin-left:3px; }
 
 /* ── ATTRIBUTE BARS ─────────────────────────────────────────────── */
-.sim-root .ing-bars{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px; }
-.sim-root .bar-item{ }
-.sim-root .bar-label{ font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-700); margin-bottom:2px; font-weight:600; }
-.sim-root .bar-track{ height:3px; background:var(--paper-300); border-radius:2px; overflow:hidden; }
+
+
+
+
 .sim-root .bar-fill{ height:100%; border-radius:2px; transition:width .3s var(--ease); }
 
 /* ── PRESETS ────────────────────────────────────────────────────── */
@@ -540,8 +451,8 @@
 }
 .sim-root .rec-empty-hed{ font-family:var(--font-display); font-style:italic; font-size:22px; color:var(--ink-200); line-height:1.2; margin-bottom:8px; }
 .sim-root .rec-empty-sub{ font-family:var(--font-mono); font-size:13px; color:var(--ink-300); line-height:1.6; margin-bottom:20px; max-width:220px; }
-.sim-root .rec-empty-btn{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.1em; text-transform:uppercase; padding:10px 22px; background:var(--coral-500); color:#fff; border:none; border-radius:var(--r-sm); cursor:pointer; transition:background .18s; }
-.sim-root .rec-empty-btn:hover{ background:var(--coral-700); }
+
+
 .sim-root .rec-row{ 
   display:grid; grid-template-columns:1fr 110px 28px; 
   gap:12px; align-items:center; padding:14px 16px; 
@@ -615,12 +526,12 @@
 .sim-root .sbtn.fl{ background:var(--moss-500); }
 
 /* ── SAVED RECIPES ──────────────────────────────────────────────── */
-.sim-root .sitem{ display:flex; align-items:center; gap:12px; padding:13px; border-bottom:1px solid var(--paper-300); }
-.sim-root .sitem:last-child{ border-bottom:none; }
-.sim-root .sitem:hover{ background:var(--paper-100); }
-.sim-root .sn{ font-size:14px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+
+
+
 .sim-root .sm{ font-size:13px; color:var(--ink-500); margin-top:2px; font-family:var(--font-mono); }
-.sim-root .seb{ font-family:var(--font-num); font-size:19px; color:var(--coral-700); padding:3px 12px; border:1px solid var(--border-soft); border-radius:var(--r-xs); white-space:nowrap; background:var(--paper-100); }
+
 .sim-root .sload{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:7px 12px; background:var(--moss-700); color:#fff; border:none; border-radius:var(--r-xs); cursor:pointer; }
 .sim-root .sload:hover{ background:var(--moss-900); }
 .sim-root .sdel{ font-size:12px; padding:7px 10px; background:var(--paper-50); color:var(--coral-700); border:1px solid var(--border-soft); border-radius:var(--r-xs); cursor:pointer; }
@@ -841,21 +752,21 @@
 }
 
 /* ── COMPARATOR ─────────────────────────────────────────────────── */
-.sim-root .cgrid{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border-soft); border:1px solid var(--border-soft); border-radius:var(--r-sm); overflow:hidden; margin-bottom:14px; }
-@media(max-width:900px){ .sim-root .cgrid{ grid-template-columns:1fr; } }
-.sim-root .cc{ background:var(--paper-50); }
-.sim-root .cch{ padding:15px 18px; border-bottom:1px solid var(--paper-300); }
-.sim-root .cch-label{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--coral-700); }
-.sim-root .cch-sub{ font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--ink-500); margin-top:3px; }
-.sim-root .ccb{ padding:18px; }
-.sim-root .crow{ display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--paper-300); }
-.sim-root .crow:last-child{ border-bottom:none; }
-.sim-root .clbl{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); }
+
+
+
+
+
+
+
+
+
+
 .sim-root .cval{ font-family:var(--font-display); font-size:28px; color:var(--ink-900); font-weight:400; line-height:1; }
 .sim-root .cval.better{ color:var(--moss-500); }
 .sim-root .cval.worse{ color:var(--coral-700); }
-.sim-root .cempty{ padding:36px 18px; text-align:center; font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--ink-300); }
-.sim-root .cwinner{ padding:15px 20px; background:var(--paper-100); border:1px solid var(--border-soft); border-top:none; border-radius:0 0 var(--r-sm) var(--r-sm); text-align:center; font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--ink-700); }
+
+
 
 /* ── SCHEDULE ───────────────────────────────────────────────────── */
 .sim-root .schctrl{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:26px; align-items:flex-end; }
@@ -940,10 +851,7 @@
 @media(max-width:768px){ .sim-root .inv-grid{ grid-template-columns:1fr; } }
 
 /* ── RECOMMENDER ────────────────────────────────────────────────── */
-@media(max-width:860px){
-  .sim-root .rec-two-col{ grid-template-columns:1fr !important; }
-  .sim-root .rec-sticky{ position:static !important; }
-}
+
 .sim-root .inv-field label{ display:block; font-family:var(--font-body); font-weight:800; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-500); margin-bottom:5px; }
 /* select/input sizing consolidated below (~line 1528) — this used to duplicate
    it with an [type=number] selector, which by CSS specificity always won over
@@ -962,7 +870,7 @@
 /* ── NOVEL: EB DIAL (inked instrument) ──────────────────────────── */
 .sim-root .ebdial{ display:flex; flex-direction:column; align-items:center; padding:6px 0 18px; margin-bottom:18px; border-bottom:1px solid var(--paper-300); }
 .sim-root .ebdial svg{ overflow:visible; display:block; }
-.sim-root .ebdial-cap{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-500); margin-top:2px; text-align:center; }
+
 .sim-root .ebdial-note{ font-family:var(--font-mono); font-size:12px; color:var(--ink-500); margin-top:5px; text-align:center; }
 
 /* ── BUILDER LAYOUT ─────────────────────────────────────────────── */
@@ -1009,7 +917,7 @@
 /* ── PRINT ──────────────────────────────────────────────────────── */
 @media print{
   .sim-root{ background:#fff; font-size:12px; }
-  .sim-root .topbar, .sim-root .hero-strip, .sim-root .tabs, .sim-root .no-print, .sim-root .spp-sect, .sim-root .panel:not(.print-panel), .sim-root .bwrap, .sim-root .sbar, .sim-root .act-row, .sim-root .tog, .sim-root .add-btn, .sim-root .rem, .sim-root .ing-list, .sim-root .search, .sim-root .cats, .sim-root .presets, .sim-root button{ display:none !important; }
+  .sim-root .topbar, .sim-root .tabs, .sim-root .no-print, .sim-root .spp-sect, .sim-root .panel:not(.print-panel), .sim-root .bwrap, .sim-root .sbar, .sim-root .act-row, .sim-root .tog, .sim-root .add-btn, .sim-root .rem, .sim-root .ing-list, .sim-root .search, .sim-root .cats, .sim-root .presets, .sim-root button{ display:none !important; }
   .sim-root .hero{ display:none !important; }
   .sim-root .print-header{ display:block !important; text-align:center; padding-bottom:12px; margin-bottom:0; border-bottom:2px solid var(--coral-700); }
   .sim-root .print-header h1{ font-family:var(--font-display); font-size:34px; color:var(--moss-700); margin-bottom:4px; }
@@ -1040,7 +948,7 @@
 /* ── TABLET PORTRAIT / LARGE MOBILE (569px—850px) ────────────────── */
 @media(max-width:850px) and (min-width:569px){
   .sim-root .wrap{ padding:0 16px; }
-  .sim-root .nav-wrap{ top:56px; }
+  
 
   /* ── Species grid ── */
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
@@ -1068,31 +976,31 @@
 @media(max-width:568px) and (min-width:420px){
   .sim-root{ font-size:87%; }
   .sim-root .wrap{ padding:0 12px; }
-  .sim-root .nav-wrap{ top:48px; }
+  
 
   /* ── Nav ── */
-  .sim-root .mode-btn{ font-size:18px; padding:9px 14px; }
+  
   .sim-root .sub-tabs{ padding:0 6px; }
-  .sim-root .sub-tab{ padding:6px 9px; font-size:8px; }
+  
   
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:14px; }
-  .sim-root .p-strip{ padding:5px 8px; }
+  
   .sim-root .p-family{ font-size:8px; }
-  .sim-root .p-num{ font-size:8px; }
+  
   .sim-root .p-img{ padding:4px; aspect-ratio:1; }
   .sim-root .p-body{ padding:8px 9px 8px; }
   .sim-root .p-common{ font-size:14px; line-height:1.08; }
   .sim-root .p-sci{ font-size:10px; margin-top:1px; }
-  .sim-root .p-params{ row-gap:3px; column-gap:5px; }
-  .sim-root .p-params dt{ font-size:9px; }
-  .sim-root .p-params dd{ font-size:10px; }
+  
+  
+  
   
   /* ── Panels ── */
   .sim-root .panel, .sim-root .spp-sect{ padding:12px 12px; margin-bottom:10px; }
-  .sim-root .step-eyebrow{ margin-bottom:10px; padding-bottom:8px; gap:8px; }
-  .sim-root .step-num{ font-size:11px; padding:2px 6px; }
-  .sim-root .step-title{ font-size:13px; }
+  
+  
+  
   
   /* ── Search & filters ── */
   .sim-root .search{ font-size:16px; padding:10px 12px; margin-bottom:10px; }
@@ -1135,7 +1043,7 @@
   .sim-root .btn{ width:100%; min-width:auto; }
   
   /* ── Info cards ── */
-  .sim-root .info-row{ gap:8px; flex-direction:column; }
+  
   .sim-root .kv .v{ font-size:16px; }
   
   /* ── Section labels ── */
@@ -1174,8 +1082,8 @@
   .sim-root .ssv{ font-size:24px; }
   
   /* ── Saved recipes ── */
-  .sim-root .sitem{ flex-wrap:wrap; gap:6px; padding:10px 12px; }
-  .sim-root .seb{ width:100%; text-align:center; font-size:16px; }
+  
+  
   .sim-root .sload, .sim-root .sdel{ flex:1; text-align:center; font-size:10px; padding:8px 10px; }
   
   /* ── Dashboard ── */
@@ -1184,9 +1092,9 @@
      element is display:flex now (see the editorial redesign block). */
 
   /* ── Comparator ── */
-  .sim-root .cgrid{ grid-template-columns:1fr; gap:0; }
-  .sim-root .cch{ padding:12px 14px; }
-  .sim-root .ccb{ padding:12px 14px; }
+  
+  
+  
   
   /* ── Balance mode ── */
   .sim-root .bal-mode{ font-size:9px; padding:3px 6px; }
@@ -1196,35 +1104,35 @@
 @media(max-width:419px){
   .sim-root{ font-size:85%; }
   .sim-root .wrap{ padding:0 10px; }
-  .sim-root .nav-wrap{ top:44px; }
+  
 
   /* ── Nav ── */
-  .sim-root .mode-btn{ font-size:16px; padding:8px 12px; }
+  
   .sim-root .sub-tabs{ padding:0 4px; }
-  .sim-root .sub-tab{ padding:5px 8px; font-size:7px; }
-  .sim-root .mode-sep{ height:12px; }
+  
+  
   
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:12px; }
-  .sim-root .p-strip{ padding:4px 7px; }
+  
   .sim-root .p-family{ font-size:7px; letter-spacing:.08em; }
-  .sim-root .p-num{ font-size:7px; }
+  
   .sim-root .p-img{ padding:3px; aspect-ratio:1/1; }
   .sim-root .p-img img{ padding:0; }
   .sim-root .p-body{ padding:6px 8px; }
   .sim-root .p-common{ font-size:13px; line-height:1.1; }
   .sim-root .p-sci{ font-size:9px; margin-top:1px; }
-  .sim-root .p-ann{ font-size:10px; }
-  .sim-root .p-params{ row-gap:2px; column-gap:4px; }
-  .sim-root .p-params dt{ font-size:8px; }
-  .sim-root .p-params dd{ font-size:9px; }
-  .sim-root .p-foot{ padding:6px 10px; }
+  
+  
+  
+  
+  
   
   /* ── Panels ── */
   .sim-root .panel, .sim-root .spp-sect{ padding:10px 10px; margin-bottom:8px; }
-  .sim-root .step-eyebrow{ margin-bottom:8px; padding-bottom:6px; gap:6px; }
-  .sim-root .step-num{ font-size:10px; padding:2px 5px; width:auto; }
-  .sim-root .step-title{ font-size:12px; }
+  
+  
+  
   
   /* ── Search ── */
   .sim-root .search{ font-size:16px; padding:9px 10px; margin-bottom:8px; }
@@ -1271,7 +1179,7 @@
   .sim-root .btn{ width:100%; min-width:auto; justify-content:center; }
   
   /* ── Info rows ── */
-  .sim-root .info-row{ gap:6px; flex-direction:column; padding-left:0; }
+  
   .sim-root .kv .k{ font-size:8px; }
   .sim-root .kv .v{ font-size:15px; }
   
@@ -1317,10 +1225,10 @@
   .sim-root .ssl{ font-size:10px; }
   
   /* ── Saved recipes ── */
-  .sim-root .sitem{ flex-wrap:wrap; gap:4px; padding:8px 10px; }
-  .sim-root .sn{ font-size:12px; width:100%; }
+  
+  
   .sim-root .sm{ font-size:11px; width:100%; }
-  .sim-root .seb{ font-size:14px; padding:6px 8px; width:100%; }
+  
   .sim-root .sload, .sim-root .sdel{ font-size:9px; padding:6px 8px; flex:1; }
   .sim-root .sempty{ padding:16px 12px; font-size:14px; }
   
@@ -1330,13 +1238,13 @@
      same reason as the block above. */
 
   /* ── Comparator ── */
-  .sim-root .cgrid{ grid-template-columns:1fr; }
-  .sim-root .cch{ padding:10px 12px; }
-  .sim-root .cch-label{ font-size:10px; }
-  .sim-root .cch-sub{ font-size:14px; }
-  .sim-root .ccb{ padding:10px 12px; }
-  .sim-root .crow{ padding:8px 0; }
-  .sim-root .clbl{ font-size:10px; }
+  
+  
+  
+  
+  
+  
+  
   .sim-root .cval{ font-size:22px; }
   
   /* ── Balance ── */
@@ -1372,47 +1280,27 @@
   max-width:1280px; margin:0 auto; padding:0 24px;
   display:flex; align-items:center; gap:18px; flex-wrap:wrap;
 }
-.sim-root .bridge-label{
-  font-family:var(--font-mono); font-weight:700; font-size:10px;
-  letter-spacing:.18em; text-transform:uppercase; color:#B8614D;
-  flex-shrink:0;
-  background:transparent;
-  padding:0;
-  border-radius:0;
-}
+
 .sim-root .bridge-name{
   font-family:var(--font-display); font-size:18px; color:var(--ink-0); line-height:1; font-weight:400;
 }
 .sim-root .bridge-sci{
   font-family:var(--font-display); font-style:italic; font-size:13px; color:var(--ink-2);
 }
-.sim-root .bridge-sep{ width:1px; height:16px; background:var(--line-1); flex-shrink:0; }
-.sim-root .bridge-param{
-  font-family:var(--font-mono); font-size:12px; color:var(--ink-2);
-  display:flex; align-items:center; gap:6px;
-}
-.sim-root .bridge-param em{ color:var(--ink-0); font-style:normal; font-size:8px; letter-spacing:.1em; text-transform:uppercase; }
+
+
+
 @media(max-width:600px){
-  .sim-root .bridge-sep{ display:none; }
-  .sim-root .bridge-param{ display:none; }
+  
+  
   .sim-root .bridge-sci{ display:none; }
 }
 
 /* ── STEP MARKERS ───────────────────────────────────────────────── */
-.sim-root .step-eyebrow{
-  display:flex; align-items:center; gap:10px; margin-bottom:18px;
-  padding-bottom:10px; border-bottom:1px solid var(--border-soft);
-}
-.sim-root .step-num{
-  font-family:var(--font-mono); font-size:13px; letter-spacing:.12em;
-  color:var(--ink-300); border:1px solid var(--border-soft); border-radius:var(--r-xs);
-  padding:3px 9px; flex-shrink:0; background:var(--paper-200);
-}
-.sim-root .step-title{
-  font-family:var(--font-body); font-weight:800; font-size:18px;
-  letter-spacing:.18em; text-transform:uppercase; color:var(--moss-700);
-}
-.sim-root .step-title em{ content:''; display:inline-block; width:14px; height:2px; background:var(--coral-500); vertical-align:middle; margin-right:8px; }
+
+
+
+
 
 .sim-root ::-webkit-scrollbar{ width:8px; height:8px; }
 .sim-root ::-webkit-scrollbar-thumb{ background:var(--line-1); border-radius:0; }
@@ -1464,57 +1352,48 @@
 .sim-root .hero{display:none!important;}
 .sim-root .fos-rail{display:none!important;}
 .sim-root .topbar{display:none!important;}
-.sim-root .fos-home-back{display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);background:none;border:none;cursor:pointer;padding:10px 24px 0;}
-.sim-root .fos-home-back:hover{color:var(--ink-900);}
-@media(min-width:801px){
-  .sim-root .fos-home-back{display:inline-flex;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box;padding:14px 24px 0;}
-}
+
+
+
 @media(max-width:800px){
-  .sim-root .fos-home-back{display:inline-flex;}
+  
   .sim-root .wrap{padding-bottom:24px!important;}
 }
-.sim-root .fos-home{padding:38px 24px 70px;max-width:820px;margin:0 auto;}
-.sim-root .fos-eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);}
-.sim-root .fos-kicker{font-family:var(--font-display);font-weight:100;font-style:italic;font-size:24px;color:var(--ink-500);margin-top:30px;}
-.sim-root .fos-h1{font-family:var(--font-display);font-weight:900;font-size:54px;line-height:.98;letter-spacing:-.02em;color:var(--ink-900);margin:8px 0 0;}
-.sim-root .fos-home-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;}
-.sim-root .fos-home-art img{height:210px;width:auto;mix-blend-mode:multiply;opacity:.85;filter:saturate(.6) contrast(1.05);display:block;}
-.sim-root .fos-tiles{display:flex;flex-direction:column;gap:11px;margin-top:36px;}
-.sim-root .fos-tile{display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;border:1px solid var(--border-strong);background:var(--paper-50);border-radius:0;padding:18px 20px;cursor:pointer;transition:border-color .15s,transform .1s;}
-.sim-root .fos-tile:hover{border-color:var(--ink-900);}
-.sim-root .fos-tile:active{transform:scale(.99);}
+
+
+
+
+
+
+
+
+
+
 .sim-root .fos-tile.pri{background:var(--ink-900);border-color:var(--ink-900);}
 .sim-root .fos-tile.pri .fos-tile-t, .sim-root .fos-tile.pri .fos-tile-arrow{color:var(--paper-50);}
 .sim-root .fos-tile.pri .fos-tile-s{color:color-mix(in oklab,var(--paper-50) 70%,transparent);}
-.sim-root .fos-tile-t{font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:-.01em;color:var(--ink-900);display:block;line-height:1.1;}
-.sim-root .fos-tile-s{font-family:var(--font-body);font-size:13px;color:var(--ink-500);display:block;margin-top:3px;}
-.sim-root .fos-tile-arrow{font-size:20px;color:var(--ink-2);flex-shrink:0;}
+
+
+
 .sim-root .fos-tile.pri .fos-tile-arrow{color:var(--paper-0);}
-.sim-root .fos-species{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:34px;padding-top:18px;border-top:1px solid var(--border-soft);font-family:var(--font-mono);font-size:12px;color:var(--ink-600);}
-.sim-root .fos-species b{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--ink-900);letter-spacing:-.01em;}
-.sim-root .fos-species em{font-family:var(--font-display);font-style:italic;font-weight:300;color:var(--ink-500);font-size:13px;}
-.sim-root .fos-species-dot{width:8px;height:8px;border-radius:50%;background:var(--moss-500);box-shadow:0 0 0 3px color-mix(in oklab,var(--moss-500) 22%,transparent);flex-shrink:0;}
-.sim-root .fos-species button{margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:7px 13px;background:transparent;color:var(--ink-0);border:1px solid var(--border-strong);cursor:pointer;border-radius:0;}
-.sim-root .fos-species button:hover{border-color:var(--ink-0);}
-@media(max-width:600px){
-  .sim-root .fos-home{padding:26px 16px 50px;}
-  .sim-root .fos-h1{font-size:40px;}
-  .sim-root .fos-kicker{font-size:20px;margin-top:18px;}
-  .sim-root .fos-home-art{display:none;}
-  .sim-root .fos-tile-t{font-size:18px;}
-  .sim-root .fos-species button{margin-left:0;}
-}
+
+
+
+
+
+
+
 .sim-root .fos-chips{display:none!important;}
 .sim-root .fos-chips button{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:8px 15px;border:1px solid var(--border-strong);border-radius:0;background:var(--paper-50);color:var(--ink-500);cursor:pointer;transition:color .15s,background-color .15s,border-color .15s;}
 .sim-root .fos-chips button:hover{color:var(--ink-900);border-color:var(--ink-900);}
 .sim-root .fos-chips button.on{background:var(--ink-0);color:var(--paper-0);border-color:var(--ink-0);}
-@media print{.sim-root{padding-left:0!important;}.sim-root .fos-rail, .sim-root .fos-chips, .sim-root .fos-home{display:none!important;}}
+@media print{.sim-root{padding-left:0!important;}.sim-root .fos-rail, .sim-root .fos-chips{display:none!important;}}
 /* ── v3 ADDITIONS ──────────────────────────────────────────────── */
-.sim-root .flush-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.sim-root .flush-label{font-family:var(--font-mono);font-size:12px;width:74px;color:var(--ink-700);flex-shrink:0;font-weight:600;}
-.sim-root .flush-track{flex:1;height:20px;background:var(--paper-300);border-radius:2px;overflow:hidden;position:relative;}
-.sim-root .flush-fill{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;padding-left:7px;transition:width .5s cubic-bezier(0.32,0.72,0.36,1);}
-.sim-root .flush-day{font-family:var(--font-mono);font-size:12px;color:var(--ink-600);width:50px;flex-shrink:0;text-align:right;font-weight:500;}
+
+
+
+
+
 
 .sim-root .pantry-grid{display:flex;flex-wrap:wrap;gap:4px 6px;margin:10px 0;}
 .sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .12s;font-weight:600;}
@@ -1566,29 +1445,29 @@
 .sim-root .spr-score{font-family:var(--font-num);font-size:16px;font-weight:400;min-width:32px;text-align:right;}
 
 .sim-root .ing-item{position:relative;}
-.sim-root .ing-quick-add{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:var(--coral-500);color:#fff;border:none;cursor:pointer;font-size:16px;line-height:1;display:none;align-items:center;justify-content:center;transition:all .15s;}
+
 .sim-root .ing-item:hover .ing-quick-add{display:flex;}
-.sim-root .ing-quick-add:hover{background:var(--coral-700);transform:translateY(-50%) scale(1.1);}
+
 .sim-root .ing-quick-add.added{background:var(--moss-500);}
 
 .sim-root .inv-field select:focus-visible, .sim-root .inv-field input:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px;}
 .sim-root .inv-field select, .sim-root .inv-field input{width:100%;padding:10px 12px;border:1px solid var(--border-soft);border-radius:var(--r-sm);background:var(--paper-50);font-family:var(--font-body);font-size:14px;color:var(--ink-900);outline:none;}
 .sim-root .inv-field select:focus, .sim-root .inv-field input:focus{border-color:var(--coral-500);}
 
-.sim-root .step-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
-.sim-root .step-num{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--coral-500);background:color-mix(in oklab,var(--coral-200) 40%,var(--paper-50));border:1px solid var(--coral-200);border-radius:4px;padding:3px 8px;}
-.sim-root .step-title{font-family:var(--font-body);font-weight:800;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-700);}
+
+
+
 
 .sim-root .builder-wrap{}
-.sim-root .builder-subnav{display:none;}
-@media(max-width:900px){.sim-root .builder-subnav{display:flex;}}
+
+
 
 .sim-root .builder-cols > *{min-width:0;}
 @media(max-width:900px){.sim-root .builder-cols{gap:12px;}}
 @media(max-width:600px){.sim-root .ing-meta{flex-wrap:wrap!important;}.sim-root .ing-meta span{flex:1 1 50%!important;border-bottom:1px solid rgba(26,20,16,0.07)!important;}}
 /* ── Builder sub-tabs ── */
 .sim-root .builder-subtabs{display:flex;gap:0;border-bottom:2px solid var(--border-soft);margin-bottom:20px;background:var(--paper-100);}
-.sim-root .bst{padding:13px 22px;border:none;background:none;cursor:pointer;font-family:var(--font-body);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s,background .15s;}
+
 .sim-root .bst.on{color:var(--coral-500);border-bottom-color:var(--coral-500);background:color-mix(in oklab,var(--coral-500) 6%,var(--paper-50,#fff));}
 .sim-root .bst:hover:not(.on){color:var(--ink-900);background:rgba(0,0,0,.03);}
 .sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:#fff;font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide .3s ease;}
@@ -1617,12 +1496,12 @@
 
 .sim-root .species-bridge{border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding-top:16px;}
 .sim-root .bridge-inner{max-width:1280px;margin:0 auto;padding:24px 32px!important;display:flex;align-items:center!important;gap:18px!important;flex-wrap:wrap;overflow-x:hidden;}
-.sim-root .bridge-label{font-family:var(--font-body);font-weight:800;font-size:12.65px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);}
-.sim-root .bridge-sep{width:1px;height:14px;background:var(--border-soft);flex-shrink:0;opacity:0;}
+
+
 .sim-root .bridge-name{font-family:var(--font-display);font-size:29.9px;letter-spacing:-0.005em;line-height:1.1;color:var(--ink-0);}
 .sim-root .bridge-sci{font-family:var(--font-display);font-style:italic;font-size:21.85px;color:var(--ink-600);}
-.sim-root .bridge-param{font-family:var(--font-mono);font-size:14.95px;color:var(--ink-700);white-space:nowrap;}
-.sim-root .bridge-param em{color:var(--ink-700);margin-right:4px;font-style:normal;font-weight:700;}
+
+
 
 .sim-root .price-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
 .sim-root .price-row:last-child{border-bottom:none;}
@@ -1702,7 +1581,7 @@
   .sim-root .bolsas-table td > *{flex:1 1 auto;max-width:60%;}
   .sim-root .bolsas-table input, .sim-root .bolsas-table select{font-size:16px!important;padding:8px 10px!important;min-height:44px;box-sizing:border-box;}
 }
-@media(max-width:600px){.sim-root .cmp-b-row{flex-direction:column;align-items:flex-start!important;}.sim-root .cmp-b-row > span{margin-right:0!important;margin-bottom:4px;}}
+
 .sim-root .inv-table{width:100%;border-collapse:collapse;}
 .sim-root .inv-table th{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);padding:8px 12px;background:var(--paper-200);border-bottom:1px solid var(--border-soft);text-align:left;}
 .sim-root .inv-table td{font-family:var(--font-mono);font-size:13px;color:var(--ink-900);padding:8px 12px;border-bottom:1px solid var(--paper-300);vertical-align:middle;}
@@ -1719,7 +1598,7 @@
 .sim-root .inv-input select{appearance:none;}
 .sim-root .inv-row{display:grid;gap:12px;margin-bottom:12px;}
 .sim-root .inv-row-2{grid-template-columns:1fr 1fr;}
-.sim-root .inv-row-3{grid-template-columns:1fr 1fr 1fr;}
+
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
 .sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .sim-root .inv-btn-pri{background:var(--coral-500);color:#fff;}
@@ -1755,11 +1634,11 @@
 .sim-root .inv-stat-val{font-family:var(--font-display);font-style:italic;font-size:32px;color:var(--ink-900);line-height:1;}
 .sim-root .inv-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-400);margin-top:4px;}
 
-.sim-root .inv-link-btn{background:none;border:none;cursor:pointer;font-family:var(--font-mono);font-size:10px;color:var(--coral-500);text-decoration:underline;padding:0;}
-.sim-root .inv-link-btn:hover{color:var(--coral-700);}
-.sim-root .inv-radio-group{display:flex;gap:12px;margin-bottom:0;}
-.sim-root .inv-radio-opt{display:flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--font-mono);font-size:12px;color:var(--ink-700);font-weight:600;}
-.sim-root .inv-radio-opt input[type=radio]{accent-color:var(--coral-500);}
+
+
+
+
+
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
@@ -1786,23 +1665,23 @@
 .sim-root .catalog-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px;}
 .sim-root .catalog-eyebrow{font-family:var(--font-body);font-weight:800;font-size:11.25px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral-500);display:block;margin-bottom:6px;}
 .sim-root .catalog-title{font-family:var(--font-display);font-size:38px;color:var(--ink-0);margin:0;font-weight:400;line-height:1;}
-.sim-root .view-toggle{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:24px;}
-.sim-root .view-toggle-lbl{font-family:var(--font-body);font-weight:800;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500);}
-.sim-root .view-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-soft);background:var(--paper-50);cursor:pointer;color:var(--ink-500);padding:0;transition:all .12s;}
+
+
+
 .sim-root .view-btn.on{border-color:var(--coral-500);color:var(--coral-500);}
 /* Card image — 15% smaller, normalized scale */
 .sim-root .spp-card .p-img{aspect-ratio:1/1!important;background-color:var(--paper-100)!important;background-image:none!important;padding:20px!important;}
 
 /* Card flat stat grid */
-.sim-root .p-stats{display:grid;margin-top:auto;}
-.sim-root .p-stats-3{grid-template-columns:repeat(3,1fr);border-top:1px solid var(--paper-300);}
-.sim-root .p-stats-foot{grid-template-columns:1fr 1fr auto;border-top:1px solid var(--paper-300);}
-.sim-root .p-stat{padding:7px 10px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--paper-300);}
-.sim-root .p-stats-3 .p-stat:last-child, .sim-root .p-stats-foot .p-stat:last-child{border-right:none;}
-.sim-root .p-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-800);}
-.sim-root .p-stat-val{font-family:var(--font-mono);font-size:11px;color:var(--ink-800);font-weight:700;}
-.sim-root .p-stat-radio{display:flex;align-items:center;justify-content:center;padding:8px 12px;border-left:1px solid var(--paper-300);}
-.sim-root .p-radio{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--ink-300);display:block;transition:all .15s;}
+
+
+
+
+
+
+
+
+
 .sim-root .p-radio.on{border-color:var(--coral-500);background:var(--coral-500);box-shadow:inset 0 0 0 3px var(--paper-50);}
 /* Alternating row tint on grid rows 4-6 and 7-9 */
 .sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
@@ -1845,30 +1724,30 @@
 .sim-root .spp-info-left{display:flex;flex-direction:column;border-right:1px solid rgba(26,20,16,0.1);min-height:480px;}
 .sim-root .spp-info-top{padding:32px 28px 20px;flex:1;}
 .sim-root .spp-info-center{background:var(--paper-50);overflow:hidden;position:relative;}
-.sim-root .spp-info-right{display:none;}
+
 .sim-root .spp-info-sci{font-family:var(--font-sci);font-style:italic;font-size:17.5px;color:var(--ink-2);margin-bottom:4px;}
 .sim-root .spp-info-name{font-family:var(--font-display);font-size:53.9px;font-weight:400;letter-spacing:-.02em;color:var(--ink-0);line-height:1.0;margin-bottom:14px;}
-.sim-root .spp-info-desc{font-size:9px;line-height:1.6;color:var(--ink-700);text-wrap:pretty;margin-bottom:20px;}
+
 .sim-root .spp-info-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:saturate(.65) contrast(1.05);mix-blend-mode:multiply;padding:32px 28px;box-sizing:border-box;}
 /* Detail rows: Apariencia / Sabor / Usos */
-.sim-root .spp-detail-rows{display:flex;flex-direction:column;gap:14px;}
-.sim-root .spp-detail-row{display:flex;gap:10px;align-items:flex-start;}
-.sim-root .spp-detail-ico{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(26,20,16,0.12);color:var(--ink-500);}
+
+
+
 .sim-root .spp-detail-txt .k{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-700);margin-bottom:3px;}
 .sim-root .spp-detail-txt .v{font-size:15px;color:var(--ink-700);line-height:1.5;}
 /* Franja de parámetros — anotaciones de campo al fondo */
-.sim-root .spp-field-strip{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid rgba(26,20,16,0.1);}
-.sim-root .spp-field-cell{padding:14px 14px 12px;border-right:1px solid rgba(26,20,16,0.07);display:flex;flex-direction:column;gap:5px;}
-.sim-root .spp-field-cell:last-child{border-right:none;}
-.sim-root .spp-field-lbl{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500);}
-.sim-root .spp-field-val{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--ink-900);line-height:1.2;}
+
+
+
+
+
 /* Fila CTA */
 .sim-root .spp-cta-row{padding:14px 28px;border-top:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper-0);}
 .sim-root .spp-cta-note{font-family:var(--font-sci);font-style:italic;font-size:15px;color:var(--ink-1);line-height:1.4;font-weight:600;}
 .sim-root .spp-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;background:var(--ink-0);color:var(--paper-0);border:none;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;border-radius:var(--r-xs);}
 .sim-root .spp-cta:hover{background:var(--ink-1);}
-.sim-root .spp-info-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:14px 22px;background:var(--ink-900);color:var(--paper-50);border:none;cursor:pointer;transition:all .15s;width:100%;margin-top:14px;text-align:center;}
-.sim-root .spp-info-cta:hover{background:var(--ink-1);}
+
+
 .sim-root .p-body{padding-bottom:10px!important;}
 
 /* ── v5 MOBILE OVERRIDES ─────────────────────────────────────── */
@@ -1877,13 +1756,13 @@
   .sim-root .spp-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;}
 
   /* Stat rows inside cards: stack temp/ph/co on narrow */
-  .sim-root .p-stats-3{grid-template-columns:repeat(3,1fr);} /* keep 3-col, just smaller text */
-  .sim-root .p-stat{padding:6px 8px;}
-  .sim-root .p-stat-lbl{font-size:6px;letter-spacing:.1em;}
-  .sim-root .p-stat-val{font-size:9px;}
-  .sim-root .p-stats-foot{grid-template-columns:1fr 1fr auto;}
-  .sim-root .p-stat-radio{padding:6px 10px;}
-  .sim-root .p-radio{width:11px;height:11px;}
+   /* keep 3-col, just smaller text */
+  
+  
+  
+  
+  
+  
 
   /* Bridge: stack on mobile (unified) */
   .sim-root .bridge-inner{flex-wrap:wrap!important;padding:10px 16px!important;gap:8px 14px!important;align-items:center!important;overflow-x:visible!important;}
@@ -1918,13 +1797,13 @@
 
   /* 2. Mode switcher: scroll horizontal, sin wrap */
   .sim-root .mode-switcher{ overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; position:relative; }
-  .sim-root .mode-btn{ font-size:18px; padding:9px 16px; flex-shrink:0; }
-  .sim-root .mode-sep{ flex-shrink:0; }
+  
+  
 
   /* 3. Sub-tabs: scroll horizontal, sin overflow */
   .sim-root .sub-tabs{ overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap!important; padding:0 8px; position:relative; }
-  .sim-root .sub-tab{ flex-shrink:0; white-space:nowrap; }
-  .sim-root .sub-sep{ flex-shrink:0; }
+  
+  
 
   /* 3b. Indicador de scroll horizontal: mismo gradiente que .cats, aplicado también a subtabs y mode-switcher */
   .sim-root .builder-subtabs, .sim-root .sub-tabs, .sim-root .mode-switcher{ position:relative; }
@@ -1950,14 +1829,14 @@
 
   /* 8. Formularios inventario: colapsar columnas */
   .sim-root .inv-row-2{ grid-template-columns:1fr!important; }
-  .sim-root .inv-row-3{ grid-template-columns:1fr 1fr!important; }
+  
   .sim-root .inv-row-4{ grid-template-columns:1fr 1fr!important; gap:8px!important; }
 
   /* 9. Optimizer result metrics: 2×2 */
   .sim-root .opt-metrics{ grid-template-columns:1fr 1fr!important; }
 
   /* 10. Comparador: 1 col */
-  .sim-root .cgrid{ grid-template-columns:1fr!important; }
+  
 
   /* 11. Recipe row: ingrediente rediseñado como flexbox column */
   .sim-root .rec-row{ display:flex!important; flex-direction:column!important; gap:8px!important; padding:12px 14px!important; }
@@ -1983,8 +1862,8 @@
   .sim-root .spp-info-img{position:relative!important;inset:auto!important;height:auto!important;width:100%!important;object-fit:contain!important;max-height:380px!important;padding:16px 12px!important;}
   .sim-root .spp-info-name{font-size:32px!important;margin-bottom:10px!important;}
   .sim-root .spp-info-sci{font-size:14px!important;}
-  .sim-root .spp-field-strip{grid-template-columns:repeat(3,1fr)!important;}
-  .sim-root .spp-field-cell:nth-child(n+4){display:none!important;}
+  
+  
   .sim-root .spp-cta-row{flex-direction:column!important;align-items:center!important;gap:10px!important;padding:14px 18px!important;text-align:center!important;}
   .sim-root .spp-cta{width:100%!important;text-align:center!important;}
   /* Keep "Formular" CTA always visible at bottom of scrolling modal */
@@ -2004,7 +1883,7 @@
   .sim-root .ing-list{ max-height:340px; }
 
   /* 20. Info row especie */
-  .sim-root .info-row{ gap:12px; padding-left:8px; }
+  
   .sim-root .kv .v{ font-size:18px; }
 
   /* 21. Opt result: pills wrap + botones visibles */
@@ -2035,7 +1914,7 @@
   .sim-root .bg-wrap{ padding:10px 12px 8px; }
 
   /* 27. Flush bars */
-  .sim-root .flush-label{ width:60px; font-size:8px; }
+  
 
   /* 27b. Barra de guardar receta: fijada al fondo (thumb zone) en vez de requerir scroll.
      bottom:96px para no quedar tapada por .species-bridge, que también es sticky
@@ -2104,9 +1983,9 @@
 }
 
 /* ── FAB: salto rápido entre Ingredientes ↔ Receta activa en Formular (móvil) ── */
-.sim-root .mobile-quickjump{display:none;position:fixed;right:16px;bottom:20px;z-index:65;align-items:center;gap:6px;padding:13px 18px;border-radius:999px;background:var(--ink-900);color:var(--paper-50);border:none;font-family:var(--font-mono);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;box-shadow:var(--shadow-fab);cursor:pointer;}
-.sim-root .mobile-quickjump:active{transform:scale(.96);}
-@media(max-width:900px){.sim-root .mobile-quickjump{display:inline-flex;bottom:calc(78px + env(safe-area-inset-bottom));}}
+
+
+
 
 /* ── Hoja de Producción: compactar en móvil (screen-only, no afecta impresión) ── */
 @media screen and (max-width:900px){
@@ -2129,8 +2008,8 @@
 
 @media(max-width:400px){
   .sim-root .spp-grid{ grid-template-columns:1fr!important; }
-  .sim-root .inv-row-3{ grid-template-columns:1fr!important; }
-  .sim-root .mode-btn{ font-size:15px!important; padding:8px 12px!important; }
+  
+  
 }
 
 /* ── PAGE TITLE BAR ──────────────────────────────────────────── */
@@ -2144,8 +2023,8 @@
 .sim-root .bodega-bar-title{font-family:var(--font-body);font-size:12px;font-weight:700;color:var(--ink-800);line-height:1.2;}
 .sim-root .bodega-bar-sub{font-family:var(--font-mono);font-size:10px;color:var(--ink-700);margin-top:3px;font-weight:600;}
 .sim-root .bodega-bar-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.sim-root .bodega-bar-link{font-family:var(--font-mono);font-size:11px;color:var(--coral-500);background:none;border:none;cursor:pointer;padding:3px 8px;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;font-weight:600;}
-.sim-root .bodega-bar-link:hover{color:var(--coral-700);}
+
+
 .sim-root .bodega-bar-refresh{display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;border:1px solid var(--border-soft);border-radius:var(--r-sm);background:none;color:var(--ink-600);cursor:pointer;}
 .sim-root .bodega-bar-refresh:hover{color:var(--coral-500);border-color:var(--coral-500);}
 .sim-root .pantry-chip-kg{font-family:var(--font-mono);font-size:9px;color:var(--accent-olive);opacity:.8;font-weight:400;margin-left:1px;}
@@ -2160,7 +2039,7 @@
 .sim-root .pi-critical{--pi-color:var(--coral-500);}
 .sim-root .pi-warning{--pi-color:var(--ochre-700,#A07828);}
 .sim-root .pi-tip{--pi-color:#4A6B4A;}
-.sim-root .pi-info{--pi-color:var(--ink-700);}
+
 .sim-root .perito-item{display:grid;grid-template-columns:36px 1fr auto;gap:0;border-bottom:1px solid var(--paper-300);align-items:start;}
 .sim-root .pi-icon-col{display:flex;align-items:center;justify-content:center;padding:11px 4px;border-right:1px solid var(--paper-300);}
 .sim-root .pi-icon{font-family:var(--font-mono);font-size:8px;font-weight:700;padding:2px 4px;border:1.5px solid var(--pi-color);color:var(--pi-color);text-align:center;line-height:1.3;min-width:24px;display:inline-block;}
@@ -2304,23 +2183,16 @@
 }
 
 /* Quick-add button: keep it accessible over name row */
-.sim-root .ing-quick-add{
-  top:50%!important;
-  right:6px!important;
-}
+
 
 /* Quick-add: siempre visible en touch/móvil, sin depender de :hover */
-@media(max-width:900px){
-  .sim-root .ing-quick-add{ display:flex!important; }
-}
-@media(hover:none){
-  .sim-root .ing-quick-add{ display:flex!important; }
-}
+
+
 /* Hit-area táctil ≥48px para botones circulares pequeños (visual se mantiene, toque se amplía vía ::before).
    inset:-11px porque .bodega-bar-refresh es el más chico (26px visual): 26+11+11=48px exactos.
    Para .ing-quick-add/.view-btn (28px) da 50px — de sobra, nunca reduce el objetivo táctil. */
-.sim-root .ing-quick-add,.sim-root .view-btn,.sim-root .bodega-bar-refresh{position:relative;}
-.sim-root .ing-quick-add::before,.sim-root .view-btn::before,.sim-root .bodega-bar-refresh::before{
+.sim-root .bodega-bar-refresh{position:relative;}
+.sim-root .bodega-bar-refresh::before{
   content:'';position:absolute;inset:-11px;
 }
 
@@ -2363,11 +2235,11 @@
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
 @media(max-width:768px){
   .sim-root .cats, .sim-root .presets, .sim-root .sub-tabs, .sim-root .mode-switcher, .sim-root .builder-subtabs{ scroll-snap-type:x mandatory; }
-  .sim-root .cat, .sim-root .pre, .sim-root .sub-tab, .sim-root .mode-btn, .sim-root .bst{ scroll-snap-align:start; }
+  .sim-root .cat, .sim-root .pre{ scroll-snap-align:start; }
 
   /* Builder sub-tabs: scroll horizontal en pantallas angostas */
   .sim-root .builder-subtabs{ overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap!important; }
-  .sim-root .bst{ flex-shrink:0; white-space:nowrap; }
+  
 
   /* Sombra a la izquierda tras hacer scroll, para reforzar que es bidireccional */
   .sim-root .cats.scrolled::before, .sim-root .presets.scrolled::before, .sim-root .sub-tabs.scrolled::before, .sim-root .mode-switcher.scrolled::before, .sim-root .builder-subtabs.scrolled::before{
@@ -2651,15 +2523,15 @@
 
 /* ── SPECIES GUIDE ─────────────────────────────────────────────── */
 .sim-root .sguide{background:var(--paper-50);border:1px solid rgba(26,20,16,0.12);border-top-width:3px;margin-bottom:16px;}
-.sim-root .sguide-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;}
-.sim-root .sguide-body{border-top:1px solid rgba(26,20,16,0.08);}
-.sim-root .sguide-params{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid rgba(26,20,16,0.08);}
-.sim-root .sguide-param{padding:10px 12px;border-right:1px solid rgba(26,20,16,0.06);display:flex;flex-direction:column;gap:3px;}
-.sim-root .sguide-param:last-child{border-right:none;}
-.sim-root .sguide-param-lbl{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-500);}
-.sim-root .sguide-param-val{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--ink-900);line-height:1.2;}
-.sim-root .sguide-param-note{font-family:var(--font-mono);font-size:9px;color:var(--ink-600);}
-.sim-root .sguide-alert{padding:8px 14px;border-bottom:1px solid rgba(26,20,16,0.08);background:var(--paper-100);}
+
+
+
+
+
+
+
+
+
 .sim-root .sguide-section{padding:10px 14px;}
 .sim-root .sguide-section+.sguide-section{border-top:1px solid rgba(26,20,16,0.07);}
 .sim-root .sguide-section:last-child{background:color-mix(in oklab,var(--paper-100) 70%,var(--coral-500) 6%);padding:14px 16px;margin:12px -14px -10px -14px;border-radius:0 0 6px 6px;border-top:2.5px solid var(--coral-500);box-shadow:inset 0 1px 0 rgba(197,86,45,0.1);}
@@ -2669,18 +2541,18 @@
 .sim-root .sguide-hecho{display:flex;gap:9px;align-items:flex-start;}
 .sim-root .sguide-hecho-n{font-family:var(--font-mono);font-size:10px;color:var(--coral-500);font-weight:700;flex-shrink:0;margin-top:2px;min-width:14px;}
 .sim-root .sguide-hecho-txt{font-family:var(--font-body);font-size:11.5px;color:var(--ink-800);line-height:1.55;}
-.sim-root .sguide-compat{display:flex;flex-direction:column;gap:7px;}
-.sim-root .sguide-compat-row{display:flex;gap:10px;align-items:flex-start;}
-.sim-root .sguide-compat-cat{font-family:var(--font-mono);font-size:9px;font-weight:800;color:var(--ink-700);width:78px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em;padding-top:3px;background:rgba(197,86,45,0.08);padding:4px 8px;border-radius:2px;margin-left:-8px;}
-.sim-root .sguide-chips{display:flex;flex-wrap:wrap;gap:8px;}
-.sim-root .sguide-chip{font-family:var(--font-mono);font-size:10px;font-weight:600;padding:4px 10px;background:var(--paper-100);border:1.5px solid var(--paper-300);border-radius:4px;color:var(--ink-900);cursor:pointer;transition:all .15s;}
-.sim-root .sguide-chip:hover{background:var(--coral-100,#f5e5d8);border-color:var(--coral-400,#d97a4f);color:var(--coral-700,#a0442d);transform:translateY(-1px);box-shadow:var(--shadow-hover-accent2-sm);}
+
+
+
+
+
+
 .sim-root .sguide-chip.added{background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));border-color:var(--moss-400,#7A9B60);color:var(--moss-700);}
 .sim-root .sguide-chip.added:hover{background:color-mix(in oklab,var(--coral-200) 50%,var(--paper-50));border-color:var(--coral-400,#d97a4f);color:var(--coral-700);}
-.sim-root .sguide-toggle-compat{font-family:var(--font-mono);font-size:10px;font-weight:700;color:#fff;background:var(--coral-500);border:none;cursor:pointer;padding:5px 12px;border-radius:3px;transition:all .15s;text-transform:uppercase;letter-spacing:.06em;}
-.sim-root .sguide-toggle-compat:hover{background:var(--coral-600);transform:translateY(-1px);box-shadow:var(--shadow-hover-accent2-md);}
-@media(max-width:900px){.sim-root .sguide-params{grid-template-columns:repeat(4,1fr)!important;}}
-@media(max-width:600px){.sim-root .sguide-params{grid-template-columns:repeat(2,1fr)!important;}.sim-root .sguide-compat-row{flex-direction:column;gap:8px;}.sim-root .sguide-compat-cat{width:auto;}.sim-root .p-chips-row1{grid-template-columns:1fr 1fr!important;}.sim-root .p-chips-row2{grid-template-columns:1fr 1fr!important;}.sim-root .p-chip-val{font-size:10px;}.sim-root .p-chip-lbl{font-size:8px;}}
+
+
+
+@media(max-width:600px){.sim-root .p-chips-row1{grid-template-columns:1fr 1fr!important;}.sim-root .p-chips-row2{grid-template-columns:1fr 1fr!important;}.sim-root .p-chip-val{font-size:10px;}.sim-root .p-chip-lbl{font-size:8px;}}
 
 
 /* ==== NATIVE MERGE: print visibility override (beats shell body *{visibility:hidden}) ==== */
