@@ -71,10 +71,19 @@ import './formulator-api.js';
     .filter(r => r?.sKey === sKey && Array.isArray(r.recipe))
     .map(r => ({ recipe: r.recipe }));
 
+  // Lotes reales de Bitácora con cosechas registradas — evidencia auto-derivada,
+  // sin que el operador tenga que teclear un EB real a mano por prueba.
+  const bitacoraTrialRows = sKey => {
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!calib?.bitacoraAsTrialRows) return [];
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
+  };
+
   const historyCalibrationFor = (sKey, recipe) => {
     const engine = globalThis.SetasPeritoScenarios;
     if (!engine?.recipeDistance) return null;
-    const rows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
+    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
+    const rows = [...bitacoraTrialRows(sKey), ...trialRows];
     if (!rows.length) return null;
     const comparable = rows.map(r => ({ ...r, similarity: Math.max(0, 1 - engine.recipeDistance(recipe, r.recipe)) }));
     const selected = comparable.filter(r => r.similarity >= 0.55);
