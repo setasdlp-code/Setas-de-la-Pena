@@ -453,8 +453,13 @@
 }
 .sim-root .search::placeholder{ color:var(--ink-3,#96907C); opacity:1; }
 
-.sim-root .cats{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
-.sim-root .cats{ display:flex; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:6px; margin-bottom:16px; padding-bottom:6px; position:relative; }
+/* Antes había dos reglas .sim-root .cats seguidas — la primera (flex-wrap:wrap, causante
+   del salto a 3 líneas) quedaba muerta porque la segunda, idéntica en especificidad y
+   declarada después, la pisaba en la cascada. Se deja solo la que realmente aplica,
+   más scrollbar-width:none para ocultar la barra de scroll en Firefox/desktop (en iOS/
+   touch ya era invisible por defecto). */
+.sim-root .cats{ display:flex; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:6px; margin-bottom:16px; padding-bottom:6px; position:relative; }
+.sim-root .cats::-webkit-scrollbar{ display:none; }
 .sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, var(--paper-1) 100%); pointer-events:none; z-index:10; }
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
