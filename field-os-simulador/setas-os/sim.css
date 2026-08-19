@@ -850,6 +850,9 @@
 .sim-root .inv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
 @media(max-width:768px){ .sim-root .inv-grid{ grid-template-columns:1fr; } }
 
+/* ── HOME COCKPIT: Acciones Rápidas (destacada + lista) ──────────── */
+@media(max-width:768px){ .sim-root .home-actions-grid{ grid-template-columns:1fr!important; } }
+
 /* ── RECOMMENDER ────────────────────────────────────────────────── */
 
 .sim-root .inv-field label{ display:block; font-family:var(--font-body); font-weight:800; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-500); margin-bottom:5px; }

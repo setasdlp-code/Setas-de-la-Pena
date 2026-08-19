@@ -2877,52 +2877,72 @@ BATCH (${numBags}×${kgBag} kg):
       padding: "28px 32px",
       position: "relative",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 680 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, "FIELD OS · CENTRO DE MANDO OPERATIVO")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-3xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", marginBottom: 10 } }, "Setas de la Peña"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", color: "var(--ink-700)", margin: 0, lineHeight: 1.5 } }, "Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--ink-700)" } }, "⛰️ Tenjo 2.600 msnm"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--ink-700)" } }, "💧 H₂O Eb. 91.4°C"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--moss-700)" } }, "● Sistema Nominal")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, background: "var(--paper-50)", border: "1px solid var(--paper-300)", padding: "8px 14px", borderRadius: "var(--r-sm)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Especie en foco"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, sp?.name || "Orellana Gris", " ", /* @__PURE__ */ React.createElement("em", { style: { fontStyle: "italic", fontWeight: 400, fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "(", sp?.scientific, ")"))), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("catalogo"), style: { padding: "4px 10px", background: "transparent", border: "1px solid var(--coral-500)", borderRadius: "var(--r-xs)", color: "var(--coral-500)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer", transition: "all .15s", whiteSpace: "nowrap" } }, "Cambiar"))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-      gap: 12
-    } }, [
-      { label: "Formular Receta", sub: "Balance C:N & Perito", icon: "⚡", tab: "formular", onClick: () => goTab("formular"), pri: true },
-      { label: "Ficha de Producción", sub: "Báscula & mezcla del día", icon: "📋", tab: "produccion", onClick: () => goTab("produccion") },
-      { label: "Registrar Cosecha", sub: "Pesaje de flush en gramos", icon: "🍄", tab: "bitacora", onClick: () => setShowBitCosecha(true) },
-      { label: "Entrada a Bodega", sub: "Compras & stock FIFO", icon: "📦", tab: "inventario", onClick: () => {
-        goTab("inventario");
-        setInvTab("compra");
-      } },
-      { label: "Nueva Prueba / Lote", sub: "Crear código y bolsas", icon: "🔬", tab: "bitacora", onClick: () => setShowBitNuevo(true) },
-      { label: "Catálogo Especies", sub: "Requerimientos climáticos", icon: "📖", tab: "catalogo", onClick: () => goTab("catalogo") }
-    ].map((btn) => /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        key: btn.label,
-        onClick: btn.onClick,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "14px 16px",
-          background: btn.pri ? "var(--paper-0)" : "var(--paper-0)",
-          border: btn.pri ? "1.5px solid var(--coral-500)" : "1px solid var(--border-soft)",
-          borderRadius: "var(--r-sm)",
-          textAlign: "left",
-          cursor: "pointer",
-          transition: "all .15s ease",
-          boxShadow: "var(--shadow-card-rest)",
-          position: "relative"
-        },
-        onMouseEnter: (e) => {
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "var(--shadow-card-hover)";
-        },
-        onMouseLeave: (e) => {
-          e.currentTarget.style.transform = "none";
-          e.currentTarget.style.boxShadow = "var(--shadow-card-rest)";
-        }
-      },
-      /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xl)", lineHeight: 1, flexShrink: 0 } }, btn.icon),
-      /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", color: btn.pri ? "var(--coral-700)" : "var(--ink-900)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.label), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.sub)),
-      /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: btn.pri ? "var(--coral-500)" : "var(--ink-400)", fontWeight: 700 } }, "→")
-    )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Telemetría de Salas de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● 4 zonas monitoreadas")), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 680 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, "FIELD OS · CENTRO DE MANDO OPERATIVO")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-3xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", marginBottom: 10 } }, "Setas de la Peña"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", color: "var(--ink-700)", margin: 0, lineHeight: 1.5 } }, "Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.")), /* @__PURE__ */ null), React.createElement("div", { style: { display: "flex", flexWrap: "wrap", marginTop: 22, marginLeft: -32, marginRight: -32, marginBottom: -28, background: "var(--ink-900)", borderBottomLeftRadius: "var(--r-md)", borderBottomRightRadius: "var(--r-md)" } }, [
+      { label: "Altitud", value: "2.600", unit: "msnm" },
+      { label: "Pto. ebullición H₂O", value: "91.4", unit: "°C" },
+      { label: "Estado del sistema", value: "Nominal", unit: "", accent: "var(--moss-500)" }
+    ].map((ch, i) => React.createElement("div", { key: ch.label, style: { flex: "1 1 150px", padding: "16px 24px", borderRight: "1px solid rgba(245,241,232,.1)", borderTop: "1px solid rgba(245,241,232,.1)" } },
+      React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "rgba(245,241,232,.5)", marginBottom: 4 } }, ch.label),
+      React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xl)", fontWeight: 700, color: ch.accent || "var(--paper-50)", lineHeight: 1 } }, ch.value, ch.unit && React.createElement("span", { style: { fontSize: "var(--text-xs)", fontWeight: 400, marginLeft: 4, color: "rgba(245,241,232,.5)" } }, ch.unit))
+    )), React.createElement("div", { key: "especie", style: { flex: "2 1 220px", padding: "14px 24px", borderTop: "1px solid rgba(245,241,232,.1)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 } },
+      React.createElement("div", null,
+        React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "rgba(245,241,232,.5)", marginBottom: 4 } }, "Especie en foco"),
+        React.createElement("div", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-lg)", color: "var(--paper-50)" } }, sp?.name || "Orellana Gris", " ", React.createElement("span", { style: { fontFamily: "var(--font-body)", fontStyle: "normal", fontSize: "var(--text-xs)", color: "rgba(245,241,232,.5)" } }, sp?.scientific))
+      ),
+      React.createElement("button", { onClick: () => goTab("catalogo"), style: { flexShrink: 0, padding: "6px 14px", background: "transparent", border: "1px solid var(--coral-500)", borderRadius: "var(--r-xs)", color: "var(--coral-500)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Cambiar")
+    ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { className: "home-actions-grid", style: { display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 16 } }, (() => {
+      const items = [
+        { label: "Formular Receta", sub: "Balance C:N & Perito", icon: "⚡", tab: "formular", onClick: () => goTab("formular"), pri: true },
+        { label: "Ficha de Producción", sub: "Báscula & mezcla del día", icon: "📋", tab: "produccion", onClick: () => goTab("produccion") },
+        { label: "Registrar Cosecha", sub: "Pesaje de flush en gramos", icon: "🍄", tab: "bitacora", onClick: () => setShowBitCosecha(true) },
+        { label: "Entrada a Bodega", sub: "Compras & stock FIFO", icon: "📦", tab: "inventario", onClick: () => {
+          goTab("inventario");
+          setInvTab("compra");
+        } },
+        { label: "Nueva Prueba / Lote", sub: "Crear código y bolsas", icon: "🔬", tab: "bitacora", onClick: () => setShowBitNuevo(true) },
+        { label: "Catálogo Especies", sub: "Requerimientos climáticos", icon: "📖", tab: "catalogo", onClick: () => goTab("catalogo") }
+      ];
+      const primary = items.find((it) => it.pri) || items[0];
+      const secondary = items.filter((it) => it !== primary);
+      return [
+        React.createElement(
+          "button",
+          {
+            key: "primary",
+            onClick: primary.onClick,
+            style: { display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 20, padding: "22px 22px 18px", background: "var(--ink-900)", border: "none", borderRadius: "var(--r-sm)", textAlign: "left", cursor: "pointer", minHeight: 150, position: "relative" }
+          },
+          React.createElement("span", { style: { fontSize: 26, lineHeight: 1 } }, primary.icon),
+          React.createElement(
+            "div",
+            null,
+            React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--paper-50)", marginBottom: 4 } }, primary.label),
+            React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "rgba(245,241,232,.6)" } }, primary.sub)
+          ),
+          React.createElement("span", { style: { position: "absolute", top: 20, right: 20, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", fontWeight: 700 } }, "→")
+        ),
+        React.createElement(
+          "div",
+          { key: "secondary", style: { display: "flex", flexDirection: "column", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden" } },
+          secondary.map((btn, i) => React.createElement(
+            "button",
+            {
+              key: btn.label,
+              onClick: btn.onClick,
+              style: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "var(--paper-0)", border: "none", borderTop: i === 0 ? "none" : "1px solid var(--border-soft)", textAlign: "left", cursor: "pointer", width: "100%" }
+            },
+            React.createElement("span", { style: { fontSize: "var(--text-lg)", lineHeight: 1, flexShrink: 0, width: 22, textAlign: "center" } }, btn.icon),
+            React.createElement(
+              "div",
+              { style: { minWidth: 0, flex: 1 } },
+              React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", lineHeight: 1.2 } }, btn.label),
+              React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", marginTop: 1 } }, btn.sub)
+            ),
+            React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-400)", fontWeight: 700, flexShrink: 0 } }, "→")
+          ))
+        )
+      ];
+    })())), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Telemetría de Salas de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● 4 zonas monitoreadas")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
       gap: 16,
