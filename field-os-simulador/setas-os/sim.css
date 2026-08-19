@@ -2043,14 +2043,49 @@
     box-shadow:var(--shadow-sticky-edge);
   }
 
-  /* 28. Receta activa: % input y controles con objetivo táctil mayor */
-  .sim-root .rec-pct-input{ min-height:44px!important; padding:8px!important; }
-  .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:44px!important; }
-  .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:44px!important; min-height:44px!important; }
+  /* 28. Receta activa: % input y controles con objetivo táctil mayor (48px) */
+  .sim-root .rec-pct-input{ min-height:48px!important; padding:8px!important; }
+  .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:48px!important; min-width:48px!important; }
+  .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:48px!important; min-height:48px!important; }
 
-  /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil mayor */
-  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:44px!important; min-width:44px!important; }
-  .sim-root .cat-modal-close{ width:44px!important; height:44px!important; }
+  /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil 48px */
+  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:48px!important; min-width:48px!important; }
+  .sim-root .cat-modal-close{ width:48px!important; height:48px!important; }
+
+  /* 30. Mini-botones de ingrediente (✕ excluir / + agregar en catálogo): más separación
+     entre ambos para evitar toques accidentales. La hit-area a 48px vive en las reglas
+     de .qa-mini-btn más abajo en el archivo (editadas para el mismo objetivo). */
+  .sim-root .ing-card-item > div:last-child{ gap:10px!important; padding:6px 4px 8px!important; }
+
+  /* 31. Cabeceras de acordeón de categoría (Bases de Carbono, Suplementos…): más altas,
+     toda la barra ya es clickeable (onClick en el div contenedor, no solo el chevron),
+     más contraste contra las filas (paper-100 y paper-50 son el MISMO color aquí — sin
+     esto la cabecera es indistinguible del cuerpo) y descripción secundaria oculta para
+     reducir scroll. */
+  .sim-root .role-group-hdr{ min-height:52px!important; padding:12px 14px!important; background:var(--paper-200)!important; }
+  .sim-root .role-group-desc{ display:none!important; }
+  .sim-root .ing-card-item{ border-bottom:1px solid var(--border-soft); }
+  .sim-root .ing-card-item:last-child{ border-bottom:none; }
+
+  /* 32. Barra "live-dash" (especie/EB/C:N + acciones + tray de accesos rápidos): sin CSS
+     propia hasta ahora (solo estilos inline por elemento) — se vuelve la navegación
+     persistente entre Catálogo/Receta/Perito/Generador en móvil. */
+  .sim-root .live-dash-bar{
+    position:sticky; top:0; z-index:25;
+    display:flex; flex-direction:column; gap:8px;
+    padding:10px 12px; background:var(--paper-100); border-bottom:1px solid var(--border-soft);
+  }
+  .sim-root .live-dash-left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sim-root .live-dash-metrics{ display:flex; gap:8px; flex-wrap:wrap; }
+  .sim-root .live-dash-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .sim-root .live-dash-btn{ min-height:48px!important; padding:0 14px!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; }
+  .sim-root .live-dash-tray{ padding-top:6px; border-top:1px dashed var(--border-soft); }
+  .sim-root .live-dash-chips-row{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+
+  /* 33. Pills de navegación rápida dentro de live-dash-tray (Insumos/Receta/Perito/Generador/
+     Batch): objetivo táctil 48px de alto — son la única forma de saltar entre catálogo,
+     formulación activa y generador sin scrollear en móvil. */
+  .sim-root .live-dash-tray button{ min-height:48px!important; }
 }
 
 /* Producción: grid de lote a 1 columna en teléfonos angostos — debe ir DESPUÉS del
@@ -2273,10 +2308,12 @@
 @media(hover:none){
   .sim-root .ing-quick-add{ display:flex!important; }
 }
-/* Hit-area táctil ≥44px para botones circulares pequeños (visual se mantiene, toque se amplía vía ::before) */
+/* Hit-area táctil ≥48px para botones circulares pequeños (visual se mantiene, toque se amplía vía ::before).
+   inset:-11px porque .bodega-bar-refresh es el más chico (26px visual): 26+11+11=48px exactos.
+   Para .ing-quick-add/.view-btn (28px) da 50px — de sobra, nunca reduce el objetivo táctil. */
 .sim-root .ing-quick-add,.sim-root .view-btn,.sim-root .bodega-bar-refresh{position:relative;}
 .sim-root .ing-quick-add::before,.sim-root .view-btn::before,.sim-root .bodega-bar-refresh::before{
-  content:'';position:absolute;inset:-8px;
+  content:'';position:absolute;inset:-11px;
 }
 
 /* Sticky "añadido" feedback: pulso en el botón + flash en la fila */
@@ -2305,14 +2342,14 @@
     min-width:18px!important;
     min-height:18px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-13px;}
+  .sim-root .qa-mini-btn::before{inset:-15px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
     min-width:20px!important;
     min-height:20px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-12px;}
+  .sim-root .qa-mini-btn::before{inset:-14px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
