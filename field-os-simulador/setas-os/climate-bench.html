@@ -548,6 +548,9 @@
         chambers: [makeChamber("c1", "Cámara 01", 0), makeChamber("c2", "Cámara 02", .6)],
         activeId: "c1",
         running: true,
+        // true por defecto: si el shell padre nunca manda el mensaje de visibilidad (p.ej.
+        // este archivo abierto suelto, fuera del iframe del shell), se comporta como siempre.
+        parentVisible: true,
         speed: 1,
         minutes: 0,
         alerts: 0,
@@ -808,8 +811,12 @@
         if (!state.running) return;
         const stepMinutes = 5 * state.speed;
         state.minutes += stepMinutes;
+        // simulateChamber corre siempre — es lo que genera incidentes y dispara las alertas
+        // postMessage hacia el shell padre, incluso con el usuario en Formular. Lo único que
+        // se salta cuando el shell no está en la vista de Control es el render() del DOM: el
+        // iframe es invisible (1x1px) en ese caso, así que pintar su UI sería trabajo perdido.
         state.chambers.forEach(c => simulateChamber(c, stepMinutes));
-        render();
+        if (state.parentVisible) render();
       }
 
       function buildChambers() {
@@ -1154,6 +1161,16 @@
       $("resetButton").addEventListener("click", reset);
       $("exportButton").addEventListener("click", exportCsv);
       window.addEventListener("resize", drawChart);
+
+      // Visibilidad reportada por el shell padre (ver Setas OS v5.dc.html, renderVals()):
+      // solo controla si step() pinta su DOM, nunca si simula ni si detecta incidentes.
+      window.addEventListener("message", event => {
+        const d = event && event.data;
+        if (!d || d.source !== "setas-os-shell" || d.kind !== "clima-visibility") return;
+        const wasVisible = state.parentVisible;
+        state.parentVisible = !!d.active;
+        if (state.parentVisible && !wasVisible) render();
+      });
 
       renderStructural();
       setInterval(step, 850);

@@ -1546,7 +1546,7 @@
 }
 .sim-root .seg:first-child{ border-left:none; }
 .sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
-.sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;white-space:nowrap;}
+.sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;white-space:nowrap;}
 .sim-root .opt-load:hover{background:var(--coral-700);}
 .sim-root .opt-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-soft);border-top:none;}
 .sim-root .opt-met{background:var(--paper-100);padding:12px 10px;text-align:center;}
@@ -2043,13 +2043,16 @@
     box-shadow:var(--shadow-sticky-edge);
   }
 
-  /* 28. Receta activa: % input y controles con objetivo táctil mayor (48px) */
+  /* 28. Receta activa: % input y controles con objetivo táctil mayor (48px). .rem y .lock-btn
+     no tienen display:flex en su regla base — sin centrar, el glifo (✕/●/○) queda pegado
+     arriba del botón en vez de en el medio al crecer el min-height. */
   .sim-root .rec-pct-input{ min-height:48px!important; padding:8px!important; }
-  .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:48px!important; min-width:48px!important; }
-  .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:48px!important; min-height:48px!important; }
+  .sim-root .rem{ padding:8px 12px!important; font-size:15px!important; min-height:48px!important; min-width:48px!important; display:flex!important; align-items:center!important; justify-content:center!important; }
+  .sim-root .lock-btn{ padding:12px!important; font-size:14px!important; min-width:48px!important; min-height:48px!important; display:flex!important; align-items:center!important; justify-content:center!important; }
 
-  /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo táctil 48px */
-  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:48px!important; min-width:48px!important; }
+  /* 29. Botones pequeños en filas densas (✕ eliminar) y cierre de modal de especie: objetivo
+     táctil 48px. Mismo problema de centrado que arriba en .inv-btn-sm. */
+  .sim-root .inv-btn-sm{ padding:10px 14px!important; min-height:48px!important; min-width:48px!important; display:flex!important; align-items:center!important; justify-content:center!important; }
   .sim-root .cat-modal-close{ width:48px!important; height:48px!important; }
 
   /* 30. Mini-botones de ingrediente (✕ excluir / + agregar en catálogo): más separación

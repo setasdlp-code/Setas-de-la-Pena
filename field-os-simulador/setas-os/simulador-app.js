@@ -1340,6 +1340,7 @@ function App(props) {
   const [optMaxCost, setOptMaxCost] = useState(0);
   const [optResults, setOptResults] = useState(null);
   const [optRunning, setOptRunning] = useState(false);
+  const [expandedOptResults, setExpandedOptResults] = useState({});
   const [globalMode, setGlobalMode] = useState(() => {
     try {
       const v = localStorage.getItem("setas_global_workmode");
@@ -1379,6 +1380,12 @@ function App(props) {
     setCollapsedRoles({});
   }, [sKey]);
   const [optProfile, setOptProfile] = useState("produccion");
+  // Se indexa por posición en el array de resultados (0,1,2…), no por receta — sin este
+  // reset, una tarjeta expandida en el perfil "Producción" aparecería ya expandida al
+  // cambiar a "Rescate" solo porque coincide el índice, mostrando la receta equivocada abierta.
+  React.useEffect(() => {
+    setExpandedOptResults({});
+  }, [optProfile]);
   const [prodBags, setProdBags] = useState(6);
   const [prodKg, setProdKg] = useState(1.5);
   const [prodH, setProdH] = useState(67);
@@ -3409,20 +3416,26 @@ Click para editar`
         fallback: (g) => g.cat === "trop" || g.cat === "circ"
       }
     ];
+    // roleAssignment se construye sobre `fings` (catálogo ya filtrado por búsqueda/categoría,
+    // pero NO por bodega/compatibles) para que la clasificación por rol no dependa de esos
+    // dos filtros rápidos. Así se puede distinguir "el rol no existe en el catálogo" (se
+    // oculta el grupo entero, no hay nada que mostrar nunca) de "el rol existe pero el
+    // filtro actual lo dejó en cero" (la cabecera se queda, el cuerpo muestra un estado vacío).
     const roleAssignment = {};
     ROLE_GROUPS.forEach((grp) => {
-      base.forEach((g) => {
+      fings.forEach((g) => {
         if (!roleAssignment[g.id] && grp.primary(g)) roleAssignment[g.id] = grp.key;
       });
     });
     ROLE_GROUPS.forEach((grp) => {
-      base.forEach((g) => {
+      fings.forEach((g) => {
         if (!roleAssignment[g.id] && grp.fallback(g)) roleAssignment[g.id] = grp.key;
       });
     });
     return ROLE_GROUPS.map((grp) => {
+      const grpIngsAll = fings.filter((g) => roleAssignment[g.id] === grp.key);
+      if (grpIngsAll.length === 0) return null;
       const grpIngs = base.filter((g) => roleAssignment[g.id] === grp.key);
-      if (grpIngs.length === 0) return null;
       const compatCount = grpIngs.filter((g) => g.cs && g.cs.includes(sKey)).length;
       // Estado inicial: solo abren por defecto los grupos con insumos compatibles con
       // la especie activa o ya presentes en la receta — el resto arranca plegado para
@@ -3454,7 +3467,7 @@ Click para editar`
         },
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16 } }, grp.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, grp.label, " ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-600)", fontWeight: 500 } }, "(", grpIngs.length, ")")), /* @__PURE__ */ React.createElement("div", { className: "role-group-desc", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-600)", lineHeight: 1.2 } }, grp.desc))),
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", background: "rgba(77,98,53,.12)", color: "var(--moss-700)", padding: "2px 5px", borderRadius: 3, fontWeight: 600 } }, compatCount, " comp."), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s" } }, "▼"))
-      ), !isCollapsed && /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 6px" } }, grpIngs.map(renderIngRow)));
+      ), !isCollapsed && (grpIngs.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 6px" } }, grpIngs.map(renderIngRow)) : /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", fontStyle: "italic", textAlign: "center" } }, usePantry && showCompatOnly ? "Ninguno en bodega es compatible con esta especie" : usePantry ? "Ninguno en bodega — desactiva el filtro de bodega para ver el resto" : "Ninguno compatible con esta especie")));
     });
   })()))), /* @__PURE__ */ React.createElement("div", { className: "builder-right" }, an && (() => {
     const hasPer = recipe.length > 0;
@@ -3664,6 +3677,7 @@ Click para editar`
             }
           });
           setOptResults({ ...byProfile, noStock, _diag });
+          setExpandedOptResults({});
           setOptRunning(false);
         }, 50);
       },
@@ -3682,7 +3696,7 @@ Click para editar`
       const g = INGS.find((ing) => ing.id === id);
       return g && g.role === "base_carbono";
     }).sort().join("+");
-    return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention)" } }, "⚠ Supl. ", r.suppPct.toFixed(0), "% > límite")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
+    return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention)" } }, "⚠ Supl. ", r.suppPct.toFixed(0), "% > límite")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
       setSKey(optTarget);
       setRecipe(r.recipe);
       setLockedIds([]);
@@ -3709,7 +3723,7 @@ Click para editar`
           sub: eCost > 0 ? `ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}` : null
         }
       ];
-    })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Riesgo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500,#A07828)" : "#C53030" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
+    })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), /* @__PURE__ */ React.createElement("button", { className: "opt-detail-toggle", onClick: () => setExpandedOptResults((s) => ({ ...s, [i]: !s[i] })), "aria-expanded": !!expandedOptResults[i], style: { width: "100%", textAlign: "left", padding: "10px 14px", minHeight: 48, background: "var(--paper-50)", border: "none", borderTop: "1px solid var(--border-soft)", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 } }, expandedOptResults[i] ? "Ocultar detalle" : "Ver detalle · bolsas, tratamiento, spawn", /* @__PURE__ */ React.createElement("span", { style: { transform: expandedOptResults[i] ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .15s", flexShrink: 0 } }, "▾")), expandedOptResults[i] && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Riesgo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500,#A07828)" : "#C53030" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
       const tOpt2 = calcTreatment(r.an, optTarget, SPP);
       const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
       const bags = [
@@ -3728,7 +3742,7 @@ Click para editar`
       if (!t) return null;
       const tc = t.col === "autoclave" ? { bg: "#FCEEE9", br: "#E8B4A0", fg: "#B5451F", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "#EEF3EA", br: "#90A870", fg: "#3D5520", icon: "❄", lbl: "CWLP — Cal en Frío pH≥12" };
       return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));
-    })());
+    })()));
   })), !optRunning && optResults && !optResults.noStock && optResults[optProfile]?.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "18px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-100)" } }, (() => {
     const d = optResults[`_diag_${optProfile}`] || { diag: optResults._diag?.diag };
     const diag = d?.diag;

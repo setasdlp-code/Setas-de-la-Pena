@@ -3141,6 +3141,18 @@ class Component extends DCLogic {
     const activeWorkspace = s.module==='sim'
       ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':(PRODUCCION_SIM_TABS.includes(s.simTab)?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
       : (['plan','inventario'].includes(s.module)?'produccion':(s.module==='sesion'?'bitacora':(CONTROL_MODULES.includes(s.module)?'control':'control')));
+    // Banco Climático: sigue simulando siempre (así las alertas de cámara llegan aunque el
+    // usuario esté en Formular), pero solo necesita RENDERIZAR su DOM mientras el workspace
+    // activo es 'control' — el resto del tiempo el iframe de 1px es invisible igual. Se avisa
+    // por postMessage solo cuando cambia, no en cada render.
+    const climaActive = activeWorkspace==='control';
+    if(this._climaActiveSent!==climaActive){
+      this._climaActiveSent = climaActive;
+      if(!this._climaFrameEl) this._climaFrameEl = document.querySelector('iframe[title="Banco Climático"]');
+      if(this._climaFrameEl && this._climaFrameEl.contentWindow){
+        this._climaFrameEl.contentWindow.postMessage({ source:'setas-os-shell', kind:'clima-visibility', active:climaActive }, '*');
+      }
+    }
     const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
     let workspaceTabs = [];
     if(activeWorkspace==='formular') workspaceTabs = [
