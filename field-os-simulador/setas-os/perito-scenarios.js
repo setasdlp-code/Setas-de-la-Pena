@@ -709,25 +709,62 @@
   // NOT a quality judgment — every seed already hits the target C:N almost
   // exactly by construction (that's what the closed-form solver in
   // generateStructuralSeeds guarantees), so C:N proximity cannot discriminate
-  // between them. Instead this ranks by ingredient cost (cheaper mixes first)
-  // and recipe simplicity (fewer distinct ingredients first), both readable
-  // straight off the seed without touching the scoring engine, then breaks
-  // ties by canonical composition for determinism.
+  // between them. Ranks by ingredient cost (cheaper mixes first) and recipe
+  // simplicity (fewer distinct ingredients first), both readable straight off
+  // the seed without touching the scoring engine.
+  //
+  // Cost-ranking alone is NOT enough once the catalog is large: on the real
+  // production catalog (33+ compatible bases for a given species), a single
+  // base costing a fraction of the others (e.g. hojarasca at $200/kg vs.
+  // $400–$28.000/kg for the rest) makes almost every seed that uses it cheaper
+  // than almost every seed that doesn't — so a pure global cost sort fills
+  // the entire structuralSeedCap budget with variants of that one base before
+  // evaluate() ever runs, and no downstream diversity logic (ranked/
+  // recommended) can recover bases that were discarded here. Seeds are
+  // grouped by their base_carbono combination first (cheapest-within-group
+  // order preserved), then interleaved round-robin across groups — so the
+  // cap gets spent across as many distinct bases as the seed pool actually
+  // has, cheapest-first within each, instead of the cheapest bases overall.
+  const seedBaseKey = (seed, roleById) => seed.recipe
+    .filter(r => roleById.get(r.id) === 'base_carbono')
+    .map(r => r.id).sort().join('+') || 'sin_base';
+
   const cheapSeedRank = (seeds, ingredients) => {
     const costById = new Map((ingredients || []).map(g => [g.id, Number(g.cost) || 0]));
+    const roleById = new Map((ingredients || []).map(g => [g.id, g.role]));
     const scored = seeds.map(seed => {
       const estimatedCost = seed.recipe.reduce(
         (sum, r) => sum + (costById.get(r.id) || 0) * (Number(r.p) || 0) / 100,
         0
       );
-      return { seed, estimatedCost, complexity: seed.recipe.length };
+      return { seed, estimatedCost, complexity: seed.recipe.length, baseKey: seedBaseKey(seed, roleById) };
     });
-    scored.sort((a, b) =>
+    const byCostThenKey = (a, b) =>
       a.estimatedCost - b.estimatedCost ||
       a.complexity - b.complexity ||
-      canonicalRecipeKey(a.seed.recipe).localeCompare(canonicalRecipeKey(b.seed.recipe))
-    );
-    return scored.map(s => s.seed);
+      canonicalRecipeKey(a.seed.recipe).localeCompare(canonicalRecipeKey(b.seed.recipe));
+
+    const groups = new Map();
+    scored.forEach((s) => {
+      if (!groups.has(s.baseKey)) groups.set(s.baseKey, []);
+      groups.get(s.baseKey).push(s);
+    });
+    groups.forEach((list) => list.sort(byCostThenKey));
+    const groupOrder = [...groups.keys()].sort((a, b) => {
+      const diff = groups.get(a)[0].estimatedCost - groups.get(b)[0].estimatedCost;
+      return diff || a.localeCompare(b);
+    });
+
+    const out = [];
+    for (let round = 0; out.length < scored.length; round += 1) {
+      let addedThisRound = false;
+      for (const key of groupOrder) {
+        const list = groups.get(key);
+        if (round < list.length) { out.push(list[round]); addedThisRound = true; }
+      }
+      if (!addedThisRound) break;
+    }
+    return out.map((s) => s.seed);
   };
 
   const searchScenarios = ({
