@@ -1,0 +1,9 @@
+[
+  {
+    "_comment": "EJEMPLO ilustrativo — no son datos reales de campo. Copia este archivo a ground-truth-fixtures.json y reemplaza con lotes reales (sKey + recipe + ebReal medido) a medida que Bitácora acumule cosechas suficientes por especie.",
+    "sKey": "p_ostreatus_gris",
+    "recipe": [{ "id": "paja_trigo", "p": 80 }, { "id": "salvado_trigo", "p": 20 }],
+    "ebReal": 95,
+    "loteId": "SDP-EJEMPLO-01"
+  }
+]
