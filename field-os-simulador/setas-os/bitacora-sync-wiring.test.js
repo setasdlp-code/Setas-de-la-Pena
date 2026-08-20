@@ -49,3 +49,10 @@ test('crearBitLote respalda el lote y sus bolsas nuevas en Firestore', () => {
   assert.match(body, /SetasBitacoraDB\.guardarLote\(lote\)/);
   assert.match(body, /SetasBitacoraDB\.guardarBolsas\(bolsas\)/);
 });
+
+test('updateBitLote respalda los cambios del lote en Firestore', () => {
+  const jsx = read('simulador-app.jsx');
+  const start = jsx.indexOf('const updateBitLote=');
+  const end = jsx.indexOf('const updateBitBolsa=');
+  assert.match(jsx.slice(start, end), /SetasBitacoraDB\.actualizarLote\(loteId,\s*fields\)/);
+});
