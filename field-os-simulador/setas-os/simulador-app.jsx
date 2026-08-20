@@ -2476,6 +2476,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{
           await window.SetasBitacoraDB.guardarLote(lote);
           await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          setBitSyncErr('');
         }catch(err){
           setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
         }
@@ -2487,7 +2488,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
-        try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);}
+        try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }
@@ -2496,7 +2497,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
-        try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);}
+        try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }
@@ -2506,7 +2507,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
-        try{await window.SetasBitacoraDB.guardarCosecha(e);}
+        try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }
@@ -2515,7 +2516,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
-        try{await window.SetasBitacoraDB.eliminarCosecha(id);}
+        try{await window.SetasBitacoraDB.eliminarCosecha(id);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }
@@ -2530,7 +2531,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
       if(window.SetasBitacoraDB){
         (async()=>{
-          try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);}
+          try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);setBitSyncErr('');}
           catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
         })();
       }

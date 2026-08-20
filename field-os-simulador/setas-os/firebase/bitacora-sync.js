@@ -6,7 +6,7 @@
 // Bitácora actualiza y borra registros por ese id local más adelante.
 import { db } from "./firebase-init.js";
 import {
-  doc, setDoc, updateDoc, deleteDoc, serverTimestamp,
+  doc, setDoc, deleteDoc, serverTimestamp,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // bolsa.foto es un data URL base64 (ver compressImageToDataURL en
@@ -23,7 +23,7 @@ export async function guardarLote(lote) {
 }
 
 export async function actualizarLote(loteId, fields) {
-  return updateDoc(doc(db, "bitacora_lotes", loteId), { ...fields, syncedAt: serverTimestamp() });
+  return setDoc(doc(db, "bitacora_lotes", loteId), { ...fields, syncedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function guardarBolsas(bolsas) {
@@ -35,7 +35,7 @@ export async function guardarBolsas(bolsas) {
 }
 
 export async function actualizarBolsa(bolsaId, fields) {
-  return updateDoc(doc(db, "bitacora_bolsas", bolsaId), { ...stripFoto(fields), syncedAt: serverTimestamp() });
+  return setDoc(doc(db, "bitacora_bolsas", bolsaId), { ...stripFoto(fields), syncedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function guardarCosecha(cosecha) {

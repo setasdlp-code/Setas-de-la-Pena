@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5ec86eb0acad33f6de207ce564e1406de154de2c61740f5d01d0c7d0be3e9059
+// source-hash: b70363918eb03c86e8c341d15780133b3354310a96d880f18a40ed1a2dd02515
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2089,6 +2089,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try {
           await window.SetasBitacoraDB.guardarLote(lote);
           await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          setBitSyncErr("");
         } catch (err) {
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
@@ -2109,6 +2110,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       (async () => {
         try {
           await window.SetasBitacoraDB.actualizarLote(loteId, fields);
+          setBitSyncErr("");
         } catch (err) {
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
@@ -2129,6 +2131,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       (async () => {
         try {
           await window.SetasBitacoraDB.actualizarBolsa(bolsaId, fields);
+          setBitSyncErr("");
         } catch (err) {
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
@@ -2149,6 +2152,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       (async () => {
         try {
           await window.SetasBitacoraDB.guardarCosecha(e);
+          setBitSyncErr("");
         } catch (err) {
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
@@ -2168,6 +2172,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       (async () => {
         try {
           await window.SetasBitacoraDB.eliminarCosecha(id);
+          setBitSyncErr("");
         } catch (err) {
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
@@ -2210,6 +2215,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         (async () => {
           try {
             await window.SetasBitacoraDB.eliminarLoteCascade(loteId, bolsaIds, cosechaIds);
+            setBitSyncErr("");
           } catch (err) {
             setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
           }

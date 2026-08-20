@@ -105,3 +105,14 @@ test('los 6 mutadores de Bitácora llaman a setBitSyncErr en su catch (no dejan 
   const calls = jsx.match(/catch\(err\)\{\s*setBitSyncErr\(/g) || [];
   assert.equal(calls.length, 6, `se esperaban 6 llamadas a setBitSyncErr en catch, hubo ${calls.length}`);
 });
+
+test('bitacora-sync.js nunca importa ni llama una API de lectura de Firestore (invariante de un solo sentido)', () => {
+  const src = read('firebase/bitacora-sync.js');
+  assert.doesNotMatch(src, /\b(getDoc|getDocs|onSnapshot|query|collection|where|orderBy)\s*\(/);
+});
+
+test('los 6 sitios de cableado en simulador-app.jsx conservan el guard if(window.SetasBitacoraDB)', () => {
+  const jsx = read('simulador-app.jsx');
+  const guards = jsx.match(/if\(window\.SetasBitacoraDB\)\{/g) || [];
+  assert.equal(guards.length, 6, `se esperaban 6 guards if(window.SetasBitacoraDB){, hubo ${guards.length}`);
+});
