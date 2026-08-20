@@ -79,3 +79,14 @@ test('deleteBitCosecha elimina la cosecha también en Firestore', () => {
   const end = jsx.indexOf('const deleteBitLote=');
   assert.match(jsx.slice(start, end), /SetasBitacoraDB\.eliminarCosecha\(id\)/);
 });
+
+test('deleteBitLote elimina el lote, sus bolsas y sus cosechas también en Firestore', () => {
+  const jsx = read('simulador-app.jsx');
+  const start = jsx.indexOf('const deleteBitLote=');
+  assert.ok(start > -1, 'no se encontró deleteBitLote');
+  // deleteBitLote es una función corta (~8 líneas); una ventana fija de 1200
+  // caracteres cubre su cuerpo completo sin depender de encontrar el nombre
+  // exacto de la siguiente función declarada después en el archivo.
+  const body = jsx.slice(start, start + 1200);
+  assert.match(body, /SetasBitacoraDB\.eliminarLoteCascade\(loteId,\s*bolsaIds,\s*cosechaIds\)/);
+});

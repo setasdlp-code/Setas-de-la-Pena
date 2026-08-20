@@ -2521,10 +2521,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
+      const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
+      const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
+      if(window.SetasBitacoraDB){
+        (async()=>{
+          try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);}
+          catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
+        })();
+      }
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
