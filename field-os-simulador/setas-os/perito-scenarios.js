@@ -672,6 +672,38 @@
     return selected.slice(0, limit);
   };
 
+  // Selecciona hasta `limit` candidatos de una lista ya ordenada por utilidad,
+  // priorizando en dos niveles: 1) groupKeyFor no visto (diversidad primaria —
+  // p.ej. combinación de ingredientes base), 2) entre lo que repite grupo,
+  // c.type no visto todavía (diversidad secundaria de relleno) antes que orden
+  // de utilidad puro. La diversidad de grupo nunca se sacrifica por type: type
+  // solo decide el ORDEN de relleno una vez que el grupo ya se repitió.
+  const selectRecommended = (candidates = [], { groupKeyFor, limit = 4 } = {}) => {
+    const seenGroups = new Set();
+    const seenTypes = new Set();
+    const diverse = [];
+    const leftovers = [];
+    (candidates || []).forEach((c) => {
+      const k = groupKeyFor(c);
+      if (!seenGroups.has(k)) {
+        seenGroups.add(k);
+        seenTypes.add(c.type);
+        diverse.push(c);
+      } else {
+        leftovers.push(c);
+      }
+    });
+    const added = new Set(diverse);
+    const newTypeFill = leftovers.filter((c) => {
+      if (added.has(c) || seenTypes.has(c.type)) return false;
+      seenTypes.add(c.type);
+      added.add(c);
+      return true;
+    });
+    const repeatFill = leftovers.filter((c) => !added.has(c));
+    return diverse.concat(newTypeFill, repeatFill).slice(0, limit);
+  };
+
   // Cheap pre-rank for structural seeds, used only to cap how many seeds
   // reach the expensive evaluate() call (analyze + SetasScoring). This is
   // NOT a quality judgment — every seed already hits the target C:N almost
@@ -947,19 +979,13 @@
     // 1-2 types dominantes — plausible cuando una base gana en casi todas las
     // dimensiones — todas las tarjetas terminaban usando esa misma base con
     // distinto tratamiento o suplemento secundario, aunque ranked (que el
-    // operador nunca ve) sí tuviera variedad de bases disponible. Se prioriza
-    // diversidad de bases reusando structKeyFor — cada tarjeta conserva su
-    // .type para la etiqueta de la UI, pero deja de ser la clave de selección.
-    const RECOMMENDED_LIMIT = 4;
-    const recommendedSeen = new Set();
-    const recommendedDiverse = [];
-    const recommendedLeftovers = [];
-    pareto.forEach(c => {
-      const k = structKeyFor(c);
-      if (!recommendedSeen.has(k)) { recommendedSeen.add(k); recommendedDiverse.push(c); }
-      else recommendedLeftovers.push(c);
-    });
-    const recommended = recommendedDiverse.concat(recommendedLeftovers).slice(0, RECOMMENDED_LIMIT);
+    // operador nunca ve) sí tuviera variedad de bases disponible. Diversidad
+    // de bases (structKeyFor) es el criterio primario; entre bases repetidas,
+    // un type aún no mostrado decide el relleno antes que la utilidad pura —
+    // así, cuando hay margen, las tarjetas cubren tanto bases como etiquetas
+    // distintas, sin sacrificar nunca la diversidad de bases por eso.
+    const RECOMMENDED_LIMIT = 5;
+    const recommended = selectRecommended(pareto, { groupKeyFor: structKeyFor, limit: RECOMMENDED_LIMIT });
 
     return {
       baseline,
@@ -1018,6 +1044,7 @@
     weightedUtility,
     evaluateScenario,
     selectStructuralRoots,
+    selectRecommended,
     searchScenarios,
   };
 
