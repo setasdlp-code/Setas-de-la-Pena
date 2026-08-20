@@ -856,6 +856,71 @@
 /* ── HOME COCKPIT: Acciones Rápidas (destacada + lista) ──────────── */
 @media(max-width:768px){ .sim-root .home-actions-grid{ grid-template-columns:1fr!important; } }
 
+/* ── HOME COCKPIT: Swiss Industrial Print theme (preview branch) ──
+   Scoped token override, not a rewrite. Every color/radius/shadow the
+   home dashboard renders with comes from CSS custom properties
+   (var(--paper-0), var(--ink-900), var(--r-md)...), so redefining them
+   inside .home-cockpit reskins the whole screen without touching a
+   single inline style in simulador-app.jsx. Gaya (weight 900) and IBM
+   Plex Mono are already loaded by the DS bundle — no new font load.
+   One accent only: hazard red. Zero border-radius. No soft shadows. */
+.home-cockpit{
+  --paper-0:   #F4F4F0;
+  --paper-50:  #F4F4F0;
+  --paper-100: #EAE8E3;
+  --paper-200: #DEDCD3;
+  --paper-300: #C9C7BE;
+
+  --ink-900: #0A0A0A;
+  --ink-800: #111111;
+  --ink-700: #1A1A1A;
+  --ink-600: #2A2A2A;
+  --ink-500: #3D3D3D;
+  --ink-400: #5C5C5C;
+
+  --moss-700: #0A0A0A;
+  --moss-500: #0A0A0A;
+  --moss-300: #0A0A0A;
+
+  --coral-500: #E61919;
+  --coral-700: #B01010;
+
+  --ochre-500: #0A0A0A;
+  --ochre-700: #0A0A0A;
+  --slate-500: #3D3D3D;
+  --sand-500:  #EAE8E3;
+
+  --status-active-bg: #EAE8E3;
+  --status-error: #E61919;
+
+  --border-soft: #0A0A0A;
+
+  --r-xs: 0;
+  --r-sm: 0;
+  --r-md: 0;
+
+  --shadow-card-rest: none;
+  --shadow-card-hover: none;
+
+  background: var(--paper-50);
+}
+.home-cockpit *{ border-radius:0 !important; }
+.home-cockpit h1,
+.home-cockpit h2,
+.home-cockpit h3{
+  font-weight:900 !important;
+  text-transform:uppercase;
+}
+.home-cockpit h1{
+  letter-spacing:-.03em !important;
+  border-bottom:3px solid var(--coral-500);
+  padding-bottom:10px;
+  display:inline-block;
+}
+.home-cockpit h2{ letter-spacing:-.02em !important; }
+.home-cockpit button{ transition:none !important; }
+.home-cockpit button:active{ transform:translateY(1px); }
+
 /* ── RECOMMENDER ────────────────────────────────────────────────── */
 
 .sim-root .inv-field label{ display:block; font-family:var(--font-body); font-weight:800; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-500); margin-bottom:5px; }
