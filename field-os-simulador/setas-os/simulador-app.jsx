@@ -1733,6 +1733,7 @@ function App(props){
   const [flash,setFlash]=useState(false);
   const [saveSyncErr,setSaveSyncErr]=useState('');
   const [loteSyncErr,setLoteSyncErr]=useState('');
+  const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState('home');
@@ -3211,6 +3212,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
+                {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 0cacc2c0f1e02d68525e9569660461b0c691c9f3fde3db4576e529ef321eca2c
+// source-hash: 5ec86eb0acad33f6de207ce564e1406de154de2c61740f5d01d0c7d0be3e9059
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1243,6 +1243,7 @@ function App(props) {
   const [flash, setFlash] = useState(false);
   const [saveSyncErr, setSaveSyncErr] = useState("");
   const [loteSyncErr, setLoteSyncErr] = useState("");
+  const [bitSyncErr, setBitSyncErr] = React.useState("");
   const [cmpRecipe, setCmpRecipe] = useState([]);
   const [cmpKey, setCmpKey] = useState("p_ostreatus_gris");
   const [tab, setTab] = useState("home");
@@ -2083,6 +2084,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.guardarLote(lote);
+          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        } catch (err) {
+          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+        }
+      })();
+    }
     return lote.id;
   };
   const updateBitLote = (loteId, fields) => {
@@ -2094,6 +2105,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.actualizarLote(loteId, fields);
+        } catch (err) {
+          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+        }
+      })();
+    }
   };
   const updateBitBolsa = (bolsaId, fields) => {
     setBitBolsas((prev) => {
@@ -2105,16 +2125,35 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.actualizarBolsa(bolsaId, fields);
+        } catch (err) {
+          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+        }
+      })();
+    }
   };
   const addBitCosecha = (cosecha) => {
+    const e = { ...cosecha, id: "COS_" + Date.now() };
     setBitCosechas((prev) => {
-      const upd = [...prev, { ...cosecha, id: "COS_" + Date.now() }];
+      const upd = [...prev, e];
       try {
         localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-      } catch (e) {
+      } catch (err) {
       }
       return upd;
     });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.guardarCosecha(e);
+        } catch (err) {
+          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+        }
+      })();
+    }
   };
   const deleteBitCosecha = (id) => {
     setBitCosechas((prev) => {
@@ -2125,9 +2164,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.eliminarCosecha(id);
+        } catch (err) {
+          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+        }
+      })();
+    }
   };
   const deleteBitLote = (loteId) => {
     const doDelete = () => {
+      const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
+      const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
       setBitLotes((prev) => {
         const upd = prev.filter((l) => l.id !== loteId);
         try {
@@ -2155,6 +2205,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if (bitActiveLoteId === loteId) {
         setBitActiveLoteId(null);
         goBitTab("bit_dash");
+      }
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.eliminarLoteCascade(loteId, bolsaIds, cosechaIds);
+          } catch (err) {
+            setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+          }
+        })();
       }
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
@@ -2618,7 +2677,7 @@ BATCH (${numBags}×${kgBag} kg):
   })()), invTab === "proveedores" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setShowProvModal(true) }, "＋ Agregar proveedor")), invProveedores.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 24, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "Sin proveedores. Agrega el primero.") : /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, invProveedores.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "prov-row" }, /* @__PURE__ */ React.createElement("span", { className: "prov-tipo-chip" }, p.tipo), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "prov-name" }, p.nombre), /* @__PURE__ */ React.createElement("div", { className: "prov-muni" }, p.municipio)), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => requireAdmin(eliminarProveedor)(p.id) }, "✕")))))), showProvModal && /* @__PURE__ */ React.createElement("div", { className: "inv-modal-bg", onClick: (e) => {
     if (e.target === e.currentTarget) setShowProvModal(false);
   } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal" }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nuevo Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { className: "inv-input", value: newProv.nombre, onChange: (e) => setNewProv((p) => ({ ...p, nombre: e.target.value })), placeholder: "Ej. Distribuidora Agro Sabana" })), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Tipo"), /* @__PURE__ */ React.createElement("select", { className: "inv-input", value: newProv.tipo, onChange: (e) => setNewProv((p) => ({ ...p, tipo: e.target.value })) }, [["plaza", "Plaza de mercado"], ["industrial", "Industrial"], ["artesanal", "Artesanal"], ["directo", "Directo / Finca"], ["otro", "Otro"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Municipio"), /* @__PURE__ */ React.createElement("input", { className: "inv-input", value: newProv.municipio, onChange: (e) => setNewProv((p) => ({ ...p, municipio: e.target.value })), placeholder: "Ej. Tenjo" }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => setShowProvModal(false) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: agregarProveedor }, "Guardar proveedor")))));
-  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel", style: { paddingBottom: 0, marginBottom: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bit-context-actions", style: { display: "flex", alignItems: "center", gap: 6, minHeight: 44, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_comparador" ? " on" : ""), onClick: () => goBitTab("bit_comparador") }, "Comparar lotes"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_ficha" ? " on" : ""), onClick: () => goBitTab("bit_ficha"), disabled: !bitActiveLoteId, style: { opacity: bitActiveLoteId ? 1 : 0.45 } }, "Ficha experimental"), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo))), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "all .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "all .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel", style: { paddingBottom: 0, marginBottom: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bit-context-actions", style: { display: "flex", alignItems: "center", gap: 6, minHeight: 44, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_comparador" ? " on" : ""), onClick: () => goBitTab("bit_comparador") }, "Comparar lotes"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_ficha" ? " on" : ""), onClick: () => goBitTab("bit_ficha"), disabled: !bitActiveLoteId, style: { opacity: bitActiveLoteId ? 1 : 0.45 } }, "Ficha experimental"), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo), bitSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", marginLeft: 8, alignSelf: "center" }, title: bitSyncErr }, "⚠ sin sincronizar"))), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "all .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "all .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setBitNuevoForm(buildBitNuevoForm());
     setShowBitNuevo(true);
   }, className: "inv-btn inv-btn-pri" }, "+ Nueva prueba"))), bitLotes.length > 0 && (() => {

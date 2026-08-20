@@ -90,3 +90,18 @@ test('deleteBitLote elimina el lote, sus bolsas y sus cosechas también en Fires
   const body = jsx.slice(start, start + 1200);
   assert.match(body, /SetasBitacoraDB\.eliminarLoteCascade\(loteId,\s*bolsaIds,\s*cosechaIds\)/);
 });
+
+test('bitSyncErr existe como estado y se renderiza como aviso no bloqueante', () => {
+  const jsx = read('simulador-app.jsx');
+  assert.match(jsx, /const \[bitSyncErr,setBitSyncErr\]=React\.useState\(''\)/);
+  assert.match(jsx, /\{bitSyncErr&&<span[^>]*title=\{bitSyncErr\}/);
+});
+
+test('los 6 mutadores de Bitácora llaman a setBitSyncErr en su catch (no dejan el error en silencio)', () => {
+  const jsx = read('simulador-app.jsx');
+  // \s* tolera el bloque catch de crearBitLote (Tarea 2), que envuelve dos
+  // awaits y por eso separa "catch(err){" de "setBitSyncErr(" en líneas
+  // distintas; los otros 5 sitios usan la forma de una sola línea.
+  const calls = jsx.match(/catch\(err\)\{\s*setBitSyncErr\(/g) || [];
+  assert.equal(calls.length, 6, `se esperaban 6 llamadas a setBitSyncErr en catch, hubo ${calls.length}`);
+});
