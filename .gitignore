@@ -71,3 +71,8 @@ venv/
 # Redundant archive (source lives in knowledge_base/)
 # ─────────────────────────────────────────────
 knowledge_base.zip
+
+# ─────────────────────────────────────────────
+# Subagent-driven-development scratch workspace (ledgers, briefs, reports)
+# ─────────────────────────────────────────────
+.superpowers/
