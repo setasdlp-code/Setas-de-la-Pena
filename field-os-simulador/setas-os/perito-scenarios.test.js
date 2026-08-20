@@ -11,6 +11,7 @@ const {
   paretoFront,
   searchScenarios,
   selectRecommended,
+  dominantBaseKey,
 } = require('./perito-scenarios.js');
 
 const ingredients = [
@@ -204,6 +205,41 @@ test('selectRecommended prioriza combinaciones de base no vistas antes de repeti
   ];
   const out = selectRecommended(candidates, { groupKeyFor, limit: 4 });
   assert.deepEqual(out.map(c => c.id), ['c1', 'c3', 'c2', 'c4']);
+});
+
+// ── dominantBaseKey — la identidad estructural de una receta cuenta solo
+// bases con participación real, no cualquier base_carbono presente ──────
+// Caso real encontrado con el catálogo de producción: 8 de 12 tarjetas de
+// "Generador de recetas" para Orellana Gris eran kikuyo 30-35% + hojarasca
+// 44-51% + UN relleno distinto cada vez al 1.6-12% (cáscara de plátano,
+// sms, paja de soya, tallo de floricultura...). structKeyFor (que contaba
+// cualquier base_carbono presente) las veía como 4-8 "grupos distintos" —
+// dominantBaseKey debe verlas como una sola receta real.
+test('dominantBaseKey ignora bases_carbono minoritarias — mismo relleno al 5-12% no cuenta como base distinta', () => {
+  const roleById = new Map([
+    ['kikuyo', 'base_carbono'], ['hojarasca', 'base_carbono'],
+    ['cascara_platano', 'base_carbono'], ['sms', 'base_carbono'], ['paja_soya', 'base_carbono'],
+  ]);
+  const variant = filler => [
+    { id: 'kikuyo', p: 32 }, { id: 'hojarasca', p: 49 }, { id: filler, p: 8 },
+  ];
+  const keys = new Set([
+    dominantBaseKey(variant('cascara_platano'), roleById),
+    dominantBaseKey(variant('sms'), roleById),
+    dominantBaseKey(variant('paja_soya'), roleById),
+  ]);
+  assert.equal(keys.size, 1, `variantes con solo el relleno menor distinto deben compartir clave; hubo ${keys.size}: ${[...keys]}`);
+  assert.equal([...keys][0], 'hojarasca+kikuyo');
+});
+
+test('dominantBaseKey sí distingue recetas con distintas bases dominantes', () => {
+  const roleById = new Map([
+    ['kikuyo', 'base_carbono'], ['hojarasca', 'base_carbono'],
+    ['retamo_espinoso', 'base_carbono'], ['carton_corrugado', 'base_carbono'],
+  ]);
+  const a = dominantBaseKey([{ id: 'kikuyo', p: 32 }, { id: 'hojarasca', p: 49 }, { id: 'retamo_espinoso', p: 8 }], roleById);
+  const b = dominantBaseKey([{ id: 'retamo_espinoso', p: 39 }, { id: 'carton_corrugado', p: 26 }, { id: 'hojarasca', p: 8 }], roleById);
+  assert.notEqual(a, b);
 });
 
 test('selectRecommended prefiere un type no visto sobre repetir type, aunque tenga menor utilidad', () => {
