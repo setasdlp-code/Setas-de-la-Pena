@@ -518,3 +518,48 @@ test('cheapSeedRank ordena de forma determinista sin llamar al motor de scoring'
   assert.deepEqual(ranked1.map(s => canonicalRecipeKey(s.recipe)), ranked2.map(s => canonicalRecipeKey(s.recipe)));
   assert.equal(ranked1.length, seeds.length);
 });
+
+// Reproduce con el catálogo real de producción (87 ingredientes, 33 bases
+// compatibles con Orellana Gris): "hojarasca" cuesta $200/kg, la más barata
+// de las 33 bases (el resto entre $400 y $28.000). generateStructuralSeeds
+// genera 44,082 semillas para esa especie; cheapSeedRank las recorta a 300
+// antes de evaluate(). Con un ranking global por costo, casi todas las
+// semillas que sobreviven el recorte terminan incluyendo hojarasca — no
+// porque sea mejor, sino porque cualquier combinación que la use es más
+// barata que casi cualquier combinación entre las otras 32 bases. Ninguna
+// diversidad downstream (ranked/recommended) puede recuperar bases que ya
+// se descartaron en este paso.
+test('cheapSeedRank no deja que las bases más baratas acaparen el cupo cuando hay muchas bases viables', () => {
+  // 20 bases con un spread realista de cn/n/moisture (como el catálogo real:
+  // 33 bases compatibles para Orellana Gris), una de ellas absurdamente barata
+  // frente al resto — como hojarasca ($200/kg) frente a las otras 32 bases
+  // reales ($400–$28.000/kg). generateStructuralSeeds ya genera miles de
+  // semillas con solo 20 bases x 8 suplementos; cheapSeedRank las recorta a
+  // un cupo mucho menor antes de evaluate().
+  const targetKey = 'test';
+  const spp = { [targetKey]: SPP.test };
+  const bases = Array.from({ length: 20 }, (_, i) => ({
+    id: `base_${i}`, name: `Base ${i}`, role: 'base_carbono',
+    cn: 30 + i * 4, n: 0.4 + (i % 5) * 0.25, c: 45 + (i % 6), moisture: 10 + (i % 5) * 3,
+    cost: i === 0 ? 50 : 1500 + i * 400, cs: [targetKey],
+  }));
+  const supps = Array.from({ length: 8 }, (_, i) => ({
+    id: `supp_${i}`, name: `Supp ${i}`, role: 'suplemento_n',
+    cn: 8 + i, n: 2.5 + i * 0.3, c: 40 + (i % 4), moisture: 10 + (i % 6) * 5,
+    cost: 1000 + i * 400, cs: [targetKey],
+  }));
+  const ingredients = [...bases, ...supps];
+
+  const seeds = generateStructuralSeeds({ targetKey, ingredients, spp, profileKey: 'produccion' });
+  const CAP = 30;
+  assert.ok(seeds.length > CAP * 10, `fixture inválido: se esperaban bastantes más de ${CAP * 10} semillas, hubo ${seeds.length}`);
+
+  const roleById = new Map(ingredients.map(g => [g.id, g.role]));
+  const survivors = cheapSeedRank(seeds, ingredients).slice(0, CAP);
+  const distinctBaseIds = new Set(survivors.flatMap(s => s.recipe.filter(r => roleById.get(r.id) === 'base_carbono').map(r => r.id)));
+
+  assert.ok(
+    distinctBaseIds.size >= 12,
+    `solo ${distinctBaseIds.size} base(s) distinta(s) (de 20 disponibles) sobrevivieron el recorte de ${seeds.length} semillas a ${CAP} — el ranking por costo global está acaparando el cupo con las bases más baratas`
+  );
+});
