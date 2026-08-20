@@ -7,6 +7,19 @@
   const round2 = (v) => Math.round(v * 100) / 100;
   const round1 = (v) => Math.round(v * 10) / 10;
 
+  // Identidad estructural "real" de una receta para fines de diversidad:
+  // solo cuenta como base un ingrediente base_carbono que aporte al menos
+  // DOMINANT_BASE_MIN_PCT de la receta. Caso real encontrado con el
+  // catálogo de producción: 8 de 12 recomendaciones para Orellana Gris
+  // eran "kikuyo 30-35% + hojarasca 44-51%" con un relleno menor distinto
+  // cada vez (5-12%: cáscara de plátano, sms, paja de soya...) — contar
+  // cualquier base_carbono presente, sin importar su %, hacía que esas 8
+  // variantes de la misma receta contaran como 4-8 "grupos diversos".
+  const DOMINANT_BASE_MIN_PCT = 15;
+  const dominantBaseKey = (recipe, roleById, threshold = DOMINANT_BASE_MIN_PCT) => (recipe || [])
+    .filter((r) => roleById.get(r.id) === 'base_carbono' && Number(r.p) >= threshold)
+    .map((r) => r.id).sort().join('+') || 'sin_base';
+
   const SCENARIO_PROFILES = {
     rescate: {
       maxSupp: 8,
@@ -725,10 +738,6 @@
   // order preserved), then interleaved round-robin across groups — so the
   // cap gets spent across as many distinct bases as the seed pool actually
   // has, cheapest-first within each, instead of the cheapest bases overall.
-  const seedBaseKey = (seed, roleById) => seed.recipe
-    .filter(r => roleById.get(r.id) === 'base_carbono')
-    .map(r => r.id).sort().join('+') || 'sin_base';
-
   const cheapSeedRank = (seeds, ingredients) => {
     const costById = new Map((ingredients || []).map(g => [g.id, Number(g.cost) || 0]));
     const roleById = new Map((ingredients || []).map(g => [g.id, g.role]));
@@ -737,7 +746,7 @@
         (sum, r) => sum + (costById.get(r.id) || 0) * (Number(r.p) || 0) / 100,
         0
       );
-      return { seed, estimatedCost, complexity: seed.recipe.length, baseKey: seedBaseKey(seed, roleById) };
+      return { seed, estimatedCost, complexity: seed.recipe.length, baseKey: dominantBaseKey(seed.recipe, roleById) };
     });
     const byCostThenKey = (a, b) =>
       a.estimatedCost - b.estimatedCost ||
@@ -994,7 +1003,7 @@
     // aún hay espacio en el límite — así no se acorta la lista cuando de verdad no hay más
     // variedad estructural disponible.
     const roleByIdForRanking = new Map(ingredients.map(g => [g.id, g.role]));
-    const structKeyFor = c => c.recipe.filter(r => roleByIdForRanking.get(r.id) === 'base_carbono').map(r => r.id).sort().join('+') || 'sin_base';
+    const structKeyFor = c => dominantBaseKey(c.recipe, roleByIdForRanking);
     const RANKED_LIMIT = 12;
     const RANKED_PER_GROUP_CAP = 3;
     const rankedGroupCounts = new Map();
@@ -1082,6 +1091,7 @@
     evaluateScenario,
     selectStructuralRoots,
     selectRecommended,
+    dominantBaseKey,
     searchScenarios,
   };
 
