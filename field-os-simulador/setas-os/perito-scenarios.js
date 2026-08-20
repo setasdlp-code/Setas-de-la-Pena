@@ -941,9 +941,25 @@
     const viable = allowed.filter(c => dimensionVector(c.evaluation).safety >= 60);
     const pareto = paretoFront(viable).sort(utilitySort);
 
-    const byType = {};
-    pareto.forEach(c => { if (!byType[c.type]) byType[c.type] = c; });
-    const recommended = Object.values(byType).slice(0, 4);
+    // recommended son las tarjetas de escenario que perito-scenarios-bridge.js
+    // le muestra al operador. Antes se deduplicaban por c.type (conservadora/
+    // rendimiento/economia/experimental/alternativa): si el Pareto colapsa a
+    // 1-2 types dominantes — plausible cuando una base gana en casi todas las
+    // dimensiones — todas las tarjetas terminaban usando esa misma base con
+    // distinto tratamiento o suplemento secundario, aunque ranked (que el
+    // operador nunca ve) sí tuviera variedad de bases disponible. Se prioriza
+    // diversidad de bases reusando structKeyFor — cada tarjeta conserva su
+    // .type para la etiqueta de la UI, pero deja de ser la clave de selección.
+    const RECOMMENDED_LIMIT = 4;
+    const recommendedSeen = new Set();
+    const recommendedDiverse = [];
+    const recommendedLeftovers = [];
+    pareto.forEach(c => {
+      const k = structKeyFor(c);
+      if (!recommendedSeen.has(k)) { recommendedSeen.add(k); recommendedDiverse.push(c); }
+      else recommendedLeftovers.push(c);
+    });
+    const recommended = recommendedDiverse.concat(recommendedLeftovers).slice(0, RECOMMENDED_LIMIT);
 
     return {
       baseline,

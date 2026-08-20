@@ -216,6 +216,44 @@ test('searchScenarios diversifica el ranked del beam en vez de dejar que un solo
   }
 });
 
+test('searchScenarios diversifica recommended por base, no solo ranked (que el operador nunca ve)', () => {
+  // recommended son las tarjetas de escenario que perito-scenarios-bridge.js
+  // realmente le muestra al operador — se construían agrupando por c.type
+  // (conservadora/rendimiento/economia/experimental/alternativa) en vez de por
+  // combinación de bases. Con una base claramente dominante en casi todas las
+  // dimensiones (más barata, mejor C:N), el Pareto colapsa a 1-2 types y
+  // recommended termina repitiendo esa misma base en todas sus tarjetas —
+  // incluso cuando ranked (nunca mostrado al usuario) sí era diverso.
+  const skewedINGS = [
+    { id: 'paja_trigo', name: 'Paja de trigo', role: 'base_carbono', cn: 80, n: .6, c: 48, moisture: 12, ph: 6.8, dig: 7, cra: 3, cs: ['p_ostreatus_gris'], cost: 300 },
+    { id: 'aserrin_roble', name: 'Aserrín de roble', role: 'base_carbono', cn: 120, n: .3, c: 50, moisture: 15, ph: 6.2, dig: 4, cra: 2, cs: ['p_ostreatus_gris'], cost: 900 },
+    { id: 'bagazo_cana', name: 'Bagazo de caña', role: 'base_carbono', cn: 100, n: .4, c: 49, moisture: 55, ph: 6.0, dig: 5, cra: 3, cs: ['p_ostreatus_gris'], cost: 850 },
+    { id: 'salvado_trigo', name: 'Salvado de trigo', role: 'suplemento_n', cn: 15, n: 2.5, c: 45, moisture: 12, ph: 6.5, dig: 8, cra: 4, cs: ['p_ostreatus_gris'], cost: 900 },
+    { id: 'harina_pescado', name: 'Harina de pescado', role: 'suplemento_n', cn: 6, n: 8.0, c: 48, moisture: 8, ph: 6.5, dig: 9, cra: 2, cs: ['p_ostreatus_gris'], cost: 3200 },
+  ];
+  const sp = SPP.p_ostreatus_gris;
+  const out = scenarios.searchScenarios({
+    recipe: [], context: { sKey: 'p_ostreatus_gris', spp: SPP }, targetKey: 'p_ostreatus_gris', spp: SPP,
+    ingredients: skewedINGS,
+    analyze: recipe => legacy.analyze(recipe, 'p_ostreatus_gris', skewedINGS, SPP),
+    score: scoreAdapter('p_ostreatus_gris'), history: [], searchMode: 'hybrid',
+    generations: 3, beamWidth: 14, stepPct: 4, useStock: false, profileKey: 'produccion',
+    roleCaps: roleCaps(sp), ingredientCaps: ingredientCaps(skewedINGS, sp),
+  });
+
+  const roleById = new Map(skewedINGS.map(g => [g.id, g.role]));
+  const baseGroupOf = c => c.recipe.filter(r => roleById.get(r.id) === 'base_carbono').map(r => r.id).sort().join('+');
+  const rankedGroups = new Set(out.ranked.map(baseGroupOf));
+  const recommendedGroups = new Set(out.recommended.map(baseGroupOf));
+
+  assert.ok(rankedGroups.size >= 2, `fixture inválido: ranked debería ya ser diverso (${rankedGroups.size} bases)`);
+  assert.ok(out.recommended.length > 0, 'esperaba al menos una recomendación');
+  assert.ok(
+    recommendedGroups.size >= Math.min(2, rankedGroups.size),
+    `recommended no explora bases distintas aunque ranked sí las tiene disponibles: ${recommendedGroups.size} base(s) en recommended vs ${rankedGroups.size} en ranked`
+  );
+});
+
 // This test intentionally depends on runAutoOptimizer while it is the parity
 // oracle. After this gate passes in the complete checkout, freeze the observed
 // legacy top-12 compositions/scores as static golden fixtures; only then remove
