@@ -2510,7 +2510,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       })();
     }
   };
-  const deleteBitCosecha=(id)=>{setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});};
+  const deleteBitCosecha=(id)=>{
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    if(window.SetasBitacoraDB){
+      (async()=>{
+        try{await window.SetasBitacoraDB.eliminarCosecha(id);}
+        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
+      })();
+    }
+  };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
