@@ -10,6 +10,7 @@ const {
   applyMutation,
   paretoFront,
   searchScenarios,
+  selectRecommended,
 } = require('./perito-scenarios.js');
 
 const ingredients = [
@@ -187,4 +188,32 @@ test('Perito consume SetasFormulatorAPI y no conoce controles internos del Formu
   assert.match(bridge, /historyCalibrationFor\(context\.sKey/);
   assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
   assert.match(hook, /import '\.\/perito-scenarios-bridge\.js';/);
+});
+
+// ── selectRecommended — diversidad de base primero, type como criterio
+// secundario de relleno (no de selección primaria) ──────────────────
+test('selectRecommended prioriza combinaciones de base no vistas antes de repetir una', () => {
+  const mk = (id, group, type) => ({ id, recipe: [{ id: group, p: 100 }], type });
+  const groupKeyFor = c => c.recipe[0].id;
+  // Orden = orden de utilidad (ya viene ordenado por el llamador).
+  const candidates = [
+    mk('c1', 'baseA', 'rendimiento'),
+    mk('c2', 'baseA', 'economia'),
+    mk('c3', 'baseB', 'rendimiento'),
+    mk('c4', 'baseA', 'alternativa'),
+  ];
+  const out = selectRecommended(candidates, { groupKeyFor, limit: 4 });
+  assert.deepEqual(out.map(c => c.id), ['c1', 'c3', 'c2', 'c4']);
+});
+
+test('selectRecommended prefiere un type no visto sobre repetir type, aunque tenga menor utilidad', () => {
+  const mk = (id, group, type) => ({ id, recipe: [{ id: group, p: 100 }], type });
+  const groupKeyFor = c => c.recipe[0].id;
+  const candidates = [
+    mk('c1', 'baseA', 'rendimiento'),
+    mk('c2', 'baseA', 'rendimiento'), // mayor utilidad que c3, pero repite type
+    mk('c3', 'baseA', 'economia'),    // menor utilidad, pero type nuevo
+  ];
+  const out = selectRecommended(candidates, { groupKeyFor, limit: 2 });
+  assert.deepEqual(out.map(c => c.id), ['c1', 'c3']);
 });
