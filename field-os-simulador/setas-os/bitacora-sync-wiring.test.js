@@ -56,3 +56,10 @@ test('updateBitLote respalda los cambios del lote en Firestore', () => {
   const end = jsx.indexOf('const updateBitBolsa=');
   assert.match(jsx.slice(start, end), /SetasBitacoraDB\.actualizarLote\(loteId,\s*fields\)/);
 });
+
+test('updateBitBolsa respalda los cambios de la bolsa en Firestore', () => {
+  const jsx = read('simulador-app.jsx');
+  const start = jsx.indexOf('const updateBitBolsa=');
+  const end = jsx.indexOf('const addBitCosecha=');
+  assert.match(jsx.slice(start, end), /SetasBitacoraDB\.actualizarBolsa\(bolsaId,\s*fields\)/);
+});
