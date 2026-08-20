@@ -1,6 +1,8 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   normalizeRecipe,
   capFreeIngredient,
@@ -107,6 +109,30 @@ test('applyOptToRecipe soporta operaciones set, add, increase, decrease', () => 
   assert.equal(comboRes.find(r => r.id === 'carbonato_calcio').p, 2);
 });
 
+// logic-lens: 'add' de un ingrediente nuevo cuando hay bloqueados podía sumar
+// más de 100% — el scale se topaba en 0 pero nada capaba el % del ingrediente
+// nuevo al espacio libre real, a diferencia de 'increase' (que sí normaliza).
+test('applyOptToRecipe: add nunca suma más de 100% aunque delta exceda el espacio libre', () => {
+  const rec = [{ id: 'paja_trigo', p: 80 }, { id: 'aserrin_roble', p: 20 }];
+  // Solo 20% libre (paja_trigo bloqueada al 80%); delta=30 excede ese espacio.
+  const res = applyOptToRecipe(rec, { mode: 'add', id: 'salvado_trigo', delta: 30 }, ['paja_trigo'], INGS);
+  const total = res.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
+  assert.ok(Math.abs(total - 100) < 0.15, `la receta debe sumar 100%, sumó ${total}`);
+  assert.equal(res.find(r => r.id === 'paja_trigo').p, 80, 'lo bloqueado no debe cambiar');
+  // El nuevo ingrediente se queda con TODO el espacio libre (20%), no con el
+  // delta pedido (30%) que no cabía.
+  assert.equal(res.find(r => r.id === 'salvado_trigo').p, 20);
+  assert.equal(res.find(r => r.id === 'aserrin_roble').p, 0);
+});
+
+test('applyOptToRecipe: add sin bloqueos sigue dando exactamente el delta pedido (comportamiento existente intacto)', () => {
+  const rec = [{ id: 'paja_trigo', p: 80 }, { id: 'aserrin_roble', p: 20 }];
+  const res = applyOptToRecipe(rec, { mode: 'add', id: 'salvado_trigo', delta: 15 }, [], INGS);
+  assert.equal(res.find(r => r.id === 'salvado_trigo').p, 15);
+  const total = res.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
+  assert.ok(Math.abs(total - 100) < 0.15);
+});
+
 test('calcTreatment determina el tratamiento térmico y costo energético según riesgo', () => {
   // Bajo riesgo -> CWLP
   const lowRiskAn = { suppP: 5, avgN: 1.0, trichoderma: false };
@@ -156,6 +182,36 @@ test('generateOptimizer genera veredictos y predicciones sin mutar estado', () =
   assert.ok(cnHighItem);
   assert.equal(cnHighItem.priority, 'critical');
   assert.ok(cnHighItem.predictedScore != null);
+});
+
+// logic-lens: usageCounts existe para no recomendar siempre el mismo
+// ingrediente cuando hay alternativas igual de viables — verificado aquí
+// como mecanismo puro, aislado del hecho de que ningún call site en
+// simulador-app.jsx lo estaba alimentando con datos reales.
+test('generateOptimizer respeta usageCounts: deja de sugerir siempre el mismo ingrediente entre alternativas empatadas', () => {
+  const an = {
+    sp: SPP.p_ostreatus_gris,
+    // cn en el ideal (35) para que SOLO dispare nLow — si cnHigh/cnLow también
+    // disparan, su propio bestStock() reclama uno de los 2 candidatos primero
+    // y el dedup entre flags (recommendedIds) enmascara el efecto de usageCounts
+    // que esta prueba quiere aislar.
+    cn: 35, avgN: 0.5, avgPh: 6.8, eb: 90, cost: 450, tot: 100,
+    suppP: 0, addP: 0, avgDig: 7, airP: 15, densaP: 0, trichoderma: false, incompat: []
+  };
+  const recipe = [{ id: 'paja_trigo', p: 100 }];
+  const stockIds = new Set(['paja_trigo', 'salvado_trigo', 'harina_pescado', 'carbonato_calcio']);
+
+  const sinUso = generateOptimizer(an, 'p_ostreatus_gris', stockIds, recipe, INGS, [], null, true, {}, SPP, {});
+  const nLowItem = sinUso.items.find(i => i.icon === '↑N');
+  assert.ok(nLowItem?.apply?.id, 'fixture inválido: se esperaba una sugerencia de N con ingrediente');
+  // Sin usageCounts, gana el más barato (salvado_trigo, $900 vs harina_pescado $3200).
+  assert.equal(nLowItem.apply.id, 'salvado_trigo');
+
+  const conUsoAlto = { salvado_trigo: 5 };
+  const conUso = generateOptimizer(an, 'p_ostreatus_gris', stockIds, recipe, INGS, [], null, true, {}, SPP, conUsoAlto);
+  const nLowItem2 = conUso.items.find(i => i.icon === '↑N');
+  // Con salvado_trigo ya muy recomendado, el candidato menos usado (harina_pescado) gana.
+  assert.equal(nLowItem2.apply.id, 'harina_pescado', 'usageCounts debe desplazar al ingrediente más recomendado');
 });
 
 test('runAutoOptimizer genera recetas ordenadas por score respetando inventario y perfil', () => {
@@ -209,6 +265,17 @@ test('runAutoOptimizer diversifica el top-30 en vez de dejar que 1-2 pares de ba
   assert.ok(groupCounts.size >= 5, `esperaba al menos 5 combinaciones de bases distintas, hubo ${groupCounts.size}`);
   for (const [key, count] of groupCounts) assert.ok(count <= 3, `el grupo "${key}" aporta ${count} resultados, más de los 3 permitidos por combinación de bases`);
   assert.ok(res.results.every((r, i) => i === 0 || res.results[i - 1].score >= r.score), 'el resultado sigue ordenado de mayor a menor score');
+});
+
+// logic-lens: generateOptimizer.usageCounts (verificado arriba como mecanismo
+// puro que sí funciona) nunca era alimentado por ningún call site real en
+// simulador-app.jsx — siempre llegaba {} por default, dejando el desempate
+// por "menos recomendado históricamente" permanentemente inerte.
+test('simulador-app.jsx rastrea uso de ingredientes y lo pasa a generateOptimizer', () => {
+  const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  assert.match(jsx, /usageCounts/, 'no se encontró ningún estado/uso de usageCounts en el jsx');
+  assert.match(jsx, /setUsageCounts/, 'no se encontró un setter de usageCounts — no se está registrando uso real');
+  assert.match(jsx, /generateOptimizer\([^)]*usageCounts/, 'generateOptimizer se sigue llamando sin pasar usageCounts');
 });
 
 test('calcMaxBatchFromStock calcula la masa máxima producible con inventario', () => {

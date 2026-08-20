@@ -201,8 +201,12 @@
       } else {
         const free = rec.filter(r => !locked.includes(r.id));
         const sumFree = free.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
-        const scale = Math.max(0, sumFree - delta) / Math.max(1, sumFree);
-        return [...rec.map(r => locked.includes(r.id) ? r : { ...r, p: Math.round((parseFloat(r.p) || 0) * scale * 10) / 10 }), { id, p: delta }];
+        // Si delta excede el espacio libre real (posible cuando hay bloqueados),
+        // el nuevo ingrediente no puede pedir más de lo que hay disponible —
+        // sin este tope la receta sumaba más de 100% silenciosamente.
+        const cappedDelta = Math.min(delta, sumFree);
+        const scale = Math.max(0, sumFree - cappedDelta) / Math.max(1, sumFree);
+        return [...rec.map(r => locked.includes(r.id) ? r : { ...r, p: Math.round((parseFloat(r.p) || 0) * scale * 10) / 10 }), { id, p: Math.round(cappedDelta * 10) / 10 }];
       }
     } else if (mode === 'increase') {
       const cur = existing ? (parseFloat(existing.p) || 0) : 0;

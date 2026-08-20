@@ -2212,7 +2212,13 @@ function App(props){
   // repetición. Se reinicia al cambiar de especie (contexto nuevo).
   const [appliedIcons,setAppliedIcons]=React.useState({});
   React.useEffect(()=>{setAppliedIcons({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons]);
+  // Cuántas veces se recomendó/aplicó cada ingrediente en esta sesión — sin
+  // esto, bestStock() en generateOptimizer siempre desempataba hacia el mismo
+  // candidato "mejor por sortFn" entre alternativas igual de viables (logic-lens).
+  // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
+  const [usageCounts,setUsageCounts]=React.useState({});
+  React.useEffect(()=>{setUsageCounts({});},[sKey]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,undefined,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,usageCounts]);
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -2282,6 +2288,12 @@ function App(props){
     setRecipeHistory(h=>[...h,recipe]);
     setRecipe(applyOptToRecipe(recipe,apply,lockedIds,optimizerINGS));
     if(icon) setAppliedIcons(s=>({...s,[icon]:(s[icon]||0)+1}));
+    const applyOps=Array.isArray(apply)?apply:[apply];
+    setUsageCounts(s=>{
+      const next={...s};
+      applyOps.forEach(op=>{if(op&&op.id) next[op.id]=(next[op.id]||0)+1;});
+      return next;
+    });
   };
   const undoLastRec=()=>{
     if(recipeHistory.length===0) return;
@@ -2302,7 +2314,7 @@ function App(props){
     for(let i=0;i<6;i++){
       const a=analyze(cur,sKey,effectiveINGS);
       if(!a) break;
-      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock);
+      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock,undefined,undefined,usageCounts);
       if(o.score<=bestScore) break;
       bestScore=o.score;
       const candidates=o.items
@@ -2315,7 +2327,7 @@ function App(props){
         const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
         const tryA=analyze(tryRec,sKey,effectiveINGS);
         if(!tryA) continue;
-        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),optUseStock);
+        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),optUseStock,undefined,undefined,usageCounts);
         if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestA2=tryA;bestO2=tryO;}
       }
       if(!bestCandidate) break;
