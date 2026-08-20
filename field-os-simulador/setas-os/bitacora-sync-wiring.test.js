@@ -40,3 +40,12 @@ test('Setas OS v5.dc.html carga bitacora-sync.js como módulo después de db.js'
   assert.ok(dbIdx > -1, 'no se encontró la carga de firebase/db.js');
   assert.ok(syncIdx > dbIdx, 'bitacora-sync.js debe cargarse después de db.js, en el mismo shell');
 });
+
+test('crearBitLote respalda el lote y sus bolsas nuevas en Firestore', () => {
+  const jsx = read('simulador-app.jsx');
+  const start = jsx.indexOf('const crearBitLote=');
+  const end = jsx.indexOf('const updateBitLote=');
+  const body = jsx.slice(start, end);
+  assert.match(body, /SetasBitacoraDB\.guardarLote\(lote\)/);
+  assert.match(body, /SetasBitacoraDB\.guardarBolsas\(bolsas\)/);
+});

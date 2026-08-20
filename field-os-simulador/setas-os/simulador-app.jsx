@@ -2470,6 +2470,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
     setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
     setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    if(window.SetasBitacoraDB){
+      (async()=>{
+        try{
+          await window.SetasBitacoraDB.guardarLote(lote);
+          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        }catch(err){
+          setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
+        }
+      })();
+    }
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});};
