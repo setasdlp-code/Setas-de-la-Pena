@@ -3521,6 +3521,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalCosechasCount = bitCosechas.length;
           const activeRecipeCount = recipe.length;
           const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
+          const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const operationalNow = Date.now();
+          const operationalSource = activeLotes.map((lote,index)=>{
+            const stats=calcLoteStats(lote.id);
+            const contaminated=stats&&stats.contPct>0;
+            const inoculated=Date.parse(lote.fechaInoculacion||'');
+            const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
+            return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString()};
+          });
+          const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
+          const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
+          const overdueTaskCount=operationalQueue.filter(item=>item.bucket==='overdue').length;
+          const blockedTaskCount=operationalQueue.filter(item=>item.bucket==='blocked').length;
+          const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
+          const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
+          const operationStatus=criticalTaskCount>0
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)'}
+            :(overdueTaskCount>0||incidentCount>0)
+              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
+              :{label:'Operación estable',color:'var(--moss-700)'};
 
           // Sección A: Datos de telemetría de las 4 salas y cámaras
           const salas = [
@@ -3627,43 +3648,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
           ];
 
           return (
-            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
+            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
                 borderRadius:'var(--r-md)',
-                padding:'28px 32px',
+                padding:'18px 22px',
                 position:'relative',
                 overflow:'hidden'
               }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:20}}>
-                  <div style={{maxWidth:680}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+                  <div style={{minWidth:240}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                       <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                        FIELD OS · CENTRO DE MANDO OPERATIVO
+                        CONTROL · TURNO ACTUAL
                       </span>
                     </div>
-                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-3xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',marginBottom:10}}>
-                      Setas de la Peña
+                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',margin:0}}>
+                      Hoy
                     </h1>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-base)',color:'var(--ink-700)',margin:0,lineHeight:1.5}}>
-                      Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.
-                    </p>
                   </div>
-                  <div style={{display:'flex',alignItems:'flex-start'}}>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        <IconMountain size={11}/> Tenjo 2.600 msnm
-                      </span>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        <IconDroplet size={11}/> H₂O Eb. 91.4°C
-                      </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
-                        ● Sistema Nominal
-                      </span>
-                    </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
+                    {[
+                      [activeLotes.length,'Lotes activos'],
+                      [pendingTaskCount,'Tareas pendientes'],
+                      [incidentCount,'Incidencias']
+                    ].map(([value,label])=><span key={label} style={{display:'inline-flex',alignItems:'baseline',gap:5,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                      <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{value}</strong> {label}
+                    </span>)}
+                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
+                      {operationStatus.label}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -34,6 +34,15 @@ test('Hoy keeps species selection out of the operational header', () => {
   assert.doesNotMatch(source, /Especie en foco/);
 });
 
+test('Hoy header reports live operational state without duplicated site context', () => {
+  assert.match(source, /activeLotes\.length,'Lotes activos'/);
+  assert.match(source, /pendingTaskCount,'Tareas pendientes'/);
+  assert.match(source, /incidentCount,'Incidencias'/);
+  assert.match(source, /Estado operativo: \$\{operationStatus\.label\}/);
+  assert.doesNotMatch(source, /Sistema Nominal/);
+  assert.doesNotMatch(source, /Biogranja fungícola en Tenjo/);
+});
+
 test('canonical batch detail replaces bit_ficha and derives visible actions from lifecycle', () => {
   assert.match(source, /data-testid="ux-v2-batch-detail"/);
   assert.match(source, /workflow\.validActions\(state,/);

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 42fcf942b2d81f3385a602aced059ade647ce8eec794bbebc777e3de720f17e8
+// source-hash: a429d9fc38d912399e796047e2232f8fffc3f7151462aa9f2cf0b42a22d145a4
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2880,6 +2880,28 @@ BATCH (${numBags}×${kgBag} kg):
     const totalCosechasCount = bitCosechas.length;
     const activeRecipeCount = recipe.length;
     const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
+    const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const operationalNow = Date.now();
+    const operationalSource = activeLotes.map((lote, index) => {
+      const stats = calcLoteStats(lote.id);
+      const contaminated = stats && stats.contPct > 0;
+      const inoculated = Date.parse(lote.fechaInoculacion || "");
+      const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((operationalNow - inoculated) / 864e5)) : 0;
+      return {
+        id: lote.id,
+        lote,
+        severity: stats && stats.contPct >= 20 ? "critical" : void 0,
+        blocked: contaminated && stats.contPct < 20,
+        dueAt: !contaminated && age >= 14 ? new Date(operationalNow - (index + 1) * 36e5).toISOString() : new Date(operationalNow + (index + 1) * 36e5).toISOString()
+      };
+    });
+    const operationalQueue = workflow ? workflow.buildTodayQueue(operationalSource, operationalNow) : operationalSource;
+    const criticalTaskCount = operationalQueue.filter((item) => item.bucket === "critical").length;
+    const overdueTaskCount = operationalQueue.filter((item) => item.bucket === "overdue").length;
+    const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
+    const pendingTaskCount = operationalQueue.filter((item) => !["later", "context"].includes(item.bucket)).length;
+    const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount;
+    const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)" } : { label: "Operación estable", color: "var(--moss-700)" };
     const salas = [
       {
         id: "sala-1",
@@ -2980,14 +3002,18 @@ BATCH (${numBags}×${kgBag} kg):
         linkTab: "dashboard"
       }
     ];
-    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 32, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 24, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: "var(--r-md)",
-      padding: "28px 32px",
+      padding: "18px 22px",
       position: "relative",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 680 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, "FIELD OS · CENTRO DE MANDO OPERATIVO")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-3xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", marginBottom: 10 } }, "Setas de la Peña"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", color: "var(--ink-700)", margin: 0, lineHeight: 1.5 } }, "Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(IconMountain, { size: 11 }), " Tenjo 2.600 msnm"), /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(IconDroplet, { size: 11 }), " H₂O Eb. 91.4°C"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--moss-700)" } }, "● Sistema Nominal"))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, "CONTROL · TURNO ACTUAL")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", margin: 0 } }, "Hoy")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
+      [activeLotes.length, "Lotes activos"],
+      [pendingTaskCount, "Tareas pendientes"],
+      [incidentCount, "Incidencias"]
+    ].map(([value, label]) => /* @__PURE__ */ React.createElement("span", { key: label, style: { display: "inline-flex", alignItems: "baseline", gap: 5, fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, value), " ", label)), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-50)", border: `1px solid ${operationStatus.color}`, borderRadius: "var(--r-xs)", color: operationStatus.color } }, operationStatus.label)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
       gap: 12
