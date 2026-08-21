@@ -38,6 +38,9 @@ jobs:
         run: node --test *.test.js
 
       - name: Run browser regression suite
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npx playwright test --config=playwright.config.cjs
 
       - name: Upload Playwright report on failure
