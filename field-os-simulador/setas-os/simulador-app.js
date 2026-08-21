@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 55d92f87bf4cb5fd24c5511851aeadf982b6dd9a3fa06b28294e5bb9db9b49b1
+// source-hash: 3338afa03657ec0b8bacb2fc8df1db6b707da88ab71b5db303378cf689224d66
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1446,6 +1446,8 @@ function App(props) {
   const [cmpPasteText, setCmpPasteText] = useState("");
   const [cmpParsing, setCmpParsing] = useState(false);
   const [cmpParseErr, setCmpParseErr] = useState("");
+  const [huboParseIA, setHuboParseIA] = useState(false);
+  const [cmpLastFoto, setCmpLastFoto] = useState(null);
   const [cmpConfirm, setCmpConfirm] = useState(null);
   const cmpFileRef = useRef(null);
   const [showProvModal, setShowProvModal] = useState(false);
@@ -2383,27 +2385,73 @@ body{margin:0;padding:20px 24px;background:#fff;}
     };
     img.src = url;
   });
-  const matchIngId = (nombre) => {
+  const matchByName = (list, getName, nombre, minSubstringLen = 4) => {
     if (!nombre) return "";
-    const n = nombre.toLowerCase().trim();
-    let hit = INGS.find((g) => g.name.toLowerCase() === n || g.id === n);
-    if (hit) return hit.id;
-    hit = INGS.find((g) => g.name.toLowerCase().includes(n) || n.includes(g.name.toLowerCase()));
-    return hit ? hit.id : "";
+    const n = String(nombre).toLowerCase().trim();
+    if (!n) return "";
+    const exact = list.find((x) => getName(x).toLowerCase() === n || x.id === n);
+    if (exact) return exact.id;
+    if (n.length < minSubstringLen) return "";
+    const subHits = list.filter((x) => {
+      const gn = getName(x).toLowerCase();
+      return gn.length >= minSubstringLen && gn.includes(n) || n.length >= minSubstringLen && n.includes(gn);
+    });
+    return subHits.length === 1 ? subHits[0].id : "";
   };
+  const matchIngId = (nombre) => matchByName(INGS, (g) => g.name, nombre);
+  const matchProvId = (nombre) => matchByName(invProveedores, (p) => p.nombre, nombre);
   const applyParsedItems = (parsed) => {
-    if (!Array.isArray(parsed) || !parsed.length) {
+    const items = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.items) ? parsed.items : null;
+    if (!items || !items.length) {
       setCmpParseErr("No se detectaron ítems. Prueba con Manual.");
+      setHuboParseIA(false);
       return;
     }
-    setCmpItems(parsed.map((p, i) => ({ uid: Date.now() + i, ingId: matchIngId(p.ingrediente || p.nombre || ""), kg: p.kg || p.cantidad || "", precio: p.precio || p.precio_kg || "" })));
+    const mapped = items.map((p, i) => ({ uid: Date.now() + i, ingId: matchIngId(p.ingrediente || p.nombre || ""), kg: p.kg || p.cantidad || "", precio: p.precio || p.precio_kg || "" }));
+    setCmpItems(mapped);
+    setHuboParseIA(true);
+    if (parsed && !Array.isArray(parsed)) {
+      if (parsed.proveedor) {
+        const pid = matchProvId(parsed.proveedor);
+        if (pid) setCmpProvId(pid);
+      }
+      if (parsed.fecha && /^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
+    }
     setCmpMode("manual");
   };
   const extraerJSON = (txt) => {
-    const m = txt.match(/\[[\s\S]*\]/);
-    return JSON.parse(m ? m[0] : txt);
+    const objMatch = txt.match(/\{[\s\S]*\}/);
+    if (objMatch) {
+      try {
+        const o = JSON.parse(objMatch[0]);
+        if (o && typeof o === "object" && Array.isArray(o.items)) return o;
+      } catch (e) {
+      }
+    }
+    const arrMatch = txt.match(/\[[\s\S]*\]/);
+    if (arrMatch) return JSON.parse(arrMatch[0]);
+    return JSON.parse(objMatch ? objMatch[0] : txt);
   };
   const CMP_MAX_BYTES = 10 * 1024 * 1024;
+  const parseFotoPayload = async (fileBlock, esPDF) => {
+    setCmpParsing(true);
+    setCmpParseErr("");
+    try {
+      const listaIngs = INGS.map((g) => g.name).join(", ");
+      const resp = await window.claude.complete({ messages: [{ role: "user", content: [
+        fileBlock,
+        { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
+      ] }] });
+      try {
+        applyParsedItems(extraerJSON(resp));
+      } catch (parseErr) {
+        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
+      }
+    } catch (err) {
+      setCmpParseErr(`No se pudo leer ${esPDF ? "el PDF" : "la foto"}. Intenta de nuevo o usa Manual.`);
+    }
+    setCmpParsing(false);
+  };
   const capturarFoto = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -2418,32 +2466,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
       e.target.value = "";
       return;
     }
-    setCmpParsing(true);
     setCmpParseErr("");
+    setHuboParseIA(false);
+    setCmpParsing(true);
     setCmpFuente("ocr");
     try {
       const b64 = await fileToBase64(file);
-      const listaIngs = INGS.map((g) => g.name).join(", ");
       const fileBlock = esPDF ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } } : { type: "image", source: { type: "base64", media_type: file.type || "image/jpeg", data: b64 } };
-      const resp = await window.claude.complete({ messages: [{ role: "user", content: [
-        fileBlock,
-        { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Extrae cada ítem comprado como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
-      ] }] });
-      try {
-        applyParsedItems(extraerJSON(resp));
-      } catch (parseErr) {
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
-      }
+      setCmpLastFoto({ fileBlock, esPDF, name: file.name });
+      await parseFotoPayload(fileBlock, esPDF);
     } catch (err) {
+      setCmpParsing(false);
       setCmpParseErr(`No se pudo leer ${esPDF ? "el PDF" : "la foto"}. Intenta de nuevo o usa Manual.`);
     }
-    setCmpParsing(false);
     e.target.value = "";
+  };
+  const reintentarFoto = () => {
+    if (!cmpLastFoto || cmpParsing) return;
+    setHuboParseIA(false);
+    setCmpFuente("ocr");
+    parseFotoPayload(cmpLastFoto.fileBlock, cmpLastFoto.esPDF);
   };
   const parsearTexto = async () => {
     if (!cmpPasteText.trim()) return;
     setCmpParsing(true);
     setCmpParseErr("");
+    setHuboParseIA(false);
     setCmpFuente("email");
     try {
       const listaIngs = INGS.map((g) => g.name).join(", ");
@@ -2451,7 +2499,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 """${cmpPasteText}"""
 
-Extrae cada ítem como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]. Ingredientes conocidos: ${listaIngs}.` }] });
+Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.` }] });
       applyParsedItems(extraerJSON(resp));
     } catch (err) {
       setCmpParseErr("No se pudo interpretar el texto. Intenta de nuevo o usa Manual.");
@@ -2506,6 +2554,8 @@ Extrae cada ítem como JSON puro (sin texto ni markdown): [{"ingrediente":"nombr
     setCmpMode("manual");
     setCmpPasteText("");
     setCmpFuente("manual");
+    setHuboParseIA(false);
+    setCmpLastFoto(null);
   };
   const autoBalance = (mode2 = balanceMode) => {
     if (recipe.length === 0) return;
@@ -2667,10 +2717,16 @@ BATCH (${numBags}×${kgBag} kg):
     setShowAddStockForm(false);
     setAddStockId("");
     setAddStockKg("");
-  } }, "Cancelar")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "≥5 kg · 2–5 kg · <2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar."))), invTab === "compra" && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560 } }, cmpConfirm ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)", marginBottom: 2 } }, "✓ Compra registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, cmpConfirm.proveedor || "Sin proveedor", " · ", cmpConfirm.fecha, " · $", cmpConfirm.total.toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { className: "inv-section", style: { marginBottom: 14 } }, cmpConfirm.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderBottom: i < cmpConfirm.items.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", fontWeight: 600, color: "var(--ink-800)" } }, it.nombre), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "+", it.kgComprado, " kg comprados")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--accent-olive)" } }, it.stockNuevo.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "stock actual"))))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setCmpConfirm(null) }, "＋ Registrar otra compra")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 14 } }, [["manual", "✎ Manual"], ["foto", /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconCamera, { size: 12 }), " Foto / PDF de recibo")], ["texto", "✉ Pegar texto"]].map(([v, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: "inv-btn inv-btn-sec inv-btn-sm", style: { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5, whiteSpace: "normal", lineHeight: 1.25, textAlign: "center", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
+  } }, "Cancelar")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "≥5 kg · 2–5 kg · <2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar."))), invTab === "compra" && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560 } }, cmpConfirm ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)", marginBottom: 2 } }, "✓ Compra registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, cmpConfirm.proveedor || "Sin proveedor", " · ", cmpConfirm.fecha, " · $", cmpConfirm.total.toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { className: "inv-section", style: { marginBottom: 14 } }, cmpConfirm.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderBottom: i < cmpConfirm.items.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", fontWeight: 600, color: "var(--ink-800)" } }, it.nombre), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "+", it.kgComprado, " kg comprados")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--accent-olive)" } }, it.stockNuevo.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "stock actual"))))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setCmpConfirm(null) }, "＋ Registrar otra compra")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [["manual", "✎", "Manual"], ["foto", /* @__PURE__ */ React.createElement(IconCamera, { size: 16 }), "Foto / PDF"], ["texto", "✉", "Pegar texto"]].map(([v, icon, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: "inv-btn inv-btn-sec", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 8px", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
     setCmpMode(v);
     setCmpParseErr("");
-  } }, l))), cmpMode === "foto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: 14, border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*,application/pdf", ref: cmpFileRef, style: { display: "none" }, onChange: capturarFoto }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { display: "inline-flex", alignItems: "center", gap: 6 }, disabled: cmpParsing, onClick: () => cmpFileRef.current && cmpFileRef.current.click() }, cmpParsing ? "Leyendo recibo…" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconCamera, { size: 12 }), " Tomar foto / subir recibo (o PDF)")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", marginTop: 8 } }, "La foto o PDF se lee y llena los ítems abajo — revisa antes de registrar."), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), cmpMode === "texto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("textarea", { className: "inv-input", rows: "4", style: { width: "100%", resize: "vertical", fontFamily: "var(--font-body)" }, placeholder: "Pega aquí el mensaje o correo del proveedor…", value: cmpPasteText, onChange: (e) => setCmpPasteText(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { marginTop: 8 }, disabled: cmpParsing || !cmpPasteText.trim(), onClick: parsearTexto }, cmpParsing ? "Interpretando…" : "Interpretar texto"), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("select", { className: "inv-input", value: cmpProvId, onChange: (e) => setCmpProvId(e.target.value), style: { flex: 1 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar…"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre, " — ", p.municipio))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { flexShrink: 0, padding: "9px 12px" }, onClick: () => setShowProvModal(true) }, "＋ Nuevo"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Fecha de compra"), /* @__PURE__ */ React.createElement("input", { type: "date", className: "inv-input", value: cmpFecha, onChange: (e) => setCmpFecha(e.target.value) }))), /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Ítems"), cmpItems.map((it) => {
+    setCmpLastFoto(null);
+    setHuboParseIA(false);
+  } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1 } }, icon), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-label)" } }, l)))), cmpMode === "foto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: 14, border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*,application/pdf", capture: "environment", ref: cmpFileRef, style: { display: "none" }, onChange: capturarFoto }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { display: "inline-flex", alignItems: "center", gap: 6 }, disabled: cmpParsing, onClick: () => cmpFileRef.current && cmpFileRef.current.click() }, cmpParsing ? "Leyendo recibo…" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconCamera, { size: 12 }), " Tomar foto / subir recibo (o PDF)")), cmpLastFoto && !cmpParsing && /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { marginLeft: 8, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }, onClick: reintentarFoto, title: `Reintentar con ${cmpLastFoto.name}` }, "↻ Reintentar", cmpLastFoto.name ? ` (${cmpLastFoto.name.length > 18 ? cmpLastFoto.name.slice(0, 15) + "…" : cmpLastFoto.name})` : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", marginTop: 8 } }, "La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisa antes de registrar."), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), cmpMode === "texto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("textarea", { className: "inv-input", rows: "4", style: { width: "100%", resize: "vertical", fontFamily: "var(--font-body)" }, placeholder: "Pega aquí el mensaje o correo del proveedor…", value: cmpPasteText, onChange: (e) => setCmpPasteText(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { marginTop: 8 }, disabled: cmpParsing || !cmpPasteText.trim(), onClick: parsearTexto }, cmpParsing ? "Interpretando…" : cmpParseErr ? "↻ Reintentar" : "Interpretar texto"), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), huboParseIA && (() => {
+    const total = cmpItems.length;
+    const sinMatch = cmpItems.filter((it) => !it.ingId).length;
+    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14, padding: "10px 12px", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", background: sinMatch ? "#FBF6E8" : "var(--moss-50,#F0F4EB)", border: `1px solid ${sinMatch ? "var(--status-attention)" : "var(--moss-300,#B8C9A0)"}`, color: "var(--ink-800)" } }, "Se ", total === 1 ? "detectó 1 ítem" : `detectaron ${total} ítems`, sinMatch > 0 ? ` — ${sinMatch} sin coincidencia automática, revísalos abajo.` : " — revisa cantidades y precios antes de registrar.");
+  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("select", { className: "inv-input", value: cmpProvId, onChange: (e) => setCmpProvId(e.target.value), style: { flex: 1 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar…"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre, " — ", p.municipio))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { flexShrink: 0, padding: "9px 12px" }, onClick: () => setShowProvModal(true) }, "＋ Nuevo"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Fecha de compra"), /* @__PURE__ */ React.createElement("input", { type: "date", className: "inv-input", value: cmpFecha, onChange: (e) => setCmpFecha(e.target.value) }))), /* @__PURE__ */ React.createElement("label", { className: "inv-label" }, "Ítems"), cmpItems.map((it) => {
     const g = INGS.find((x) => x.id === it.ingId);
     return /* @__PURE__ */ React.createElement("div", { key: it.uid, style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", padding: "10px 12px", marginBottom: 8, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("select", { className: "inv-input", style: { flex: 1, fontSize: "var(--text-sm)" }, value: it.ingId, onChange: (e) => updCmpItem(it.uid, "ingId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar ingrediente…"), INGS.map((gg) => /* @__PURE__ */ React.createElement("option", { key: gg.id, value: gg.id }, gg.name))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => remCmpItem(it.uid), disabled: cmpItems.length === 1 }, "✕")), !it.ingId && (it.kg || it.precio) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", marginBottom: 8 } }, "⚠ Sin coincidencia automática — elige el ingrediente."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String(Math.max(0, (parseFloat(it.kg) || 0) - 1))) }, "−"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "inv-input", style: { width: 64, textAlign: "center", fontSize: "var(--text-sm)" }, min: "0", step: "0.5", value: it.kg, onChange: (e) => updCmpItem(it.uid, "kg", e.target.value), placeholder: "kg" }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String((parseFloat(it.kg) || 0) + 1)) }, "＋"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg")), /* @__PURE__ */ React.createElement("input", { type: "number", className: "inv-input", style: { width: 90, fontSize: "var(--text-sm)" }, min: "0", step: "100", value: it.precio, onChange: (e) => updCmpItem(it.uid, "precio", e.target.value), placeholder: "$/kg" }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginLeft: "auto", whiteSpace: "nowrap" } }, "$", ((parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0)).toLocaleString("es-CO"))));
   }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: addCmpItem }, "＋ Agregar ítem"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)" } }, "Total: $", cmpItems.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0).toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: registrarCompra }, "✓ Registrar compra"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => {
@@ -2679,6 +2735,10 @@ BATCH (${numBags}×${kgBag} kg):
     setCmpFecha((/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
     setCmpMode("manual");
     setCmpPasteText("");
+    setCmpFuente("manual");
+    setHuboParseIA(false);
+    setCmpLastFoto(null);
+    setCmpParseErr("");
   } }, "✕ Limpiar")))), invTab === "historial" && /* @__PURE__ */ React.createElement("div", null, invCompras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)" } }, "Sin compras registradas.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))) : (() => {
     const byMonth = {};
     [...invCompras].sort((a, b) => b.fecha.localeCompare(a.fecha)).forEach((c) => {

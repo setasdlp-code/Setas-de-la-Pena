@@ -1,0 +1,53 @@
+name: Setas OS E2E
+
+on:
+  pull_request:
+    paths:
+      - 'field-os-simulador/setas-os/**'
+      - '.github/workflows/setas-os-e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  setas-os-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: field-os-simulador/setas-os
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: field-os-simulador/setas-os/package-lock.json
+
+      - name: Install Setas OS dependencies
+        run: npm ci
+
+      - name: Install Playwright test runner
+        run: npm install --no-save @playwright/test
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run existing node:test suite
+        run: node --test *.test.js
+
+      - name: Run browser regression suite
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: npx playwright test --config=playwright.config.cjs
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: setas-os-playwright-report
+          path: field-os-simulador/setas-os/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
