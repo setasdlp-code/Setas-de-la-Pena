@@ -3691,7 +3691,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN D · OPERACIÓN INMEDIATA
+                      SECCIÓN A · OPERACIÓN INMEDIATA
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Acciones Rápidas
@@ -3751,7 +3751,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN A · AMBIENTES & SENSORES
+                      SECCIÓN B · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Telemetría de Salas de Cultivo
@@ -3831,7 +3831,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN B · MÓDULOS DE CAMPO
+                      SECCIÓN C · MÓDULOS DE CAMPO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Espacios de Trabajo
@@ -4120,7 +4120,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN C · CICLO BIOLÓGICO TENJO
+                      SECCIÓN D · CICLO BIOLÓGICO TENJO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Pipeline de Lotes & Fases de Cultivo
@@ -4141,7 +4141,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {pipelineStages.map((st,idx)=>(
                     <div
                       key={st.num}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${st.title} — ${st.active?'en curso':'planificado'}`}
                       onClick={()=>goTab(st.linkTab)}
+                      onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goTab(st.linkTab);}}}
                       style={{
                         background:st.active?'var(--paper-50)':'var(--paper-100)',
                         border:st.active?'1px solid var(--moss-300)':'1px solid var(--paper-300)',
@@ -4188,7 +4192,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div
                             key={lt.id}
                             data-lote-id={lt.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
                             onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}}
                             style={{
                               display:'flex',
                               justifyContent:'space-between',
