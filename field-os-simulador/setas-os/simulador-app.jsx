@@ -3616,6 +3616,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
           ];
 
           // Sección C: Fases del ciclo de cultivo
+          // accent/icon de cada fase retoman el mismo color que ya usa la sala o el
+          // workspace donde esa fase realmente ocurre (incubación=slate como Sala 1,
+          // fructificación=moss como Sala 2/Producción, etc.) — el color del pipeline
+          // anticipa a dónde lleva el clic, no es decorativo.
           const pipelineStages = [
             {
               num: '01',
@@ -3623,7 +3627,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)',
               badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : 'En espera de receta',
               active: activeRecipeCount > 0,
-              linkTab: 'formular'
+              linkTab: 'formular',
+              accent: 'var(--coral-500)',
+              icon: IconFlame
             },
             {
               num: '02',
@@ -3631,7 +3637,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
               badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
               active: bolsasIncubacion > 0,
-              linkTab: 'bitacora'
+              linkTab: 'bitacora',
+              accent: 'var(--slate-500)',
+              icon: IconSprout
             },
             {
               num: '03',
@@ -3639,7 +3647,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm',
               badge: `${bitBolsas.filter(b=>b.col100).length} bolsas colonizadas 100%`,
               active: bitBolsas.filter(b=>b.col100).length > 0,
-              linkTab: 'schedule'
+              linkTab: 'schedule',
+              accent: 'var(--sand-500)',
+              icon: IconSnowflake
             },
             {
               num: '04',
@@ -3647,7 +3657,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero',
               badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
               active: totalCosechasCount > 0,
-              linkTab: 'bitacora'
+              linkTab: 'bitacora',
+              accent: 'var(--moss-700)',
+              icon: IconMushroom
             },
             {
               num: '05',
@@ -3655,7 +3667,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: '2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)',
               badge: `${bitLotes.length} lotes con trazabilidad`,
               active: bitLotes.length > 0,
-              linkTab: 'dashboard'
+              linkTab: 'dashboard',
+              accent: 'var(--ink-700)',
+              icon: IconScale
             }
           ];
 
@@ -4162,22 +4176,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goTab(st.linkTab);}}}
                       className={'home-stage-card'+(st.active?' is-active':'')}
                       style={{
+                        '--stage-accent':st.accent,
                         borderRadius:'var(--r-sm)',
                         padding:'14px',
                         cursor:'pointer',
                         position:'relative'
                       }}
                     >
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:st.active?'var(--moss-700)':'var(--ink-400)'}}>
-                          Fase {st.num}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                        <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:20,height:20,borderRadius:'50%',flexShrink:0,background:st.active?st.accent:'var(--paper-200)',color:st.active?'var(--paper-0)':'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700}}>
+                          {st.num.replace(/^0/,'')}
                         </span>
-                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?'var(--moss-700)':'var(--ink-500)'}}>
+                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?st.accent:'var(--ink-500)'}}>
                           {st.active?'En curso':'Plan'}
                         </span>
                       </div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:4}}>
-                        {st.title}
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                        <span style={{display:'inline-flex',flexShrink:0,color:st.accent}}><st.icon size={13}/></span>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                          {st.title}
+                        </div>
                       </div>
                       <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.35,marginBottom:8}}>
                         {st.sub}

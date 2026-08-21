@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 538164cba1203f0a6756f6c13613fd04237ad3848b44a0cce5d75aa9b35dc7dd
+// source-hash: 6082a45882c242e0aceb5ead1bcb646769b837bf0ab043a971580cab9b22aafc
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2996,7 +2996,9 @@ BATCH (${numBags}×${kgBag} kg):
         sub: "Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)",
         badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : "En espera de receta",
         active: activeRecipeCount > 0,
-        linkTab: "formular"
+        linkTab: "formular",
+        accent: "var(--coral-500)",
+        icon: IconFlame
       },
       {
         num: "02",
@@ -3004,7 +3006,9 @@ BATCH (${numBags}×${kgBag} kg):
         sub: "Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%",
         badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
         active: bolsasIncubacion > 0,
-        linkTab: "bitacora"
+        linkTab: "bitacora",
+        accent: "var(--slate-500)",
+        icon: IconSprout
       },
       {
         num: "03",
@@ -3012,7 +3016,9 @@ BATCH (${numBags}×${kgBag} kg):
         sub: "Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm",
         badge: `${bitBolsas.filter((b) => b.col100).length} bolsas colonizadas 100%`,
         active: bitBolsas.filter((b) => b.col100).length > 0,
-        linkTab: "schedule"
+        linkTab: "schedule",
+        accent: "var(--sand-500)",
+        icon: IconSnowflake
       },
       {
         num: "04",
@@ -3020,7 +3026,9 @@ BATCH (${numBags}×${kgBag} kg):
         sub: "Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero",
         badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
         active: totalCosechasCount > 0,
-        linkTab: "bitacora"
+        linkTab: "bitacora",
+        accent: "var(--moss-700)",
+        icon: IconMushroom
       },
       {
         num: "05",
@@ -3028,7 +3036,9 @@ BATCH (${numBags}×${kgBag} kg):
         sub: "2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)",
         badge: `${bitLotes.length} lotes con trazabilidad`,
         active: bitLotes.length > 0,
-        linkTab: "dashboard"
+        linkTab: "dashboard",
+        accent: "var(--ink-700)",
+        icon: IconScale
       }
     ];
     return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 24, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
@@ -3175,14 +3185,15 @@ BATCH (${numBags}×${kgBag} kg):
         },
         className: "home-stage-card" + (st.active ? " is-active" : ""),
         style: {
+          "--stage-accent": st.accent,
           borderRadius: "var(--r-sm)",
           padding: "14px",
           cursor: "pointer",
           position: "relative"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: st.active ? "var(--moss-700)" : "var(--ink-400)" } }, "Fase ", st.num), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-micro)", fontFamily: "var(--font-mono)", padding: "1px 5px", borderRadius: 2, background: st.active ? "var(--status-active-bg)" : "var(--paper-200)", color: st.active ? "var(--moss-700)" : "var(--ink-500)" } }, st.active ? "En curso" : "Plan")),
-      /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", marginBottom: 4 } }, st.title),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: st.active ? st.accent : "var(--paper-200)", color: st.active ? "var(--paper-0)" : "var(--ink-500)", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700 } }, st.num.replace(/^0/, "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-micro)", fontFamily: "var(--font-mono)", padding: "1px 5px", borderRadius: 2, background: st.active ? "var(--status-active-bg)" : "var(--paper-200)", color: st.active ? st.accent : "var(--ink-500)" } }, st.active ? "En curso" : "Plan")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: st.accent } }, /* @__PURE__ */ React.createElement(st.icon, { size: 13 })), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, st.title)),
       /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-600)", lineHeight: 1.35, marginBottom: 8 } }, st.sub),
       /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", borderTop: "1px solid var(--paper-300)", paddingTop: 6 } }, st.badge)
     ))), bitLotes.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 10 } }, "Lotes Recientes en Seguimiento"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, bitLotes.slice(0, 4).map((lt) => {

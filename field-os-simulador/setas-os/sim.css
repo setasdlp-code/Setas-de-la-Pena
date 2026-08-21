@@ -2587,8 +2587,8 @@
 .sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
 
 .sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
-.sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--moss-300)}
-.sim-root .home-stage-card:hover{border-color:var(--coral-500)}
+.sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
+.sim-root .home-stage-card:hover{border-color:var(--stage-accent,var(--coral-500))}
 .sim-root .home-stage-card:active{transform:scale(.98)}
 
 .sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .15s ease,transform .1s ease}
