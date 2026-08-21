@@ -3627,7 +3627,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
-              {tab==='home'&&<TodayV2/>}
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
               <div style={{
                 background:'var(--paper-0)',
@@ -3699,12 +3698,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   gap:12
                 }}>
                   {[
-                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular'),pri:true},
-                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')},
-                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:IconMushroom,tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
+                    {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                     {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:IconMicroscope,tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
-                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:IconBook,tab:'catalogo',onClick:()=>goTab('catalogo')}
+                    {label:'Lotes',sub:'Crear y gestionar lotes',icon:IconMicroscope,tab:'bitacora',onClick:()=>goTab('bitacora')},
+                    {label:'Módulos de cultivo',sub:'Mezcla, clima y producción',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')}
                   ].map(btn=>(
                     <button
                       key={btn.label}

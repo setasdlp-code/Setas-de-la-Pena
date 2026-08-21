@@ -19,9 +19,15 @@ test('production Hoy is ordered by the shared workflow contract', () => {
   assert.match(source, /openBatchDetail\(item\.id\)/);
 });
 
-test('production Hoy augments the operational cockpit instead of replacing it', () => {
+test('production Hoy uses the operational cockpit without a duplicate UX v2 section above it', () => {
   assert.doesNotMatch(source, /if\(tab==='home'\) return <TodayV2\/>/);
-  assert.match(source, /className="home-cockpit"[\s\S]*\{tab==='home'&&<TodayV2\/>\}/);
+  assert.doesNotMatch(source, /className="home-cockpit"[\s\S]{0,200}\{tab==='home'&&<TodayV2\/>\}/);
+});
+
+test('Hoy quick actions follow Registro, Formular, Bodega, Lotes, Cultivo order', () => {
+  assert.match(source, /label:'Escanear lote'[\s\S]*label:'Formular Receta'[\s\S]*label:'Entrada a Bodega'[\s\S]*label:'Lotes'[\s\S]*label:'Módulos de cultivo'/);
+  assert.match(source, /onClick:\(\)=>props\.onScanLot&&props\.onScanLot\(\)/);
+  assert.match(shell, /on-scan-lot="\{\{ openScanHome \}\}"/);
 });
 
 test('canonical batch detail replaces bit_ficha and derives visible actions from lifecycle', () => {

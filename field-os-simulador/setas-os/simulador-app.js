@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 3f6e8601793f7f5e06716cc92d4bf9d5fd0e4611da5dd3578bb1f3270e712504
+// source-hash: 59410de160d3826f7048f0be6baab8feeea87c2084a73778a40734c9c51bb6ae
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2979,7 +2979,7 @@ BATCH (${numBags}×${kgBag} kg):
         linkTab: "dashboard"
       }
     ];
-    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 32, marginBottom: 48 } }, tab === "home" && /* @__PURE__ */ React.createElement(TodayV2, null), /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 32, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: "var(--r-md)",
@@ -2991,15 +2991,14 @@ BATCH (${numBags}×${kgBag} kg):
       gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
       gap: 12
     } }, [
-      { label: "Formular Receta", sub: "Balance C:N & Perito", icon: IconBolt, tab: "formular", onClick: () => goTab("formular"), pri: true },
-      { label: "Ficha de Producción", sub: "Báscula & mezcla del día", icon: IconClipboard, tab: "produccion", onClick: () => goTab("produccion") },
-      { label: "Registrar Cosecha", sub: "Pesaje de flush en gramos", icon: IconMushroom, tab: "bitacora", onClick: () => setShowBitCosecha(true) },
+      { label: "Escanear lote", sub: "Registro de campo por QR", icon: IconTarget, tab: "registro", onClick: () => props.onScanLot && props.onScanLot(), pri: true },
+      { label: "Formular Receta", sub: "Balance C:N & Perito", icon: IconBolt, tab: "formular", onClick: () => goTab("formular") },
       { label: "Entrada a Bodega", sub: "Compras & stock FIFO", icon: IconBox, tab: "inventario", onClick: () => {
         goTab("inventario");
         setInvTab("compra");
       } },
-      { label: "Nueva Prueba / Lote", sub: "Crear código y bolsas", icon: IconMicroscope, tab: "bitacora", onClick: () => setShowBitNuevo(true) },
-      { label: "Catálogo Especies", sub: "Requerimientos climáticos", icon: IconBook, tab: "catalogo", onClick: () => goTab("catalogo") }
+      { label: "Lotes", sub: "Crear y gestionar lotes", icon: IconMicroscope, tab: "bitacora", onClick: () => goTab("bitacora") },
+      { label: "Módulos de cultivo", sub: "Mezcla, clima y producción", icon: IconClipboard, tab: "produccion", onClick: () => goTab("produccion") }
     ].map((btn) => /* @__PURE__ */ React.createElement(
       "button",
       {
