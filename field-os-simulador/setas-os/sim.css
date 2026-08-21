@@ -1619,7 +1619,7 @@
 .sim-root .inv-month-group{border:1px solid var(--border-soft);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px;}
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--paper-200);cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
-.sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--coral-700);}
+.sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
 .sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
 .sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:32px 24px;backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
