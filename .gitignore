@@ -53,6 +53,12 @@ node_modules/
 .netlify/
 .lighthouseci/
 
+# Playwright (field-os-simulador/setas-os) — sesión de auth guardada y
+# artefactos de corridas locales, no versionables.
+**/e2e/.auth/
+**/playwright-report/
+**/test-results/
+
 # ─────────────────────────────────────────────
 # Python
 # ─────────────────────────────────────────────
@@ -65,3 +71,8 @@ venv/
 # Redundant archive (source lives in knowledge_base/)
 # ─────────────────────────────────────────────
 knowledge_base.zip
+
+# ─────────────────────────────────────────────
+# Subagent-driven-development scratch workspace (ledgers, briefs, reports)
+# ─────────────────────────────────────────────
+.superpowers/

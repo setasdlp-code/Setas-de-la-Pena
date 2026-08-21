@@ -15,6 +15,17 @@ const nearIdeal = (value, { min, max, ideal }) => {
   return clamp01to100(90 - (ratio - 1) * 90);
 };
 
+// Digestibilidad ponderada de la mezcla (an.avgDig, escala 0-10). A diferencia
+// de C:N/N — que runAutoOptimizer resuelve algebraicamente al valor ideal para
+// CUALQUIER combinación de ingredientes, saturando esos dos componentes a
+// ~100 y dejando que el costo decida el desempate por descarte — la
+// digestibilidad varía de verdad entre combinaciones y no se auto-satura.
+// Sin dato (fixtures/llamadores que no la calculan) es neutral: no penaliza.
+const scoreDigestibility = (an) => {
+  if (!Number.isFinite(an.avgDig)) return 100;
+  return clamp01to100((an.avgDig / 10) * 100);
+};
+
 const scoreNutrition = (an) => {
   const sp = an.sp;
   if (!sp) return 0;
@@ -25,7 +36,8 @@ const scoreNutrition = (an) => {
   const phScore = sp.ph_optimal
     ? nearIdeal(an.avgPh, { ...sp.ph_optimal, ideal: (sp.ph_optimal.min + sp.ph_optimal.max) / 2 })
     : 50;
-  return clamp01to100(cnScore * 0.5 + nScore * 0.35 + phScore * 0.15);
+  const digScore = scoreDigestibility(an);
+  return clamp01to100(cnScore * 0.45 + nScore * 0.30 + phScore * 0.15 + digScore * 0.10);
 };
 
 const COST_BREAKPOINTS = [

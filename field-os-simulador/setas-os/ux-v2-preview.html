@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setas OS UX v2 — Hoy + Lote</title>
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<script src="setas-os-workflow.js"></script>
+<style>
+  body{margin:0;background:var(--surface-panel);color:var(--text-primary);font-family:var(--font-display)}
+  .v2-shell{min-height:100vh;display:grid;grid-template-columns:104px minmax(0,1fr)}
+  .v2-rail{position:sticky;top:0;height:100vh;padding:var(--space-4) var(--space-2);border-right:var(--rule-strong);background:var(--surface-page);display:flex;flex-direction:column;gap:var(--space-2)}
+  .v2-brand{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:var(--weight-black);padding:var(--space-3) var(--space-2) var(--space-5)}
+  .v2-nav{min-height:48px;border:0;border-left:3px solid transparent;background:transparent;color:var(--text-secondary);font-family:var(--font-mono);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:var(--tracking-widest);cursor:pointer;text-align:left;padding:var(--space-2)}
+  .v2-nav[aria-current="page"]{border-left-color:var(--status-active);color:var(--text-primary);background:var(--surface-recessed)}
+  .v2-main{min-width:0;padding:var(--space-6)}
+  .v2-page{max-width:1080px;margin:0 auto}
+  .v2-page[hidden]{display:none}
+  .v2-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}
+  .v2-title{font-family:var(--font-sans);font-size:var(--text-2xl);font-weight:var(--weight-black);margin:var(--space-2) 0 var(--space-5)}
+  .v2-section{margin-top:var(--space-6)}
+  .v2-section-head{display:flex;justify-content:space-between;gap:var(--space-3);align-items:baseline;border-bottom:var(--rule-heavy);padding-bottom:var(--space-2);margin-bottom:var(--space-2)}
+  .v2-section-title{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:var(--weight-medium)}
+  .v2-count{font-family:var(--font-mono);font-size:var(--text-sm);color:var(--text-metadata)}
+  .v2-row-action{min-width:96px;align-self:center}
+  .v2-empty{padding:var(--space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}
+  .v2-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+  .v2-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--space-5);align-items:start}
+  .v2-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--space-4)}
+  .v2-panel-title{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:var(--weight-medium);margin-bottom:var(--space-3)}
+  .v2-status{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid currentColor;padding-top:3px;color:var(--status-active)}
+  .v2-status[data-status="attention"]{color:var(--status-attention)}
+  .v2-status[data-status="error"]{color:var(--status-error)}
+  .v2-actions{display:grid;gap:var(--tap-target-gap-min)}
+  .v2-action-secondary{width:100%}
+  .v2-timeline{display:flex;flex-direction:column}
+  .v2-event-dot{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}
+  .v2-toolbar{display:flex;gap:var(--space-2);margin-bottom:var(--space-4)}
+  .v2-back{display:none}
+  @media(max-width:760px){
+    .v2-shell{display:block;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+    .v2-rail{position:fixed;z-index:40;top:auto;left:0;right:0;bottom:0;height:auto;min-height:64px;display:grid;grid-template-columns:repeat(4,1fr);padding:0 0 env(safe-area-inset-bottom);border-right:0;border-top:var(--rule-strong)}
+    .v2-brand{display:none}.v2-nav{min-height:56px;border-left:0;border-top:3px solid transparent;text-align:center}.v2-nav[aria-current="page"]{border-top-color:var(--status-active)}
+    .v2-main{padding:var(--space-4)}.v2-title{font-size:var(--text-xl)}.v2-grid{grid-template-columns:1fr}.v2-detail-grid{grid-template-columns:1fr}.v2-back{display:inline-flex}
+  }
+</style>
+</head>
+<body>
+<div class="v2-shell">
+  <nav class="v2-rail" aria-label="Navegación UX v2">
+    <div class="v2-brand">Setas OS</div>
+    <button class="v2-nav" data-route="today" aria-current="page">Hoy</button>
+    <button class="v2-nav" data-route="batches">Lotes</button>
+    <button class="v2-nav" data-route="rooms">Salas</button>
+    <button class="v2-nav" data-route="more">Más</button>
+  </nav>
+
+  <main class="v2-main">
+    <section class="v2-page" data-page="today" data-testid="ux-v2-today">
+      <div class="v2-kicker">Jueves 20 agosto · turno actual</div>
+      <h1 class="v2-title">Hoy</h1>
+      <button class="os-scan-target" id="scan-demo" type="button">Escanear lote o registrar evento</button>
+      <div id="today-groups"></div>
+    </section>
+
+    <section class="v2-page" data-page="batch" data-testid="ux-v2-batch-detail" hidden>
+      <div class="v2-toolbar"><button class="os-action v2-back" type="button" data-route="today">Volver</button></div>
+      <article class="os-batch-header">
+        <div class="os-batch-header__top">
+          <div>
+            <div class="os-batch-header__code">SHI-260714-03</div>
+            <div class="os-batch-header__species">Shiitake</div>
+          </div>
+          <span class="v2-status">Dentro de objetivo</span>
+        </div>
+        <div class="os-batch-header__meta">
+          <span>Incubación · día 37</span><span>Sala INC-02</span><span>48 bolsas</span><span>Receta R-SHI-07 v3</span>
+        </div>
+        <div class="os-batch-header__next">
+          <span class="os-batch-header__next-label">Siguiente acción</span>
+          <span class="os-batch-header__next-value">Inspeccionar maduración · mañana</span>
+        </div>
+      </article>
+
+      <div class="v2-grid" style="margin-top:var(--space-4)">
+        <div class="os-metric"><span class="os-metric__label">Temperatura</span><span class="os-metric__value">21.2 °C</span><span class="os-metric__target">objetivo 20–23</span><span class="os-provenance os-provenance--measured">Medido · SHT45 · 42 s</span></div>
+        <div class="os-metric"><span class="os-metric__label">HR</span><span class="os-metric__value">72 %</span><span class="os-metric__target">objetivo 65–75</span><span class="os-provenance os-provenance--measured">Medido · SHT45 · 42 s</span></div>
+        <div class="os-metric"><span class="os-metric__label">Edad etapa</span><span class="os-metric__value">37 d</span><span class="os-metric__target">maduración prevista 60–90 d</span><span class="os-provenance os-provenance--calculated">Calculado</span></div>
+      </div>
+
+      <div class="v2-detail-grid" style="margin-top:var(--space-6)">
+        <section class="v2-panel">
+          <div class="v2-panel-title">Actividad</div>
+          <div class="v2-timeline">
+            <div class="os-event-row"><span class="v2-event-dot"></span><div><div class="os-event-row__title">Inspección · colonización uniforme</div><div class="os-event-row__meta">20 ago · SP · sin incidencia</div></div><span class="os-provenance os-provenance--manual">Manual</span></div>
+            <div class="os-event-row"><span class="v2-event-dot"></span><div><div class="os-event-row__title">Temperatura alta durante 43 min</div><div class="os-event-row__meta">18 ago · INC-02 · máx. 24.7 °C</div></div><span class="os-provenance os-provenance--measured">Medido</span></div>
+            <div class="os-event-row"><span class="v2-event-dot"></span><div><div class="os-event-row__title">Traslado a INC-02</div><div class="os-event-row__meta">12 ago · operador SP</div></div><span></span></div>
+            <div class="os-event-row"><span class="v2-event-dot"></span><div><div class="os-event-row__title">Inoculación</div><div class="os-event-row__meta">14 jul · spawn SHI-SP-2607-02</div></div><span></span></div>
+          </div>
+        </section>
+        <aside class="v2-panel">
+          <div class="v2-panel-title">Acciones válidas ahora</div>
+          <div class="v2-actions" id="batch-actions"></div>
+          <div style="margin-top:var(--space-4)"><span class="os-sync-state os-sync-state--synced">Sincronizado</span></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="v2-page" data-page="placeholder" hidden>
+      <div class="v2-kicker">UX v2</div><h1 class="v2-title">Superficie en migración</h1><div class="v2-empty">Esta referencia ejecutable se concentra en Hoy y detalle de lote.</div>
+    </section>
+  </main>
+</div>
+<script>
+(function(){
+  const W=window.SetasOSWorkflow;
+  const pages=[...document.querySelectorAll('[data-page]')];
+  const navs=[...document.querySelectorAll('.v2-nav')];
+  const route=target=>{
+    const key=target==='today'?'today':target==='batch'?'batch':'placeholder';
+    pages.forEach(p=>p.hidden=p.dataset.page!==key);
+    navs.forEach(n=>n.setAttribute('aria-current',n.dataset.route===target?'page':'false'));
+  };
+  document.addEventListener('click',e=>{
+    const target=e.target.closest('[data-route]');
+    if(target){route(target.dataset.route);return;}
+    if(e.target.closest('#scan-demo')) route('batch');
+  });
+
+  const now=Date.parse('2026-08-20T15:00:00-05:00');
+  const items=W.buildTodayQueue([
+    {id:'climate',severity:'critical',title:'CO₂ alto en FRUCT-02',why:'1.340 ppm · objetivo <900',object:'FRUCT-02',action:'Revisar sala'},
+    {id:'inspect',dueAt:'2026-08-20T13:00:00-05:00',title:'Inspección vencida',why:'Shiitake · incubación día 37',object:'SHI-260714-03',action:'Abrir lote'},
+    {id:'harvest',dueAt:'2026-08-20T15:30:00-05:00',title:'Cosecha lista',why:'Melena de León · flush 1',object:'HER-260801-02',action:'Registrar'},
+    {id:'spawn',blocked:true,title:'Lote del viernes bloqueado',why:'Faltan 4.2 kg de spawn',object:'PLAN-260821',action:'Ver faltante'},
+    {id:'later',dueAt:'2026-08-20T18:00:00-05:00',title:'Revisar humidificador',why:'FRUCT-01 · mantenimiento',object:'FRUCT-01',action:'Abrir sala'},
+  ],now);
+  const labels={critical:'Crítico',overdue:'Vencido',now:'Ahora',blocked:'Bloqueos',later:'Después',context:'Contexto'};
+  const order=['critical','overdue','now','blocked','later','context'];
+  const root=document.getElementById('today-groups');
+  order.forEach(bucket=>{
+    const rows=items.filter(i=>i.bucket===bucket);if(!rows.length)return;
+    const sec=document.createElement('section');sec.className='v2-section';
+    sec.innerHTML='<div class="v2-section-head"><span class="v2-section-title">'+labels[bucket]+'</span><span class="v2-count">'+rows.length+'</span></div>';
+    rows.forEach(item=>{
+      const row=document.createElement('div');
+      row.className='os-'+(bucket==='critical'?'alert-row os-alert-row--critical':'task-row');
+      row.innerHTML='<span></span><div><div class="'+(bucket==='critical'?'os-alert-row__title':'os-task-row__title')+'">'+item.title+'</div><div class="'+(bucket==='critical'?'os-alert-row__meta':'os-task-row__meta')+'">'+item.object+' · '+item.why+'</div></div><button class="os-action v2-row-action" type="button">'+item.action+'</button>';
+      row.querySelector('button').addEventListener('click',()=>route(item.id==='inspect'?'batch':'placeholder'));
+      sec.appendChild(row);
+    });root.appendChild(sec);
+  });
+
+  const names={inspection:'Inspección',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha'};
+  const actions=document.getElementById('batch-actions');
+  W.validActions('incubation','operario').forEach(action=>{
+    if(!names[action])return;const b=document.createElement('button');b.className='os-action v2-action-secondary';b.type='button';b.textContent=names[action];actions.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

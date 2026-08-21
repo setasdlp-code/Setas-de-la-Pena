@@ -19,12 +19,6 @@
   const num = v => Number.isFinite(Number(v)) ? Number(v) : null;
   const money = v => num(v) == null ? '—' : '$' + Math.round(Number(v)).toLocaleString('es-CO');
   const sig = recipe => (recipe || []).map(r => `${r.id}:${Number(r.p || r.pct || 0).toFixed(2)}`).sort().join('|');
-  const similarity = (a = [], b = []) => {
-    const aa = new Set(a.map(x => x.id)), bb = new Set(b.map(x => x.id));
-    const union = new Set([...aa, ...bb]); if (!union.size) return 0;
-    let inter = 0; aa.forEach(id => { if (bb.has(id)) inter++; });
-    return inter / union.size;
-  };
   const stockMap = () => {
     const out = {};
     readJson('sdp_lotes', []).forEach(l => {
@@ -40,19 +34,22 @@
     };
     return byName[detail?.an?.sp?.name] || null;
   };
+  // Lotes reales de Bitácora con cosechas registradas — evidencia auto-derivada,
+  // sin que el operador tenga que teclear un EB real a mano por prueba.
+  const bitacoraTrialRows = sKey => {
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!calib?.bitacoraAsTrialRows) return [];
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
+  };
+
   const historyFor = (sKey, recipe) => {
     if (!sKey) return null;
-    const rows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && num(r.ebReal) != null && Array.isArray(r.recipe));
-    if (!rows.length) return null;
-    const ranked = rows.map(r => ({ r, sim: similarity(recipe, r.recipe) })).sort((a,b)=>b.sim-a.sim);
-    const pool = ranked.filter(x => x.sim >= 0.35).slice(0,8);
-    const use = pool.length ? pool : ranked.slice(0,5);
-    const weights = use.map(x => Math.max(.1, x.sim));
-    const ws = weights.reduce((a,b)=>a+b,0) || 1;
-    const meanEB = use.reduce((s,x,i)=>s+Number(x.r.ebReal)*weights[i],0)/ws;
-    const variance = use.reduce((s,x,i)=>s+Math.pow(Number(x.r.ebReal)-meanEB,2)*weights[i],0)/ws;
-    const sim = use.reduce((s,x,i)=>s+x.sim*weights[i],0)/ws;
-    return { n:use.length, meanEB, sd:Math.sqrt(Math.max(0,variance)), similarity:Math.max(0,Math.min(1,sim)), source:'setas_v6' };
+    const engine = globalThis.SetasPeritoScenarios;
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
+    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && num(r.ebReal) != null && Array.isArray(r.recipe));
+    const rows = [...bitacoraTrialRows(sKey), ...trialRows];
+    return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
   };
   const batchWetKg = () => {
     const root = document.getElementById('bl-perito')?.parentElement || document.body;

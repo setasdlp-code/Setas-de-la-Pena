@@ -1,9 +1,10 @@
+# Publica Setas OS v5 (field-os-simulador/setas-os/), la app canónica,
+# en GitHub Pages en cada push a main.
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +30,9 @@ jobs:
         uses: actions/configure-pages@v4
         with:
           enablement: true
+
+      - name: Preparar index.html
+        run: cp "field-os-simulador/setas-os/Setas OS v5.dc.html" "field-os-simulador/setas-os/index.html"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

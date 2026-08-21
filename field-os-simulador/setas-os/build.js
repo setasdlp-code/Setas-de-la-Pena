@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-// Precompiles simulador-app.jsx -> simulador-app.js using the vendored Babel
-// standalone build (same transform the browser used to run at request time
-// via support.js's x-import loader: presets ['react','typescript']).
+// Precompiles simulador-app.jsx -> simulador-app.js using esbuild (devDependency
+// — run `npm install` once before the first `node build.js`).
 // Run this after every edit to simulador-app.jsx and commit the result —
-// the browser no longer has Babel available to transpile JSX at runtime.
+// the browser no longer transpiles JSX at request time.
 // build.test.js checks simulador-app.js against this hash so a forgotten
 // rebuild fails `node --test` instead of shipping stale code silently.
 
@@ -21,13 +20,19 @@ function sourceHash(src) {
 }
 
 function build() {
-  const Babel = require('./vendor/babel.min.js');
+  let esbuild;
+  try {
+    esbuild = require('esbuild');
+  } catch (err) {
+    throw new Error('esbuild is not installed — run `npm install` in field-os-simulador/setas-os/ before `node build.js`.');
+  }
   const src = fs.readFileSync(SRC, 'utf8');
-  const { code } = Babel.transform(src, {
-    filename: 'simulador-app.jsx',
-    presets: ['react', 'typescript'],
+  const { code } = esbuild.transformSync(src, {
+    loader: 'jsx',
+    target: 'es2020',
+    jsx: 'transform',
+    charset: 'utf8',
   });
-
   const banner =
     '// AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.\n' +
     '// Run `node build.js` after changing simulador-app.jsx and commit this file.\n' +

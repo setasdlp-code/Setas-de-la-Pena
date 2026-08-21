@@ -29,39 +29,24 @@
     } catch (_) { return fallback; }
   };
   const n = value => Number.isFinite(Number(value)) ? Number(value) : null;
-  const clamp01 = value => Math.max(0, Math.min(1, value));
 
-  const recipeSimilarity = (a = [], b = []) => {
-    const aa = new Set(a.map(x => x.id));
-    const bb = new Set(b.map(x => x.id));
-    const union = new Set([...aa, ...bb]);
-    if (!union.size) return 0;
-    let intersection = 0;
-    aa.forEach(id => { if (bb.has(id)) intersection += 1; });
-    return intersection / union.size;
+  // Lotes reales de Bitácora con cosechas registradas — evidencia auto-derivada,
+  // sin que el operador tenga que teclear un EB real a mano por prueba.
+  const bitacoraTrialRows = sKey => {
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!calib?.bitacoraAsTrialRows) return [];
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
   };
 
   const historyCalibrationFor = (sKey, recipe) => {
     if (!sKey) return null;
-    const rows = readJson('setas_v6', [])
+    const engine = globalThis.SetasPeritoScenarios;
+    const calib = globalThis.SetasHistoricalCalibration;
+    if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
+    const trialRows = readJson('setas_v6', [])
       .filter(r => r && r.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
-    if (!rows.length) return null;
-    const comparable = rows.map(r => ({ ...r, similarity: recipeSimilarity(recipe, r.recipe) }));
-    const selected = comparable.filter(r => r.similarity >= 0.35);
-    const pool = selected.length ? selected : comparable;
-    const weights = pool.map(r => Math.max(0.10, r.similarity));
-    const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
-    const meanEB = pool.reduce((sum, r, i) => sum + Number(r.ebReal) * weights[i], 0) / weightSum;
-    const variance = pool.reduce((sum, r, i) => sum + Math.pow(Number(r.ebReal) - meanEB, 2) * weights[i], 0) / weightSum;
-    const similarity = pool.reduce((sum, r, i) => sum + r.similarity * weights[i], 0) / weightSum;
-    return {
-      n: pool.length,
-      meanEB,
-      sd: Math.sqrt(Math.max(0, variance)),
-      similarity: clamp01(similarity),
-      source: 'setas_v6',
-      matched: selected.length > 0,
-    };
+    const rows = [...bitacoraTrialRows(sKey), ...trialRows];
+    return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
   };
 
   const stockKgById = () => {

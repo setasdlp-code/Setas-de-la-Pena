@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f4ec">
 <script src="./error-buffer.js"></script>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
@@ -14,6 +15,7 @@
 <helmet>
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
@@ -22,16 +24,23 @@
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
 <link rel="stylesheet" href="fieldos-tokens.css">
 <script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
 <script src="qr-mini.js"></script>
+<script src="bridge-protocol.js"></script>
+<script src="setas-os-workflow.js"></script>
 <link rel="stylesheet" href="sim.css">
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
 <script src="bitacora-model.js"></script>
+    <script src="historical-calibration.js"></script>
+<script src="recipe-optimizer.js"></script>
+<script src="perito-scenarios.js"></script>
 <script type="module" src="firebase/firebase-init.js"></script>
 <script type="module" src="firebase/error-monitor.js"></script>
 <script type="module" src="firebase/db.js"></script>
+<script type="module" src="firebase/bitacora-sync.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
 <!-- error-monitor.js va ANTES de db.js/auth-gate.js a propósito: cuando era
      el último <script> de <helmet>, el runtime .dc lo descartaba (ver
@@ -59,6 +68,9 @@
   html, body { margin:0; background: var(--paper-1); }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  [role="dialog"] { overscroll-behavior:contain; }
+  .skip-link { position:fixed;left:12px;top:10px;z-index:1000;transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
+  .skip-link:focus-visible { transform:translateY(0); }
   /* Tactile press feedback — inline styles (used on ~all buttons here) can't express
      :active, so this is the only place a physical "push" confirmation can live.
      Buttons that already declare their own inline `transition` keep that untouched
@@ -86,8 +98,10 @@
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:9px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
   .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
-  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; }
+  .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; border:0; background:none; cursor:pointer; }
+  .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--accent-terracotta); outline-offset:2px; }
   .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:.6; }
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
@@ -100,6 +114,12 @@
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
+  .workspace-subnav { position:sticky; top:43px; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .workspace-subnav::-webkit-scrollbar { display:none; }
+  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
+  .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
+  .workspace-tab.secondary { color:var(--accent-blue-grey); }
+  .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
   @media (max-width:859px){
     .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:65; }
     .rail-flyout-title { display:none; }
@@ -130,17 +150,16 @@
     .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:2px 0 24px rgba(0,0,0,.12); }
   }
   @media (max-width:859px){
-    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .app-rail::before, .app-rail::after { content:''; position:absolute; top:0; bottom:0; width:16px; pointer-events:none; z-index:1; }
-    .app-rail::before { left:0; background:linear-gradient(to right, var(--paper-0), transparent); }
-    .app-rail::after { right:0; background:linear-gradient(to left, var(--paper-0), transparent); }
+    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow:visible; }
     .rail-mark { display:none; }
-    .rail-btn { flex:0 0 auto; min-width:60px; padding:6px 8px; gap:2px; min-height:48px; }
+    .rail-btn { flex:1 1 25%; min-width:0; padding:6px 4px; gap:2px; min-height:48px; }
     .rail-item { flex:0 0 auto; }
     .rail-item .rail-btn { width:auto; }
     .rail-btn.on { background:var(--paper-2); }
     .rail-btn span { font-size:8.5px; }
     .app-main { margin-left:0; padding-bottom:62px; }
+    .workspace-subnav { top:43px; min-height:44px; padding:0 10px; }
+    .workspace-tab { min-height:44px; padding:8px 10px; }
 
     /* Header simplificado: el clima completo, el nombre del operador y el
        hint "⌘K" no son esenciales en móvil — sobran espacio vertical/horizontal
@@ -161,6 +180,9 @@
   .gloves .rail-btn { min-height:64px; }
   .gloves textarea, .gloves input { font-size:17px !important; }
   .gloves .fos-hide-guantes { display:none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important; }
+  }
   @media print {
     body * { visibility:hidden !important; }
     .qr-print, .qr-print * { visibility:visible !important; }
@@ -172,56 +194,35 @@
 </helmet>
 
 <div class="app-shell {{ shellCls }}">
+  <a class="skip-link" href="#setas-main">Saltar al contenido</a>
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
-  <nav class="app-rail">
-    <span class="rail-mark"><span style="font-style: normal;">Setas </span><br>de la<br><span style="font-style: normal;">&nbsp;Peña</span></span>
-    <button class="rail-btn {{ navInicioCls }}" onClick="{{ goInicio }}" aria-current="{{ curInicio }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11c0-4.5 3.6-8 8-8s8 3.5 8 8c0 1.8-2 2.5-4 2.2-1.3-.2-1.6-1.3-3-1.3s-1.9 1.5-4 1.5-4.3-1-5-2.4Z"></path><path d="M10 13v7M14 13v7"></path><path d="M8 20h8"></path></svg>
-      <span>Hoy</span>
-    </button>
-
-    <div class="rail-sep"></div>
-
-    <button class="rail-btn {{ navCatalogoCls }}" onClick="{{ goSimCatalogo }}" aria-current="{{ curCatalogo }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
-      <span>Catálogo</span>
-    </button>
-    <button class="rail-btn {{ navFormularCls }}" onClick="{{ goSimFormular }}" aria-current="{{ curFormular }}">
+  <nav class="app-rail" aria-label="Espacios de trabajo">
+    <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Ir a Control, Hoy"><span style="font-style: normal;">Setas </span><br>de la<br><span style="font-style: normal;">&nbsp;Peña</span></button>
+    <button class="rail-btn {{ navWorkspaceFormularCls }}" data-workspace="formular" onClick="{{ goWorkspaceFormular }}" aria-current="{{ curWorkspaceFormular }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
       <span>Formular</span>
     </button>
-    <button class="rail-btn {{ navRecetarioCls }}" onClick="{{ goSimDashboard }}" aria-current="{{ curRecetario }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"></path><path d="M14 2v5h5"></path><path d="M8 13h8M8 17h5"></path></svg>
-      <span>Recetario</span>
-    </button>
-
-    <div class="rail-sep"></div>
-
-    <button class="rail-btn {{ navScheduleCls }}" onClick="{{ goSimSchedule }}" aria-current="{{ curSchedule }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="17" rx="1"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg>
-      <span>Cronograma</span>
-    </button>
-    <button class="rail-btn {{ navFichaCls }}" onClick="{{ goSimProduccion }}" aria-current="{{ curFicha }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 2h6l1 4H8l1-4Z"></path><path d="M6 6h12l1 16H5L6 6Z"></path><path d="M9 11h6M9 15h6"></path></svg>
-      <span>Ficha</span>
-    </button>
-    <button class="rail-btn {{ navProdCls }}" onClick="{{ goProduccion }}" aria-current="{{ curProd }}">
+    <button class="rail-btn {{ navWorkspaceProduccionCls }}" data-workspace="produccion" onClick="{{ goWorkspaceProduccion }}" aria-current="{{ curWorkspaceProduccion }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"></path><path d="M3 21h18"></path><path d="M9 21v-6h6v6"></path><path d="M7 12h.01M17 12h.01"></path></svg>
-      <span>Cámaras</span>
-      <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadge }} alertas">{{ climaBadge }}</span></sc-if>
+      <span>Producción</span>
+      <sc-if value="{{ hasStockBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge attention" aria-label="{{ stockBadgeLabel }}">{{ stockBadge }}</span></sc-if>
     </button>
-    <button class="rail-btn {{ navBitacoraCls }}" onClick="{{ goSimBitacora }}" aria-current="{{ curBitacora }}">
+    <button class="rail-btn {{ navWorkspaceBitacoraCls }}" data-workspace="bitacora" onClick="{{ goWorkspaceBitacora }}" aria-current="{{ curWorkspaceBitacora }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"></path><path d="M9 4V2h6v2M8 10h8M8 14h8M8 18h5"></path></svg>
       <span>Bitácora</span>
     </button>
-
+    <button class="rail-btn {{ navWorkspaceControlCls }}" data-workspace="control" onClick="{{ goWorkspaceControl }}" aria-current="{{ curWorkspaceControl }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18v-5M10 18V6M16 18v-9M22 18V3"></path><path d="M2 21h20"></path></svg>
+      <span>Control</span>
+      <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadgeLabel }}">{{ climaBadge }}</span></sc-if>
+    </button>
   </nav>
 
-  <main class="app-main fos-scroll" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
+  <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
 
     <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
-      <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
+      <span data-testid="breadcrumb" style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
         <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
           <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
@@ -257,6 +258,21 @@
       </div>
     </div>
 
+    <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
+      <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
+        <button class="workspace-tab {{ t.cls }}" onClick="{{ t.go }}" role="tab" aria-selected="{{ t.on }}" tabindex="{{ t.tabIndex }}">{{ t.label }}</button>
+      </sc-for>
+      <sc-if value="{{ hasWorkspaceMore }}" hint-placeholder-val="{{ false }}">
+        <span class="workspace-more-sep" aria-hidden="true"></span>
+        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}">Más</button>
+        <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
+            <button class="workspace-tab secondary {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
+          </sc-for>
+        </sc-if>
+      </sc-if>
+    </nav>
+
     <!-- =================== INICIO / LAUNCHER =================== -->
     <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
     <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px calc(50px + env(safe-area-inset-bottom));">
@@ -267,9 +283,9 @@
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
           
-          <div style="display:flex;border:1px solid var(--border-hairline);">
+          <div data-testid="role-selector" style="display:flex;border:1px solid var(--border-hairline);">
             <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
-              
+
             </sc-for>
           </div>
         </div>
@@ -613,7 +629,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasObsPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;">
-              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearObsPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -733,7 +749,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:18px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasQuickPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearQuickPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -1112,11 +1128,46 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
     <iframe src="{{ climaSrc }}" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
+
+    <!-- =================== VISTA PREVIA WF-9 (solo en Control · Hoy) =================== -->
+    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
+    <div class="col" style="padding:24px 26px 0;">
+      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · vista previa</span>
+          <button onClick="{{ goRegistro }}" style="cursor:pointer;background:none;border:none;color:var(--accent-terracotta);font:var(--t-caption);font-weight:700;">Ver registro completo →</button>
+        </div>
+        <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:2px;">
+          <button onClick="{{ goRevEventos }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewEventos }}</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Eventos</div>
+          </button>
+          <button onClick="{{ goRevRendimiento }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewBE }}%</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Rendimiento (EB)</div>
+          </button>
+          <button onClick="{{ goRevTrabajo }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewHoras }} h</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Trabajo</div>
+          </button>
+          <button onClick="{{ goRevSuper }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:{{ hoyPreviewAnomaliasColor }};">{{ hoyPreviewAnomalias }}</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Supervisión</div>
+          </button>
+          <button onClick="{{ goRevSalidas }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewSalidas }} kg</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Salidas</div>
+          </button>
+        </div>
+        <p style="font:var(--t-caption);color:var(--text-secondary);margin:12px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
+      </div>
+    </div>
+    </sc-if>
 
     <!-- =================== REVISIÓN DIARIA =================== -->
     <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
@@ -1724,7 +1775,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;border-top:1px solid var(--border-soft);padding-top:18px;">
           <div style="font:var(--t-caption);color:var(--text-metadata);">Informe generado {{ dateStr }} · {{ operator }} · lote {{ traceTitle }}</div>
           <sc-if value="{{ hasTraceQr }}" hint-placeholder-val="{{ false }}">
-            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" style="width:64px;height:64px;">
+            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" width="64" height="64" style="width:64px;height:64px;">
           </sc-if>
         </div>
       </div>
@@ -1877,7 +1928,7 @@
   <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
   <div onClick="{{ closeCmd }}" role="dialog" aria-modal="true" aria-label="Buscar" style="position:fixed;inset:0;z-index:95;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .16s ease;display:flex;align-items:flex-start;justify-content:center;padding:12vh 20px 20px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border:1px solid var(--border-strong);border-radius:16px;width:100%;max-width:540px;overflow:hidden;animation:fos-screen .2s cubic-bezier(.32,.72,.36,1);">
-      <input autoFocus="{{ true }}" value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);outline:none;">
+      <input value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" name="setas-search" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);">
       <sc-if value="{{ hasCmdResults }}" hint-placeholder-val="{{ false }}">
       <div class="fos-scroll" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;">
         <sc-for list="{{ cmdResults }}" as="r" hint-placeholder-count="4">
@@ -1908,7 +1959,7 @@
         <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:.75;">{{ pubSci }}</div>
       </div>
       <div style="padding:22px 24px;display:flex;gap:18px;align-items:flex-start;">
-        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
+        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" width="92" height="92" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
         <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-1);line-height:1.9;">
           <div>Contenedor · {{ pubId }}</div>
           <div>Lote · {{ pubBatch }}</div>
@@ -2271,7 +2322,7 @@ class Component extends DCLogic {
     handoff:'', handoffDraft:'', lastPushAt:0, signed:{}, reviewed:{}, diagSymptom:null, planView:'semana',
     listening:false, voiceTarget:null,
     workLog:[ {op:'Germán', horas:6.5, kg:4.2, tareas:14}, {op:'Íñigo', horas:5.0, kg:2.6, tareas:9}, {op:'Ana', horas:3.5, kg:1.4, tareas:6} ],
-    module: 'inicio',
+    module: 'sim',
     screen: 'start',
     capture: false,
     online: true, pendingSync: 0, syncing: false, syncLog: [], syncQueueOpen: false,
@@ -2288,12 +2339,15 @@ class Component extends DCLogic {
     rCount: 1,
     climaBadge: 0,
     simRecipes: [],
-    simTab: 'formular',
+    simTab: 'home',
     simTabNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
     simFlyoutOpen: false,
-    simPendingTab: 'formular',
+    bitSubtab: 'bit_dash',
+    bitSubtabNonce: 0,
+    stockAlertCount: 0,
+    workspaceMoreOpen: false,
     role: 'operator',
     operator: 'Germán', operatorKey: 'inigo', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
     reviewTab: 'eventos',
@@ -2388,7 +2442,7 @@ class Component extends DCLogic {
     this._climaTick = setInterval(()=>{ this.setState({ climaClock:Date.now() }); this.detectChamberAlerts(); }, 2000);
     this._onClimate = (e)=>{
       const d = e && e.data;
-      if(!d || d.source!=='climate-bench' || d.kind!=='climate-alert') return;
+      if(!SetasBridgeProtocol.isBridgeMessage(d, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMATE_ALERT)) return;
       this.onClimateAlert(d);
     };
     window.addEventListener('message', this._onClimate);
@@ -2776,7 +2830,20 @@ class Component extends DCLogic {
     return (map[key]||cloud)();
   }
   goSimTab(tab){
-    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, simPendingTab:tab, simTab:tab, simTabNonce:s.simTabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:tab, simTabNonce:s.simTabNonce+1 }));
+  }
+  goBitTab(bitSubtab){
+    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab, bitSubtabNonce:s.bitSubtabNonce+1 }));
+  }
+  handleWorkspaceKeys(e){
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+    const tabs=Array.from(e.currentTarget.querySelectorAll('[role="tab"]'));
+    if(!tabs.length) return;
+    const current=Math.max(0,tabs.indexOf(document.activeElement));
+    const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:e.key==='ArrowRight'?(current+1)%tabs.length:(current-1+tabs.length)%tabs.length;
+    e.preventDefault();
+    tabs[next].focus();
+    tabs[next].click();
   }
   refreshSim(){
     let list = [];
@@ -2834,7 +2901,7 @@ class Component extends DCLogic {
     } catch(e){ return ''; } }
 
   openSimForSpecies(key){
-    this.setState(s=>({ module:'sim', capture:false, simPreselect:key, simPreselectNonce:s.simPreselectNonce+1, simPendingTab:'formular', simTab:'formular', simTabNonce:s.simTabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, simPreselect:key, simPreselectNonce:s.simPreselectNonce+1, simTab:'formular', simTabNonce:s.simTabNonce+1 }));
   }
 
   confirmRegister(){
@@ -3114,12 +3181,78 @@ class Component extends DCLogic {
     const escalatedList = climateAlertList.filter(a=>a.escalated);
     const lowStockRows = INVENTORY_ROWS.filter(r=>r.status==='Reponer');
     const mkTabs = pairs => gated(pairs).map(([m,label])=>({ label, on:s.module===m, style:tabStyle(s.module===m), go:()=>this.setState(Object.assign({module:m,capture:false}, m==='camaras'?{camDetail:null,climaBadge:0}:{})) }));
+    const FORMULAR_SIM_TABS = ['catalogo','formular','dashboard'];
+    const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
+    const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
+    const activeWorkspace = s.module==='sim'
+      ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':(PRODUCCION_SIM_TABS.includes(s.simTab)?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
+      : (['plan','inventario'].includes(s.module)?'produccion':(s.module==='sesion'?'bitacora':(CONTROL_MODULES.includes(s.module)?'control':'control')));
+    // Banco Climático: sigue simulando siempre (así las alertas de cámara llegan aunque el
+    // usuario esté en Formular), pero solo necesita RENDERIZAR su DOM mientras el workspace
+    // activo es 'control' — el resto del tiempo el iframe de 1px es invisible igual. Se avisa
+    // por postMessage solo cuando cambia, no en cada render.
+    const climaActive = activeWorkspace==='control';
+    if(this._climaActiveSent!==climaActive){
+      this._climaActiveSent = climaActive;
+      if(!this._climaFrameEl) this._climaFrameEl = document.querySelector('iframe[title="Banco Climático"]');
+      if(this._climaFrameEl && this._climaFrameEl.contentWindow){
+        SetasBridgeProtocol.sendBridgeMessage(this._climaFrameEl.contentWindow, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMA_VISIBILITY, { active: climaActive });
+      }
+    }
+    const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
+    let workspaceTabs = [];
+    if(activeWorkspace==='formular') workspaceTabs = [
+      contextTab('Catálogo',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
+      contextTab('Formular',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
+      contextTab('Recetario',s.module==='sim'&&s.simTab==='dashboard',()=>this.goSimTab('dashboard')),
+    ];
+    if(activeWorkspace==='produccion') workspaceTabs = [
+      ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
+      contextTab('Preparar mezcla',s.module==='sim'&&s.simTab==='produccion',()=>this.goSimTab('produccion')),
+      contextTab('Bodega',(s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario',()=>this.goSimTab('inventario')),
+    ];
+    if(activeWorkspace==='bitacora') workspaceTabs = [
+      contextTab('Registrar evento',s.module==='sesion',()=>this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})),
+      contextTab('Lotes',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_dash',()=>this.goBitTab('bit_dash')),
+      contextTab('Seguimiento',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_bolsas',()=>this.goBitTab('bit_bolsas')),
+      contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
+    ];
+    if(activeWorkspace==='control') workspaceTabs = [
+      contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
+      contextTab('Sesión',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
+      contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
+      contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
+    ];
+    if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
+    const workspaceMoreItems = gated([['costes','Costos'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]).map(([m,label])=>({
+      label, on:s.module===m, current:s.module===m?'page':undefined, cls:s.module===m?'on':'',
+      go:()=>this.setState({module:m,capture:false,workspaceMoreOpen:false}),
+    }));
 
     return {
       // modules
       isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
+      workspaceLabel:'Navegación de '+({formular:'Formular',produccion:'Producción',bitacora:'Bitácora',control:'Control'}[activeWorkspace]),
+      workspaceTabs, activeWorkspace,
+      navWorkspaceFormularCls:activeWorkspace==='formular'?'on':'', curWorkspaceFormular:activeWorkspace==='formular'?'page':undefined,
+      navWorkspaceProduccionCls:activeWorkspace==='produccion'?'on':'', curWorkspaceProduccion:activeWorkspace==='produccion'?'page':undefined,
+      navWorkspaceBitacoraCls:activeWorkspace==='bitacora'?'on':'', curWorkspaceBitacora:activeWorkspace==='bitacora'?'page':undefined,
+      navWorkspaceControlCls:activeWorkspace==='control'?'on':'', curWorkspaceControl:activeWorkspace==='control'?'page':undefined,
+      goWorkspaceFormular:()=>this.goSimTab('formular'),
+      goWorkspaceProduccion:()=>ROLE_GATE.plan.includes(s.role)
+        ?this.setState({module:'plan',capture:false,workspaceMoreOpen:false})
+        :this.goSimTab('produccion'),
+      goWorkspaceBitacora:()=>s.sessionType
+        ?this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})
+        :this.goBitTab('bit_dash'),
+      goWorkspaceControl:()=>this.goSimTab('home'),
+      hasWorkspaceMore:activeWorkspace==='control'&&workspaceMoreItems.length>0,
+      workspaceMoreOpen:s.workspaceMoreOpen, workspaceMoreItems,
+      workspaceMoreCls:s.workspaceMoreOpen?'on':'',
+      toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
+      onWorkspaceKeyDown:e=>this.handleWorkspaceKeys(e),
       navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
       curInicio:s.module==='inicio'?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
@@ -3132,13 +3265,18 @@ class Component extends DCLogic {
       navScheduleCls:(s.module==='sim'&&s.simTab==='schedule')?'on':'', curSchedule:(s.module==='sim'&&s.simTab==='schedule')?'page':undefined,
       curPlan:s.module==='plan'?'page':undefined, curInventario:s.module==='inventario'?'page':undefined, curCalidad:s.module==='calidad'?'page':undefined,
       curAprender:s.module==='aprender'?'page':undefined, curComercial:s.module==='comercial'?'page':undefined,
-      hasClimaBadge:s.climaBadge>0, climaBadge:s.climaBadge>9?'9+':s.climaBadge,
+      hasClimaBadge:climateAlertList.length>0, climaBadge:climateAlertList.length>9?'9+':climateAlertList.length,
+      climaBadgeLabel:climateAlertList.length+' incidencias climáticas activas',
+      hasStockBadge:s.stockAlertCount>0, stockBadge:s.stockAlertCount>9?'9+':s.stockAlertCount,
+      stockBadgeLabel:s.stockAlertCount+' ingredientes bajo el mínimo local',
       navProdCls: PROD_MODS.includes(s.module)?'on':'', navRegCls: REG_MODS.includes(s.module)?'on':'',
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
-      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null,climaBadge:0}),
+      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
-      prodTabs: mkTabs([['camaras','Cámaras'],['plan','Plan'],['inventario','Inventario'],['costes','Costes'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]),
-      regTabs: mkTabs([['revision','Revisión'],['aprender','Aprender'],['comercial','Comercial']]),
+      // Las barras antiguas por pantalla quedan vacías: workspaceTabs es la única
+      // navegación contextual visible y evita dos fuentes de verdad.
+      prodTabs: [],
+      regTabs: [],
       goInicio:()=>this.setState({module:'inicio',capture:false}),
       goSesion:()=>this.setState({module:'sesion',capture:false}),
       goSim:()=>{ this.refreshSim(); this.goSimTab((s.simRecipes||[]).length>0?'dashboard':'formular'); },
@@ -3154,13 +3292,8 @@ class Component extends DCLogic {
       goSimInventario:()=>this.goSimTab('inventario'),
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
-      simSubOnInicio:s.simPendingTab==='inicio'?'on':undefined,
-      simSubOnCatalogo:s.simPendingTab==='catalogo'?'on':undefined,
-      simSubOnFormular:s.simPendingTab==='formular'?'on':undefined,
-      simSubOnBitacora:s.simPendingTab==='bitacora'?'on':undefined,
-      simSubOnDashboard:s.simPendingTab==='dashboard'?'on':undefined,
       goRevision:()=>this.setState({module:'revision',capture:false}),
-      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null,climaBadge:0}),
+      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
       goPlan:()=>this.setState({module:'plan',capture:false}),
       goInventario:()=>this.setState({module:'inventario',capture:false}),
       goCalidad:()=>this.setState({module:'calidad',capture:false}),
@@ -3193,8 +3326,21 @@ class Component extends DCLogic {
       zonas:ZONAS,
       camaras: camView.map(c=>({ ...c, ...this.liveMonitor(c), open:()=>this.setState({camDetail:c.id}) })),
       hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
-      simTab:s.simTab, simTabNonce:s.simTabNonce, simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
+      simTab:s.simTab, simTabNonce:s.simTabNonce, bitSubtab:s.bitSubtab, bitSubtabNonce:s.bitSubtabNonce,
+      simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
+      onSimTabChange:(tab)=>{
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','bitacora'];
+        if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
+      },
+      onBitSubtabChange:(bitSubtab)=>{
+        const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
+        if(allowed.includes(bitSubtab)&&bitSubtab!==this.state.bitSubtab) this.setState({bitSubtab});
+      },
+      onStockAlertChange:(count)=>{
+        const next=Math.max(0,Number(count)||0);
+        if(next!==this.state.stockAlertCount) this.setState({stockAlertCount:next});
+      },
       onSimSaved:(list)=>{ if(Array.isArray(list)) this.setState({ simRecipes:list }); },
       historicalYieldsJson: JSON.stringify(s.yields||[]),
       climaSrc:(window.__resources && window.__resources.climaBenchHtml ? window.__resources.climaBenchHtml : 'climate-bench.html'),
@@ -3662,10 +3808,11 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega' };
-    const crumbMap = { inicio:'', sesion:'Hoy · Sesión', sim:(SIM_CRUMB[s.simTab]||''), camaras:'Producción · Cámaras', plan:'Producción · Plan',
-      inventario:'Producción · Inventario', calidad:'Producción · Calidad', costes:'Producción · Costes',
-      revision:'Registro · Revisión', aprender:'Registro · Aprender', comercial:'Registro · Comercial' };
+    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Hoy' };
+    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control'};
+    const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
+      inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
+      revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
     const undoOpen = s.ledger.length>0 && (Date.now()-(s.lastPushAt||0) < 30000);
     return {
       bannerBotanicoImg: this.bannerImgResolved(),
@@ -3723,6 +3870,19 @@ class Component extends DCLogic {
       isTabTrabajo:s.reviewTab==='trabajo', isTabSuper:s.reviewTab==='supervision',
       tabTrabajoStyle:this.tabStyle(s.reviewTab==='trabajo'), tabSuperStyle:this.tabStyle(s.reviewTab==='supervision'),
       setTabTrabajo:()=>this.setState({reviewTab:'trabajo'}), setTabSuper:()=>this.setState({reviewTab:'supervision'}),
+      // vista previa WF-9 en "Hoy"
+      isHomeTab: s.module==='sim' && s.simTab==='home',
+      hoyPreviewEventos: s.reviewEvents.length,
+      hoyPreviewBE: isNaN(Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length))?'—':Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length),
+      hoyPreviewHoras: (s.workLog||[]).reduce((a,w)=>a+w.horas,0).toFixed(1),
+      hoyPreviewAnomalias: s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length,
+      hoyPreviewAnomaliasColor: (s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length)>0?'var(--status-attention)':'var(--ink-0)',
+      hoyPreviewSalidas: (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2),
+      goRevEventos:()=>this.setState({module:'revision',reviewTab:'eventos',capture:false,workspaceMoreOpen:false}),
+      goRevRendimiento:()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false}),
+      goRevTrabajo:()=>this.setState({module:'revision',reviewTab:'trabajo',capture:false,workspaceMoreOpen:false}),
+      goRevSuper:()=>this.setState({module:'revision',reviewTab:'supervision',capture:false,workspaceMoreOpen:false}),
+      goRevSalidas:()=>this.setState({module:'revision',reviewTab:'salidas',capture:false,workspaceMoreOpen:false}),
       // handoff
       hasHandoff:!!s.handoff, handoffText:s.handoff, handoffDraft:s.handoffDraft,
       setHandoffDraft:(e)=>this.setState({handoffDraft:e.target.value}),

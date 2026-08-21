@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ec">
   <meta name="description" content="Banco climático virtual y portátil para Field OS.">
   <title>Monitoreo · Field OS</title>
+  <script src="bridge-protocol.js"></script>
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -169,10 +171,9 @@
       border-radius: 9px;
       color: var(--ink);
       background: var(--paper-0);
-      outline: none;
     }
 
-    select:focus { border-color: var(--olive); }
+    select:focus-visible { border-color: var(--olive); outline: 2px solid var(--olive); outline-offset: 2px; }
 
     .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 
@@ -358,6 +359,9 @@
       .scenario-grid { grid-template-columns: 1fr; }
       .log-row { grid-template-columns: 58px 55px minmax(0,1fr); }
     }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important; }
+    }
   </style>
 </head>
 <body>
@@ -474,7 +478,7 @@
               </div>
               <span class="micro-tag" id="eventCount">0 EVENTOS</span>
             </div>
-            <div class="log-list" id="logList"></div>
+            <div class="log-list" id="logList" role="log" aria-live="polite" aria-relevant="additions text"></div>
           </section>
 
           <section class="panel control-panel">
@@ -548,6 +552,9 @@
         chambers: [makeChamber("c1", "Cámara 01", 0), makeChamber("c2", "Cámara 02", .6)],
         activeId: "c1",
         running: true,
+        // true por defecto: si el shell padre nunca manda el mensaje de visibilidad (p.ej.
+        // este archivo abierto suelto, fuera del iframe del shell), se comporta como siempre.
+        parentVisible: true,
         speed: 1,
         minutes: 0,
         alerts: 0,
@@ -557,6 +564,7 @@
       };
 
       const $ = (id) => document.getElementById(id);
+      const escapeHtml = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
       const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
       const rand = (spread) => (Math.random() - .5) * spread;
       const active = () => state.chambers.find(c => c.id === state.activeId);
@@ -666,13 +674,11 @@
       }
 
       function notifyParent(chamber, verdict) {
-        try {
-          window.parent && window.parent !== window && window.parent.postMessage({
-            source: "climate-bench", kind: "climate-alert",
-            chamber: chamber.name, phase: phases[chamber.phase].name, metric: METRIC_LABEL[verdict.metric] || "clima", detail: verdict.detail,
-            at: formatTime(state.minutes)
-          }, "*");
-        } catch (e) {}
+        if (!window.parent || window.parent === window) return;
+        SetasBridgeProtocol.sendBridgeMessage(window.parent, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMATE_ALERT, {
+          chamber: chamber.name, phase: phases[chamber.phase].name, metric: METRIC_LABEL[verdict.metric] || "clima", detail: verdict.detail,
+          at: formatTime(state.minutes)
+        });
       }
 
       // Abre / actualiza / cierra la incidencia de un contenedor+métrica. Deduplica: mientras
@@ -808,17 +814,22 @@
         if (!state.running) return;
         const stepMinutes = 5 * state.speed;
         state.minutes += stepMinutes;
+        // simulateChamber corre siempre — es lo que genera incidentes y dispara las alertas
+        // postMessage hacia el shell padre, incluso con el usuario en Formular. Lo único que
+        // se salta cuando el shell no está en la vista de Control es el render() del DOM: el
+        // iframe es invisible (1x1px) en ese caso, así que pintar su UI sería trabajo perdido.
         state.chambers.forEach(c => simulateChamber(c, stepMinutes));
-        render();
+        if (state.parentVisible) render();
       }
 
       function buildChambers() {
+        const focusedChamber = document.activeElement?.dataset?.chamber;
         $("chamberCount").textContent = `${String(state.chambers.length).padStart(2, "0")} activas`;
         $("chamberList").innerHTML = state.chambers.map(c => `
           <button class="chamber ${c.id === state.activeId ? "active" : ""}" data-chamber="${c.id}" aria-pressed="${c.id === state.activeId}">
             <div class="chamber-head">
-              <span class="chamber-name">${c.name}</span>
-              <span class="chamber-state">${phases[c.phase].name}</span>
+              <span class="chamber-name">${escapeHtml(c.name)}</span>
+              <span class="chamber-state">${escapeHtml(phases[c.phase].name)}</span>
             </div>
             <div class="chamber-readings">
               <span><strong>${c.temp.toFixed(1)}°</strong>temp.</span>
@@ -835,6 +846,7 @@
             renderStructural();
           });
         });
+        if (focusedChamber) document.querySelector(`[data-chamber="${focusedChamber}"]`)?.focus();
       }
 
       // Per-tick in-place update — no innerHTML churn, no listener re-bind
@@ -857,9 +869,10 @@
 
       function buildScenarios() {
         const chamber = active();
+        const focusedScenario = document.activeElement?.dataset?.scenario;
         $("scenarioGrid").innerHTML = scenarios.map(s => `
           <button class="scenario ${s.id === chamber.scenario ? "active" : ""}" data-scenario="${s.id}" aria-pressed="${s.id === chamber.scenario}">
-            <strong>${s.name}</strong><span>${s.note}</span>
+            <strong>${escapeHtml(s.name)}</strong><span>${escapeHtml(s.note)}</span>
           </button>
         `).join("");
 
@@ -871,6 +884,7 @@
             renderStructural();
           });
         });
+        if (focusedScenario) document.querySelector(`[data-scenario="${focusedScenario}"]`)?.focus();
       }
 
       function updateScenarios() {
@@ -933,7 +947,7 @@
           <div class="log-row">
             <span class="log-time">${shortTime(log.minute)}</span>
             <span class="log-type ${log.type}">${LOG_TYPE_LABEL[log.type] || "Estado"}</span>
-            <span>${log.message}</span>
+            <span>${escapeHtml(log.message)}</span>
           </div>
         `).join("") : `<div class="empty-log">Activa un escenario para iniciar el registro de decisiones.</div>`;
       }
@@ -1154,6 +1168,17 @@
       $("resetButton").addEventListener("click", reset);
       $("exportButton").addEventListener("click", exportCsv);
       window.addEventListener("resize", drawChart);
+
+      // Visibilidad reportada por el shell padre (ver Setas OS v5.dc.html, renderVals()):
+      // solo controla si step() pinta su DOM, nunca si simula ni si detecta incidentes.
+      // Contrato completo en bridge-protocol.js (BRIDGE_MESSAGES.CLIMA_VISIBILITY).
+      window.addEventListener("message", event => {
+        const d = event && event.data;
+        if (!SetasBridgeProtocol.isBridgeMessage(d, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMA_VISIBILITY)) return;
+        const wasVisible = state.parentVisible;
+        state.parentVisible = !!d.active;
+        if (state.parentVisible && !wasVisible) render();
+      });
 
       renderStructural();
       setInterval(step, 850);
