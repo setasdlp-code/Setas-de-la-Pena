@@ -3004,15 +3004,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                   <div>
                   <div style={{display:'flex',gap:6,marginBottom:14}}>
-                    {[['manual','✎ Manual'],['foto','📷 Foto / PDF de recibo'],['texto','✉ Pegar texto']].map(([v,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,whiteSpace:'normal',lineHeight:1.25,textAlign:'center',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
+                    {[['manual','✎ Manual'],['foto',<><IconCamera size={12}/> Foto / PDF de recibo</>],['texto','✉ Pegar texto']].map(([v,l])=>(
+                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:5,whiteSpace:'normal',lineHeight:1.25,textAlign:'center',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
                     ))}
                   </div>
 
                   {cmpMode==='foto'&&(
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
                       <input type="file" accept="image/*,application/pdf" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
-                      <button className="inv-btn inv-btn-pri inv-btn-sm" disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':'📷 Tomar foto / subir recibo (o PDF)'}</button>
+                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{display:'inline-flex',alignItems:'center',gap:6}} disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':<><IconCamera size={12}/> Tomar foto / subir recibo (o PDF)</>}</button>
                       <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena los ítems abajo — revisa antes de registrar.</div>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
@@ -3138,7 +3138,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                             })}
                                           </div>
                                         </td>
-                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--coral-700)'}}>${tot.toLocaleString('es-CO')}</td>
+                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--ink-900)'}}>${tot.toLocaleString('es-CO')}</td>
                                         <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
                                       </tr>
                                     );
