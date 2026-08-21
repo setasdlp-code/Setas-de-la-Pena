@@ -36,7 +36,9 @@ async function expectWorkspace(page, key, tabLabel) {
 }
 
 test.describe('desktop navigation contract', () => {
-  test.skip(({ project }) => project.name !== 'desktop-chromium', 'desktop-only behavioral suite');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'desktop-only behavioral suite');
+  });
 
   test('four workspaces keep rail and contextual tab synchronized', async ({ page }) => {
     await openApp(page);
@@ -146,7 +148,9 @@ test.describe('desktop navigation contract', () => {
 });
 
 test.describe('mobile navigation contract', () => {
-  test.skip(({ project }) => project.name !== 'mobile-390', '390px mobile-only suite');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile-390', '390px mobile-only suite');
+  });
 
   test('bottom rail has exactly four workspace buttons and no horizontal scroll', async ({ page }) => {
     await openApp(page);

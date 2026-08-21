@@ -31,8 +31,8 @@ jobs:
       - name: Install Playwright test runner
         run: npm install --no-save @playwright/test
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Run existing node:test suite
         run: node --test *.test.js

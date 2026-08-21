@@ -1896,6 +1896,8 @@ function App(props){
   const [cmpPasteText,setCmpPasteText]=useState('');
   const [cmpParsing,setCmpParsing]=useState(false);
   const [cmpParseErr,setCmpParseErr]=useState('');
+  const [huboParseIA,setHuboParseIA]=useState(false); // true tras interpretar foto/texto — el resumen se deriva de cmpItems en cada render, no se guarda como snapshot
+  const [cmpLastFoto,setCmpLastFoto]=useState(null); // {fileBlock,esPDF,name} — para reintentar sin resubir
   const [cmpConfirm,setCmpConfirm]=useState(null);
   const cmpFileRef=useRef(null);
   const [showProvModal,setShowProvModal]=useState(false);
@@ -2650,21 +2652,75 @@ body{margin:0;padding:20px 24px;background:#fff;}
     img.onerror=e=>{URL.revokeObjectURL(url);reject(e);};
     img.src=url;
   });
-  const matchIngId=nombre=>{
+  // Empareja un nombre (de la IA o pegado) contra una lista con {id,<getName>} por
+  // coincidencia exacta y luego por substring — solo si el substring tiene largo
+  // suficiente (evita falsos positivos con fragmentos cortos tipo "el"/"sas") y solo
+  // si es inequívoco (si matchean 2+ candidatos por substring, no se autocompleta).
+  const matchByName=(list,getName,nombre,minSubstringLen=4)=>{
     if(!nombre) return '';
-    const n=nombre.toLowerCase().trim();
-    let hit=INGS.find(g=>g.name.toLowerCase()===n||g.id===n);
-    if(hit) return hit.id;
-    hit=INGS.find(g=>g.name.toLowerCase().includes(n)||n.includes(g.name.toLowerCase()));
-    return hit?hit.id:'';
+    const n=String(nombre).toLowerCase().trim();
+    if(!n) return '';
+    const exact=list.find(x=>getName(x).toLowerCase()===n||x.id===n);
+    if(exact) return exact.id;
+    if(n.length<minSubstringLen) return '';
+    const subHits=list.filter(x=>{
+      const gn=getName(x).toLowerCase();
+      return (gn.length>=minSubstringLen&&gn.includes(n))||(n.length>=minSubstringLen&&n.includes(gn));
+    });
+    return subHits.length===1?subHits[0].id:'';
   };
+  const matchIngId=nombre=>matchByName(INGS,g=>g.name,nombre);
+  // Empareja el nombre de proveedor que devuelve la IA contra los proveedores ya
+  // registrados — solo precarga si hay coincidencia inequívoca; nunca crea proveedores nuevos.
+  const matchProvId=nombre=>matchByName(invProveedores,p=>p.nombre,nombre);
   const applyParsedItems=parsed=>{
-    if(!Array.isArray(parsed)||!parsed.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');return;}
-    setCmpItems(parsed.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''})));
+    const items=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.items)?parsed.items:null);
+    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');setHuboParseIA(false);return;}
+    const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''}));
+    setCmpItems(mapped);
+    setHuboParseIA(true);
+    if(parsed&&!Array.isArray(parsed)){
+      if(parsed.proveedor){const pid=matchProvId(parsed.proveedor);if(pid) setCmpProvId(pid);}
+      if(parsed.fecha&&/^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
+    }
     setCmpMode('manual');
   };
-  const extraerJSON=txt=>{const m=txt.match(/\[[\s\S]*\]/);return JSON.parse(m?m[0]:txt);};
+  // Acepta tanto el formato nuevo {proveedor,fecha,items:[...]} como un array plano de
+  // ítems (compatibilidad con respuestas que no incluyan proveedor/fecha).
+  const extraerJSON=txt=>{
+    // Solo se acepta el objeto {proveedor,fecha,items} si de verdad trae la clave
+    // "items" — si no, un array plano en formato legado (p.ej. un solo ítem suelto)
+    // podría matchear las llaves de su único elemento y perder el resto de la data.
+    const objMatch=txt.match(/\{[\s\S]*\}/);
+    if(objMatch){
+      try{
+        const o=JSON.parse(objMatch[0]);
+        if(o&&typeof o==='object'&&Array.isArray(o.items)) return o;
+      }catch(e){}
+    }
+    const arrMatch=txt.match(/\[[\s\S]*\]/);
+    if(arrMatch) return JSON.parse(arrMatch[0]);
+    return JSON.parse(objMatch?objMatch[0]:txt);
+  };
   const CMP_MAX_BYTES=10*1024*1024;
+  // Ejecuta el parseo de una foto/PDF ya codificado — separado de capturarFoto para
+  // poder reintentar (botón "Reintentar") sin pedirle al usuario que resuba el archivo.
+  const parseFotoPayload=async(fileBlock,esPDF)=>{
+    setCmpParsing(true);setCmpParseErr('');
+    try{
+      const listaIngs=INGS.map(g=>g.name).join(', ');
+      const resp=await window.claude.complete({messages:[{role:'user',content:[
+        fileBlock,
+        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
+      ]}]});
+      try{
+        applyParsedItems(extraerJSON(resp));
+      }catch(parseErr){
+        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+      }
+    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    setCmpParsing(false);
+  };
   const capturarFoto=async e=>{
     const file=e.target.files&&e.target.files[0]; if(!file) return;
     const esPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
@@ -2676,31 +2732,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
       e.target.value=''; return;
     }
-    setCmpParsing(true);setCmpParseErr('');setCmpFuente('ocr');
+    setCmpParseErr('');setHuboParseIA(false);setCmpParsing(true);setCmpFuente('ocr');
     try{
       const b64=await fileToBase64(file);
-      const listaIngs=INGS.map(g=>g.name).join(', ');
       const fileBlock=esPDF
         ?{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
         :{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}};
-      const resp=await window.claude.complete({messages:[{role:'user',content:[
-        fileBlock,
-        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Extrae cada ítem comprado como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
-      ]}]});
-      try{
-        applyParsedItems(extraerJSON(resp));
-      }catch(parseErr){
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
-      }
-    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
-    setCmpParsing(false); e.target.value='';
+      setCmpLastFoto({fileBlock,esPDF,name:file.name});
+      await parseFotoPayload(fileBlock,esPDF);
+    }catch(err){setCmpParsing(false);setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    e.target.value='';
+  };
+  const reintentarFoto=()=>{
+    if(!cmpLastFoto||cmpParsing) return;
+    setHuboParseIA(false);setCmpFuente('ocr');
+    parseFotoPayload(cmpLastFoto.fileBlock,cmpLastFoto.esPDF);
   };
   const parsearTexto=async()=>{
     if(!cmpPasteText.trim()) return;
-    setCmpParsing(true);setCmpParseErr('');setCmpFuente('email');
+    setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
       const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nExtrae cada ítem como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]. Ingredientes conocidos: ${listaIngs}.`}]});
+      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
       applyParsedItems(extraerJSON(resp));
     }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intenta de nuevo o usa Manual.');}
     setCmpParsing(false);
@@ -2734,7 +2787,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
     setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen});
     setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
-    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');
+    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
   };
 
   const autoBalance=(mode=balanceMode)=>{
@@ -3004,27 +3057,44 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   ):(
                   <div>
-                  <div style={{display:'flex',gap:6,marginBottom:14}}>
-                    {[['manual','✎ Manual'],['foto',<><IconCamera size={12}/> Foto / PDF de recibo</>],['texto','✉ Pegar texto']].map(([v,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:5,whiteSpace:'normal',lineHeight:1.25,textAlign:'center',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
+                  <div style={{display:'flex',gap:8,marginBottom:14}}>
+                    {[['manual','✎','Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto','✉','Pegar texto']].map(([v,icon,l])=>(
+                      <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
+                        <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
+                      </button>
                     ))}
                   </div>
 
                   {cmpMode==='foto'&&(
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
-                      <input type="file" accept="image/*,application/pdf" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
+                      <input type="file" accept="image/*,application/pdf" capture="environment" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
                       <button className="inv-btn inv-btn-pri inv-btn-sm" style={{display:'inline-flex',alignItems:'center',gap:6}} disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':<><IconCamera size={12}/> Tomar foto / subir recibo (o PDF)</>}</button>
-                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena los ítems abajo — revisa antes de registrar.</div>
+                      {cmpLastFoto&&!cmpParsing&&(
+                        <button className="inv-btn inv-btn-sec inv-btn-sm" style={{marginLeft:8,maxWidth:220,overflow:'hidden',textOverflow:'ellipsis'}} onClick={reintentarFoto} title={`Reintentar con ${cmpLastFoto.name}`}>↻ Reintentar{cmpLastFoto.name?` (${cmpLastFoto.name.length>18?cmpLastFoto.name.slice(0,15)+'…':cmpLastFoto.name})`:''}</button>
+                      )}
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisa antes de registrar.</div>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
                   {cmpMode==='texto'&&(
                     <div style={{marginBottom:16}}>
                       <textarea className="inv-input" rows="4" style={{width:'100%',resize:'vertical',fontFamily:"var(--font-body)"}} placeholder="Pega aquí el mensaje o correo del proveedor…" value={cmpPasteText} onChange={e=>setCmpPasteText(e.target.value)}/>
-                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':'Interpretar texto'}</button>
+                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':cmpParseErr?'↻ Reintentar':'Interpretar texto'}</button>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
+
+                  {huboParseIA&&(()=>{
+                    const total=cmpItems.length;
+                    const sinMatch=cmpItems.filter(it=>!it.ingId).length;
+                    return(
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,color:'var(--ink-800)'}}>
+                        Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
+                        {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
+                      </div>
+                    );
+                  })()}
 
                   <div className="inv-row inv-row-2">
                     <div>
@@ -3080,7 +3150,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div style={{display:'flex',gap:10}}>
                     <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>✓ Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');}}>✕ Limpiar</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
                   </div>
                   </div>
                   )}
