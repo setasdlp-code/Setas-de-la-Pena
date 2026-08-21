@@ -3854,8 +3854,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          LABORATORIO & NUTRICIÓN
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
+                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
                       </div>
@@ -3882,7 +3882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
                             {an?.eb ? `~${an.eb}%` : '—'}
                           </div>
                         </div>
@@ -3896,7 +3896,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
                       <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
@@ -3919,8 +3919,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          PLANTA & INSUMOS
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                          <IconBox size={11}/> PLANTA & INSUMOS
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
                       </div>
@@ -3984,8 +3984,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          TRAZABILIDAD & CAMPO
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
+                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
                       </div>
@@ -4006,7 +4006,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                             {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
                           </div>
                         </div>
@@ -4050,8 +4050,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }}>
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            GESTIÓN & FINANZAS (ADMIN)
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
                           </span>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
                         </div>
@@ -4066,13 +4066,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
@@ -4214,7 +4214,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {stats.totalFresco.toFixed(2)} kg cosechados
                                 </span>
                               )}
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-500)',fontWeight:700}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
                                 Ver lote →
                               </span>
                             </div>
@@ -4228,7 +4228,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                       No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
