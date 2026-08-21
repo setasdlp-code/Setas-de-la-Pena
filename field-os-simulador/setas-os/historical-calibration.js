@@ -1,5 +1,9 @@
 'use strict';
 
+// El runtime .dc puede volver a evaluar scripts al reconstruir el shell.
+// Mantener las declaraciones en un scope privado hace la carga idempotente.
+(function initHistoricalCalibration() {
+
 // Deriva filas de eficiencia biológica REAL a partir de la Bitácora.
 // BE = kg frescos cosechados / kg secos de sustrato × 100 — misma fórmula que
 // calcLoteStats en simulador-app.jsx. Un lote solo aporta una fila cuando puede
@@ -136,3 +140,4 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined') {
   globalThis.SetasHistoricalCalibration = api;
 }
+})();

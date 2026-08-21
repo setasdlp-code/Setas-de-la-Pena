@@ -19,6 +19,11 @@ test('production Hoy is ordered by the shared workflow contract', () => {
   assert.match(source, /openBatchDetail\(item\.id\)/);
 });
 
+test('production Hoy augments the operational cockpit instead of replacing it', () => {
+  assert.doesNotMatch(source, /if\(tab==='home'\) return <TodayV2\/>/);
+  assert.match(source, /className="home-cockpit"[\s\S]*\{tab==='home'&&<TodayV2\/>\}/);
+});
+
 test('canonical batch detail replaces bit_ficha and derives visible actions from lifecycle', () => {
   assert.match(source, /data-testid="ux-v2-batch-detail"/);
   assert.match(source, /workflow\.validActions\(state,/);

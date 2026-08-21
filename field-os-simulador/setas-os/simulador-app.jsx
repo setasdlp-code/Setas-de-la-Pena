@@ -3504,7 +3504,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         })()}
 
         {(tab==='home'||tab==='inicio')&&(()=>{
-          if(tab==='home') return <TodayV2/>;
           // Cálculos y Métricas en vivo para el Centro de Mando
           const totalStockKg = invLotes.filter(l=>l.activo).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
           const totalBolsasCount = bitBolsas.length;
@@ -3622,6 +3621,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
+              {tab==='home'&&<TodayV2/>}
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
               <div style={{
                 background:'var(--paper-0)',

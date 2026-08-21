@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 574d66930f974d2328071e5cc2f550840373f246de921c9cc1e41b5a96793e15
+// source-hash: 2a63b882b72ace249ed619aa3b4e1d00a6701fe8cfb4147b778f7279c3ef5cf6
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2869,7 +2869,6 @@ BATCH (${numBags}×${kgBag} kg):
     if (!activeGroup || activeGroup.key === "recetas" || activeGroup.tabs.length < 2) return null;
     return /* @__PURE__ */ React.createElement("div", { className: "fos-chips" }, activeGroup.tabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, className: t === tab ? "on" : "", onClick: () => goTab(t) }, TAB_LABELS[t])));
   })(), (tab === "home" || tab === "inicio") && (() => {
-    if (tab === "home") return /* @__PURE__ */ React.createElement(TodayV2, null);
     const totalStockKg = invLotes.filter((l) => l.activo).reduce((s, l) => s + (Number(l.cantidadKgDisponible) || 0), 0);
     const totalBolsasCount = bitBolsas.length;
     const bolsasIncubacion = bitBolsas.filter((b) => b.estado === "sana" && !b.col100).length;
@@ -2979,7 +2978,7 @@ BATCH (${numBags}×${kgBag} kg):
         linkTab: "dashboard"
       }
     ];
-    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 32, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 32, marginBottom: 48 } }, tab === "home" && /* @__PURE__ */ React.createElement(TodayV2, null), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: "var(--r-md)",
