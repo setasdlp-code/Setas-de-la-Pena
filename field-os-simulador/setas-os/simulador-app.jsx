@@ -3563,7 +3563,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{maxWidth:680}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
                       <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
                         FIELD OS · CENTRO DE MANDO OPERATIVO
                       </span>
                     </div>
@@ -3576,11 +3576,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        ⛰️ Tenjo 2.600 msnm
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        <IconMountain size={11}/> Tenjo 2.600 msnm
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        💧 H₂O Eb. 91.4°C
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        <IconDroplet size={11}/> H₂O Eb. 91.4°C
                       </span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
                         ● Sistema Nominal
@@ -3589,12 +3589,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* Especie Activa badge */}
                     <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--paper-50)',border:'1px solid var(--paper-300)',padding:'8px 14px',borderRadius:'var(--r-sm)',marginTop:4}}>
                       <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
                         <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                           {sp?.name || 'Orellana Gris'} <em style={{fontStyle:'italic',fontWeight:400,fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>({sp?.scientific})</em>
                         </div>
                       </div>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',color:'var(--coral-500)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
+                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--moss-700)',borderRadius:'var(--r-xs)',color:'var(--moss-700)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
                         Cambiar
                       </button>
                     </div>
@@ -3606,14 +3606,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
                       SECCIÓN D · OPERACIÓN INMEDIATA
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Acciones Rápidas
                     </h2>
                   </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                  <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
                 </div>
                 <div style={{
                   display:'grid',
@@ -3621,12 +3621,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   gap:12
                 }}>
                   {[
-                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:'⚡',tab:'formular',onClick:()=>goTab('formular'),pri:true},
-                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:'📋',tab:'produccion',onClick:()=>goTab('produccion')},
-                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:'🍄',tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
-                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:'📦',tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:'🔬',tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
-                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:'📖',tab:'catalogo',onClick:()=>goTab('catalogo')}
+                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular'),pri:true},
+                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')},
+                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:IconMushroom,tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
+                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:IconMicroscope,tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
+                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:IconBook,tab:'catalogo',onClick:()=>goTab('catalogo')}
                   ].map(btn=>(
                     <button
                       key={btn.label}
@@ -3637,7 +3637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         gap:12,
                         padding:'14px 16px',
                         background:btn.pri?'var(--paper-0)':'var(--paper-0)',
-                        border:btn.pri?'1.5px solid var(--coral-500)':'1px solid var(--border-soft)',
+                        border:btn.pri?'1.5px solid var(--moss-700)':'1px solid var(--border-soft)',
                         borderRadius:'var(--r-sm)',
                         textAlign:'left',
                         cursor:'pointer',
@@ -3648,16 +3648,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
                       onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
                     >
-                      <span style={{fontSize:'var(--text-xl)',lineHeight:1,flexShrink:0}}>{btn.icon}</span>
+                      <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
                       <div style={{minWidth:0,flex:1}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                           {btn.label}
                         </div>
                         <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                           {btn.sub}
                         </div>
                       </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-500)':'var(--ink-400)',fontWeight:700}}>→</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-400)',fontWeight:700}}>→</span>
                     </button>
                   ))}
                 </div>
