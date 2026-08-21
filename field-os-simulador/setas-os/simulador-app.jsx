@@ -3896,7 +3896,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
                       <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
@@ -4066,13 +4066,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
@@ -4214,7 +4214,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {stats.totalFresco.toFixed(2)} kg cosechados
                                 </span>
                               )}
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-500)',fontWeight:700}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
                                 Ver lote →
                               </span>
                             </div>
@@ -4228,7 +4228,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                       No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
