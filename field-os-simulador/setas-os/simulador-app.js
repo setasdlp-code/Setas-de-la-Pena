@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: afd8faa22bb525ef781ba10f7c3a32bb7439730f0a59e4f31b75ceeed9c7dd98
+// source-hash: e2cd170429a3b0b795c8bc3e8ce3b7ee5051f69d96121faac3f51f404f6049a1
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2928,55 +2928,39 @@ BATCH (${numBags}×${kgBag} kg):
         id: "sala-1",
         nombre: "Sala 1 · Incubación",
         fase: "Colonización en oscuridad",
-        temp: "22.4°C",
         tempRango: "20–24°C",
-        hum: "76%",
         humRango: "70–80%",
-        co2: "3.150 ppm",
-        co2Note: "Colonización micelial",
-        estadoLabel: "En Rango",
-        bolsas: bolsasIncubacion || 36,
+        co2Note: "Colonización micelial · objetivo <3.500 ppm",
+        bolsas: bolsasIncubacion,
         capacidad: 48
       },
       {
         id: "sala-2",
         nombre: "Sala 2 · Fructificación A",
         fase: "Orellana / Pleurotus",
-        temp: "16.5°C",
         tempRango: "14–18°C",
-        hum: "88%",
         humRango: "85–92%",
-        co2: "780 ppm",
-        co2Note: "Ventilación activa (12 R/h)",
-        estadoLabel: "Fructificación",
-        bolsas: bolsasFructificacion || 24,
+        co2Note: "Ventilación activa (12 R/h) · objetivo <900 ppm",
+        bolsas: bolsasFructificacion,
         capacidad: 36
       },
       {
         id: "sala-3",
         nombre: "Sala 3 · Cámara Climatizada",
         fase: "Shiitake & Melena de León",
-        temp: "17.8°C",
         tempRango: "16–20°C",
-        hum: "93%",
         humRango: "90–95%",
-        co2: "920 ppm",
-        co2Note: "Nebulización ultrasónica",
-        estadoLabel: "En Rango",
-        bolsas: 16,
-        capacidad: 24
+        co2Note: "Nebulización ultrasónica · objetivo <1.000 ppm",
+        bolsas: null,
+        capacidad: null
       },
       {
         id: "area-tecnica",
         nombre: "Área Técnica · Bodega & Autoclave",
         fase: "Preparación de sustratos Tenjo",
-        temp: "14.0°C",
         tempRango: "Ambiente Tenjo",
-        hum: "62%",
         humRango: "Almacén seco",
-        co2: "420 ppm",
         co2Note: "Autoclave 121°C / 15 PSI Standby",
-        estadoLabel: "Operativo",
         bolsas: `${totalStockKg.toFixed(0)} kg`,
         capacidad: `${stockIds.size} insumos`
       }
@@ -3078,7 +3062,7 @@ BATCH (${numBags}×${kgBag} kg):
       /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: btn.pri ? "var(--moss-700)" : "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(btn.icon, { size: 20 })),
       /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", color: btn.pri ? "var(--moss-700)" : "var(--ink-900)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.label), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.sub)),
       /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: btn.pri ? "var(--moss-700)" : "var(--ink-400)", fontWeight: 700 } }, "→")
-    )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Telemetría de Salas de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● 4 zonas monitoreadas")), /* @__PURE__ */ React.createElement("div", { style: {
+    )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · AMBIENTES DE CULTIVO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Bandas Objetivo de Salas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "4 zonas · sin sensor conectado")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
       gap: 16,
@@ -3100,8 +3084,8 @@ BATCH (${numBags}×${kgBag} kg):
           boxShadow: "var(--shadow-card-rest)"
         }
       },
-      /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)", color: "var(--ink-900)" } }, s.nombre), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, padding: "2px 8px", borderRadius: "var(--r-xs)", background: "var(--status-active-bg)", color: "var(--moss-700)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, s.estadoLabel)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 14 } }, s.fase), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "10px 8px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Temp"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.temp), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, s.tempRango)), /* @__PURE__ */ React.createElement("div", { style: { borderLeft: "1px solid var(--paper-300)", borderRight: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Humedad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.hum), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, s.humRango)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "CO₂"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.co2), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, "PPM")))),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--paper-300)", paddingTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("span", null, "Ocupación / Carga:"), /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)", fontFamily: "var(--font-body)", fontWeight: 700 } }, s.bolsas, " ", /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, color: "var(--ink-500)" } }, "/ ", s.capacidad)))
+      /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)", color: "var(--ink-900)" } }, s.nombre), /* @__PURE__ */ React.createElement("span", { title: "Rango objetivo de proceso — sin sensor conectado", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, padding: "2px 8px", borderRadius: "var(--r-xs)", background: "var(--paper-100)", color: "var(--ink-600)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Objetivo")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 14 } }, s.fase), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "10px 8px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Temp. objetivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.tempRango)), /* @__PURE__ */ React.createElement("div", { style: { borderLeft: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Humedad objetivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.humRango))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)", marginTop: 6 } }, s.co2Note)),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--paper-300)", paddingTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("span", null, "Ocupación / Carga:"), s.bolsas == null ? /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)" } }, "Sin datos") : /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)", fontFamily: "var(--font-body)", fontWeight: 700 } }, s.bolsas, " ", /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, color: "var(--ink-500)" } }, "/ ", s.capacidad)))
     )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN B · MÓDULOS DE CAMPO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Espacios de Trabajo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Flujos principales")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: props.isAdmin !== false ? "repeat(auto-fit, minmax(280px, 1fr))" : "repeat(auto-fit, minmax(320px, 1fr))",

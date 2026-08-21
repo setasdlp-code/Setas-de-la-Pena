@@ -3544,61 +3544,47 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
               :{label:'Operación estable',color:'var(--moss-700)'};
 
-          // Sección A: Datos de telemetría de las 4 salas y cámaras
+          // Sección A: bandas objetivo de proceso por sala. Sin sensores conectados aún:
+          // no se muestran lecturas puntuales (serían inventadas). tempRango/humRango/co2Note
+          // son el objetivo del proceso (provenance TARGET), no una medición en vivo.
           const salas = [
             {
               id: 'sala-1',
               nombre: 'Sala 1 · Incubación',
               fase: 'Colonización en oscuridad',
-              temp: '22.4°C',
               tempRango: '20–24°C',
-              hum: '76%',
               humRango: '70–80%',
-              co2: '3.150 ppm',
-              co2Note: 'Colonización micelial',
-              estadoLabel: 'En Rango',
-              bolsas: bolsasIncubacion || 36,
+              co2Note: 'Colonización micelial · objetivo <3.500 ppm',
+              bolsas: bolsasIncubacion,
               capacidad: 48
             },
             {
               id: 'sala-2',
               nombre: 'Sala 2 · Fructificación A',
               fase: 'Orellana / Pleurotus',
-              temp: '16.5°C',
               tempRango: '14–18°C',
-              hum: '88%',
               humRango: '85–92%',
-              co2: '780 ppm',
-              co2Note: 'Ventilación activa (12 R/h)',
-              estadoLabel: 'Fructificación',
-              bolsas: bolsasFructificacion || 24,
+              co2Note: 'Ventilación activa (12 R/h) · objetivo <900 ppm',
+              bolsas: bolsasFructificacion,
               capacidad: 36
             },
             {
               id: 'sala-3',
               nombre: 'Sala 3 · Cámara Climatizada',
               fase: 'Shiitake & Melena de León',
-              temp: '17.8°C',
               tempRango: '16–20°C',
-              hum: '93%',
               humRango: '90–95%',
-              co2: '920 ppm',
-              co2Note: 'Nebulización ultrasónica',
-              estadoLabel: 'En Rango',
-              bolsas: 16,
-              capacidad: 24
+              co2Note: 'Nebulización ultrasónica · objetivo <1.000 ppm',
+              bolsas: null,
+              capacidad: null
             },
             {
               id: 'area-tecnica',
               nombre: 'Área Técnica · Bodega & Autoclave',
               fase: 'Preparación de sustratos Tenjo',
-              temp: '14.0°C',
               tempRango: 'Ambiente Tenjo',
-              hum: '62%',
               humRango: 'Almacén seco',
-              co2: '420 ppm',
               co2Note: 'Autoclave 121°C / 15 PSI Standby',
-              estadoLabel: 'Operativo',
               bolsas: `${totalStockKg.toFixed(0)} kg`,
               capacidad: `${stockIds.size} insumos`
             }
@@ -3751,15 +3737,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN A · AMBIENTES & SENSORES
+                      SECCIÓN A · AMBIENTES DE CULTIVO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Telemetría de Salas de Cultivo
+                      Bandas Objetivo de Salas
                     </h2>
                   </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>4 zonas · sin sensor conectado</span>
                 </div>
-                
+
                 {/* Responsive Grid/Carousel container */}
                 <div style={{
                   display:'grid',
@@ -3788,38 +3774,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
                             {s.nombre}
                           </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                            {s.estadoLabel}
+                          <span title="Rango objetivo de proceso — sin sensor conectado" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--paper-100)',color:'var(--ink-600)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                            Objetivo
                           </span>
                         </div>
                         <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
                           {s.fase}
                         </div>
 
-                        {/* Indicadores climáticos */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
+                        {/* Bandas objetivo del proceso (sin lectura en vivo) */}
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
                           <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.temp}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.tempRango}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp. objetivo</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.tempRango}</div>
                           </div>
-                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.hum}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.humRango}</div>
+                          <div style={{borderLeft:'1px solid var(--paper-300)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad objetivo</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.humRango}</div>
                           </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.co2}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>PPM</div>
-                          </div>
+                        </div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)',marginTop:6}}>
+                          {s.co2Note}
                         </div>
                       </div>
 
-                      {/* Footer de sala con ocupación */}
+                      {/* Footer de sala con ocupación (derivada de datos reales cuando existen) */}
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
                         <span>Ocupación / Carga:</span>
-                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
+                        {s.bolsas==null
+                          ? <span style={{color:'var(--ink-400)'}}>Sin datos</span>
+                          : <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>}
                       </div>
                     </div>
                   ))}
