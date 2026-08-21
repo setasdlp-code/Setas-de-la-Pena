@@ -354,11 +354,12 @@
 /* ── INGREDIENT LIST (laboratory inventory) ────────────────────────── */
 .sim-root .search{ 
   width:100%; padding:12px 14px; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
-  background:var(--paper-0); font-family:var(--font-mono); font-size:13px; outline:none; 
-  color:var(--ink-1); margin-bottom:14px; transition:all .15s var(--ease);
+  background:var(--paper-0); font-family:var(--font-mono); font-size:13px;
+  color:var(--ink-1); margin-bottom:14px; transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
   box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);
 }
-.sim-root .search:focus{ 
+.sim-root .search:focus-visible{
+  outline:2px solid var(--focus-ring,var(--coral-500));outline-offset:2px;
   border-color:var(--slate-600,var(--accent-blue-grey));
   box-shadow:inset 0 1px 3px rgba(0,0,0,0.05), 0 0 0 2px rgba(78,106,122,0.12);
 }
@@ -375,7 +376,7 @@
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
   text-transform:uppercase; padding:8px 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300,#9BB5C4); border-radius:0;
-  background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:all .12s var(--ease); white-space:nowrap;
+  background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease); white-space:nowrap;
 }
 .sim-root .cat:hover{ 
   border-color:var(--slate-600,var(--accent-blue-grey));
@@ -426,7 +427,7 @@
 
 /* ── PRESETS ────────────────────────────────────────────────────── */
 .sim-root .presets{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px; align-items:center; }
-.sim-root .pre{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.01em; padding:6px 11px; border:1px solid var(--border-soft); border-radius:var(--r-xs); background:var(--paper-50); color:var(--ink-700); cursor:pointer; transition:all .15s var(--ease); }
+.sim-root .pre{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.01em; padding:6px 11px; border:1px solid var(--border-soft); border-radius:var(--r-xs); background:var(--paper-50); color:var(--ink-700); cursor:pointer; transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease); }
 .sim-root .pre:hover{ border-color:var(--coral-500); color:var(--coral-700); }
 
 /* ── ADD BUTTON ─────────────────────────────────────────────────── */
@@ -436,7 +437,7 @@
   background:var(--coral-500); color:var(--paper-50); 
   border:1px solid var(--coral-500); border-radius:0; 
   padding:10px 16px; cursor:pointer; flex-shrink:0; white-space:nowrap; 
-  transition:all .15s var(--ease);
+  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .add-btn:hover{ background:var(--coral-700); border-color:var(--coral-700); transform:translateY(-1px); }
 .sim-root .add-btn:active{ transform:translateY(0); }
@@ -475,7 +476,7 @@
 .sim-root .pct{ font-family:var(--font-mono); font-size:13px; color:var(--ink-2); }
 .sim-root .rem{ 
   background:none; border:none; color:var(--line-1); cursor:pointer; 
-  font-size:16px; line-height:1; transition:all .15s var(--ease);
+  font-size:16px; line-height:1; transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
   padding:0;
 }
 .sim-root .rem:hover{ color:var(--accent-terracotta); transform:scale(1.2); }
@@ -504,7 +505,7 @@
   font-family:var(--font-body); font-weight:800; font-size:9.5px; 
   letter-spacing:.14em; text-transform:uppercase; 
   border:1px solid var(--ink-900); border-radius:0; background:var(--paper-50); 
-  cursor:pointer; color:var(--ink-900); transition:all .15s var(--ease);
+  cursor:pointer; color:var(--ink-900); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .btn:hover{
   background:var(--paper-200);
@@ -520,9 +521,9 @@
 
 /* ── SAVE BAR ───────────────────────────────────────────────────── */
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
-.sim-root .sbar input{ flex:1; padding:11px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); outline:none; }
-.sim-root .sbar input:focus{ border-color:var(--coral-500); }
-.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:#fff; border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:all .15s var(--ease); }
+.sim-root .sbar input{ flex:1; padding:11px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); }
+.sim-root .sbar input:focus-visible{ border-color:var(--coral-500);outline:2px solid var(--coral-500);outline-offset:2px; }
+.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:#fff; border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:background-color .15s var(--ease),transform .15s var(--ease); }
 .sim-root .sbtn:hover{ background:var(--moss-900); transform:translateY(-1px); }
 .sim-root .sbtn:active{ transform:translateY(0); }
 .sim-root .sbtn:disabled{ background:var(--ink-300); cursor:default; }
@@ -774,8 +775,8 @@
 /* ── SCHEDULE ───────────────────────────────────────────────────── */
 .sim-root .schctrl{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:26px; align-items:flex-end; }
 .sim-root .schctl label{ font-family:var(--font-body); font-weight:800; display:block; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); margin-bottom:6px; }
-.sim-root .schctl input, .sim-root .schctl select{ padding:10px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); outline:none; }
-.sim-root .schctl input:focus, .sim-root .schctl select:focus{ border-color:var(--coral-500); }
+.sim-root .schctl input, .sim-root .schctl select{ padding:10px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); }
+.sim-root .schctl input:focus-visible, .sim-root .schctl select:focus-visible{ border-color:var(--coral-500);outline:2px solid var(--coral-500);outline-offset:2px; }
 .sim-root .schsum{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border-soft); border:1px solid var(--border-soft); border-radius:var(--r-sm); overflow:hidden; margin-bottom:30px; }
 .sim-root .ssc{ background:var(--paper-50); padding:20px; text-align:center; }
 .sim-root .ssv{ font-family:var(--font-display); font-size:38px; color:var(--coral-700); font-weight:400; line-height:1; }
@@ -802,7 +803,7 @@
   padding:10px 16px; border:1px solid var(--ink-900); 
   border-radius:0; background:var(--paper-50); 
   color:var(--ink-900); cursor:pointer; 
-  transition:all .15s var(--ease);
+  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .tog:hover{ 
   background:var(--paper-200);
@@ -832,7 +833,7 @@
   letter-spacing:.1em; text-transform:uppercase; 
   padding:11px 22px; background:#6B8E5A; color:#fff; 
   border:none; border-radius:0; cursor:pointer; white-space:nowrap; 
-  transition:all .15s var(--ease);
+  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .sbtn:hover{ background:var(--accent-olive); }
 .sim-root .sbtn:disabled{ background:var(--line-1); cursor:default; color:var(--ink-2); }
@@ -1402,7 +1403,7 @@
 
 
 .sim-root .pantry-grid{display:flex;flex-wrap:wrap;gap:4px 6px;margin:10px 0;}
-.sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .12s var(--ease);font-weight:600;}
+.sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);font-weight:600;}
 .sim-root .pantry-chip.on{border-color:var(--moss-600,var(--accent-olive));background:color-mix(in oklab,var(--accent-olive) 10%,var(--paper-50));color:var(--accent-olive);font-weight:700;}
 .sim-root .pantry-chip:hover{border-color:var(--coral-500);color:var(--coral-600);}
 
@@ -1422,7 +1423,7 @@
   background:none; border:none; padding:2px 0; cursor:pointer;
   font-family:var(--font-body); font-weight:400; font-size:var(--text-sm);
   letter-spacing:var(--tracking-label); color:var(--ink-500);
-  border-bottom:1.5px solid transparent; transition:all .12s var(--ease);
+  border-bottom:1.5px solid transparent; transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);
 }
 .sim-root .chip:hover{ color:var(--ink-900); }
 .sim-root .chip.on{ font-weight:800; color:var(--ink-900); border-bottom-color:var(--coral-500); }
@@ -1432,7 +1433,7 @@
 .sim-root .seg{
   flex:1; padding:8px 12px; cursor:pointer; border:1px solid transparent; border-left:1px solid var(--border-soft);
   font-family:var(--font-body); font-weight:800; font-size:var(--text-xs); letter-spacing:var(--tracking-button); text-transform:uppercase;
-  background:transparent; color:var(--ink-500); transition:all .15s var(--ease);
+  background:transparent; color:var(--ink-500); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .seg:first-child{ border-left:none; }
 .sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
@@ -1559,7 +1560,7 @@
    display:none) button at simulador-app.jsx:4057. */
 .sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;transition:background .15s var(--ease);}
 .sim-root .sload:hover{background:var(--coral-600,var(--accent-terracotta));}
-.sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:all .15s var(--ease);}
+.sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);}
 .sim-root .sdel:hover{background:var(--paper-200);color:var(--coral-500);}
 @media(max-width:768px){
   .sim-root .dash-grid{grid-template-columns:1fr!important;}
@@ -1594,7 +1595,7 @@
 .sim-root .inv-table tr:last-child td{border-bottom:none;}
 .sim-root .inv-table tr:hover td{background:var(--paper-100);}
 .sim-root .inv-subtab-bar{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border-soft);padding-bottom:0;}
-.sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:all .12s var(--ease);margin-bottom:-1px;}
+.sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);margin-bottom:-1px;}
 .sim-root .inv-subtab.on{background:transparent;color:var(--ink-900);border-bottom-color:var(--coral-500);}
 .sim-root .inv-subtab:hover:not(.on){color:var(--ink-700);border-bottom-color:var(--border-soft);}
 .sim-root .inv-label{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);display:block;margin-bottom:5px;}
@@ -1606,7 +1607,7 @@
 .sim-root .inv-row-2{grid-template-columns:1fr 1fr;}
 
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
-.sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:all .15s var(--ease);white-space:nowrap;}
+.sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease);white-space:nowrap;}
 .sim-root .inv-btn:active{transform:translateY(0);}
 .sim-root .inv-btn-pri{background:var(--moss-700);color:#fff;}
 .sim-root .inv-btn-pri:hover{background:var(--moss-800,var(--moss-700));transform:translateY(-1px);}
@@ -1620,13 +1621,13 @@
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--paper-200);cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
-.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;}
+.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
 .sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:32px 24px;backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
 .sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn .22s var(--ease);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .12s var(--ease);font-size:16px;line-height:1;}
+.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:#fff;border-color:var(--coral-500);}
 .sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:22px;width:440px;max-width:calc(100vw - 32px);}
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
@@ -1751,7 +1752,7 @@
 /* Fila CTA */
 .sim-root .spp-cta-row{padding:14px 28px;border-top:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper-0);}
 .sim-root .spp-cta-note{font-family:var(--font-sci);font-style:italic;font-size:15px;color:var(--ink-1);line-height:1.4;font-weight:600;}
-.sim-root .spp-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;background:var(--ink-0);color:var(--paper-0);border:none;cursor:pointer;transition:all .15s var(--ease);white-space:nowrap;flex-shrink:0;border-radius:var(--r-xs);}
+.sim-root .spp-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;background:var(--ink-0);color:var(--paper-0);border:none;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);white-space:nowrap;flex-shrink:0;border-radius:var(--r-xs);}
 .sim-root .spp-cta:hover{background:var(--ink-1);transform:translateY(-1px);}
 .sim-root .spp-cta:active{transform:translateY(0);}
 
@@ -2569,8 +2570,10 @@
   .sim-root, .sim-root *{ visibility:visible !important; }
 }
 /* UX v2 production vertical: object -> lifecycle -> valid action. */
+.sim-root :is(input,select,textarea,button,[role="button"]):focus-visible{outline:2px solid var(--focus-ring,var(--coral-500))!important;outline-offset:2px}
 .os-today-v2,.os-batch-detail-v2{max-width:1080px;margin:0 auto 48px}.os-page-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}.os-page-title{font-family:var(--font-sans);font-size:var(--text-2xl);margin:var(--space-2) 0 var(--space-5)}.os-today-group{margin-top:var(--space-6)}.os-section-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:var(--rule-heavy);padding-bottom:var(--space-2)}.os-section-head h2,.os-detail-panel h2{font-family:var(--font-sans);font-size:var(--text-lg);margin:0}.os-section-head span{font-family:var(--font-mono);color:var(--text-metadata)}.os-task-marker{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}.os-v2-empty{padding:var(--space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}.os-lifecycle-state{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid var(--status-active);padding-top:3px;color:var(--status-active)}.os-detail-back{margin-bottom:var(--space-3)}.os-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}.os-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--space-5);margin-top:var(--space-6);align-items:start}.os-detail-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--space-4)}.os-valid-actions{display:grid;gap:var(--tap-target-gap-min);margin:var(--space-3) 0 var(--space-4)}
 @media(max-width:700px){.os-today-v2,.os-batch-detail-v2{margin-bottom:24px}.os-page-title{font-size:var(--text-xl)}.os-metric-grid,.os-detail-grid{grid-template-columns:1fr}.os-task-row{grid-template-columns:auto minmax(0,1fr)}.os-task-row>.os-action{grid-column:2;width:100%}}
 /* os-action/os-scan-target ya definen :focus-visible en setas-os-components.css pero no :hover/transition — el botón se sentía inerte hasta el click. */
 .os-action,.os-icon-action,.os-scan-target{transition:background-color .15s ease,border-color .15s ease}
 .os-scan-target:hover{background:var(--surface-recessed);border-color:var(--ink-0)}
+@media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

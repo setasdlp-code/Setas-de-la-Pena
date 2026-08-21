@@ -878,7 +878,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         </div>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
-          {img&&<img src={img} alt={sp.name} style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
+          {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
           <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
@@ -1017,7 +1017,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
 const ConfirmModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
@@ -1032,10 +1032,10 @@ const PromptModal=({dlg,onClose})=>{
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="inv-modal" style={{width:420}}>
+      <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
-        {dlg.label&&<label className="inv-label">{dlg.label}</label>}
-        <input className="inv-input" autoFocus value={val} placeholder={dlg.placeholder||''} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
+        {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
+        <input id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
         <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
@@ -1046,7 +1046,7 @@ const PromptModal=({dlg,onClose})=>{
 };
 const NoticeModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',justifyContent:'flex-end'}}>
@@ -1162,7 +1162,7 @@ const EBDial=({an,sp})=>{
             <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontFamily="var(--font-mono)" fontSize="9.5" fill="var(--ink-500)">{tv}</text>
           </g>
         );})}
-        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'all .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
         <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="#9C3F1F">{an.ebLow}–{an.ebHigh}</text>
@@ -1742,7 +1742,7 @@ function App(props){
   const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
-  const [tab,setTab]=useState('home');
+  const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
   const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
@@ -1756,7 +1756,8 @@ function App(props){
   const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
   const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
-  const goTab=t=>{const next=applyTab(t);if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  useEffect(()=>{const onPop=()=>{try{applyTab(new URLSearchParams(window.location.search).get('view')||'home');}catch(e){}};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
   useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
@@ -2866,7 +2867,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* STOCK */}
                                   <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
                                     {isEditing?(
-                                      <input autoFocus type="number" min="0" step="0.5"
+                                      <input type="number" min="0" step="0.5"
                                         value={editingRowData.stock}
                                         onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
                                         onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
@@ -3182,7 +3183,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* MODAL NUEVO PROVEEDOR */}
             {showProvModal&&(
               <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowProvModal(false);}}>
-                <div className="inv-modal">
+                <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nuevo proveedor">
                   <div className="inv-modal-title">Nuevo Proveedor</div>
                   <div style={{marginBottom:12}}>
                     <label className="inv-label">Nombre</label>
@@ -3298,8 +3299,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes experimentales <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
                   <div style={{display:'flex',gap:6}}>
-                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>⊞ Cuadrícula</button>
-                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>≡ Tabla</button>
+                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
+                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
                     <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
@@ -3343,7 +3344,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3481,7 +3482,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="hero-lede" style={{display:'block',marginTop:14,fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Cálculo, optimización y trazabilidad de mezclas.</div>
           </div>
           <div className="hero-art">
-            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" />
+            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" width="720" height="480" />
           </div>
         </div>
       </header>
@@ -3521,6 +3522,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalCosechasCount = bitCosechas.length;
           const activeRecipeCount = recipe.length;
           const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
+          const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const operationalNow = Date.now();
+          const operationalSource = activeLotes.map((lote,index)=>{
+            const stats=calcLoteStats(lote.id);
+            const contaminated=stats&&stats.contPct>0;
+            const inoculated=Date.parse(lote.fechaInoculacion||'');
+            const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
+            return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString()};
+          });
+          const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
+          const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
+          const overdueTaskCount=operationalQueue.filter(item=>item.bucket==='overdue').length;
+          const blockedTaskCount=operationalQueue.filter(item=>item.bucket==='blocked').length;
+          const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
+          const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
+          const operationStatus=criticalTaskCount>0
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)'}
+            :(overdueTaskCount>0||incidentCount>0)
+              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
+              :{label:'Operación estable',color:'var(--moss-700)'};
 
           // Sección A: Datos de telemetría de las 4 salas y cámaras
           const salas = [
@@ -3627,55 +3649,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
           ];
 
           return (
-            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
+            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
                 borderRadius:'var(--r-md)',
-                padding:'28px 32px',
+                padding:'18px 22px',
                 position:'relative',
                 overflow:'hidden'
               }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:20}}>
-                  <div style={{maxWidth:680}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+                  <div style={{minWidth:240}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                       <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                        FIELD OS · CENTRO DE MANDO OPERATIVO
+                        CONTROL · TURNO ACTUAL
                       </span>
                     </div>
-                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-3xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',marginBottom:10}}>
-                      Setas de la Peña
+                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',margin:0}}>
+                      Hoy
                     </h1>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-base)',color:'var(--ink-700)',margin:0,lineHeight:1.5}}>
-                      Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.
-                    </p>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        <IconMountain size={11}/> Tenjo 2.600 msnm
-                      </span>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        <IconDroplet size={11}/> H₂O Eb. 91.4°C
-                      </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
-                        ● Sistema Nominal
-                      </span>
-                    </div>
-                    {/* Especie Activa badge */}
-                    <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--paper-50)',border:'1px solid var(--paper-300)',padding:'8px 14px',borderRadius:'var(--r-sm)',marginTop:4}}>
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                          {sp?.name || 'Orellana Gris'} <em style={{fontStyle:'italic',fontWeight:400,fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>({sp?.scientific})</em>
-                        </div>
-                      </div>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--moss-700)',borderRadius:'var(--r-xs)',color:'var(--moss-700)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
-                        Cambiar
-                      </button>
-                    </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
+                    {[
+                      [activeLotes.length,'Lotes activos'],
+                      [pendingTaskCount,'Tareas pendientes'],
+                      [incidentCount,'Incidencias']
+                    ].map(([value,label])=><span key={label} style={{display:'inline-flex',alignItems:'baseline',gap:5,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                      <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{value}</strong> {label}
+                    </span>)}
+                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
+                      {operationStatus.label}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -3718,7 +3724,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         borderRadius:'var(--r-sm)',
                         textAlign:'left',
                         cursor:'pointer',
-                        transition:'all .15s ease',
+                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
                         boxShadow:'var(--shadow-card-rest)',
                         position:'relative'
                       }}
@@ -4142,7 +4148,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         borderRadius:'var(--r-sm)',
                         padding:'14px',
                         cursor:'pointer',
-                        transition:'all .15s ease',
+                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
                         position:'relative'
                       }}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--coral-500)';}}
@@ -4259,7 +4265,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="p-activa">Activa</span>
                     </div>
                     {hasImg
-                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} loading="lazy" decoding="async"/></div>
+                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
                       :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--accent-blue-grey)':'var(--accent-mushroom)'}/></div>
                     }
                     <div className="p-body">
@@ -4362,7 +4368,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* RIGHT: Ilustración full-bleed + CTA */}
                 <div className="spp-info-center" style={{display:'flex',flexDirection:'column'}}>
                   <div className="spp-img-wrap" style={{flex:1,position:'relative',minHeight:320}}>
-                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
+                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} width="520" height="390" className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
@@ -5100,14 +5106,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               )}
               {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
-                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'all .4s ease'}}>
+                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
                       <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
                     </div>
                     <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'all .4s ease'}}>{sc}</span>
+                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>{sc}</span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
                     </div>
                   </div>
@@ -5812,7 +5818,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {BAG_TYPES.map(bt=>{
                   const on=prodBagType===bt.id;
                   return(
-                    <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'all .12s'}}>
+                    <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
                     </button>
@@ -5876,7 +5882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
                       <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
-                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
+                      <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
                   <div>
@@ -5888,7 +5894,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
                     <div style={{flex:1,minWidth:140}}>
                       <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
-                      <input id="prod-lote" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="L-2026-047" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",outline:'none',boxSizing:'border-box'}}/>
+                      <input id="prod-lote" name="numeroLote" autoComplete="off" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="Ej. L-2026-047…" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",boxSizing:'border-box'}}/>
                     </div>
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
@@ -6234,7 +6240,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
-            <div className="inv-modal" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Ejecutar lote" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
@@ -6261,19 +6267,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitNuevo(false);}}>
-            <div className="inv-modal" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nueva prueba experimental" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
               <div className="inv-modal-title">Nueva prueba experimental</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Código de lote</label><input className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label">Especie</label><input className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Cepa / proveedor</label><input className="inv-input" placeholder="Spawn proveedor X" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label">Operador</label><input className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Fecha mezcla</label><input type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label">Fecha inoculación</label><input type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
                 <div><label className="inv-label"># Bolsas</label><input type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
@@ -6298,7 +6304,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitCosecha(false);}}>
-            <div className="inv-modal" style={{width:440}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Registrar cosecha" style={{width:440}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label">Bolsa</label><select className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
@@ -6308,7 +6314,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
                 <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
@@ -6321,7 +6327,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
       </div>
 
-      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)}>
+      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} role="button" tabIndex={0} aria-expanded={bridgeOpen} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBridgeOpen(o=>!o);}}}>
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>
@@ -6331,7 +6337,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
                 Ver catálogo
               </button>
             </div>
@@ -6348,7 +6354,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
             <span style={{color:'var(--paper-0)',opacity:.6,fontSize:"var(--text-sm)",lineHeight:1,transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
