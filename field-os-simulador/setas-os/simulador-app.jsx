@@ -1896,7 +1896,7 @@ function App(props){
   const [cmpPasteText,setCmpPasteText]=useState('');
   const [cmpParsing,setCmpParsing]=useState(false);
   const [cmpParseErr,setCmpParseErr]=useState('');
-  const [cmpParseSummary,setCmpParseSummary]=useState(null); // {total,sinMatch} tras interpretar foto/texto
+  const [huboParseIA,setHuboParseIA]=useState(false); // true tras interpretar foto/texto — el resumen se deriva de cmpItems en cada render, no se guarda como snapshot
   const [cmpLastFoto,setCmpLastFoto]=useState(null); // {fileBlock,esPDF,name} — para reintentar sin resubir
   const [cmpConfirm,setCmpConfirm]=useState(null);
   const cmpFileRef=useRef(null);
@@ -2652,31 +2652,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
     img.onerror=e=>{URL.revokeObjectURL(url);reject(e);};
     img.src=url;
   });
-  const matchIngId=nombre=>{
-    if(!nombre) return '';
-    const n=nombre.toLowerCase().trim();
-    let hit=INGS.find(g=>g.name.toLowerCase()===n||g.id===n);
-    if(hit) return hit.id;
-    hit=INGS.find(g=>g.name.toLowerCase().includes(n)||n.includes(g.name.toLowerCase()));
-    return hit?hit.id:'';
-  };
-  // Empareja el nombre de proveedor que devuelve la IA contra los proveedores ya
-  // registrados — solo precarga si hay coincidencia; nunca crea proveedores nuevos.
-  const matchProvId=nombre=>{
+  // Empareja un nombre (de la IA o pegado) contra una lista con {id,<getName>} por
+  // coincidencia exacta y luego por substring — solo si el substring tiene largo
+  // suficiente (evita falsos positivos con fragmentos cortos tipo "el"/"sas") y solo
+  // si es inequívoco (si matchean 2+ candidatos por substring, no se autocompleta).
+  const matchByName=(list,getName,nombre,minSubstringLen=4)=>{
     if(!nombre) return '';
     const n=String(nombre).toLowerCase().trim();
     if(!n) return '';
-    let hit=invProveedores.find(p=>p.nombre.toLowerCase()===n);
-    if(hit) return hit.id;
-    hit=invProveedores.find(p=>p.nombre.toLowerCase().includes(n)||n.includes(p.nombre.toLowerCase()));
-    return hit?hit.id:'';
+    const exact=list.find(x=>getName(x).toLowerCase()===n||x.id===n);
+    if(exact) return exact.id;
+    if(n.length<minSubstringLen) return '';
+    const subHits=list.filter(x=>{
+      const gn=getName(x).toLowerCase();
+      return (gn.length>=minSubstringLen&&gn.includes(n))||(n.length>=minSubstringLen&&n.includes(gn));
+    });
+    return subHits.length===1?subHits[0].id:'';
   };
+  const matchIngId=nombre=>matchByName(INGS,g=>g.name,nombre);
+  // Empareja el nombre de proveedor que devuelve la IA contra los proveedores ya
+  // registrados — solo precarga si hay coincidencia inequívoca; nunca crea proveedores nuevos.
+  const matchProvId=nombre=>matchByName(invProveedores,p=>p.nombre,nombre);
   const applyParsedItems=parsed=>{
     const items=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.items)?parsed.items:null);
-    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');setCmpParseSummary(null);return;}
+    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');setHuboParseIA(false);return;}
     const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''}));
     setCmpItems(mapped);
-    setCmpParseSummary({total:mapped.length,sinMatch:mapped.filter(it=>!it.ingId).length});
+    setHuboParseIA(true);
     if(parsed&&!Array.isArray(parsed)){
       if(parsed.proveedor){const pid=matchProvId(parsed.proveedor);if(pid) setCmpProvId(pid);}
       if(parsed.fecha&&/^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
@@ -2686,16 +2688,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // Acepta tanto el formato nuevo {proveedor,fecha,items:[...]} como un array plano de
   // ítems (compatibilidad con respuestas que no incluyan proveedor/fecha).
   const extraerJSON=txt=>{
+    // Solo se acepta el objeto {proveedor,fecha,items} si de verdad trae la clave
+    // "items" — si no, un array plano en formato legado (p.ej. un solo ítem suelto)
+    // podría matchear las llaves de su único elemento y perder el resto de la data.
     const objMatch=txt.match(/\{[\s\S]*\}/);
-    if(objMatch){try{const o=JSON.parse(objMatch[0]);if(o&&typeof o==='object') return o;}catch(e){}}
+    if(objMatch){
+      try{
+        const o=JSON.parse(objMatch[0]);
+        if(o&&typeof o==='object'&&Array.isArray(o.items)) return o;
+      }catch(e){}
+    }
     const arrMatch=txt.match(/\[[\s\S]*\]/);
-    return JSON.parse(arrMatch?arrMatch[0]:txt);
+    if(arrMatch) return JSON.parse(arrMatch[0]);
+    return JSON.parse(objMatch?objMatch[0]:txt);
   };
   const CMP_MAX_BYTES=10*1024*1024;
   // Ejecuta el parseo de una foto/PDF ya codificado — separado de capturarFoto para
   // poder reintentar (botón "Reintentar") sin pedirle al usuario que resuba el archivo.
   const parseFotoPayload=async(fileBlock,esPDF)=>{
-    setCmpParsing(true);setCmpParseErr('');setCmpFuente('ocr');
+    setCmpParsing(true);setCmpParseErr('');
     try{
       const listaIngs=INGS.map(g=>g.name).join(', ');
       const resp=await window.claude.complete({messages:[{role:'user',content:[
@@ -2721,7 +2732,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
       e.target.value=''; return;
     }
-    setCmpParseErr('');setCmpParseSummary(null);setCmpParsing(true);
+    setCmpParseErr('');setHuboParseIA(false);setCmpParsing(true);setCmpFuente('ocr');
     try{
       const b64=await fileToBase64(file);
       const fileBlock=esPDF
@@ -2732,10 +2743,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }catch(err){setCmpParsing(false);setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
     e.target.value='';
   };
-  const reintentarFoto=()=>{if(cmpLastFoto&&!cmpParsing) parseFotoPayload(cmpLastFoto.fileBlock,cmpLastFoto.esPDF);};
+  const reintentarFoto=()=>{
+    if(!cmpLastFoto||cmpParsing) return;
+    setHuboParseIA(false);setCmpFuente('ocr');
+    parseFotoPayload(cmpLastFoto.fileBlock,cmpLastFoto.esPDF);
+  };
   const parsearTexto=async()=>{
     if(!cmpPasteText.trim()) return;
-    setCmpParsing(true);setCmpParseErr('');setCmpParseSummary(null);setCmpFuente('email');
+    setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
       const listaIngs=INGS.map(g=>g.name).join(', ');
       const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
@@ -2772,7 +2787,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
     setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen});
     setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
-    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setCmpParseSummary(null);setCmpLastFoto(null);
+    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
   };
 
   const autoBalance=(mode=balanceMode)=>{
@@ -3044,7 +3059,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div>
                   <div style={{display:'flex',gap:8,marginBottom:14}}>
                     {[['manual','✎','Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto','✉','Pegar texto']].map(([v,icon,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>
+                      <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
                         <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
                       </button>
@@ -3070,12 +3085,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
 
-                  {cmpParseSummary&&(
-                    <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:cmpParseSummary.sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${cmpParseSummary.sinMatch?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,color:'var(--ink-800)'}}>
-                      Se {cmpParseSummary.total===1?'detectó 1 ítem':`detectaron ${cmpParseSummary.total} ítems`}
-                      {cmpParseSummary.sinMatch>0?` — ${cmpParseSummary.sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
-                    </div>
-                  )}
+                  {huboParseIA&&(()=>{
+                    const total=cmpItems.length;
+                    const sinMatch=cmpItems.filter(it=>!it.ingId).length;
+                    return(
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,color:'var(--ink-800)'}}>
+                        Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
+                        {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
+                      </div>
+                    );
+                  })()}
 
                   <div className="inv-row inv-row-2">
                     <div>
@@ -3131,7 +3150,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div style={{display:'flex',gap:10}}>
                     <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>✓ Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpParseSummary(null);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
                   </div>
                   </div>
                   )}
