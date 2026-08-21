@@ -6188,7 +6188,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -6197,7 +6197,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
                                   <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
                                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
-                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--coral-700)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
+                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
                                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
                                   </div>
                                 ))}
