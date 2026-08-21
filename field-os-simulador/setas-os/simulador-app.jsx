@@ -3714,22 +3714,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button
                       key={btn.label}
                       onClick={btn.onClick}
+                      className={'home-quick-action'+(btn.pri?' is-primary':'')}
                       style={{
                         display:'flex',
                         alignItems:'center',
                         gap:12,
                         padding:'14px 16px',
-                        background:btn.pri?'var(--paper-0)':'var(--paper-0)',
-                        border:btn.pri?'1.5px solid var(--moss-700)':'1px solid var(--border-soft)',
                         borderRadius:'var(--r-sm)',
                         textAlign:'left',
                         cursor:'pointer',
-                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
-                        boxShadow:'var(--shadow-card-rest)',
                         position:'relative'
                       }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
                     >
                       <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
                       <div style={{minWidth:0,flex:1}}>
@@ -3901,10 +3896,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('catalogo')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Catálogo
                       </button>
                     </div>
@@ -3966,10 +3961,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('produccion')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('produccion')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ficha de Mezclado
                       </button>
-                      <button onClick={()=>goTab('inventario')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('inventario')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Bodega
                       </button>
                     </div>
@@ -4031,10 +4026,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         + Registrar Cosecha
                       </button>
-                      <button onClick={()=>goTab('bitacora')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Ver Bitácora
                       </button>
                     </div>
@@ -4097,10 +4092,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
 
                       <div style={{display:'flex',gap:8}}>
-                        <button onClick={()=>goTab('dashboard')} style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('dashboard')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                           Dashboard
                         </button>
-                        <button onClick={()=>goTab('schedule')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('schedule')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                           Cronograma
                         </button>
                       </div>
@@ -4146,17 +4141,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       aria-label={`${st.title} — ${st.active?'en curso':'planificado'}`}
                       onClick={()=>goTab(st.linkTab)}
                       onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goTab(st.linkTab);}}}
+                      className={'home-stage-card'+(st.active?' is-active':'')}
                       style={{
-                        background:st.active?'var(--paper-50)':'var(--paper-100)',
-                        border:st.active?'1px solid var(--moss-300)':'1px solid var(--paper-300)',
                         borderRadius:'var(--r-sm)',
                         padding:'14px',
                         cursor:'pointer',
-                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
                         position:'relative'
                       }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--coral-500)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=st.active?'var(--moss-300)':'var(--paper-300)';}}
                     >
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:st.active?'var(--moss-700)':'var(--ink-400)'}}>
@@ -4197,21 +4188,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
                             onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
                             onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}}
+                            className="home-lote-row"
                             style={{
                               display:'flex',
                               justifyContent:'space-between',
                               alignItems:'center',
                               padding:'10px 14px',
-                              background:'var(--paper-50)',
-                              border:'1px solid var(--paper-300)',
                               borderRadius:'var(--r-xs)',
                               cursor:'pointer',
                               flexWrap:'wrap',
-                              gap:8,
-                              transition:'background .15s'
+                              gap:8
                             }}
-                            onMouseEnter={e=>e.currentTarget.style.background='var(--paper-100)'}
-                            onMouseLeave={e=>e.currentTarget.style.background='var(--paper-50)'}
                           >
                             <div style={{display:'flex',alignItems:'center',gap:12}}>
                               <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
