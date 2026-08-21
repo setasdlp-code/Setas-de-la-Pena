@@ -33,11 +33,13 @@ function buildGate() {
 
   gate.innerHTML = `
     <form id="setas-auth-form" style="width:320px;padding:28px;background:#fff;border:1px solid var(--border-hairline,#ddd8c8);border-radius:10px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.06);font-family:var(--font-sans, Georgia, serif);">
-      <div style="font-family:Georgia,serif;font-style:italic;font-size:22px;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</div>
-      <div id="setas-auth-status" style="font-family:var(--font-mono,monospace);font-size:11px;color:#8a8577;">Conectando…</div>
-      <input id="setas-auth-email" type="email" required placeholder="correo@ejemplo.com" style="padding:10px 12px;border:1px solid var(--border-hairline,#ddd8c8);border-radius:6px;font:inherit;display:none;">
-      <input id="setas-auth-password" type="password" required placeholder="Contraseña" style="padding:10px 12px;border:1px solid var(--border-hairline,#ddd8c8);border-radius:6px;font:inherit;display:none;">
-      <div id="setas-auth-err" style="color:#C53030;font-size:12px;font-family:var(--font-mono,monospace);"></div>
+      <h1 style="margin:0;font-family:Georgia,serif;font-style:italic;font-size:22px;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
+      <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:#8a8577;">Conectando…</div>
+      <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;">Correo</label>
+      <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com…" style="padding:10px 12px;border:1px solid var(--border-hairline,#ddd8c8);border-radius:6px;font:inherit;display:none;">
+      <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;">Contraseña</label>
+      <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña…" style="padding:10px 12px;border:1px solid var(--border-hairline,#ddd8c8);border-radius:6px;font:inherit;display:none;">
+      <div id="setas-auth-err" role="alert" aria-live="assertive" style="color:#C53030;font-size:12px;font-family:var(--font-mono,monospace);"></div>
       <button id="setas-auth-submit" type="submit" style="padding:11px 12px;background:var(--ink-0,#1a1410);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;display:none;">Ingresar</button>
     </form>
   `;
@@ -59,6 +61,8 @@ function buildGate() {
     gate,
     signoutBtn,
     status: gate.querySelector("#setas-auth-status"),
+    emailLabel: gate.querySelector('label[for="setas-auth-email"]'),
+    passwordLabel: gate.querySelector('label[for="setas-auth-password"]'),
     email: gate.querySelector("#setas-auth-email"),
     password: gate.querySelector("#setas-auth-password"),
     err: gate.querySelector("#setas-auth-err"),
@@ -81,7 +85,9 @@ function init() {
       el.signoutBtn.style.display = "none";
       el.status.style.display = "none";
       el.email.style.display = "block";
+      el.emailLabel.style.display = "block";
       el.password.style.display = "block";
+      el.passwordLabel.style.display = "block";
       el.submit.style.display = "block";
     }
   });

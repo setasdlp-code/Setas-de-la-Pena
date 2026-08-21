@@ -878,7 +878,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         </div>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
-          {img&&<img src={img} alt={sp.name} style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
+          {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
           <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
@@ -1017,7 +1017,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
 const ConfirmModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
@@ -1032,10 +1032,10 @@ const PromptModal=({dlg,onClose})=>{
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="inv-modal" style={{width:420}}>
+      <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
-        {dlg.label&&<label className="inv-label">{dlg.label}</label>}
-        <input className="inv-input" autoFocus value={val} placeholder={dlg.placeholder||''} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
+        {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
+        <input id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
         <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
@@ -1046,7 +1046,7 @@ const PromptModal=({dlg,onClose})=>{
 };
 const NoticeModal=({dlg,onClose})=>(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',justifyContent:'flex-end'}}>
@@ -1742,7 +1742,7 @@ function App(props){
   const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
-  const [tab,setTab]=useState('home');
+  const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
   const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
@@ -1756,7 +1756,8 @@ function App(props){
   const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
   const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
-  const goTab=t=>{const next=applyTab(t);if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  useEffect(()=>{const onPop=()=>{try{applyTab(new URLSearchParams(window.location.search).get('view')||'home');}catch(e){}};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
   useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
@@ -3182,7 +3183,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* MODAL NUEVO PROVEEDOR */}
             {showProvModal&&(
               <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowProvModal(false);}}>
-                <div className="inv-modal">
+                <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nuevo proveedor">
                   <div className="inv-modal-title">Nuevo Proveedor</div>
                   <div style={{marginBottom:12}}>
                     <label className="inv-label">Nombre</label>
@@ -3481,7 +3482,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="hero-lede" style={{display:'block',marginTop:14,fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Cálculo, optimización y trazabilidad de mezclas.</div>
           </div>
           <div className="hero-art">
-            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" />
+            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" width="720" height="480" />
           </div>
         </div>
       </header>
@@ -5881,7 +5882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
                       <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
-                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
+                      <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
                   <div>
@@ -5893,7 +5894,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
                     <div style={{flex:1,minWidth:140}}>
                       <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
-                      <input id="prod-lote" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="L-2026-047" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",outline:'none',boxSizing:'border-box'}}/>
+                      <input id="prod-lote" name="numeroLote" autoComplete="off" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="Ej. L-2026-047…" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",boxSizing:'border-box'}}/>
                     </div>
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
@@ -6239,7 +6240,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
-            <div className="inv-modal" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Ejecutar lote" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
@@ -6266,19 +6267,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitNuevo(false);}}>
-            <div className="inv-modal" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nueva prueba experimental" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
               <div className="inv-modal-title">Nueva prueba experimental</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Código de lote</label><input className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label">Especie</label><input className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Cepa / proveedor</label><input className="inv-input" placeholder="Spawn proveedor X" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label">Operador</label><input className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Fecha mezcla</label><input type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label">Fecha inoculación</label><input type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
                 <div><label className="inv-label"># Bolsas</label><input type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
@@ -6303,7 +6304,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitCosecha(false);}}>
-            <div className="inv-modal" style={{width:440}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Registrar cosecha" style={{width:440}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label">Bolsa</label><select className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
@@ -6313,7 +6314,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
                 <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
@@ -6326,7 +6327,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
       </div>
 
-      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)}>
+      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} role="button" tabIndex={0} aria-expanded={bridgeOpen} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBridgeOpen(o=>!o);}}}>
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>

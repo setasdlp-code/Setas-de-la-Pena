@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f4ec">
 <script src="./error-buffer.js"></script>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
@@ -65,6 +66,9 @@
   html, body { margin:0; background: var(--paper-1); }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  [role="dialog"] { overscroll-behavior:contain; }
+  .skip-link { position:fixed;left:12px;top:10px;z-index:1000;transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
+  .skip-link:focus-visible { transform:translateY(0); }
   /* Tactile press feedback — inline styles (used on ~all buttons here) can't express
      :active, so this is the only place a physical "push" confirmation can live.
      Buttons that already declare their own inline `transition` keep that untouched
@@ -175,8 +179,7 @@
   .gloves textarea, .gloves input { font-size:17px !important; }
   .gloves .fos-hide-guantes { display:none; }
   @media (prefers-reduced-motion: reduce) {
-    .app-rail, .rail-btn, .workspace-tab { transition:none !important; }
-    .rail-badge { animation:none !important; }
+    *, *::before, *::after { animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important; }
   }
   @media print {
     body * { visibility:hidden !important; }
@@ -189,6 +192,7 @@
 </helmet>
 
 <div class="app-shell {{ shellCls }}">
+  <a class="skip-link" href="#setas-main">Saltar al contenido</a>
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
   <nav class="app-rail" aria-label="Espacios de trabajo">
@@ -213,7 +217,7 @@
     </button>
   </nav>
 
-  <main class="app-main fos-scroll" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
+  <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
 
     <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
       <span data-testid="breadcrumb" style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
@@ -623,7 +627,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasObsPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;">
-              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearObsPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -743,7 +747,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:18px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasQuickPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearQuickPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -1734,7 +1738,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;border-top:1px solid var(--border-soft);padding-top:18px;">
           <div style="font:var(--t-caption);color:var(--text-metadata);">Informe generado {{ dateStr }} · {{ operator }} · lote {{ traceTitle }}</div>
           <sc-if value="{{ hasTraceQr }}" hint-placeholder-val="{{ false }}">
-            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" style="width:64px;height:64px;">
+            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" width="64" height="64" style="width:64px;height:64px;">
           </sc-if>
         </div>
       </div>
@@ -1887,7 +1891,7 @@
   <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
   <div onClick="{{ closeCmd }}" role="dialog" aria-modal="true" aria-label="Buscar" style="position:fixed;inset:0;z-index:95;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .16s ease;display:flex;align-items:flex-start;justify-content:center;padding:12vh 20px 20px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border:1px solid var(--border-strong);border-radius:16px;width:100%;max-width:540px;overflow:hidden;animation:fos-screen .2s cubic-bezier(.32,.72,.36,1);">
-      <input autoFocus="{{ true }}" value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);outline:none;">
+      <input value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" name="setas-search" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);">
       <sc-if value="{{ hasCmdResults }}" hint-placeholder-val="{{ false }}">
       <div class="fos-scroll" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;">
         <sc-for list="{{ cmdResults }}" as="r" hint-placeholder-count="4">
@@ -1918,7 +1922,7 @@
         <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:.75;">{{ pubSci }}</div>
       </div>
       <div style="padding:22px 24px;display:flex;gap:18px;align-items:flex-start;">
-        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
+        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" width="92" height="92" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
         <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-1);line-height:1.9;">
           <div>Contenedor · {{ pubId }}</div>
           <div>Lote · {{ pubBatch }}</div>

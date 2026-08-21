@@ -8,6 +8,9 @@ const path = require('node:path');
 const root = __dirname;
 const shell = fs.readFileSync(path.join(root, 'Setas OS v5.dc.html'), 'utf8');
 const source = fs.readFileSync(path.join(root, 'simulador-app.jsx'), 'utf8');
+const styles = fs.readFileSync(path.join(root, 'sim.css'), 'utf8');
+const authGate = fs.readFileSync(path.join(root, 'firebase/auth-gate.js'), 'utf8');
+const climate = fs.readFileSync(path.join(root, 'climate-bench.html'), 'utf8');
 
 test('production shell loads the canonical workflow before the React app', () => {
   assert.match(shell, /<script src="setas-os-workflow\.js"><\/script>[\s\S]*<x-import[^>]+from="\.\/simulador-app\.js"/);
@@ -60,4 +63,25 @@ test('UX v2 production integration adds no DOM observation bridge', () => {
   const end = source.indexOf('const BitacoraSection=');
   const integration = source.slice(start, end);
   assert.doesNotMatch(integration, /MutationObserver|querySelector|textContent|innerHTML/);
+});
+
+test('production surfaces preserve keyboard focus and reduced motion', () => {
+  assert.match(shell, /class="skip-link" href="#setas-main"/);
+  assert.match(shell, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(styles, /\[role="button"\]\):focus-visible/);
+  assert.doesNotMatch(styles, /transition:all/);
+});
+
+test('auth and climate controls expose accessible status and form metadata', () => {
+  assert.match(authGate, /name="email"[^>]+autocomplete="email"[^>]+spellcheck="false"/);
+  assert.match(authGate, /name="password"[^>]+autocomplete="current-password"/);
+  assert.match(authGate, /role="alert" aria-live="assertive"/);
+  assert.match(climate, /id="logList" role="log" aria-live="polite"/);
+});
+
+test('workspace state is deep-linkable through the view query parameter', () => {
+  assert.match(source, /URLSearchParams\(window\.location\.search\)\.get\('view'\)/);
+  assert.match(source, /searchParams\.set\('view',next\)/);
+  assert.match(source, /addEventListener\('popstate',onPop\)/);
 });
