@@ -1348,6 +1348,12 @@ const IconSeed = ({ size = 12, color = 'currentColor' }) => (
     <path d="M3 13l5-5" />
   </svg>
 );
+const IconNut = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1.5c-2.5 1.5-4 4-4 7 0 2.7 1.8 5.5 4 6 2.2-.5 4-3.3 4-6 0-3-1.5-5.5-4-7z" />
+    <path d="M8 6.2v8.3" />
+  </svg>
+);
 const IconScale = ({ size = 12, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <line x1="8" y1="1" x2="8" y2="14" />
@@ -3442,7 +3448,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
-                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
+                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
                   </div>
                 </div>
               );
@@ -3846,8 +3852,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          LABORATORIO & NUTRICIÓN
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
+                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
                       </div>
@@ -3874,7 +3880,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
                             {an?.eb ? `~${an.eb}%` : '—'}
                           </div>
                         </div>
@@ -3888,7 +3894,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
                       <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
@@ -3911,8 +3917,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          PLANTA & INSUMOS
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                          <IconBox size={11}/> PLANTA & INSUMOS
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
                       </div>
@@ -3976,8 +3982,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          TRAZABILIDAD & CAMPO
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
+                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
                       </div>
@@ -3998,7 +4004,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                             {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
                           </div>
                         </div>
@@ -4042,8 +4048,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }}>
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            GESTIÓN & FINANZAS (ADMIN)
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
                           </span>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
                         </div>
@@ -4058,13 +4064,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
@@ -4206,7 +4212,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {stats.totalFresco.toFixed(2)} kg cosechados
                                 </span>
                               )}
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-500)',fontWeight:700}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
                                 Ver lote →
                               </span>
                             </div>
@@ -4220,7 +4226,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                       No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -4377,7 +4383,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:'var(--paper-100)',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{fontSize:22}}>{globalMode==='produccion'?'🏭':'🔬'}</span>
+              <span style={{display:'inline-flex',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>{globalMode==='produccion'?<IconFactory size={22}/>:<IconMicroscope size={22}/>}</span>
               <div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
                   <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>
@@ -4402,9 +4408,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
                   color:globalMode==='produccion'?'var(--paper-0)':'var(--ink-700)',
                   border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
                 }}>
-                🏭 Producción
+                <IconFactory size={12}/> Producción
               </button>
               <button
                 onClick={()=>setGlobalWorkMode('investigacion')}
@@ -4413,16 +4419,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
                   color:globalMode==='investigacion'?'var(--paper-0)':'var(--ink-700)',
                   border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer'
+                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
                 }}>
-                🔬 Investigación
+                <IconMicroscope size={12}/> Investigación
               </button>
               {recipe.length>0&&(
                 <button
                   onClick={()=>promoverReceta()}
                   title="Promover esta receta a Producción oficial (alerta si faltan insumos)"
                   style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',padding:'6px 12px',background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                  ⭐ Promover
+                  <IconStar size={12} fill="currentColor"/> Promover
                 </button>
               )}
             </div>
@@ -4759,7 +4765,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'base_carbono',
                       label:'Bases de Carbono',
-                      icon:'🌾',
+                      icon:IconSeed,
                       desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
                       primary:g=>g.role==='base_carbono',
                       fallback:g=>g.cat==='base'||g.cn>=40
@@ -4767,7 +4773,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'suplemento_n',
                       label:'Suplementos Nitrogenados',
-                      icon:'🥜',
+                      icon:IconNut,
                       desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
                       primary:g=>g.role==='suplemento_n'||g.role==='suplemento_medio',
                       fallback:g=>g.n>=1.4
@@ -4775,7 +4781,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'aditivo',
                       label:'Minerales y Tampones de pH',
-                      icon:'⚖️',
+                      icon:IconScale,
                       desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
                       primary:g=>!!g.role?.startsWith('aditivo_'),
                       fallback:g=>g.cat==='adit'||g.cn===0
@@ -4783,7 +4789,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'aireador',
                       label:'Aireadores y Estructurantes',
-                      icon:'💨',
+                      icon:IconWind,
                       desc:'Porosidad y difusión de oxígeno gaseoso',
                       primary:g=>g.role==='aireador',
                       fallback:g=>g.cat==='trop'||g.cat==='circ'
@@ -4826,7 +4832,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             userSelect:'none'
                           }}>
                           <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{fontSize:16}}>{grp.icon}</span>
+                            <span style={{display:'inline-flex',color:'var(--ink-700)'}}><grp.icon size={16}/></span>
                             <div>
                               <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
                                 {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
@@ -4876,7 +4882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
                       <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
                         <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
@@ -4941,7 +4947,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {/* ── Modo de trabajo: mismo estado que el Generador — cambiarlo
                           aquí también cambia qué explora "Calcular" más abajo. ── */}
                       <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
                         {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
                           <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
                         ))}
@@ -4954,7 +4960,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
                         ].map((m,i)=>(
                           <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
+                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
                             <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
                         ))}
@@ -4982,8 +4988,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
                       {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
@@ -5041,7 +5047,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
+                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -5340,7 +5346,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           <div style={{display:'flex',gap:6,alignItems:'center'}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
-                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
+                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
                             <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
                           </div>
