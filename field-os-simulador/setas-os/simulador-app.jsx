@@ -3206,6 +3206,75 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
+  const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
+  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded'};
+  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
+  const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
+  const runBatchAction=(action,lote)=>{
+    if(action==='harvest'){
+      const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
+      setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
+      setShowBitCosecha(true);return;
+    }
+    if(action==='advance_stage'){
+      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
+      const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
+      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
+        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+      }
+      return;
+    }
+    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
+    if(action==='contamination'){goBitTab('bit_bolsas',true);return;}
+    setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
+  };
+  const TodayV2=()=>{
+    const now=Date.now();
+    const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
+      const stats=calcLoteStats(lote.id);
+      const contaminated=stats&&stats.contPct>0;
+      const inoculated=Date.parse(lote.fechaInoculacion||'');
+      const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
+      return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+        dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
+        title:contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
+        why:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+    });
+    const queue=workflow?workflow.buildTodayQueue(source,now):source;
+    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
+    return <section className="os-today-v2" data-testid="ux-v2-today">
+      <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
+      <button className="os-scan-target" type="button" onClick={()=>setNoticeDlg({title:'Escanear lote',msg:'Usa el lector de campo para resolver el lote y mostrar sus acciones válidas.'})}>Escanear lote o registrar evento</button>
+      {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
+      {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
+        <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
+        {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
+          <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
+          <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+        </div>)}
+      </section>;})}
+    </section>;
+  };
+  const BatchDetailV2=({lote})=>{
+    const stats=calcLoteStats(lote.id);const state=legacyLifecycle[lote.estado]||'planned';
+    const isAdmin=props.isAdmin===true||props.isAdmin==='true';
+    const actions=workflow?workflow.validActions(state,isAdmin?'direccion':'operario'):[];
+    const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
+    const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
+    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
+      <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state">{lifecycleLabel[state]||state}</span></div>
+        <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
+        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
+      <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
+      <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
+        <aside className="os-detail-panel"><h2>Acciones válidas ahora</h2><div className="os-valid-actions">{actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}</div><span className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span></aside></div>
+    </article>;
+  };
+
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
@@ -3341,6 +3410,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const cosechas=[...bitCosechas.filter(c=>c.loteId===bitActiveLoteId)].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
               const stats=calcLoteStats(bitActiveLoteId);const score=stats?calcLoteScore(stats):null;
+              return <BatchDetailV2 lote={lote}/>;
+              /* Legacy printable sheet retained below during migration, but no longer rendered. */
               return(
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
@@ -3433,6 +3504,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         })()}
 
         {(tab==='home'||tab==='inicio')&&(()=>{
+          if(tab==='home') return <TodayV2/>;
           // Cálculos y Métricas en vivo para el Centro de Mando
           const totalStockKg = invLotes.filter(l=>l.activo).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
           const totalBolsasCount = bitBolsas.length;
