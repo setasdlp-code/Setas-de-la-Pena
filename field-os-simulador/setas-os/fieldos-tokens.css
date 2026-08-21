@@ -184,6 +184,23 @@
   /* Apéndice — a slightly cooler, denser surface than the main body */
   --paper-appendix: color-mix(in oklab, var(--paper-0) 91%, var(--accent-blue-grey) 9%);
   --border-appendix: color-mix(in oklab, var(--line-1) 80%, var(--accent-blue-grey) 20%);
+
+  /* ── Z-INDEX SCALE — named layers instead of guessed numbers.
+     Every stacking value in sim.css / simulador-app.jsx should reference one
+     of these, not a raw number. Add a new tier here before reaching for an
+     arbitrary value. ── */
+  --z-local:      1;   /* content sitting above its own sibling within one component */
+  --z-raised:     2;   /* small badge/marker layered on that same component */
+  --z-sticky-sub: 6;   /* sub-nav / summary bars sticky within a tab's content */
+  --z-sticky:     10;  /* sticky section headers, fade-edge gradients, inline badges */
+  --z-sticky-panel: 20; /* sticky panel headers, higher-priority sticky bars */
+  --z-nav:        40;  /* the app's persistent side/bottom rail */
+  --z-bottom-bar: 50;  /* sticky bottom bar docked under the nav */
+  --z-fab:        65;  /* floating action button, above the bottom bar */
+  --z-bottom-bar-mobile: 200; /* bottom bar's mobile override, above the FAB layer */
+  --z-modal:      300; /* first-level modal overlay */
+  --z-modal-top:  400; /* modal that can open on top of another modal */
+  --z-overlay:    1000; /* full-screen blocking overlay (loading/onboarding) */
 }
 
 /* ── Semantic type classes (unchanged usage, now DS-backed) ── */

@@ -682,7 +682,7 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
   
   if(fullscreen) return(
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
       <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
       <RadarSVG size={600}/>
       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
@@ -848,7 +848,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   const catEntries=catOrder.filter(k=>bycat[k]).map(k=>[k,bycat[k]]);
 
   if(!open) return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
+    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
       <div style={{width:20,height:4,borderRadius:2,background:band,flexShrink:0}}/>
       <span style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
@@ -859,7 +859,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   );
 
   return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
+    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
       {/* Franja lateral familia */}
       <div className="p-family-strip" style={{background:`color-mix(in oklab,${band} 10%,var(--paper-100))`,borderRight:`1px solid color-mix(in oklab,${band} 25%,transparent)`}}>
         <span style={{color:band}}>{family}</span>
@@ -879,7 +879,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
           {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
-          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
+          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:'var(--z-local)',maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
             {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
@@ -2031,10 +2031,16 @@ function App(props){
         if(c) setInvCompras(JSON.parse(c));
         if(l) setInvLotes(JSON.parse(l));
         if(m) setInvMovimientos(JSON.parse(m));
-        const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
-        if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
       }
     }catch(e){}
+    // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
+    // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
+    try{
+      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
+      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
+    }catch(e){
+      setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+    }
   },[]);
 
   // ── v4: sincronizar pantry con stock
@@ -2474,12 +2480,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
   };
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{
@@ -2494,7 +2501,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
-    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
@@ -2503,7 +2510,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
   const updateBitBolsa=(bolsaId,fields)=>{
-    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});}return upd;});
+    const fechaKey=['col25','col50','col100'].find(k=>k in fields);
+    if(fechaKey&&fields[fechaKey]){
+      const bolsa=bitBolsas.find(b=>b.id===bolsaId);
+      const lote=bolsa&&bitLotes.find(l=>l.id===bolsa.loteId);
+      if(lote&&!window.SetasBitacora.isFechaColValida(fields[fechaKey],lote.fechaInoculacion)){
+        setNoticeDlg({title:'Fecha inválida',msg:'La fecha de colonización no puede ser anterior a la fecha de inoculación del lote ('+lote.fechaInoculacion+').'});
+        return;
+      }
+    }
+    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
@@ -2513,7 +2529,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
-    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){}return upd;});
+    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
@@ -2547,30 +2563,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
+  // Cálculo puro en bitacora-model.js (testeado por separado) — aquí solo se
+  // resuelve el loteId contra el estado de React y se delega.
   const calcLoteStats=(loteId)=>{
     const lote=bitLotes.find(lt=>lt.id===loteId);if(!lote) return null;
-    const bolsas=bitBolsas.filter(b=>b.loteId===loteId);if(!bolsas.length) return null;
-    const cosechas=bitCosechas.filter(c=>c.loteId===loteId);
-    const bolsasSanas=bolsas.filter(b=>b.estado==='sana').length;
-    const bolsasContaminadas=bolsas.filter(b=>b.estado==='contaminada').length;
-    const contPct=bolsas.length?(bolsasContaminadas/bolsas.length)*100:0;
-    const totalFresco=cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
-    const peseSeco=parseFloat(lote.peseSeco)||0;
-    const be=peseSeco>0?(totalFresco/peseSeco)*100:null;
-    const col100s=bolsas.filter(b=>b.col100&&lote.fechaInoculacion).map(b=>Math.round((new Date(b.col100)-new Date(lote.fechaInoculacion))/86400000));
-    const diasCol=col100s.length?col100s.reduce((s,d)=>s+d,0)/col100s.length:null;
-    const costoKg=totalFresco>0&&lote.costoIngKg>0?(lote.costoIngKg*peseSeco)/totalFresco:null;
-    return{bolsasSanas,bolsasContaminadas,contPct,totalFresco,be,diasCol,costoKg,numBolsas:bolsas.length};
+    return window.SetasBitacora.calcLoteStats(lote,bitBolsas.filter(b=>b.loteId===loteId),bitCosechas.filter(c=>c.loteId===loteId));
   };
-  const calcLoteScore=(stats)=>{
-    if(!stats||stats.totalFresco===0) return null;
-    let s=0;
-    if(stats.be!=null) s+=Math.min(40,(stats.be/150)*40);
-    s+=(1-stats.contPct/100)*30;
-    s+=stats.diasCol!=null?(stats.diasCol<=18?15:stats.diasCol<=25?10:5):7;
-    s+=stats.costoKg!=null?(stats.costoKg<=2000?15:stats.costoKg<=4000?10:5):7;
-    return Math.round(s);
-  };
+  const calcLoteScore=(stats)=>window.SetasBitacora.calcLoteScore(stats);
   // Genera la receta óptima para la especie activa con toda la paleta y la carga
   const loadOptimal=()=>{
     try{
@@ -5451,7 +5450,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{position:'absolute',left:15,top:0,bottom:0,width:'1px',background:'var(--border-soft)',opacity:0}}/>
                     {saved.map((e,idx)=>{const s2=SPP[e.sKey];const isEven=idx%2===0;return(
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
-                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
+                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
@@ -5484,7 +5483,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div>
 {/* ── GENERADOR DE RECETAS ── */}
             <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:20,background:'var(--paper-50,#fff)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
                 <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
@@ -5518,7 +5517,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             </div>
                             {/* fuente + perfil en una sola fila compacta */}
-                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
+                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
                                 <div className="chip-row">
@@ -6077,7 +6076,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ];
               return(
               <div>
-                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
                       <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>

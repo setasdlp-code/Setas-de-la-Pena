@@ -2,14 +2,6 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "field-os-simulador",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["start"],
-      "port": 4173,
-      "autoPort": true,
-      "cwd": "field_os/20_product_design/PROTOTYPES/field-os-simulador-app"
-    },
-    {
       "name": "setas-os-v5",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8743", "--bind", "127.0.0.1", "--directory", "/Users/sebastianpinzon/Documents/SETAS de la PEÑA/Simulador de Rectas/export-setas-os-v5"],
