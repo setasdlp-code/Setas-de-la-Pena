@@ -3854,8 +3854,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          LABORATORIO & NUTRICIÓN
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
+                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
                       </div>
@@ -3882,7 +3882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
                             {an?.eb ? `~${an.eb}%` : '—'}
                           </div>
                         </div>
@@ -3919,8 +3919,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          PLANTA & INSUMOS
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                          <IconBox size={11}/> PLANTA & INSUMOS
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
                       </div>
@@ -3984,8 +3984,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          TRAZABILIDAD & CAMPO
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
+                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
                       </div>
@@ -4006,7 +4006,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                             {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
                           </div>
                         </div>
@@ -4050,8 +4050,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }}>
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            GESTIÓN & FINANZAS (ADMIN)
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
                           </span>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
                         </div>
