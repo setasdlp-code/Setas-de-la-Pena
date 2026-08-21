@@ -3576,11 +3576,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        ⛰️ Tenjo 2.600 msnm
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        <IconMountain size={11}/> Tenjo 2.600 msnm
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        💧 H₂O Eb. 91.4°C
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
+                        <IconDroplet size={11}/> H₂O Eb. 91.4°C
                       </span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
                         ● Sistema Nominal
@@ -3621,12 +3621,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   gap:12
                 }}>
                   {[
-                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:'⚡',tab:'formular',onClick:()=>goTab('formular'),pri:true},
-                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:'📋',tab:'produccion',onClick:()=>goTab('produccion')},
-                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:'🍄',tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
-                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:'📦',tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:'🔬',tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
-                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:'📖',tab:'catalogo',onClick:()=>goTab('catalogo')}
+                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular'),pri:true},
+                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')},
+                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:IconMushroom,tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
+                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:IconMicroscope,tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
+                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:IconBook,tab:'catalogo',onClick:()=>goTab('catalogo')}
                   ].map(btn=>(
                     <button
                       key={btn.label}
@@ -3648,7 +3648,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
                       onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
                     >
-                      <span style={{fontSize:'var(--text-xl)',lineHeight:1,flexShrink:0}}>{btn.icon}</span>
+                      <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--coral-500)':'var(--ink-700)'}}><btn.icon size={20}/></span>
                       <div style={{minWidth:0,flex:1}}>
                         <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                           {btn.label}
