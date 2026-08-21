@@ -1132,6 +1132,41 @@
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
     <iframe src="{{ climaSrc }}" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
 
+    <!-- =================== VISTA PREVIA WF-9 (solo en Control · Hoy) =================== -->
+    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
+    <div class="col" style="padding:24px 26px 0;">
+      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · vista previa</span>
+          <button onClick="{{ goRegistro }}" style="cursor:pointer;background:none;border:none;color:var(--accent-terracotta);font:var(--t-caption);font-weight:700;">Ver registro completo →</button>
+        </div>
+        <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:2px;">
+          <button onClick="{{ goRevEventos }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewEventos }}</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Eventos</div>
+          </button>
+          <button onClick="{{ goRevRendimiento }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewBE }}%</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Rendimiento (EB)</div>
+          </button>
+          <button onClick="{{ goRevTrabajo }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewHoras }} h</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Trabajo</div>
+          </button>
+          <button onClick="{{ goRevSuper }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:{{ hoyPreviewAnomaliasColor }};">{{ hoyPreviewAnomalias }}</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Supervisión</div>
+          </button>
+          <button onClick="{{ goRevSalidas }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewSalidas }} kg</div>
+            <div style="font:var(--t-caption);color:var(--text-metadata);">Salidas</div>
+          </button>
+        </div>
+        <p style="font:var(--t-caption);color:var(--text-secondary);margin:12px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
+      </div>
+    </div>
+    </sc-if>
+
     <!-- =================== REVISIÓN DIARIA =================== -->
     <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
     <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
@@ -3833,6 +3868,19 @@ class Component extends DCLogic {
       isTabTrabajo:s.reviewTab==='trabajo', isTabSuper:s.reviewTab==='supervision',
       tabTrabajoStyle:this.tabStyle(s.reviewTab==='trabajo'), tabSuperStyle:this.tabStyle(s.reviewTab==='supervision'),
       setTabTrabajo:()=>this.setState({reviewTab:'trabajo'}), setTabSuper:()=>this.setState({reviewTab:'supervision'}),
+      // vista previa WF-9 en "Hoy"
+      isHomeTab: s.module==='sim' && s.simTab==='home',
+      hoyPreviewEventos: s.reviewEvents.length,
+      hoyPreviewBE: isNaN(Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length))?'—':Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length),
+      hoyPreviewHoras: (s.workLog||[]).reduce((a,w)=>a+w.horas,0).toFixed(1),
+      hoyPreviewAnomalias: s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length,
+      hoyPreviewAnomaliasColor: (s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length)>0?'var(--status-attention)':'var(--ink-0)',
+      hoyPreviewSalidas: (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2),
+      goRevEventos:()=>this.setState({module:'revision',reviewTab:'eventos',capture:false,workspaceMoreOpen:false}),
+      goRevRendimiento:()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false}),
+      goRevTrabajo:()=>this.setState({module:'revision',reviewTab:'trabajo',capture:false,workspaceMoreOpen:false}),
+      goRevSuper:()=>this.setState({module:'revision',reviewTab:'supervision',capture:false,workspaceMoreOpen:false}),
+      goRevSalidas:()=>this.setState({module:'revision',reviewTab:'salidas',capture:false,workspaceMoreOpen:false}),
       // handoff
       hasHandoff:!!s.handoff, handoffText:s.handoff, handoffDraft:s.handoffDraft,
       setHandoffDraft:(e)=>this.setState({handoffDraft:e.target.value}),
