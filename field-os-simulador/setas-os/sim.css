@@ -2576,4 +2576,29 @@
 /* os-action/os-scan-target ya definen :focus-visible en setas-os-components.css pero no :hover/transition — el botón se sentía inerte hasta el click. */
 .os-action,.os-icon-action,.os-scan-target{transition:background-color .15s ease,border-color .15s ease}
 .os-scan-target:hover{background:var(--surface-recessed);border-color:var(--ink-0)}
+
+/* ── HOME COCKPIT — hover/press states, previously mutated via onMouseEnter/Leave
+   JS (didn't reach keyboard focus, never fired on touch, and there was no
+   :active feedback anywhere). Moved to CSS so :hover, :active and
+   :focus-visible (global rule above) all come for free. ── */
+.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
+.sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
+.sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
+
+.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
+.sim-root .home-stage-card:hover{border-color:var(--stage-accent,var(--coral-500))}
+.sim-root .home-stage-card:active{transform:scale(.98)}
+
+.sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .15s ease,transform .1s ease}
+.sim-root .home-lote-row:hover{background:var(--paper-100)}
+.sim-root .home-lote-row:active{background:var(--paper-200);transform:scale(.99)}
+
+.sim-root .home-panel-btn{transition:filter .15s ease,background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-panel-btn.is-primary:hover{filter:brightness(1.08)}
+.sim-root .home-panel-btn.is-primary:active{filter:brightness(.94);transform:scale(.97)}
+.sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
+.sim-root .home-panel-btn.is-secondary:active{background:var(--paper-200);transform:scale(.97)}
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

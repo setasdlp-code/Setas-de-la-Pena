@@ -3544,7 +3544,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
               :{label:'Operación estable',color:'var(--moss-700)'};
 
-          // Sección A: Datos de telemetría de las 4 salas y cámaras
+          // Sección A: Datos de telemetría de las 4 salas y cámaras.
+          // accent/icon clasifican el tipo de ambiente (uso de acento permitido por
+          // colors.css: "classification & status only") — no repiten el mismo cuadro
+          // blanco 4 veces, cada fase de cultivo se reconoce de un vistazo.
           const salas = [
             {
               id: 'sala-1',
@@ -3558,7 +3561,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Colonización micelial',
               estadoLabel: 'En Rango',
               bolsas: bolsasIncubacion || 36,
-              capacidad: 48
+              capacidad: 48,
+              accent: 'var(--slate-500)',
+              icon: IconSprout
             },
             {
               id: 'sala-2',
@@ -3572,7 +3577,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Ventilación activa (12 R/h)',
               estadoLabel: 'Fructificación',
               bolsas: bolsasFructificacion || 24,
-              capacidad: 36
+              capacidad: 36,
+              accent: 'var(--moss-500)',
+              icon: IconMushroom
             },
             {
               id: 'sala-3',
@@ -3586,7 +3593,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Nebulización ultrasónica',
               estadoLabel: 'En Rango',
               bolsas: 16,
-              capacidad: 24
+              capacidad: 24,
+              accent: 'var(--sand-500)',
+              icon: IconSnowflake
             },
             {
               id: 'area-tecnica',
@@ -3600,11 +3609,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Autoclave 121°C / 15 PSI Standby',
               estadoLabel: 'Operativo',
               bolsas: `${totalStockKg.toFixed(0)} kg`,
-              capacidad: `${stockIds.size} insumos`
+              capacidad: `${stockIds.size} insumos`,
+              accent: 'var(--ink-500)',
+              icon: IconBox
             }
           ];
 
           // Sección C: Fases del ciclo de cultivo
+          // accent/icon de cada fase retoman el mismo color que ya usa la sala o el
+          // workspace donde esa fase realmente ocurre (incubación=slate como Sala 1,
+          // fructificación=moss como Sala 2/Producción, etc.) — el color del pipeline
+          // anticipa a dónde lleva el clic, no es decorativo.
           const pipelineStages = [
             {
               num: '01',
@@ -3612,7 +3627,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)',
               badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : 'En espera de receta',
               active: activeRecipeCount > 0,
-              linkTab: 'formular'
+              linkTab: 'formular',
+              accent: 'var(--coral-500)',
+              icon: IconFlame
             },
             {
               num: '02',
@@ -3620,7 +3637,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
               badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
               active: bolsasIncubacion > 0,
-              linkTab: 'bitacora'
+              linkTab: 'bitacora',
+              accent: 'var(--slate-500)',
+              icon: IconSprout
             },
             {
               num: '03',
@@ -3628,7 +3647,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm',
               badge: `${bitBolsas.filter(b=>b.col100).length} bolsas colonizadas 100%`,
               active: bitBolsas.filter(b=>b.col100).length > 0,
-              linkTab: 'schedule'
+              linkTab: 'schedule',
+              accent: 'var(--sand-500)',
+              icon: IconSnowflake
             },
             {
               num: '04',
@@ -3636,7 +3657,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: 'Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero',
               badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
               active: totalCosechasCount > 0,
-              linkTab: 'bitacora'
+              linkTab: 'bitacora',
+              accent: 'var(--moss-700)',
+              icon: IconMushroom
             },
             {
               num: '05',
@@ -3644,7 +3667,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               sub: '2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)',
               badge: `${bitLotes.length} lotes con trazabilidad`,
               active: bitLotes.length > 0,
-              linkTab: 'dashboard'
+              linkTab: 'dashboard',
+              accent: 'var(--ink-700)',
+              icon: IconScale
             }
           ];
 
@@ -3662,8 +3687,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
                   <div style={{minWidth:240}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:operationStatus.color,display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:operationStatus.color}}>
                         CONTROL · TURNO ACTUAL
                       </span>
                     </div>
@@ -3673,12 +3698,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
                     {[
-                      [activeLotes.length,'Lotes activos'],
-                      [pendingTaskCount,'Tareas pendientes'],
-                      [incidentCount,'Incidencias']
-                    ].map(([value,label])=><span key={label} style={{display:'inline-flex',alignItems:'baseline',gap:5,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                      <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{value}</strong> {label}
-                    </span>)}
+                      {value:activeLotes.length,label:'Lotes activos',icon:IconMicroscope,tone:'neutral'},
+                      {value:pendingTaskCount,label:'Tareas pendientes',icon:IconClipboard,tone:pendingTaskCount>0?'attention':'neutral'},
+                      {value:incidentCount,label:'Incidencias',icon:IconAlert,tone:incidentCount>0?'critical':'neutral'}
+                    ].map(kpi=>{
+                      const tones={
+                        neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
+                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'var(--ochre-700)',weight:800},
+                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'var(--coral-700)',weight:800}
+                      };
+                      const t=tones[kpi.tone];
+                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
+                        <kpi.icon size={12}/>
+                        <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:t.ink}}>{kpi.value}</strong> {kpi.label}
+                      </span>;
+                    })}
                     <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
                       {operationStatus.label}
                     </span>
@@ -3691,7 +3725,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN D · OPERACIÓN INMEDIATA
+                      SECCIÓN A · OPERACIÓN INMEDIATA
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Acciones Rápidas
@@ -3714,22 +3748,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button
                       key={btn.label}
                       onClick={btn.onClick}
+                      className={'home-quick-action'+(btn.pri?' is-primary':'')}
                       style={{
                         display:'flex',
                         alignItems:'center',
                         gap:12,
                         padding:'14px 16px',
-                        background:btn.pri?'var(--paper-0)':'var(--paper-0)',
-                        border:btn.pri?'1.5px solid var(--moss-700)':'1px solid var(--border-soft)',
                         borderRadius:'var(--r-sm)',
                         textAlign:'left',
                         cursor:'pointer',
-                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
-                        boxShadow:'var(--shadow-card-rest)',
                         position:'relative'
                       }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
                     >
                       <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
                       <div style={{minWidth:0,flex:1}}>
@@ -3751,7 +3780,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN A · AMBIENTES & SENSORES
+                      SECCIÓN B · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Telemetría de Salas de Cultivo
@@ -3774,6 +3803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       style={{
                         background:'var(--paper-0)',
                         border:'1px solid var(--border-soft)',
+                        borderTop:`3px solid ${s.accent}`,
                         borderRadius:'var(--r-md)',
                         padding:'20px',
                         display:'flex',
@@ -3785,8 +3815,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     >
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                            {s.nombre}
+                          <div style={{display:'flex',alignItems:'center',gap:7}}>
+                            <span style={{display:'inline-flex',flexShrink:0,color:s.accent}}><s.icon size={14}/></span>
+                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
+                              {s.nombre}
+                            </div>
                           </div>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
                             {s.estadoLabel}
@@ -3831,7 +3864,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN B · MÓDULOS DE CAMPO
+                      SECCIÓN C · MÓDULOS DE CAMPO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Espacios de Trabajo
@@ -3849,6 +3882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--coral-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3901,10 +3935,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('catalogo')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Catálogo
                       </button>
                     </div>
@@ -3914,6 +3948,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--moss-700)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3966,10 +4001,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('produccion')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('produccion')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ficha de Mezclado
                       </button>
-                      <button onClick={()=>goTab('inventario')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('inventario')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Bodega
                       </button>
                     </div>
@@ -3979,6 +4014,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--slate-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -4031,10 +4067,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         + Registrar Cosecha
                       </button>
-                      <button onClick={()=>goTab('bitacora')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Ver Bitácora
                       </button>
                     </div>
@@ -4045,6 +4081,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{
                       background:'var(--paper-0)',
                       border:'1px solid var(--border-soft)',
+                      borderTop:'3px solid var(--ink-700)',
                       borderRadius:'var(--r-md)',
                       padding:'24px',
                       display:'flex',
@@ -4097,10 +4134,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
 
                       <div style={{display:'flex',gap:8}}>
-                        <button onClick={()=>goTab('dashboard')} style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('dashboard')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                           Dashboard
                         </button>
-                        <button onClick={()=>goTab('schedule')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('schedule')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                           Cronograma
                         </button>
                       </div>
@@ -4120,7 +4157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN C · CICLO BIOLÓGICO TENJO
+                      SECCIÓN D · CICLO BIOLÓGICO TENJO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Pipeline de Lotes & Fases de Cultivo
@@ -4141,29 +4178,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {pipelineStages.map((st,idx)=>(
                     <div
                       key={st.num}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${st.title} — ${st.active?'en curso':'planificado'}`}
                       onClick={()=>goTab(st.linkTab)}
+                      onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goTab(st.linkTab);}}}
+                      className={'home-stage-card'+(st.active?' is-active':'')}
                       style={{
-                        background:st.active?'var(--paper-50)':'var(--paper-100)',
-                        border:st.active?'1px solid var(--moss-300)':'1px solid var(--paper-300)',
+                        '--stage-accent':st.accent,
                         borderRadius:'var(--r-sm)',
                         padding:'14px',
                         cursor:'pointer',
-                        transition:'background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease',
                         position:'relative'
                       }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--coral-500)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=st.active?'var(--moss-300)':'var(--paper-300)';}}
                     >
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:st.active?'var(--moss-700)':'var(--ink-400)'}}>
-                          Fase {st.num}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                        <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:20,height:20,borderRadius:'50%',flexShrink:0,background:st.active?st.accent:'var(--paper-200)',color:st.active?'var(--paper-0)':'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700}}>
+                          {st.num.replace(/^0/,'')}
                         </span>
-                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?'var(--moss-700)':'var(--ink-500)'}}>
+                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?st.accent:'var(--ink-500)'}}>
                           {st.active?'En curso':'Plan'}
                         </span>
                       </div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:4}}>
-                        {st.title}
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                        <span style={{display:'inline-flex',flexShrink:0,color:st.accent}}><st.icon size={13}/></span>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                          {st.title}
+                        </div>
                       </div>
                       <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.35,marginBottom:8}}>
                         {st.sub}
@@ -4188,22 +4229,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div
                             key={lt.id}
                             data-lote-id={lt.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
                             onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}}
+                            className="home-lote-row"
                             style={{
                               display:'flex',
                               justifyContent:'space-between',
                               alignItems:'center',
                               padding:'10px 14px',
-                              background:'var(--paper-50)',
-                              border:'1px solid var(--paper-300)',
                               borderRadius:'var(--r-xs)',
                               cursor:'pointer',
                               flexWrap:'wrap',
-                              gap:8,
-                              transition:'background .15s'
+                              gap:8
                             }}
-                            onMouseEnter={e=>e.currentTarget.style.background='var(--paper-100)'}
-                            onMouseLeave={e=>e.currentTarget.style.background='var(--paper-50)'}
                           >
                             <div style={{display:'flex',alignItems:'center',gap:12}}>
                               <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>

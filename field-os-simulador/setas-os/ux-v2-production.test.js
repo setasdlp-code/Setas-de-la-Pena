@@ -38,9 +38,9 @@ test('Hoy keeps species selection out of the operational header', () => {
 });
 
 test('Hoy header reports live operational state without duplicated site context', () => {
-  assert.match(source, /activeLotes\.length,'Lotes activos'/);
-  assert.match(source, /pendingTaskCount,'Tareas pendientes'/);
-  assert.match(source, /incidentCount,'Incidencias'/);
+  assert.match(source, /value:activeLotes\.length,label:'Lotes activos'/);
+  assert.match(source, /value:pendingTaskCount,label:'Tareas pendientes'/);
+  assert.match(source, /value:incidentCount,label:'Incidencias'/);
   assert.match(source, /Estado operativo: \$\{operationStatus\.label\}/);
   assert.doesNotMatch(source, /Sistema Nominal/);
   assert.doesNotMatch(source, /Biogranja fungícola en Tenjo/);
