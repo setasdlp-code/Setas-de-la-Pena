@@ -3687,8 +3687,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
                   <div style={{minWidth:240}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:operationStatus.color,display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:operationStatus.color}}>
                         CONTROL · TURNO ACTUAL
                       </span>
                     </div>
@@ -3698,12 +3698,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
                     {[
-                      [activeLotes.length,'Lotes activos'],
-                      [pendingTaskCount,'Tareas pendientes'],
-                      [incidentCount,'Incidencias']
-                    ].map(([value,label])=><span key={label} style={{display:'inline-flex',alignItems:'baseline',gap:5,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                      <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{value}</strong> {label}
-                    </span>)}
+                      {value:activeLotes.length,label:'Lotes activos',icon:IconMicroscope,tone:'neutral'},
+                      {value:pendingTaskCount,label:'Tareas pendientes',icon:IconClipboard,tone:pendingTaskCount>0?'attention':'neutral'},
+                      {value:incidentCount,label:'Incidencias',icon:IconAlert,tone:incidentCount>0?'critical':'neutral'}
+                    ].map(kpi=>{
+                      const tones={
+                        neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
+                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'var(--ochre-700)',weight:800},
+                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'var(--coral-700)',weight:800}
+                      };
+                      const t=tones[kpi.tone];
+                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
+                        <kpi.icon size={12}/>
+                        <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:t.ink}}>{kpi.value}</strong> {kpi.label}
+                      </span>;
+                    })}
                     <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
                       {operationStatus.label}
                     </span>
