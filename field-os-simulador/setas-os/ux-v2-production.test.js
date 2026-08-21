@@ -30,6 +30,10 @@ test('Hoy quick actions follow Registro, Formular, Bodega, Lotes, Cultivo order'
   assert.match(shell, /on-scan-lot="\{\{ openScanHome \}\}"/);
 });
 
+test('Hoy keeps species selection out of the operational header', () => {
+  assert.doesNotMatch(source, /Especie en foco/);
+});
+
 test('canonical batch detail replaces bit_ficha and derives visible actions from lifecycle', () => {
   assert.match(source, /data-testid="ux-v2-batch-detail"/);
   assert.match(source, /workflow\.validActions\(state,/);

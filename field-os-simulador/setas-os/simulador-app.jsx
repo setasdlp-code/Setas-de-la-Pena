@@ -3652,7 +3652,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.
                     </p>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
+                  <div style={{display:'flex',alignItems:'flex-start'}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
                       <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
                         <IconMountain size={11}/> Tenjo 2.600 msnm
@@ -3663,18 +3663,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
                         ● Sistema Nominal
                       </span>
-                    </div>
-                    {/* Especie Activa badge */}
-                    <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--paper-50)',border:'1px solid var(--paper-300)',padding:'8px 14px',borderRadius:'var(--r-sm)',marginTop:4}}>
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                          {sp?.name || 'Orellana Gris'} <em style={{fontStyle:'italic',fontWeight:400,fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>({sp?.scientific})</em>
-                        </div>
-                      </div>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--moss-700)',borderRadius:'var(--r-xs)',color:'var(--moss-700)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
-                        Cambiar
-                      </button>
                     </div>
                   </div>
                 </div>
