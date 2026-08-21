@@ -3544,7 +3544,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
               :{label:'Operación estable',color:'var(--moss-700)'};
 
-          // Sección A: Datos de telemetría de las 4 salas y cámaras
+          // Sección A: Datos de telemetría de las 4 salas y cámaras.
+          // accent/icon clasifican el tipo de ambiente (uso de acento permitido por
+          // colors.css: "classification & status only") — no repiten el mismo cuadro
+          // blanco 4 veces, cada fase de cultivo se reconoce de un vistazo.
           const salas = [
             {
               id: 'sala-1',
@@ -3558,7 +3561,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Colonización micelial',
               estadoLabel: 'En Rango',
               bolsas: bolsasIncubacion || 36,
-              capacidad: 48
+              capacidad: 48,
+              accent: 'var(--slate-500)',
+              icon: IconSprout
             },
             {
               id: 'sala-2',
@@ -3572,7 +3577,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Ventilación activa (12 R/h)',
               estadoLabel: 'Fructificación',
               bolsas: bolsasFructificacion || 24,
-              capacidad: 36
+              capacidad: 36,
+              accent: 'var(--moss-500)',
+              icon: IconMushroom
             },
             {
               id: 'sala-3',
@@ -3586,7 +3593,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Nebulización ultrasónica',
               estadoLabel: 'En Rango',
               bolsas: 16,
-              capacidad: 24
+              capacidad: 24,
+              accent: 'var(--sand-500)',
+              icon: IconSnowflake
             },
             {
               id: 'area-tecnica',
@@ -3600,7 +3609,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               co2Note: 'Autoclave 121°C / 15 PSI Standby',
               estadoLabel: 'Operativo',
               bolsas: `${totalStockKg.toFixed(0)} kg`,
-              capacidad: `${stockIds.size} insumos`
+              capacidad: `${stockIds.size} insumos`,
+              accent: 'var(--ink-500)',
+              icon: IconBox
             }
           ];
 
@@ -3769,6 +3780,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       style={{
                         background:'var(--paper-0)',
                         border:'1px solid var(--border-soft)',
+                        borderTop:`3px solid ${s.accent}`,
                         borderRadius:'var(--r-md)',
                         padding:'20px',
                         display:'flex',
@@ -3780,8 +3792,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     >
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                            {s.nombre}
+                          <div style={{display:'flex',alignItems:'center',gap:7}}>
+                            <span style={{display:'inline-flex',flexShrink:0,color:s.accent}}><s.icon size={14}/></span>
+                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
+                              {s.nombre}
+                            </div>
                           </div>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
                             {s.estadoLabel}
@@ -3844,6 +3859,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--coral-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3909,6 +3925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--moss-700)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3974,6 +3991,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--slate-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -4040,6 +4058,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{
                       background:'var(--paper-0)',
                       border:'1px solid var(--border-soft)',
+                      borderTop:'3px solid var(--ink-700)',
                       borderRadius:'var(--r-md)',
                       padding:'24px',
                       display:'flex',
