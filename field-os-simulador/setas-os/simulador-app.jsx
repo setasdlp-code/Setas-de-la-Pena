@@ -4077,8 +4077,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   el trabajo del día (tareas puntuales) y el estado de los lotes activos
                   son ambos "qué hacer/qué está pasando ahora", así que van juntos. */}
               <div className="home-tareas-lotes-row">
-                <div>
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                <div style={{height:'100%'}}>
+                    {/* height:100% en el wrapper y en la tarjeta: la fila usa
+                        align-items:stretch para que esta columna iguale la altura de
+                        Seguimiento de Lotes por Fase (a la derecha), que normalmente es
+                        más alta por su kanban de 4 fases. */}
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
                         {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
@@ -4164,7 +4168,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const descartados = bitLotes.length-clasificados.length;
                   return (
                     <div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(230px, 1fr))',gap:14}}>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:14}}>
                         {columnas.map(col=>{
                           const items = clasificados.filter(c=>c.columna===col.key);
                           return (

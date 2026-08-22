@@ -2654,7 +2654,7 @@
 .sim-root .home-acciones-espacios-row{display:grid;grid-template-columns:1fr 4fr;gap:20px;align-items:start}
 @media(max-width:900px){ .sim-root .home-acciones-espacios-row{ grid-template-columns:1fr!important; } }
 
-.sim-root .home-tareas-lotes-row{display:grid;grid-template-columns:1fr 3fr;gap:20px;align-items:start}
+.sim-root .home-tareas-lotes-row{display:grid;grid-template-columns:1fr 3fr;gap:20px;align-items:stretch}
 @media(max-width:900px){ .sim-root .home-tareas-lotes-row{ grid-template-columns:1fr!important; } }
 
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
