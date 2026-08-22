@@ -2628,4 +2628,9 @@
 .sim-root .home-header-row{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start}
 @media(max-width:768px){ .sim-root .home-header-row{ grid-template-columns:1fr!important; } }
 
+/* "Hoy" · Ambientes & Sensores: 2×2 fija (no auto-fit a 4 columnas en
+   pantallas anchas) — colapsa a 1 columna por debajo de 640px. */
+.sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:640px){ .sim-root .home-salas-grid{ grid-template-columns:1fr!important; } }
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

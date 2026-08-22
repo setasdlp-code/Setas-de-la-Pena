@@ -3978,14 +3978,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
                 </div>
                 
-                {/* Responsive Grid/Carousel container */}
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap:16,
-                  overflowX:'auto',
-                  paddingBottom:4
-                }}>
+                {/* 2×2 responsive: dos columnas fijas, colapsa a una por debajo de 640px */}
+                <div className="home-salas-grid">
                   {salas.map(s=>(
                     <div
                       key={s.id}
@@ -4043,6 +4037,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span>Ocupación / Carga:</span>
                         <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
                       </div>
+
+                      {/* Preview: apunta a las gráficas de clima en vivo (sparklines temp/hum/CO₂) que viven en Cámaras */}
+                      <button
+                        onClick={()=>props.onGoCamaras&&props.onGoCamaras()}
+                        style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'8px 10px',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',cursor:'pointer',textAlign:'left'}}
+                      >
+                        <span style={{display:'flex',alignItems:'center',gap:6}}>
+                          <IconCamera size={12} color="var(--ink-500)"/>
+                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Gráficas de clima en vivo</span>
+                        </span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>Ver en Cámaras →</span>
+                      </button>
                     </div>
                   ))}
                 </div>

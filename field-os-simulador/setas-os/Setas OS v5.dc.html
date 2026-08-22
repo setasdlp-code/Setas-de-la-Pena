@@ -857,10 +857,13 @@
                   <span style="font-family:var(--font-mono);font-size:15px;color:{{ cm.liveAccent }};">{{ cm.liveCo2 }} ppm CO₂</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);align-self:center;">{{ cm.liveStatusLabel }}</span>
                 </div>
-                <svg viewBox="0 0 280 56" preserveAspectRatio="none" style="width:100%;height:44px;overflow:visible;">
-                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="1.6"></polyline>
-                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="1.6"></polyline>
-                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="1.6"></polyline>
+                <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ cm.sparkTrendLabel }}" style="width:100%;height:44px;overflow:visible;">
+                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="3" fill="var(--accent-terracotta)"></circle>
+                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="3" fill="var(--accent-blue-grey)"></circle>
+                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="3" fill="var(--accent-olive)"></circle>
                 </svg>
                 <div style="display:flex;gap:12px;">
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp.</span>
@@ -933,10 +936,13 @@
               <span style="font-family:var(--font-mono);font-size:20px;color:{{ camDetail.liveAccent }};">{{ camDetail.liveCo2 }} ppm CO₂</span>
               <span style="font:var(--t-caption);color:var(--text-metadata);">{{ camDetail.liveStatusLabel }}</span>
             </div>
-            <svg viewBox="0 0 280 56" preserveAspectRatio="none" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
-              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="1.6"></polyline>
-              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="1.6"></polyline>
-              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="1.6"></polyline>
+            <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ camDetail.sparkTrendLabel }}" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
+              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="3.5" fill="var(--accent-terracotta)"></circle>
+              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="3.5" fill="var(--accent-blue-grey)"></circle>
+              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="3.5" fill="var(--accent-olive)"></circle>
             </svg>
             <div style="display:flex;gap:12px;margin-top:6px;">
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura</span>
@@ -981,7 +987,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-go-camaras="{{ goCamaras }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -2421,13 +2427,23 @@ class Component extends DCLogic {
       const ci = ((cR[0]+cR[1])/2 + wave(3,tk)*((cR[1]-cR[0])/2+40));
       tPts.push(ti); hPts.push(hi); cPts.push(ci);
     }
-    const toPath=(arr)=>{ const mn=Math.min(...arr), mx=Math.max(...arr), span=Math.max(0.1,mx-mn); return arr.map((v,i)=>(i/(N-1)*W).toFixed(1)+','+((1-(v-mn)/span)*H).toFixed(1)).join(' '); };
+    // toPath también devuelve endY (última coordenada Y) para anclar el punto
+    // "ahora" al final de cada línea — el sparkline no lleva eje, así que ese
+    // punto es la única pista visual de cuál es el valor más reciente.
+    const toPath=(arr)=>{
+      const mn=Math.min(...arr), mx=Math.max(...arr), span=Math.max(0.1,mx-mn);
+      const pts=arr.map((v,i)=>[(i/(N-1)*W).toFixed(1), ((1-(v-mn)/span)*H).toFixed(1)]);
+      return { d:pts.map(p=>p.join(',')).join(' '), endY:pts[pts.length-1][1] };
+    };
+    const tSpark=toPath(tPts), hSpark=toPath(hPts), cSpark=toPath(cPts);
     return {
       liveTemp: temp, liveHum: hum, liveCo2: co2,
       liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
       liveStatusLabel: outOfRange?'Fuera de rango':'Dentro de rango',
       hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
-      tempSpark: toPath(tPts), humSpark: toPath(hPts), co2Spark: toPath(cPts),
+      tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
+      tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
+      sparkTrendLabel: `Tendencia últimas horas: temperatura, humedad y CO₂ (${temp}°C, ${hum}% HR, ${co2} ppm)`,
     };
   }
   dismissClimateBanner(){ this.setState({ climateBanner:null }); }
