@@ -2646,4 +2646,9 @@
 @media(max-width:960px){ .sim-root .home-salas-grid{ grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:640px){ .sim-root .home-salas-grid{ grid-template-columns:1fr!important; } }
 
+/* "Hoy" · Sección A: Acciones Rápidas (3/5) y Registro de cultivo · vista
+   previa (2/5) lado a lado — colapsa a una columna <900px. */
+.sim-root .home-acciones-registro-row{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start}
+@media(max-width:900px){ .sim-root .home-acciones-registro-row{ grid-template-columns:1fr!important; } }
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
