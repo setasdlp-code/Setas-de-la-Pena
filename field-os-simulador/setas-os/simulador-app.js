@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 4bf1e2324d6a2a1a24d84115a3e73319b5df060b839121df9ddb57dc7b1a558a
+// source-hash: a5c8e011bdbe799f0f9e86e1ea502ecff62d4cd1fd85c9613e08a5da41742ba0
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3125,7 +3125,7 @@ BATCH (${numBags}×${kgBag} kg):
         { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
         { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
       ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), style: { cursor: "pointer", flex: "1 0 100px", minWidth: 100, textAlign: "left", background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-lg)", color: m.color || "var(--ink-900)" } }, m.value), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, m.label)))))));
-    })(), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN B · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Cámaras de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● ", camaras.length, " ", camaras.length === 1 ? "cámara monitoreada" : "cámaras monitoreadas")), /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, camaras.map((c) => {
+    })(), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN B · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Cámaras de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● ", camaras.length, " ", camaras.length === 1 ? "cámara monitoreada" : "cámaras monitoreadas")), camaras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { border: "1px dashed var(--paper-300)", borderRadius: "var(--r-md)", padding: "20px", textAlign: "center", fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Sin datos de cámaras disponibles.") : /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, camaras.map((c) => {
       const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
       return /* @__PURE__ */ React.createElement(
         "div",
@@ -3232,26 +3232,22 @@ BATCH (${numBags}×${kgBag} kg):
       gap: 12,
       marginBottom: 20
     } }, pipelineStages.map((st, idx) => /* @__PURE__ */ React.createElement(
-      "div",
+      "button",
       {
         key: st.num,
-        role: "button",
-        tabIndex: 0,
         "aria-label": `${st.title} — ${st.active ? "en curso" : "planificado"}`,
         onClick: () => goTab(st.linkTab),
-        onKeyDown: (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            goTab(st.linkTab);
-          }
-        },
         className: "home-stage-card" + (st.active ? " is-active" : ""),
         style: {
           "--stage-accent": st.accent,
           borderRadius: "var(--r-sm)",
           padding: "14px",
           cursor: "pointer",
-          position: "relative"
+          position: "relative",
+          display: "block",
+          width: "100%",
+          textAlign: "left",
+          fontFamily: "inherit"
         }
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: st.active ? st.accent : "var(--paper-200)", color: st.active ? "var(--paper-0)" : "var(--ink-500)", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700 } }, st.num.replace(/^0/, "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-micro)", fontFamily: "var(--font-mono)", padding: "1px 5px", borderRadius: 2, background: st.active ? "var(--status-active-bg)" : "var(--paper-200)", color: st.active ? st.accent : "var(--ink-500)" } }, st.active ? "En curso" : "Plan")),
@@ -3261,25 +3257,15 @@ BATCH (${numBags}×${kgBag} kg):
     ))), bitLotes.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 10 } }, "Lotes Recientes en Seguimiento"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, bitLotes.slice(0, 4).map((lt) => {
       const stats = calcLoteStats(lt.id);
       return /* @__PURE__ */ React.createElement(
-        "div",
+        "button",
         {
           key: lt.id,
           "data-lote-id": lt.id,
-          role: "button",
-          tabIndex: 0,
           "aria-label": `Abrir lote ${lt.codigo} · ${lt.especie || "sin especie"}`,
           onClick: () => {
             setBitActiveLoteId(lt.id);
             goTab("bitacora");
             goBitTab("bit_bolsas", true);
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setBitActiveLoteId(lt.id);
-              goTab("bitacora");
-              goBitTab("bit_bolsas", true);
-            }
           },
           className: "home-lote-row",
           style: {
@@ -3290,7 +3276,10 @@ BATCH (${numBags}×${kgBag} kg):
             borderRadius: "var(--r-xs)",
             cursor: "pointer",
             flexWrap: "wrap",
-            gap: 8
+            gap: 8,
+            width: "100%",
+            textAlign: "left",
+            fontFamily: "inherit"
           }
         },
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, lt.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, lt.especie, " · ", lt.numBolsas || 1, " bolsas · ", lt.fechaInoculacion || lt.fechaMezcla || "Sin fecha")),
