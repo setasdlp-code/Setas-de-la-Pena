@@ -3729,13 +3729,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       <div style={{
                         display:'grid',
-                        gridTemplateColumns:'repeat(3, 1fr)',
+                        gridTemplateColumns:'1fr',
                         gap:12
                       }}>
-                        {/* Lotes/Módulos de cultivo se quedan fuera: llevan a la misma
-                            pestaña que "Ver Bitácora"/"Ficha de Mezclado" en Espacios de
-                            Trabajo (ahora la columna de al lado) y no agregan nada nuevo.
-                            Formular Sustrato y Registrar Evento sí faltaban del todo. */}
+                        {/* Una sola columna, los 5 botones del mismo ancho: le cede el resto
+                            del ancho de la fila a Espacios de Trabajo para que sus 3 tarjetas
+                            quepan lado a lado. Lotes/Módulos de cultivo se quedan fuera: llevan
+                            a la misma pestaña que "Ver Bitácora"/"Ficha de Mezclado" en Espacios
+                            de Trabajo y no agregan nada nuevo. */}
                         {[
                           {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
                             const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
@@ -3798,7 +3799,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 <div style={{
                   display:'grid',
-                  gridTemplateColumns:'1fr', // columna angosta dentro de Sección A: una tarjeta por fila, no auto-fit
+                  gridTemplateColumns:'repeat(3, 1fr)', // Acciones Rápidas pasó a una sola columna angosta para cederle ancho a esta: las 3 tarjetas caben lado a lado
                   gap:20
                 }}>
                   {/* WORKSPACE 1: FORMULACIÓN & I+D */}
