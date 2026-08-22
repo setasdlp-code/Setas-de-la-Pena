@@ -2640,9 +2640,10 @@
 .sim-root .home-handoff-dismiss:hover{color:var(--ink-900)}
 .sim-root .home-handoff-dismiss:active{transform:scale(.96)}
 
-/* "Hoy" · Ambientes & Sensores: 2×2 fija (no auto-fit a 4 columnas en
-   pantallas anchas) — colapsa a 1 columna por debajo de 640px. */
-.sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+/* "Hoy" · Ambientes & Sensores: 3 columnas fijas (hay 3 cámaras reales) —
+   pasa a 2 por debajo de 960px y a 1 por debajo de 640px. */
+.sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:960px){ .sim-root .home-salas-grid{ grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:640px){ .sim-root .home-salas-grid{ grid-template-columns:1fr!important; } }
 
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
