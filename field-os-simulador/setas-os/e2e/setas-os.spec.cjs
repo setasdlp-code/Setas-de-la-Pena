@@ -109,6 +109,98 @@ test.describe('desktop navigation contract', () => {
     await expect(selectedContextTab(page)).not.toContainText('Recetario');
   });
 
+  test('Formular keeps species and live recipe evaluation visible before advanced tools', async ({ page }) => {
+    await openApp(page, () => localStorage.setItem('sim_preselect_spp', 'p_ostreatus_gris'));
+    await workspaceButton(page, 'formular').click();
+    await contextTab(page, 'Formular').click();
+
+    const species = page.locator('.form-species-context');
+    const recipe = page.locator('#bl-receta');
+    const evaluation = page.locator('#recipe-live-evaluation');
+    const ingredients = page.locator('#bl-ingredientes');
+    const advanced = page.locator('.form-advanced-tools-head');
+
+    await expect(species).toBeVisible();
+    await expect(species).toContainText('Orellana Gris');
+    await expect(recipe).toBeVisible();
+    await expect(evaluation).toBeVisible();
+    await expect(evaluation).toContainText('Evaluación en vivo');
+    await expect(advanced).toContainText('Perito + Automejora');
+    await expect(page.locator('.sim-live-dashboard')).toBeHidden();
+
+    const layout = await page.evaluate(() => {
+      const rect = sel => document.querySelector(sel).getBoundingClientRect();
+      const r = rect('#bl-receta');
+      const e = rect('#recipe-live-evaluation');
+      const i = rect('#bl-ingredientes');
+      const a = rect('.form-advanced-tools-head');
+      return { recipeTop:r.top, evaluationTop:e.top, recipeLeft:r.left, evaluationLeft:e.left, ingredientsTop:i.top, advancedTop:a.top };
+    });
+    expect(Math.abs(layout.recipeTop-layout.evaluationTop)).toBeLessThan(3);
+    expect(layout.evaluationLeft).toBeGreaterThan(layout.recipeLeft);
+    expect(layout.ingredientsTop).toBeGreaterThan(layout.recipeTop);
+    expect(layout.advancedTop).toBeGreaterThan(layout.ingredientsTop);
+
+    await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
+    const liveSummary = page.locator('.sim-live-dashboard');
+    await expect(liveSummary).toBeVisible();
+    await expect(liveSummary).toContainText('Paja de trigo');
+    await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight / 2; });
+    const sticky = await liveSummary.evaluate(el => {
+      const r = el.getBoundingClientRect();
+      return { top:r.top, bottom:r.bottom, viewport:window.innerHeight };
+    });
+    expect(sticky.top).toBeGreaterThanOrEqual(120);
+    expect(sticky.bottom).toBeLessThan(sticky.viewport);
+  });
+
+  test('ingredient groups use the workspace scroll and collapse independently', async ({ page }) => {
+    await openApp(page);
+    await workspaceButton(page, 'formular').click();
+    await contextTab(page, 'Formular').click();
+    await page.getByRole('button', { name: 'Paleta completa', exact: true }).click();
+
+    const list = page.locator('#bl-ingredientes .ing-list');
+    await expect(list).toBeVisible();
+    const scrollContract = await list.evaluate(el => {
+      const style = getComputedStyle(el);
+      const left = el.closest('.builder-left');
+      return {
+        listOverflowY: style.overflowY,
+        listMaxHeight: style.maxHeight,
+        listClientHeight: el.clientHeight,
+        listScrollHeight: el.scrollHeight,
+        leftOverflowY: left ? getComputedStyle(left).overflowY : null,
+      };
+    });
+    expect(scrollContract.listOverflowY).toBe('visible');
+    expect(scrollContract.listMaxHeight).toBe('none');
+    expect(scrollContract.listScrollHeight).toBeLessThanOrEqual(scrollContract.listClientHeight + 1);
+    expect(scrollContract.leftOverflowY).toBe('visible');
+
+    const headers = page.locator('.role-group-hdr');
+    const headerCount = await headers.count();
+    expect(headerCount).toBeGreaterThanOrEqual(4);
+    const first = headers.nth(0);
+    const second = headers.nth(1);
+    await expect(first).toHaveAttribute('aria-expanded', 'true');
+    await expect(second).toHaveAttribute('aria-expanded', 'true');
+
+    await first.click();
+    await expect(first).toBeVisible();
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await expect(second).toHaveAttribute('aria-expanded', 'true');
+
+    await second.click();
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await expect(second).toHaveAttribute('aria-expanded', 'false');
+    await expect(headers).toHaveCount(headerCount);
+
+    await first.click();
+    await expect(first).toHaveAttribute('aria-expanded', 'true');
+    await expect(second).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('repeated hostile navigation sequence does not accumulate stale state', async ({ page }) => {
     await openApp(page);
 
