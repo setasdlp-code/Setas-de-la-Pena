@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 99c4b3960b16e6ba4a702d86ae49d44f3641a6d5794e97cc5f7083f17354559b
+// source-hash: 940e08175cf56a29c59fcb9b561f83eab13d59e1894520282d0f25eab6eb1a46
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2981,102 +2981,12 @@ BATCH (${numBags}×${kgBag} kg):
     const pendingTaskCount = operationalQueue.filter((item) => !["later", "context"].includes(item.bucket)).length;
     const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount;
     const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)" } : { label: "Operación estable", color: "var(--moss-700)" };
-    const parseNum = (str) => {
-      const m = (str || "").match(/-?\d+(?:[.,]\d+)?/);
-      return m ? parseFloat(m[0].replace(",", ".")) : null;
-    };
-    const parseRangeWidth = (str) => {
-      const nums = (str || "").match(/-?\d+(?:[.,]\d+)?/g);
-      if (!nums || nums.length < 2) return null;
-      return Math.abs(parseFloat(nums[nums.length - 1].replace(",", ".")) - parseFloat(nums[0].replace(",", ".")));
-    };
-    const genSpark = (seedStr, mid, amplitude) => {
-      let seed = 0;
-      for (let i = 0; i < seedStr.length; i++) seed = seed * 31 + seedStr.charCodeAt(i) >>> 0;
-      const wave = (n) => Math.sin(seed * 0.013 + n) * 0.62 + Math.sin(seed * 0.031 + n * 2.7) * 0.28 + Math.sin(seed * 0.057 + n * 5.1) * 0.1;
-      const N = 24, W = 280, H = 40;
-      const pts = Array.from({ length: N }, (_, i) => mid + wave(i * 0.5) * amplitude);
-      const mn = Math.min(...pts), mx = Math.max(...pts), span = Math.max(0.1, mx - mn);
-      const coords = pts.map((v, i) => [(i / (N - 1) * W).toFixed(1), ((1 - (v - mn) / span) * H).toFixed(1)]);
-      return { d: coords.map((c) => c.join(",")).join(" "), endY: coords[coords.length - 1][1] };
-    };
-    const salaSpark = (s) => {
-      const tempVal = parseNum(s.temp), tempW = parseRangeWidth(s.tempRango);
-      const humVal = parseNum(s.hum), humW = parseRangeWidth(s.humRango);
-      const co2Val = parseNum(s.co2);
-      if (tempVal === null || tempW === null || humVal === null || humW === null || co2Val === null) return null;
-      return {
-        temp: genSpark(s.id + "t", tempVal, tempW / 2 + 0.3),
-        hum: genSpark(s.id + "h", humVal, humW / 2 + 1),
-        co2: genSpark(s.id + "c", co2Val, co2Val * 0.06 + 20)
-      };
-    };
-    const salas = [
-      {
-        id: "sala-1",
-        nombre: "Sala 1 · Incubación",
-        fase: "Colonización en oscuridad",
-        temp: "22.4°C",
-        tempRango: "20–24°C",
-        hum: "76%",
-        humRango: "70–80%",
-        co2: "3.150 ppm",
-        co2Note: "Colonización micelial",
-        estadoLabel: "En Rango",
-        bolsas: bolsasIncubacion || 36,
-        capacidad: 48,
-        accent: "var(--slate-500)",
-        icon: IconSprout
-      },
-      {
-        id: "sala-2",
-        nombre: "Sala 2 · Fructificación A",
-        fase: "Orellana / Pleurotus",
-        temp: "16.5°C",
-        tempRango: "14–18°C",
-        hum: "88%",
-        humRango: "85–92%",
-        co2: "780 ppm",
-        co2Note: "Ventilación activa (12 R/h)",
-        estadoLabel: "Fructificación",
-        bolsas: bolsasFructificacion || 24,
-        capacidad: 36,
-        accent: "var(--moss-500)",
-        icon: IconMushroom
-      },
-      {
-        id: "sala-3",
-        nombre: "Sala 3 · Cámara Climatizada",
-        fase: "Shiitake & Melena de León",
-        temp: "17.8°C",
-        tempRango: "16–20°C",
-        hum: "93%",
-        humRango: "90–95%",
-        co2: "920 ppm",
-        co2Note: "Nebulización ultrasónica",
-        estadoLabel: "En Rango",
-        bolsas: 16,
-        capacidad: 24,
-        accent: "var(--sand-500)",
-        icon: IconSnowflake
-      },
-      {
-        id: "area-tecnica",
-        nombre: "Área Técnica · Bodega & Autoclave",
-        fase: "Preparación de sustratos Tenjo",
-        temp: "14.0°C",
-        tempRango: "Ambiente Tenjo",
-        hum: "62%",
-        humRango: "Almacén seco",
-        co2: "420 ppm",
-        co2Note: "Autoclave 121°C / 15 PSI Standby",
-        estadoLabel: "Operativo",
-        bolsas: `${totalStockKg.toFixed(0)} kg`,
-        capacidad: `${stockIds.size} insumos`,
-        accent: "var(--ink-500)",
-        icon: IconBox
-      }
-    ];
+    let camaras = [];
+    try {
+      camaras = JSON.parse(props.hoyCamarasJson || "[]");
+    } catch (e) {
+      camaras = [];
+    }
     const pipelineStages = [
       {
         num: "01",
@@ -3092,7 +3002,7 @@ BATCH (${numBags}×${kgBag} kg):
         num: "02",
         title: "Inoculación & Incubación",
         sub: "Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%",
-        badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
+        badge: `${bolsasIncubacion} bolsas en incubación`,
         active: bolsasIncubacion > 0,
         linkTab: "bitacora",
         accent: "var(--slate-500)",
@@ -3173,7 +3083,31 @@ BATCH (${numBags}×${kgBag} kg):
         r.label
       );
     }))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, border: "1px solid var(--slate-500)", borderRadius: "var(--r-sm)", padding: "10px 14px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--slate-700)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "Leído")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), (() => {
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, alignItems: "start" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
+      let tasksHoy = [], recentActivity = [];
+      try {
+        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
+      } catch (e) {
+        tasksHoy = [];
+      }
+      try {
+        recentActivity = JSON.parse(props.recentActivityJson || "[]");
+      } catch (e) {
+        recentActivity = [];
+      }
+      if (!tasksHoy.length && !recentActivity.length) return null;
+      const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
+      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · SEGUIMIENTO DEL DÍA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Tareas y Actividad")), tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, props.tasksOpenCount)), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px" } }, tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, style: { display: "flex", alignItems: "center", gap: 2, padding: "4px 12px 4px 4px", border: "1px solid var(--paper-300)", borderRadius: "var(--r-sm)", opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
+          "aria-pressed": t.done,
+          "aria-label": "Marcar tarea",
+          style: { cursor: "pointer", flexShrink: 0, width: 36, height: 36, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${t.done ? "var(--moss-600)" : "var(--paper-300)"}`, background: t.done ? "var(--moss-600)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
+      ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 3 } }, t.prio)))), recentActivity.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", marginTop: tasksHoy.length > 0 ? 16 : 0, paddingTop: tasksHoy.length > 0 ? 16 : 0, borderTop: tasksHoy.length > 0 ? "1px solid var(--paper-300)" : "none" } }, recentActivity.map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: ev.accent, marginTop: 6 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ev.typeLabel), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--slate-600)" } }, ev.container)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1 } }, ev.note)))))));
+    })(), (() => {
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, alignItems: "start" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN B · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
         gap: 12
@@ -3213,40 +3147,16 @@ BATCH (${numBags}×${kgBag} kg):
         { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
         { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
       ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), style: { cursor: "pointer", flex: "1 0 100px", minWidth: 100, textAlign: "left", background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-lg)", color: m.color || "var(--ink-900)" } }, m.value), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, m.label)))))));
-    })(), (() => {
-      let tasksHoy = [], recentActivity = [];
-      try {
-        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
-      } catch (e) {
-        tasksHoy = [];
-      }
-      try {
-        recentActivity = JSON.parse(props.recentActivityJson || "[]");
-      } catch (e) {
-        recentActivity = [];
-      }
-      if (!tasksHoy.length && !recentActivity.length) return null;
-      const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
-      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SEGUIMIENTO DEL DÍA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Tareas y Actividad")), tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, props.tasksOpenCount)), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px" } }, tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, style: { display: "flex", alignItems: "center", gap: 2, padding: "4px 12px 4px 4px", border: "1px solid var(--paper-300)", borderRadius: "var(--r-sm)", opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
-          "aria-pressed": t.done,
-          "aria-label": "Marcar tarea",
-          style: { cursor: "pointer", flexShrink: 0, width: 36, height: 36, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
-        },
-        /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${t.done ? "var(--moss-600)" : "var(--paper-300)"}`, background: t.done ? "var(--moss-600)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
-      ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 3 } }, t.prio)))), recentActivity.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", marginTop: tasksHoy.length > 0 ? 16 : 0, paddingTop: tasksHoy.length > 0 ? 16 : 0, borderTop: tasksHoy.length > 0 ? "1px solid var(--paper-300)" : "none" } }, recentActivity.map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: ev.accent, marginTop: 6 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ev.typeLabel), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--slate-600)" } }, ev.container)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1 } }, ev.note)))))));
-    })(), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN B · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Telemetría de Salas de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● 4 zonas monitoreadas")), /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, salas.map((s) => {
-      const spark = salaSpark(s);
+    })(), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Cámaras de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● ", camaras.length, " ", camaras.length === 1 ? "cámara monitoreada" : "cámaras monitoreadas")), /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, camaras.map((c) => {
+      const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
-          key: s.id,
+          key: c.id,
           style: {
             background: "var(--paper-0)",
             border: "1px solid var(--border-soft)",
-            borderTop: `3px solid ${s.accent}`,
+            borderTop: `3px solid ${c.estadoAccent || "var(--ink-500)"}`,
             borderRadius: "var(--r-md)",
             padding: "20px",
             display: "flex",
@@ -3256,11 +3166,11 @@ BATCH (${numBags}×${kgBag} kg):
             boxShadow: "var(--shadow-card-rest)"
           }
         },
-        /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: s.accent } }, /* @__PURE__ */ React.createElement(s.icon, { size: 14 })), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)", color: "var(--ink-900)" } }, s.nombre)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, padding: "2px 8px", borderRadius: "var(--r-xs)", background: "var(--status-active-bg)", color: "var(--moss-700)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, s.estadoLabel)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 14 } }, s.fase), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "10px 8px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Temp"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.temp), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, s.tempRango)), /* @__PURE__ */ React.createElement("div", { style: { borderLeft: "1px solid var(--paper-300)", borderRight: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Humedad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.hum), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, s.humRango)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "CO₂"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, s.co2), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-400)" } }, "PPM")))),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--paper-300)", paddingTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("span", null, "Ocupación / Carga:"), /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)", fontFamily: "var(--font-body)", fontWeight: 700 } }, s.bolsas, " ", /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, color: "var(--ink-500)" } }, "/ ", s.capacidad))),
-        spark && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Tendencia"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoCamaras && props.onGoCamaras(), style: { display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--coral-600)", fontWeight: 700 } }, /* @__PURE__ */ React.createElement(IconCamera, { size: 11 }), " Cámaras →")), /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 280 40", preserveAspectRatio: "none", role: "img", "aria-label": `Tendencia últimas horas en ${s.nombre}: temperatura, humedad y CO₂`, style: { width: "100%", height: 36, overflow: "visible", display: "block" } }, /* @__PURE__ */ React.createElement("polyline", { points: spark.temp.d, fill: "none", stroke: "var(--coral-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: spark.hum.d, fill: "none", stroke: "var(--slate-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: spark.co2.d, fill: "none", stroke: "var(--moss-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: spark.temp.endY, r: "3", fill: "var(--coral-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: spark.hum.endY, r: "3", fill: "var(--slate-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: spark.co2.endY, r: "3", fill: "var(--moss-500)" })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginTop: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--coral-500)", display: "inline-block" } }), "Temp."), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--slate-500)", display: "inline-block" } }), "Humedad"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--moss-500)", display: "inline-block" } }), "CO₂")))
+        /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: c.estadoAccent || "var(--ink-500)" } }, /* @__PURE__ */ React.createElement(IconCamera, { size: 14 })), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)", color: "var(--ink-900)" } }, c.name)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, padding: "2px 8px", borderRadius: "var(--r-xs)", background: "var(--status-active-bg)", color: "var(--moss-700)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, c.estadoLabel)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 14 } }, "Zona ", c.zona, " · ", c.sppName), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "10px 8px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Temp"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, c.liveTemp, "°C")), /* @__PURE__ */ React.createElement("div", { style: { borderLeft: "1px solid var(--paper-300)", borderRight: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Humedad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, c.liveHum, "%")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "CO₂"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, c.liveCo2, " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-micro)" } }, "ppm")))), c.hasLiveAlert && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--coral-700)", marginTop: 8 } }, c.liveAlertNote)),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--paper-300)", paddingTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("span", null, "Ocupación / Carga:"), /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)", fontFamily: "var(--font-body)", fontWeight: 700 } }, c.occupancy, "% ", /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, color: "var(--ink-500)" } }, "· ", c.capKg, " kg cap."))),
+        hasSpark && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Tendencia"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onOpenCamara && props.onOpenCamara(c.id), style: { display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--coral-600)", fontWeight: 700 } }, /* @__PURE__ */ React.createElement(IconCamera, { size: 11 }), " Ver detalle →")), /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 280 40", preserveAspectRatio: "none", role: "img", "aria-label": `Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`, style: { width: "100%", height: 36, overflow: "visible", display: "block" } }, /* @__PURE__ */ React.createElement("polyline", { points: c.tempSpark, fill: "none", stroke: "var(--coral-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: c.humSpark, fill: "none", stroke: "var(--slate-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: c.co2Spark, fill: "none", stroke: "var(--moss-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.tempSparkEndY, r: "3", fill: "var(--coral-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.humSparkEndY, r: "3", fill: "var(--slate-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.co2SparkEndY, r: "3", fill: "var(--moss-500)" })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginTop: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--coral-500)", display: "inline-block" } }), "Temp."), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--slate-500)", display: "inline-block" } }), "Humedad"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--moss-500)", display: "inline-block" } }), "CO₂")))
       );
-    }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · MÓDULOS DE CAMPO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Espacios de Trabajo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Flujos principales")), /* @__PURE__ */ React.createElement("div", { style: {
+    }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · MÓDULOS DE CAMPO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Espacios de Trabajo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Flujos principales")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: props.isAdmin !== false ? "repeat(auto-fit, minmax(280px, 1fr))" : "repeat(auto-fit, minmax(320px, 1fr))",
       gap: 20
@@ -3314,7 +3224,7 @@ BATCH (${numBags}×${kgBag} kg):
       borderRadius: "var(--r-md)",
       padding: "28px",
       boxShadow: "var(--shadow-card-rest)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · CICLO BIOLÓGICO TENJO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Pipeline de Lotes & Fases de Cultivo")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Ciclo total promedio: ~42–48 días")), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN E · CICLO BIOLÓGICO TENJO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Pipeline de Lotes & Fases de Cultivo")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Ciclo total promedio: ~42–48 días")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
       gap: 12,

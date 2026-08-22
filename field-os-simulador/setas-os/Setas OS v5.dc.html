@@ -987,7 +987,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-go-camaras="{{ goCamaras }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -2906,6 +2906,7 @@ class Component extends DCLogic {
       };
     });
     const camD = s.camDetail ? camView.find(c=>c.id===s.camDetail) : null;
+    const camViewLive = camView.map(c=>({ ...c, ...this.liveMonitor(c) }));
 
     // ---- Rendimiento: BE por sustrato (receta) y por especie ----
     const beOf = y => y.freshG/(y.dryKg*1000)*100;
@@ -3157,8 +3158,20 @@ class Component extends DCLogic {
       ],
       commercialRows:commercialClients,
       zonas:ZONAS,
-      camaras: camView.map(c=>({ ...c, ...this.liveMonitor(c), open:()=>this.setState({camDetail:c.id}) })),
+      camaras: camViewLive.map(c=>({ ...c, open:()=>this.setState({camDetail:c.id}) })),
       hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
+      // Cámaras reales (no las "salas" ilustrativas que Hoy usaba antes) para la
+      // vista previa de Ambientes & Sensores en Hoy — mismos datos que alimentan
+      // el módulo Cámaras, sin inventar una correspondencia con las 4 salas mock.
+      hoyCamarasJson: JSON.stringify(camViewLive.map(c=>({
+        id:c.id, name:c.name, zona:c.zona, sppName:c.sppName, estadoLabel:c.estadoLabel, estadoAccent:c.estadoAccent,
+        count:c.count, capKg:c.capKg, occupancy:c.occupancy, note:c.note,
+        liveTemp:c.liveTemp, liveHum:c.liveHum, liveCo2:c.liveCo2, liveStatusLabel:c.liveStatusLabel,
+        hasLiveAlert:c.hasLiveAlert, liveAlertNote:c.liveAlertNote,
+        tempSpark:c.tempSpark, humSpark:c.humSpark, co2Spark:c.co2Spark,
+        tempSparkEndY:c.tempSparkEndY, humSparkEndY:c.humSparkEndY, co2SparkEndY:c.co2SparkEndY,
+      }))),
+      onOpenCamara:(id)=>this.setState({module:'camaras',capture:false,camDetail:id}),
       simTab:s.simTab, simTabNonce:s.simTabNonce, bitSubtab:s.bitSubtab, bitSubtabNonce:s.bitSubtabNonce,
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
