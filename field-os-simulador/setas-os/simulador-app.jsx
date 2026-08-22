@@ -4596,9 +4596,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
             </div>
-            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <div role="group" aria-label="Modo de trabajo global" style={{display:'flex',gap:6,alignItems:'center'}}>
               <button
                 onClick={()=>setGlobalWorkMode('produccion')}
+                aria-pressed={globalMode==='produccion'}
                 style={{
                   fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
                   background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
@@ -4606,10 +4607,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
                   borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
                 }}>
-                <IconFactory size={12}/> Producción
+                <IconFactory size={12} aria-hidden="true"/> Producción
               </button>
               <button
                 onClick={()=>setGlobalWorkMode('investigacion')}
+                aria-pressed={globalMode==='investigacion'}
                 style={{
                   fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
                   background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
@@ -4617,7 +4619,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
                   borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
                 }}>
-                <IconMicroscope size={12}/> Investigación
+                <IconMicroscope size={12} aria-hidden="true"/> Investigación
               </button>
               {recipe.length>0&&(
                 <button
@@ -4858,8 +4860,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:18,color:'var(--ink-900)',lineHeight:1}}>Ingredientes</span>
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input className="search" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+                <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
               </div>
               {showPrices&&(
                 <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
@@ -4896,31 +4898,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
               )}
-                <div className="bodega-bar" role="button" tabIndex={0} onClick={()=>goTab('inventario')} onKeyDown={e=>{if(e.key==='Enter')goTab('inventario');}} style={{cursor:'pointer'}} title="Abrir bodega / inventario">
-                <span className="bodega-bar-icon" style={{color:pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)',display:'flex',alignItems:'center'}}><IcoBox color={pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)'}/></span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div className="bodega-bar-title">{pantryIds.length>0?pantryIds.length+' ingredientes en bodega':'Bodega vacía — sin stock registrado'}</div>
-                  {pantryIds.length>0&&<div className="bodega-bar-sub">{Object.values(stockMap).reduce((a,b)=>a+b,0).toFixed(1)} kg disponibles</div>}
-                </div>
+                <div className="bodega-bar" title="Abrir bodega / inventario">
+                <button
+                  type="button"
+                  onClick={()=>goTab('inventario')}
+                  style={{display:'flex',alignItems:'center',gap:'inherit',flex:1,minWidth:0,background:'none',border:'none',padding:0,margin:0,font:'inherit',color:'inherit',textAlign:'left',cursor:'pointer'}}
+                >
+                  <span className="bodega-bar-icon" aria-hidden="true" style={{color:pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)',display:'flex',alignItems:'center'}}><IcoBox color={pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)'}/></span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="bodega-bar-title">{pantryIds.length>0?pantryIds.length+' ingredientes en bodega':'Bodega vacía — sin stock registrado'}</div>
+                    {pantryIds.length>0&&<div className="bodega-bar-sub">{Object.values(stockMap).reduce((a,b)=>a+b,0).toFixed(1)} kg disponibles</div>}
+                  </div>
+                </button>
                 <div className="bodega-bar-right">
-                  <button className={'tog'+(usePantry?' on':'')} onClick={e=>{e.stopPropagation();setUsePantry(!usePantry);}} title={pantryIds.length===0?'Carga ingredientes en Bodega primero':(usePantry?'Ver todos los ingredientes':'Ver solo bodega')}>{usePantry?'Ver todos':'Ver bodega'}</button>
+                  <button className={'tog'+(usePantry?' on':'')} aria-pressed={usePantry} onClick={e=>{e.stopPropagation();setUsePantry(!usePantry);}} title={pantryIds.length===0?'Carga ingredientes en Bodega primero':(usePantry?'Ver todos los ingredientes':'Ver solo bodega')}>{usePantry?'Ver todos':'Ver bodega'}</button>
                   <button className="bodega-bar-refresh" onClick={e=>{e.stopPropagation();goTab('inventario');}} title="Actualizar stock" aria-label="Actualizar stock">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
                   </button>
                 </div>
               </div>
               {usePantry&&pantryIds.length>0&&(
                 <div className="pantry-grid" style={{marginBottom:8}}>
                   {pantryIds.slice(0,12).map(id=>{const g=INGS.find(i=>i.id===id);const kg=stockMap[id]||0;return g?(
-                    <span key={id} className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}{' ✕'}</span>
+                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true"> ✕</span></button>
                   ):null;})}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
-              <div className="cats">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
+              <div className="cats" role="group" aria-label="Filtrar por categoría">
+                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
+                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
               </div>
               <div className="ing-list">
                 {(()=>{
@@ -5026,12 +5034,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     return(
                       <div key={grp.key} className="role-group-box" style={{marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',overflow:'hidden'}}>
-                        <div
+                        <button
+                          type="button"
                           onClick={()=>toggleRoleCollapse(grp.key)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={e=>{if(e.key==='Enter') toggleRoleCollapse(grp.key);}}
+                          aria-expanded={!isCollapsed}
                           style={{
+                            width:'100%',
+                            font:'inherit',
+                            color:'inherit',
+                            border:'none',
                             padding:'8px 10px',
                             background:'var(--paper-100)',
                             borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',
@@ -5039,10 +5050,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             justifyContent:'space-between',
                             alignItems:'center',
                             cursor:'pointer',
-                            userSelect:'none'
+                            userSelect:'none',
+                            textAlign:'left'
                           }}>
                           <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{display:'inline-flex',color:'var(--ink-700)'}}><grp.icon size={16}/></span>
+                            <span aria-hidden="true" style={{display:'inline-flex',color:'var(--ink-700)'}}><grp.icon size={16}/></span>
                             <div>
                               <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
                                 {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
@@ -5056,11 +5068,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
                               {compatCount} comp.
                             </span>
-                            <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
+                            <span aria-hidden="true" style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
                               ▼
                             </span>
                           </div>
-                        </div>
+                        </button>
                         {!isCollapsed&&(
                           <div style={{padding:'4px 6px'}}>
                             {grpIngs.map(renderIngRow)}
@@ -5105,9 +5117,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
@@ -5159,7 +5171,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:8}}>
                         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
                         {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
-                          <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
+                          <button key={k} className={'chip'+(optUseStock===v?' on':'')} aria-pressed={optUseStock===v} onClick={()=>setOptUseStock(v)}>{l}</button>
                         ))}
                       </div>
                       {/* ── barra resumen live: score + EB + costo ── */}
@@ -5207,9 +5219,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
                   </div>
                   {showFlush&&<FlushChart an={an}/>}
                   {showCompChart&&<CompositionChart recipe={recipe}/>}
@@ -5246,7 +5258,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </select>
                     </div>
                   )}
-                  <button className={`tog${normMode?' on':''}`} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
+                  <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
                   <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
                 </div>}
               </div>
@@ -5361,7 +5373,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="bwrap" id="bl-batch">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:13}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
-                    <button className={`tog${showBatch?' on':''}`} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
+                    <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
@@ -5440,18 +5452,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
               )}
               {recipe.length>0&&<div className="act-row no-print">
                 <button className="btn" onClick={()=>window.print()}>Imprimir ficha</button>
-                <button className="btn pri" onClick={exportR}>↓ Exportar .txt</button>
+                <button className="btn pri" onClick={exportR}><span aria-hidden="true">↓</span> Exportar .txt</button>
                 <button className="btn" onClick={()=>{
                   if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible.'});return;}
                   const el=document.querySelector('.print-panel');
                   if(!el){setNoticeDlg({msg:'Genera análisis primero.'});return;}
                   html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
-                }}>↓ PDF</button>
+                }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
                   const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
-                }}>↓ JSON</button>
+                }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{
                   const input=document.createElement('input');input.type='file';input.accept='.json';
                   input.onchange=e=>{
@@ -5473,14 +5485,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     reader.readAsText(file);
                   };
                   input.click();
-                }}>↑ Importar</button>
+                }}><span aria-hidden="true">↑</span> Importar</button>
               </div>}
               
 {/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
 
 {recipe.length>0&&(
                 <div className="sbar">
-                  <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
+                  <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
@@ -5498,7 +5510,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel treatment-section" id="bl-tratamiento">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento recomendado</div>
-                <button className={`tog${showGuide?' on':''}`} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
+                <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
               </div>
               <div className={`tcard ${tr.col}`}>
                 <div className="tttl">{tr.name}</div>
@@ -5578,13 +5590,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
-                <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
+                <button className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
                   <div className="seg-row" style={{marginBottom:14}}>
-                    <button className={'seg'+(formularMode==='auto'?' on':'')} onClick={()=>setFormularMode('auto')}>Automática</button>
-                    <button className={'seg'+(formularMode==='manual'?' on':'')} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
+                    <button className={'seg'+(formularMode==='auto'?' on':'')} aria-pressed={formularMode==='auto'} onClick={()=>setFormularMode('auto')}>Automática</button>
+                    <button className={'seg'+(formularMode==='manual'?' on':'')} aria-pressed={formularMode==='manual'} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
                   </div>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
                     {formularMode==='auto'
@@ -5597,8 +5609,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <select style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
+                                <div id="opt-target-label" style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
+                                <select aria-labelledby="opt-target-label" style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
                                   value={optTarget} onChange={e=>setOptTarget(e.target.value)}>
                                   {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                                 </select>
@@ -5616,7 +5628,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
                                 <div className="chip-row">
                                   {[['stock','Solo bodega',true],['full','Paleta completa',false]].map(([k,l,v])=>(
-                                    <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
+                                    <button key={k} className={'chip'+(optUseStock===v?' on':'')} aria-pressed={optUseStock===v} onClick={()=>setOptUseStock(v)}>{l}</button>
                                   ))}
                                 </div>
                               </div>
@@ -5625,7 +5637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
                                 <div className="chip-row">
                                   {Object.entries(OPT_PROFILES).map(([k,p])=>(
-                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
+                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} aria-pressed={optProfile===k} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
                                   ))}
                                 </div>
                               </div>
@@ -5822,9 +5834,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <div role="button" tabIndex={0} onClick={()=>{goTab('inventario');setInvTab('compra');}} onKeyDown={e=>{if(e.key==='Enter'){goTab('inventario');setInvTab('compra');}}} style={{cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
-                              </div>
+                              </button>
                             )}
                           </div>
                         </div>
