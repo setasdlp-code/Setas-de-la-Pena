@@ -69,6 +69,7 @@
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   [role="dialog"] { overscroll-behavior:contain; }
+  .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
   .skip-link { position:fixed;left:12px;top:10px;z-index:1000;transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
   .skip-link:focus-visible { transform:translateY(0); }
   /* Tactile press feedback — inline styles (used on ~all buttons here) can't express
@@ -114,7 +115,7 @@
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
-  .workspace-subnav { position:sticky; top:43px; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .workspace-subnav { position:sticky; top:0; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .workspace-subnav::-webkit-scrollbar { display:none; }
   .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
@@ -158,15 +159,9 @@
     .rail-btn.on { background:var(--paper-2); }
     .rail-btn span { font-size:8.5px; }
     .app-main { margin-left:0; padding-bottom:62px; }
-    .workspace-subnav { top:43px; min-height:44px; padding:0 10px; }
+    .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     .workspace-tab { min-height:44px; padding:8px 10px; }
 
-    /* Header simplificado: el clima completo y el hint "⌘K" no son esenciales
-       en móvil — sobran espacio vertical/horizontal en una fila que ya compite
-       con el breadcrumb y los botones de acción. */
-    .fos-weather-text { display:none; }
-    .fos-hide-guantes { display:none; }
-    .fos-btn-label { display:none; }
     /* El botón flotante de cerrar sesión (firebase/auth-gate.js) ya no tiene
        alternativa en móvil desde que el picker de operador (que llevaba
        "Cerrar sesión" en su menú) se reemplazó por el selector de rol —
@@ -221,28 +216,7 @@
   </nav>
 
   <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
-
-    <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
-      <span data-testid="breadcrumb" style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
-        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
-          <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
-        </button>
-        <div data-testid="role-selector" role="group" aria-label="Rol de operación" style="display:inline-flex;border:1px solid var(--border-soft);border-radius:999px;overflow:hidden;">
-          <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
-            <button onClick="{{ ro.select }}" aria-pressed="{{ ro.sel }}" style="{{ ro.style }}">{{ ro.label }}</button>
-          </sc-for>
-        </div>
-        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:14px;height:14px;"><path d="M6 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V5.5a1.5 1.5 0 0 1 3 0V12"></path><path d="M15 12V8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-3"></path></svg>
-          <span class="fos-btn-label">Guantes</span>
-        </button>
-        <button onClick="{{ openCmd }}" aria-label="Buscar" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <span class="fos-btn-label">Buscar</span> <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
-        </button>
-      </div>
-    </div>
+    <span data-testid="breadcrumb" class="sr-only" aria-live="polite">{{ crumb }}</span>
 
     <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
       <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
@@ -641,7 +615,7 @@
             <div class="fos-scroll" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">
               <sc-for list="{{ photoStrip }}" as="p" hint-placeholder-count="3">
                 <div style="flex:none;display:flex;flex-direction:column;gap:5px;">
-                  <img ref="{{ p.ref }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de seguimiento" style="width:132px;height:132px;object-fit:cover;border:1px solid var(--border-soft);border-radius:var(--radius-sm);">
+                  <img ref="{{ p.ref }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de seguimiento" width="132" height="132" style="width:132px;height:132px;object-fit:cover;border:1px solid var(--border-soft);border-radius:var(--radius-sm);">
                   <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-1);">{{ p.label }}</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);">{{ p.date }}</span>
                 </div>
@@ -686,7 +660,7 @@
                     <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.date }}</span></div>
                     <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
                     <sc-if value="{{ ev.hasPhoto }}" hint-placeholder-val="{{ false }}">
-                      <img ref="{{ ev.photoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo" style="width:84px;height:84px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);margin-top:8px;">
+                      <img ref="{{ ev.photoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo" width="84" height="84" style="width:84px;height:84px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);margin-top:8px;">
                     </sc-if>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;">
                       <span style="font:var(--t-caption);color:var(--text-disabled);">{{ ev.by }}</span>
@@ -1818,7 +1792,7 @@
       <div style="display:flex;flex-direction:column;gap:12px;max-height:56vh;overflow-y:auto;">
       <sc-for list="{{ labelItems }}" as="li" hint-placeholder-count="1">
       <div class="qr-print" style="border:1px solid var(--border-strong);border-radius:12px;padding:18px;background:#fff;display:flex;gap:16px;align-items:center;">
-        <img ref="{{ li.qrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Código QR del contenedor" style="width:120px;height:120px;flex:none;">
+        <img ref="{{ li.qrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Código QR del contenedor" width="120" height="120" style="width:120px;height:120px;flex:none;">
         <div style="min-width:0;flex:1;">
           <div style="font-family:var(--font-sans);font-weight:900;font-size:27px;color:var(--ink-0);line-height:1;letter-spacing:-.01em;">{{ li.id }}</div>
           <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;color:var(--text-secondary);margin-top:3px;">{{ li.sci }}</div>

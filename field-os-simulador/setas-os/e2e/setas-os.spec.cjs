@@ -24,7 +24,7 @@ function contextTab(page, name) {
 }
 
 function breadcrumb(page) {
-  return page.locator('main.app-main > div').first().locator('span').first();
+  return page.locator('[data-testid="breadcrumb"]');
 }
 
 async function expectWorkspace(page, key, tabLabel) {
@@ -171,12 +171,15 @@ test.describe('mobile navigation contract', () => {
     }
   });
 
-  test('species bridge never overlaps the bottom rail', async ({ page }) => {
+  test('Formular omits the species bridge and remaining bridges never overlap the bottom rail', async ({ page }) => {
     await openApp(page);
     await workspaceButton(page, 'formular').click();
     await contextTab(page, 'Formular').click();
 
     const bridge = page.locator('.species-bridge');
+    await expect(bridge).toHaveCount(0);
+
+    await contextTab(page, 'Recetario').click();
     await expect(bridge).toBeVisible();
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight; });
 
