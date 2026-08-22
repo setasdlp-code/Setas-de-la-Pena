@@ -2657,4 +2657,102 @@
 .sim-root .home-tareas-lotes-row{display:grid;grid-template-columns:1fr 3fr;gap:20px;align-items:stretch}
 @media(max-width:900px){ .sim-root .home-tareas-lotes-row{ grid-template-columns:1fr!important; } }
 
+/* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
+   Intentionally scoped to the two containers rendered only when
+   tab === 'formular'. The Control cockpit, shell and other workspaces
+   remain untouched and act as the visual reference. */
+.sim-root .builder-wrap,
+.sim-root .formular-workspace{
+  --font-body:var(--font-display);
+  --form-control-radius:var(--radius-sm);
+  --form-control-min-height:44px;
+  --form-control-padding:8px 12px;
+  --form-control-border:1px solid var(--border-strong);
+  --form-control-bg:var(--paper-0);
+  --form-control-fg:var(--text-metadata);
+  --form-control-active-bg:var(--accent-olive);
+  --form-control-active-fg:var(--paper-0);
+  font-family:var(--font-display);
+}
+
+.sim-root :is(.builder-wrap,.formular-workspace) .panel{
+  border:var(--form-control-border);
+  border-radius:var(--form-control-radius);
+  box-shadow:none;
+}
+
+.sim-root :is(.builder-wrap,.formular-workspace) .sec{
+  font-family:var(--font-display);
+  font-size:20px;
+  font-style:normal;
+  font-weight:700;
+}
+
+.sim-root .builder-wrap .cat,
+.sim-root .formular-workspace :is(.chip,.seg){
+  min-height:var(--form-control-min-height);
+  padding:var(--form-control-padding);
+  border:var(--form-control-border);
+  border-radius:var(--form-control-radius);
+  background:var(--form-control-bg);
+  color:var(--form-control-fg);
+  font-family:var(--font-mono);
+  font-size:var(--text-xs);
+  font-weight:600;
+  letter-spacing:var(--tracking-button);
+  text-transform:uppercase;
+  transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);
+}
+
+.sim-root .builder-wrap .cat:hover,
+.sim-root .formular-workspace :is(.chip,.seg):hover{
+  border-color:var(--accent-olive);
+  color:var(--ink-0);
+}
+
+.sim-root .builder-wrap .cat.on,
+.sim-root .formular-workspace :is(.chip,.seg).on{
+  border-color:var(--accent-olive)!important;
+  background:var(--form-control-active-bg)!important;
+  color:var(--form-control-active-fg)!important;
+}
+
+.sim-root .formular-workspace .seg-row{
+  gap:6px;
+  border:0;
+  border-radius:0;
+  overflow:visible;
+}
+.sim-root .formular-workspace .seg:first-child{border-left:var(--form-control-border)}
+
+.sim-root .builder-wrap .ing-card-item{
+  border:var(--form-control-border)!important;
+  border-radius:var(--form-control-radius)!important;
+  background:var(--paper-0)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.sim-root .builder-wrap .ing-card-item:hover{
+  border-color:var(--accent-olive)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.sim-root .builder-wrap .ing-card-item .ing-item{border-radius:var(--form-control-radius)!important}
+.sim-root .builder-wrap .ing-card-item .ing-name{
+  font-family:var(--font-display)!important;
+  font-size:14.5px!important;
+  font-weight:600!important;
+}
+.sim-root .builder-wrap .ing-card-item .ing-meta span{font-family:var(--font-mono)!important}
+
+.sim-root .builder-wrap .role-group-box{
+  border:var(--form-control-border)!important;
+  border-radius:var(--form-control-radius)!important;
+  box-shadow:none!important;
+}
+.sim-root .builder-wrap .role-group-box > button{
+  background:var(--paper-1)!important;
+  border-radius:0!important;
+}
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

@@ -4836,7 +4836,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="builder-left">
             <div className="panel" id="bl-ingredientes">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
-                <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:18,color:'var(--ink-900)',lineHeight:1}}>Ingredientes</span>
+                <span style={{fontFamily:'var(--font-display)',fontStyle:'normal',fontWeight:700,fontSize:18,color:'var(--ink-900)',lineHeight:1}}>Ingredientes</span>
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
                 <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -5564,7 +5564,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-          <div>
+          <div className="formular-workspace">
 {/* ── GENERADOR DE RECETAS ── */}
             <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
@@ -5589,7 +5589,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
                                 <div id="opt-target-label" style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <select aria-labelledby="opt-target-label" style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
+                                <select aria-labelledby="opt-target-label" style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'normal',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
                                   value={optTarget} onChange={e=>setOptTarget(e.target.value)}>
                                   {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                                 </select>
