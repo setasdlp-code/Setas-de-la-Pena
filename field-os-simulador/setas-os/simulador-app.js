@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 046d9be733c18f7fb1ca85e5702125d8a701f2db724b69258539d16457dc95b7
+// source-hash: 752cfdd8f3cf2ac763938581a382d95657e38b78d2b531b436073bd2cae0271f
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
