@@ -78,7 +78,8 @@ test('Formular does not render an empty recipe status bar', () => {
 
 test('Formular exposes one guided species-to-save flow and one shared ingredient origin', () => {
   assert.match(jsx, /Especie → Origen → Ingredientes → Validar y guardar/);
-  assert.match(jsx, /id="form-species" name="formSpecies"/);
+  assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
+  assert.doesNotMatch(jsx, /id="form-species" name="formSpecies"/);
   assert.match(jsx, /aria-label="Origen de ingredientes"/);
   assert.match(jsx, /setOptUseStock\(stockOnly\);\s*setUsePantry\(stockOnly\);/);
   assert.doesNotMatch(jsx, /Modo Producción Oficial/);
@@ -87,8 +88,25 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
   assert.doesNotMatch(jsx, /data-testid="species-bridge"[^>]*role="button"/);
 });
 
+test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
+  assert.match(jsx, /className="form-species-context" aria-labelledby="form-species-context-title"/);
+  assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
+  assert.match(jsx, /Receta activa \+ evaluación en vivo/);
+  assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
+  assert.match(jsx, /Perito \+ Automejora/);
+  assert.match(css, /\.form-recipe-workspace\{[\s\S]*"recipe evaluation"/);
+  assert.match(css, /\.builder-wrap > \.sim-live-dashboard\{[\s\S]*position:sticky/);
+  assert.match(jsx, /const \[showLiveChips,setShowLiveChips\]=useState\(true\)/);
+  assert.match(jsx, /className="live-dash-btn live-dash-recipe-toggle"/);
+});
+
 test('long UI collections use progressive disclosure and mobile-safe layouts', () => {
-  assert.match(jsx, /collapsedRoles.*base_carbono:false,suplemento_n:true,aditivo:true,aireador:true/);
+  assert.match(jsx, /collapsedRoles.*base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false/);
+  assert.match(jsx, /toggleRoleCollapse=.*\[roleKey\]:!prev\[roleKey\]/);
+  assert.match(jsx, /setAllRoleGroups/);
+  assert.match(jsx, /className="role-group-hdr"/);
+  assert.match(jsx, /className="role-group-content" hidden=\{isCollapsed\}/);
+  assert.match(css, /\.builder-wrap \.ing-list\{max-height:none;overflow:visible\}/);
   assert.match(jsx, /compatible\{compatCount===1\?'':'s'\}/);
   assert.match(jsx, /className="inv-table inventory-stock-table"/);
   assert.match(css, /\.inventory-stock-table td::before\{content:attr\(data-label\)/);

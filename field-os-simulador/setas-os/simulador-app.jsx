@@ -965,6 +965,8 @@ const PERITO_STATUS={
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
+const FORM_ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
+const FORM_ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
 const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
@@ -1459,12 +1461,21 @@ const IconPause = ({ size = 12, color = 'currentColor' }) => (
 );
 
 const RecipeGauges=({an,sp,optimalAn,historical})=>{
-  if(!sp||!an||!an.cn) return null;
+  if(!sp||!an||!an.cn) return (
+    <aside className="bg-wrap recipe-live-evaluation is-empty" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
+      <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
+      <div className="recipe-live-empty">
+        <span aria-hidden="true"><IconTarget size={22}/></span>
+        <strong>Aún no hay una fórmula que evaluar</strong>
+        <span>Agrega el primer ingrediente y aquí aparecerán C:N, nitrógeno y EB estimada.</span>
+      </div>
+    </aside>
+  );
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   const blendedEB=blendEBWithHistory(an,historical);
   return (
-    <div className="bg-wrap">
-      <div className="bg-eyebrow">Parámetros de sustrato</div>
+    <aside className="bg-wrap recipe-live-evaluation" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
+      <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
@@ -1492,7 +1503,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 };
 
@@ -1868,13 +1879,11 @@ function App(props){
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  const [showLiveChips,setShowLiveChips]=useState(false);
+  const [showLiveChips,setShowLiveChips]=useState(true);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:true,aditivo:true,aireador:true});
-  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>{
-    if(prev[roleKey]) return {base_carbono:true,suplemento_n:true,aditivo:true,aireador:true,[roleKey]:false};
-    return {...prev,[roleKey]:true};
-  });
+  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
+  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
+  const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   const [optProfile,setOptProfile]=useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
@@ -2208,6 +2217,23 @@ function App(props){
     const roleMatch=cat==='all'||(cat==='aditivo'?['aditivo_ph','aditivo_estructura','aditivo_micronutriente','aditivo_arrancador'].includes(g.role):g.role===cat);
     return ms&&roleMatch;
   }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
+  const visibleIngredients=useMemo(()=>{
+    let rows=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
+    if(showCompatOnly){
+      const compatibleIds=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
+      rows=rows.filter(g=>compatibleIds.has(g.id));
+    }
+    return rows;
+  },[usePantry,fings,pantryIds,showCompatOnly,sKey]);
+  const showRoleGroups=groupByRole&&cat==='all'&&search.trim().length===0;
+  const hasIngredientViewFilters=cat!=='all'||search.trim().length>0||showCompatOnly;
+  const resetIngredientView=()=>{
+    setSearch('');
+    setCat('all');
+    setShowCompatOnly(false);
+    setGroupByRole(true);
+    setAllRoleGroups(false);
+  };
 
   // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
   // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
@@ -4611,11 +4637,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <ol className="form-flow-grid">
               <li className="form-step is-ready">
                 <span className="form-step-num">01</span>
-                <label className="form-step-label" htmlFor="form-species">Especie</label>
-                <select id="form-species" name="formSpecies" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
-                  <option value="" disabled>Elegir especie…</option>
-                  {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
-                </select>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                </div>
                 <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
               </li>
               <li className="form-step is-ready">
@@ -4645,6 +4671,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
               </li>
             </ol>
+          </section>
+
+          <section className="form-species-context" aria-labelledby="form-species-context-title">
+            <div className="form-species-identity">
+              <span className="form-species-kicker">Especie activa</span>
+              <div>
+                <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
+                <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
+              </div>
+            </div>
+            <label className="form-species-picker" htmlFor="form-species-context-select">
+              <span>Cambiar especie</span>
+              <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                <option value="" disabled>Elegir especie…</option>
+                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+              </select>
+            </label>
+            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
+            </div>
           </section>
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
@@ -4677,11 +4726,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="live-dash-bar">
                     {/* Especie y modo */}
                     <div className="live-dash-left">
-                      <span className="live-dash-species" title={sp?.name||'Pleurotus ostreatus'}>
-                        {sp?.name||'Pleurotus'}
+                      <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
+                        Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:globalMode==='produccion'?'rgba(77,98,53,.15)':'rgba(200,90,50,.15)',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-500)',fontWeight:700,textTransform:'uppercase'}}>
-                        {globalMode==='produccion'?'BODEGA':'PALETA'}
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                        evaluación en vivo
                       </span>
                     </div>
 
@@ -4739,7 +4788,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                       <button
                         onClick={()=>setShowLiveChips(!showLiveChips)}
-                        className="live-dash-btn"
+                        className="live-dash-btn live-dash-recipe-toggle"
                         style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
                         aria-label={`${recipe.length} insumos en receta. ${showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}`}
                         aria-expanded={showLiveChips}
@@ -4770,10 +4819,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* Bandeja expandible con detalle, chips e hipervínculos */}
-                  {showLiveChips&&(
+                  {(
                     <div className="live-dash-tray">
                       {/* Sub-navegación rápida */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
+                      <div className="live-dash-secondary-nav" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
                         <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                           {[
                             {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
@@ -4807,7 +4856,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                       {/* Observación perito si aplica */}
                       {limiter&&(
-                        <div style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
+                        <div className="live-dash-limiter" style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
                           <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
                             <IconAlert size={11} color={sm2.txt} />
                             <span>{limiter}</span>
@@ -4825,13 +4874,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           const g=INGS.find(i=>i.id===r.id);
                           if(!g) return null;
                           const isLocked=lockedIds.includes(r.id);
-                          const roleCol=ROLE_COLORS[g.role]||'var(--ink-500)';
+                          const roleCol=FORM_ROLE_COLORS[g.role]||'var(--ink-500)';
                           return(
                             <div
                               key={r.id}
                               className="live-ing-chip"
-                              onClick={()=>document.getElementById(`rec-row-${r.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})}
-                              title={`${g.name} (${ROLE_LABELS[g.role]||g.role}) · ${r.p}%\nClick para editar`}>
+                              title={`${g.name} (${FORM_ROLE_LABELS[g.role]||g.role}) · ${r.p}%`}>
                               <span style={{width:6,height:6,borderRadius:'50%',background:roleCol,flexShrink:0}}></span>
                               <span style={{fontWeight:600}}>{g.name}</span>
                               <span style={{fontFamily:'var(--font-mono)',fontWeight:700,color:isLocked?'var(--coral-600)':'var(--ink-800)',display:'inline-flex',alignItems:'center',gap:2}}>
@@ -4840,6 +4888,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <button
                                 className="live-ing-chip-del"
                                 onClick={(e)=>{e.stopPropagation();remI(r.id);}}
+                                aria-label={`Quitar ${g.name} de la receta`}
                                 title={`Quitar ${g.name}`}>
                                 ×
                               </button>
@@ -4853,11 +4902,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })() : null}
           </div>
-          <div className="builder-cols">
+          <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
+            <header className="active-recipe-workspace-head">
+              <div>
+                <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
+                <h2 id="active-recipe-workspace-title">Receta activa + evaluación en vivo</h2>
+                <p>Los ingredientes de la fórmula y su lectura técnica permanecen juntos y visibles mientras formulas.</p>
+              </div>
+              <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
+            </header>
             <div className="builder-left">
             <div className="panel" id="bl-ingredientes">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
-                <span style={{fontFamily:'var(--font-display)',fontStyle:'normal',fontWeight:700,fontSize:18,color:'var(--ink-900)',lineHeight:1}}>Ingredientes</span>
+              <div className="ingredient-section-head">
+                <div>
+                  <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
+                  <h2>Ingredientes</h2>
+                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
+                </div>
+                <span className="ingredient-section-count" aria-live="polite">
+                  {visibleIngredients.length} de {effectiveINGS.length}
+                </span>
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
                 <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -4871,7 +4935,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
-                  <div style={{maxHeight:260,overflowY:'auto'}}>
+                  <div>
                     {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
                       const isEdited=priceOverrides[ing.id]!==undefined;
                       const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
@@ -4929,15 +4993,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
                 <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
               </div>
-              <div className="ing-list">
+              <div className="ingredient-view-toolbar">
+                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
+                <div>
+                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
+                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
+                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
+                </div>
+              </div>
+              <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
                 {(()=>{
-                  let base=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
+                  const base=visibleIngredients;
                   if(usePantry&&pantryIds.length===0){
                     return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
                   }
-                  if(showCompatOnly){
-                    const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
-                    base=base.filter(g=>compat.has(g.id));
+                  if(base.length===0){
+                    return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
                   }
 
                   const renderIngRow=(ing)=>{
@@ -4977,7 +5048,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   };
 
-                  if(!groupByRole || cat!=='all' || search.trim().length>0){
+                  if(!showRoleGroups){
                     return base.map(renderIngRow);
                   }
 
@@ -5013,6 +5084,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       desc:'Porosidad y difusión de oxígeno gaseoso',
                       primary:g=>g.role==='aireador',
                       fallback:g=>g.cat==='trop'||g.cat==='circ'
+                    },
+                    {
+                      key:'otro',
+                      label:'Otros Insumos',
+                      icon:IconSprout,
+                      desc:'Ingredientes complementarios aún no clasificados en los roles anteriores',
+                      primary:()=>false,
+                      fallback:()=>true
                     }
                   ];
 
@@ -5035,52 +5114,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;
 
                     return(
-                      <div key={grp.key} className="role-group-box" style={{marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',overflow:'hidden'}}>
+                      <section key={grp.key} className={`role-group-box${isCollapsed?' is-collapsed':''}`}>
                         <button
                           type="button"
+                          className="role-group-hdr"
                           onClick={()=>toggleRoleCollapse(grp.key)}
                           aria-expanded={!isCollapsed}
-                          style={{
-                            width:'100%',
-                            font:'inherit',
-                            color:'inherit',
-                            border:'none',
-                            padding:'8px 10px',
-                            background:'var(--paper-100)',
-                            borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',
-                            display:'flex',
-                            justifyContent:'space-between',
-                            alignItems:'center',
-                            cursor:'pointer',
-                            userSelect:'none',
-                            textAlign:'left'
-                          }}>
-                          <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span aria-hidden="true" style={{display:'inline-flex',color:'var(--ink-700)'}}><grp.icon size={16}/></span>
+                          aria-controls={`role-group-${grp.key}`}>
+                          <div className="role-group-heading">
+                            <span className="role-group-icon" aria-hidden="true"><grp.icon size={18}/></span>
                             <div>
-                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
-                                {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
+                              <div className="role-group-title">
+                                {grp.label} <span>({grpIngs.length})</span>
                               </div>
-                              <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.2}}>
-                                {grp.desc}
-                              </div>
+                              <div className="role-group-desc">{grp.desc}</div>
                             </div>
                           </div>
-                          <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
+                          <div className="role-group-summary">
+                            <span className="role-group-compatible">
                               {compatCount} compatible{compatCount===1?'':'s'}
                             </span>
-                            <span aria-hidden="true" style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
-                              ▼
-                            </span>
+                            <span className="role-group-chevron" aria-hidden="true">⌄</span>
                           </div>
                         </button>
-                        {!isCollapsed&&(
-                          <div style={{padding:'4px 6px'}}>
-                            {grpIngs.map(renderIngRow)}
-                          </div>
-                        )}
-                      </div>
+                        <div id={`role-group-${grp.key}`} className="role-group-content" hidden={isCollapsed}>
+                          {grpIngs.map(renderIngRow)}
+                        </div>
+                      </section>
                     );
                   });
                 })()}
@@ -5088,6 +5148,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             </div>
             <div className="builder-right">
+            <header className="form-advanced-tools-head" id="form-advanced-tools-title">
+              <div>
+                <span className="ingredient-section-eyebrow">Herramientas avanzadas</span>
+                <h2>Perito + Automejora</h2>
+                <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
+              </div>
+              <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Abrir generador</button>
+            </header>
             {an&&(()=>{
               const hasPer=recipe.length>0;
               const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
@@ -5499,7 +5567,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
             </div>
-          </div>
+          </section>
           {tab==='formular'&&tr&&recipe.length>0&&(
             <div className="panel treatment-section" id="bl-tratamiento">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
@@ -5581,9 +5649,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='formular'&&(
           <div className="formular-workspace">
 {/* ── GENERADOR DE RECETAS ── */}
-            <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
+            <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
-                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
+                <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
                 <button className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
               {showOptimizer&&(<>
