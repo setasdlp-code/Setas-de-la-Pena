@@ -138,7 +138,7 @@ test.describe('desktop navigation contract', () => {
     await openApp(page);
 
     await workspaceButton(page, 'control').click();
-    await contextTab(page, 'Sesión').click();
+    await contextTab(page, 'Hoy').click();
 
     const roleControls = page.getByRole('button', { name: /^(Operario|Producción|Dirección)$/ });
     await expect(roleControls).toHaveCount(3);
