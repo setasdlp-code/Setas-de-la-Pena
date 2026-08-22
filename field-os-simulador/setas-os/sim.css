@@ -2623,12 +2623,6 @@
 .sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
 .sim-root .home-panel-btn.is-secondary:active{background:var(--paper-200);transform:scale(.97)}
 
-/* "Hoy": cabecera Control · Turno Actual y Actividad reciente lado a lado,
-   mismo ancho (igual que Acciones Rápidas/Registro y Tareas de hoy más abajo)
-   — colapsan a una sola columna en viewports angostos. */
-.sim-root .home-header-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-@media(max-width:768px){ .sim-root .home-header-row{ grid-template-columns:1fr!important; } }
-
 /* "Hoy" · Ambientes & Sensores: 2×2 fija (no auto-fit a 4 columnas en
    pantallas anchas) — colapsa a 1 columna por debajo de 640px. */
 .sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
