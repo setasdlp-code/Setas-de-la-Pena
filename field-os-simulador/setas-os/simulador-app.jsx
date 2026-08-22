@@ -3863,6 +3863,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* 3 columnas fijas (3 cámaras reales), responsive: 2 columnas <960px, 1 columna <640px */}
+                {camaras.length===0 ? (
+                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'20px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                    Sin datos de cámaras disponibles.
+                  </div>
+                ) : (
                 <div className="home-salas-grid">
                   {camaras.map(c=>{
                     const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
@@ -3953,6 +3958,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   })}
                 </div>
+                )}
               </div>
 
               {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
@@ -4337,20 +4343,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   marginBottom:20
                 }}>
                   {pipelineStages.map((st,idx)=>(
-                    <div
+                    <button
                       key={st.num}
-                      role="button"
-                      tabIndex={0}
                       aria-label={`${st.title} — ${st.active?'en curso':'planificado'}`}
                       onClick={()=>goTab(st.linkTab)}
-                      onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goTab(st.linkTab);}}}
                       className={'home-stage-card'+(st.active?' is-active':'')}
                       style={{
                         '--stage-accent':st.accent,
                         borderRadius:'var(--r-sm)',
                         padding:'14px',
                         cursor:'pointer',
-                        position:'relative'
+                        position:'relative',
+                        display:'block',
+                        width:'100%',
+                        textAlign:'left',
+                        fontFamily:'inherit'
                       }}
                     >
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
@@ -4373,7 +4380,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-800)',borderTop:'1px solid var(--paper-300)',paddingTop:6}}>
                         {st.badge}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
 
@@ -4387,14 +4394,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {bitLotes.slice(0,4).map(lt=>{
                         const stats = calcLoteStats(lt.id);
                         return (
-                          <div
+                          <button
                             key={lt.id}
                             data-lote-id={lt.id}
-                            role="button"
-                            tabIndex={0}
                             aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
                             onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
-                            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}}
                             className="home-lote-row"
                             style={{
                               display:'flex',
@@ -4404,7 +4408,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               borderRadius:'var(--r-xs)',
                               cursor:'pointer',
                               flexWrap:'wrap',
-                              gap:8
+                              gap:8,
+                              width:'100%',
+                              textAlign:'left',
+                              fontFamily:'inherit'
                             }}
                           >
                             <div style={{display:'flex',alignItems:'center',gap:12}}>
@@ -4425,7 +4432,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 Ver lote →
                               </span>
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
