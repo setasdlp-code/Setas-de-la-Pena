@@ -848,14 +848,14 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   const catEntries=catOrder.filter(k=>bycat[k]).map(k=>[k,bycat[k]]);
 
   if(!open) return(
-    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
+    <button type="button" aria-expanded="false" style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',width:'100%',marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px',font:'inherit',textAlign:'left'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
       <div style={{width:20,height:4,borderRadius:2,background:band,flexShrink:0}}/>
       <span style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:band,opacity:.8}}>ver ▼</span>
       </span>
       <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:`color-mix(in oklab,${band} 85%,var(--ink-900))`}}>{sp.name}</span>
-    </div>
+    </button>
   );
 
   return(
@@ -866,7 +866,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
       </div>
       <div style={{marginLeft:15}}>
         {/* Cabecera archival */}
-        <div className="p-arch-head" style={{marginLeft:0,cursor:'pointer'}} onClick={()=>setOpen(o=>!o)}>
+        <button type="button" className="p-arch-head" aria-expanded="true" style={{marginLeft:0,cursor:'pointer',width:'100%',border:0,background:'transparent',font:'inherit',textAlign:'left'}} onClick={()=>setOpen(o=>!o)}>
           <div className="p-arch-left">
             <span className="p-arch-num" style={{color:band}}>{num}</span>
             <span className="p-arch-code">{code}</span>
@@ -875,7 +875,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
             <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>▲</span>
           </div>
-        </div>
+        </button>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
           {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
@@ -992,7 +992,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
         {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a "Todo el catálogo".</div>}
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
@@ -1015,9 +1015,37 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
 });
 
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
-const ConfirmModal=({dlg,onClose})=>(
+const useDialogA11y=(onClose)=>{
+  const dialogRef=React.useRef(null);
+  const closeRef=React.useRef(onClose);
+  closeRef.current=onClose;
+  React.useEffect(()=>{
+    const previous=document.activeElement;
+    const dialog=dialogRef.current;
+    if(!dialog) return;
+    const selector='button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusables=()=>Array.from(dialog.querySelectorAll(selector));
+    const preferred=dialog.querySelector('[data-autofocus]')||focusables()[0]||dialog;
+    preferred.focus();
+    const onKeyDown=e=>{
+      if(e.key==='Escape'){e.preventDefault();closeRef.current();return;}
+      if(e.key!=='Tab') return;
+      const items=focusables();
+      if(!items.length){e.preventDefault();dialog.focus();return;}
+      const first=items[0],last=items[items.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    };
+    dialog.addEventListener('keydown',onKeyDown);
+    return()=>{dialog.removeEventListener('keydown',onKeyDown);if(previous&&typeof previous.focus==='function')previous.focus();};
+  },[]);
+  return dialogRef;
+};
+const ConfirmModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
@@ -1026,16 +1054,18 @@ const ConfirmModal=({dlg,onClose})=>(
       </div>
     </div>
   </div>
-);
+  );
+};
 const PromptModal=({dlg,onClose})=>{
   const[val,setVal]=React.useState(dlg.defaultValue||'');
+  const dialogRef=useDialogA11y(onClose);
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
+      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
         {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
-        <input id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
+        <input data-autofocus id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
         <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
@@ -1044,9 +1074,11 @@ const PromptModal=({dlg,onClose})=>{
     </div>
   );
 };
-const NoticeModal=({dlg,onClose})=>(
+const NoticeModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',justifyContent:'flex-end'}}>
@@ -1054,7 +1086,8 @@ const NoticeModal=({dlg,onClose})=>(
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
@@ -1086,7 +1119,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const craPct=ing.cra/5;                                     // 0–5 → 0–1
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
-    <div className={'ing-item '+(expanded?'expanded':'')} onClick={()=>setExpanded(!expanded)}>
+    <div className={'ing-item '+(expanded?'expanded':'')}>
       <div className="ing-badge" style={{background:cat}} title={ing.cat}>{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
@@ -1130,6 +1163,9 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
 
         )}
       </div>
+      <button type="button" className="ing-expand-btn" aria-expanded={expanded} aria-label={`${expanded?'Ocultar':'Mostrar'} perfil de ${ing.name}`} onClick={()=>setExpanded(!expanded)}>
+        <span aria-hidden="true">{expanded?'−':'+'}</span>
+      </button>
     </div>
   );
 };
@@ -1783,7 +1819,6 @@ function App(props){
   const [balanceMode,setBalanceMode]=useState('proportional');
   // v3 new state
   const [pantryIds,setPantryIds]=useState([]);
-  const [usePantry,setUsePantry]=useState(false);
   const [showCompatOnly,setShowCompatOnly]=useState(false);
   const [disabledIngIds,setDisabledIngIds]=useState([]);
   const toggleDisabledIng=(id)=>setDisabledIngIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
@@ -1810,10 +1845,13 @@ function App(props){
     } catch(e) {}
     return 'produccion';
   });
+  const [usePantry,setUsePantry]=useState(globalMode === 'produccion');
   const [optUseStock, setOptUseStock] = useState(globalMode === 'produccion');
   const setGlobalWorkMode = (mode) => {
     setGlobalMode(mode);
-    setOptUseStock(mode === 'produccion');
+    const stockOnly=mode === 'produccion';
+    setOptUseStock(stockOnly);
+    setUsePantry(stockOnly);
     try {
       localStorage.setItem('setas_global_workmode', mode);
       localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
@@ -1832,8 +1870,11 @@ function App(props){
   }, []);
   const [showLiveChips,setShowLiveChips]=useState(false);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({});
-  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
+  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:true,aditivo:true,aireador:true});
+  const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>{
+    if(prev[roleKey]) return {base_carbono:true,suplemento_n:true,aditivo:true,aireador:true,[roleKey]:false};
+    return {...prev,[roleKey]:true};
+  });
   const [optProfile,setOptProfile]=useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
@@ -2889,7 +2930,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
                       <div className="inv-section">
-                        <table className="inv-table">
+                        <table className="inv-table inventory-stock-table">
                           <thead>
                             <tr>
                               <th>Ingrediente</th>
@@ -2907,7 +2948,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               return(
                                 <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
                                   {/* INGREDIENTE */}
-                                  <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
+                                  <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
                                     {isEditing?(
                                       <select value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
@@ -2917,7 +2958,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* STOCK */}
-                                  <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                  <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
                                     {isEditing?(
                                       <input type="number" min="0" step="0.5"
                                         value={editingRowData.stock}
@@ -2930,7 +2971,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* PRECIO */}
-                                  <td style={{color:'var(--ink-500)',minWidth:100}}>
+                                  <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
                                     {isEditing?(
                                       <input type="number" min="0" step="100"
                                         value={editingRowData.precio}
@@ -2943,7 +2984,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* PROVEEDOR */}
-                                  <td style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
+                                  <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
                                     {isEditing?(
                                       <select value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         <option value="">Sin especificar</option>
@@ -2954,7 +2995,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* ALERTA MÍN */}
-                                  <td style={{minWidth:90}}>
+                                  <td data-label="Alerta mínima" style={{minWidth:90}}>
                                     {isEditing?(
                                       <input type="number" min="0" step="0.5"
                                         value={editingRowData.alertaMin}
@@ -2967,7 +3008,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* ESTADO */}
-                                  <td>
+                                  <td data-label="Estado">
                                     {r.stock<r.alertaMin
                                       ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                       :r.stock<r.alertaMin*2.5
@@ -2975,11 +3016,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                   </td>
                                   {/* ACCIONES */}
-                                  <td>
+                                  <td data-label="Acciones">
                                     {isEditing?(
                                       <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar">✓</button>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar">✕</button>
+                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
+                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
                                       </div>
                                     ):(
                                       <div style={{display:'flex',gap:4}}>
@@ -2987,7 +3028,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
                                           ✎ Editar
                                         </button>
-                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente"
+                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
                                           style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
                                           onClick={()=>eliminarIngrediente(r.id,r.name)}>
                                           ×
@@ -3097,9 +3138,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div className="inv-row inv-row-2">
                     <div>
-                      <label className="inv-label">Proveedor</label>
+                      <label className="inv-label" htmlFor="purchase-provider">Proveedor</label>
                       <div style={{display:'flex',gap:6}}>
-                        <select className="inv-input" value={cmpProvId} onChange={e=>setCmpProvId(e.target.value)} style={{flex:1}}>
+                        <select id="purchase-provider" name="purchaseProvider" className="inv-input" value={cmpProvId} onChange={e=>setCmpProvId(e.target.value)} style={{flex:1}}>
                           <option value="">Seleccionar…</option>
                           {invProveedores.map(p=>(
                             <option key={p.id} value={p.id}>{p.nombre} — {p.municipio}</option>
@@ -3109,12 +3150,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                     <div>
-                      <label className="inv-label">Fecha de compra</label>
-                      <input type="date" className="inv-input" value={cmpFecha} onChange={e=>setCmpFecha(e.target.value)}/>
+                      <label className="inv-label" htmlFor="purchase-date">Fecha de compra</label>
+                      <input id="purchase-date" name="purchaseDate" type="date" className="inv-input" value={cmpFecha} onChange={e=>setCmpFecha(e.target.value)}/>
                     </div>
                   </div>
 
-                  <label className="inv-label">Ítems</label>
+                  <span className="inv-label">Ítems</span>
                   {cmpItems.map(it=>{
                     const g=INGS.find(x=>x.id===it.ingId);
                     return(
@@ -3178,13 +3219,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const label=new Date(parseInt(yr),parseInt(mo)-1,1).toLocaleDateString('es-CO',{month:'long',year:'numeric'});
                         return(
                           <div key={mes} className="inv-month-group">
-                            <div className="inv-month-head" onClick={()=>setCollapsedMonths(prev=>({...prev,[mes]:!prev[mes]}))}>
+                            <button type="button" className="inv-month-head" aria-expanded={!collapsed} onClick={()=>setCollapsedMonths(prev=>({...prev,[mes]:!prev[mes]}))}>
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
                                 <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
                                 <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
                               </div>
-                            </div>
+                            </button>
                             {!collapsed&&(
                               <table className="inv-table">
                                 <thead>
@@ -3255,21 +3296,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nuevo proveedor">
                   <div className="inv-modal-title">Nuevo Proveedor</div>
                   <div style={{marginBottom:12}}>
-                    <label className="inv-label">Nombre</label>
-                    <input className="inv-input" value={newProv.nombre} onChange={e=>setNewProv(p=>({...p,nombre:e.target.value}))} placeholder="Ej. Distribuidora Agro Sabana"/>
+                    <label className="inv-label" htmlFor="provider-name">Nombre</label>
+                    <input id="provider-name" name="providerName" autoComplete="organization" className="inv-input" value={newProv.nombre} onChange={e=>setNewProv(p=>({...p,nombre:e.target.value}))} placeholder="Ej. Distribuidora Agro Sabana"/>
                   </div>
                   <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                     <div>
-                      <label className="inv-label">Tipo</label>
-                      <select className="inv-input" value={newProv.tipo} onChange={e=>setNewProv(p=>({...p,tipo:e.target.value}))}>
+                      <label className="inv-label" htmlFor="provider-type">Tipo</label>
+                      <select id="provider-type" name="providerType" className="inv-input" value={newProv.tipo} onChange={e=>setNewProv(p=>({...p,tipo:e.target.value}))}>
                         {[['plaza','Plaza de mercado'],['industrial','Industrial'],['artesanal','Artesanal'],['directo','Directo / Finca'],['otro','Otro']].map(([v,l])=>(
                           <option key={v} value={v}>{l}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="inv-label">Municipio</label>
-                      <input className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
+                      <label className="inv-label" htmlFor="provider-city">Municipio</label>
+                      <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
                   </div>
                   <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
@@ -3531,7 +3572,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   return(
     <div>
       <div className="topbar">
-        <div className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</div>
+        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</button>
       </div>
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,height:106,display:'block'}}>
@@ -3797,7 +3838,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>Flujos principales</span>
                 </div>
 
-                <div style={{
+                <div className="home-workspaces-grid" style={{
                   display:'grid',
                   gridTemplateColumns:'repeat(3, 1fr)', // Acciones Rápidas pasó a una sola columna angosta para cederle ancho a esta: las 3 tarjetas caben lado a lado
                   gap:20
@@ -4449,7 +4490,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div className="p-chips-row p-chips-row2">
                         <div className="p-chip"><span className="p-chip-txt"><span className="p-chip-lbl">pH</span><span className="p-chip-val">{d.ph_optimal.min}–{d.ph_optimal.max}</span></span></div>
                         <div className="p-chip"><span className="p-chip-txt"><span className="p-chip-lbl">C:N</span><span className="p-chip-val">{d.cn_optimal.min}–{d.cn_optimal.max}</span></span></div>
-                        <div className="p-chip p-chip-arr" onClick={e=>{e.stopPropagation();setSKey(k);setCatalogModalOpen(true);}}><IcoArrow/></div>
+                        <div className="p-chip p-chip-arr" aria-hidden="true"><IcoArrow/></div>
                       </div>
                     </div>
                     </div>
@@ -4555,61 +4596,56 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="builder-wrap" data-tab={tab}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
 
-          {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:'var(--paper-100)',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{display:'inline-flex',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>{globalMode==='produccion'?<IconFactory size={22}/>:<IconMicroscope size={22}/>}</span>
+          {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
+              el editor manual como el Perito y el Generador automático. */}
+          <section className="form-flow" aria-labelledby="form-flow-title">
+            <div className="form-flow-head">
               <div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>
-                    Modo {globalMode==='produccion'?'Producción Oficial (Bodega Tenjo)':'Investigación y Desarrollo (I+D Catálogo)'}
-                  </span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:globalMode==='produccion'?'var(--moss-200)':'var(--coral-100)',borderRadius:3,color:'var(--ink-900)',fontWeight:600}}>
-                    {globalMode==='produccion'?'Stock Bodega Restringido':'Catálogo Abierto sin límites'}
-                  </span>
-                </div>
-                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:2}}>
-                  {globalMode==='produccion'
-                    ? 'Optimiza formulaciones con insumos disponibles en Bodega Tenjo y planifica hojas de lote de producción.'
-                    : 'Libre exploración botánica sin límite de stock para maximizar Eficiencia Biológica (EB) y crear fórmulas experimentales.'}
-                </div>
+                <span className="form-flow-eyebrow">Nueva formulación</span>
+                <h2 id="form-flow-title">Especie → Origen → Ingredientes → Validar y guardar</h2>
               </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {recipe.length>0?`${recipe.length} ingrediente${recipe.length===1?'':'s'} · Perito ${Math.round(opt.score)}/100`:'Preparado para comenzar'}
+              </span>
             </div>
-            <div role="group" aria-label="Modo de trabajo global" style={{display:'flex',gap:6,alignItems:'center'}}>
-              <button
-                onClick={()=>setGlobalWorkMode('produccion')}
-                aria-pressed={globalMode==='produccion'}
-                style={{
-                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
-                  background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
-                  color:globalMode==='produccion'?'var(--paper-0)':'var(--ink-700)',
-                  border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
-                }}>
-                <IconFactory size={12} aria-hidden="true"/> Producción
-              </button>
-              <button
-                onClick={()=>setGlobalWorkMode('investigacion')}
-                aria-pressed={globalMode==='investigacion'}
-                style={{
-                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
-                  background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
-                  color:globalMode==='investigacion'?'var(--paper-0)':'var(--ink-700)',
-                  border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5
-                }}>
-                <IconMicroscope size={12} aria-hidden="true"/> Investigación
-              </button>
-              {recipe.length>0&&(
-                <button
-                  onClick={()=>promoverReceta()}
-                  title="Promover esta receta a Producción oficial (alerta si faltan insumos)"
-                  style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',padding:'6px 12px',background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                  <IconStar size={12} fill="currentColor"/> Promover
+            <ol className="form-flow-grid">
+              <li className="form-step is-ready">
+                <span className="form-step-num">01</span>
+                <label className="form-step-label" htmlFor="form-species">Especie</label>
+                <select id="form-species" name="formSpecies" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                  <option value="" disabled>Elegir especie…</option>
+                  {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+                </select>
+                <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
+              </li>
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Origen</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
+                </div>
+                <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
+              </li>
+              <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
+                  <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Usar generador</button>
+                </div>
+                <span className="form-step-help">Agrega insumos o calcula una base.</span>
+              </li>
+              <li className={`form-step${recipe.length>0?' is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Validar y guardar</span>
+                <button type="button" className="form-step-primary" disabled={recipe.length===0} onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  {recipe.length>0?'Revisar receta':'Agrega ingredientes'}
                 </button>
-              )}
-            </div>
-          </div>
+                <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
+              </li>
+            </ol>
+          </section>
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
               Decisión de diseño:
@@ -4645,7 +4681,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {sp?.name||'Pleurotus'}
                       </span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:globalMode==='produccion'?'rgba(77,98,53,.15)':'rgba(200,90,50,.15)',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-500)',fontWeight:700,textTransform:'uppercase'}}>
-                        {globalMode==='produccion'?'PROD':'INV'}
+                        {globalMode==='produccion'?'BODEGA':'PALETA'}
                       </span>
                     </div>
 
@@ -4815,22 +4851,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </div>
               );
-            })() : (
-              <div className="live-dash-bar" style={{background:'var(--paper-50)'}}>
-                <div className="live-dash-left">
-                  <span className="live-dash-species">{sp?.name||'Pleurotus ostreatus'}</span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-500)'}}>
-                    · Sin receta activa
-                  </span>
-                </div>
-                <button
-                  onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}
-                  className="live-dash-btn"
-                  style={{fontSize:'10.5px'}}>
-                  + Agregar insumos
-                </button>
-              </div>
-            )}
+            })() : null}
           </div>
           <div className="builder-cols">
             <div className="builder-left">
@@ -4890,7 +4911,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </button>
                 <div className="bodega-bar-right">
-                  <button className={'tog'+(usePantry?' on':'')} aria-pressed={usePantry} onClick={e=>{e.stopPropagation();setUsePantry(!usePantry);}} title={pantryIds.length===0?'Carga ingredientes en Bodega primero':(usePantry?'Ver todos los ingredientes':'Ver solo bodega')}>{usePantry?'Ver todos':'Ver bodega'}</button>
                   <button className="bodega-bar-refresh" onClick={e=>{e.stopPropagation();goTab('inventario');}} title="Actualizar stock" aria-label="Actualizar stock">
                     <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
                   </button>
@@ -4911,7 +4931,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="ing-list">
                 {(()=>{
-                  let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;
+                  let base=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
+                  if(usePantry&&pantryIds.length===0){
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
+                  }
                   if(showCompatOnly){
                     const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
                     base=base.filter(g=>compat.has(g.id));
@@ -5045,7 +5068,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:6}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
-                              {compatCount} comp.
+                              {compatCount} compatible{compatCount===1?'':'s'}
                             </span>
                             <span aria-hidden="true" style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
                               ▼
@@ -5145,14 +5168,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── PERITO: INDICADORES + ITEMS ── */}
                   {hasPer&&(
                     <>
-                      {/* ── Modo de trabajo: mismo estado que el Generador — cambiarlo
-                          aquí también cambia qué explora "Calcular" más abajo. ── */}
-                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:8}}>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
-                        {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
-                          <button key={k} className={'chip'+(optUseStock===v?' on':'')} aria-pressed={optUseStock===v} onClick={()=>setOptUseStock(v)}>{l}</button>
-                        ))}
-                      </div>
                       {/* ── barra resumen live: score + EB + costo ── */}
                       <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
                         {[
@@ -5588,30 +5603,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div id="opt-target-label" style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <select aria-labelledby="opt-target-label" style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'normal',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
-                                  value={optTarget} onChange={e=>setOptTarget(e.target.value)}>
-                                  {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
-                                </select>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
+                                <div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}}>{SPP[optTarget]?.name}</div>
                               </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máx. $/kg</div>
-                                <input type="number" min="0" step="100" value={optMaxCost} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
-                                  aria-label="Costo máximo por kg (vacío = sin límite)"
-                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0'}} placeholder="Sin límite"/>
+                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máximo por kg</label>
+                                <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
+                                  autoComplete="off" aria-describedby="opt-max-cost-help"
+                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}} placeholder="Sin límite"/>
+                                <span id="opt-max-cost-help" className="sr-only">Deja el campo vacío para no aplicar un límite de costo.</span>
                               </div>
                             </div>
-                            {/* fuente + perfil en una sola fila compacta */}
+                            {/* El origen se define una sola vez en el paso 02 del flujo. */}
                             <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
-                              <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
-                                <div className="chip-row">
-                                  {[['stock','Solo bodega',true],['full','Paleta completa',false]].map(([k,l,v])=>(
-                                    <button key={k} className={'chip'+(optUseStock===v?' on':'')} aria-pressed={optUseStock===v} onClick={()=>setOptUseStock(v)}>{l}</button>
-                                  ))}
-                                </div>
-                              </div>
-                              <div style={{width:1,height:16,background:'var(--border-soft)'}}></div>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
                                 <div className="chip-row">
@@ -6048,8 +6052,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel no-print" style={{marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
-                  No hay receta activa. Arma una en <strong>Formulador</strong> o genera una automáticamente en <strong>Generar</strong>.
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                  <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
+                  <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
               ):(
                 <>
@@ -6339,7 +6344,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
               {saved.length===0
-                ?<div className="rec-empty">No hay recetas guardadas.<br/>Crea y guarda desde el Formulador.</div>
+                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
                 :(()=>{
                   const filtered=saved.filter(e=>dashFilter==='all'||e.sKey===dashFilter);
                   if(!filtered.length) return <div className="sempty">Sin recetas para esta especie.</div>;
@@ -6477,17 +6482,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
-                <div><label className="inv-label"># Bolsas</label><input type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
-                <div><label className="inv-label">kg húmedo/bolsa</label><input type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
-                <div><label className="inv-label">% spawn</label><input type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
-                <div><label className="inv-label">Humedad %</label><input type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa</label><input id="bit-wet-kg" name="wetKgPerBag" type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-spawn">% spawn</label><input id="bit-spawn" name="spawnPercent" type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-moisture">Humedad %</label><input id="bit-moisture" name="moisturePercent" type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Tratamiento</label><select className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-                <div><label className="inv-label">Peso seco (kg)</label><input type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="auto" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco (kg)</label><input id="bit-dry-weight" name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="Calculado automáticamente…" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Objetivo de la prueba</label><input className="inv-input" placeholder="ej. Comparar humedad 63% vs 66%" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
-              <div style={{marginBottom:16}}><label className="inv-label">Notas</label><textarea className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
+              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
@@ -6502,15 +6507,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Registrar cosecha" style={{width:440}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Bolsa</label><select className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
-                <div><label className="inv-label">Flush #</label><input type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
-                <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
-              <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
@@ -6522,7 +6527,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
       </div>
 
-      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} role="button" tabIndex={0} aria-expanded={bridgeOpen} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setBridgeOpen(o=>!o);}}}>
+      {((RECETA_TABS.includes(tab)&&tab!=='formular')||tab==='produccion'||tab==='schedule')&&(<section data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} aria-label="Especie activa">
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>
@@ -6552,11 +6557,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
-            <span style={{color:'var(--paper-0)',opacity:.6,fontSize:"var(--text-sm)",lineHeight:1,transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
+            <button type="button" className="bridge-toggle" aria-expanded={bridgeOpen} aria-label={bridgeOpen?'Ocultar parámetros de especie':'Mostrar parámetros de especie'} onClick={()=>setBridgeOpen(o=>!o)}>
+              <span aria-hidden="true" style={{display:'inline-block',transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
+            </button>
           </div>
           </>)}
         </div>
-      </div>)}
+      </section>)}
     </div>
   );
 }
