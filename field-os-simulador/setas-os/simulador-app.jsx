@@ -3862,7 +3862,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● {camaras.length} {camaras.length===1?'cámara monitoreada':'cámaras monitoreadas'}</span>
                 </div>
 
-                {/* 2×2 responsive: dos columnas fijas, colapsa a una por debajo de 640px */}
+                {/* 3 columnas fijas (3 cámaras reales), responsive: 2 columnas <960px, 1 columna <640px */}
                 <div className="home-salas-grid">
                   {camaras.map(c=>{
                     const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
