@@ -3783,38 +3783,44 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
                     </div>
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:20}}>
                       {tasksHoy.length>0 && (
-                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                          {tasksHoy.map(t=>(
-                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                              </button>
-                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                              </button>
-                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                            </div>
-                          ))}
+                        <div>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Tareas de hoy</span>
+                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                            {tasksHoy.map(t=>(
+                              <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                                <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                  style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                  <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                                </button>
+                                <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                  <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                                </button>
+                                <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {recentActivity.length>0 && (
-                        <div style={{display:'flex',flexDirection:'column',marginTop:tasksHoy.length>0?16:0,paddingTop:tasksHoy.length>0?16:0,borderTop:tasksHoy.length>0?'1px solid var(--paper-300)':'none'}}>
-                          {recentActivity.map((ev,i)=>(
-                            <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                              <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                              <div style={{flex:1,minWidth:0}}>
-                                <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                        <div style={{borderLeft:tasksHoy.length>0?'1px solid var(--paper-300)':'none',paddingLeft:tasksHoy.length>0?20:0}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Actividad reciente</span>
+                          <div style={{display:'flex',flexDirection:'column'}}>
+                            {recentActivity.map((ev,i)=>(
+                              <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                                <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                                    <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                                  </div>
+                                  <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
                                 </div>
-                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
