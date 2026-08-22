@@ -3763,12 +3763,95 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {/* SECCIÓN A: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
+              {/* SECCIÓN A: ACCIONES RÁPIDAS (columna izquierda) + REGISTRO DE CULTIVO (columna izquierda, abajo) */}
+              {(()=>{
+                return (
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))',gap:20,alignItems:'start'}}>
+                    <div style={{display:'flex',flexDirection:'column',gap:20}}>
+                      <div>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                          <div>
+                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                              SECCIÓN A · OPERACIÓN INMEDIATA
+                            </span>
+                            <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                              Acciones Rápidas
+                            </h2>
+                          </div>
+                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                        </div>
+                        <div style={{
+                          display:'grid',
+                          gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
+                          gap:12
+                        }}>
+                          {[
+                            {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                            {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                            {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                            {label:'Lotes',sub:'Crear y gestionar lotes',icon:IconMicroscope,tab:'bitacora',onClick:()=>goTab('bitacora')},
+                            {label:'Módulos de cultivo',sub:'Mezcla, clima y producción',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')}
+                          ].map(btn=>(
+                            <button
+                              key={btn.label}
+                              onClick={btn.onClick}
+                              className={'home-quick-action'+(btn.pri?' is-primary':'')}
+                              style={{
+                                display:'flex',
+                                alignItems:'center',
+                                gap:12,
+                                padding:'14px 16px',
+                                borderRadius:'var(--r-sm)',
+                                textAlign:'left',
+                                cursor:'pointer',
+                                position:'relative'
+                              }}
+                            >
+                              <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
+                              <div style={{minWidth:0,flex:1}}>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                                  {btn.label}
+                                </div>
+                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                                  {btn.sub}
+                                </div>
+                              </div>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-400)',fontWeight:700}}>→</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Registro de cultivo · vista previa</span>
+                          <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)'}}>Ver registro completo →</button>
+                        </div>
+                        <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:2}}>
+                          {[
+                            {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
+                            {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
+                            {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
+                            {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
+                            {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                          ].map(m=>(
+                            <button key={m.label} onClick={()=>m.onClick&&m.onClick()} style={{cursor:'pointer',flex:'1 0 100px',minWidth:100,textAlign:'left',background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px 14px'}}>
+                              <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-lg)',color:m.color||'var(--ink-900)'}}>{m.value}</div>
+                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECCIÓN B: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN A · AMBIENTES & SENSORES
+                      SECCIÓN B · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Cámaras de Cultivo
@@ -3869,89 +3952,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   })}
                 </div>
               </div>
-
-              {/* SECCIÓN B: ACCIONES RÁPIDAS (columna izquierda) + REGISTRO DE CULTIVO (columna izquierda, abajo) */}
-              {(()=>{
-                return (
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))',gap:20,alignItems:'start'}}>
-                    <div style={{display:'flex',flexDirection:'column',gap:20}}>
-                      <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                          <div>
-                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                              SECCIÓN B · OPERACIÓN INMEDIATA
-                            </span>
-                            <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                              Acciones Rápidas
-                            </h2>
-                          </div>
-                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
-                        </div>
-                        <div style={{
-                          display:'grid',
-                          gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
-                          gap:12
-                        }}>
-                          {[
-                            {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
-                            {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                            {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                            {label:'Lotes',sub:'Crear y gestionar lotes',icon:IconMicroscope,tab:'bitacora',onClick:()=>goTab('bitacora')},
-                            {label:'Módulos de cultivo',sub:'Mezcla, clima y producción',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')}
-                          ].map(btn=>(
-                            <button
-                              key={btn.label}
-                              onClick={btn.onClick}
-                              className={'home-quick-action'+(btn.pri?' is-primary':'')}
-                              style={{
-                                display:'flex',
-                                alignItems:'center',
-                                gap:12,
-                                padding:'14px 16px',
-                                borderRadius:'var(--r-sm)',
-                                textAlign:'left',
-                                cursor:'pointer',
-                                position:'relative'
-                              }}
-                            >
-                              <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
-                              <div style={{minWidth:0,flex:1}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                  {btn.label}
-                                </div>
-                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                  {btn.sub}
-                                </div>
-                              </div>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-400)',fontWeight:700}}>→</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Registro de cultivo · vista previa</span>
-                          <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)'}}>Ver registro completo →</button>
-                        </div>
-                        <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:2}}>
-                          {[
-                            {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
-                            {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
-                            {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
-                            {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
-                            {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
-                          ].map(m=>(
-                            <button key={m.label} onClick={()=>m.onClick&&m.onClick()} style={{cursor:'pointer',flex:'1 0 100px',minWidth:100,textAlign:'left',background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px 14px'}}>
-                              <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-lg)',color:m.color||'var(--ink-900)'}}>{m.value}</div>
-                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
               {(()=>{
