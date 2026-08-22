@@ -176,13 +176,6 @@
     .lotes-quick-grid { grid-template-columns:1fr !important; }
   }
   .col { max-width:640px; margin:0 auto; }
-  /* "Hoy": el cockpit de React y "Actividad reciente" (shell) van en dos
-     columnas — la segunda columna se colapsa a ancho completo debajo de la
-     primera por debajo del breakpoint de escritorio del rail (859px). */
-  .hoy-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,340px); gap:20px; align-items:start; padding:0 26px 24px; }
-  @media (max-width:859px){
-    .hoy-layout { grid-template-columns:1fr; padding:0 16px 24px; }
-  }
   .gloves button, .gloves label { min-height:56px; }
   .gloves .rail-btn { min-height:64px; }
   .gloves textarea, .gloves input { font-size:17px !important; }
@@ -986,33 +979,9 @@
     </div>
     </sc-if>
 
-    <!-- =================== SIMULADOR (nativo, siempre montado) + ACTIVIDAD RECIENTE ───────────────
-         En Control · Hoy, el cockpit de React y "Actividad reciente" (shell) van en dos columnas
-         (.hoy-layout, responsive — ver <style>). En el resto de tabs hoyWrapCls queda vacío y el
-         div envolvente no afecta el layout normal de ancho completo del simulador. =================== -->
-    <div class="{{ hoyWrapCls }}">
-      <div class="sim-root" style="{{ simRootStyle }}">
-        <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" hint-size="100%,100vh"></x-import>
-      </div>
-
-      <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
-      <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
-      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
-        <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Actividad reciente</span>
-        <div style="display:flex;flex-direction:column;margin-top:10px;">
-          <sc-for list="{{ recentActivity }}" as="ev" hint-placeholder-count="2">
-            <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);">
-              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div>
-                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-      </sc-if>
-      </sc-if>
+    <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
+    <div class="sim-root" style="{{ simRootStyle }}">
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -3202,8 +3171,7 @@ class Component extends DCLogic {
       primaryActionSub: s.sessionType ? ('Sesi\u00f3n de '+sessionLabel+' \u00b7 '+s.clock) : 'No hay una sesi\u00f3n activa',
       needsReviewCount: s.containers.filter(c=>c.status==='contaminado').length,
       goHistoryFromInicio:()=>this.setState({module:'sesion', screen:'history', detail:null, capture:false}),
-      hasRecentActivity: s.ledger.length>0,
-      recentActivity: s.ledger.slice(0,3).map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
+      recentActivityJson: JSON.stringify(s.ledger.slice(0,3).map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent }))),
 
       // session screen flags
       isStart:s.screen==='start', isHome:s.screen==='home', isRegister:s.screen==='register',
@@ -3699,7 +3667,6 @@ class Component extends DCLogic {
       setTabTrabajo:()=>this.setState({reviewTab:'trabajo'}), setTabSuper:()=>this.setState({reviewTab:'supervision'}),
       // vista previa WF-9 en "Hoy"
       isHomeTab: s.module==='sim' && s.simTab==='home',
-      hoyWrapCls: (s.module==='sim' && s.simTab==='home') ? 'hoy-layout' : '',
       hoyPreviewEventos: s.reviewEvents.length,
       hoyPreviewBE: isNaN(Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length))?'—':Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length),
       hoyPreviewHoras: (s.workLog||[]).reduce((a,w)=>a+w.horas,0).toFixed(1),
