@@ -973,7 +973,7 @@
 
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" role="{{ role }}" on-set-role="{{ onSetRole }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -987,106 +987,9 @@
     </div>
     </sc-if>
 
-    <!-- =================== JORNADA · ROL · TRASPASO (consolidado desde el antiguo módulo "Sesión", solo en Control · Hoy) =================== -->
+    <!-- =================== ACTIVIDAD RECIENTE (solo en Control · Hoy; el resto de "Sesión" — jornada, rol, tareas, vista previa — vive ahora dentro del cockpit de React, ver simulador-app.jsx) =================== -->
     <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
     <div class="col" style="padding:24px 26px 0;">
-      <div style="display:flex;flex-direction:column;gap:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-          <sc-if value="{{ hasActiveSession }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ openSession }}" style="cursor:pointer;flex:1;min-width:260px;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:19px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
-              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:20px;height:20px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-          </sc-if>
-          <sc-if value="{{ noActiveSession }}" hint-placeholder-val="{{ true }}">
-          <button onClick="{{ startCult }}" style="cursor:pointer;flex:1;min-width:260px;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:19px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
-              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:20px;height:20px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-          </sc-if>
-          <div data-testid="role-selector" style="display:flex;border:1px solid var(--border-hairline);flex:none;">
-            <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
-              <button onClick="{{ ro.select }}" aria-pressed="{{ ro.sel }}" style="{{ ro.style }}">{{ ro.label }}</button>
-            </sc-for>
-          </div>
-        </div>
-        <sc-if value="{{ hasHandoff }}" hint-placeholder-val="{{ false }}">
-        <div style="border:1px solid var(--accent-blue-grey);border-radius:var(--radius-md);padding:13px 16px;background:var(--paper-0);">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <span style="font:var(--t-label);color:var(--accent-blue-grey);">Traspaso del turno anterior</span>
-            <button onClick="{{ clearHandoff }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);color:var(--text-metadata);">Leído</button>
-          </div>
-          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:5px;line-height:1.5;">{{ handoffText }}</div>
-        </div>
-        </sc-if>
-      </div>
-    </div>
-    </sc-if>
-
-    <!-- =================== VISTA PREVIA WF-9 (solo en Control · Hoy) =================== -->
-    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
-    <div class="col" style="padding:24px 26px 0;">
-      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · vista previa</span>
-          <button onClick="{{ goRegistro }}" style="cursor:pointer;background:none;border:none;color:var(--accent-terracotta);font:var(--t-caption);font-weight:700;">Ver registro completo →</button>
-        </div>
-        <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:2px;">
-          <button onClick="{{ goRevEventos }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewEventos }}</div>
-            <div style="font:var(--t-caption);color:var(--text-metadata);">Eventos</div>
-          </button>
-          <button onClick="{{ goRevRendimiento }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewBE }}%</div>
-            <div style="font:var(--t-caption);color:var(--text-metadata);">Rendimiento (EB)</div>
-          </button>
-          <button onClick="{{ goRevTrabajo }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewHoras }} h</div>
-            <div style="font:var(--t-caption);color:var(--text-metadata);">Trabajo</div>
-          </button>
-          <button onClick="{{ goRevSuper }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:{{ hoyPreviewAnomaliasColor }};">{{ hoyPreviewAnomalias }}</div>
-            <div style="font:var(--t-caption);color:var(--text-metadata);">Supervisión</div>
-          </button>
-          <button onClick="{{ goRevSalidas }}" style="cursor:pointer;flex:1;min-width:100px;text-align:left;background:var(--paper-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-            <div style="font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink-0);">{{ hoyPreviewSalidas }} kg</div>
-            <div style="font:var(--t-caption);color:var(--text-metadata);">Salidas</div>
-          </button>
-        </div>
-        <p style="font:var(--t-caption);color:var(--text-secondary);margin:12px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
-      </div>
-    </div>
-    </sc-if>
-
-    <!-- =================== TAREAS DE HOY · ACTIVIDAD RECIENTE (consolidado desde el antiguo módulo "Sesión", solo en Control · Hoy) =================== -->
-    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
-    <div class="col" style="padding:24px 26px 0;">
-      <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:16px;">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
-          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Tareas de hoy</span>
-          <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ tasksOpenCount }}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
-          <sc-for list="{{ tasksToday }}" as="t" hint-placeholder-count="3">
-            <div style="{{ t.rowStyle }}">
-              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}"><span style="{{ t.boxInnerStyle }}">✓</span></button>
-              <button onClick="{{ t.go }}" style="cursor:pointer;flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;display:flex;flex-direction:column;gap:3px;">
-                <span style="{{ t.titleStyle }}">{{ t.title }}</span>
-                <span style="font:var(--t-caption);color:var(--text-metadata);"><span style="font-family:var(--font-mono);">{{ t.id }}</span> · {{ t.why }}</span>
-              </button>
-              <span style="flex:none;font:var(--t-caption);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{ t.prioAccent }};border:1px solid {{ t.prioAccent }};padding:2px 7px;border-radius:3px;">{{ t.prio }}</span>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-      </sc-if>
       <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
       <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
         <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Actividad reciente</span>
@@ -3235,6 +3138,9 @@ class Component extends DCLogic {
       showPlan:ROLE_GATE.plan.includes(s.role), showInventario:ROLE_GATE.inventario.includes(s.role), showCalidad:ROLE_GATE.calidad.includes(s.role), showAprender:ROLE_GATE.aprender.includes(s.role), showComercial:ROLE_GATE.comercial.includes(s.role),
       roleOptions: ROLE_LABELS.map((r,i)=>{ const sel = s.role===r.key; return { label:r.label, sel, select:()=>this.setRole(r.key),
         style:'cursor:pointer;padding:8px 14px;border:none;'+(i<ROLE_LABELS.length-1?'border-right:1px solid var(--border-hairline);':'')+'background:'+(sel?'var(--ink-0)':'var(--paper-0)')+';color:'+(sel?'var(--paper-0)':'var(--ink-1)')+';font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;' }; }),
+      // props para el cockpit de "Hoy" en React (jornada, rol y traspaso — ver x-import)
+      role: s.role,
+      onSetRole:(role)=>this.setRole(role),
 
       // plan
       planMetrics:PLAN_METRICS, scheduleRows, demandRows,
@@ -3763,6 +3669,11 @@ class Component extends DCLogic {
         style:'cursor:pointer;text-align:left;border:1px solid '+(s.qCause===k.key?'var(--ink-0)':'var(--border-soft)')+';background:'+(s.qCause===k.key?'var(--ink-0)':'var(--paper-0)')+';color:'+(s.qCause===k.key?'var(--paper-0)':'var(--ink-0)')+';border-radius:var(--radius-sm);padding:11px 13px;display:flex;flex-direction:column;gap:2px;font:var(--t-label);' })),
       tasksToday: tareas5, hasTasks: tareas5.length>0,
       tasksOpenCount: tareas5.filter(t=>!t.done).length+' abiertas',
+      // versión serializable de tareas5 para cruzar al cockpit de React (las
+      // funciones go/toggle no sobreviven JSON — se resuelven por key desde acá)
+      tasksHoyJson: JSON.stringify(tareas5.map(t=>({ key:t.key, id:t.id, title:t.title, why:t.why, prio:t.prio, done:t.done }))),
+      onTaskGo:(key)=>{ const t=tareas5.find(x=>x.key===key); if(t) t.go(); },
+      onTaskToggle:(key)=>this.setState(x=>({ taskDone:{...x.taskDone, [key]:!x.taskDone[key]} })),
       cp, beLoteRows: beRows, hasBeRows: beRows.length>0,
       goCalidadFromInicio:()=>this.setState({ module:'calidad', capture:false }),
       // pronóstico + semana
