@@ -3803,7 +3803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </span>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>→</span>
                   </button>
-                  <div style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
+                  <div data-testid="role-selector" style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
                     {[{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}].map((r,i)=>{
                       const sel=props.role===r.key;
                       return (

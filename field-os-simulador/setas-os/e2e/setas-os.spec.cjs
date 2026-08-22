@@ -134,7 +134,6 @@ test.describe('desktop navigation contract', () => {
   });
 
   test('role selector renders Operario / Producción / Dirección', async ({ page }) => {
-    test.fail(true, 'BUG CONOCIDO: roleOptions existe pero el cuerpo del sc-for del selector está vacío');
     await openApp(page);
 
     await workspaceButton(page, 'control').click();

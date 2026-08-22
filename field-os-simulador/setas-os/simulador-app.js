@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 64999fc3c7bf1855234ed335727d8e71d28f2f0dbc3400f6436657d10945cb69
+// source-hash: a57174d725a5fd84c4bbe9707bbad7ba2be3a07a643cb421cd087ee21e1312aa
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3130,7 +3130,7 @@ BATCH (${numBags}×${kgBag} kg):
       },
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)" } }, props.sessionLabel || "Iniciar jornada"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "rgba(255,255,255,0.7)" } }, props.sessionSub)),
       /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, "→")
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", flex: "none" } }, [{ key: "operator", label: "Operario" }, { key: "production", label: "Producción" }, { key: "direction", label: "Dirección" }].map((r, i) => {
+    ), /* @__PURE__ */ React.createElement("div", { "data-testid": "role-selector", style: { display: "flex", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", flex: "none" } }, [{ key: "operator", label: "Operario" }, { key: "production", label: "Producción" }, { key: "direction", label: "Dirección" }].map((r, i) => {
       const sel = props.role === r.key;
       return /* @__PURE__ */ React.createElement(
         "button",
