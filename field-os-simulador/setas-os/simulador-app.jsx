@@ -3613,113 +3613,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
               :{label:'Operación estable',color:'var(--moss-700)'};
 
-          // Sección A: Datos de telemetría de las 4 salas y cámaras.
-          // accent/icon clasifican el tipo de ambiente (uso de acento permitido por
-          // colors.css: "classification & status only") — no repiten el mismo cuadro
-          // blanco 4 veces, cada fase de cultivo se reconoce de un vistazo.
-          // Genera un sparkline simulado (mismo enfoque que liveMonitor() en el
-          // shell para Cámaras: onda armónica sembrada por id, sin eje — el valor
-          // ya mostrado en la tarjeta es la lectura real, esto es solo la forma
-          // de la tendencia). parseNum/parseRangeWidth devuelven null si el string
-          // no trae números (p.ej. "Ambiente Tenjo"); en ese caso no hay spark.
-          const parseNum = str => { const m = (str || '').match(/-?\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(',', '.')) : null; };
-          const parseRangeWidth = str => {
-            const nums = (str || '').match(/-?\d+(?:[.,]\d+)?/g);
-            if (!nums || nums.length < 2) return null;
-            return Math.abs(parseFloat(nums[nums.length - 1].replace(',', '.')) - parseFloat(nums[0].replace(',', '.')));
-          };
-          const genSpark = (seedStr, mid, amplitude) => {
-            let seed = 0; for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
-            const wave = n => Math.sin(seed * 0.013 + n) * 0.62 + Math.sin(seed * 0.031 + n * 2.7) * 0.28 + Math.sin(seed * 0.057 + n * 5.1) * 0.10;
-            const N = 24, W = 280, H = 40;
-            const pts = Array.from({ length: N }, (_, i) => mid + wave(i * 0.5) * amplitude);
-            const mn = Math.min(...pts), mx = Math.max(...pts), span = Math.max(0.1, mx - mn);
-            const coords = pts.map((v, i) => [(i / (N - 1) * W).toFixed(1), ((1 - (v - mn) / span) * H).toFixed(1)]);
-            return { d: coords.map(c => c.join(',')).join(' '), endY: coords[coords.length - 1][1] };
-          };
-          const salaSpark = s => {
-            const tempVal = parseNum(s.temp), tempW = parseRangeWidth(s.tempRango);
-            const humVal = parseNum(s.hum), humW = parseRangeWidth(s.humRango);
-            const co2Val = parseNum(s.co2);
-            if (tempVal === null || tempW === null || humVal === null || humW === null || co2Val === null) return null;
-            return {
-              temp: genSpark(s.id + 't', tempVal, tempW / 2 + 0.3),
-              hum: genSpark(s.id + 'h', humVal, humW / 2 + 1),
-              co2: genSpark(s.id + 'c', co2Val, co2Val * 0.06 + 20),
-            };
-          };
-          const salas = [
-            {
-              id: 'sala-1',
-              nombre: 'Sala 1 · Incubación',
-              fase: 'Colonización en oscuridad',
-              temp: '22.4°C',
-              tempRango: '20–24°C',
-              hum: '76%',
-              humRango: '70–80%',
-              co2: '3.150 ppm',
-              co2Note: 'Colonización micelial',
-              estadoLabel: 'En Rango',
-              bolsas: bolsasIncubacion || 36,
-              capacidad: 48,
-              accent: 'var(--slate-500)',
-              icon: IconSprout
-            },
-            {
-              id: 'sala-2',
-              nombre: 'Sala 2 · Fructificación A',
-              fase: 'Orellana / Pleurotus',
-              temp: '16.5°C',
-              tempRango: '14–18°C',
-              hum: '88%',
-              humRango: '85–92%',
-              co2: '780 ppm',
-              co2Note: 'Ventilación activa (12 R/h)',
-              estadoLabel: 'Fructificación',
-              bolsas: bolsasFructificacion || 24,
-              capacidad: 36,
-              accent: 'var(--moss-500)',
-              icon: IconMushroom
-            },
-            {
-              id: 'sala-3',
-              nombre: 'Sala 3 · Cámara Climatizada',
-              fase: 'Shiitake & Melena de León',
-              temp: '17.8°C',
-              tempRango: '16–20°C',
-              hum: '93%',
-              humRango: '90–95%',
-              co2: '920 ppm',
-              co2Note: 'Nebulización ultrasónica',
-              estadoLabel: 'En Rango',
-              bolsas: 16,
-              capacidad: 24,
-              accent: 'var(--sand-500)',
-              icon: IconSnowflake
-            },
-            {
-              id: 'area-tecnica',
-              nombre: 'Área Técnica · Bodega & Autoclave',
-              fase: 'Preparación de sustratos Tenjo',
-              temp: '14.0°C',
-              tempRango: 'Ambiente Tenjo',
-              hum: '62%',
-              humRango: 'Almacén seco',
-              co2: '420 ppm',
-              co2Note: 'Autoclave 121°C / 15 PSI Standby',
-              estadoLabel: 'Operativo',
-              bolsas: `${totalStockKg.toFixed(0)} kg`,
-              capacidad: `${stockIds.size} insumos`,
-              accent: 'var(--ink-500)',
-              icon: IconBox
-            }
-          ];
+          // Ambientes & Sensores: cámaras físicas REALES (mismos datos que el
+          // módulo Cámaras — id, temp/hum/CO₂ en vivo, sparkline). Antes esta
+          // sección mostraba 4 "salas" ilustrativas sin relación con las cámaras
+          // reales (incub/martha/cloudlab); ahora son los mismos 3 registros,
+          // así que un clic en "Ver en Cámaras" siempre abre la cámara correcta.
+          let camaras=[];
+          try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // Sección C: Fases del ciclo de cultivo
-          // accent/icon de cada fase retoman el mismo color que ya usa la sala o el
-          // workspace donde esa fase realmente ocurre (incubación=slate como Sala 1,
-          // fructificación=moss como Sala 2/Producción, etc.) — el color del pipeline
-          // anticipa a dónde lleva el clic, no es decorativo.
+          // Sección E: Fases del ciclo de cultivo
+          // accent/icon de cada fase retoman el mismo color que ya usa el workspace
+          // donde esa fase realmente ocurre (incubación=slate, fructificación=moss,
+          // etc.) — el color del pipeline anticipa a dónde lleva el clic, no es
+          // decorativo.
           const pipelineStages = [
             {
               num: '01',
@@ -3735,7 +3641,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               num: '02',
               title: 'Inoculación & Incubación',
               sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
-              badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
+              badge: `${bolsasIncubacion} bolsas en incubación`,
               active: bolsasIncubacion > 0,
               linkTab: 'bitacora',
               accent: 'var(--slate-500)',
@@ -3857,7 +3763,66 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {/* SECCIÓN D: ACCIONES RÁPIDAS + REGISTRO DE CULTIVO (columna izquierda) · TAREAS DE HOY (columna derecha) */}
+              {/* SECCIÓN A: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
+              {(()=>{
+                let tasksHoy=[], recentActivity=[];
+                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+                if(!tasksHoy.length && !recentActivity.length) return null;
+                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
+                return (
+                  <div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                      <div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                          SECCIÓN A · SEGUIMIENTO DEL DÍA
+                        </span>
+                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                          Tareas y Actividad
+                        </h2>
+                      </div>
+                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
+                    </div>
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                      {tasksHoy.length>0 && (
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {tasksHoy.map(t=>(
+                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              </button>
+                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              </button>
+                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {recentActivity.length>0 && (
+                        <div style={{display:'flex',flexDirection:'column',marginTop:tasksHoy.length>0?16:0,paddingTop:tasksHoy.length>0?16:0,borderTop:tasksHoy.length>0?'1px solid var(--paper-300)':'none'}}>
+                          {recentActivity.map((ev,i)=>(
+                            <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                              <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECCIÓN B: ACCIONES RÁPIDAS (columna izquierda) + REGISTRO DE CULTIVO (columna izquierda, abajo) */}
               {(()=>{
                 return (
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))',gap:20,alignItems:'start'}}>
@@ -3866,7 +3831,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                           <div>
                             <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                              SECCIÓN A · OPERACIÓN INMEDIATA
+                              SECCIÓN B · OPERACIÓN INMEDIATA
                             </span>
                             <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                               Acciones Rápidas
@@ -3940,90 +3905,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 );
               })()}
 
-              {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que A/B: título fuera, un solo cuadro adentro */}
-              {(()=>{
-                let tasksHoy=[], recentActivity=[];
-                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
-                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
-                if(!tasksHoy.length && !recentActivity.length) return null;
-                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
-                return (
-                  <div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                      <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                          SEGUIMIENTO DEL DÍA
-                        </span>
-                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                          Tareas y Actividad
-                        </h2>
-                      </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
-                    </div>
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
-                      {tasksHoy.length>0 && (
-                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                          {tasksHoy.map(t=>(
-                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                              </button>
-                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                              </button>
-                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {recentActivity.length>0 && (
-                        <div style={{display:'flex',flexDirection:'column',marginTop:tasksHoy.length>0?16:0,paddingTop:tasksHoy.length>0?16:0,borderTop:tasksHoy.length>0?'1px solid var(--paper-300)':'none'}}>
-                          {recentActivity.map((ev,i)=>(
-                            <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                              <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                              <div style={{flex:1,minWidth:0}}>
-                                <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
-                                </div>
-                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* SECCIÓN A: TELEMETRÍA / ESTADO OPERATIVO DE SALAS */}
+              {/* SECCIÓN C: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN B · AMBIENTES & SENSORES
+                      SECCIÓN C · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Telemetría de Salas de Cultivo
+                      Cámaras de Cultivo
                     </h2>
                   </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● {camaras.length} {camaras.length===1?'cámara monitoreada':'cámaras monitoreadas'}</span>
                 </div>
-                
+
                 {/* 2×2 responsive: dos columnas fijas, colapsa a una por debajo de 640px */}
                 <div className="home-salas-grid">
-                  {salas.map(s=>{
-                    const spark = salaSpark(s);
+                  {camaras.map(c=>{
+                    const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
                     return (
                     <div
-                      key={s.id}
+                      key={c.id}
                       style={{
                         background:'var(--paper-0)',
                         border:'1px solid var(--border-soft)',
-                        borderTop:`3px solid ${s.accent}`,
+                        borderTop:`3px solid ${c.estadoAccent||'var(--ink-500)'}`,
                         borderRadius:'var(--r-md)',
                         padding:'20px',
                         display:'flex',
@@ -4036,62 +3942,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
                           <div style={{display:'flex',alignItems:'center',gap:7}}>
-                            <span style={{display:'inline-flex',flexShrink:0,color:s.accent}}><s.icon size={14}/></span>
+                            <span style={{display:'inline-flex',flexShrink:0,color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={14}/></span>
                             <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                              {s.nombre}
+                              {c.name}
                             </div>
                           </div>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                            {s.estadoLabel}
+                            {c.estadoLabel}
                           </span>
                         </div>
                         <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
-                          {s.fase}
+                          Zona {c.zona} · {c.sppName}
                         </div>
 
-                        {/* Indicadores climáticos */}
+                        {/* Indicadores climáticos en vivo */}
                         <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.temp}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.tempRango}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveTemp}°C</div>
                           </div>
                           <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.hum}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.humRango}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveHum}%</div>
                           </div>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.co2}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>PPM</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveCo2} <span style={{fontSize:'var(--text-micro)'}}>ppm</span></div>
                           </div>
                         </div>
+                        {c.hasLiveAlert && (
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--coral-700)',marginTop:8}}>{c.liveAlertNote}</div>
+                        )}
                       </div>
 
-                      {/* Footer de sala con ocupación */}
+                      {/* Footer con ocupación real (contenedores activos / capacidad kg) */}
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
                         <span>Ocupación / Carga:</span>
-                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
+                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{c.occupancy}% <span style={{fontWeight:400,color:'var(--ink-500)'}}>· {c.capKg} kg cap.</span></b>
                       </div>
 
-                      {/* Gráfica de tendencia (temp/hum/CO₂) — mismo lenguaje visual que Cámaras: trazo 2px
-                          con extremos redondeados, punto "ahora" al final de cada línea, leyenda por color. */}
-                      {spark && (
+                      {/* Gráfica de tendencia real (temp/hum/CO₂) — mismos datos y mismo lenguaje
+                          visual que el módulo Cámaras: trazo 2px redondeado, punto "ahora", leyenda. */}
+                      {hasSpark && (
                         <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:12}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Tendencia</span>
-                            <button onClick={()=>props.onGoCamaras&&props.onGoCamaras()} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
-                              <IconCamera size={11}/> Cámaras →
+                            <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
+                              <IconCamera size={11}/> Ver detalle →
                             </button>
                           </div>
-                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${s.nombre}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
-                            <polyline points={spark.temp.d} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={spark.hum.d} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={spark.co2.d} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx={280} cy={spark.temp.endY} r="3" fill="var(--coral-500)"/>
-                            <circle cx={280} cy={spark.hum.endY} r="3" fill="var(--slate-500)"/>
-                            <circle cx={280} cy={spark.co2.endY} r="3" fill="var(--moss-500)"/>
+                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
+                            <polyline points={c.tempSpark} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={c.humSpark} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={c.co2Spark} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx={280} cy={c.tempSparkEndY} r="3" fill="var(--coral-500)"/>
+                            <circle cx={280} cy={c.humSparkEndY} r="3" fill="var(--slate-500)"/>
+                            <circle cx={280} cy={c.co2SparkEndY} r="3" fill="var(--moss-500)"/>
                           </svg>
                           <div style={{display:'flex',gap:10,marginTop:6}}>
                             <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--coral-500)',display:'inline-block'}}/>Temp.</span>
@@ -4106,12 +4012,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
 
-              {/* SECCIÓN B: ESPACIOS DE TRABAJO / MÓDULOS DE OPERACIÓN */}
+              {/* SECCIÓN D: ESPACIOS DE TRABAJO / MÓDULOS DE OPERACIÓN */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN C · MÓDULOS DE CAMPO
+                      SECCIÓN D · MÓDULOS DE CAMPO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Espacios de Trabajo
@@ -4393,7 +4299,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
 
-              {/* SECCIÓN C: PIPELINE DE LOTES ACTIVOS / CICLO DE CULTIVO */}
+              {/* SECCIÓN E: PIPELINE DE LOTES ACTIVOS / CICLO DE CULTIVO */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
@@ -4404,7 +4310,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN D · CICLO BIOLÓGICO TENJO
+                      SECCIÓN E · CICLO BIOLÓGICO TENJO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Pipeline de Lotes & Fases de Cultivo
