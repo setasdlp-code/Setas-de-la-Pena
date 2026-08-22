@@ -3744,7 +3744,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
-              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
+              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO (2/3) + ACTIVIDAD RECIENTE (1/3), lado a lado y responsive */}
+              <div className="home-header-row">
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
@@ -3824,6 +3825,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
                 )}
+              </div>
+
+              {/* ACTIVIDAD RECIENTE — segunda columna (1/3) junto a Control · Turno Actual */}
+              {(()=>{
+                let recentActivity=[];
+                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+                if(!recentActivity.length) return null;
+                return (
+                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Actividad reciente</span>
+                    <div style={{display:'flex',flexDirection:'column',marginTop:10}}>
+                      {recentActivity.map((ev,i)=>(
+                        <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                            </div>
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               </div>
 
               {/* SECCIÓN D: ACCIONES RÁPIDAS + REGISTRO DE CULTIVO (columna izquierda) · TAREAS DE HOY (columna derecha) */}
@@ -3950,14 +3978,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
                 </div>
                 
-                {/* Responsive Grid/Carousel container */}
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap:16,
-                  overflowX:'auto',
-                  paddingBottom:4
-                }}>
+                {/* 2×2 responsive: dos columnas fijas, colapsa a una por debajo de 640px */}
+                <div className="home-salas-grid">
                   {salas.map(s=>(
                     <div
                       key={s.id}
@@ -4015,6 +4037,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span>Ocupación / Carga:</span>
                         <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
                       </div>
+
+                      {/* Preview: apunta a las gráficas de clima en vivo (sparklines temp/hum/CO₂) que viven en Cámaras */}
+                      <button
+                        onClick={()=>props.onGoCamaras&&props.onGoCamaras()}
+                        style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'8px 10px',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',cursor:'pointer',textAlign:'left'}}
+                      >
+                        <span style={{display:'flex',alignItems:'center',gap:6}}>
+                          <IconCamera size={12} color="var(--ink-500)"/>
+                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Gráficas de clima en vivo</span>
+                        </span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>Ver en Cámaras →</span>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -4442,31 +4476,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {/* ACTIVIDAD RECIENTE — última sección del cockpit, mismo bloque que todo lo demás */}
-              {(()=>{
-                let recentActivity=[];
-                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
-                if(!recentActivity.length) return null;
-                return (
-                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Actividad reciente</span>
-                    <div style={{display:'flex',flexDirection:'column',marginTop:10}}>
-                      {recentActivity.map((ev,i)=>(
-                        <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
-                            </div>
-                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
           );
         })()}
