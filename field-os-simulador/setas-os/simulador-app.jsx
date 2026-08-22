@@ -3787,6 +3787,43 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </span>
                   </div>
                 </div>
+
+                {/* JORNADA + MODOS DE OPERACIÓN — consolidado desde el antiguo módulo "Sesión" */}
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,flexWrap:'wrap',marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
+                  <button
+                    onClick={()=>{
+                      const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                      if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                      else props.onStartSession&&props.onStartSession();
+                    }}
+                    style={{cursor:'pointer',flex:'1 1 260px',minWidth:220,textAlign:'left',border:'none',background:'var(--ink-900)',color:'var(--paper-0)',borderRadius:'var(--r-sm)',padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{flex:1,display:'flex',flexDirection:'column',gap:2}}>
+                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)'}}>{props.sessionLabel||'Iniciar jornada'}</span>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'rgba(255,255,255,0.7)'}}>{props.sessionSub}</span>
+                    </span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>→</span>
+                  </button>
+                  <div data-testid="role-selector" style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
+                    {[{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}].map((r,i)=>{
+                      const sel=props.role===r.key;
+                      return (
+                        <button key={r.key} onClick={()=>props.onSetRole&&props.onSetRole(r.key)} aria-pressed={sel}
+                          style={{cursor:'pointer',padding:'8px 12px',border:'none',borderRight:i<2?'1px solid var(--border-soft)':'none',background:sel?'var(--ink-900)':'var(--paper-0)',color:sel?'var(--paper-0)':'var(--ink-700)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)',fontWeight:700}}>
+                          {r.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {(props.hasHandoff===true||props.hasHandoff==='true')&&(
+                  <div style={{marginTop:12,border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--slate-700)'}}>Traspaso del turno anterior</span>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
+                    </div>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
+                  </div>
+                )}
               </div>
 
               {/* SECCIÓN D: ACCIONES RÁPIDAS (Zona Superior / Pulgar) */}
@@ -3843,6 +3880,61 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ))}
                 </div>
               </div>
+
+              {/* TAREAS DE HOY + VISTA PREVIA DEL REGISTRO — lado a lado, justo después de Acciones Rápidas */}
+              {(()=>{
+                let tasksHoy=[];
+                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+                const hasTasksHoy=tasksHoy.length>0;
+                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
+                return (
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))',gap:20}}>
+                    {hasTasksHoy&&(
+                      <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {tasksHoy.map(t=>(
+                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              </button>
+                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              </button>
+                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Registro de cultivo · vista previa</span>
+                        <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)'}}>Ver registro completo →</button>
+                      </div>
+                      <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:2}}>
+                        {[
+                          {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
+                          {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
+                          {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
+                          {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
+                          {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                        ].map(m=>(
+                          <button key={m.label} onClick={()=>m.onClick&&m.onClick()} style={{cursor:'pointer',flex:'1 0 100px',minWidth:100,textAlign:'left',background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px 14px'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-lg)',color:m.color||'var(--ink-900)'}}>{m.value}</div>
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* SECCIÓN A: TELEMETRÍA / ESTADO OPERATIVO DE SALAS */}
               <div>

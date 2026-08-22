@@ -1,6 +1,6 @@
 # Setas OS — catálogo de escenarios E2E
 
-Los 11 escenarios (E2E-01 a E2E-11) están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). E2E-08 se mantiene intencionalmente como `test.fail()` — ver su sección abajo. Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
+Los 11 escenarios (E2E-01 a E2E-11) están implementados con Playwright en `e2e/*.spec.js` y pasan contra la app real (`npx playwright test`, proyectos `chromium` y `mobile`/WebKit). Este documento sigue siendo la referencia de diseño de cada escenario; no hay job de CI wireado todavía (ver "Próximo paso").
 
 ## Convenciones de la suite
 
@@ -30,7 +30,7 @@ Atributos nuevos recomendados (no añadidos todavía) para dejar de depender de 
 
 **E2E-07 — "Calcular" produce diversidad estructural real.** Con catálogo completo (no bodega reducida) y una especie con ≥4 bases compatibles: en los primeros 12 resultados, ≥4 firmas de base estructural distintas, ninguna firma en más de 3 posiciones, sin duplicados exactos tras normalizar. El motor (`perito-scenarios.js`) ya implementa esta política (`RANKED_LIMIT=12`, `RANKED_PER_GROUP_CAP=3`) — este test la protege de regresiones.
 
-**E2E-08 — Selector Operario/Producción/Dirección — fallo conocido.** `EXPECTED FAILURE` marcado explícitamente. El `<sc-for>` de `roleOptions` en `Setas OS v5.dc.html` está vacío — el modelo genera la lista pero no hay `<button>` dentro. Mantener como fallo esperado en CI; un "unexpected pass" debe convertirse inmediatamente en regresión normal a investigar.
+**E2E-08 — Selector Operario/Producción/Dirección renderiza en Hoy.** Vivía en la pantalla "Sesión" con el `<sc-for>` de `roleOptions` vacío (bug conocido, sin `<button>` dentro del bucle). Al consolidar "Sesión" dentro de "Hoy", el selector se migró al cockpit de React (`data-testid="role-selector"`) y ya renderiza sus 3 `<button>` normalmente. Verificar: 3 botones (Operario/Producción/Dirección) visibles en `Control · Hoy`, y que seleccionar uno marca `aria-pressed="true"`.
 
 **E2E-09 — Mobile 390px: rail inferior de cuatro botones.** Exactamente 4 `[data-workspace]` visibles, ninguno fuera del viewport, sin scroll horizontal del rail ni del documento, los 4 accionables.
 

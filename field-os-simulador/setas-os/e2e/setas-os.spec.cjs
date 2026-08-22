@@ -134,16 +134,19 @@ test.describe('desktop navigation contract', () => {
   });
 
   test('role selector renders Operario / Producción / Dirección', async ({ page }) => {
-    test.fail(true, 'BUG CONOCIDO: roleOptions existe pero el cuerpo del sc-for del selector está vacío');
     await openApp(page);
 
     await workspaceButton(page, 'control').click();
     await contextTab(page, 'Hoy').click();
 
-    const roleControls = page.getByRole('button', { name: /^(Operario|Producción|Dirección)$/ });
+    // Ámbito acotado al selector: la palabra "Producción" también nombra el
+    // botón del workspace en el rail principal (siempre montado), así que un
+    // getByRole sin ámbito choca con él y cuenta 4 en vez de 3.
+    const roleSelector = page.locator('[data-testid="role-selector"]');
+    const roleControls = roleSelector.getByRole('button', { name: /^(Operario|Producción|Dirección)$/ });
     await expect(roleControls).toHaveCount(3);
-    await page.getByRole('button', { name: 'Producción', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Producción', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await roleSelector.getByRole('button', { name: 'Producción', exact: true }).click();
+    await expect(roleSelector.getByRole('button', { name: 'Producción', exact: true })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 
