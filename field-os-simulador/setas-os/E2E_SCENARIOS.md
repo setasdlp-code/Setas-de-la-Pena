@@ -30,7 +30,7 @@ Atributos nuevos recomendados (no añadidos todavía) para dejar de depender de 
 
 **E2E-07 — "Calcular" produce diversidad estructural real.** Con catálogo completo (no bodega reducida) y una especie con ≥4 bases compatibles: en los primeros 12 resultados, ≥4 firmas de base estructural distintas, ninguna firma en más de 3 posiciones, sin duplicados exactos tras normalizar. El motor (`perito-scenarios.js`) ya implementa esta política (`RANKED_LIMIT=12`, `RANKED_PER_GROUP_CAP=3`) — este test la protege de regresiones.
 
-**E2E-08 — Selector Operario/Producción/Dirección renderiza en Hoy.** Vivía en la pantalla "Sesión" con el `<sc-for>` de `roleOptions` vacío (bug conocido, sin `<button>` dentro del bucle). Al consolidar "Sesión" dentro de "Hoy", el selector se migró al cockpit de React (`data-testid="role-selector"`) y ya renderiza sus 3 `<button>` normalmente. Verificar: 3 botones (Operario/Producción/Dirección) visibles en `Control · Hoy`, y que seleccionar uno marca `aria-pressed="true"`.
+**E2E-08 — retirado.** El selector Operario/Producción/Dirección (que llegó a vivir en "Sesión" y luego en el cockpit de React de "Hoy") se quitó de la interfaz: "Control · Turno Actual" volvió a ser solo la barra de estado (KPIs), y "Iniciar/Continuar jornada" pasó a ser un botón terracota dentro de Acciones Rápidas. El estado de rol (`s.role`, `ROLE_GATE`) sigue existiendo y sigue gateando permisos en el resto de la app — solo no hay ningún control visible para cambiarlo. Test y spec correspondientes eliminados.
 
 **E2E-09 — Mobile 390px: rail inferior de cuatro botones.** Exactamente 4 `[data-workspace]` visibles, ninguno fuera del viewport, sin scroll horizontal del rail ni del documento, los 4 accionables.
 

@@ -3725,42 +3725,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
-                {/* JORNADA + MODOS DE OPERACIÓN — consolidado desde el antiguo módulo "Sesión" */}
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,flexWrap:'wrap',marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
-                  <button
-                    onClick={()=>{
-                      const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
-                      if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
-                      else props.onStartSession&&props.onStartSession();
-                    }}
-                    className="home-jornada-cta"
-                    style={{cursor:'pointer',flex:'1 1 260px',minWidth:220,textAlign:'left',border:'none',background:'var(--ink-900)',color:'var(--paper-0)',borderRadius:'var(--r-sm)',padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
-                    <span style={{flex:1,display:'flex',flexDirection:'column',gap:2}}>
-                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)'}}>{props.sessionLabel||'Iniciar jornada'}</span>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'color-mix(in oklab, var(--paper-0) 70%, transparent)'}}>{props.sessionSub}</span>
-                    </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>→</span>
-                  </button>
-                  <div data-testid="role-selector" role="group" aria-label="Modo de operación" style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
-                    {[{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}].map((r,i)=>{
-                      const sel=props.role===r.key;
-                      return (
-                        <button key={r.key} onClick={()=>props.onSetRole&&props.onSetRole(r.key)} aria-pressed={sel}
-                          className={'home-role-btn'+(sel?' is-selected':'')}
-                          style={{cursor:'pointer',padding:'8px 12px',border:'none',borderRight:i<2?'1px solid var(--border-soft)':'none',background:sel?'var(--ink-900)':'var(--paper-0)',color:sel?'var(--paper-0)':'var(--ink-700)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)',fontWeight:700}}>
-                          {r.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
-                  <div style={{marginTop:12,border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
+                  <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
+                  <div style={{border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
                       <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--slate-700)'}}>Traspaso del turno anterior</span>
                       <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
                     </div>
                     <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
+                  </div>
                   </div>
                 )}
               </div>
@@ -3787,16 +3760,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         gap:12
                       }}>
                         {[
+                          {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                            const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                            if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                            else props.onStartSession&&props.onStartSession();
+                          },jornada:true},
                           {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
                           {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                           {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                           {label:'Lotes',sub:'Crear y gestionar lotes',icon:IconMicroscope,tab:'bitacora',onClick:()=>goTab('bitacora')},
                           {label:'Módulos de cultivo',sub:'Mezcla, clima y producción',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')}
-                        ].map(btn=>(
+                        ].map(btn=>{
+                          const accent=btn.jornada?'var(--coral-600)':(btn.pri?'var(--moss-700)':null);
+                          return (
                           <button
                             key={btn.label}
                             onClick={btn.onClick}
-                            className={'home-quick-action'+(btn.pri?' is-primary':'')}
+                            className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
                             style={{
                               display:'flex',
                               alignItems:'center',
@@ -3808,18 +3788,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               position:'relative'
                             }}
                           >
-                            <span style={{display:'inline-flex',flexShrink:0,color:btn.pri?'var(--moss-700)':'var(--ink-700)'}}><btn.icon size={20}/></span>
+                            <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={20}/></span>
                             <div style={{minWidth:0,flex:1}}>
-                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                                 {btn.label}
                               </div>
                               <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                                 {btn.sub}
                               </div>
                             </div>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--moss-700)':'var(--ink-400)',fontWeight:700}}>→</span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                     <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>

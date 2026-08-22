@@ -2605,6 +2605,7 @@
    :focus-visible (global rule above) all come for free. ── */
 .sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .15s ease,border-color .15s ease,transform .1s ease}
 .sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
+.sim-root .home-quick-action.is-jornada{border:1.5px solid var(--coral-500)}
 .sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
 .sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
 
@@ -2623,19 +2624,11 @@
 .sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
 .sim-root .home-panel-btn.is-secondary:active{background:var(--paper-200);transform:scale(.97)}
 
-/* "Hoy" · Control · Turno Actual — CTA de jornada, selector de rol y
-   descarte de traspaso no tenían :hover/:active (se sentían inertes hasta
-   el click), mismo problema que ya se había resuelto para home-quick-action
-   y home-panel-btn. Mismo enfoque: CSS, no JS, para que :focus-visible
-   (regla global arriba) y prefers-reduced-motion (regla al final) apliquen gratis. */
-.sim-root .home-jornada-cta{transition:filter .15s ease,transform .1s ease}
-.sim-root .home-jornada-cta:hover{filter:brightness(1.15)}
-.sim-root .home-jornada-cta:active{filter:brightness(.92);transform:scale(.99)}
-
-.sim-root .home-role-btn{transition:background-color .15s ease,transform .1s ease}
-.sim-root .home-role-btn:not(.is-selected):hover{background:var(--paper-100)}
-.sim-root .home-role-btn:active{transform:scale(.96)}
-
+/* "Hoy" · Control · Turno Actual — descarte de traspaso no tenía
+   :hover/:active (se sentía inerte hasta el click), mismo problema que ya
+   se había resuelto para home-quick-action y home-panel-btn. Mismo
+   enfoque: CSS, no JS, para que :focus-visible (regla global arriba) y
+   prefers-reduced-motion (regla al final) apliquen gratis. */
 .sim-root .home-handoff-dismiss{transition:color .15s ease}
 .sim-root .home-handoff-dismiss:hover{color:var(--ink-900)}
 .sim-root .home-handoff-dismiss:active{transform:scale(.96)}
