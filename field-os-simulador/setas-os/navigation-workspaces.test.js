@@ -67,3 +67,13 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
   assert.doesNotMatch(loadR[0], /setTab\(/);
   assert.match(loadR[0], /goTab\('formular'\)/);
 });
+
+test('Control remains the visual reference and Formular overrides stay locally scoped', () => {
+  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="builder-wrap"/);
+  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="formular-workspace"/);
+  const scoped = css.match(/\/\* ── FORMULAR · VISUAL PARITY WITH CONTROL[\s\S]*?(?=@media\(prefers-reduced-motion:reduce\))/);
+  assert.ok(scoped, 'Formular scoped visual block not found');
+  assert.match(scoped[0], /\.builder-wrap/);
+  assert.match(scoped[0], /\.formular-workspace/);
+  assert.doesNotMatch(scoped[0], /\.home-/);
+});
