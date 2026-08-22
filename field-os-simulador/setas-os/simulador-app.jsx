@@ -3744,7 +3744,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
-              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
+              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO (2/3) + ACTIVIDAD RECIENTE (1/3), lado a lado y responsive */}
+              <div className="home-header-row">
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
@@ -3824,6 +3825,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
                 )}
+              </div>
+
+              {/* ACTIVIDAD RECIENTE — segunda columna (1/3) junto a Control · Turno Actual */}
+              {(()=>{
+                let recentActivity=[];
+                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+                if(!recentActivity.length) return null;
+                return (
+                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Actividad reciente</span>
+                    <div style={{display:'flex',flexDirection:'column',marginTop:10}}>
+                      {recentActivity.map((ev,i)=>(
+                        <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                            </div>
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               </div>
 
               {/* SECCIÓN D: ACCIONES RÁPIDAS + REGISTRO DE CULTIVO (columna izquierda) · TAREAS DE HOY (columna derecha) */}
@@ -4442,31 +4470,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {/* ACTIVIDAD RECIENTE — última sección del cockpit, mismo bloque que todo lo demás */}
-              {(()=>{
-                let recentActivity=[];
-                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
-                if(!recentActivity.length) return null;
-                return (
-                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Actividad reciente</span>
-                    <div style={{display:'flex',flexDirection:'column',marginTop:10}}>
-                      {recentActivity.map((ev,i)=>(
-                        <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
-                            </div>
-                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
           );
         })()}
