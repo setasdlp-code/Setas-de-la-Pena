@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 437e734ae743bbf2d53f29aaf2e385e49f2600bbf554d9c8ca0ccb51b82cd264
+// source-hash: 866568754abbb75b12914e56cef368b1db669fa0101d665df1471f1e418b1b6b
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1254,7 +1254,7 @@ function App(props) {
       return "home";
     }
   });
-  const TAB_LABELS = { home: "Hoy", inicio: "Inicio", catalogo: "Catálogo", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", dashboard: "Recetario", bitacora: "Bitácora" };
+  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", dashboard: "Recetario", bitacora: "Bitácora" };
   const NAV_GROUPS = [
     { key: "inicio", label: "Inicio", tabs: ["home", "inicio"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 11l9-7 9 7M5 10v10h14V10" })) },
     { key: "recetas", label: "Formular", tabs: ["catalogo", "formular", "dashboard"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9" })) },
@@ -2987,58 +2987,6 @@ BATCH (${numBags}×${kgBag} kg):
     } catch (e) {
       camaras = [];
     }
-    const pipelineStages = [
-      {
-        num: "01",
-        title: "Preparación & Mezcla",
-        sub: "Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)",
-        badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : "En espera de receta",
-        active: activeRecipeCount > 0,
-        linkTab: "formular",
-        accent: "var(--coral-500)",
-        icon: IconFlame
-      },
-      {
-        num: "02",
-        title: "Inoculación & Incubación",
-        sub: "Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%",
-        badge: `${bolsasIncubacion} bolsas en incubación`,
-        active: bolsasIncubacion > 0,
-        linkTab: "bitacora",
-        accent: "var(--slate-500)",
-        icon: IconSprout
-      },
-      {
-        num: "03",
-        title: "Inducción / Primordios",
-        sub: "Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm",
-        badge: `${bitBolsas.filter((b) => b.col100).length} bolsas colonizadas 100%`,
-        active: bitBolsas.filter((b) => b.col100).length > 0,
-        linkTab: "schedule",
-        accent: "var(--sand-500)",
-        icon: IconSnowflake
-      },
-      {
-        num: "04",
-        title: "Fructificación & Cosecha",
-        sub: "Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero",
-        badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
-        active: totalCosechasCount > 0,
-        linkTab: "bitacora",
-        accent: "var(--moss-700)",
-        icon: IconMushroom
-      },
-      {
-        num: "05",
-        title: "Post-Cosecha & Descanso",
-        sub: "2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)",
-        badge: `${bitLotes.length} lotes con trazabilidad`,
-        active: bitLotes.length > 0,
-        linkTab: "dashboard",
-        accent: "var(--ink-700)",
-        icon: IconScale
-      }
-    ];
     return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 24, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
@@ -3046,7 +2994,7 @@ BATCH (${numBags}×${kgBag} kg):
       padding: "18px 22px",
       position: "relative",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", margin: 0 } }, "Hoy")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", margin: 0 } }, "Tablero de Control")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
       { value: activeLotes.length, label: "Lotes activos", icon: IconMicroscope, tone: "neutral" },
       { value: pendingTaskCount, label: "Tareas pendientes", icon: IconClipboard, tone: pendingTaskCount > 0 ? "attention" : "neutral" },
       { value: incidentCount, label: "Incidencias", icon: IconAlert, tone: incidentCount > 0 ? "critical" : "neutral" }
@@ -3130,31 +3078,7 @@ BATCH (${numBags}×${kgBag} kg):
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--paper-300)", paddingTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("span", null, "Ocupación / Carga:"), /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)", fontFamily: "var(--font-body)", fontWeight: 700 } }, c.occupancy, "% ", /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, color: "var(--ink-500)" } }, "· ", c.capKg, " kg cap."))),
         hasSpark && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Tendencia"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onOpenCamara && props.onOpenCamara(c.id), style: { display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--coral-600)", fontWeight: 700 } }, /* @__PURE__ */ React.createElement(IconCamera, { size: 11 }), " Ver detalle →")), /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 280 40", preserveAspectRatio: "none", role: "img", "aria-label": `Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`, style: { width: "100%", height: 36, overflow: "visible", display: "block" } }, /* @__PURE__ */ React.createElement("polyline", { points: c.tempSpark, fill: "none", stroke: "var(--coral-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: c.humSpark, fill: "none", stroke: "var(--slate-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("polyline", { points: c.co2Spark, fill: "none", stroke: "var(--moss-500)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.tempSparkEndY, r: "3", fill: "var(--coral-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.humSparkEndY, r: "3", fill: "var(--slate-500)" }), /* @__PURE__ */ React.createElement("circle", { cx: 280, cy: c.co2SparkEndY, r: "3", fill: "var(--moss-500)" })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginTop: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--coral-500)", display: "inline-block" } }), "Temp."), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--slate-500)", display: "inline-block" } }), "Humedad"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 2, background: "var(--moss-500)", display: "inline-block" } }), "CO₂")))
       );
-    }))), (() => {
-      let tasksHoy = [], recentActivity = [];
-      try {
-        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
-      } catch (e) {
-        tasksHoy = [];
-      }
-      try {
-        recentActivity = JSON.parse(props.recentActivityJson || "[]");
-      } catch (e) {
-        recentActivity = [];
-      }
-      if (!tasksHoy.length && !recentActivity.length) return null;
-      const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
-      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · SEGUIMIENTO DEL DÍA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Tareas y Actividad")), tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, props.tasksOpenCount)), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 } }, tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 10 } }, "Tareas de hoy"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, style: { display: "flex", alignItems: "center", gap: 2, padding: "4px 12px 4px 4px", border: "1px solid var(--paper-300)", borderRadius: "var(--r-sm)", opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
-          "aria-pressed": t.done,
-          "aria-label": "Marcar tarea",
-          style: { cursor: "pointer", flexShrink: 0, width: 36, height: 36, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
-        },
-        /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${t.done ? "var(--moss-600)" : "var(--paper-300)"}`, background: t.done ? "var(--moss-600)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
-      ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 3 } }, t.prio))))), recentActivity.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { borderLeft: tasksHoy.length > 0 ? "1px solid var(--paper-300)" : "none", paddingLeft: tasksHoy.length > 0 ? 20 : 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 10 } }, "Actividad reciente"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, recentActivity.map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: ev.accent, marginTop: 6 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ev.typeLabel), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--slate-600)" } }, ev.container)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1 } }, ev.note))))))));
-    })(), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · MÓDULOS DE CAMPO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Espacios de Trabajo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Flujos principales")), /* @__PURE__ */ React.createElement("div", { style: {
+    }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN D · MÓDULOS DE CAMPO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Espacios de Trabajo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Flujos principales")), /* @__PURE__ */ React.createElement("div", { style: {
       display: "grid",
       gridTemplateColumns: props.isAdmin !== false ? "repeat(auto-fit, minmax(280px, 1fr))" : "repeat(auto-fit, minmax(320px, 1fr))",
       gap: 20
@@ -3202,72 +3126,92 @@ BATCH (${numBags}×${kgBag} kg):
       justifyContent: "space-between",
       gap: 18,
       boxShadow: "var(--shadow-card-rest)"
-    } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(IconScale, { size: 11 }), " GESTIÓN & FINANZAS (ADMIN)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "Activo")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Finanzas & Rendimiento"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Análisis de costo unitario por kilo seco y por bolsa comercial, balance de proveedores y simulación de márgenes."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Costo/kg Sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", an?.cost ? Math.round(an.cost).toLocaleString("es-CO") : "0", " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Bolsa Estándar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString("es-CO") : "0", " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Recetas Evaluadas"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, saved.length, " fórmulas")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Ciclo Planificado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, sch?.totDays || 45, " días")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("dashboard"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--ink-900)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Dashboard"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("schedule"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Cronograma"))))), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(IconScale, { size: 11 }), " GESTIÓN & FINANZAS (ADMIN)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "Activo")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Finanzas & Rendimiento"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Análisis de costo unitario por kilo seco y por bolsa comercial, balance de proveedores y simulación de márgenes."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Costo/kg Sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", an?.cost ? Math.round(an.cost).toLocaleString("es-CO") : "0", " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Bolsa Estándar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString("es-CO") : "0", " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Recetas Evaluadas"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, saved.length, " fórmulas")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Ciclo Planificado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, sch?.totDays || 45, " días")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("dashboard"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--ink-900)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Dashboard"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("schedule"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Cronograma"))))), (() => {
+      let tasksHoy = [], recentActivity = [];
+      try {
+        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
+      } catch (e) {
+        tasksHoy = [];
+      }
+      try {
+        recentActivity = JSON.parse(props.recentActivityJson || "[]");
+      } catch (e) {
+        recentActivity = [];
+      }
+      if (!tasksHoy.length && !recentActivity.length) return null;
+      const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
+      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · SEGUIMIENTO DEL DÍA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Tareas y Actividad")), tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, props.tasksOpenCount)), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 } }, tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 10 } }, "Tareas de hoy"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, style: { display: "flex", alignItems: "center", gap: 2, padding: "4px 12px 4px 4px", border: "1px solid var(--paper-300)", borderRadius: "var(--r-sm)", opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
+          "aria-pressed": t.done,
+          "aria-label": "Marcar tarea",
+          style: { cursor: "pointer", flexShrink: 0, width: 36, height: 36, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${t.done ? "var(--moss-600)" : "var(--paper-300)"}`, background: t.done ? "var(--moss-600)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
+      ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 3 } }, t.prio))))), recentActivity.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { borderLeft: tasksHoy.length > 0 ? "1px solid var(--paper-300)" : "none", paddingLeft: tasksHoy.length > 0 ? 20 : 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 10 } }, "Actividad reciente"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, recentActivity.map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: ev.accent, marginTop: 6 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ev.typeLabel), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--slate-600)" } }, ev.container)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1 } }, ev.note))))))));
+    })(), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: "var(--r-md)",
       padding: "28px",
       boxShadow: "var(--shadow-card-rest)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN E · CICLO BIOLÓGICO TENJO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Pipeline de Lotes & Fases de Cultivo")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Ciclo total promedio: ~42–48 días")), /* @__PURE__ */ React.createElement("div", { style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-      gap: 12,
-      marginBottom: 20
-    } }, pipelineStages.map((st, idx) => /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        key: st.num,
-        "aria-label": `${st.title} — ${st.active ? "en curso" : "planificado"}`,
-        onClick: () => goTab(st.linkTab),
-        className: "home-stage-card" + (st.active ? " is-active" : ""),
-        style: {
-          "--stage-accent": st.accent,
-          borderRadius: "var(--r-sm)",
-          padding: "14px",
-          cursor: "pointer",
-          position: "relative",
-          display: "block",
-          width: "100%",
-          textAlign: "left",
-          fontFamily: "inherit"
-        }
-      },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: st.active ? st.accent : "var(--paper-200)", color: st.active ? "var(--paper-0)" : "var(--ink-500)", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700 } }, st.num.replace(/^0/, "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-micro)", fontFamily: "var(--font-mono)", padding: "1px 5px", borderRadius: 2, background: st.active ? "var(--status-active-bg)" : "var(--paper-200)", color: st.active ? st.accent : "var(--ink-500)" } }, st.active ? "En curso" : "Plan")),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: st.accent } }, /* @__PURE__ */ React.createElement(st.icon, { size: 13 })), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, st.title)),
-      /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-600)", lineHeight: 1.35, marginBottom: 8 } }, st.sub),
-      /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", borderTop: "1px solid var(--paper-300)", paddingTop: 6 } }, st.badge)
-    ))), bitLotes.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 10 } }, "Lotes Recientes en Seguimiento"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, bitLotes.slice(0, 4).map((lt) => {
-      const stats = calcLoteStats(lt.id);
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: lt.id,
-          "data-lote-id": lt.id,
-          "aria-label": `Abrir lote ${lt.codigo} · ${lt.especie || "sin especie"}`,
-          onClick: () => {
-            setBitActiveLoteId(lt.id);
-            goTab("bitacora");
-            goBitTab("bit_bolsas", true);
-          },
-          className: "home-lote-row",
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "10px 14px",
-            borderRadius: "var(--r-xs)",
-            cursor: "pointer",
-            flexWrap: "wrap",
-            gap: 8,
-            width: "100%",
-            textAlign: "left",
-            fontFamily: "inherit"
-          }
-        },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, lt.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, lt.especie, " · ", lt.numBolsas || 1, " bolsas · ", lt.fechaInoculacion || lt.fechaMezcla || "Sin fecha")),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16 } }, stats?.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)", fontWeight: 700 } }, stats.totalFresco.toFixed(2), " kg cosechados"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)", fontWeight: 700 } }, "Ver lote →"))
-      );
-    }))) : /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid var(--paper-300)", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora."), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(true), style: { padding: "5px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "+ Iniciar Primer Lote"))));
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN E · CICLO BIOLÓGICO TENJO"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Seguimiento de Lotes por Fase")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Ciclo total promedio: ~42–48 días")), bitLotes.length > 0 ? (() => {
+      const columnas = [
+        { key: "incubacion", title: "Incubación", sub: "Días 1–18 · Oscuridad 22–24°C", accent: "var(--slate-500)", icon: IconSprout, linkTab: "bitacora" },
+        { key: "primordios", title: "Primordios", sub: "Colonización 100% · Espera de shock térmico", accent: "var(--sand-500)", icon: IconSnowflake, linkTab: "schedule" },
+        { key: "fruta", title: "Fructificación & Cosecha", sub: "Días 24–45 · Cosecha en botón/sombrero", accent: "var(--moss-700)", icon: IconMushroom, linkTab: "bitacora" },
+        { key: "post", title: "Post-Cosecha", sub: "2°/3° flush · Trazabilidad de EB", accent: "var(--ink-700)", icon: IconScale, linkTab: "dashboard" }
+      ];
+      const clasificados = bitLotes.filter((l) => l.estado !== "descartado").map((lote) => {
+        const stats = calcLoteStats(lote.id);
+        const bolsasLote = bitBolsas.filter((b) => b.loteId === lote.id);
+        const sanas = bolsasLote.filter((b) => b.estado === "sana");
+        const colonizado = sanas.length > 0 && sanas.every((b) => !!b.col100);
+        const columna = lote.estado === "completado" ? "post" : lote.estado === "fructificacion" ? "fruta" : colonizado ? "primordios" : "incubacion";
+        const inoculated = Date.parse(lote.fechaInoculacion || "");
+        const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((operationalNow - inoculated) / 864e5)) : null;
+        return { lote, stats, columna, age };
+      });
+      const descartados = bitLotes.length - clasificados.length;
+      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 } }, columnas.map((col) => {
+        const items = clasificados.filter((c) => c.columna === col.key);
+        return /* @__PURE__ */ React.createElement("div", { key: col.key, style: { background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderTop: `3px solid ${col.accent}`, borderRadius: "var(--r-sm)", padding: "14px", display: "flex", flexDirection: "column", gap: 10, minHeight: 120 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab(col.linkTab), style: { background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, color: col.accent } }, /* @__PURE__ */ React.createElement(col.icon, { size: 13 }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--ink-900)" } }, col.title)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-600)" } }, items.length)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", lineHeight: 1.3 } }, col.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-400)", fontStyle: "italic" } }, "Sin lotes"), items.map(({ lote: lt, stats, age }) => {
+          const critical = stats && stats.contPct >= 20;
+          const contaminated = stats && stats.contPct > 0;
+          return /* @__PURE__ */ React.createElement(
+            "button",
+            {
+              key: lt.id,
+              "data-lote-id": lt.id,
+              "aria-label": `Abrir lote ${lt.codigo} · ${lt.especie || "sin especie"}`,
+              onClick: () => {
+                setBitActiveLoteId(lt.id);
+                goTab("bitacora");
+                goBitTab("bit_bolsas", true);
+              },
+              className: "home-lote-card",
+              style: {
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                padding: "9px 10px",
+                background: "var(--paper-0)",
+                border: `1px solid ${critical ? "var(--coral-500)" : "var(--paper-300)"}`,
+                borderRadius: "var(--r-xs)",
+                cursor: "pointer",
+                textAlign: "left",
+                fontFamily: "inherit",
+                width: "100%"
+              }
+            },
+            /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", color: "var(--ink-900)" } }, lt.codigo), age != null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "día ", age)),
+            /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-600)" } }, lt.especie, " · ", lt.numBolsas || 1, " bolsas"),
+            (contaminated || stats?.totalFresco > 0) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, contaminated && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, padding: "1px 5px", borderRadius: 2, color: critical ? "var(--coral-700)" : "var(--ochre-700)", background: critical ? "color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))" : "color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))" } }, stats.contPct.toFixed(0), "% contam."), stats?.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--moss-700)", fontWeight: 700 } }, stats.totalFresco.toFixed(2), " kg"))
+          );
+        })));
+      })), descartados > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-400)" } }, descartados, " lote", descartados === 1 ? "" : "s", " descartado", descartados === 1 ? "" : "s", " (oculto", descartados === 1 ? "" : "s", " del tablero)"));
+    })() : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora."), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(true), style: { padding: "5px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "+ Iniciar Primer Lote"))));
   })(), tab === "catalogo" && /* @__PURE__ */ React.createElement("div", { className: "spp-sect spp-sect-catalog" }, /* @__PURE__ */ React.createElement("div", { className: "catalog-hdr" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "catalog-eyebrow" }, "Receta"), /* @__PURE__ */ React.createElement("h2", { className: "catalog-title" }, "Catálogo de especies"))), /* @__PURE__ */ React.createElement("div", { className: "spp-grid" }, Object.entries(SPP).map(([k, d], idx) => {
     const hasImg = !!IMG[k];
     const isOn = sKey === k;
