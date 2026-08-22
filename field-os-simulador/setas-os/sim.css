@@ -2623,6 +2623,23 @@
 .sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
 .sim-root .home-panel-btn.is-secondary:active{background:var(--paper-200);transform:scale(.97)}
 
+/* "Hoy" · Control · Turno Actual — CTA de jornada, selector de rol y
+   descarte de traspaso no tenían :hover/:active (se sentían inertes hasta
+   el click), mismo problema que ya se había resuelto para home-quick-action
+   y home-panel-btn. Mismo enfoque: CSS, no JS, para que :focus-visible
+   (regla global arriba) y prefers-reduced-motion (regla al final) apliquen gratis. */
+.sim-root .home-jornada-cta{transition:filter .15s ease,transform .1s ease}
+.sim-root .home-jornada-cta:hover{filter:brightness(1.15)}
+.sim-root .home-jornada-cta:active{filter:brightness(.92);transform:scale(.99)}
+
+.sim-root .home-role-btn{transition:background-color .15s ease,transform .1s ease}
+.sim-root .home-role-btn:not(.is-selected):hover{background:var(--paper-100)}
+.sim-root .home-role-btn:active{transform:scale(.96)}
+
+.sim-root .home-handoff-dismiss{transition:color .15s ease}
+.sim-root .home-handoff-dismiss:hover{color:var(--ink-900)}
+.sim-root .home-handoff-dismiss:active{transform:scale(.96)}
+
 /* "Hoy" · Ambientes & Sensores: 2×2 fija (no auto-fit a 4 columnas en
    pantallas anchas) — colapsa a 1 columna por debajo de 640px. */
 .sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}

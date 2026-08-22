@@ -3733,18 +3733,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                       else props.onStartSession&&props.onStartSession();
                     }}
+                    className="home-jornada-cta"
                     style={{cursor:'pointer',flex:'1 1 260px',minWidth:220,textAlign:'left',border:'none',background:'var(--ink-900)',color:'var(--paper-0)',borderRadius:'var(--r-sm)',padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
                     <span style={{flex:1,display:'flex',flexDirection:'column',gap:2}}>
                       <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)'}}>{props.sessionLabel||'Iniciar jornada'}</span>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'rgba(255,255,255,0.7)'}}>{props.sessionSub}</span>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'color-mix(in oklab, var(--paper-0) 70%, transparent)'}}>{props.sessionSub}</span>
                     </span>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>→</span>
                   </button>
-                  <div data-testid="role-selector" style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
+                  <div data-testid="role-selector" role="group" aria-label="Modo de operación" style={{display:'flex',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',flex:'none'}}>
                     {[{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}].map((r,i)=>{
                       const sel=props.role===r.key;
                       return (
                         <button key={r.key} onClick={()=>props.onSetRole&&props.onSetRole(r.key)} aria-pressed={sel}
+                          className={'home-role-btn'+(sel?' is-selected':'')}
                           style={{cursor:'pointer',padding:'8px 12px',border:'none',borderRight:i<2?'1px solid var(--border-soft)':'none',background:sel?'var(--ink-900)':'var(--paper-0)',color:sel?'var(--paper-0)':'var(--ink-700)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)',fontWeight:700}}>
                           {r.label}
                         </button>
@@ -3756,7 +3758,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:12,border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
                       <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--slate-700)'}}>Traspaso del turno anterior</span>
-                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
                     </div>
                     <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>

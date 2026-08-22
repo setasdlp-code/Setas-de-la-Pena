@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: cc55dd4d0ad110aae3f6b6f1eb3619b74e287eb1be247c34f73b063c5ecf31dc
+// source-hash: 3bed0673e3cd4eb0668a6d74ecc14ffcad9f00a3828972cbab04cd86ff2befb8
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3066,11 +3066,12 @@ BATCH (${numBags}×${kgBag} kg):
           if (hasActiveSession) props.onContinueSession && props.onContinueSession();
           else props.onStartSession && props.onStartSession();
         },
+        className: "home-jornada-cta",
         style: { cursor: "pointer", flex: "1 1 260px", minWidth: 220, textAlign: "left", border: "none", background: "var(--ink-900)", color: "var(--paper-0)", borderRadius: "var(--r-sm)", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }
       },
-      /* @__PURE__ */ React.createElement("span", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)" } }, props.sessionLabel || "Iniciar jornada"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "rgba(255,255,255,0.7)" } }, props.sessionSub)),
+      /* @__PURE__ */ React.createElement("span", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)" } }, props.sessionLabel || "Iniciar jornada"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "color-mix(in oklab, var(--paper-0) 70%, transparent)" } }, props.sessionSub)),
       /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, "→")
-    ), /* @__PURE__ */ React.createElement("div", { "data-testid": "role-selector", style: { display: "flex", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", flex: "none" } }, [{ key: "operator", label: "Operario" }, { key: "production", label: "Producción" }, { key: "direction", label: "Dirección" }].map((r, i) => {
+    ), /* @__PURE__ */ React.createElement("div", { "data-testid": "role-selector", role: "group", "aria-label": "Modo de operación", style: { display: "flex", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", flex: "none" } }, [{ key: "operator", label: "Operario" }, { key: "production", label: "Producción" }, { key: "direction", label: "Dirección" }].map((r, i) => {
       const sel = props.role === r.key;
       return /* @__PURE__ */ React.createElement(
         "button",
@@ -3078,11 +3079,12 @@ BATCH (${numBags}×${kgBag} kg):
           key: r.key,
           onClick: () => props.onSetRole && props.onSetRole(r.key),
           "aria-pressed": sel,
+          className: "home-role-btn" + (sel ? " is-selected" : ""),
           style: { cursor: "pointer", padding: "8px 12px", border: "none", borderRight: i < 2 ? "1px solid var(--border-soft)" : "none", background: sel ? "var(--ink-900)" : "var(--paper-0)", color: sel ? "var(--paper-0)" : "var(--ink-700)", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", fontWeight: 700 }
         },
         r.label
       );
-    }))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, border: "1px solid var(--slate-500)", borderRadius: "var(--r-sm)", padding: "10px 14px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--slate-700)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "Leído")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), (() => {
+    }))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, border: "1px solid var(--slate-500)", borderRadius: "var(--r-sm)", padding: "10px 14px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--slate-700)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "Leído")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), (() => {
       return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, alignItems: "start" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
