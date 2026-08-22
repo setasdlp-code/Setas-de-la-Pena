@@ -273,161 +273,6 @@
       </sc-if>
     </nav>
 
-    <!-- =================== INICIO / LAUNCHER =================== -->
-    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
-    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px calc(50px + env(safe-area-inset-bottom));">
-      <div class="col">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
-          
-          
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
-          
-          <div data-testid="role-selector" style="display:flex;border:1px solid var(--border-hairline);">
-            <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
-
-            </sc-for>
-          </div>
-        </div>
-        <div style="margin-top:14px;">
-          <h1 style="font-family: var(--font-sans); font-weight: 900; font-size: clamp(32px, 9vw, 53px); letter-spacing: -.02em; color: var(--ink-1); margin: 0">Cuaderno de Campo</h1>
-          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;max-width:420px;">Registro de campo, trazabilidad por contenedor y formulación de sustratos.</p>
-        </div>
-        
-
-        <sc-if value="{{ hasActiveSession }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:18px;">
-          <button onClick="{{ openSession }}" style="cursor:pointer;width:100%;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:21px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
-              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:22px;height:22px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-        </div>
-        </sc-if>
-        <sc-if value="{{ noActiveSession }}" hint-placeholder-val="{{ true }}">
-        <div style="margin-top:22px;">
-          <div style="font-family:var(--font-sans);font-weight:200;font-style:italic;font-size:16px;color:var(--text-metadata);">{{ greeting }} Abre una sesión para empezar.</div>
-          <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
-            <button onClick="{{ startCult }}" style="cursor: pointer; text-align: left; border: 1px solid var(--ink-0); color: var(--paper-0); border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; gap: 3px; background-color: var(--ink-0)">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:20px;">Registrar</span>
-              <span style="font: var(--t-body-sm); color: #FAF8F3">Manejo, observación, cosecha</span>
-            </button>
-          </div>
-        </div>
-        <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
-        <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
-          <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
-          <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
-        </div>
-        </sc-if>
-        </sc-if>
-
-        <div style="margin-top:14px;">
-          <button onClick="{{ goRevision }}" style="cursor:pointer;width:100%;text-align:left;border:1px solid var(--accent-terracotta);background:var(--paper-0);color:var(--accent-terracotta);border-radius:var(--radius-md);padding:16px 20px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:18px;letter-spacing:-.01em;">Revisión diaria</span>
-              <span style="font:var(--t-body-sm);color:var(--ink-1);">Anomalías, eventos y rendimiento del día</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:22px;height:22px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-        </div>
-
-        <sc-if value="{{ hasHandoff }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:22px;border:1px solid var(--accent-blue-grey);border-radius:var(--radius-md);padding:15px 17px;background:var(--paper-0);">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <span style="font:var(--t-label);color:var(--accent-blue-grey);">Traspaso del turno anterior</span>
-            <button onClick="{{ clearHandoff }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);color:var(--text-metadata);">Leído</button>
-          </div>
-          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:6px;line-height:1.5;">{{ handoffText }}</div>
-        </div>
-        </sc-if>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:30px 0 12px;">Cámaras activas</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
-          <sc-for list="{{ camarasQuick }}" as="cm" hint-placeholder-count="4">
-            <button onClick="{{ cm.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
-              <span style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:{{ cm.accent }};"></span><span style="font:var(--t-label);color:var(--ink-0);">{{ cm.name }}</span></span>
-              <span style="font:var(--t-caption);color:var(--text-metadata);">Zona {{ cm.zona }} · {{ cm.sppName }}</span>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:2px;">
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">T°</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.temp }}°</span></div>
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">HR</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.hum }}%</span></div>
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">CO₂</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.co2 }}</span></div>
-              </div>
-            </button>
-          </sc-for>
-        </div>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 12px;">Lotes activos</div>
-        <sc-if value="{{ hasLotesQuick }}" hint-placeholder-val="{{ true }}">
-        <div class="lotes-quick-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
-          <sc-for list="{{ lotesQuick }}" as="l" hint-placeholder-count="4">
-            <button onClick="{{ l.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px 10px 10px;display:flex;align-items:center;gap:12px;justify-content:space-between;min-width:0;overflow:hidden;">
-              <span style="display:flex;align-items:center;gap:12px;min-width:0;">
-                <sc-if value="{{ l.img }}" hint-placeholder-val="{{ false }}"><img ref="{{ l.imgRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="{{ l.sppName }}" style="width: 101px; height: 100px; border-radius: 6px; object-fit: cover; flex: none"></sc-if>
-                <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
-                  <span style="font:var(--t-label);color:var(--ink-0);font-family:var(--font-mono);">{{ l.batch }}</span>
-                  <span style="font:var(--t-caption);color:var(--text-metadata);">{{ l.summary }}</span>
-                  <span style="font:var(--t-caption);color:var(--text-metadata);">Etapa: {{ l.stagesLabel }} · Receta {{ l.recipe }} · {{ l.oldest }}</span>
-                </span>
-              </span>
-              <sc-if value="{{ l.hasAlert }}" hint-placeholder-val="{{ false }}"><span title="{{ l.alertLabel }}" aria-label="{{ l.alertLabel }}" style="flex: none; display:flex;align-items:center;justify-content:center; background: var(--accent-rust); border-radius: 3px; width: 42px; height: 29px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--paper-0)" stroke-width="2.2" style="width:15px;height:15px;"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r="0.6" fill="var(--paper-0)" stroke="none"></circle></svg></span></sc-if>
-            </button>
-          </sc-for>
-        </div>
-        </sc-if>
-
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:26px 0 10px;">
-          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Hoy</span>
-          <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-          <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ tasksOpenCount }} tareas</span>
-          </sc-if>
-        </div>
-
-        <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-          <sc-for list="{{ tasksToday }}" as="t" hint-placeholder-count="3">
-            <div style="{{ t.rowStyle }}">
-              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}"><span style="{{ t.boxInnerStyle }}">✓</span></button>
-              <button onClick="{{ t.go }}" style="cursor:pointer;flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;display:flex;flex-direction:column;gap:3px;">
-                <span style="{{ t.titleStyle }}">{{ t.title }}</span>
-                <span style="font:var(--t-caption);color:var(--text-metadata);"><span style="font-family:var(--font-mono);">{{ t.id }}</span> · {{ t.why }}</span>
-              </button>
-              <span style="flex:none;font:var(--t-caption);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{ t.prioAccent }};border:1px solid {{ t.prioAccent }};padding:2px 7px;border-radius:3px;">{{ t.prio }}</span>
-            </div>
-          </sc-for>
-        </div>
-        </sc-if>
-
-        <div style="display:grid;grid-template-columns:1fr;gap:10px;">
-          <button onClick="{{ goSim }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-            <span style="display:flex;flex-direction:column;gap:2px;">
-              <span style="font:var(--t-label);color:var(--ink-0);">{{ simCardLabel }}</span>
-              <span style="font:var(--t-caption);color:var(--text-metadata);">{{ simCardSub }}</span>
-            </span>
-            <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);">→</span>
-          </button>
-        </div>
-
-        <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Actividad reciente</div>
-        <div style="display:flex;flex-direction:column;">
-          <sc-for list="{{ recentActivity }}" as="ev" hint-placeholder-count="2">
-            <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);">
-              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div>
-                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-        </sc-if>
-      </div>
-    </div>
-    </sc-if>
-
     <!-- =================== SESIÓN (Field OS) =================== -->
     <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
 
@@ -1134,6 +979,56 @@
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
     <iframe src="{{ climaSrc }}" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
 
+    <!-- =================== TRANSICIÓN DE JORNADA (global, no depende de qué pantalla la abrió) =================== -->
+    <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
+      <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
+      <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
+    </div>
+    </sc-if>
+
+    <!-- =================== JORNADA · ROL · TRASPASO (consolidado desde el antiguo módulo "Sesión", solo en Control · Hoy) =================== -->
+    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
+    <div class="col" style="padding:24px 26px 0;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+          <sc-if value="{{ hasActiveSession }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ openSession }}" style="cursor:pointer;flex:1;min-width:260px;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:14px;">
+            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:19px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
+              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:20px;height:20px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+          </button>
+          </sc-if>
+          <sc-if value="{{ noActiveSession }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ startCult }}" style="cursor:pointer;flex:1;min-width:260px;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:14px;">
+            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
+              <span style="font-family:var(--font-sans);font-weight:800;font-size:19px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
+              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:20px;height:20px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+          </button>
+          </sc-if>
+          <div data-testid="role-selector" style="display:flex;border:1px solid var(--border-hairline);flex:none;">
+            <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
+              <button onClick="{{ ro.select }}" aria-pressed="{{ ro.sel }}" style="{{ ro.style }}">{{ ro.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ hasHandoff }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--accent-blue-grey);border-radius:var(--radius-md);padding:13px 16px;background:var(--paper-0);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span style="font:var(--t-label);color:var(--accent-blue-grey);">Traspaso del turno anterior</span>
+            <button onClick="{{ clearHandoff }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);color:var(--text-metadata);">Leído</button>
+          </div>
+          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:5px;line-height:1.5;">{{ handoffText }}</div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
     <!-- =================== VISTA PREVIA WF-9 (solo en Control · Hoy) =================== -->
     <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
     <div class="col" style="padding:24px 26px 0;">
@@ -1166,6 +1061,48 @@
         </div>
         <p style="font:var(--t-caption);color:var(--text-secondary);margin:12px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
       </div>
+    </div>
+    </sc-if>
+
+    <!-- =================== TAREAS DE HOY · ACTIVIDAD RECIENTE (consolidado desde el antiguo módulo "Sesión", solo en Control · Hoy) =================== -->
+    <sc-if value="{{ isHomeTab }}" hint-placeholder-val="{{ false }}">
+    <div class="col" style="padding:24px 26px 0;">
+      <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
+          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Tareas de hoy</span>
+          <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ tasksOpenCount }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+          <sc-for list="{{ tasksToday }}" as="t" hint-placeholder-count="3">
+            <div style="{{ t.rowStyle }}">
+              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}"><span style="{{ t.boxInnerStyle }}">✓</span></button>
+              <button onClick="{{ t.go }}" style="cursor:pointer;flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;display:flex;flex-direction:column;gap:3px;">
+                <span style="{{ t.titleStyle }}">{{ t.title }}</span>
+                <span style="font:var(--t-caption);color:var(--text-metadata);"><span style="font-family:var(--font-mono);">{{ t.id }}</span> · {{ t.why }}</span>
+              </button>
+              <span style="flex:none;font:var(--t-caption);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{ t.prioAccent }};border:1px solid {{ t.prioAccent }};padding:2px 7px;border-radius:3px;">{{ t.prio }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px 20px;">
+        <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Actividad reciente</span>
+        <div style="display:flex;flex-direction:column;margin-top:10px;">
+          <sc-for list="{{ recentActivity }}" as="ev" hint-placeholder-count="2">
+            <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);">
+              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div>
+                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
     </div>
     </sc-if>
 
@@ -2660,7 +2597,7 @@ class Component extends DCLogic {
     const a=this.state.chamberAlerts[key]; if(!a) return;
     const rest=Object.assign({},this.state.chamberAlerts); delete rest[key];
     this.setState(s=>({ chamberAlerts:rest, climateBanner: s.climateBanner&&s.climateBanner.key===key?null:s.climateBanner,
-      module:'inicio', quickType:'correccion', screen:'quick', capture:false, quickNote:'Acción correctiva · '+a.note }));
+      quickType:'correccion', screen:'quick', capture:false, quickNote:'Acción correctiva · '+a.note }));
   }
   dismissAlert(key){
     const rest=Object.assign({},this.state.chamberAlerts); delete rest[key];
@@ -3011,10 +2948,9 @@ class Component extends DCLogic {
                : base+'var(--border-soft);background:var(--paper-0);';
   }
   setRole(role){
-    this.setState(s=>{
-      const gate = ROLE_GATE[s.module];
-      return { role, module: (gate && !gate.includes(role)) ? 'inicio' : s.module };
-    });
+    const gate = ROLE_GATE[this.state.module];
+    if(gate && !gate.includes(role)) this.goSimTab('home');
+    this.setState({ role });
   }
   tagStyle(color){
     return 'display:inline-flex;align-items:center;border:1px solid '+color+';color:'+color+';padding:2px 9px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;';
@@ -3219,7 +3155,6 @@ class Component extends DCLogic {
     ];
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
-      contextTab('Sesión',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
       contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
@@ -3231,7 +3166,7 @@ class Component extends DCLogic {
 
     return {
       // modules
-      isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
+      isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
       workspaceLabel:'Navegación de '+({formular:'Formular',produccion:'Producción',bitacora:'Bitácora',control:'Control'}[activeWorkspace]),
@@ -3253,9 +3188,9 @@ class Component extends DCLogic {
       workspaceMoreCls:s.workspaceMoreOpen?'on':'',
       toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
       onWorkspaceKeyDown:e=>this.handleWorkspaceKeys(e),
-      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
+      navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
-      curInicio:s.module==='inicio'?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
+      curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
       curRevision:s.module==='revision'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
       navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
@@ -3277,9 +3212,7 @@ class Component extends DCLogic {
       // navegación contextual visible y evita dos fuentes de verdad.
       prodTabs: [],
       regTabs: [],
-      goInicio:()=>this.setState({module:'inicio',capture:false}),
       goSesion:()=>this.setState({module:'sesion',capture:false}),
-      goSim:()=>{ this.refreshSim(); this.goSimTab((s.simRecipes||[]).length>0?'dashboard':'formular'); },
       toggleSimFlyout:()=>this.setState(s=>({simFlyoutOpen:!s.simFlyoutOpen})),
       openSimFlyout:()=>this.setState({simFlyoutOpen:true}),
       closeSimFlyout:()=>this.setState({simFlyoutOpen:false}),
@@ -3350,32 +3283,6 @@ class Component extends DCLogic {
       hasActiveSession: !!s.sessionType, noActiveSession: !s.sessionType,
       openSession:()=>this.setState({module:'sesion',screen:'home',capture:false}),
       simRecipeCount:(s.simRecipes||[]).length,
-      simCardLabel: (s.simRecipes||[]).length>0 ? ((s.simRecipes||[]).length+' recetas guardadas') : 'Formular un sustrato',
-      simCardSub: (s.simRecipes||[]).length>0 ? 'Abrir el recetario' : 'A\u00fan no hay recetas \u00b7 empieza una',
-      camarasQuick: CAMARAS.filter(cm=>cm.estado==='activo').map(cm=>{
-        const r=this.liveMonitor(cm);
-        return { name:cm.name, zona:cm.zona, sppName: cm.spp?spName(cm.spp):'Mixto / sin asignar',
-          temp:r.liveTemp, hum:r.liveHum, co2:r.liveCo2, accent:r.liveAccent,
-          go:()=>this.setState({module:'camaras',capture:false,camDetail:cm.id}) };
-      }),
-      lotesQuick: (()=>{
-        const g={}; s.containers.forEach(c=>{ (g[c.batch]=g[c.batch]||[]).push(c); });
-        return Object.keys(g).map(batch=>{
-          const cs=g[batch], bad=cs.filter(c=>c.status==='contaminado').length, active=cs.filter(c=>c.status==='activo').length;
-          const sp = SPECIES.find(x=>x.key===cs[0].key);
-          const stages=[...new Set(cs.map(c=>c.stage))];
-          const recipe = cs[0].recipe||'—';
-          const oldest = cs.reduce((a,c)=>this.diasDesde(c.tl[c.tl.length-1].date)>a?this.diasDesde(c.tl[c.tl.length-1].date):a,0);
-          return { batch, sppName: sp?sp.name:'Mixto',
-            summary: (sp?sp.name+' · ':'')+cs.length+' contenedores · '+active+' activos',
-            stagesLabel: stages.join(', '), recipe, oldest: oldest+' d sin evento',
-            hasAlert:bad>0, alertLabel:bad+' contaminado'+(bad>1?'s':''),
-            img: resolveImg(sp?sp.img:'_standalone_imgs/grey-mushroom.png'),
-            imgRef:(el)=>{ if(el) el.src = resolveImg(sp?sp.img:'_standalone_imgs/grey-mushroom.png'); },
-            go:()=>this.setState({module:'sesion', screen:'history', detail:cs[0].id, capture:false}) };
-        });
-      })(),
-      hasLotesQuick: s.containers.length>0,
       primaryActionLabel: s.sessionType ? 'Continuar jornada' : 'Iniciar jornada',
       primaryActionSub: s.sessionType ? ('Sesi\u00f3n de '+sessionLabel+' \u00b7 '+s.clock) : 'No hay una sesi\u00f3n activa',
       needsReviewCount: s.containers.filter(c=>c.status==='contaminado').length,
@@ -3537,7 +3444,7 @@ class Component extends DCLogic {
 
       // end
       endBreakdown,
-      confirmEnd:()=>{ clearInterval(this._t); this.setState({module:'inicio', sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
+      confirmEnd:()=>{ clearInterval(this._t); this.goSimTab('home'); this.setState({sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
 
       // review
       reviewTab:s.reviewTab, isTabEventos:s.reviewTab==='eventos', isTabRend:s.reviewTab==='rendimiento', isTabSalidas:s.reviewTab==='salidas', isTabConoc:s.reviewTab==='conocimiento',
