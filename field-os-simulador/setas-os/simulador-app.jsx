@@ -3617,6 +3617,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // accent/icon clasifican el tipo de ambiente (uso de acento permitido por
           // colors.css: "classification & status only") — no repiten el mismo cuadro
           // blanco 4 veces, cada fase de cultivo se reconoce de un vistazo.
+          // Genera un sparkline simulado (mismo enfoque que liveMonitor() en el
+          // shell para Cámaras: onda armónica sembrada por id, sin eje — el valor
+          // ya mostrado en la tarjeta es la lectura real, esto es solo la forma
+          // de la tendencia). parseNum/parseRangeWidth devuelven null si el string
+          // no trae números (p.ej. "Ambiente Tenjo"); en ese caso no hay spark.
+          const parseNum = str => { const m = (str || '').match(/-?\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(',', '.')) : null; };
+          const parseRangeWidth = str => {
+            const nums = (str || '').match(/-?\d+(?:[.,]\d+)?/g);
+            if (!nums || nums.length < 2) return null;
+            return Math.abs(parseFloat(nums[nums.length - 1].replace(',', '.')) - parseFloat(nums[0].replace(',', '.')));
+          };
+          const genSpark = (seedStr, mid, amplitude) => {
+            let seed = 0; for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+            const wave = n => Math.sin(seed * 0.013 + n) * 0.62 + Math.sin(seed * 0.031 + n * 2.7) * 0.28 + Math.sin(seed * 0.057 + n * 5.1) * 0.10;
+            const N = 24, W = 280, H = 40;
+            const pts = Array.from({ length: N }, (_, i) => mid + wave(i * 0.5) * amplitude);
+            const mn = Math.min(...pts), mx = Math.max(...pts), span = Math.max(0.1, mx - mn);
+            const coords = pts.map((v, i) => [(i / (N - 1) * W).toFixed(1), ((1 - (v - mn) / span) * H).toFixed(1)]);
+            return { d: coords.map(c => c.join(',')).join(' '), endY: coords[coords.length - 1][1] };
+          };
+          const salaSpark = s => {
+            const tempVal = parseNum(s.temp), tempW = parseRangeWidth(s.tempRango);
+            const humVal = parseNum(s.hum), humW = parseRangeWidth(s.humRango);
+            const co2Val = parseNum(s.co2);
+            if (tempVal === null || tempW === null || humVal === null || humW === null || co2Val === null) return null;
+            return {
+              temp: genSpark(s.id + 't', tempVal, tempW / 2 + 0.3),
+              hum: genSpark(s.id + 'h', humVal, humW / 2 + 1),
+              co2: genSpark(s.id + 'c', co2Val, co2Val * 0.06 + 20),
+            };
+          };
           const salas = [
             {
               id: 'sala-1',
@@ -3834,7 +3865,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 if(!recentActivity.length) return null;
                 return (
                   <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Actividad reciente</span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',margin:0}}>Actividad reciente</h2>
                     <div style={{display:'flex',flexDirection:'column',marginTop:10}}>
                       {recentActivity.map((ev,i)=>(
                         <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
@@ -3940,7 +3971,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {hasTasksHoy&&(
                       <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
+                          <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',margin:0}}>Tareas de hoy</h2>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>
                         </div>
                         <div style={{display:'flex',flexDirection:'column',gap:8}}>
@@ -3980,7 +4011,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 
                 {/* 2×2 responsive: dos columnas fijas, colapsa a una por debajo de 640px */}
                 <div className="home-salas-grid">
-                  {salas.map(s=>(
+                  {salas.map(s=>{
+                    const spark = salaSpark(s);
+                    return (
                     <div
                       key={s.id}
                       style={{
@@ -4038,19 +4071,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
                       </div>
 
-                      {/* Preview: apunta a las gráficas de clima en vivo (sparklines temp/hum/CO₂) que viven en Cámaras */}
-                      <button
-                        onClick={()=>props.onGoCamaras&&props.onGoCamaras()}
-                        style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'8px 10px',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',cursor:'pointer',textAlign:'left'}}
-                      >
-                        <span style={{display:'flex',alignItems:'center',gap:6}}>
-                          <IconCamera size={12} color="var(--ink-500)"/>
-                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Gráficas de clima en vivo</span>
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>Ver en Cámaras →</span>
-                      </button>
+                      {/* Gráfica de tendencia (temp/hum/CO₂) — mismo lenguaje visual que Cámaras: trazo 2px
+                          con extremos redondeados, punto "ahora" al final de cada línea, leyenda por color. */}
+                      {spark && (
+                        <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:12}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Tendencia</span>
+                            <button onClick={()=>props.onGoCamaras&&props.onGoCamaras()} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
+                              <IconCamera size={11}/> Cámaras →
+                            </button>
+                          </div>
+                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${s.nombre}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
+                            <polyline points={spark.temp.d} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={spark.hum.d} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={spark.co2.d} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx={280} cy={spark.temp.endY} r="3" fill="var(--coral-500)"/>
+                            <circle cx={280} cy={spark.hum.endY} r="3" fill="var(--slate-500)"/>
+                            <circle cx={280} cy={spark.co2.endY} r="3" fill="var(--moss-500)"/>
+                          </svg>
+                          <div style={{display:'flex',gap:10,marginTop:6}}>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--coral-500)',display:'inline-block'}}/>Temp.</span>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--slate-500)',display:'inline-block'}}/>Humedad</span>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--moss-500)',display:'inline-block'}}/>CO₂</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
