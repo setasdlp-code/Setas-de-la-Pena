@@ -27,8 +27,15 @@ test('production Hoy uses the operational cockpit without a duplicate UX v2 sect
   assert.doesNotMatch(source, /className="home-cockpit"[\s\S]{0,200}\{tab==='home'&&<TodayV2\/>\}/);
 });
 
-test('Hoy quick actions follow Registro, Formular, Bodega, Lotes, Cultivo order', () => {
-  assert.match(source, /label:'Escanear lote'[\s\S]*label:'Formular Receta'[\s\S]*label:'Entrada a Bodega'[\s\S]*label:'Lotes'[\s\S]*label:'Módulos de cultivo'/);
+test('Hoy quick actions only cover destinations with no equivalent CTA in Espacios de Trabajo', () => {
+  // Formular Receta/Lotes/Módulos de cultivo se quitaron: llevaban a las mismas
+  // pestañas que "Ir al Formulador", "Ver Bitácora" y "Ficha de Mezclado" en
+  // Espacios de Trabajo, duplicando destino sin más contexto. Quedan solo los
+  // accesos que esa sección no cubre.
+  assert.match(source, /label:'Escanear lote'[\s\S]*label:'Entrada a Bodega'/);
+  assert.doesNotMatch(source, /label:'Formular Receta'/);
+  assert.doesNotMatch(source, /label:'Lotes',sub:'Crear y gestionar lotes'/);
+  assert.doesNotMatch(source, /label:'Módulos de cultivo'/);
   assert.match(source, /onClick:\(\)=>props\.onScanLot&&props\.onScanLot\(\)/);
   assert.match(shell, /on-scan-lot="\{\{ openScanHome \}\}"/);
 });

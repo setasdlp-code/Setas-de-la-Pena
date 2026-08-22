@@ -3621,6 +3621,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
+          // tasksHoy/recentActivity se parsean una sola vez acá: Tareas de hoy ahora
+          // vive en Sección A (junto a Acciones Rápidas) y Actividad reciente en
+          // Sección C, así que ambas secciones necesitan estos datos.
+          let tasksHoy=[], recentActivity=[];
+          try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+          try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+          const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
+
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
@@ -3667,6 +3675,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
+                <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',flexShrink:0}}>
+                    Registro de cultivo · vista previa
+                  </span>
+                  <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
+                    {[
+                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
+                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
+                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
+                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
+                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                    ].map(m=>(
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'5px 10px'}}>
+                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-900)'}}>{m.value}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                </div>
+
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
                   <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
                   <div style={{border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
@@ -3701,6 +3730,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         gridTemplateColumns:'repeat(3, 1fr)',
                         gap:12
                       }}>
+                        {/* Solo quedan acá los accesos que NO tienen ya un CTA equivalente en
+                            Espacios de Trabajo (Sección D): Formular Receta/Lotes/Módulos de
+                            cultivo llevaban exactamente a las mismas pestañas que "Ir al
+                            Formulador", "Ver Bitácora" y "Ficha de Mezclado" de esa sección,
+                            duplicando destino sin agregar contexto. Entrada a Bodega sí es
+                            distinta: salta directo a la subpestaña de compra, no solo a Bodega. */}
                         {[
                           {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
                             const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
@@ -3708,10 +3743,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             else props.onStartSession&&props.onStartSession();
                           },jornada:true},
                           {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
-                          {label:'Formular Receta',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                          {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                          {label:'Lotes',sub:'Crear y gestionar lotes',icon:IconMicroscope,tab:'bitacora',onClick:()=>goTab('bitacora')},
-                          {label:'Módulos de cultivo',sub:'Mezcla, clima y producción',icon:IconClipboard,tab:'produccion',onClick:()=>goTab('produccion')}
+                          {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}}
                         ].map(btn=>{
                           const accent=btn.jornada?'var(--coral-600)':(btn.pri?'var(--moss-700)':null);
                           return (
@@ -3747,34 +3779,186 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Registro de cultivo · vista previa</span>
-                        <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)'}}>Ver registro completo →</button>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
+                        {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
                       </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                        {[
-                          {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
-                          {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
-                          {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
-                          {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
-                          {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
-                        ].map(m=>(
-                          <button key={m.label} onClick={()=>m.onClick&&m.onClick()} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left',background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 14px'}}>
-                            <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-base)',color:m.color||'var(--ink-900)'}}>{m.value}</span>
-                          </button>
-                        ))}
-                      </div>
+                      {tasksHoy.length===0 ? (
+                        <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
+                          Sin tareas pendientes por ahora.
+                        </div>
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {/* Se muestran máx. 5: tasksHoy no tiene tope propio (puede crecer con
+                              cada contenedor activo + alerta de clima) y sin este límite la
+                              columna de tareas desbalanceaba la fila frente a Acciones Rápidas,
+                              de altura fija. El total real ya está en el contador de arriba. */}
+                          {tasksHoy.slice(0,5).map(t=>(
+                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              </button>
+                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              </button>
+                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                            </div>
+                          ))}
+                          {tasksHoy.length>5 && (
+                            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
+                              +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más — ver contador arriba
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })()}
 
-              {/* SECCIÓN B: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
+              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — movida arriba, justo después de
+                  Acciones Rápidas: es el trabajo operativo real (qué lote está en qué fase),
+                  no debe quedar por debajo de tarjetas de navegación como Espacios de Trabajo.
+                  kanban de lotes activos agrupado
+                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
+                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
+                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
+                  en la Bitácora, así que no hay lote que ubicar ahí. */}
+              <div style={{
+                background:'var(--paper-0)',
+                border:'1px solid var(--border-soft)',
+                borderRadius:'var(--r-md)',
+                padding:'28px',
+                boxShadow:'var(--shadow-card-rest)'
+              }}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN B · CICLO BIOLÓGICO TENJO
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Seguimiento de Lotes por Fase
+                    </h2>
+                  </div>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                    Ciclo total promedio: ~42–48 días
+                  </div>
+                </div>
+
+                {bitLotes.length>0 ? (()=>{
+                  const columnas = [
+                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
+                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
+                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
+                  ];
+                  const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
+                    const stats = calcLoteStats(lote.id);
+                    const bolsasLote = bitBolsas.filter(b=>b.loteId===lote.id);
+                    const sanas = bolsasLote.filter(b=>b.estado==='sana');
+                    const colonizado = sanas.length>0 && sanas.every(b=>!!b.col100);
+                    const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
+                    const inoculated = Date.parse(lote.fechaInoculacion||'');
+                    const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
+                    return {lote,stats,columna,age};
+                  });
+                  const descartados = bitLotes.length-clasificados.length;
+                  return (
+                    <div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(230px, 1fr))',gap:14}}>
+                        {columnas.map(col=>{
+                          const items = clasificados.filter(c=>c.columna===col.key);
+                          return (
+                            <div key={col.key} style={{background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderTop:`3px solid ${col.accent}`,borderRadius:'var(--r-sm)',padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
+                              <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
+                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
+                                  <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
+                                    <col.icon size={13}/>
+                                    <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{col.title}</span>
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-600)'}}>{items.length}</span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',lineHeight:1.3}}>{col.sub}</div>
+                              </button>
+                              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                                {items.length===0 && <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)',fontStyle:'italic'}}>Sin lotes</div>}
+                                {items.map(({lote:lt,stats,age})=>{
+                                  const critical = stats && stats.contPct>=20;
+                                  const contaminated = stats && stats.contPct>0;
+                                  return (
+                                    <button
+                                      key={lt.id}
+                                      data-lote-id={lt.id}
+                                      aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
+                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                                      className="home-lote-card"
+                                      style={{
+                                        display:'flex',flexDirection:'column',gap:4,
+                                        padding:'9px 10px',
+                                        background:'var(--paper-0)',
+                                        border:`1px solid ${critical?'var(--coral-500)':'var(--paper-300)'}`,
+                                        borderRadius:'var(--r-xs)',
+                                        cursor:'pointer',
+                                        textAlign:'left',
+                                        fontFamily:'inherit',
+                                        width:'100%'
+                                      }}
+                                    >
+                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{lt.codigo}</span>
+                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>día {age}</span>}
+                                      </div>
+                                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>
+                                        {lt.especie} · {lt.numBolsas || 1} bolsas
+                                      </div>
+                                      {(contaminated||stats?.totalFresco>0) && (
+                                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                                          {contaminated && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,color:critical?'var(--coral-700)':'var(--ochre-700)',background:critical?'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))':'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))'}}>
+                                              {stats.contPct.toFixed(0)}% contam.
+                                            </span>
+                                          )}
+                                          {stats?.totalFresco>0 && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--moss-700)',fontWeight:700}}>
+                                              {stats.totalFresco.toFixed(2)} kg
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {descartados>0 && (
+                        <div style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>
+                          {descartados} lote{descartados===1?'':'s'} descartado{descartados===1?'':'s'} (oculto{descartados===1?'':'s'} del tablero)
+                        </div>
+                      )}
+                    </div>
+                  );
+                })() : (
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                      No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
+                    </span>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      + Iniciar Primer Lote
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN C: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN B · AMBIENTES & SENSORES
+                      SECCIÓN C · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Cámaras de Cultivo
@@ -4169,203 +4353,42 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
 
-              {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
-              {(()=>{
-                let tasksHoy=[], recentActivity=[];
-                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
-                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
-                if(!tasksHoy.length && !recentActivity.length) return null;
-                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
-                return (
-                  <div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                      <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                          SECCIÓN C · SEGUIMIENTO DEL DÍA
-                        </span>
-                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                          Tareas y Actividad
-                        </h2>
-                      </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
-                    </div>
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:20}}>
-                      {tasksHoy.length>0 && (
-                        <div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Tareas de hoy</span>
-                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                            {tasksHoy.map(t=>(
-                              <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                                <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                  style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                  <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                                </button>
-                                <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                  <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                                </button>
-                                <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {recentActivity.length>0 && (
-                        <div style={{borderLeft:tasksHoy.length>0?'1px solid var(--paper-300)':'none',paddingLeft:tasksHoy.length>0?20:0}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Actividad reciente</span>
-                          <div style={{display:'flex',flexDirection:'column'}}>
-                            {recentActivity.map((ev,i)=>(
-                              <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                                <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                                <div style={{flex:1,minWidth:0}}>
-                                  <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                                    <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
-                                  </div>
-                                  <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+              {/* SECCIÓN E: ACTIVIDAD RECIENTE — Tareas de hoy se movió a Sección A, junto
+                  a Acciones Rápidas. Cada evento es un botón: lleva directo al lote/
+                  contenedor/cámara de origen vía props.onActivityGo(container, type) —
+                  se pasa el tipo porque los eventos 'clima' no guardan un id de
+                  contenedor sino un nombre de cámara (se resuelve del otro lado). */}
+              {recentActivity.length>0 && (
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                        SECCIÓN E · SEGUIMIENTO DEL DÍA
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                        Actividad Reciente
+                      </h2>
                     </div>
                   </div>
-                );
-              })()}
-
-              {/* SECCIÓN E: SEGUIMIENTO DE LOTES POR FASE — kanban de lotes activos agrupado
-                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
-                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
-                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
-                  en la Bitácora, así que no hay lote que ubicar ahí. */}
-              <div style={{
-                background:'var(--paper-0)',
-                border:'1px solid var(--border-soft)',
-                borderRadius:'var(--r-md)',
-                padding:'28px',
-                boxShadow:'var(--shadow-card-rest)'
-              }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                  <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN E · CICLO BIOLÓGICO TENJO
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Seguimiento de Lotes por Fase
-                    </h2>
-                  </div>
-                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                    Ciclo total promedio: ~42–48 días
+                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                    <div style={{display:'flex',flexDirection:'column'}}>
+                      {recentActivity.map((ev,i)=>(
+                        <button key={i} onClick={()=>props.onActivityGo&&props.onActivityGo(ev.container,ev.type)} className="home-activity-row" style={{cursor:'pointer',display:'flex',gap:12,padding:'11px 4px',borderTop:'none',borderLeft:'none',borderRight:'none',borderBottom:i<recentActivity.length-1?'1px solid var(--paper-300)':'none',background:'none',width:'100%',textAlign:'left',borderRadius:'var(--r-xs)'}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                            </div>
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                          </div>
+                          <span style={{flexShrink:0,alignSelf:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-400)',fontWeight:700}}>→</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                {bitLotes.length>0 ? (()=>{
-                  const columnas = [
-                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
-                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
-                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
-                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
-                  ];
-                  const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
-                    const stats = calcLoteStats(lote.id);
-                    const bolsasLote = bitBolsas.filter(b=>b.loteId===lote.id);
-                    const sanas = bolsasLote.filter(b=>b.estado==='sana');
-                    const colonizado = sanas.length>0 && sanas.every(b=>!!b.col100);
-                    const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
-                    const inoculated = Date.parse(lote.fechaInoculacion||'');
-                    const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
-                    return {lote,stats,columna,age};
-                  });
-                  const descartados = bitLotes.length-clasificados.length;
-                  return (
-                    <div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(230px, 1fr))',gap:14}}>
-                        {columnas.map(col=>{
-                          const items = clasificados.filter(c=>c.columna===col.key);
-                          return (
-                            <div key={col.key} style={{background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderTop:`3px solid ${col.accent}`,borderRadius:'var(--r-sm)',padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
-                              <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
-                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
-                                  <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
-                                    <col.icon size={13}/>
-                                    <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{col.title}</span>
-                                  </span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-600)'}}>{items.length}</span>
-                                </div>
-                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',lineHeight:1.3}}>{col.sub}</div>
-                              </button>
-                              <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                                {items.length===0 && <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)',fontStyle:'italic'}}>Sin lotes</div>}
-                                {items.map(({lote:lt,stats,age})=>{
-                                  const critical = stats && stats.contPct>=20;
-                                  const contaminated = stats && stats.contPct>0;
-                                  return (
-                                    <button
-                                      key={lt.id}
-                                      data-lote-id={lt.id}
-                                      aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
-                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
-                                      className="home-lote-card"
-                                      style={{
-                                        display:'flex',flexDirection:'column',gap:4,
-                                        padding:'9px 10px',
-                                        background:'var(--paper-0)',
-                                        border:`1px solid ${critical?'var(--coral-500)':'var(--paper-300)'}`,
-                                        borderRadius:'var(--r-xs)',
-                                        cursor:'pointer',
-                                        textAlign:'left',
-                                        fontFamily:'inherit',
-                                        width:'100%'
-                                      }}
-                                    >
-                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{lt.codigo}</span>
-                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>día {age}</span>}
-                                      </div>
-                                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>
-                                        {lt.especie} · {lt.numBolsas || 1} bolsas
-                                      </div>
-                                      {(contaminated||stats?.totalFresco>0) && (
-                                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-                                          {contaminated && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,color:critical?'var(--coral-700)':'var(--ochre-700)',background:critical?'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))':'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))'}}>
-                                              {stats.contPct.toFixed(0)}% contam.
-                                            </span>
-                                          )}
-                                          {stats?.totalFresco>0 && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--moss-700)',fontWeight:700}}>
-                                              {stats.totalFresco.toFixed(2)} kg
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {descartados>0 && (
-                        <div style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>
-                          {descartados} lote{descartados===1?'':'s'} descartado{descartados===1?'':'s'} (oculto{descartados===1?'':'s'} del tablero)
-                        </div>
-                      )}
-                    </div>
-                  );
-                })() : (
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
-                      No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
-                    </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                      + Iniciar Primer Lote
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
 
             </div>
           );
