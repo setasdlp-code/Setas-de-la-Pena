@@ -1743,7 +1743,7 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
-  const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
@@ -3621,64 +3621,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // Sección E: Fases del ciclo de cultivo
-          // accent/icon de cada fase retoman el mismo color que ya usa el workspace
-          // donde esa fase realmente ocurre (incubación=slate, fructificación=moss,
-          // etc.) — el color del pipeline anticipa a dónde lleva el clic, no es
-          // decorativo.
-          const pipelineStages = [
-            {
-              num: '01',
-              title: 'Preparación & Mezcla',
-              sub: 'Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)',
-              badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : 'En espera de receta',
-              active: activeRecipeCount > 0,
-              linkTab: 'formular',
-              accent: 'var(--coral-500)',
-              icon: IconFlame
-            },
-            {
-              num: '02',
-              title: 'Inoculación & Incubación',
-              sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
-              badge: `${bolsasIncubacion} bolsas en incubación`,
-              active: bolsasIncubacion > 0,
-              linkTab: 'bitacora',
-              accent: 'var(--slate-500)',
-              icon: IconSprout
-            },
-            {
-              num: '03',
-              title: 'Inducción / Primordios',
-              sub: 'Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm',
-              badge: `${bitBolsas.filter(b=>b.col100).length} bolsas colonizadas 100%`,
-              active: bitBolsas.filter(b=>b.col100).length > 0,
-              linkTab: 'schedule',
-              accent: 'var(--sand-500)',
-              icon: IconSnowflake
-            },
-            {
-              num: '04',
-              title: 'Fructificación & Cosecha',
-              sub: 'Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero',
-              badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
-              active: totalCosechasCount > 0,
-              linkTab: 'bitacora',
-              accent: 'var(--moss-700)',
-              icon: IconMushroom
-            },
-            {
-              num: '05',
-              title: 'Post-Cosecha & Descanso',
-              sub: '2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)',
-              badge: `${bitLotes.length} lotes con trazabilidad`,
-              active: bitLotes.length > 0,
-              linkTab: 'dashboard',
-              accent: 'var(--ink-700)',
-              icon: IconScale
-            }
-          ];
-
           return (
             <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
@@ -3699,7 +3641,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </span>
                     </div>
                     <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',margin:0}}>
-                      Hoy
+                      Tablero de Control
                     </h1>
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
@@ -3939,71 +3881,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 )}
               </div>
-
-              {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
-              {(()=>{
-                let tasksHoy=[], recentActivity=[];
-                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
-                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
-                if(!tasksHoy.length && !recentActivity.length) return null;
-                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
-                return (
-                  <div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                      <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                          SECCIÓN C · SEGUIMIENTO DEL DÍA
-                        </span>
-                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                          Tareas y Actividad
-                        </h2>
-                      </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
-                    </div>
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:20}}>
-                      {tasksHoy.length>0 && (
-                        <div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Tareas de hoy</span>
-                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                            {tasksHoy.map(t=>(
-                              <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                                <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                  style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                  <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                                </button>
-                                <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                  <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                                </button>
-                                <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {recentActivity.length>0 && (
-                        <div style={{borderLeft:tasksHoy.length>0?'1px solid var(--paper-300)':'none',paddingLeft:tasksHoy.length>0?20:0}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Actividad reciente</span>
-                          <div style={{display:'flex',flexDirection:'column'}}>
-                            {recentActivity.map((ev,i)=>(
-                              <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                                <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
-                                <div style={{flex:1,minWidth:0}}>
-                                  <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                                    <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
-                                  </div>
-                                  <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* SECCIÓN D: ESPACIOS DE TRABAJO / MÓDULOS DE OPERACIÓN */}
               <div>
@@ -4292,7 +4169,76 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
 
-              {/* SECCIÓN E: PIPELINE DE LOTES ACTIVOS / CICLO DE CULTIVO */}
+              {/* SECCIÓN C: TAREAS DE HOY + ACTIVIDAD RECIENTE — mismo bloque, mismo estilo que las demás secciones: título fuera, un solo cuadro adentro */}
+              {(()=>{
+                let tasksHoy=[], recentActivity=[];
+                try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+                try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+                if(!tasksHoy.length && !recentActivity.length) return null;
+                const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
+                return (
+                  <div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                      <div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                          SECCIÓN C · SEGUIMIENTO DEL DÍA
+                        </span>
+                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                          Tareas y Actividad
+                        </h2>
+                      </div>
+                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
+                    </div>
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:20}}>
+                      {tasksHoy.length>0 && (
+                        <div>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Tareas de hoy</span>
+                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                            {tasksHoy.map(t=>(
+                              <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                                <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                  style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                  <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                                </button>
+                                <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                  <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                  <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                                </button>
+                                <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {recentActivity.length>0 && (
+                        <div style={{borderLeft:tasksHoy.length>0?'1px solid var(--paper-300)':'none',paddingLeft:tasksHoy.length>0?20:0}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:10}}>Actividad reciente</span>
+                          <div style={{display:'flex',flexDirection:'column'}}>
+                            {recentActivity.map((ev,i)=>(
+                              <div key={i} style={{display:'flex',gap:12,padding:'11px 0',borderBottom:'1px solid var(--paper-300)'}}>
+                                <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                                    <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                                  </div>
+                                  <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECCIÓN E: SEGUIMIENTO DE LOTES POR FASE — kanban de lotes activos agrupado
+                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
+                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
+                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
+                  en la Bitácora, así que no hay lote que ubicar ahí. */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
@@ -4306,7 +4252,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       SECCIÓN E · CICLO BIOLÓGICO TENJO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Pipeline de Lotes & Fases de Cultivo
+                      Seguimiento de Lotes por Fase
                     </h2>
                   </div>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
@@ -4314,110 +4260,103 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
-                {/* 5 Stages Horizontal Stepper */}
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap:12,
-                  marginBottom:20
-                }}>
-                  {pipelineStages.map((st,idx)=>(
-                    <button
-                      key={st.num}
-                      aria-label={`${st.title} — ${st.active?'en curso':'planificado'}`}
-                      onClick={()=>goTab(st.linkTab)}
-                      className={'home-stage-card'+(st.active?' is-active':'')}
-                      style={{
-                        '--stage-accent':st.accent,
-                        borderRadius:'var(--r-sm)',
-                        padding:'14px',
-                        cursor:'pointer',
-                        position:'relative',
-                        display:'block',
-                        width:'100%',
-                        textAlign:'left',
-                        fontFamily:'inherit'
-                      }}
-                    >
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                        <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:20,height:20,borderRadius:'50%',flexShrink:0,background:st.active?st.accent:'var(--paper-200)',color:st.active?'var(--paper-0)':'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700}}>
-                          {st.num.replace(/^0/,'')}
-                        </span>
-                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?st.accent:'var(--ink-500)'}}>
-                          {st.active?'En curso':'Plan'}
-                        </span>
+                {bitLotes.length>0 ? (()=>{
+                  const columnas = [
+                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
+                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
+                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
+                  ];
+                  const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
+                    const stats = calcLoteStats(lote.id);
+                    const bolsasLote = bitBolsas.filter(b=>b.loteId===lote.id);
+                    const sanas = bolsasLote.filter(b=>b.estado==='sana');
+                    const colonizado = sanas.length>0 && sanas.every(b=>!!b.col100);
+                    const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
+                    const inoculated = Date.parse(lote.fechaInoculacion||'');
+                    const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
+                    return {lote,stats,columna,age};
+                  });
+                  const descartados = bitLotes.length-clasificados.length;
+                  return (
+                    <div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(230px, 1fr))',gap:14}}>
+                        {columnas.map(col=>{
+                          const items = clasificados.filter(c=>c.columna===col.key);
+                          return (
+                            <div key={col.key} style={{background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderTop:`3px solid ${col.accent}`,borderRadius:'var(--r-sm)',padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
+                              <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
+                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
+                                  <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
+                                    <col.icon size={13}/>
+                                    <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{col.title}</span>
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-600)'}}>{items.length}</span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',lineHeight:1.3}}>{col.sub}</div>
+                              </button>
+                              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                                {items.length===0 && <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)',fontStyle:'italic'}}>Sin lotes</div>}
+                                {items.map(({lote:lt,stats,age})=>{
+                                  const critical = stats && stats.contPct>=20;
+                                  const contaminated = stats && stats.contPct>0;
+                                  return (
+                                    <button
+                                      key={lt.id}
+                                      data-lote-id={lt.id}
+                                      aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
+                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                                      className="home-lote-card"
+                                      style={{
+                                        display:'flex',flexDirection:'column',gap:4,
+                                        padding:'9px 10px',
+                                        background:'var(--paper-0)',
+                                        border:`1px solid ${critical?'var(--coral-500)':'var(--paper-300)'}`,
+                                        borderRadius:'var(--r-xs)',
+                                        cursor:'pointer',
+                                        textAlign:'left',
+                                        fontFamily:'inherit',
+                                        width:'100%'
+                                      }}
+                                    >
+                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{lt.codigo}</span>
+                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>día {age}</span>}
+                                      </div>
+                                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>
+                                        {lt.especie} · {lt.numBolsas || 1} bolsas
+                                      </div>
+                                      {(contaminated||stats?.totalFresco>0) && (
+                                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                                          {contaminated && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,color:critical?'var(--coral-700)':'var(--ochre-700)',background:critical?'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))':'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))'}}>
+                                              {stats.contPct.toFixed(0)}% contam.
+                                            </span>
+                                          )}
+                                          {stats?.totalFresco>0 && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--moss-700)',fontWeight:700}}>
+                                              {stats.totalFresco.toFixed(2)} kg
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-                        <span style={{display:'inline-flex',flexShrink:0,color:st.accent}}><st.icon size={13}/></span>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                          {st.title}
+                      {descartados>0 && (
+                        <div style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>
+                          {descartados} lote{descartados===1?'':'s'} descartado{descartados===1?'':'s'} (oculto{descartados===1?'':'s'} del tablero)
                         </div>
-                      </div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.35,marginBottom:8}}>
-                        {st.sub}
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-800)',borderTop:'1px solid var(--paper-300)',paddingTop:6}}>
-                        {st.badge}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Resumen de lotes activos si existen en la bitácora */}
-                {bitLotes.length>0 ? (
-                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:16}}>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:10}}>
-                      Lotes Recientes en Seguimiento
+                      )}
                     </div>
-                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                      {bitLotes.slice(0,4).map(lt=>{
-                        const stats = calcLoteStats(lt.id);
-                        return (
-                          <button
-                            key={lt.id}
-                            data-lote-id={lt.id}
-                            aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
-                            onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
-                            className="home-lote-row"
-                            style={{
-                              display:'flex',
-                              justifyContent:'space-between',
-                              alignItems:'center',
-                              padding:'10px 14px',
-                              borderRadius:'var(--r-xs)',
-                              cursor:'pointer',
-                              flexWrap:'wrap',
-                              gap:8,
-                              width:'100%',
-                              textAlign:'left',
-                              fontFamily:'inherit'
-                            }}
-                          >
-                            <div style={{display:'flex',alignItems:'center',gap:12}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                                {lt.codigo}
-                              </span>
-                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                                {lt.especie} · {lt.numBolsas || 1} bolsas · {lt.fechaInoculacion || lt.fechaMezcla || 'Sin fecha'}
-                              </span>
-                            </div>
-                            <div style={{display:'flex',alignItems:'center',gap:16}}>
-                              {stats?.totalFresco>0 && (
-                                <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
-                                  {stats.totalFresco.toFixed(2)} kg cosechados
-                                </span>
-                              )}
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
-                                Ver lote →
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:14,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                  );
+                })() : (
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                       No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
