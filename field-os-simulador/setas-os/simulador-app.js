@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 79eb588d4ee8aa3e401fdaeaa34332e9e0ea0c804fc1c587d476b79129e44755
+// source-hash: 95f544c545d2d0b9fea11e702a3fc70bc360bb8d66b6e51a6383232b39fdfc9b
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -3058,38 +3058,17 @@ BATCH (${numBags}×${kgBag} kg):
       };
       const t = tones[kpi.tone];
       return /* @__PURE__ */ React.createElement("span", { key: kpi.label, style: { display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", padding: "6px 10px", background: t.bg, border: `1px solid ${t.border}`, borderRadius: "var(--r-xs)", color: t.ink, fontWeight: t.weight } }, /* @__PURE__ */ React.createElement(kpi.icon, { size: 12 }), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: t.ink } }, kpi.value), " ", kpi.label);
-    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-50)", border: `1px solid ${operationStatus.color}`, borderRadius: "var(--r-xs)", color: operationStatus.color } }, operationStatus.label))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => {
-          const hasActiveSession = props.hasActiveSession === true || props.hasActiveSession === "true";
-          if (hasActiveSession) props.onContinueSession && props.onContinueSession();
-          else props.onStartSession && props.onStartSession();
-        },
-        className: "home-jornada-cta",
-        style: { cursor: "pointer", flex: "1 1 260px", minWidth: 220, textAlign: "left", border: "none", background: "var(--ink-900)", color: "var(--paper-0)", borderRadius: "var(--r-sm)", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }
-      },
-      /* @__PURE__ */ React.createElement("span", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-base)" } }, props.sessionLabel || "Iniciar jornada"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "color-mix(in oklab, var(--paper-0) 70%, transparent)" } }, props.sessionSub)),
-      /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, "→")
-    ), /* @__PURE__ */ React.createElement("div", { "data-testid": "role-selector", role: "group", "aria-label": "Modo de operación", style: { display: "flex", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", flex: "none" } }, [{ key: "operator", label: "Operario" }, { key: "production", label: "Producción" }, { key: "direction", label: "Dirección" }].map((r, i) => {
-      const sel = props.role === r.key;
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: r.key,
-          onClick: () => props.onSetRole && props.onSetRole(r.key),
-          "aria-pressed": sel,
-          className: "home-role-btn" + (sel ? " is-selected" : ""),
-          style: { cursor: "pointer", padding: "8px 12px", border: "none", borderRight: i < 2 ? "1px solid var(--border-soft)" : "none", background: sel ? "var(--ink-900)" : "var(--paper-0)", color: sel ? "var(--paper-0)" : "var(--ink-700)", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", fontWeight: 700 }
-        },
-        r.label
-      );
-    }))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, border: "1px solid var(--slate-500)", borderRadius: "var(--r-sm)", padding: "10px 14px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--slate-700)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "Leído")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), (() => {
+    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-50)", border: `1px solid ${operationStatus.color}`, borderRadius: "var(--r-xs)", color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--slate-500)", borderRadius: "var(--r-sm)", padding: "10px 14px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", color: "var(--slate-700)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "Leído")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), (() => {
       return /* @__PURE__ */ React.createElement("div", { className: "home-acciones-registro-row" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN A · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: 12
       } }, [
+        { label: props.sessionLabel || "Iniciar jornada", sub: props.sessionSub || "Registro de campo", icon: IconFlame, onClick: () => {
+          const hasActiveSession = props.hasActiveSession === true || props.hasActiveSession === "true";
+          if (hasActiveSession) props.onContinueSession && props.onContinueSession();
+          else props.onStartSession && props.onStartSession();
+        }, jornada: true },
         { label: "Escanear lote", sub: "Registro de campo por QR", icon: IconTarget, tab: "registro", onClick: () => props.onScanLot && props.onScanLot(), pri: true },
         { label: "Formular Receta", sub: "Balance C:N & Perito", icon: IconBolt, tab: "formular", onClick: () => goTab("formular") },
         { label: "Entrada a Bodega", sub: "Compras & stock FIFO", icon: IconBox, tab: "inventario", onClick: () => {
@@ -3098,27 +3077,30 @@ BATCH (${numBags}×${kgBag} kg):
         } },
         { label: "Lotes", sub: "Crear y gestionar lotes", icon: IconMicroscope, tab: "bitacora", onClick: () => goTab("bitacora") },
         { label: "Módulos de cultivo", sub: "Mezcla, clima y producción", icon: IconClipboard, tab: "produccion", onClick: () => goTab("produccion") }
-      ].map((btn) => /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: btn.label,
-          onClick: btn.onClick,
-          className: "home-quick-action" + (btn.pri ? " is-primary" : ""),
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "14px 16px",
-            borderRadius: "var(--r-sm)",
-            textAlign: "left",
-            cursor: "pointer",
-            position: "relative"
-          }
-        },
-        /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: btn.pri ? "var(--moss-700)" : "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(btn.icon, { size: 20 })),
-        /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", color: btn.pri ? "var(--moss-700)" : "var(--ink-900)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.label), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.sub)),
-        /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: btn.pri ? "var(--moss-700)" : "var(--ink-400)", fontWeight: 700 } }, "→")
-      )))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Registro de cultivo · vista previa"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--coral-600)" } }, "Ver registro completo →")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, [
+      ].map((btn) => {
+        const accent = btn.jornada ? "var(--coral-600)" : btn.pri ? "var(--moss-700)" : null;
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: btn.label,
+            onClick: btn.onClick,
+            className: "home-quick-action" + (btn.pri ? " is-primary" : "") + (btn.jornada ? " is-jornada" : ""),
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 16px",
+              borderRadius: "var(--r-sm)",
+              textAlign: "left",
+              cursor: "pointer",
+              position: "relative"
+            }
+          },
+          /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", flexShrink: 0, color: accent || "var(--ink-700)" } }, /* @__PURE__ */ React.createElement(btn.icon, { size: 20 })),
+          /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", color: accent || "var(--ink-900)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.label), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.sub)),
+          /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: accent || "var(--ink-400)", fontWeight: 700 } }, "→")
+        );
+      }))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "18px 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Registro de cultivo · vista previa"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--coral-600)" } }, "Ver registro completo →")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, [
         { label: "Eventos", value: props.hoyPreviewEventos, onClick: props.onGoRevEventos },
         { label: "Rendimiento (EB)", value: `${props.hoyPreviewBe}%`, onClick: props.onGoRevRendimiento },
         { label: "Trabajo", value: `${props.hoyPreviewHoras} h`, onClick: props.onGoRevTrabajo },

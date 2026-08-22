@@ -62,7 +62,7 @@ La misma regla aplica a Bitácora — usar `goBitTab('bit_ficha', true)`, nunca 
 
 El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`. No editar `sc-if`/`sc-for`/`{{ }}` como si fueran Web Components o JSX real.
 
-**Detalle práctico importante:** un `<sc-for>` puede estar correctamente conectado en la lógica (la lista existe en `render()`) y aun así no mostrar nada si su cuerpo HTML está vacío. Así fue durante un tiempo el selector de rol (Operario/Producción/Dirección): `roleOptions` existía, pero el `<sc-for>` de la pantalla "Sesión" no tenía ningún `<button>` dentro (E2E-08). Al consolidar "Sesión" dentro de "Hoy", el selector se migró al cockpit de React con su `<sc-for>` completo, así que ya renderiza — pero vale la pena tener este patrón de fallo presente al tocar cualquier otro `<sc-for>` del shell.
+**Detalle práctico importante:** un `<sc-for>` puede estar correctamente conectado en la lógica (la lista existe en `render()`) y aun así no mostrar nada si su cuerpo HTML está vacío — ese fue el bug original de E2E-08 (selector de rol con `<sc-for>` sin `<button>` dentro). El selector en sí se retiró después (ver E2E_SCENARIOS.md), pero vale la pena tener este patrón de fallo presente al tocar cualquier otro `<sc-for>` del shell.
 
 ## 3. Generador de recetas: hay dos motores
 

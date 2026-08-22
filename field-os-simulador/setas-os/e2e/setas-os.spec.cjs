@@ -133,21 +133,6 @@ test.describe('desktop navigation contract', () => {
     }
   });
 
-  test('role selector renders Operario / Producción / Dirección', async ({ page }) => {
-    await openApp(page);
-
-    await workspaceButton(page, 'control').click();
-    await contextTab(page, 'Hoy').click();
-
-    // Ámbito acotado al selector: la palabra "Producción" también nombra el
-    // botón del workspace en el rail principal (siempre montado), así que un
-    // getByRole sin ámbito choca con él y cuenta 4 en vez de 3.
-    const roleSelector = page.locator('[data-testid="role-selector"]');
-    const roleControls = roleSelector.getByRole('button', { name: /^(Operario|Producción|Dirección)$/ });
-    await expect(roleControls).toHaveCount(3);
-    await roleSelector.getByRole('button', { name: 'Producción', exact: true }).click();
-    await expect(roleSelector.getByRole('button', { name: 'Producción', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  });
 });
 
 test.describe('mobile navigation contract', () => {
