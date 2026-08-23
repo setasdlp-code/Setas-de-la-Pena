@@ -89,7 +89,7 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
 });
 
 test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
-  assert.match(jsx, /className="form-species-context" aria-labelledby="form-species-context-title"/);
+  assert.match(jsx, /className=\{`form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}`\} aria-labelledby="form-species-context-title"/);
   assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
   assert.match(jsx, /Receta activa \+ evaluación en vivo/);
   assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
@@ -176,11 +176,16 @@ test('Formular V2 separates Mesa and Generator without undefined replacement hel
 
 test('mobile production flow resets scroll and exposes one progressive next action', () => {
   assert.match(jsx, /const focusFormTop=.*getElementById\('setas-main'\)/s);
+  assert.match(jsx, /const focusIngredientCatalog=.*#bl-ingredientes \.search/s);
   assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':'produce'/);
   assert.match(jsx, /data-testid="formulator-next-action"/);
+  assert.match(jsx, /data-testid="form-mobile-start"[\s\S]*id="form-mobile-species-select"[\s\S]*Elegir insumos[\s\S]*Usar generador/);
+  assert.match(jsx, /form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}/);
   assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);
   assert.match(css, /\.form-production-command\{[\s\S]*position:sticky;[\s\S]*top:0;[\s\S]*z-index:var\(--z-sticky-panel\)/);
-  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.form-production-command-btn\{min-width:146px;min-height:46px/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.formular-mode-nav\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.form-mobile-start\{[\s\S]*display:grid[\s\S]*\.form-flow\{display:none\}/);
+  assert.match(css, /\.form-species-context\.is-empty\{display:none\}[\s\S]*\.form-species-context\.has-recipe/);
 });
 
 test('Control remains the visual reference and Formular overrides stay locally scoped', () => {

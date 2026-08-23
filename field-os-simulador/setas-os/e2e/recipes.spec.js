@@ -125,3 +125,23 @@ test('la acción móvil principal guía especie → balance → preparación', a
   await nextAction.click();
   expect(await activeWorkspace(page)).toBe('produccion');
 });
+
+test('el inicio rápido móvil pone especie, origen y selección de insumos en la primera pantalla', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'La superficie de inicio rápido solo se muestra en móvil');
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+
+  const quickStart = page.getByTestId('form-mobile-start');
+  await expect(quickStart).toBeVisible();
+  await expect(page.locator('.form-flow')).toBeHidden();
+  await expect(page.getByRole('tab', { name: /Mesa de Mezcla/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Generador de Recetas/ })).toBeVisible();
+
+  await selectSpecies(page, 'p_ostreatus_gris');
+  await quickStart.getByRole('button', { name: 'Catálogo', exact: true }).click();
+  await quickStart.getByRole('button', { name: 'Elegir insumos', exact: true }).click();
+
+  const search = page.locator('#bl-ingredientes .search');
+  await expect(search).toBeFocused();
+  await expect(search).toBeInViewport();
+});

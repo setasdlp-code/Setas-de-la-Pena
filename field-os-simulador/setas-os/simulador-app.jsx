@@ -1950,6 +1950,10 @@ function App(props){
     const main=document.getElementById('setas-main');
     if(main) main.scrollTo({top:0,left:0});
   });
+  const focusIngredientCatalog=()=>{
+    document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>document.querySelector('#bl-ingredientes .search')?.focus(),250);
+  };
   const openBuilderSubTab=(next,{focusTab=false}={})=>{
     setBuilderSubTab(next);
     focusFormTop();
@@ -4749,6 +4753,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </nav>
         )}
 
+        {tab==='formular'&&builderSubTab==='formular'&&recipe.length===0&&(
+          <section className="form-mobile-start" data-testid="form-mobile-start" aria-labelledby="form-mobile-start-title">
+            <header>
+              <span>Inicio rápido</span>
+              <strong id="form-mobile-start-title">Configura y empieza la receta</strong>
+            </header>
+            <label className="form-mobile-start-field" htmlFor="form-mobile-species-select">
+              <span>1 · Especie</span>
+              <select id="form-mobile-species-select" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                <option value="" disabled>Elegir especie…</option>
+                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+              </select>
+            </label>
+            <div className="form-mobile-start-field">
+              <span>2 · Origen</span>
+              <div className="form-mobile-origin-options" role="group" aria-label="Origen de ingredientes para inicio rápido">
+                <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+              </div>
+            </div>
+            <div className="form-mobile-start-actions" aria-label="Método para comenzar">
+              <button type="button" className="is-primary" onClick={focusIngredientCatalog}>Elegir insumos</button>
+              <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
+            </div>
+          </section>
+        )}
+
         {tab==='formular'&&builderSubTab==='formular'&&recipe.length>0&&(
           <section className={`form-production-command is-${formNextState}`} aria-label="Siguiente paso de producción">
             <div className="form-production-command-copy">
@@ -4806,7 +4837,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-num">03</span>
                 <span className="form-step-label">Ingredientes</span>
                 <div className="form-step-actions">
-                  <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
+                  <button type="button" onClick={focusIngredientCatalog}>Elegir manualmente</button>
                   <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
                 </div>
                 <span className="form-step-help">Agrega insumos o calcula una base.</span>
@@ -4822,7 +4853,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </ol>
           </section>
 
-          <section className="form-species-context" aria-labelledby="form-species-context-title">
+          <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
               <div>
@@ -4837,6 +4868,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
             </label>
+            <div className="form-species-origin-toggle">
+              <span>Origen de ingredientes</span>
+              <div role="group" aria-label="Origen de ingredientes en la receta activa">
+                <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+              </div>
+            </div>
             <div className="form-species-targets" aria-label="Objetivos de la especie activa">
               <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
               <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
