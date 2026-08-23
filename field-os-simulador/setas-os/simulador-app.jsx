@@ -4953,7 +4953,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
                             {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
                           </div>
-                          <input type="number" min="0" step="100" required
+                          <input type="number" min="0" step="100" inputMode="numeric" required
                             aria-label={`Precio ${ing.name} por kg`}
                             className={`price-inp${isEdited?' edited':''}`}
                             value={ing.cost}
@@ -5374,7 +5374,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:4}}>
                         <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
                         <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',borderRadius:'var(--r-xs)'}}/>
+                          <input type="number" min="0" max="100" step=".5" inputMode="decimal" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',borderRadius:'var(--r-xs)'}}/>
                           <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
                         </div>
                       </div>
@@ -5446,11 +5446,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
-                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
-                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
@@ -5561,11 +5561,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
 {/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
 
 {recipe.length>0&&(
+                <div>
                 <div className="sbar">
                   <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
+                </div>
+                {!balanced&&(
+                  <div role="status" aria-live="polite" style={{marginTop:6,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
+                    ⚠ {balMsg}
+                  </div>
+                )}
                 </div>
               )}
             </div>
@@ -5955,12 +5962,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="inv-field">
                               <label htmlFor="inv-min">Mineral / corrector pH (%)</label>
-                              <input id="inv-min" type="number" min="0" max="10" step="0.5" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
+                              <input id="inv-min" type="number" min="0" max="10" step="0.5" inputMode="decimal" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
                             </div>
                             {invAer&&(
                               <div className="inv-field">
                                 <label htmlFor="inv-aerpct">Aireador fijo (%)</label>
-                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
+                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" inputMode="numeric" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
                               </div>
                             )}
                           </div>
