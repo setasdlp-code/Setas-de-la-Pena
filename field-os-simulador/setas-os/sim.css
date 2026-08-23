@@ -3376,6 +3376,8 @@
   font:800 var(--text-2xs)/1.4 var(--font-mono);
   text-align:center;
 }
+.sim-root .form-mobile-start{display:none}
+.sim-root .form-species-origin-toggle{display:none}
 .sim-root .form-production-command{
   position:sticky;
   top:0;
@@ -3448,7 +3450,46 @@
 .sim-root .mass-balance-action{min-height:44px}
 
 @media(max-width:560px){
-  .sim-root .formular-mode-nav{grid-template-columns:1fr}
+  .sim-root .formular-mode-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sim-root .formular-mode-btn{min-height:48px;gap:4px;padding:6px 4px;font-size:var(--text-xs)}
+  .sim-root .formular-mode-badge{min-width:18px;padding:2px 4px}
+  .sim-root .form-mobile-start{
+    display:grid;
+    gap:10px;
+    margin:-6px 0 10px;
+    padding:12px;
+    border:1px solid var(--ink-900);
+    border-top:4px solid var(--accent-olive);
+    background:var(--paper-0);
+  }
+  .sim-root .form-mobile-start header{display:grid;gap:3px}
+  .sim-root .form-mobile-start header span,
+  .sim-root .form-mobile-start-field > span,
+  .sim-root .form-species-origin-toggle > span{color:var(--ink-500);font:800 var(--text-2xs)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
+  .sim-root .form-mobile-start header strong{color:var(--ink-900);font:800 var(--text-base)/1.15 var(--font-display)}
+  .sim-root .form-mobile-start-field{display:grid;gap:5px}
+  .sim-root .form-mobile-start select,
+  .sim-root .form-mobile-origin-options button,
+  .sim-root .form-mobile-start-actions button,
+  .sim-root .form-species-origin-toggle button{min-height:46px;border:1px solid var(--ink-900);border-radius:0;background:var(--paper-0);color:var(--ink-900);font:800 var(--text-xs)/1 var(--font-display)}
+  .sim-root .form-mobile-start select{width:100%;padding:8px 10px}
+  .sim-root .form-mobile-origin-options,
+  .sim-root .form-mobile-start-actions,
+  .sim-root .form-species-origin-toggle > div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .sim-root .form-mobile-origin-options button.is-active,
+  .sim-root .form-species-origin-toggle button.is-active,
+  .sim-root .form-mobile-start-actions button.is-primary{background:var(--accent-olive);color:var(--paper-0)}
+  .sim-root .form-flow{display:none}
+  .sim-root .form-species-context.is-empty{display:none}
+  .sim-root .form-species-context.has-recipe{grid-template-columns:minmax(0,1fr);gap:8px;padding:9px 10px}
+  .sim-root .form-species-context.has-recipe .form-species-identity,
+  .sim-root .form-species-context.has-recipe .form-species-targets{display:none}
+  .sim-root .form-species-context.has-recipe .form-species-picker > span{letter-spacing:var(--tracking-button)}
+  .sim-root .form-species-context.has-recipe .form-species-picker select{min-height:46px}
+  .sim-root .form-species-origin-toggle{display:grid;gap:5px}
+  .sim-root .form-species-origin-toggle > span{color:rgba(255,255,255,.6)}
+  .sim-root .form-species-origin-toggle button{border-color:rgba(255,255,255,.42);background:transparent;color:var(--paper-0)}
+  .sim-root .form-species-origin-toggle button.is-active{border-color:var(--paper-0)}
   .sim-root .form-production-command{gap:8px;min-height:58px;margin:-6px 0 10px;padding:6px 6px 6px 10px}
   .sim-root .form-production-command-copy strong{font-size:var(--text-xs)}
   .sim-root .form-production-command-btn{min-width:146px;min-height:46px;padding:8px 10px}

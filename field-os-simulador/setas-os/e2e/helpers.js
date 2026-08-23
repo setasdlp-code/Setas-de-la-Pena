@@ -70,6 +70,11 @@ async function confirmDialogIfPresent(page, label = 'Confirmar') {
 
 /** Selecciona una especie desde el contexto persistente del Formulador. */
 async function selectSpecies(page, sKey) {
+  const quickStartSelect = page.locator('#form-mobile-species-select');
+  if (await quickStartSelect.isVisible()) {
+    await quickStartSelect.selectOption(sKey);
+    return;
+  }
   await page.locator('#form-species-context-select').selectOption(sKey);
 }
 
