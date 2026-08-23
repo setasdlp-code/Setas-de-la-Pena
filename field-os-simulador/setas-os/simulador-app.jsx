@@ -1946,6 +1946,13 @@ function App(props){
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
+  const onBuilderTabKeyDown=e=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+    e.preventDefault();
+    const next=e.key==='Home'||e.key==='ArrowLeft'?'formular':'generador';
+    setBuilderSubTab(next);
+    requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':'formular-tab-generador')?.focus());
+  };
   const [loadedFlash,setLoadedFlash]=useState(false);
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [cmpProvId,setCmpProvId]=useState('');
@@ -2178,7 +2185,7 @@ function App(props){
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
@@ -4674,7 +4681,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
-                    <button onClick={()=>{setCatalogModalOpen(false);goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
+                    <button onClick={()=>{setCatalogModalOpen(false);setBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
               </div>
@@ -4685,8 +4692,40 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-        <div className="builder-wrap" data-tab={tab}>
-          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada</div>}
+          <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
+            <button
+              type="button"
+              role="tab"
+              id="formular-tab-mesa"
+              aria-controls="formular-panel-mesa"
+              aria-selected={builderSubTab==='formular'}
+              tabIndex={builderSubTab==='formular'?0:-1}
+              className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
+              onKeyDown={onBuilderTabKeyDown}
+              onClick={()=>setBuilderSubTab('formular')}>
+              <span aria-hidden="true">🥣</span>
+              <span>Mesa de Mezcla</span>
+              {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="formular-tab-generador"
+              aria-controls="formular-panel-generador"
+              aria-selected={builderSubTab==='generador'}
+              tabIndex={builderSubTab==='generador'?0:-1}
+              className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
+              onKeyDown={onBuilderTabKeyDown}
+              onClick={()=>setBuilderSubTab('generador')}>
+              <span aria-hidden="true">⚡</span>
+              <span>Generador de Recetas</span>
+            </button>
+          </nav>
+        )}
+
+        {tab==='formular'&&builderSubTab==='formular'&&(
+        <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
+          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
 
           {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
               el editor manual como el Perito y el Generador automático. */}
@@ -4724,7 +4763,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-label">Ingredientes</span>
                 <div className="form-step-actions">
                   <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
-                  <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Usar generador</button>
+                  <button type="button" onClick={()=>setBuilderSubTab('generador')}>Usar generador</button>
                 </div>
                 <span className="form-step-help">Agrega insumos o calcula una base.</span>
               </li>
@@ -5220,7 +5259,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <h2>Perito + Automejora</h2>
                 <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
               </div>
-              <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Abrir generador</button>
+              <button type="button" onClick={()=>setBuilderSubTab('generador')}>Abrir generador</button>
             </header>
             {an&&(()=>{
               const hasPer=recipe.length>0;
@@ -5378,7 +5417,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {recipe.length>0&&<div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap'}}>
                   {an&&Math.abs(an.tot-100)>0.5&&(
                     <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                      <button className="tog" onClick={()=>autoBalance(balanceMode)}>Balancear</button>
+                      <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}>⚡ Auto-balancear 100%</button>
                       <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
                         <option value="proportional">Proporcional</option>
                         <option value="equal">Igualando</option>
@@ -5397,7 +5436,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
+                    <button onClick={()=>{setShowOptimizer(true);setBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -5419,21 +5458,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{flex:1}}>
                           <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
                             <div style={{fontSize:"var(--text-base)",fontWeight:500}}>{g.name}</div>
-                            <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{fontSize:"var(--text-sm)",padding:'2px 4px',flexShrink:0}}>
-                              {isLocked?'●':'○'}
+                            <button type="button" className={`lock-btn mix-lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'}>
+                              <span aria-hidden="true">{isLocked?'●':'○'}</span> {isLocked?'Fijado':'Libre'}
                             </button>
                           </div>
                           <div className="imeta" style={{fontSize:"var(--text-xs)"}}>C:N {g.cn||'—'} · N {g.n||'—'}%</div>
                           {rowFlag&&<div style={{marginTop:4,fontSize:"var(--text-xs)",fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}><span>{rowFlag.priority==='critical'?'⚠':'!'}</span><span>{rowFlag.label}</span></div>}
                         </div>
-                        <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0,fontSize:"var(--text-base)",padding:'4px 8px'}}>✕</button>
+                        <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`}>✕</button>
                       </div>
                       {/* Controls: slider + number input */}
                       <div style={{display:'flex',flexDirection:'column',gap:4}}>
                         <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
-                        <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" inputMode="decimal" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',borderRadius:'var(--r-xs)'}}/>
-                          <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
+                        <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
+                          {[-5,-1].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)<=0} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>{delta}%</button>)}
+                          <label className="mix-number-wrap">
+                            <span className="sr-only">Porcentaje de {g.name}</span>
+                            <input type="number" min="0" max="100" step=".5" inputMode="decimal" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input mix-num-input"/>
+                            <span aria-hidden="true">%</span>
+                          </label>
+                          {[1,5].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)>=100} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>+{delta}%</button>)}
                         </div>
                       </div>
                     </div>
@@ -5719,13 +5763,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         )}
 
-        {tab==='formular'&&(
-          <div className="formular-workspace">
+        {tab==='formular'&&builderSubTab==='generador'&&(
+          <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
 {/* ── GENERADOR DE RECETAS ── */}
             <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
-                <button className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <button type="button" className="tog" onClick={()=>setBuilderSubTab('formular')}>← Mesa de Mezcla</button>
+                  <button type="button" className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
+                </div>
               </div>
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
@@ -5844,7 +5891,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('formular');;setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>Cargar</button>
+                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('produccion');}}>Producir</button>
                                         </div>
                                       </div>
@@ -6108,7 +6155,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                   )}
-                                  <button className="btn pri" style={{width:'100%'}} onClick={()=>{setRecipe(invResult.recipe);goTab('formular');}}>Cargar en Formulador</button>
+                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setRecipe(invResult.recipe);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa de Mezcla</button>
                                 </>)
                               }
                             </div>

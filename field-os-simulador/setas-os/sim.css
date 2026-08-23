@@ -3340,4 +3340,77 @@
   .sim-root .p-chip-val{font-size:9px}
 }
 
+/* Formulador V2 quirúrgico: separa los dos trabajos sin reemplazar el
+   editor, el Perito ni el solver existentes. */
+.sim-root .formular-mode-nav{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  margin:0 0 14px;
+  padding:5px;
+  border:1px solid var(--ink-900);
+  background:var(--paper-200);
+}
+.sim-root .formular-mode-btn{
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:8px 14px;
+  border:1px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--ink-700);
+  font:800 var(--text-sm)/1.2 var(--font-body);
+  cursor:pointer;
+}
+.sim-root .formular-mode-btn:hover,
+.sim-root .formular-mode-btn:focus-visible{border-color:var(--border-strong);background:var(--paper-100);color:var(--ink-900)}
+.sim-root .formular-mode-btn.is-active{border-color:var(--ink-900);background:var(--paper-0);color:var(--ink-900);box-shadow:3px 3px 0 var(--ink-900)}
+.sim-root .formular-mode-badge{
+  min-width:20px;
+  padding:2px 6px;
+  background:var(--moss-700);
+  color:var(--paper-0);
+  font:800 var(--text-2xs)/1.4 var(--font-mono);
+  text-align:center;
+}
+.sim-root .mix-lock-btn,
+.sim-root .mix-remove-btn{
+  min-width:44px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:6px 10px!important;
+  flex-shrink:0;
+}
+.sim-root .mix-steppers{display:grid;grid-template-columns:44px 44px minmax(76px,1fr) 44px 44px;gap:4px;align-items:center}
+.sim-root .mix-step-btn{
+  min-width:44px;
+  min-height:44px;
+  padding:4px;
+  border:1px solid var(--border-strong);
+  border-radius:0;
+  background:var(--paper-100);
+  color:var(--ink-800);
+  font:700 var(--text-xs)/1 var(--font-mono);
+  cursor:pointer;
+}
+.sim-root .mix-step-btn:hover:not(:disabled),
+.sim-root .mix-step-btn:focus-visible{background:var(--paper-300);border-color:var(--ink-900)}
+.sim-root .mix-step-btn:disabled{opacity:.38;cursor:not-allowed}
+.sim-root .mix-number-wrap{min-height:44px;display:flex;align-items:center;border:1px solid var(--ink-900);background:var(--paper-0)}
+.sim-root .mix-num-input{width:100%!important;min-width:0;min-height:42px;padding:6px 3px!important;border:0!important;border-radius:0!important;background:transparent!important;text-align:center;font:800 var(--text-base)/1 var(--font-mono)!important}
+.sim-root .mix-number-wrap > span:last-child{padding-right:8px;color:var(--ink-600);font:700 var(--text-xs)/1 var(--font-mono)}
+.sim-root .mass-balance-action{min-height:44px}
+
+@media(max-width:560px){
+  .sim-root .formular-mode-nav{grid-template-columns:1fr}
+  .sim-root .mix-steppers{grid-template-columns:44px 44px minmax(68px,1fr) 44px 44px}
+  .sim-root .mix-step-btn{font-size:10px}
+}
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

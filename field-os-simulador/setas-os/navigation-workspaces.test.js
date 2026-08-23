@@ -159,12 +159,24 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
   const loadR = jsx.match(/const loadR=e=>\{[\s\S]*?\n  \};/);
   assert.ok(loadR, 'loadR function not found');
   assert.doesNotMatch(loadR[0], /setTab\(/);
+  assert.match(loadR[0], /setBuilderSubTab\('formular'\)/);
   assert.match(loadR[0], /goTab\('formular'\)/);
 });
 
+test('Formular V2 separates Mesa and Generator without undefined replacement helpers', () => {
+  assert.match(jsx, /className="formular-mode-nav" role="tablist"/);
+  assert.match(jsx, /id="formular-panel-mesa"[\s\S]*?role="tabpanel"/);
+  assert.match(jsx, /id="formular-panel-generador"[\s\S]*?role="tabpanel"/);
+  assert.match(jsx, /setBuilderSubTab\('formular'\)[\s\S]*?Cargar en Mesa/);
+  assert.match(jsx, /className="mix-steppers" role="group"/);
+  assert.doesNotMatch(jsx, /\bFORM_ROLE_GROUPS\b/);
+  assert.ok(jsx.indexOf('const renderIngRow=') < jsx.lastIndexOf('renderIngRow'), 'renderIngRow must be defined before use');
+  assert.doesNotMatch(jsx, /\bsolveCN\s*\(/);
+});
+
 test('Control remains the visual reference and Formular overrides stay locally scoped', () => {
-  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="builder-wrap"/);
-  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="formular-workspace"/);
+  assert.match(jsx, /\{tab==='formular'&&builderSubTab==='formular'&&\(\s*<div id="formular-panel-mesa" className="builder-wrap"/);
+  assert.match(jsx, /\{tab==='formular'&&builderSubTab==='generador'&&\(\s*<div id="formular-panel-generador" className="formular-workspace"/);
   const scoped = css.match(/\/\* ── FORMULAR · VISUAL PARITY WITH CONTROL[\s\S]*?(?=@media\(prefers-reduced-motion:reduce\))/);
   assert.ok(scoped, 'Formular scoped visual block not found');
   assert.match(scoped[0], /\.builder-wrap/);
