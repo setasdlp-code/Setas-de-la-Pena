@@ -159,7 +159,7 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
   const loadR = jsx.match(/const loadR=e=>\{[\s\S]*?\n  \};/);
   assert.ok(loadR, 'loadR function not found');
   assert.doesNotMatch(loadR[0], /setTab\(/);
-  assert.match(loadR[0], /setBuilderSubTab\('formular'\)/);
+  assert.match(loadR[0], /openBuilderSubTab\('formular'\)/);
   assert.match(loadR[0], /goTab\('formular'\)/);
 });
 
@@ -167,11 +167,20 @@ test('Formular V2 separates Mesa and Generator without undefined replacement hel
   assert.match(jsx, /className="formular-mode-nav" role="tablist"/);
   assert.match(jsx, /id="formular-panel-mesa"[\s\S]*?role="tabpanel"/);
   assert.match(jsx, /id="formular-panel-generador"[\s\S]*?role="tabpanel"/);
-  assert.match(jsx, /setBuilderSubTab\('formular'\)[\s\S]*?Cargar en Mesa/);
+  assert.match(jsx, /openBuilderSubTab\('formular'\)[\s\S]*?Cargar en Mesa/);
   assert.match(jsx, /className="mix-steppers" role="group"/);
   assert.doesNotMatch(jsx, /\bFORM_ROLE_GROUPS\b/);
   assert.ok(jsx.indexOf('const renderIngRow=') < jsx.lastIndexOf('renderIngRow'), 'renderIngRow must be defined before use');
   assert.doesNotMatch(jsx, /\bsolveCN\s*\(/);
+});
+
+test('mobile production flow resets scroll and exposes one progressive next action', () => {
+  assert.match(jsx, /const focusFormTop=.*getElementById\('setas-main'\)/s);
+  assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':'produce'/);
+  assert.match(jsx, /data-testid="formulator-next-action"/);
+  assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);
+  assert.match(css, /\.form-production-command\{[\s\S]*position:sticky;[\s\S]*top:0;[\s\S]*z-index:var\(--z-sticky-panel\)/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.form-production-command-btn\{min-width:146px;min-height:46px/);
 });
 
 test('Control remains the visual reference and Formular overrides stay locally scoped', () => {
