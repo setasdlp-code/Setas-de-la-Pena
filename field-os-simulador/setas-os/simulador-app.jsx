@@ -5588,7 +5588,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     };
                     const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                     return(
-                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
+                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
                       {/* Header: nombre + lock + remove */}
                       <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
                         <div style={{flex:1}}>
