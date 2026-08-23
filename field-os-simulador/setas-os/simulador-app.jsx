@@ -2107,6 +2107,21 @@ function App(props){
   useEffect(()=>{try{const s=localStorage.getItem('sdp_alertas');if(s) setAlertaConfig(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_prov_override');if(s) setProvOverride(JSON.parse(s));}catch(e){};},[]);
 
+  // ── Registro de adaptador nativo para SetasFormulatorAPI (Perito, escenarios, agentes)
+  useEffect(()=>{
+    if(globalThis.SetasFormulatorAPI?.registerNativeAdapter){
+      return globalThis.SetasFormulatorAPI.registerNativeAdapter({
+        getRecipe:()=>recipe,
+        getLockedIds:()=>new Set(lockedIds),
+        getBatchWetKg:()=>(numBags*kgBag),
+        applyRecipe:async (targetRecipe, options={})=>{
+          setRecipe(targetRecipe);
+          return {ok:true, recipe:targetRecipe};
+        },
+      });
+    }
+  },[recipe, lockedIds, numBags, kgBag]);
+
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced) return;
     const trSave=an?calcTreatment(an, sKey, SPP):null;
@@ -2169,7 +2184,7 @@ function App(props){
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
@@ -4628,7 +4643,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&(
         <div className="builder-wrap" data-tab={tab}>
-          {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
+          {loadedFlash&&<div className="loaded-toast">✓ Receta cargada en Mesa de Mezcla</div>}
 
           {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
               el editor manual como el Perito y el Generador automático. */}
@@ -4665,15 +4680,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-num">03</span>
                 <span className="form-step-label">Ingredientes</span>
                 <div className="form-step-actions">
-                  <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
-                  <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Usar generador</button>
+                  <button type="button" onClick={()=>{setBuilderSubTab('formular');document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'});}}>Elegir manualmente</button>
+                  <button type="button" onClick={()=>{setBuilderSubTab('generador');document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}}>Usar generador</button>
                 </div>
                 <span className="form-step-help">Agrega insumos o calcula una base.</span>
               </li>
               <li className={`form-step${recipe.length>0?' is-ready':''}`}>
                 <span className="form-step-num">04</span>
                 <span className="form-step-label">Validar y guardar</span>
-                <button type="button" className="form-step-primary" disabled={recipe.length===0} onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                <button type="button" className="form-step-primary" disabled={recipe.length===0} onClick={()=>{setBuilderSubTab('formular');document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});}}>
                   {recipe.length>0?'Revisar receta':'Agrega ingredientes'}
                 </button>
                 <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
@@ -4681,1379 +4696,967 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </ol>
           </section>
 
-          <section className="form-species-context" aria-labelledby="form-species-context-title">
-            <div className="form-species-identity">
-              <span className="form-species-kicker">Especie activa</span>
-              <div>
-                <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
-                <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
+          {/* Subnavegación de modo: Mesa de Mezcla vs Generador de Recetas */}
+          <div className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
+            <button
+              type="button"
+              role="tab"
+              id="tab-btn-mesa"
+              aria-selected={builderSubTab==='formular'}
+              className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
+              onClick={()=>setBuilderSubTab('formular')}>
+              <span style={{fontSize:'16px'}}>🥣</span>
+              <span>Mesa de Mezcla</span>
+              {recipe.length>0&&<span className="formular-mode-badge">{recipe.length}</span>}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-btn-gen"
+              aria-selected={builderSubTab==='generador'}
+              className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
+              onClick={()=>setBuilderSubTab('generador')}>
+              <span style={{fontSize:'16px'}}>⚡</span>
+              <span>Generador de Recetas</span>
+              <span className="formular-mode-badge-accent">IA</span>
+            </button>
+          </div>
+
+          {builderSubTab==='formular'&&(
+            <>
+              {/* Especie Activa & Metas Biológicas */}
+              <section className="form-species-context" aria-labelledby="form-species-context-title">
+                <div className="form-species-identity">
+                  <span className="form-species-kicker">Especie activa</span>
+                  <div>
+                    <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
+                    <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
+                  </div>
+                </div>
+                <label className="form-species-picker" htmlFor="form-species-context-select">
+                  <span>Cambiar especie</span>
+                  <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                    <option value="" disabled>Elegir especie…</option>
+                    {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+                  </select>
+                </label>
+                <div className="form-species-targets" aria-label="Objetivos de la especie activa">
+                  <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+                  <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+                  <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
+                  <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
+                </div>
+              </section>
+
+              {/* ── STICKY LIVE MINI DASHBOARD ── */}
+              <div className="sim-live-dashboard" id="sim-live-dash">
+                {recipe.length>0 ? (()=>{
+                  const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
+                  const ebVal=an?blendEBWithHistory(an,histStats):0;
+                  const ebOpt=sp?.eb_optimal||100;
+                  const ebBase=sp?.eb_baseline||80;
+                  const ebOk=ebVal>=ebOpt;
+                  const ebMid=ebVal>=ebBase;
+                  const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
+                  const totOk=an?Math.abs(an.tot-100)<=0.5:false;
+                  const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+
+                  return(
+                    <div>
+                      <div className="live-dash-bar">
+                        <div className="live-dash-left">
+                          <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
+                            Mesa de Mezcla
+                          </span>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                            en vivo
+                          </span>
+                        </div>
+
+                        <div className="live-dash-metrics">
+                          {/* Score Perito */}
+                          <button
+                            onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                            className="live-dash-pill"
+                            style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
+                            aria-label={`Score Perito: ${Math.round(opt.score)} de 100, ${sm2.label}. Ver análisis completo`}
+                            title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
+                            <IconTarget size={11} color={sm2.badge} />
+                            <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                          </button>
+
+                          {/* EB */}
+                          <div className="live-dash-pill" title={`Eficiencia Biológica Estimada: ${Math.round(ebVal)}% (Meta: ${ebOpt}%)`}>
+                            <span className="live-dash-pill-label">EB</span>
+                            <span style={{color:ebColor}}>{Math.round(ebVal)}%</span>
+                          </div>
+
+                          {/* Masa Total % */}
+                          <div
+                            className="live-dash-pill"
+                            style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
+                            title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
+                            <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
+                              {an?an.tot.toFixed(0):'0'}%
+                              {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="live-dash-actions">
+                          {an&&!totOk&&(
+                            <button
+                              onClick={()=>autoBalance(balanceMode)}
+                              className="live-dash-btn"
+                              style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                              aria-label="Ajustar ingredientes libres al 100%"
+                              title="Ajustar ingredientes libres al 100%">
+                              <IconBolt size={10} color="#fff" />
+                              <span>100%</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={()=>setShowLiveChips(!showLiveChips)}
+                            className="live-dash-btn live-dash-recipe-toggle"
+                            style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
+                            aria-label={`${recipe.length} insumos en receta`}
+                            title="Ver fórmula">
+                            <IconRecipe size={11} color="var(--ink-700)" />
+                            <span>{recipe.length}</span>
+                          </button>
+                          <button
+                            onClick={()=>setBuilderSubTab('generador')}
+                            className="live-dash-btn"
+                            style={{background:'var(--moss-700)',color:'#fff',borderColor:'var(--moss-800)'}}
+                            title="Abrir Generador de Recetas">
+                            <span style={{fontSize:'12px'}}>⚡</span>
+                            <span>Generador</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })() : null}
               </div>
-            </div>
-            <label className="form-species-picker" htmlFor="form-species-context-select">
-              <span>Cambiar especie</span>
-              <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
-                <option value="" disabled>Elegir especie…</option>
-                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
-              </select>
-            </label>
-            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
-              <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
-              <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
-              <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
-              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
-            </div>
-          </section>
 
-          {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
-              Decisión de diseño:
-              El dashboard pegajoso superior (sim-live-dashboard) centraliza en tiempo real:
-              1) Especie activa y modo de trabajo global (PROD / INV).
-              2) Score Perito interactivo con acceso directo al dictamen.
-              3) Eficiencia Biológica (EB) y Balance de masa (%) con auto-balance 100%.
-              4) Conexión en vivo (online/offline) e insumos con edición/eliminación directa.
-              5) Sub-navegación contextual por anclas (Insumos, Receta, Perito, Batch, Tratamiento).
-              Esto sustituye y unifica sin pérdida las barras estáticas previas, manteniendo
-              en bl-perito los análisis profundos (mgrid, EBDial, rangos C:N/N%, nitrógeno y sugerencias).
-          ── */}
-          <div className="sim-live-dashboard" id="sim-live-dash">
-            {recipe.length>0 ? (()=>{
-              const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
-              const limiter=peritoMainLimiter(opt,an);
-              const ebVal=an?blendEBWithHistory(an,histStats):0;
-              const ebOpt=sp?.eb_optimal||100;
-              const ebBase=sp?.eb_baseline||80;
-              const ebOk=ebVal>=ebOpt;
-              const ebMid=ebVal>=ebBase;
-              const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
-              const totOk=an?Math.abs(an.tot-100)<=0.5:false;
-              const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+              {/* ── WORKSPACE DE 2 COLUMNAS ── */}
+              <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
+                <header className="active-recipe-workspace-head" style={{display:'none'}}>
+                  <h2 id="active-recipe-workspace-title">Receta activa + evaluación en vivo</h2>
+                </header>
+                {/* COLUMNA IZQUIERDA: CATÁLOGO DE INSUMOS */}
+                <div className="builder-left" id="bl-ingredientes">
+                  <header className="ingredient-section-head" id="ingredient-catalog-title">
+                    <div>
+                      <span className="ingredient-section-eyebrow">Catálogo de insumos</span>
+                      <h2>Elige ingredientes</h2>
+                      <p>Agrega bases, suplementos y minerales a tu mesa de mezcla.</p>
+                    </div>
+                    <button type="button" className="ingredient-section-aux" onClick={()=>setShowPrices(p=>!p)}>
+                      {showPrices?'Ocultar precios':'Editar precios'}
+                    </button>
+                  </header>
 
-              return(
-                <div>
-                  {/* Fila única ultra-compacta (~38px) */}
-                  <div className="live-dash-bar">
-                    {/* Especie y modo */}
-                    <div className="live-dash-left">
-                      <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
-                        Receta activa
-                      </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
-                        evaluación en vivo
-                      </span>
+                  <div className="panel" style={{position:'sticky',top:175,zIndex:'var(--z-sticky-panel)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8}}>
+                      <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Insumos disponibles</div>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{visibleIngredients.length}</div>
+                    </div>
+                    <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
+                      <input
+                        aria-label="Buscar insumo por nombre o uso"
+                        placeholder="Buscar insumo…"
+                        value={search}
+                        onChange={e=>setSearch(e.target.value)}
+                        style={{flex:1,minWidth:140,padding:'7px 10px',border:'1px solid var(--paper-300)',background:'var(--paper-50)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}
+                      />
+                      {search&&<button onClick={()=>setSearch('')} style={{padding:'7px 10px',border:'1px solid var(--paper-300)',background:'var(--paper-100)',borderRadius:'var(--r-xs)',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>✕</button>}
                     </div>
 
-                    {/* Métricas clave en micro-píldoras */}
-                    <div className="live-dash-metrics">
-                      {/* Score Perito */}
+                    <div className="cats" role="group" aria-label="Categorías de insumos" style={{marginBottom:8}}>
+                      {CATS.map(c=>(
+                        <button key={c.id} className={'cat'+(cat===c.id?' on':'')} onClick={()=>setCat(c.id)} aria-pressed={cat===c.id}>{c.label}</button>
+                      ))}
+                    </div>
+
+                    <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',paddingTop:6,borderTop:'1px solid var(--paper-300)'}}>
                       <button
-                        onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
-                        className="live-dash-pill"
-                        style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
-                        aria-label={`Score Perito: ${Math.round(opt.score)} de 100, ${sm2.label}. Ver análisis completo`}
-                        title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
-                        <IconTarget size={11} color={sm2.badge} />
-                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                        className={`tog${showCompatOnly?' on':''}`}
+                        aria-pressed={showCompatOnly}
+                        onClick={()=>setShowCompatOnly(s=>!s)}
+                        title={`Mostrar solo ingredientes compatibles con ${sp.name}`}>
+                        Solo {sp.name.split(' ')[0]}
                       </button>
-
-                      {/* EB */}
-                      <div className="live-dash-pill" title={`Eficiencia Biológica Estimada: ${Math.round(ebVal)}% (Meta: ${ebOpt}%)`}>
-                        <span className="live-dash-pill-label">EB</span>
-                        <span style={{color:ebColor}}>{Math.round(ebVal)}%</span>
-                      </div>
-
-                      {/* Masa Total % */}
-                      <div
-                        className="live-dash-pill"
-                        style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
-                        title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
-                        <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
-                          {an?an.tot.toFixed(0):'0'}%
-                          {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Región viva para lectores de pantalla: anuncia cambios de estado
-                        que hoy solo se comunican por color (score/EB/balance de masa). */}
-                    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-                      {`Score Perito ${Math.round(opt.score)} de 100, ${sm2.label}. `}
-                      {`Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk?', meta alcanzada':(ebMid?', por debajo de la meta':', por debajo de la línea base')}. `}
-                      {`Balance de masa ${an?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
-                    </div>
-
-                    {/* Acciones compactas */}
-                    <div className="live-dash-actions">
-                      {an&&!totOk&&(
-                        <button
-                          onClick={()=>autoBalance(balanceMode)}
-                          className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
-                          aria-label="Ajustar ingredientes libres al 100%"
-                          title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="#fff" />
-                          <span>100%</span>
-                        </button>
+                      <button
+                        className={`tog${groupByRole?' on':''}`}
+                        aria-pressed={groupByRole}
+                        onClick={()=>setGroupByRole(s=>!s)}
+                        title="Agrupar lista por rol funcional (Bases, Suplementos, Minerales, Aireadores)">
+                        Agrupado por rol
+                      </button>
+                      {showRoleGroups&&(
+                        <div style={{display:'inline-flex',gap:4}}>
+                          <button type="button" className="tog" onClick={()=>setAllRoleGroups(false)} style={{fontSize:'10px',padding:'2px 6px'}}>Expandir grupos</button>
+                          <button type="button" className="tog" onClick={()=>setAllRoleGroups(true)} style={{fontSize:'10px',padding:'2px 6px'}}>Colapsar grupos</button>
+                        </div>
                       )}
-                      <button
-                        onClick={()=>setShowLiveChips(!showLiveChips)}
-                        className="live-dash-btn live-dash-recipe-toggle"
-                        style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
-                        aria-label={`${recipe.length} insumos en receta. ${showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}`}
-                        aria-expanded={showLiveChips}
-                        title={showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}>
-                        <IconRecipe size={11} color="var(--ink-700)" />
-                        <span>{recipe.length}</span>
-                        {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
-                      </button>
-                      <button
-                        onClick={()=>{
-                          if(saveName.trim()){
-                            saveR();
-                          } else {
-                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
-                            setTimeout(()=>{
-                              const inp=document.querySelector('.sbar input');
-                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
-                            },300);
-                          }
-                        }}
-                        className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
-                        aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
-                        title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
-                      </button>
                     </div>
                   </div>
 
-                  {/* Bandeja expandible con detalle, chips e hipervínculos */}
-                  {(
-                    <div className="live-dash-tray">
-                      {/* Sub-navegación rápida */}
-                      <div className="live-dash-secondary-nav" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
-                        <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                          {[
-                            {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
-                            {id:'bl-receta',l:'Receta',icon:IconRecipe},
-                            {id:'bl-perito',l:'Perito',icon:IconTarget},
-                            {id:'bl-batch',l:'Batch',icon:IconBox},
-                            ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
-                          ].map(s=>{
-                            const IconComp=s.icon;
-                            return (
+                  <div className="ing-list role-groups-list" style={{display:'flex',flexDirection:'column',gap:10,marginTop:10}}>
+                    {(()=>{
+                      const groupsToRender = showRoleGroups
+                        ? FORM_ROLE_GROUPS.map(grp=>({ ...grp, ings: visibleIngredients.filter(g=>g.role===grp.key) })).filter(g=>g.ings.length>0)
+                        : [{ key:'all', label:null, color:null, ings: visibleIngredients }];
+
+                      if(visibleIngredients.length===0){
+                        return(
+                          <div style={{padding:'20px 14px',textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-500)',background:'var(--paper-100)',borderRadius:'var(--r-sm)'}}>
+                            No hay insumos que coincidan con la búsqueda o filtro.
+                          </div>
+                        );
+                      }
+
+                      return groupsToRender.map(grp=>{
+                        const isCollapsed = Boolean(collapsedRoles[grp.key]);
+                        const compatCount = grp.ings.filter(g=>g.cs&&g.cs.includes(sKey)).length;
+                        return(
+                          <section key={grp.key} className={`role-group-box${isCollapsed?' is-collapsed':''}`} style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
+                            {grp.label&&(
                               <button
-                                key={s.id}
-                                onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
-                                style={{
-                                  fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,
-                                  textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
-                                  color:'var(--ink-700)',border:'1px solid var(--border-soft)',
-                                  borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4
-                                }}>
-                                <IconComp size={10} color="var(--ink-600)" />
-                                <span>{s.l}</span>
+                                type="button"
+                                className="role-group-hdr"
+                                aria-expanded={!isCollapsed}
+                                onClick={()=>toggleRoleCollapse(grp.key)}
+                                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:grp.color+'15',border:'none',borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',cursor:'pointer',textAlign:'left'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                                  <span style={{width:8,height:8,borderRadius:'50%',background:grp.color}}/>
+                                  <strong style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color:'var(--ink-800)'}}>{grp.label}</strong>
+                                </div>
+                                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                                  <span className="role-group-compatible" style={{fontFamily:'var(--font-mono)',fontSize:'10px',color:'var(--ink-600)'}}>
+                                    {compatCount} compatible{compatCount===1?'':'s'}
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>({grp.ings.length})</span>
+                                </div>
                               </button>
-                            );
-                          })}
+                            )}
+                            <div className="role-group-content" hidden={isCollapsed} style={{padding:'6px'}}>
+                              {grp.ings.map(renderIngRow)}
+                            </div>
+                          </section>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                {/* COLUMNA DERECHA: RECETA ACTIVA + PERITO */}
+                <div className="builder-right">
+                  {/* MESA DE MEZCLA (RECETA ACTIVA) */}
+                  <div className="panel panel-accent" id="bl-receta">
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
+                      <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+                        <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:22,color:'var(--ink-900)',lineHeight:1}}>Mesa de Mezcla</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:600}}>({recipe.length} insumos)</span>
+                      </div>
+                    </div>
+
+                    {/* BARRA DE BALANCE DE MASA (100%) */}
+                    {an&&(
+                      <div className={`mass-balance-bar ${an.tot>=99.5&&an.tot<=100.5?'is-ok':an.tot<95||an.tot>105?'is-err':'is-warn'}`}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <span style={{fontWeight:800,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',fontSize:'var(--text-xs)'}}>
+                            Masa Total:
+                          </span>
+                          <span style={{fontWeight:800,fontSize:'var(--text-base)'}}>
+                            {an.tot.toFixed(1)}% / 100%
+                          </span>
+                          {an.tot>=99.5&&an.tot<=100.5 ? (
+                            <span style={{color:'var(--moss-700)',fontWeight:700,fontSize:'var(--text-xs)',display:'inline-flex',alignItems:'center',gap:3}}>
+                              <IconCheck size={14} color="var(--moss-700)" /> Balanceado
+                            </span>
+                          ) : (
+                            <span style={{color:'var(--coral-600)',fontWeight:700,fontSize:'var(--text-xs)',display:'inline-flex',alignItems:'center',gap:3}}>
+                              <IconAlert size={14} color="var(--coral-600)" /> Requiere balance
+                            </span>
+                          )}
                         </div>
-                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'10px',padding:'2px 6px'}}>
-                          <span className="offline-status-dot"></span>
-                          <span>{isOnline ? 'En línea' : 'Sin conexión'}</span>
+                        <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+                          {Math.abs(an.tot-100)>0.5&&(
+                            <button
+                              type="button"
+                              className="mass-balance-btn"
+                              onClick={()=>autoBalance(balanceMode)}
+                              title="Ajustar ingredientes libres al 100%">
+                              <IconBolt size={14} color="#fff" />
+                              <span>Auto-balancear 100%</span>
+                            </button>
+                          )}
+                          <select className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
+                            <option value="proportional">Proporcional</option>
+                            <option value="equal">Igualando</option>
+                            <option value="last">Al último</option>
+                          </select>
+                          <button
+                            type="button"
+                            className={`tog${normMode?' on':''}`}
+                            aria-pressed={normMode}
+                            onClick={()=>setNormMode(!normMode)}
+                            title="Al cambiar un %, los demás se reescalan proporcionalmente (respeta ●)">
+                            Auto-ajustar (%)
+                          </button>
+                          <button
+                            type="button"
+                            className="tog"
+                            onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>
+                            Limpiar
+                          </button>
                         </div>
                       </div>
+                    )}
 
-                      {/* Observación perito si aplica */}
-                      {limiter&&(
-                        <div className="live-dash-limiter" style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
-                          <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
-                            <IconAlert size={11} color={sm2.txt} />
-                            <span>{limiter}</span>
-                          </span>
-                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'10px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
+                    {recipe.length===0 ? (
+                      <div className="rec-empty" style={{padding:'24px 16px',textAlign:'center'}}>
+                        <div className="rec-empty-hed" style={{fontSize:'18px',fontWeight:700,marginBottom:6}}>Tu mesa de mezcla está vacía</div>
+                        <div className="rec-empty-sub" style={{color:'var(--ink-600)',marginBottom:16}}>Selecciona insumos a la izquierda o genera una receta automáticamente con IA.</div>
+                        <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+                          <button
+                            type="button"
+                            onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}
+                            style={{padding:'10px 18px',background:'var(--paper-100)',border:'1px solid var(--border-strong)',borderRadius:'var(--radius-sm)',fontWeight:700,cursor:'pointer'}}>
+                            + Explorar Insumos
+                          </button>
+                          <button
+                            type="button"
+                            onClick={()=>setBuilderSubTab('generador')}
+                            style={{padding:'10px 18px',background:'var(--moss-700)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',fontWeight:700,cursor:'pointer'}}>
+                            ⚡ Abrir Generador de Recetas
+                          </button>
                         </div>
-                      )}
-
-                      {/* Fila horizontal de chips de insumos */}
-                      <div className="live-dash-chips-row">
-                        <span style={{fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginRight:2,flexShrink:0}}>
-                          Fórmula:
-                        </span>
+                      </div>
+                    ) : (
+                      <div style={{border:'1px solid var(--paper-300)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
                         {recipe.map(r=>{
                           const g=INGS.find(i=>i.id===r.id);
                           if(!g) return null;
                           const isLocked=lockedIds.includes(r.id);
-                          const roleCol=FORM_ROLE_COLORS[g.role]||'var(--ink-500)';
+                          const gName=(g.name||'').toLowerCase();
+                          const roleMatch=(it)=>{
+                            const txt=(it.action||'').replace(/<[^>]+>/g,'').toLowerCase();
+                            if(txt.includes(gName)) return true;
+                            const isCarbBase=g.role==='base_carbono', isNSupp=g.role==='suplemento_n'||g.n>=1.5;
+                            if((it.icon==='↓C:N'||it.icon==='↑N')&&isNSupp) return true;
+                            if((it.icon==='↑C:N'||it.icon==='↓N')&&isCarbBase) return true;
+                            return false;
+                          };
+                          const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
+                          const roleCol=FORM_ROLE_COLORS[g.role]||'#666';
+
                           return(
-                            <div
-                              key={r.id}
-                              className="live-ing-chip"
-                              title={`${g.name} (${FORM_ROLE_LABELS[g.role]||g.role}) · ${r.p}%`}>
-                              <span style={{width:6,height:6,borderRadius:'50%',background:roleCol,flexShrink:0}}></span>
-                              <span style={{fontWeight:600}}>{g.name}</span>
-                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,color:isLocked?'var(--coral-600)':'var(--ink-800)',display:'inline-flex',alignItems:'center',gap:2}}>
-                                {r.p}%{isLocked ? <IconLock size={9} color="var(--coral-600)" /> : null}
-                              </span>
-                              <button
-                                className="live-ing-chip-del"
-                                onClick={(e)=>{e.stopPropagation();remI(r.id);}}
-                                aria-label={`Quitar ${g.name} de la receta`}
-                                title={`Quitar ${g.name}`}>
-                                ×
-                              </button>
+                            <div key={r.id} className={`mix-ingredient-row${isLocked?' is-locked':''}`}>
+                              {/* Header: role + name + lock + remove */}
+                              <div className="mix-row-header">
+                                <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flex:1}}>
+                                  <span className="mix-role-tag" style={{background:roleCol+'22',color:roleCol,border:`1px solid ${roleCol}44`}}>
+                                    {FORM_ROLE_LABELS[g.role]||g.role}
+                                  </span>
+                                  <span style={{fontSize:"var(--text-base)",fontWeight:700,color:'var(--ink-900)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                                    {g.name}
+                                  </span>
+                                  <span className="imeta" style={{fontSize:"var(--text-xs)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>
+                                    C:N {g.cn||'—'} · N {g.n||'—'}%
+                                  </span>
+                                </div>
+                                <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+                                  <button
+                                    type="button"
+                                    className={`mix-lock-btn${isLocked?' is-locked':''}`}
+                                    onClick={()=>toggleLock(r.id)}
+                                    aria-label={isLocked?`Desbloquear porcentaje de ${g.name}`:`Fijar porcentaje de ${g.name}`}
+                                    title={isLocked?'Desbloquear (se ajusta al auto-balancear)':'Fijar este % (no cambia al auto-balancear)'}>
+                                    {isLocked ? '🔒 Fijado' : '🔓 Libre'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="mix-del-btn"
+                                    onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}}
+                                    aria-label={`Quitar ${g.name} de la receta`}
+                                    title={`Quitar ${g.name}`}>
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Controls: Steppers 44px + Range slider */}
+                              <div className="mix-controls-row">
+                                <div className="mix-steppers" role="group" aria-label={`Ajuste de porcentaje para ${g.name}`}>
+                                  <button
+                                    type="button"
+                                    className="mix-step-btn"
+                                    disabled={isLocked || r.p <= 0}
+                                    onClick={()=>!isLocked&&updP(r.id,Math.max(0,Math.round((r.p-5)*10)/10))}
+                                    title="-5%">
+                                    -5%
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="mix-step-btn"
+                                    disabled={isLocked || r.p <= 0}
+                                    onClick={()=>!isLocked&&updP(r.id,Math.max(0,Math.round((r.p-1)*10)/10))}
+                                    title="-1%">
+                                    -1%
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.5"
+                                    required
+                                    value={r.p}
+                                    readOnly={isLocked}
+                                    onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)}
+                                    aria-label={`Porcentaje de ${g.name}`}
+                                    className="mix-num-input"
+                                  />
+                                  <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-700)'}}>%</span>
+                                  <button
+                                    type="button"
+                                    className="mix-step-btn"
+                                    disabled={isLocked || r.p >= 100}
+                                    onClick={()=>!isLocked&&updP(r.id,Math.min(100,Math.round((r.p+1)*10)/10))}
+                                    title="+1%">
+                                    +1%
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="mix-step-btn"
+                                    disabled={isLocked || r.p >= 100}
+                                    onClick={()=>!isLocked&&updP(r.id,Math.min(100,Math.round((r.p+5)*10)/10))}
+                                    title="+5%">
+                                    +5%
+                                  </button>
+                                </div>
+                                {rowFlag&&(
+                                  <div style={{fontSize:"var(--text-xs)",fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}>
+                                    <span>{rowFlag.priority==='critical'?'⚠':'!'}</span>
+                                    <span>{rowFlag.label}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                step="0.5"
+                                value={r.p}
+                                onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)}
+                                disabled={isLocked}
+                                aria-label={`Deslizador de porcentaje para ${g.name}`}
+                                style={{width:'100%',accentColor:'var(--accent-olive)',opacity:isLocked?0.4:1}}
+                              />
                             </div>
                           );
                         })}
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })() : null}
-          </div>
-          <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
-            <header className="active-recipe-workspace-head">
-              <div>
-                <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
-                <h2 id="active-recipe-workspace-title">Receta activa + evaluación en vivo</h2>
-                <p>Los ingredientes de la fórmula y su lectura técnica permanecen juntos y visibles mientras formulas.</p>
-              </div>
-              <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
-            </header>
-            <div className="builder-left">
-            <div className="panel" id="bl-ingredientes">
-              <div className="ingredient-section-head">
-                <div>
-                  <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
-                  <h2>Ingredientes</h2>
-                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
-                </div>
-                <span className="ingredient-section-count" aria-live="polite">
-                  {visibleIngredients.length} de {effectiveINGS.length}
-                </span>
-              </div>
-              <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
-              </div>
-              {showPrices&&(
-                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
-                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
-                    {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
-                  <div>
-                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
-                      const isEdited=priceOverrides[ing.id]!==undefined;
-                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
-                      return(
-                        <div key={ing.id} className="price-row">
-                          <div>
-                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
-                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
-                          </div>
-                          <input type="number" min="0" step="100" required
-                            aria-label={`Precio ${ing.name} por kg`}
-                            className={`price-inp${isEdited?' edited':''}`}
-                            value={ing.cost}
-                            onChange={e=>{
-                              const v=Math.max(0,parseInt(e.target.value)||0);
-                              const n={...priceOverrides,[ing.id]:v};
-                              setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-                <div className="bodega-bar" title="Abrir bodega / inventario">
-                <button
-                  type="button"
-                  onClick={()=>goTab('inventario')}
-                  style={{display:'flex',alignItems:'center',gap:'inherit',flex:1,minWidth:0,background:'none',border:'none',padding:0,margin:0,font:'inherit',color:'inherit',textAlign:'left',cursor:'pointer'}}
-                >
-                  <span className="bodega-bar-icon" aria-hidden="true" style={{color:pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)',display:'flex',alignItems:'center'}}><IcoBox color={pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)'}/></span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div className="bodega-bar-title">{pantryIds.length>0?pantryIds.length+' ingredientes en bodega':'Bodega vacía — sin stock registrado'}</div>
-                    {pantryIds.length>0&&<div className="bodega-bar-sub">{Object.values(stockMap).reduce((a,b)=>a+b,0).toFixed(1)} kg disponibles</div>}
-                  </div>
-                </button>
-                <div className="bodega-bar-right">
-                  <button className="bodega-bar-refresh" onClick={e=>{e.stopPropagation();goTab('inventario');}} title="Actualizar stock" aria-label="Actualizar stock">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
-                  </button>
-                </div>
-              </div>
-              {usePantry&&pantryIds.length>0&&(
-                <div className="pantry-grid" style={{marginBottom:8}}>
-                  {pantryIds.slice(0,12).map(id=>{const g=INGS.find(i=>i.id===id);const kg=stockMap[id]||0;return g?(
-                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true"> ✕</span></button>
-                  ):null;})}
-                  {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
-                </div>
-              )}
-              <div className="cats" role="group" aria-label="Filtrar por categoría">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
-              </div>
-              <div className="ingredient-view-toolbar">
-                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
-                <div>
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
-                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
-                </div>
-              </div>
-              <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
-                {(()=>{
-                  const base=visibleIngredients;
-                  if(usePantry&&pantryIds.length===0){
-                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
-                  }
-                  if(base.length===0){
-                    return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
-                  }
 
-                  const renderIngRow=(ing)=>{
-                    const inR=recipe.find(r=>r.id===ing.id);
-                    const inPantry=pantryIds.includes(ing.id);
-                    const isCompat=ing.cs&&ing.cs.includes(sKey);
+                  {/* DIAGNÓSTICO PERITO DE RECETA */}
+                  <div className="bg-wrap recipe-live-evaluation">
+                    <div style={{display:'none'}}>Perito + Automejora</div>
+                  {an&&(()=>{
+                    const hasPer=recipe.length>0;
+                    const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+                    const criticals=items.filter(s=>s.priority==='critical');
+                    const warnings=items.filter(s=>s.priority==='warning');
+                    const tips=items.filter(s=>s.priority==='tip');
+                    const infos=items.filter(s=>s.priority==='info');
+                    const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+                    const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+                    const cur=sp?Math.min(an.cn,max):0;
+                    const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
+
                     return(
-                      <div key={ing.id} className={`ing-card-item${justAddedIds.includes(ing.id)?' ing-row-flash':''}`} style={{display:'flex',flexDirection:'column',opacity:disabledIngIds.includes(ing.id)?0.42:1,transition:'opacity .15s'}}>
-                        <div style={{position:'relative'}}>
-                          <IngredientItem ing={ing} onAdd={ing=>{if(!recipe.find(r=>r.id===ing.id)){addI(ing.id);flashAdded(ing.id);}}} stockKg={stockMap[ing.id]||0} isCompat={isCompat} spName={sp?.name}/>
-                          {inPantry&&isCompat&&<div title="En bodega y compatible con esta especie" style={{position:'absolute',left:4,top:'50%',transform:'translateY(-50%)',width:7,height:7,borderRadius:'50%',background:'var(--moss-500)',boxShadow:'0 0 0 2px var(--paper-50)'}}/>}
+                      <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
+                        {/* HEADER DEL PERITO: SCORE CIRCULAR + VEREDICTO */}
+                        {hasPer&&(
+                          <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
+                            <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
+                              <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:2}}>
+                                <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Perito · Diagnóstico</span>
+                                <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 5px',background:'rgba(0,0,0,.06)',borderRadius:2,color:'var(--ink-600)',fontWeight:700}}>ESTIMADO · EB</span>
+                                <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 5px',background:'rgba(0,0,0,.06)',borderRadius:2,color:'var(--ink-600)',fontWeight:700}}>CALCULADO · C:N</span>
+                              </div>
+                              <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1.1,transition:'color .3s'}}>{sm.veredicto}</div>
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                                {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
+                                {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
+                                {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                                {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                              </div>
+                            </div>
+                            <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                              {(criticals.length>0||warnings.length>0)&&(
+                                <button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>
+                                  <span aria-hidden="true">✦</span> Auto-mejorar
+                                </button>
+                              )}
+                              {recipeHistory.length>0&&(
+                                <button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                                  <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                                  Deshacer ({recipeHistory.length})
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MÉTRICAS CLAVE (GRID) */}
+                        <div className="mgrid" style={{marginBottom:12}}>
+                          {[
+                            {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                            {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                            {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                            {l:'Costo / kg',v:`$${Math.round(an.cost)} COP`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                            {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                            {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                          ].map(m=>(
+                            <div key={m.l} className="mc">
+                              <div className="mlbl">{m.l}</div>
+                              <div className="mval">{m.v}</div>
+                              <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                            </div>
+                          ))}
                         </div>
-                        <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
-                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
-                            title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
-                            aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
-                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
-                            {disabledIngIds.includes(ing.id)?'⊘':'–'}
-                          </button>
-                          <span aria-hidden="true" style={{width:1,alignSelf:'stretch',minHeight:13,background:'var(--border-soft)',flexShrink:0}}/>
-                          <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();setPantryIds(prev=>inPantry?prev.filter(x=>x!==ing.id):[...prev,ing.id]);}}
-                            title={inPantry?'Quitar de bodega':'Agregar a bodega'}
-                            aria-label={inPantry?`Quitar ${ing.name} de bodega`:`Agregar ${ing.name} a bodega`}
-                            style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:inPantry?'var(--moss-500)':'var(--border-soft)',color:inPantry?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                            <IcoBox color="currentColor" size={8}/>
-                          </button>
-                          {!inR&&(
-                            <button className={'qa-mini-btn qa-add-btn'+(justAddedIds.includes(ing.id)?' qa-pulse':'')} onClick={e=>{e.stopPropagation();addI(ing.id);flashAdded(ing.id);}}
-                              title="Agregar a receta"
-                              aria-label={`Agregar ${ing.name} a la receta`}
-                              style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',cursor:'pointer',fontSize:'clamp(8px,1.8vw,9px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                              +
-                            </button>
-                          )}
+
+                        {/* EBDial + C:N gauge */}
+                        <EBDial an={an} sp={sp}/>
+                        {sp&&an.cn>0&&(
+                          <div className="gauge-wrap">
+                            <div className="gauge-hdr">
+                              <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                              <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                            </div>
+                            <div className="gauge-tr">
+                              <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                              <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                            </div>
+                            <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                          </div>
+                        )}
+                        <NitrogenChart recipe={recipe}/>
+
+                        {/* SUGERENCIAS DEL PERITO */}
+                        {hasPer&&(
+                          <>
+                            <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8,marginTop:8}}>
+                              {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                              {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                              {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                            </div>
+                            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                            {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                            {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
+                            {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+                          </>
+                        )}
+
+                        {/* CHARTS */}
+                        <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
+                          <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                          <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                          <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
                         </div>
+                        {showFlush&&<FlushChart an={an}/>}
+                        {showCompChart&&<CompositionChart recipe={recipe}/>}
+                        {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
                       </div>
                     );
-                  };
+                  })()}
 
-                  if(!showRoleGroups){
-                    return base.map(renderIngRow);
-                  }
+                  <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+                  </div>
 
-                  const ROLE_GROUPS=[
-                    {
-                      key:'base_carbono',
-                      label:'Bases de Carbono',
-                      icon:IconSeed,
-                      desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
-                      primary:g=>g.role==='base_carbono',
-                      fallback:g=>g.cat==='base'||g.cn>=40
-                    },
-                    {
-                      key:'suplemento_n',
-                      label:'Suplementos Nitrogenados',
-                      icon:IconNut,
-                      desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
-                      primary:g=>g.role==='suplemento_n'||g.role==='suplemento_medio',
-                      fallback:g=>g.n>=1.4
-                    },
-                    {
-                      key:'aditivo',
-                      label:'Minerales y Tampones de pH',
-                      icon:IconScale,
-                      desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
-                      primary:g=>!!g.role?.startsWith('aditivo_'),
-                      fallback:g=>g.cat==='adit'||g.cn===0
-                    },
-                    {
-                      key:'aireador',
-                      label:'Aireadores y Estructurantes',
-                      icon:IconWind,
-                      desc:'Porosidad y difusión de oxígeno gaseoso',
-                      primary:g=>g.role==='aireador',
-                      fallback:g=>g.cat==='trop'||g.cat==='circ'
-                    },
-                    {
-                      key:'otro',
-                      label:'Otros Insumos',
-                      icon:IconSprout,
-                      desc:'Ingredientes complementarios aún no clasificados en los roles anteriores',
-                      primary:()=>false,
-                      fallback:()=>true
-                    }
-                  ];
+                  {/* ID COMPATIBLE CON TESTS Y SCRIPTS: #bl-batch */}
+                  <div id="bl-batch" style={{display:'none'}} />
 
-                  // Dos pasadas: el rol explícito del catálogo siempre gana sobre las
-                  // heurísticas de cat/cn — evita que un insumo con role='aireador' pero
-                  // cn===0 (o similar solape) caiga en el grupo equivocado solo por el
-                  // orden en que se evalúan los grupos.
-                  const roleAssignment={};
-                  ROLE_GROUPS.forEach(grp=>{
-                    base.forEach(g=>{ if(!roleAssignment[g.id]&&grp.primary(g)) roleAssignment[g.id]=grp.key; });
-                  });
-                  ROLE_GROUPS.forEach(grp=>{
-                    base.forEach(g=>{ if(!roleAssignment[g.id]&&grp.fallback(g)) roleAssignment[g.id]=grp.key; });
-                  });
+                  {/* TRATAMIENTO RECOMENDADO */}
+                  {tr&&recipe.length>0&&(
+                    <div className="panel treatment-section" id="bl-tratamiento" style={{marginBottom:12}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--paper-300)'}}>
+                        <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento de inocuidad</div>
+                        <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía técnica'}</button>
+                      </div>
+                      <div className={`tcard ${tr.col}`}>
+                        <div className="tttl">{tr.name}</div>
+                        <div className="tparams">{[tr.temp,tr.time,`Spawn ${tr.spawn}%`].map((p,i)=><span key={i} className="tp">{p}</span>)}</div>
+                        <div className="twhy">{tr.reasons.map((r,i)=><span key={i}>{r}</span>)}</div>
+                        <div className="tproc">{tr.prep}</div>
+                        {tr.energy&&(
+                          <div style={{marginTop:10,display:'flex',gap:12,alignItems:'center',padding:'7px 10px',background:'rgba(0,0,0,.04)',borderRadius:'var(--r-xs)',borderTop:'1px solid rgba(0,0,0,.08)'}}>
+                            <span style={{fontSize:"var(--text-md)"}}>⚡</span>
+                            <div style={{flex:1}}>
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700}}>
+                                {tr.energy.cop_per_kg_humedo>0
+                                  ?`Consumo eléctrico: ${tr.energy.kwh_per_kg} kWh/kg · $${(tr.energy.cop_per_kg_seco||0).toLocaleString('es-CO')} COP/kg seco`
+                                  :'Sin consumo eléctrico — proceso en frío'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {showGuide&&<PasteGuide tr={tr} recipe={recipe} numBags={numBags} kgBag={kgBag}/>}
+                    </div>
+                  )}
 
-                  return ROLE_GROUPS.map(grp=>{
-                    const grpIngs=base.filter(g=>roleAssignment[g.id]===grp.key);
-                    if(grpIngs.length===0) return null;
-                    const isCollapsed=collapsedRoles[grp.key];
-                    const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;
+                  {/* BARRA DE GUARDADO Y PASE A PRODUCCIÓN */}
+                  {recipe.length>0&&(
+                    <div className="panel" style={{display:'flex',flexDirection:'column',gap:10,background:'var(--paper-100)'}}>
+                      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                        <input
+                          aria-label="Nombre de la receta"
+                          autoComplete="off"
+                          placeholder="Nombre para guardar la receta…"
+                          value={saveName}
+                          onChange={e=>setSaveName(e.target.value)}
+                          onKeyDown={e=>e.key==='Enter'&&saveR()}
+                          maxLength={60}
+                          style={{flex:1,minWidth:200,minHeight:42,padding:'8px 12px',border:'1px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--paper-0)',fontFamily:'var(--font-body)',fontSize:'var(--text-sm)',fontWeight:600}}
+                        />
+                        <button
+                          className={`sbtn${flash?' fl':''}`}
+                          onClick={saveR}
+                          disabled={!saveName.trim()||!balanced}
+                          title={balanced?'Guardar receta en recetario':balMsg}
+                          style={{minHeight:42,padding:'8px 18px',background:balanced?'var(--moss-700)':'var(--paper-300)',color:balanced?'#fff':'var(--ink-500)',border:'none',borderRadius:'var(--radius-sm)',fontWeight:700,cursor:balanced?'pointer':'not-allowed'}}>
+                          {flash?'✓ Guardada':'Guardar en Recetario'}
+                        </button>
+                      </div>
 
-                    return(
-                      <section key={grp.key} className={`role-group-box${isCollapsed?' is-collapsed':''}`}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',paddingTop:8,borderTop:'1px solid var(--border-soft)'}}>
                         <button
                           type="button"
-                          className="role-group-hdr"
-                          onClick={()=>toggleRoleCollapse(grp.key)}
-                          aria-expanded={!isCollapsed}
-                          aria-controls={`role-group-${grp.key}`}>
-                          <div className="role-group-heading">
-                            <span className="role-group-icon" aria-hidden="true"><grp.icon size={18}/></span>
-                            <div>
-                              <div className="role-group-title">
-                                {grp.label} <span>({grpIngs.length})</span>
-                              </div>
-                              <div className="role-group-desc">{grp.desc}</div>
-                            </div>
-                          </div>
-                          <div className="role-group-summary">
-                            <span className="role-group-compatible">
-                              {compatCount} compatible{compatCount===1?'':'s'}
-                            </span>
-                            <span className="role-group-chevron" aria-hidden="true">⌄</span>
-                          </div>
+                          onClick={()=>goTab('produccion')}
+                          style={{minHeight:42,padding:'8px 20px',background:'var(--moss-600,var(--accent-olive))',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',fontFamily:'var(--font-body)',fontSize:'var(--text-sm)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:8}}>
+                          <span>Preparar Mezcla en Producción →</span>
                         </button>
-                        <div id={`role-group-${grp.key}`} className="role-group-content" hidden={isCollapsed}>
-                          {grpIngs.map(renderIngRow)}
-                        </div>
-                      </section>
-                    );
-                  });
-                })()}
-              </div>
-            </div>
-            </div>
-            <div className="builder-right">
-            <header className="form-advanced-tools-head" id="form-advanced-tools-title">
-              <div>
-                <span className="ingredient-section-eyebrow">Herramientas avanzadas</span>
-                <h2>Perito + Automejora</h2>
-                <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
-              </div>
-              <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Abrir generador</button>
-            </header>
-            {an&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const infos=items.filter(s=>s.priority==='info');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an.cn,max):0;
-              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-              return(
-                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
-                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
-                  {hasPer&&(
-                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
-                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
-                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
-                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                        <div style={{display:'flex',gap:6}}>
+                          <button className="tog" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced}>+ Crear Lote de Prueba</button>
+                          <button className="tog" onClick={()=>window.print()}>Imprimir</button>
                         </div>
                       </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
-                          Deshacer ({recipeHistory.length})
-                        </button>}
-                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
-                  <div className="mgrid" style={{marginBottom:12}}>
-                    {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
-                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
-                    ].map(m=>(
-                      <div key={m.l} className="mc">
-                        <div className="mlbl">{m.l}</div>
-                        <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* ── EBDial + C:N gauge ── */}
-                  <EBDial an={an} sp={sp}/>
-                  {sp&&an.cn>0&&(
-                    <div className="gauge-wrap">
-                      <div className="gauge-hdr">
-                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                      </div>
-                      <div className="gauge-tr">
-                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                      </div>
-                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                    </div>
-                  )}
-                  <NitrogenChart recipe={recipe}/>
-
-                  {/* ── PERITO: INDICADORES + ITEMS ── */}
-                  {hasPer&&(
-                    <>
-                      {/* ── barra resumen live: score + EB + costo ── */}
-                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
-                        {[
-                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
-                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                        ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
-                        </div>}
-                      {histStats&&histStats.n>0&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
-                        </div>}
-                      {modelAccuracy!=null&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
-                        </div>}
-                      {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
-                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
-                        </div>}
-                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
-                      </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
-                    </>
-                  )}
-
-                  {/* ── CHARTS TOGGLE + CHARTS ── */}
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
-                  </div>
-                  {showFlush&&<FlushChart an={an}/>}
-                  {showCompChart&&<CompositionChart recipe={recipe}/>}
-                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
-
-                  {/* ── EVALUACIÓN TÉCNICA ── */}
-                  <div className="dbox" style={{marginTop:8}}>
-                    <div className="dttl">Evaluación</div>
-                    <div className="dtxt">{dg.main}</div>
-                  </div>
-                  {dg.sugs.length>0&&(<>
-                    <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
-                  </>)}
-                </div>
-              );
-            })()}
-            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
-            <div className="panel panel-accent" id="bl-receta">
-              {/* ── HEADER EDITORIAL ── */}
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
-                <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Receta activa</span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
-                </div>
-                {recipe.length>0&&<div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap'}}>
-                  {an&&Math.abs(an.tot-100)>0.5&&(
-                    <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                      <button className="tog" onClick={()=>autoBalance(balanceMode)}>Balancear</button>
-                      <select className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
-                        <option value="proportional">Proporcional</option>
-                        <option value="equal">Igualando</option>
-                        <option value="last">Al último</option>
-                      </select>
-                    </div>
-                  )}
-                  <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
-                  <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
-                </div>}
-              </div>
-              {recipe.length===0
-                ?<div className="rec-empty">
-                  <div className="rec-empty-hed">Sin ingredientes aún.</div>
-                  <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
-                  <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
-                  </div>
-                </div>
-                :<div style={{border:'1px solid var(--paper-300)'}}>
-                  {recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);if(!g) return null;const isLocked=lockedIds.includes(r.id);
-                    const gName=(g.name||'').toLowerCase();
-                    const roleMatch=(it)=>{
-                      const txt=(it.action||'').replace(/<[^>]+>/g,'').toLowerCase();
-                      if(txt.includes(gName)) return true;
-                      const isCarbBase=g.role==='base_carbono', isNSupp=g.role==='suplemento_n'||g.n>=1.5;
-                      if((it.icon==='↓C:N'||it.icon==='↑N')&&isNSupp) return true;
-                      if((it.icon==='↑C:N'||it.icon==='↓N')&&isCarbBase) return true;
-                      return false;
-                    };
-                    const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
-                    return(
-                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
-                      {/* Header: nombre + lock + remove */}
-                      <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
-                        <div style={{flex:1}}>
-                          <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
-                            <div style={{fontSize:"var(--text-base)",fontWeight:500}}>{g.name}</div>
-                            <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{fontSize:"var(--text-sm)",padding:'2px 4px',flexShrink:0}}>
-                              {isLocked?'●':'○'}
-                            </button>
-                          </div>
-                          <div className="imeta" style={{fontSize:"var(--text-xs)"}}>C:N {g.cn||'—'} · N {g.n||'—'}%</div>
-                          {rowFlag&&<div style={{marginTop:4,fontSize:"var(--text-xs)",fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}><span>{rowFlag.priority==='critical'?'⚠':'!'}</span><span>{rowFlag.label}</span></div>}
-                        </div>
-                        <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0,fontSize:"var(--text-base)",padding:'4px 8px'}}>✕</button>
-                      </div>
-                      {/* Controls: slider + number input */}
-                      <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                        <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
-                        <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
-                          <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
-                        </div>
-                      </div>
-                    </div>
-                  );})}
-                </div>
-              }
-              {an&&<div className={`tbar ${an.tot>=99&&an.tot<=101?'ok':an.tot<95||an.tot>105?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
-              {normMode&&recipe.length>0&&(
-                <div className="norm-bar">
-                  <span>⇌</span>
-                  <span>Auto-ajustar activo — al cambiar un %, los demás se reescalan proporcionalmente</span>
-                  {lockedIds.length>0&&<span style={{marginLeft:'auto',opacity:.8}}>● {lockedIds.length} fijado{lockedIds.length!==1?'s':''}</span>}
-                </div>
-              )}
-              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
-                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                    <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
-                      <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
-                    </div>
-                    <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>{sc}</span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
-                    </div>
-                  </div>
-                  <div style={{height:3,background:'rgba(26,20,16,0.08)',borderRadius:2,overflow:'hidden'}}>
-                    <div style={{height:'100%',width:`${sc}%`,background:col,borderRadius:2,transition:'width .6s cubic-bezier(.32,.72,.36,1)'}}></div>
-                  </div>
-                </div>
-              );})()}
-              {an&&an.sp&&(
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0 4px'}}>
-                  {[
-                    {label:'C:N',val:an.cn,min:an.sp.cn_optimal.min,max:an.sp.cn_optimal.max,ideal:an.sp.cn_optimal.ideal,fmt:v=>`${v.toFixed(1)}:1`,scale:Math.max(an.sp.cn_optimal.max*1.5,an.cn*1.1||1)},
-                    {label:'N%',val:an.avgN,min:an.sp.n_optimal.min,max:an.sp.n_optimal.max,ideal:an.sp.n_optimal.ideal,fmt:v=>`${v.toFixed(2)}%`,scale:Math.max(an.sp.n_optimal.max*1.5,an.avgN*1.1||1)}
-                  ].map(m=>{
-                    const inRange=m.val>=m.min&&m.val<=m.max;
-                    const pct=Math.min(100,(m.val/m.scale)*100);
-                    const idealPct=(m.ideal/m.scale)*100;
-                    const minPct=(m.min/m.scale)*100;
-                    const maxPct=(m.max/m.scale)*100;
-                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'#d4a04a';
-                    return(
-                      <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
-                          <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
-                          <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
-                        </div>
-                        <div style={{position:'relative',height:6,background:'#e0dbd3',borderRadius:3}}>
-                          <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
-                          <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
-                          <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
-                        </div>
-                        <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>
-                          <span>{m.fmt(m.min)}</span><span style={{opacity:.7}}>↑{m.fmt(m.ideal)}</span><span>{m.fmt(m.max)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {recipe.length>0&&(
-                <div className="bwrap" id="bl-batch">
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:13}}>
-                    <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
-                    <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
-                  </div>
-                  <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
-                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
-                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
-                  </div>
-                  {showBatch&&bd&&(
-                    <div>
-                      {bd.items.map((it,i)=>(
-                        <div key={i} className="brow">
-                          <span className="bn">{it.name}</span>
-                          <div style={{display:'flex',gap:11,alignItems:'center'}}>
-                            {it.cost>0&&<span className="bc">${Math.round(it.cost).toLocaleString()}</span>}
-                            <span className="bq">{it.unit}</span>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="brow" style={{borderTop:'2px solid var(--border-soft)',marginTop:4,paddingTop:8}}>
-                        <span className="bn" style={{color:'#2A5078',fontWeight:600}}> Agua a agregar (obj. {bd.hObj}%)</span>
-                        <span className="bq" style={{background:'#E8F2FA',border:'1px solid #9AC0D8',color:'#2A5078'}}>{bd.agua.toFixed(2)} L</span>
-                      </div>
-                      <div className="brow" style={{borderTop:'1px solid var(--paper-300)',marginTop:4,paddingTop:8}}>
-                        <span className="bn"> Spawn ({an?.dynSpawn||8}% · {bd.spawn.toFixed(2)} kg)</span>
-                        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                          <span className="bc">${Math.round(bd.spawnCostTotal).toLocaleString()}</span>
-                          <span className="bq" style={{background:'#E8F5E8',border:'1px solid #7AB87A',color:'#2A5A2A'}}>{bd.spawn.toFixed(2)} kg</span>
-                        </div>
-                      </div>
-                      <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
-                        <div className="btot"><div className="bv">{bd.wet.toFixed(1)} kg</div><div className="bl">Sustrato</div></div>
-                        <div className="btot"><div className="bv">${Math.round(bd.cost).toLocaleString()}</div><div className="bl">Insumos</div></div>
-                        <div className="btot"><div className="bv">${Math.round(bd.spawnCostTotal).toLocaleString()}</div><div className="bl">Spawn</div></div>
-                        <div className="btot" style={{background:'var(--coral-500)'}}><div className="bv">${Math.round(bd.totalCost).toLocaleString()}</div><div className="bl">Total COP</div></div>
-                      </div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
-                        <div style={{background:'var(--paper-100)',padding:'8px 12px',border:'1px solid var(--border-soft)'}}>
-                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-500)',marginBottom:3}}>Costo por bolsa</div>
-                          <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.costPerBag).toLocaleString()}</div>
-                        </div>
-                        <div style={{background:'var(--paper-100)',padding:'8px 12px',border:'1px solid var(--border-soft)'}}>
-                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-500)',marginBottom:3}}>Costo / kg sustrato</div>
-                          <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.cost/bd.wet).toLocaleString()}</div>
-                        </div>
-                      </div>
-                      {vegPrice>0&&an&&an.eb>0&&(()=>{
-                        const yieldKg=bd.dry*(an.eb/100);
-                        const revenue=yieldKg*vegPrice;
-                        const margin=revenue-bd.totalCost;
-                        const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
-                        const positive=margin>=0;
-                        return(
-                          <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'#F2F5EE':'#F9EDEA'}}>
-                            <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
-                            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:positive?'var(--moss-500)':'var(--coral-500)'}}>
-                              {[
-                                {l:'Cosecha est.',v:`${yieldKg.toFixed(1)} kg`},
-                                {l:'Ingresos brutos',v:`$${Math.round(revenue).toLocaleString()}`},
-                                {l:`Margen ${marginPct}%`,v:`$${Math.round(margin).toLocaleString()}`,bold:true,good:positive},
-                              ].map((cell,i)=>(
-                                <div key={i} style={{background:'var(--paper-50)',padding:'10px 12px',textAlign:'center'}}>
-                                  <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{cell.l}</div>
-                                  <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:cell.bold?(cell.good?'var(--moss-500)':'var(--coral-500)'):'var(--ink-900)'}}>{cell.v}</div>
-                                </div>
-                              ))}
-                            </div>
-                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
-                          </div>
-                        );
-                      })()}
+                      {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                     </div>
                   )}
                 </div>
-              )}
-              {recipe.length>0&&<div className="act-row no-print">
-                <button className="btn" onClick={()=>window.print()}>Imprimir ficha</button>
-                <button className="btn pri" onClick={exportR}><span aria-hidden="true">↓</span> Exportar .txt</button>
-                <button className="btn" onClick={()=>{
-                  if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible.'});return;}
-                  const el=document.querySelector('.print-panel');
-                  if(!el){setNoticeDlg({msg:'Genera análisis primero.'});return;}
-                  html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
-                }}><span aria-hidden="true">↓</span> PDF</button>
-                <button className="btn" onClick={()=>{
-                  if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
-                  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
-                }}><span aria-hidden="true">↓</span> JSON</button>
-                <button className="btn" onClick={()=>{
-                  const input=document.createElement('input');input.type='file';input.accept='.json';
-                  input.onchange=e=>{
-                    const file=e.target.files[0];if(!file) return;
-                    const reader=new FileReader();
-                    reader.onload=ev=>{
-                      try{
-                        const p=JSON.parse(ev.target.result);
-                        if(p.receta&&p.especie){
-                          const apply=()=>{
-                            if(p.especie.key&&SPP[p.especie.key]) setSKey(p.especie.key);
-                            setRecipe(p.receta.map(r=>({id:r.id,p:r.porcentaje})));
-                          };
-                          if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta actual con "${p.especie.nombre||p.especie.key}"?`,onConfirm:apply});}
-                          else apply();
-                        } else {setNoticeDlg({msg:'JSON inválido — no contiene los campos receta/especie.'});}
-                      } catch(err){setNoticeDlg({msg:'Error al leer el archivo JSON. Verifica que sea un archivo exportado desde el simulador.'});}
-                    };
-                    reader.readAsText(file);
-                  };
-                  input.click();
-                }}><span aria-hidden="true">↑</span> Importar</button>
-              </div>}
-              
-{/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
-
-{recipe.length>0&&(
-                <div className="sbar">
-                  <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
-                </div>
-              )}
-            </div>
-
-
-
-
-
-            </div>
-          </section>
-          {tab==='formular'&&tr&&recipe.length>0&&(
-            <div className="panel treatment-section" id="bl-tratamiento">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
-                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento recomendado</div>
-                <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
-              </div>
-              <div className={`tcard ${tr.col}`}>
-                <div className="tttl">{tr.name}</div>
-                <div className="tparams">{[tr.temp,tr.time,`Spawn ${tr.spawn}%`].map((p,i)=><span key={i} className="tp">{p}</span>)}</div>
-                <div className="twhy">{tr.reasons.map((r,i)=><span key={i}>{r}</span>)}</div>
-                <div className="tproc">{tr.prep}</div>
-                {tr.alt&&<div style={{marginTop:10,fontSize:"var(--text-sm)",color:'var(--ink-500)',background:'var(--paper-200)',border:'1px solid var(--paper-300)',padding:'6px 10px',borderLeft:'2px solid var(--border-soft)'}}>{tr.alt}</div>}
-                {tr.energy&&(
-                  <div style={{marginTop:10,display:'flex',gap:12,alignItems:'center',padding:'7px 10px',background:'rgba(0,0,0,.04)',borderRadius:'var(--r-xs)',borderTop:'1px solid rgba(0,0,0,.08)'}}>
-                    <span style={{fontSize:"var(--text-md)"}}>⚡</span>
-                    <div style={{flex:1}}>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700}}>
-                        {tr.energy.cop_per_kg_humedo>0
-                          ?`Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString('es-CO')} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco||0).toLocaleString('es-CO')} COP/kg seco`
-                          :'Sin consumo eléctrico — proceso en frío'}
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",opacity:.7,marginTop:2}}>{tr.energy.detalle}</div>
-                    </div>
-                    {an&&an.cost>0&&tr.energy.cop_per_kg_seco>0&&(
-                      <div style={{textAlign:'right',flexShrink:0}}>
-                        <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",fontWeight:700}}>${(Math.round(an.cost)+tr.energy.cop_per_kg_seco).toLocaleString('es-CO')}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",opacity:.7}}>COP/kg total</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              {showGuide&&<PasteGuide tr={tr} recipe={recipe} numBags={numBags} kgBag={kgBag}/>}
-            </div>
+              </section>
+            </>
           )}
-
-                        <div className="panel rec-panel" style={{display:'none'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
-                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>
-                  Recetario <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({saved.length})</span>
-                </div>
-              </div>
-              {showSaved&&<div style={{marginTop:0}}>
-                {saved.length===0
-                  ?<div className="sempty">Sin recetas en el recetario aún.</div>
-                  :<div style={{position:'relative'}}>
-                    <div style={{position:'absolute',left:15,top:0,bottom:0,width:'1px',background:'var(--border-soft)',opacity:0}}/>
-                    {saved.map((e,idx)=>{const s2=SPP[e.sKey];const isEven=idx%2===0;return(
-                      <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
-                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
-                        <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
-                          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB estimada {e.eb}%</span>
-                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'#C53030'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
-                            {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
-                            {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
-                          </div>
-                          <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
-                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
-                            <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
-                            <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
-                          </div>
-                        </div>
-                      </div>
-                    );})}
-                  </div>}
-              </div>}
-            </div>
-
-
         </div>
-
         )}
 
         {tab==='formular'&&(
-          <div className="formular-workspace">
-{/* ── GENERADOR DE RECETAS ── */}
-            <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:18}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
-                <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
-                <button className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
+          <div className="formular-workspace" style={{display:builderSubTab==='generador'?'block':'none'}}>
+            {/* ── SUBPESTAÑA DEDICADA: GENERADOR DE RECETAS ── */}
+            <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:0,background:'var(--paper-0)',border:'1px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'20px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
+                <div>
+                  <h2 id="gen-panel-title" style={{margin:0,fontFamily:'var(--font-display)',fontSize:'24px',fontWeight:800,color:'var(--ink-900)'}}>
+                    ⚡ Generador de Recetas
+                  </h2>
+                  <p style={{margin:'4px 0 0',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                    Calcula automáticamente combinaciones óptimas de sustrato basadas en requerimientos biológicos y stock en bodega.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="tog"
+                  onClick={()=>setBuilderSubTab('formular')}
+                  style={{padding:'8px 14px',fontWeight:700}}>
+                  ← Volver a Mesa de Mezcla
+                </button>
               </div>
-              {showOptimizer&&(<>
-                <div style={{marginTop:0}}>
-                  <div className="seg-row" style={{marginBottom:14}}>
-                    <button className={'seg'+(formularMode==='auto'?' on':'')} aria-pressed={formularMode==='auto'} onClick={()=>setFormularMode('auto')}>Automática</button>
-                    <button className={'seg'+(formularMode==='manual'?' on':'')} aria-pressed={formularMode==='manual'} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
+
+              <div className="seg-row" style={{marginBottom:18}}>
+                <button className={'seg'+(formularMode==='auto'?' on':'')} aria-pressed={formularMode==='auto'} onClick={()=>setFormularMode('auto')}>Automática (IA / Escenarios)</button>
+                <button className={'seg'+(formularMode==='manual'?' on':'')} aria-pressed={formularMode==='manual'} onClick={()=>setFormularMode('manual')}>Por objetivo C:N (Solver)</button>
+              </div>
+
+              {formularMode==='auto'&&(
+                <div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:16,marginBottom:18,background:'var(--paper-100)',padding:'16px',borderRadius:'var(--radius-sm)'}}>
+                    <div>
+                      <label style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:4}}>Especie objetivo</label>
+                      <select value={optTarget} onChange={e=>setOptTarget(e.target.value)} style={{width:'100%',minHeight:40,padding:'6px 10px',border:'1px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--paper-0)',fontFamily:'var(--font-body)',fontSize:'var(--text-sm)',fontWeight:700}}>
+                        {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:4}}>Costo máx. COP/kg (opcional)</label>
+                      <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
+                        placeholder="Sin límite"
+                        style={{width:'100%',minHeight:40,padding:'6px 10px',border:'1px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--paper-0)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}/>
+                    </div>
+
+                    <div>
+                      <label style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:4}}>Origen de insumos</label>
+                      <div className="chip-row">
+                        <button type="button" className={'chip'+(optUseStock?' on':'')} onClick={()=>setOptUseStock(true)}>Solo bodega</button>
+                        <button type="button" className={'chip'+(!optUseStock?' on':'')} onClick={()=>setOptUseStock(false)}>Paleta completa</button>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
-                    {formularMode==='auto'
-                      ?'Genera combinaciones base×suplemento óptimas para tu especie — desde tu bodega o toda la paleta.'
-                      :'Elige dos ingredientes y un C:N objetivo. El sistema calcula las proporciones exactas.'}
+
+                  <div style={{marginBottom:18}}>
+                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:8}}>
+                      Selecciona un Perfil de Optimización
+                    </div>
+                    <div className="gen-profile-cards">
+                      {Object.entries(OPT_PROFILES).map(([k,p])=>(
+                        <button
+                          key={k}
+                          type="button"
+                          className={`gen-profile-card${optProfile===k?' is-active':''}`}
+                          onClick={()=>setOptProfile(k)}>
+                          <div style={{fontWeight:800,fontSize:'var(--text-sm)',color:optProfile===k?p.color:'var(--ink-900)',marginBottom:4}}>
+                            {p.label}
+                          </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.4}}>
+                            {p.desc||(k==='rescate'?'Maximiza uso de materias primas en stock':'Equilibrio entre rendimiento y costo')}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-            {formularMode==='auto'&&(
-              <div>
-                          <div style={{marginBottom:16}}>
-                            {/* ── controles editoriales ── */}
-                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
-                              <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}}>{SPP[optTarget]?.name}</div>
+
+                  <button
+                    className="gen-calc-btn"
+                    disabled={optRunning}
+                    onClick={()=>{
+                      setOptRunning(true);
+                      setTimeout(()=>{
+                        try{
+                          const out = runHybridRecipeSearch({
+                            targetKey: optTarget,
+                            recipe: [],
+                            invLotes,
+                            maxCost: optMaxCost,
+                            ingredients: effectiveINGS,
+                            useStock: optUseStock,
+                            profileKey: optProfile,
+                            stockMap,
+                          });
+                          const rankedList = (out.ranked||[]).slice(0,12).map(c=>
+                            hybridOptimizerRow(c,optTarget,effectiveINGS,stockMap,optProfile)
+                          );
+                          const diag = hybridOptimizerDiag(out,optTarget,effectiveINGS,optUseStock,invLotes,optProfile);
+                          setOptResults({[optProfile]: rankedList, [`_diag_${optProfile}`]: {stockCount: diag.stockIds, diag}});
+                        }catch(err){
+                          console.error(err);
+                        }finally{
+                          setOptRunning(false);
+                        }
+                      }, 50);
+                    }}>
+                    {optRunning ? 'Calculando combinaciones...' : '⚡ Calcular Mejores Recetas'}
+                  </button>
+
+                  {/* RESULTADOS DEL GENERADOR */}
+                  <div style={{marginTop:24}}>
+                    {optResults&&optResults[optProfile]&&optResults[optProfile].length>0&&(
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))',gap:16}}>
+                        {optResults[optProfile].map((r,idx)=>(
+                          <div key={idx} className="opt-card" style={{border:'1.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--paper-0)',overflow:'hidden',display:'flex',flexDirection:'column'}}>
+                            <div style={{padding:'12px 14px',background:'var(--paper-100)',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid var(--border-soft)'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                                <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-xs)',background:'var(--moss-700)',color:'#fff',padding:'2px 6px',borderRadius:2}}>
+                                  #{idx+1}
+                                </span>
+                                <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-700)'}}>
+                                  Score: {Math.round(r.score)}/100
+                                </span>
                               </div>
-                              <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máximo por kg</label>
-                                <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
-                                  autoComplete="off" aria-describedby="opt-max-cost-help"
-                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}} placeholder="Sin límite"/>
-                                <span id="opt-max-cost-help" className="sr-only">Deja el campo vacío para no aplicar un límite de costo.</span>
+                              <div style={{display:'flex',gap:6}}>
+                                <button
+                                  type="button"
+                                  className="sload"
+                                  onClick={()=>{
+                                    setSKey(optTarget);
+                                    setRecipe(r.recipe);
+                                    setLockedIds([]);
+                                    setBuilderSubTab('formular');
+                                    setLoadedFlash(true);
+                                    setTimeout(()=>setLoadedFlash(false),2200);
+                                  }}
+                                  style={{padding:'6px 12px',background:'var(--moss-700)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',fontWeight:700,cursor:'pointer',fontSize:'var(--text-xs)'}}>
+                                  🥣 Cargar en Mesa
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={()=>{
+                                    setSKey(optTarget);
+                                    setRecipe(r.recipe);
+                                    setLockedIds([]);
+                                    goTab('produccion');
+                                  }}
+                                  style={{padding:'6px 10px',background:'transparent',color:'var(--ink-800)',border:'1px solid var(--border-soft)',borderRadius:'var(--radius-sm)',fontWeight:600,cursor:'pointer',fontSize:'var(--text-xs)'}}>
+                                  Producir
+                                </button>
                               </div>
                             </div>
-                            {/* El origen se define una sola vez en el paso 02 del flujo. */}
-                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
-                              <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
-                                <div className="chip-row">
-                                  {Object.entries(OPT_PROFILES).map(([k,p])=>(
-                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} aria-pressed={optProfile===k} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
-                                  ))}
-                                </div>
-                              </div>
-                              <button
-                                className="btn dark"
-                                onClick={()=>{
-                                  setOptRunning(true);setOptResults(null);
-                                  setTimeout(()=>{
-                                    let noStock=false;let _diag=null;
-                                    const byProfile={};
-                                    Object.keys(OPT_PROFILES).forEach(pk=>{
-                                      try{
-                                        const out=runHybridRecipeSearch({
-                                          targetKey:optTarget,
-                                          recipe:[],
-                                          invLotes,
-                                          maxCost:optMaxCost,
-                                          ingredients:optimizerINGS,
-                                          useStock:optUseStock,
-                                          profileKey:pk,
-                                          stockMap,
-                                        });
-                                        noStock=noStock||!!out.noStock;
-                                        byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
-                                          hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
-                                        );
-                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
-                                        const stockCount=diag.stockIds;
-                                        byProfile[`_diag_${pk}`]={stockCount,diag};
-                                        if(pk===optProfile)_diag={stockCount,diag};
-                                      }catch(e){
-                                        byProfile[pk]=[];
-                                        const diag={error:e.message||String(e),profileKey:pk,targetKey:optTarget};
-                                        byProfile[`_diag_${pk}`]={stockCount:0,diag};
-                                        if(pk===optProfile)_diag={stockCount:0,diag};
-                                      }
-                                    });
-                                    // Sin fallback — cada perfil muestra solo lo que le corresponde
-                                    setOptResults({...byProfile,noStock,_diag});
-                                    setOptRunning(false);
-                                  },50);
-                                }}
-                                style={{marginLeft:'auto',flex:'none',minWidth:0,padding:'6px 16px'}}>
-                                {optRunning?<span><span className="spin">↻</span> …</span>:'Calcular'}
-                              </button>
-                            </div>
-                            {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
-                              return sc>0?(
-                                <div style={{padding:'8px 12px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
-                                  Usando solo ingredientes en stock · {sc} disponibles en inventario
-                                </div>
-                              ):(
-                                <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'#7A5A10',marginBottom:12}}>
-                                  Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
-                                </div>
-                              );
-                            })():(
-                              <div style={{padding:'8px 12px',background:'var(--coral-50,#FCEEE9)',border:'1px solid var(--coral-300,#E8B4A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',marginBottom:12}}>
-                                Generando con toda la paleta compatible con {SPP[optTarget]?.name} · ignora inventario · ideal para diseñar la receta antes de comprar
-                              </div>
-                            )}
-                            {optResults&&optResults[optProfile]&&(
-                              <div>
-                                <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
-                                  {optResults[optProfile].length} combinaciones exclusivas · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · C:N objetivo {SPP[optTarget]?.cn_optimal.ideal}:1
-                                </div>
-                                {optResults[optProfile].map((r,i)=>{
-                                  const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
-                                  const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
+
+                            <div style={{padding:'12px 14px',flex:1}}>
+                              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:12}}>
+                                {r.recipe.map(ing=>{
+                                  const g=INGS.find(x=>x.id===ing.id);
                                   return(
-                                    <div key={i} className="opt-result" data-result-id={i} data-base-signature={baseSig}>
-                                      <div className="opt-result-head">
-                                        <div className="opt-rank">#{i+1}</div>
-                                        <div style={{display:'flex',flexDirection:'column',gap:1}}>
-                                          <div className="opt-score">{r.score}</div>
-                                          <div className="opt-score-lbl">SCORE</div>
-                                        </div>
-                                        <div className="opt-pills" style={{flex:1}}>
-                                          {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
-                                        </div>
-                                        <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('formular');;setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>Cargar</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('produccion');}}>Producir</button>
-                                        </div>
-                                      </div>
-                                      <div className="opt-metrics">
-                                        {(()=>{
-                                          const tOpt=calcTreatment(r.an, optTarget, SPP);
-                                          const eCost=tOpt?.energy?.cop_per_kg_seco||0;
-                                          const totalCost=Math.round(r.an.cost)+eCost;
-                                          return[
-                                            {l:'C:N',v:`${r.an.cn.toFixed(1)}:1`},
-                                            {l:'N%',v:`${r.an.avgN.toFixed(2)}%`},
-                                            {l:'EB',v:r.an.ebLow&&r.an.ebHigh?`${r.an.ebLow}–${r.an.ebHigh}%`:`${r.an.eb.toFixed(0)}%`},
-                                            {l:'Costo total/kg',v:totalCost>0?`${totalCost.toLocaleString('es-CO')}`:'--',
-                                             sub:eCost>0?`ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}`:null},
-                                          ];
-                                        })().map(m=>(
-                                          <div key={m.l} className="opt-met">
-                                            <div className="opt-met-lbl">{m.l}</div>
-                                            <div className="opt-met-val" style={{fontSize:m.v&&m.v.length>6?14:18}}>{m.v}</div>
-                                            {m.sub&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',lineHeight:1.3,marginTop:1}}>{m.sub}</div>}
-                                          </div>
-                                        ))}
-                                      </div>
-                                      {/* Riesgo + bodega produce */}
-                                      <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
-                                        <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
-                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
-                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500,#A07828)':'#C53030'}}>{r.riskScore??'—'}/100</div>
-                                        </div>
-                                        {r.maxKgWet!=null&&(
-                                          <div style={{flex:2,padding:'7px 10px'}}>
-                                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Bodega produce</div>
-                                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:'var(--slate-700,var(--accent-blue-grey))'}}>{r.maxKgWet>0?`hasta ${r.maxKgWet} kg húmedos`:'stock insuficiente'}</div>
-                                          </div>
-                                        )}
-                                      </div>
-                                      {r.an.cost>0&&(()=>{
-                                        const tOpt2=calcTreatment(r.an, optTarget, SPP);
-                                        const eCost2=tOpt2?.energy?.cop_per_kg_seco||0;
-                                        const bags=[
-                                          {nom:'Bolsa 20×50',kgH:1.8},
-                                          {nom:'Bolsa 18×35',kgH:1.0},
-                                          {nom:'Punch bag',kgH:3.5},
-                                        ];
-                                        const hFactor=optTarget.includes('shiitake')||optTarget.includes('lions')||optTarget.includes('reishi')?0.40:0.35;
-                                        return(
-                                          <div style={{display:'flex',gap:0,borderTop:'1px solid var(--border-soft)',borderBottom:'none'}}>
-                                            {bags.map(b=>{
-                                              const kgSeco=b.kgH*hFactor;
-                                              const costBolsa=Math.round((r.an.cost+eCost2)*kgSeco);
-                                              return(
-                                                <div key={b.nom} style={{flex:1,padding:'5px 8px',borderRight:'1px solid var(--border-soft)',textAlign:'center',background:'var(--paper-50)'}}>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginBottom:2,letterSpacing:'var(--tracking-label)',fontWeight:600}}>{b.nom}</div>
-                                                  <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",color:'var(--coral-700)',fontWeight:700}}>${costBolsa.toLocaleString('es-CO')}</div>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>COP / bolsa</div>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        );
-                                      })()}
-                                      {(()=>{
-                                        const t=calcTreatment(r.an, optTarget, SPP);
-                                        if(!t) return null;
-                                        const tc=t.col==='autoclave'
-                                          ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
-                                          :t.col==='thermal'
-                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention)',lbl:'Pasteurización 65–75°C núcleo'}
-                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
-                                        return(
-                                          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,opacity:.8}}>Spawn {t.spawn}%</span>
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
+                                    <span key={ing.id} style={{padding:'3px 8px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:600}}>
+                                      {g?.name||ing.id}: <b>{ing.p}%</b>
+                                    </span>
                                   );
                                 })}
                               </div>
-                            )}
-                            {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
-                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
-                                {(()=>{const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};const diag=d?.diag;return diag?(
-                                  <div>
-                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
-                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',marginBottom:12}}>
-                                      {[
-                                        ['Stock en bodega',diag.stockIds],
-                                        ['Disponibles para especie (pool)',diag.poolSize],
-                                        ['Bases carbono compatibles',diag.bases],
-                                        ['Suplementos N compatibles',diag.supps],
-                                        ['Combinaciones evaluadas',diag.tried],
-                                        ['Resultados antes de filtros',diag.resultsRaw],
-                                        ['Límite suplementación',diag.suppLimit+'%'],
-                                        ['Perfil activo',OPT_PROFILES[diag.profileKey]?.label||diag.profileKey],
-                                      ].map(([lb,v])=>(
-                                        <div key={lb} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid var(--paper-300)'}}>
-                                          <span style={{color:'var(--ink-500)'}}>{lb}</span>
-                                          <span style={{fontWeight:700,color:Number(v)===0?'var(--coral-700)':'var(--ink-900)'}}>{v}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
-                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún suplemento N en bodega es compatible con esta especie.</div>}
-                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6}}>⚠ Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
-                                    {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
-                                    {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
-                                  </div>
-                                ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
-                            )}
-                            {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
-                                Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
-                              </button>
-                            )}
-                          </div>
-                        </div>
-            )}                              {formularMode==='manual'&&(
-              <div className="panel panel-accent">
-                          <div className="sec">Formulación por Objetivo C:N</div>
-                          <div style={{marginBottom:16,padding:'8px 12px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',fontFamily:"var(--font-body)",fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',lineHeight:1.6}}>
-                            Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
-                          </div>
-                          {sp&&(
-                            <div style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
-                              <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
-                                <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.name}</div>
+
+                              <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6,textAlign:'center',background:'var(--paper-50)',padding:'8px',borderRadius:4}}>
+                                <div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'9px',color:'var(--ink-500)',textTransform:'uppercase'}}>C:N</div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700}}>{r.an.cn.toFixed(1)}:1</div>
+                                </div>
+                                <div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'9px',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Est.</div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--moss-700)'}}>{r.an.eb.toFixed(0)}%</div>
+                                </div>
+                                <div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'9px',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg</div>
+                                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700}}>${Math.round(r.an.cost)}</div>
+                                </div>
                               </div>
-                              <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.ideal}:1</div>
-                              </div>
-                              <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.min}–{sp.cn_optimal.max}</div>
-                              </div>
-                              <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>N objetivo</div>
-                                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.n_optimal.min}–{sp.n_optimal.max}%</div>
-                              </div>
-                            </div>
-                          )}
-                          <div className="inv-grid">
-                            <div className="inv-field">
-                              <label htmlFor="inv-base">Ingrediente base (carbono)</label>
-                              <select id="inv-base" value={invBase} onChange={e=>setInvBase(e.target.value)}>
-                                <option value="">— Seleccionar —</option>
-                                {INGS.filter(g=>g.role==='base_carbono'&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
-                                  <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="inv-field">
-                              <label htmlFor="inv-supp">Suplemento nitrógeno</label>
-                              <select id="inv-supp" value={invSupp} onChange={e=>setInvSupp(e.target.value)}>
-                                <option value="">— Seleccionar —</option>
-                                {INGS.filter(g=>['suplemento_n','suplemento_medio'].includes(g.role)&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
-                                  <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="inv-field">
-                              <label htmlFor="inv-aer">Aireador (opcional)</label>
-                              <select id="inv-aer" value={invAer} onChange={e=>setInvAer(e.target.value)}>
-                                <option value="">— Ninguno —</option>
-                                {INGS.filter(g=>g.role==='aireador'&&g.cs.includes(sKey)).map(g=>(
-                                  <option key={g.id} value={g.id}>{g.name}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="inv-field">
-                              <label htmlFor="inv-min">Mineral / corrector pH (%)</label>
-                              <input id="inv-min" type="number" min="0" max="10" step="0.5" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
-                            </div>
-                            {invAer&&(
-                              <div className="inv-field">
-                                <label htmlFor="inv-aerpct">Aireador fijo (%)</label>
-                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
-                              </div>
-                            )}
-                          </div>
-                          <div style={{marginBottom:18}}>
-                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-                              <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N objetivo</span>
-                              <span style={{fontFamily:"var(--font-num)",fontSize:28,fontWeight:600,color:sp&&invTargetCN>=sp.cn_optimal.min&&invTargetCN<=sp.cn_optimal.max?'var(--moss-500)':'var(--coral-500)'}}>{invTargetCN}:1</span>
-                            </div>
-                            <input type="range" min="10" max="120" step="1" value={invTargetCN} onChange={e=>setInvTargetCN(parseInt(e.target.value))} aria-label="Relación C:N objetivo" aria-valuetext={`${invTargetCN}:1`} style={{width:'100%',accentColor:'var(--coral-500)',marginBottom:6}}/>
-                            {sp&&(
-                              <div style={{position:'relative',height:4,background:'var(--paper-300)',borderRadius:2}}>
-                                <div style={{position:'absolute',left:`${((sp.cn_optimal.min-10)/110)*100}%`,width:`${((sp.cn_optimal.max-sp.cn_optimal.min)/110)*100}%`,height:'100%',background:'rgba(77,98,53,.35)',borderRadius:2}}/>
-                                <div style={{position:'absolute',left:`${((sp.cn_optimal.ideal-10)/110)*100}%`,width:2,height:'220%',top:'-60%',background:'var(--moss-500)',borderRadius:1}}/>
-                              </div>
-                            )}
-                            <div style={{display:'flex',justifyContent:'space-between',marginTop:7,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>
-                              <span>10</span>
-                              {sp&&<span style={{color:'var(--moss-500)'}}>óptimo {sp.cn_optimal.min}–{sp.cn_optimal.max}</span>}
-                              <span>120</span>
                             </div>
                           </div>
-                          <button className="btn pri" style={{width:'100%',padding:13,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)'}} disabled={!invBase||!invSupp}
-                            onClick={()=>{
-                              const bI=INGS.find(i=>i.id===invBase);
-                              const sI=INGS.find(i=>i.id===invSupp);
-                              if(!bI||!sI) return;
-                              const T=invTargetCN, pMin=invMin, pAer=invAer?invAerPct:0;
-                              const pRem=100-pMin-pAer;
-                              if(pRem<=2){setInvResult({error:'Los porcentajes fijos superan 98%. Reduce mineral o aireador.'});return;}
-                              const bDry=1-Math.min(0.92,Math.max(0,(bI.moisture||0)/100));
-                              const sDry=1-Math.min(0.92,Math.max(0,(sI.moisture||0)/100));
-                              const cb=bI.c*bDry, nb=bI.n*bDry, cs=sI.c*sDry, ns=sI.n*sDry;
-                              const denom=(cb-cs)-T*(nb-ns);
-                              if(Math.abs(denom)<0.001){setInvResult({error:'Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N.'});return;}
-                              const ps=pRem*(cb-T*nb)/denom;
-                              const pb=pRem-ps;
-                              if(ps<0||pb<0||ps>pRem){
-                                const cnMin=Math.min(bI.cn,sI.cn).toFixed(0), cnMax=Math.max(bI.cn,sI.cn).toFixed(0);
-                                setInvResult({error:`C:N ${T}:1 no alcanzable con estos ingredientes. Rango posible: ${cnMin}–${cnMax}:1`});
-                                return;
-                              }
-                              const res=[];
-                              res.push({id:invBase,p:Math.round(pb*10)/10});
-                              res.push({id:invSupp,p:Math.round(ps*10)/10});
-                              if(invAer&&pAer>0) res.push({id:invAer,p:pAer});
-                              if(pMin>0) res.push({id:'carbonato_calcio',p:pMin});
-                              const anRes=analyze(res,sKey,effectiveINGS);
-                              setInvResult({recipe:res,an:anRes});
-                            }}
-                          >⇌ Calcular proporciones exactas</button>
-                          {invResult&&(
-                            <div className="inv-result">
-                              {invResult.error
-                                ?<div style={{color:'var(--coral-500)',fontFamily:"var(--font-num)",fontSize:18,fontStyle:'italic',lineHeight:1.5}}>{invResult.error}</div>
-                                :(<>
-                                  <div className="sec" style={{marginTop:0}}>Resultado</div>
-                                  <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
-                                    {invResult.recipe.map(r=>{
-                                      const g=INGS.find(i=>i.id===r.id);
-                                      return g?(
-                                        <div key={r.id} style={{padding:'10px 16px',background:'var(--paper-50)',border:'1px solid var(--border-soft)',minWidth:100,textAlign:'center'}}>
-                                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{g.name.length>18?g.name.slice(0,18)+'…':g.name}</div>
-                                          <div style={{fontFamily:"var(--font-num)",fontSize:32,fontWeight:300,color:'var(--coral-500)',lineHeight:1}}>{r.p}<span style={{fontSize:"var(--text-base)",color:'var(--ink-500)',marginLeft:1}}>%</span></div>
-                                        </div>
-                                      ):null;
-                                    })}
-                                  </div>
-                                  {invResult.an&&(
-                                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginBottom:14}}>
-                                      {[
-                                        {l:'C:N logrado',v:`${invResult.an.cn.toFixed(1)}:1`,ok:sp&&invResult.an.cn>=sp.cn_optimal.min&&invResult.an.cn<=sp.cn_optimal.max},
-                                        {l:'Nitrógeno',v:`${invResult.an.avgN.toFixed(2)}%`,ok:sp&&invResult.an.avgN>=sp.n_optimal.min&&invResult.an.avgN<=sp.n_optimal.max},
-                                        {l:'EB esperada',v:invResult.an.ebLow&&invResult.an.ebHigh?`${invResult.an.ebLow}–${invResult.an.ebHigh}%`:`${invResult.an.eb.toFixed(0)}%`,ok:invResult.an.eb>=90},
-                                        {l:'Costo/kg',v:`${Math.round(invResult.an.cost)}`,ok:invResult.an.cost<1000},
-                                      ].map((m,i)=>(
-                                        <div key={i} style={{background:'var(--paper-50)',border:`1px solid ${m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
-                                          <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{m.l}</div>
-                                          <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                  <button className="btn pri" style={{width:'100%'}} onClick={()=>{setRecipe(invResult.recipe);goTab('formular');}}>Cargar en Formulador</button>
-                                </>)
-                              }
-                            </div>
-                          )}
-                        </div>
-            )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </>)}
+              )}
+
+              {formularMode==='manual'&&(
+                <div className="panel panel-accent">
+                  <div className="sec">Formulación por Objetivo C:N (Solver)</div>
+                  <div style={{marginBottom:16,padding:'8px 12px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',fontFamily:"var(--font-body)",fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',lineHeight:1.6}}>
+                    Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
+                  </div>
+                  {sp&&(
+                    <div style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
+                        <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.name}</div>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.ideal}:1</div>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.min}–{sp.cn_optimal.max}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="inv-grid">
+                    <div className="inv-field">
+                      <label htmlFor="inv-base">Ingrediente base (carbono)</label>
+                      <select id="inv-base" value={invBase} onChange={e=>setInvBase(e.target.value)}>
+                        <option value="">— Seleccionar —</option>
+                        {INGS.filter(g=>g.role==='base_carbono'&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
+                          <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="inv-field">
+                      <label htmlFor="inv-supp">Suplemento (nitrógeno)</label>
+                      <select id="inv-supp" value={invSupp} onChange={e=>setInvSupp(e.target.value)}>
+                        <option value="">— Seleccionar —</option>
+                        {INGS.filter(g=>g.role==='suplemento_n'&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
+                          <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="inv-field">
+                      <label htmlFor="inv-aer">Aireador opcional</label>
+                      <select id="inv-aer" value={invAer} onChange={e=>setInvAer(e.target.value)}>
+                        <option value="">— Ninguno (0%) —</option>
+                        {INGS.filter(g=>g.role==='aireador').map(g=>(
+                          <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="inv-field">
+                      <label htmlFor="inv-min">Mineral opcional (1%)</label>
+                      <select id="inv-min" value={invMin} onChange={e=>setInvMin(e.target.value)}>
+                        <option value="">— Ninguno (0%) —</option>
+                        {INGS.filter(g=>g.role==='mineral').map(g=>(
+                          <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{marginTop:16,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                    <button
+                      className="btn pri"
+                      disabled={!invBase||!invSupp}
+                      onClick={()=>{
+                        const res = solveCN(invBase, invSupp, invTargetCN, { aerId: invAer, aerPct: invAerPct, minId: invMin });
+                        setInvResult(res);
+                      }}
+                      style={{width:'100%',minHeight:44,fontWeight:700}}>
+                      Calcular proporciones exactas
+                    </button>
+                  </div>
+
+                  {invResult&&(
+                    <div style={{marginTop:16,padding:'14px',background:'var(--paper-100)',borderRadius:'var(--radius-sm)'}}>
+                      {invResult.error ? (
+                        <div style={{color:'var(--coral-600)',fontWeight:700}}>{invResult.error}</div>
+                      ) : (
+                        <div>
+                          <div style={{fontWeight:800,marginBottom:10}}>Fórmula calculada:</div>
+                          <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:14}}>
+                            {invResult.recipe.map(r=>{
+                              const g=INGS.find(x=>x.id===r.id);
+                              return(
+                                <span key={r.id} style={{padding:'6px 12px',background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,fontFamily:'var(--font-mono)',fontWeight:700}}>
+                                  {g?.name||r.id}: {r.p}%
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <button
+                            className="btn pri"
+                            style={{width:'100%',minHeight:44,background:'var(--moss-700)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',fontWeight:800}}
+                            onClick={()=>{
+                              setRecipe(invResult.recipe);
+                              setBuilderSubTab('formular');
+                              setLoadedFlash(true);
+                              setTimeout(()=>setLoadedFlash(false),2200);
+                            }}>
+                            🥣 Cargar en Mesa de Mezcla
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
+          )}
+        </div>
         )}
 
         {tab==='schedule'&&(

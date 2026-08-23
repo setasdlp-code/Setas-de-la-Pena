@@ -3339,4 +3339,295 @@
   .sim-root .p-chip-val{font-size:9px}
 }
 
+/* ==========================================================================
+   SETAS OS — FORMULADOR V2 (MESA DE MEZCLA & GENERADOR SEPARADOS)
+   ========================================================================== */
+.sim-root .formular-mode-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: var(--paper-200);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+}
+.sim-root .formular-mode-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-700);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sim-root .formular-mode-btn:hover {
+  color: var(--ink-900);
+  background: rgba(255, 255, 255, 0.4);
+}
+.sim-root .formular-mode-btn.is-active {
+  background: var(--paper-0);
+  color: var(--ink-900);
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.sim-root .formular-mode-badge {
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--accent-olive);
+  color: var(--paper-0);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+}
+.sim-root .formular-mode-badge-accent {
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--coral-500);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* Mesa de Mezcla — Filas y Steppers */
+.sim-root .mix-ingredient-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--paper-0);
+  transition: background 0.15s ease;
+}
+.sim-root .mix-ingredient-row.is-locked {
+  background: var(--paper-100);
+}
+.sim-root .mix-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sim-root .mix-role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.sim-root .mix-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sim-root .mix-steppers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sim-root .mix-step-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-50);
+  color: var(--ink-800);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+.sim-root .mix-step-btn:hover:not(:disabled) {
+  background: var(--paper-200);
+  border-color: var(--ink-700);
+  color: var(--ink-900);
+}
+.sim-root .mix-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.sim-root .mix-num-input {
+  width: 72px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-0);
+  color: var(--ink-900);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+.sim-root .mix-num-input:focus {
+  border-color: var(--accent-olive);
+  box-shadow: 0 0 0 2px rgba(74, 93, 58, 0.2);
+}
+.sim-root .mix-lock-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--paper-100);
+  color: var(--ink-600);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.sim-root .mix-lock-btn.is-locked {
+  background: var(--coral-50);
+  border-color: var(--coral-500);
+  color: var(--coral-600);
+  font-weight: 800;
+}
+.sim-root .mix-del-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--coral-600);
+  font-size: var(--text-base);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sim-root .mix-del-btn:hover {
+  background: var(--coral-50);
+  border-color: var(--coral-500);
+}
+
+/* Mass Balance Bar */
+.sim-root .mass-balance-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  flex-wrap: wrap;
+}
+.sim-root .mass-balance-bar.is-ok {
+  background: rgba(74, 93, 58, 0.1);
+  border: 1.5px solid var(--moss-600);
+  color: var(--moss-800);
+}
+.sim-root .mass-balance-bar.is-warn {
+  background: rgba(160, 120, 40, 0.1);
+  border: 1.5px solid #d4a04a;
+  color: #7a5a10;
+}
+.sim-root .mass-balance-bar.is-err {
+  background: rgba(197, 48, 48, 0.1);
+  border: 1.5px solid var(--coral-500);
+  color: var(--coral-700);
+}
+.sim-root .mass-balance-btn {
+  min-height: 38px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--coral-500);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sim-root .mass-balance-btn:hover {
+  background: var(--coral-600);
+}
+
+/* Generator Profile Cards */
+.sim-root .gen-profile-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .sim-root .gen-profile-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.sim-root .gen-profile-card {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--paper-0);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.sim-root .gen-profile-card:hover {
+  border-color: var(--ink-500);
+}
+.sim-root .gen-profile-card.is-active {
+  border-color: var(--accent-olive);
+  background: color-mix(in oklab, var(--accent-olive) 8%, var(--paper-0));
+  box-shadow: 0 2px 8px rgba(74, 93, 58, 0.15);
+}
+.sim-root .gen-calc-btn {
+  min-height: 48px;
+  padding: 10px 24px;
+  background: var(--moss-700);
+  color: var(--paper-0);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.sim-root .gen-calc-btn:hover:not(:disabled) {
+  background: var(--moss-800);
+}
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

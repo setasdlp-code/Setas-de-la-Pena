@@ -189,9 +189,11 @@
     let result;
     if (nativeAdapter?.applyRecipe) {
       try {
-        result = await nativeAdapter.applyRecipe(targetRecipe, options);
-        if (result === true) result = { ok: true, recipe: getRecipe(names), adapter: 'native' };
-        if (!result || typeof result !== 'object') result = { ok: false, message: 'El adaptador nativo no devolvió un resultado válido.', adapter: 'native' };
+        const res = await nativeAdapter.applyRecipe(targetRecipe, options);
+        if (res === true) result = { ok: true, recipe: targetRecipe || getRecipe(names), adapter: 'native' };
+        else if (res && typeof res === 'object' && res.ok !== false) result = { ok: true, recipe: res.recipe || targetRecipe || getRecipe(names), adapter: 'native' };
+        else if (res && typeof res === 'object' && res.ok === false) result = { ok: false, message: res.message || 'El adaptador nativo rechazó la receta.', adapter: 'native' };
+        else result = { ok: false, message: 'El adaptador nativo no devolvió un resultado válido.', adapter: 'native' };
       } catch (err) {
         result = { ok: false, message: err?.message || 'Falló el adaptador nativo.', adapter: 'native' };
       }

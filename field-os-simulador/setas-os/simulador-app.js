@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: fd1a526c64bedf71e8a9e0f9eae027e07d00aa38188ac21f281953b1a100c622
+// source-hash: 9f34e7d1ba03939ae1cf59e234ab306b22135fb193f8c77945c4a89ef33ec509
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1700,6 +1700,19 @@ function App(props) {
     }
     ;
   }, []);
+  useEffect(() => {
+    if (globalThis.SetasFormulatorAPI?.registerNativeAdapter) {
+      return globalThis.SetasFormulatorAPI.registerNativeAdapter({
+        getRecipe: () => recipe,
+        getLockedIds: () => new Set(lockedIds),
+        getBatchWetKg: () => numBags * kgBag,
+        applyRecipe: async (targetRecipe, options = {}) => {
+          setRecipe(targetRecipe);
+          return { ok: true, recipe: targetRecipe };
+        }
+      });
+    }
+  }, [recipe, lockedIds, numBags, kgBag]);
   const saveR = () => {
     const nm = saveName.trim();
     if (!nm || !recipe.length || !balanced) return;
@@ -1781,6 +1794,7 @@ function App(props) {
       setSKey(e.sKey);
       setRecipe(e.recipe);
       setLockedIds([]);
+      setBuilderSubTab("formular");
       goTab("formular");
       setLoadedFlash(true);
       setTimeout(() => setLoadedFlash(false), 2200);
@@ -3329,12 +3343,46 @@ BATCH (${numBags}×${kgBag} kg):
       setCatalogModalOpen(false);
       goTab("formular");
     }, className: "spp-cta" }, "Formular con ", sp.name, " →"))))));
-  })()), tab === "formular" && /* @__PURE__ */ React.createElement("div", { className: "builder-wrap", "data-tab": tab }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast" }, "✓ Receta cargada"), /* @__PURE__ */ React.createElement("section", { className: "form-flow", "aria-labelledby": "form-flow-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Nueva formulación"), /* @__PURE__ */ React.createElement("h2", { id: "form-flow-title" }, "Especie → Origen → Ingredientes → Validar y guardar")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, recipe.length > 0 ? `${recipe.length} ingrediente${recipe.length === 1 ? "" : "s"} · Perito ${Math.round(opt.score)}/100` : "Preparado para comenzar")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid" }, /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp.name : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+  })()), tab === "formular" && /* @__PURE__ */ React.createElement("div", { className: "builder-wrap", "data-tab": tab }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast" }, "✓ Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: "form-flow", "aria-labelledby": "form-flow-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Nueva formulación"), /* @__PURE__ */ React.createElement("h2", { id: "form-flow-title" }, "Especie → Origen → Ingredientes → Validar y guardar")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, recipe.length > 0 ? `${recipe.length} ingrediente${recipe.length === 1 ? "" : "s"} · Perito ${Math.round(opt.score)}/100` : "Preparado para comenzar")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid" }, /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp.name : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
     document.querySelector(".form-species-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => document.getElementById("form-species-context-select")?.focus(), 250);
-  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define los rangos C:N, pH y EB.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Solo bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Paleta completa")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Usa únicamente el stock disponible." : "Permite explorar todo el catálogo.")), /* @__PURE__ */ React.createElement("li", { className: `form-step${hasPickedSpecies ? " is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => document.getElementById("bl-ingredientes")?.scrollIntoView({ behavior: "smooth", block: "start" }) }, "Elegir manualmente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => document.getElementById("gen-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }) }, "Usar generador")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega insumos o calcula una base.")), /* @__PURE__ */ React.createElement("li", { className: `form-step${recipe.length > 0 ? " is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Validar y guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "form-step-primary", disabled: recipe.length === 0, onClick: () => document.getElementById("bl-receta")?.scrollIntoView({ behavior: "smooth", block: "start" }) }, recipe.length > 0 ? "Revisar receta" : "Agrega ingredientes"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Revisa balance, riesgo, costo y tratamiento.")))), /* @__PURE__ */ React.createElement("section", { className: "form-species-context", "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp.name : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp.scientific : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-targets", "aria-label": "Objetivos de la especie activa" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "C:N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.cn_optimal.min}–${sp.cn_optimal.max}:1` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.n_optimal.min}–${sp.n_optimal.max}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "EB meta"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.eb_optimal}%` : "—")), /* @__PURE__ */ React.createElement("span", { className: `form-species-mode is-${globalMode}` }, /* @__PURE__ */ React.createElement("small", null, "Origen"), /* @__PURE__ */ React.createElement("b", null, globalMode === "produccion" ? "Bodega" : "Paleta completa")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length > 0 ? (() => {
+  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define los rangos C:N, pH y EB.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Solo bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Paleta completa")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Usa únicamente el stock disponible." : "Permite explorar todo el catálogo.")), /* @__PURE__ */ React.createElement("li", { className: `form-step${hasPickedSpecies ? " is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    setBuilderSubTab("formular");
+    document.getElementById("bl-ingredientes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } }, "Elegir manualmente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    setBuilderSubTab("generador");
+    document.getElementById("gen-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } }, "Usar generador")), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega insumos o calcula una base.")), /* @__PURE__ */ React.createElement("li", { className: `form-step${recipe.length > 0 ? " is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Validar y guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "form-step-primary", disabled: recipe.length === 0, onClick: () => {
+    setBuilderSubTab("formular");
+    document.getElementById("bl-receta")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } }, recipe.length > 0 ? "Revisar receta" : "Agrega ingredientes"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Revisa balance, riesgo, costo y tratamiento.")))), /* @__PURE__ */ React.createElement("div", { className: "formular-mode-nav", role: "tablist", "aria-label": "Modo de formulación" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      role: "tab",
+      id: "tab-btn-mesa",
+      "aria-selected": builderSubTab === "formular",
+      className: `formular-mode-btn${builderSubTab === "formular" ? " is-active" : ""}`,
+      onClick: () => setBuilderSubTab("formular")
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { fontSize: "16px" } }, "🥣"),
+    /* @__PURE__ */ React.createElement("span", null, "Mesa de Mezcla"),
+    recipe.length > 0 && /* @__PURE__ */ React.createElement("span", { className: "formular-mode-badge" }, recipe.length)
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      role: "tab",
+      id: "tab-btn-gen",
+      "aria-selected": builderSubTab === "generador",
+      className: `formular-mode-btn${builderSubTab === "generador" ? " is-active" : ""}`,
+      onClick: () => setBuilderSubTab("generador")
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { fontSize: "16px" } }, "⚡"),
+    /* @__PURE__ */ React.createElement("span", null, "Generador de Recetas"),
+    /* @__PURE__ */ React.createElement("span", { className: "formular-mode-badge-accent" }, "IA")
+  )), builderSubTab === "formular" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { className: "form-species-context", "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp.name : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp.scientific : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-targets", "aria-label": "Objetivos de la especie activa" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "C:N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.cn_optimal.min}–${sp.cn_optimal.max}:1` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.n_optimal.min}–${sp.n_optimal.max}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "EB meta"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies ? `${sp.eb_optimal}%` : "—")), /* @__PURE__ */ React.createElement("span", { className: `form-species-mode is-${globalMode}` }, /* @__PURE__ */ React.createElement("small", null, "Origen"), /* @__PURE__ */ React.createElement("b", null, globalMode === "produccion" ? "Bodega" : "Paleta completa")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length > 0 ? (() => {
     const sm2 = PERITO_STATUS[opt.status] || PERITO_STATUS.sin_receta;
-    const limiter = peritoMainLimiter(opt, an);
     const ebVal = an ? blendEBWithHistory(an, histStats) : 0;
     const ebOpt = sp?.eb_optimal || 100;
     const ebBase = sp?.eb_baseline || 80;
@@ -3343,7 +3391,7 @@ BATCH (${numBags}×${kgBag} kg):
     const ebColor = ebOk ? "var(--moss-700,#2E3B2F)" : ebMid ? "#976E1A" : "#A8432A";
     const totOk = an ? Math.abs(an.tot - 100) <= 0.5 : false;
     const totColor = totOk ? "var(--moss-700,#2E3B2F)" : "#A8432A";
-    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Ingredientes y evaluación de la receta activa" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "var(--moss-700)", fontWeight: 700, textTransform: "uppercase" } }, "evaluación en vivo")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-metrics" }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Ingredientes y evaluación de la receta activa" }, "Mesa de Mezcla"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "var(--moss-700)", fontWeight: 700, textTransform: "uppercase" } }, "en vivo")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-metrics" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }),
@@ -3363,7 +3411,7 @@ Click para ver análisis completo`
         title: `Balance de masa: ${an ? an.tot.toFixed(1) : "0"}% (ideal 100%)`
       },
       /* @__PURE__ */ React.createElement("span", { style: { color: totColor, display: "inline-flex", alignItems: "center", gap: 3 } }, an ? an.tot.toFixed(0) : "0", "%", totOk ? /* @__PURE__ */ React.createElement(IconCheck, { size: 10, color: totColor }) : /* @__PURE__ */ React.createElement(IconAlert, { size: 10, color: totColor }))
-    )), /* @__PURE__ */ React.createElement("div", { className: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, `Score Perito ${Math.round(opt.score)} de 100, ${sm2.label}. `, `Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk ? ", meta alcanzada" : ebMid ? ", por debajo de la meta" : ", por debajo de la línea base"}. `, `Balance de masa ${an ? an.tot.toFixed(0) : "0"} por ciento${totOk ? ", correcto" : ", requiere ajuste al 100 por ciento"}.`), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, an && !totOk && /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, an && !totOk && /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => autoBalance(balanceMode),
@@ -3380,326 +3428,119 @@ Click para ver análisis completo`
         onClick: () => setShowLiveChips(!showLiveChips),
         className: "live-dash-btn live-dash-recipe-toggle",
         style: { background: showLiveChips ? "var(--paper-300)" : "var(--paper-100)" },
-        "aria-label": `${recipe.length} insumos en receta. ${showLiveChips ? "Ocultar detalle de fórmula" : "Ver fórmula e insumos"}`,
-        "aria-expanded": showLiveChips,
-        title: showLiveChips ? "Ocultar detalle de fórmula" : "Ver fórmula e insumos"
+        "aria-label": `${recipe.length} insumos en receta`,
+        title: "Ver fórmula"
       },
       /* @__PURE__ */ React.createElement(IconRecipe, { size: 11, color: "var(--ink-700)" }),
-      /* @__PURE__ */ React.createElement("span", null, recipe.length),
-      showLiveChips ? /* @__PURE__ */ React.createElement(IconChevronUp, { size: 9, color: "var(--ink-700)" }) : /* @__PURE__ */ React.createElement(IconChevronDown, { size: 9, color: "var(--ink-700)" })
+      /* @__PURE__ */ React.createElement("span", null, recipe.length)
     ), /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => {
-          if (saveName.trim()) {
-            saveR();
-          } else {
-            document.getElementById("bl-receta")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            setTimeout(() => {
-              const inp = document.querySelector(".sbar input");
-              if (inp) {
-                inp.focus();
-                inp.style.outline = "2px solid var(--coral-500)";
-                setTimeout(() => inp.style.outline = "", 1200);
-              }
-            }, 300);
-          }
-        },
+        onClick: () => setBuilderSubTab("generador"),
         className: "live-dash-btn",
-        style: { background: flash ? "var(--moss-600)" : "var(--ink-900)", color: "#fff", borderColor: "var(--ink-900)" },
-        "aria-label": flash ? "Receta guardada" : "Guardar receta en Recetario",
-        title: "Guardar receta en Recetario"
+        style: { background: "var(--moss-700)", color: "#fff", borderColor: "var(--moss-800)" },
+        title: "Abrir Generador de Recetas"
       },
-      flash ? /* @__PURE__ */ React.createElement(IconCheck, { size: 11, color: "#fff" }) : /* @__PURE__ */ React.createElement(IconDisk, { size: 11, color: "#fff" })
-    ))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-secondary-nav", style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap" } }, [
-      { id: "bl-ingredientes", l: "Insumos", icon: IconSprout },
-      { id: "bl-receta", l: "Receta", icon: IconRecipe },
-      { id: "bl-perito", l: "Perito", icon: IconTarget },
-      { id: "bl-batch", l: "Batch", icon: IconBox },
-      ...tr ? [{ id: "bl-tratamiento", l: "Tratamiento", icon: IconFlame }] : []
-    ].map((s) => {
-      const IconComp = s.icon;
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: s.id,
-          onClick: () => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" }),
-          style: {
-            fontFamily: "var(--font-body)",
-            fontSize: "10px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            padding: "3px 6px",
-            background: "var(--paper-0)",
-            color: "var(--ink-700)",
-            border: "1px solid var(--border-soft)",
-            borderRadius: "var(--r-xs)",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4
-          }
-        },
-        /* @__PURE__ */ React.createElement(IconComp, { size: 10, color: "var(--ink-600)" }),
-        /* @__PURE__ */ React.createElement("span", null, s.l)
-      );
-    })), /* @__PURE__ */ React.createElement("div", { className: `offline-status-chip ${isOnline ? "is-online" : "is-offline"}`, style: { fontSize: "10px", padding: "2px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "offline-status-dot" }), /* @__PURE__ */ React.createElement("span", null, isOnline ? "En línea" : "Sin conexión"))), limiter && /* @__PURE__ */ React.createElement("div", { className: "live-dash-limiter", style: { marginBottom: 6, padding: "3px 8px", background: sm2.bg || "var(--paper-100)", borderRadius: 2, fontSize: "11px", fontFamily: "var(--font-mono)", color: sm2.txt, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 11, color: sm2.txt }), /* @__PURE__ */ React.createElement("span", null, limiter)), /* @__PURE__ */ React.createElement("button", { onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { background: "none", border: "none", color: sm2.txt, fontWeight: 700, fontSize: "10px", cursor: "pointer", textDecoration: "underline" } }, "Ver dictamen")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-chips-row" }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-500)", marginRight: 2, flexShrink: 0 } }, "Fórmula:"), recipe.map((r) => {
-      const g = INGS.find((i) => i.id === r.id);
-      if (!g) return null;
-      const isLocked = lockedIds.includes(r.id);
-      const roleCol = FORM_ROLE_COLORS[g.role] || "var(--ink-500)";
-      return /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: r.id,
-          className: "live-ing-chip",
-          title: `${g.name} (${FORM_ROLE_LABELS[g.role] || g.role}) · ${r.p}%`
-        },
-        /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: roleCol, flexShrink: 0 } }),
-        /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, g.name),
-        /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, color: isLocked ? "var(--coral-600)" : "var(--ink-800)", display: "inline-flex", alignItems: "center", gap: 2 } }, r.p, "%", isLocked ? /* @__PURE__ */ React.createElement(IconLock, { size: 9, color: "var(--coral-600)" }) : null),
-        /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            className: "live-ing-chip-del",
-            onClick: (e) => {
-              e.stopPropagation();
-              remI(r.id);
-            },
-            "aria-label": `Quitar ${g.name} de la receta`,
-            title: `Quitar ${g.name}`
-          },
-          "×"
-        )
-      );
-    }))));
-  })() : null), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Receta activa + evaluación en vivo"), /* @__PURE__ */ React.createElement("p", null, "Los ingredientes de la fórmula y su lectura técnica permanecen juntos y visibles mientras formulas.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("input", { className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", style: { marginBottom: 0, flex: "1 1 auto", minWidth: "200px" }, placeholder: "Buscar ingrediente o etiqueta…", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
-    setPriceOverrides({});
-    try {
-      localStorage.removeItem("setas_prices_v1");
-    } catch (e) {
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px" } }, "⚡"),
+      /* @__PURE__ */ React.createElement("span", null, "Generador")
+    ))));
+  })() : null), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head", style: { display: "none" } }, /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Receta activa + evaluación en vivo")), /* @__PURE__ */ React.createElement("div", { className: "builder-left", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("header", { className: "ingredient-section-head", id: "ingredient-catalog-title" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Catálogo de insumos"), /* @__PURE__ */ React.createElement("h2", null, "Elige ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Agrega bases, suplementos y minerales a tu mesa de mezcla.")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "ingredient-section-aux", onClick: () => setShowPrices((p) => !p) }, showPrices ? "Ocultar precios" : "Editar precios")), /* @__PURE__ */ React.createElement("div", { className: "panel", style: { position: "sticky", top: 175, zIndex: "var(--z-sticky-panel)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Insumos disponibles"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, visibleIngredients.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      "aria-label": "Buscar insumo por nombre o uso",
+      placeholder: "Buscar insumo…",
+      value: search,
+      onChange: (e) => setSearch(e.target.value),
+      style: { flex: 1, minWidth: 140, padding: "7px 10px", border: "1px solid var(--paper-300)", background: "var(--paper-50)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", color: "var(--ink-900)", outline: "none", borderRadius: "var(--r-xs)" }
     }
-  }, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 8px", border: "1px solid var(--coral-500)", background: "none", color: "var(--coral-500)", cursor: "pointer" } }, "Restaurar todo")), /* @__PURE__ */ React.createElement("div", null, fings.filter((g) => g.cn > 0 || g.cost > 0).map((ing) => {
-    const isEdited = priceOverrides[ing.id] !== void 0;
-    const orig = INGS.find((i) => i.id === ing.id)?.cost || 0;
-    return /* @__PURE__ */ React.createElement("div", { key: ing.id, className: "price-row" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-base)", fontWeight: 500, color: "var(--ink-900)" } }, ing.name), isEdited && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-700)", fontFamily: "var(--font-mono)", fontWeight: 500 } }, "Orig: $", orig, "/kg")), /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        type: "number",
-        min: "0",
-        step: "100",
-        required: true,
-        "aria-label": `Precio ${ing.name} por kg`,
-        className: `price-inp${isEdited ? " edited" : ""}`,
-        value: ing.cost,
-        onChange: (e) => {
-          const v = Math.max(0, parseInt(e.target.value) || 0);
-          const n = { ...priceOverrides, [ing.id]: v };
-          setPriceOverrides(n);
-          try {
-            localStorage.setItem("setas_prices_v1", JSON.stringify(n));
-          } catch (err) {
-          }
-        }
-      }
-    ));
-  }))), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar", title: "Abrir bodega / inventario" }, /* @__PURE__ */ React.createElement(
+  ), search && /* @__PURE__ */ React.createElement("button", { onClick: () => setSearch(""), style: { padding: "7px 10px", border: "1px solid var(--paper-300)", background: "var(--paper-100)", borderRadius: "var(--r-xs)", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "✕")), /* @__PURE__ */ React.createElement("div", { className: "cats", role: "group", "aria-label": "Categorías de insumos", style: { marginBottom: 8 } }, CATS.map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, className: "cat" + (cat === c.id ? " on" : ""), onClick: () => setCat(c.id), "aria-pressed": cat === c.id }, c.label))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", paddingTop: 6, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
-      type: "button",
-      onClick: () => goTab("inventario"),
-      style: { display: "flex", alignItems: "center", gap: "inherit", flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, margin: 0, font: "inherit", color: "inherit", textAlign: "left", cursor: "pointer" }
+      className: `tog${showCompatOnly ? " on" : ""}`,
+      "aria-pressed": showCompatOnly,
+      onClick: () => setShowCompatOnly((s) => !s),
+      title: `Mostrar solo ingredientes compatibles con ${sp.name}`
     },
-    /* @__PURE__ */ React.createElement("span", { className: "bodega-bar-icon", "aria-hidden": "true", style: { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)", display: "flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(IcoBox, { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)" })),
-    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-title" }, pantryIds.length > 0 ? pantryIds.length + " ingredientes en bodega" : "Bodega vacía — sin stock registrado"), pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-sub" }, Object.values(stockMap).reduce((a, b) => a + b, 0).toFixed(1), " kg disponibles"))
-  ), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-right" }, /* @__PURE__ */ React.createElement("button", { className: "bodega-bar-refresh", onClick: (e) => {
-    e.stopPropagation();
-    goTab("inventario");
-  }, title: "Actualizar stock", "aria-label": "Actualizar stock" }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", viewBox: "0 0 24 24", width: "14", height: "14", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" }))))), usePantry && pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "pantry-grid", style: { marginBottom: 8 } }, pantryIds.slice(0, 12).map((id) => {
-    const g = INGS.find((i) => i.id === id);
-    const kg = stockMap[id] || 0;
-    return g ? /* @__PURE__ */ React.createElement("button", { key: id, type: "button", className: "pantry-chip on", style: { borderColor: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "var(--moss-500)" : void 0, background: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))" : void 0 }, title: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "Compatible con " + sp.name : void 0, "aria-label": `Quitar ${g.name} de bodega`, onClick: () => setPantryIds((prev) => prev.filter((x) => x !== id)) }, INGS.find((i) => i.id === id)?.cs?.includes(sKey) && /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--moss-500)", marginRight: 4, verticalAlign: "middle", marginTop: -1 } }), g.name.length > 18 ? g.name.slice(0, 18) + "…" : g.name, kg > 0 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip-kg" }, kg.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, " ✕")) : null;
-  }), pantryIds.length > 12 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip", style: { opacity: 0.5 } }, "+", pantryIds.length - 12, " más")), /* @__PURE__ */ React.createElement("div", { className: "cats", role: "group", "aria-label": "Filtrar por categoría" }, Object.entries(CATS).map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, "data-cat": k, className: `cat${cat === k ? " on" : ""}`, "aria-pressed": cat === k, onClick: () => setCat(k) }, l)), /* @__PURE__ */ React.createElement("button", { className: `cat${showCompatOnly ? " on" : ""}`, "aria-pressed": showCompatOnly, style: { borderColor: showCompatOnly ? "var(--moss-600)" : "", color: showCompatOnly ? "var(--moss-600)" : "", background: showCompatOnly ? "color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))" : "" }, onClick: () => setShowCompatOnly((s) => !s), title: "Ver solo ingredientes compatibles con la especie seleccionada" }, showCompatOnly ? "Solo compatibles ✕" : "Compatibles"), /* @__PURE__ */ React.createElement("button", { className: `cat${groupByRole ? " on" : ""}`, "aria-pressed": groupByRole, onClick: () => setGroupByRole((g) => !g), title: "Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)" }, groupByRole ? "Agrupado por Rol ✓" : "Lista simple")), /* @__PURE__ */ React.createElement("div", { className: "ingredient-view-toolbar" }, /* @__PURE__ */ React.createElement("span", null, visibleIngredients.length, " ingrediente", visibleIngredients.length === 1 ? "" : "s", " con el origen y filtros actuales"), /* @__PURE__ */ React.createElement("div", null, showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAllRoleGroups(false) }, "Expandir grupos"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAllRoleGroups(true) }, "Colapsar grupos"), hasIngredientViewFilters && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: resetIngredientView }, "Restablecer vista"))), /* @__PURE__ */ React.createElement("div", { className: `ing-list${showRoleGroups ? " is-grouped" : " is-simple"}` }, (() => {
-    const base = visibleIngredients;
-    if (usePantry && pantryIds.length === 0) {
-      return /* @__PURE__ */ React.createElement("button", { type: "button", className: "ingredient-empty-action", onClick: () => {
-        goTab("inventario");
-        setInvTab("compra");
-      } }, /* @__PURE__ */ React.createElement("strong", null, "Bodega sin ingredientes disponibles."), /* @__PURE__ */ React.createElement("span", null, "Registra una compra o cambia el origen a “Paleta completa”."));
+    "Solo ",
+    sp.name.split(" ")[0]
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: `tog${groupByRole ? " on" : ""}`,
+      "aria-pressed": groupByRole,
+      onClick: () => setGroupByRole((s) => !s),
+      title: "Agrupar lista por rol funcional (Bases, Suplementos, Minerales, Aireadores)"
+    },
+    "Agrupado por rol"
+  ), showRoleGroups && /* @__PURE__ */ React.createElement("div", { style: { display: "inline-flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog", onClick: () => setAllRoleGroups(false), style: { fontSize: "10px", padding: "2px 6px" } }, "Expandir grupos"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog", onClick: () => setAllRoleGroups(true), style: { fontSize: "10px", padding: "2px 6px" } }, "Colapsar grupos")))), /* @__PURE__ */ React.createElement("div", { className: "ing-list role-groups-list", style: { display: "flex", flexDirection: "column", gap: 10, marginTop: 10 } }, (() => {
+    const groupsToRender = showRoleGroups ? FORM_ROLE_GROUPS.map((grp) => ({ ...grp, ings: visibleIngredients.filter((g) => g.role === grp.key) })).filter((g) => g.ings.length > 0) : [{ key: "all", label: null, color: null, ings: visibleIngredients }];
+    if (visibleIngredients.length === 0) {
+      return /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 14px", textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-100)", borderRadius: "var(--r-sm)" } }, "No hay insumos que coincidan con la búsqueda o filtro.");
     }
-    if (base.length === 0) {
-      return /* @__PURE__ */ React.createElement("div", { className: "ingredient-no-results", role: "status" }, /* @__PURE__ */ React.createElement("strong", null, "No hay ingredientes para esta vista."), /* @__PURE__ */ React.createElement("span", null, "Prueba otra búsqueda o restablece los filtros."), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: resetIngredientView }, "Restablecer vista"));
-    }
-    const renderIngRow = (ing) => {
-      const inR = recipe.find((r) => r.id === ing.id);
-      const inPantry = pantryIds.includes(ing.id);
-      const isCompat = ing.cs && ing.cs.includes(sKey);
-      return /* @__PURE__ */ React.createElement("div", { key: ing.id, className: `ing-card-item${justAddedIds.includes(ing.id) ? " ing-row-flash" : ""}`, style: { display: "flex", flexDirection: "column", opacity: disabledIngIds.includes(ing.id) ? 0.42 : 1, transition: "opacity .15s" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement(IngredientItem, { ing, onAdd: (ing2) => {
-        if (!recipe.find((r) => r.id === ing2.id)) {
-          addI(ing2.id);
-          flashAdded(ing2.id);
-        }
-      }, stockKg: stockMap[ing.id] || 0, isCompat, spName: sp?.name }), inPantry && isCompat && /* @__PURE__ */ React.createElement("div", { title: "En bodega y compatible con esta especie", style: { position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, borderRadius: "50%", background: "var(--moss-500)", boxShadow: "0 0 0 2px var(--paper-50)" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6, padding: "4px 4px 6px" } }, /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          className: "qa-mini-btn",
-          onClick: (e) => {
-            e.stopPropagation();
-            toggleDisabledIng(ing.id);
-          },
-          title: disabledIngIds.includes(ing.id) ? "Habilitar para el optimizador" : "Excluir del optimizador",
-          "aria-label": disabledIngIds.includes(ing.id) ? `Habilitar ${ing.name} para el optimizador` : `Excluir ${ing.name} del optimizador`,
-          style: { width: "clamp(13px,3vw,15px)", height: "clamp(13px,3vw,15px)", borderRadius: "50%", background: disabledIngIds.includes(ing.id) ? "var(--coral-500)" : "var(--border-soft)", color: disabledIngIds.includes(ing.id) ? "var(--paper-0)" : "rgba(26,20,16,.5)", border: "none", cursor: "pointer", fontSize: "clamp(7px,1.5vw,8px)", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }
-        },
-        disabledIngIds.includes(ing.id) ? "⊘" : "–"
-      ), /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { width: 1, alignSelf: "stretch", minHeight: 13, background: "var(--border-soft)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          className: "qa-mini-btn",
-          onClick: (e) => {
-            e.stopPropagation();
-            setPantryIds((prev) => inPantry ? prev.filter((x) => x !== ing.id) : [...prev, ing.id]);
-          },
-          title: inPantry ? "Quitar de bodega" : "Agregar a bodega",
-          "aria-label": inPantry ? `Quitar ${ing.name} de bodega` : `Agregar ${ing.name} a bodega`,
-          style: { width: "clamp(13px,3vw,15px)", height: "clamp(13px,3vw,15px)", borderRadius: "50%", background: inPantry ? "var(--moss-500)" : "var(--border-soft)", color: inPantry ? "var(--paper-0)" : "rgba(26,20,16,.5)", border: "none", cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }
-        },
-        /* @__PURE__ */ React.createElement(IcoBox, { color: "currentColor", size: 8 })
-      ), !inR && /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          className: "qa-mini-btn qa-add-btn" + (justAddedIds.includes(ing.id) ? " qa-pulse" : ""),
-          onClick: (e) => {
-            e.stopPropagation();
-            addI(ing.id);
-            flashAdded(ing.id);
-          },
-          title: "Agregar a receta",
-          "aria-label": `Agregar ${ing.name} a la receta`,
-          style: { width: "clamp(13px,3vw,15px)", height: "clamp(13px,3vw,15px)", borderRadius: "50%", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", cursor: "pointer", fontSize: "clamp(8px,1.8vw,9px)", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }
-        },
-        "+"
-      )));
-    };
-    if (!showRoleGroups) {
-      return base.map(renderIngRow);
-    }
-    const ROLE_GROUPS = [
-      {
-        key: "base_carbono",
-        label: "Bases de Carbono",
-        icon: IconSeed,
-        desc: "Estructura primaria de lignina y celulosa (60–85% de la receta)",
-        primary: (g) => g.role === "base_carbono",
-        fallback: (g) => g.cat === "base" || g.cn >= 40
-      },
-      {
-        key: "suplemento_n",
-        label: "Suplementos Nitrogenados",
-        icon: IconNut,
-        desc: "Aporte de proteína y arranque micelial (5–20% máx según especie)",
-        primary: (g) => g.role === "suplemento_n" || g.role === "suplemento_medio",
-        fallback: (g) => g.n >= 1.4
-      },
-      {
-        key: "aditivo",
-        label: "Minerales y Tampones de pH",
-        icon: IconScale,
-        desc: "Estabilizadores de acidez, calcio y estructura (1–4%)",
-        primary: (g) => !!g.role?.startsWith("aditivo_"),
-        fallback: (g) => g.cat === "adit" || g.cn === 0
-      },
-      {
-        key: "aireador",
-        label: "Aireadores y Estructurantes",
-        icon: IconWind,
-        desc: "Porosidad y difusión de oxígeno gaseoso",
-        primary: (g) => g.role === "aireador",
-        fallback: (g) => g.cat === "trop" || g.cat === "circ"
-      },
-      {
-        key: "otro",
-        label: "Otros Insumos",
-        icon: IconSprout,
-        desc: "Ingredientes complementarios aún no clasificados en los roles anteriores",
-        primary: () => false,
-        fallback: () => true
-      }
-    ];
-    const roleAssignment = {};
-    ROLE_GROUPS.forEach((grp) => {
-      base.forEach((g) => {
-        if (!roleAssignment[g.id] && grp.primary(g)) roleAssignment[g.id] = grp.key;
-      });
-    });
-    ROLE_GROUPS.forEach((grp) => {
-      base.forEach((g) => {
-        if (!roleAssignment[g.id] && grp.fallback(g)) roleAssignment[g.id] = grp.key;
-      });
-    });
-    return ROLE_GROUPS.map((grp) => {
-      const grpIngs = base.filter((g) => roleAssignment[g.id] === grp.key);
-      if (grpIngs.length === 0) return null;
-      const isCollapsed = collapsedRoles[grp.key];
-      const compatCount = grpIngs.filter((g) => g.cs && g.cs.includes(sKey)).length;
-      return /* @__PURE__ */ React.createElement("section", { key: grp.key, className: `role-group-box${isCollapsed ? " is-collapsed" : ""}` }, /* @__PURE__ */ React.createElement(
+    return groupsToRender.map((grp) => {
+      const isCollapsed = Boolean(collapsedRoles[grp.key]);
+      const compatCount = grp.ings.filter((g) => g.cs && g.cs.includes(sKey)).length;
+      return /* @__PURE__ */ React.createElement("section", { key: grp.key, className: `role-group-box${isCollapsed ? " is-collapsed" : ""}`, style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden" } }, grp.label && /* @__PURE__ */ React.createElement(
         "button",
         {
           type: "button",
           className: "role-group-hdr",
-          onClick: () => toggleRoleCollapse(grp.key),
           "aria-expanded": !isCollapsed,
-          "aria-controls": `role-group-${grp.key}`
+          onClick: () => toggleRoleCollapse(grp.key),
+          style: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: grp.color + "15", border: "none", borderBottom: isCollapsed ? "none" : "1px solid var(--border-soft)", cursor: "pointer", textAlign: "left" }
         },
-        /* @__PURE__ */ React.createElement("div", { className: "role-group-heading" }, /* @__PURE__ */ React.createElement("span", { className: "role-group-icon", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement(grp.icon, { size: 18 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "role-group-title" }, grp.label, " ", /* @__PURE__ */ React.createElement("span", null, "(", grpIngs.length, ")")), /* @__PURE__ */ React.createElement("div", { className: "role-group-desc" }, grp.desc))),
-        /* @__PURE__ */ React.createElement("div", { className: "role-group-summary" }, /* @__PURE__ */ React.createElement("span", { className: "role-group-compatible" }, compatCount, " compatible", compatCount === 1 ? "" : "s"), /* @__PURE__ */ React.createElement("span", { className: "role-group-chevron", "aria-hidden": "true" }, "⌄"))
-      ), /* @__PURE__ */ React.createElement("div", { id: `role-group-${grp.key}`, className: "role-group-content", hidden: isCollapsed }, grpIngs.map(renderIngRow)));
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: grp.color } }), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-label)", color: "var(--ink-800)" } }, grp.label)),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "role-group-compatible", style: { fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--ink-600)" } }, compatCount, " compatible", compatCount === 1 ? "" : "s"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "(", grp.ings.length, ")"))
+      ), /* @__PURE__ */ React.createElement("div", { className: "role-group-content", hidden: isCollapsed, style: { padding: "6px" } }, grp.ings.map(renderIngRow)));
     });
-  })()))), /* @__PURE__ */ React.createElement("div", { className: "builder-right" }, /* @__PURE__ */ React.createElement("header", { className: "form-advanced-tools-head", id: "form-advanced-tools-title" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Herramientas avanzadas"), /* @__PURE__ */ React.createElement("h2", null, "Perito + Automejora"), /* @__PURE__ */ React.createElement("p", null, "Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.")), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => document.getElementById("gen-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }) }, "Abrir generador")), an && (() => {
-    const hasPer = recipe.length > 0;
-    const { score, status, items } = hasPer ? opt : { score: 0, status: "sin_receta", items: [] };
-    const criticals = items.filter((s) => s.priority === "critical");
-    const warnings = items.filter((s) => s.priority === "warning");
-    const tips = items.filter((s) => s.priority === "tip");
-    const infos = items.filter((s) => s.priority === "info");
-    const sm = PERITO_STATUS[status] || PERITO_STATUS.sin_receta;
-    const max = 150, oMin = sp?.cn_optimal?.min, oMax = sp?.cn_optimal?.max;
-    const cur = sp ? Math.min(an.cn, max) : 0;
-    const cnOk = sp && an.cn >= oMin && an.cn <= oMax;
-    return /* @__PURE__ */ React.createElement("div", { className: "panel print-panel", id: "bl-perito", style: { background: hasPer ? sm.bg : "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: 12, transition: "background .3s,border-color .3s" } }, hasPer && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${sm.border}40`, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 62, height: 62, borderRadius: "50%", background: sm.badge, flexShrink: 0, transition: "background .3s" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 24, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.7)", letterSpacing: "var(--tracking-button)", marginTop: 1 } }, "SCORE")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, marginBottom: 2 } }, "Perito · Veredicto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 800, color: sm.txt, lineHeight: 1, transition: "color .3s" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, marginTop: 4, lineHeight: 1.4 } }, sm.accion && /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700 } }, sm.accion), (() => {
-      const causa = peritoMainLimiter(opt, an);
-      return causa ? /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.8, marginTop: 2 } }, /* @__PURE__ */ React.createElement("b", null, "Causa:"), " ", causa) : null;
-    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("produccion"), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "Producir"), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
-      setPromptDlg({ title: "Nueva prueba experimental", label: "Nombre de la prueba", placeholder: "ej. Ostra gris — ajuste C:N lote 12", confirmLabel: "Guardar prueba", onSubmit: (nm) => {
-        const trSave = calcTreatment(an, sKey, SPP);
-        const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an.eb.toFixed(0), cn: an.cn.toFixed(1), score: opt.score, cost: Math.round(an.cost), treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
-        const u = [e, ...saved];
-        setSaved(u);
-        try {
-          localStorage.setItem("setas_v6", JSON.stringify(u));
-        } catch (e2) {
-        }
-        setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
-      } });
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: sm.badge, border: `1px solid ${sm.border}`, borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "+ Crear prueba"))), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
-      { l: "C:N", v: `${an.cn.toFixed(1)}:1`, ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max },
-      { l: "Nitrógeno", v: `${an.avgN.toFixed(2)}%`, ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max },
-      { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
-      { l: "Costo / kg", v: `$${Math.round(an.cost)}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
-      { l: "pH estimado", v: an.avgPh?.toFixed(1) || "—", ok: sp && an.avgPh >= sp.ph_optimal?.min && an.avgPh <= sp.ph_optimal?.max, w: false },
-      { l: "Digestibilidad", v: `${an.avgDig?.toFixed(1) || "—"}/10`, ok: an.avgDig >= 7, w: an.avgDig >= 4 && an.avgDig < 7 }
-    ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "mc" }, /* @__PURE__ */ React.createElement("div", { className: "mlbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "mval" }, m.v), /* @__PURE__ */ React.createElement("span", { className: `mbadge ${m.ok ? "bgood" : m.w ? "bwarn" : "bbad"}` }, m.ok ? "Óptimo" : m.w ? "Aceptable" : "Ajustar")))), /* @__PURE__ */ React.createElement(EBDial, { an, sp }), sp && an.cn > 0 && /* @__PURE__ */ React.createElement("div", { className: "gauge-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-hdr" }, /* @__PURE__ */ React.createElement("span", { className: "gauge-cur" }, "C:N ", an.cn.toFixed(1), ":1"), /* @__PURE__ */ React.createElement("span", { className: "gauge-tgt" }, "objetivo ", oMin, "–", oMax, ":1")), /* @__PURE__ */ React.createElement("div", { className: "gauge-tr" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-zn", style: { left: `${oMin / max * 100}%`, width: `${(oMax - oMin) / max * 100}%` } }), /* @__PURE__ */ React.createElement("div", { className: "gauge-nd", style: { left: `${cur / max * 100}%`, background: cnOk ? "var(--accent-olive)" : an.cn < oMin ? "var(--coral-500)" : "var(--ochre-500,#A07828)" } })), /* @__PURE__ */ React.createElement("div", { className: "gauge-ft" }, /* @__PURE__ */ React.createElement("span", null, "0"), /* @__PURE__ */ React.createElement("span", null, oMin, "–", oMax), /* @__PURE__ */ React.createElement("span", null, "150+"))), /* @__PURE__ */ React.createElement(NitrogenChart, { recipe }), hasPer && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, margin: "10px 0 8px", border: "1px solid rgba(26,20,16,.1)", borderRadius: 6, overflow: "hidden", background: "var(--paper-100)" } }, [
-      { l: "Calificación", v: `${opt?.score ?? "—"}/100`, ok: (opt?.score || 0) >= 85, w: (opt?.score || 0) >= 60 },
-      { l: "EB estimada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb?.toFixed(0) || "—"}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
-      { l: "Costo / kg", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 10px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), (an.tot < 97 || an.tot > 103) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, "⚠ Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", null, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "✦ Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
-  })(), /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats }), /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-900)", lineHeight: 1 } }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", recipe.length, ")")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap" } }, an && Math.abs(an.tot - 100) > 0.5 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => autoBalance(balanceMode) }, "Balancear"), /* @__PURE__ */ React.createElement("select", { className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value), title: "Estrategia de balanceo" }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último"))), /* @__PURE__ */ React.createElement("button", { className: `tog${normMode ? " on" : ""}`, "aria-pressed": normMode, onClick: () => setNormMode(!normMode), title: "Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)" }, "Auto-ajustar"), /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
-    setRecipe([]);
-    setLockedIds([]);
-  } }) }, "Limpiar"))), recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Selecciona ingredientes a la izquierda para comenzar a formular."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 18, padding: "14px 16px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-100)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 6 } }, "¿No sabes por dónde empezar?"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", lineHeight: 1.6, marginBottom: 12 } }, "El ", /* @__PURE__ */ React.createElement("strong", null, "Generador"), " crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular."), /* @__PURE__ */ React.createElement("button", { onClick: () => {
-    setShowOptimizer(true);
-    document.getElementById("gen-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", padding: "9px 16px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Ver Generador ↓"))) : /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--paper-300)" } }, recipe.map((r) => {
+  })())), /* @__PURE__ */ React.createElement("div", { className: "builder-right" }, /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 22, color: "var(--ink-900)", lineHeight: 1 } }, "Mesa de Mezcla"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 600 } }, "(", recipe.length, " insumos)"))), an && /* @__PURE__ */ React.createElement("div", { className: `mass-balance-bar ${an.tot >= 99.5 && an.tot <= 100.5 ? "is-ok" : an.tot < 95 || an.tot > 105 ? "is-err" : "is-warn"}` }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 800, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", fontSize: "var(--text-xs)" } }, "Masa Total:"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 800, fontSize: "var(--text-base)" } }, an.tot.toFixed(1), "% / 100%"), an.tot >= 99.5 && an.tot <= 100.5 ? /* @__PURE__ */ React.createElement("span", { style: { color: "var(--moss-700)", fontWeight: 700, fontSize: "var(--text-xs)", display: "inline-flex", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement(IconCheck, { size: 14, color: "var(--moss-700)" }), " Balanceado") : /* @__PURE__ */ React.createElement("span", { style: { color: "var(--coral-600)", fontWeight: 700, fontSize: "var(--text-xs)", display: "inline-flex", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 14, color: "var(--coral-600)" }), " Requiere balance")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } }, Math.abs(an.tot - 100) > 0.5 && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "mass-balance-btn",
+      onClick: () => autoBalance(balanceMode),
+      title: "Ajustar ingredientes libres al 100%"
+    },
+    /* @__PURE__ */ React.createElement(IconBolt, { size: 14, color: "#fff" }),
+    /* @__PURE__ */ React.createElement("span", null, "Auto-balancear 100%")
+  ), /* @__PURE__ */ React.createElement("select", { className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value), title: "Estrategia de balanceo" }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último")), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: `tog${normMode ? " on" : ""}`,
+      "aria-pressed": normMode,
+      onClick: () => setNormMode(!normMode),
+      title: "Al cambiar un %, los demás se reescalan proporcionalmente (respeta ●)"
+    },
+    "Auto-ajustar (%)"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "tog",
+      onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
+        setRecipe([]);
+        setLockedIds([]);
+      } })
+    },
+    "Limpiar"
+  ))), recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "rec-empty", style: { padding: "24px 16px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed", style: { fontSize: "18px", fontWeight: 700, marginBottom: 6 } }, "Tu mesa de mezcla está vacía"), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub", style: { color: "var(--ink-600)", marginBottom: 16 } }, "Selecciona insumos a la izquierda o genera una receta automáticamente con IA."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => document.getElementById("bl-ingredientes")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      style: { padding: "10px 18px", background: "var(--paper-100)", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: "pointer" }
+    },
+    "+ Explorar Insumos"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => setBuilderSubTab("generador"),
+      style: { padding: "10px 18px", background: "var(--moss-700)", color: "#fff", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: "pointer" }
+    },
+    "⚡ Abrir Generador de Recetas"
+  ))) : /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--paper-300)", borderRadius: "var(--radius-sm)", overflow: "hidden" } }, recipe.map((r) => {
     const g = INGS.find((i) => i.id === r.id);
     if (!g) return null;
     const isLocked = lockedIds.includes(r.id);
@@ -3713,99 +3554,163 @@ Click para ver análisis completo`
       return false;
     };
     const rowFlag = recipe.length > 0 ? opt.items.find((it) => it.priority === "critical" && roleMatch(it)) || opt.items.find((it) => it.priority === "warning" && roleMatch(it)) : null;
-    return /* @__PURE__ */ React.createElement("div", { key: r.id, className: `rec-row${isLocked ? " rec-locked" : ""}`, style: { display: "flex", flexDirection: "column", gap: 8, padding: "12px 14px", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 6, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-base)", fontWeight: 500 } }, g.name), /* @__PURE__ */ React.createElement("button", { className: `lock-btn${isLocked ? " on" : ""}`, onClick: () => toggleLock(r.id), "aria-label": isLocked ? `Desbloquear porcentaje de ${g?.name || ""}` : `Fijar porcentaje de ${g?.name || ""}`, title: isLocked ? "Desbloquear (incluir en auto-ajuste)" : "Fijar este % (excluir del auto-ajuste)", style: { fontSize: "var(--text-sm)", padding: "2px 4px", flexShrink: 0 } }, isLocked ? "●" : "○")), /* @__PURE__ */ React.createElement("div", { className: "imeta", style: { fontSize: "var(--text-xs)" } }, "C:N ", g.cn || "—", " · N ", g.n || "—", "%"), rowFlag && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: "var(--text-xs)", fontWeight: 700, color: rowFlag.priority === "critical" ? "var(--coral-500)" : "#7A5A10", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("span", null, rowFlag.priority === "critical" ? "⚠" : "!"), /* @__PURE__ */ React.createElement("span", null, rowFlag.label))), /* @__PURE__ */ React.createElement("button", { className: "rem", onClick: () => {
-      remI(r.id);
-      setLockedIds((l) => l.filter((x) => x !== r.id));
-    }, "aria-label": `Quitar ${g?.name || "ingrediente"} de la receta`, style: { flexShrink: 0, fontSize: "var(--text-base)", padding: "4px 8px" } }, "✕")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("input", { type: "range", min: "0", max: "100", step: ".5", value: r.p, onChange: (e) => !isLocked && updP(r.id, parseFloat(e.target.value) || 0), disabled: isLocked, "aria-label": `Porcentaje de ${g.name}`, "aria-valuetext": `${r.p}%`, "aria-disabled": isLocked, style: { opacity: isLocked ? 0.5 : 1, width: "100%" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", max: "100", step: ".5", required: true, value: r.p, onChange: (e) => !isLocked && updP(r.id, parseFloat(e.target.value) || 0), readOnly: isLocked, "aria-label": `Porcentaje de ${g?.name || "ingrediente"} (numérico)`, className: "rec-pct-input", style: { width: "70px", padding: "6px 8px", border: "1px solid var(--paper-300)", background: isLocked ? "var(--paper-200)" : "var(--paper-100)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", textAlign: "center", color: "var(--ink-900)", outline: "none", borderRadius: "var(--r-xs)" } }), /* @__PURE__ */ React.createElement("span", { className: "pct", style: { fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--ink-600)" } }, "%"))));
-  })), an && /* @__PURE__ */ React.createElement("div", { className: `tbar ${an.tot >= 99 && an.tot <= 101 ? "ok" : an.tot < 95 || an.tot > 105 ? "err" : "warn"}` }, /* @__PURE__ */ React.createElement("span", null, "Total"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, an.tot.toFixed(1), "% / 100%")), normMode && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "norm-bar" }, /* @__PURE__ */ React.createElement("span", null, "⇌"), /* @__PURE__ */ React.createElement("span", null, "Auto-ajustar activo — al cambiar un %, los demás se reescalan proporcionalmente"), lockedIds.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "auto", opacity: 0.8 } }, "● ", lockedIds.length, " fijado", lockedIds.length !== 1 ? "s" : "")), an && an.sp && opt?.score > 0 && (() => {
-    const sc = opt.score;
-    const col = sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)";
-    const bg = sc >= 80 ? "#F2F5EE" : sc >= 60 ? "#FBF6E8" : "#F9EDEA";
-    const lbl = sc >= 85 ? "Óptima" : sc >= 70 ? "Muy buena" : sc >= 55 ? "Aceptable" : sc >= 40 ? "Mejorable" : "Deficiente";
-    return /* @__PURE__ */ React.createElement("div", { style: { background: bg, border: `1px solid ${col}`, borderLeft: `4px solid ${col}`, padding: "12px 14px 10px", marginTop: 3, transition: "background-color .4s ease,border-color .4s ease,color .4s ease" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 800, marginBottom: 2 } }, "Score de receta"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-base)", fontStyle: "italic", color: col, lineHeight: 1, transition: "color .4s" } }, lbl)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 42, fontWeight: 400, lineHeight: 1, color: col, letterSpacing: "var(--tracking-tight)", transition: "background-color .4s ease,border-color .4s ease,color .4s ease" } }, sc), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-400)", fontWeight: 600, marginBottom: 4 } }, "/100"))), /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(26,20,16,0.08)", borderRadius: 2, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${sc}%`, background: col, borderRadius: 2, transition: "width .6s cubic-bezier(.32,.72,.36,1)" } })));
-  })(), an && an.sp && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "10px 0 4px" } }, [
-    { label: "C:N", val: an.cn, min: an.sp.cn_optimal.min, max: an.sp.cn_optimal.max, ideal: an.sp.cn_optimal.ideal, fmt: (v) => `${v.toFixed(1)}:1`, scale: Math.max(an.sp.cn_optimal.max * 1.5, an.cn * 1.1 || 1) },
-    { label: "N%", val: an.avgN, min: an.sp.n_optimal.min, max: an.sp.n_optimal.max, ideal: an.sp.n_optimal.ideal, fmt: (v) => `${v.toFixed(2)}%`, scale: Math.max(an.sp.n_optimal.max * 1.5, an.avgN * 1.1 || 1) }
-  ].map((m) => {
-    const inRange = m.val >= m.min && m.val <= m.max;
-    const pct = Math.min(100, m.val / m.scale * 100);
-    const idealPct = m.ideal / m.scale * 100;
-    const minPct = m.min / m.scale * 100;
-    const maxPct = m.max / m.scale * 100;
-    const barColor = inRange ? "var(--moss-500)" : m.val < m.min ? "var(--coral-500)" : "#d4a04a";
-    return /* @__PURE__ */ React.createElement("div", { key: m.label, style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", padding: "8px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-700)", fontWeight: 700 } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", color: barColor, fontWeight: 600 } }, m.fmt(m.val))), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 6, background: "#e0dbd3", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${minPct}%`, width: `${maxPct - minPct}%`, height: "100%", background: "rgba(77,98,53,.2)", borderRadius: 3 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${idealPct}%`, width: 2, height: "160%", top: "-30%", background: "rgba(77,98,53,.5)", borderRadius: 1 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, width: `${pct}%`, height: "100%", background: barColor, borderRadius: 3, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, /* @__PURE__ */ React.createElement("span", null, m.fmt(m.min)), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.7 } }, "↑", m.fmt(m.ideal)), /* @__PURE__ */ React.createElement("span", null, m.fmt(m.max))));
-  })), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bwrap", id: "bl-batch" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 13 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Batch"), /* @__PURE__ */ React.createElement("button", { className: `tog${showBatch ? " on" : ""}`, "aria-pressed": showBatch, onClick: () => setShowBatch(!showBatch) }, showBatch ? "Ocultar" : "Calcular")), /* @__PURE__ */ React.createElement("div", { className: "bgrid", style: { gridTemplateColumns: "1fr 1fr 1fr 1fr" } }, /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-numbags" }, "Nº bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bf-numbags", type: "number", min: "1", max: "500", required: true, value: numBags, onChange: (e) => setNumBags(parseInt(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-kgbag" }, "kg / bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bf-kgbag", type: "number", min: ".5", max: "5", step: ".1", required: true, value: kgBag, onChange: (e) => setKgBag(parseFloat(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-hobj" }, "Humedad obj. % △"), /* @__PURE__ */ React.createElement("input", { id: "bf-hobj", type: "number", min: "55", max: "80", required: true, value: hObj, onChange: (e) => setHObj(parseInt(e.target.value) || 67), style: { borderColor: hObj >= 67 ? "var(--moss-500)" : "var(--coral-500)" } })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-spawncost" }, "Costo spawn ($/kg)"), /* @__PURE__ */ React.createElement("input", { id: "bf-spawncost", type: "number", min: "0", step: "1000", required: true, value: spawnCost, onChange: (e) => setSpawnCost(parseInt(e.target.value) || 0) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-vegprice" }, "Precio venta ($/kg )"), /* @__PURE__ */ React.createElement("input", { id: "bf-vegprice", type: "number", min: "0", step: "1000", required: true, value: vegPrice, onChange: (e) => setVegPrice(parseInt(e.target.value) || 0) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-total" }, "Total"), /* @__PURE__ */ React.createElement("input", { id: "bf-total", readOnly: true, value: `${(numBags * kgBag).toFixed(1)} kg`, style: { fontWeight: 700, color: "var(--coral-500)" } }))), showBatch && bd && /* @__PURE__ */ React.createElement("div", null, bd.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "brow" }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, it.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 11, alignItems: "center" } }, it.cost > 0 && /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(it.cost).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq" }, it.unit)))), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "2px solid var(--border-soft)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn", style: { color: "#2A5078", fontWeight: 600 } }, " Agua a agregar (obj. ", bd.hObj, "%)"), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F2FA", border: "1px solid #9AC0D8", color: "#2A5078" } }, bd.agua.toFixed(2), " L")), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "1px solid var(--paper-300)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, " Spawn (", an?.dynSpawn || 8, "% · ", bd.spawn.toFixed(2), " kg)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F5E8", border: "1px solid #7AB87A", color: "#2A5A2A" } }, bd.spawn.toFixed(2), " kg"))), /* @__PURE__ */ React.createElement("div", { className: "btots", style: { gridTemplateColumns: "repeat(4,1fr)" } }, /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, bd.wet.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Sustrato")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.cost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Insumos")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Spawn")), /* @__PURE__ */ React.createElement("div", { className: "btot", style: { background: "var(--coral-500)" } }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.totalCost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Total COP"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo por bolsa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.costPerBag).toLocaleString())), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo / kg sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.cost / bd.wet).toLocaleString()))), vegPrice > 0 && an && an.eb > 0 && (() => {
-    const yieldKg = bd.dry * (an.eb / 100);
-    const revenue = yieldKg * vegPrice;
-    const margin = revenue - bd.totalCost;
-    const marginPct = revenue > 0 ? (margin / revenue * 100).toFixed(1) : 0;
-    const positive = margin >= 0;
-    return /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, border: `1px solid ${positive ? "var(--moss-500)" : "var(--coral-500)"}`, background: positive ? "#F2F5EE" : "#F9EDEA" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", borderBottom: `1px solid ${positive ? "var(--moss-500)" : "var(--coral-500)"}`, fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: positive ? "var(--moss-500)" : "var(--coral-500)" } }, "Proyección de ingresos · EB ", an.eb.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, background: positive ? "var(--moss-500)" : "var(--coral-500)" } }, [
-      { l: "Cosecha est.", v: `${yieldKg.toFixed(1)} kg` },
-      { l: "Ingresos brutos", v: `$${Math.round(revenue).toLocaleString()}` },
-      { l: `Margen ${marginPct}%`, v: `$${Math.round(margin).toLocaleString()}`, bold: true, good: positive }
-    ].map((cell, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, cell.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: cell.bold ? cell.good ? "var(--moss-500)" : "var(--coral-500)" : "var(--ink-900)" } }, cell.v)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, "Precio venta $", vegPrice.toLocaleString(), "/kg · Costo total $", Math.round(bd.totalCost).toLocaleString(), " COP · Sin contar labor ni servicios · EB sobre materia seca ($", bd.dry.toFixed(1), " kg de $", bd.wet.toFixed(1), " kg húmedos)."));
-  })())), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "act-row no-print" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => window.print() }, "Imprimir ficha"), /* @__PURE__ */ React.createElement("button", { className: "btn pri", onClick: exportR }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↓"), " Exportar .txt"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
-    if (typeof html2pdf === "undefined") {
-      setNoticeDlg({ msg: "html2pdf no disponible." });
-      return;
+    const roleCol = FORM_ROLE_COLORS[g.role] || "#666";
+    return /* @__PURE__ */ React.createElement("div", { key: r.id, className: `mix-ingredient-row${isLocked ? " is-locked" : ""}` }, /* @__PURE__ */ React.createElement("div", { className: "mix-row-header" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { className: "mix-role-tag", style: { background: roleCol + "22", color: roleCol, border: `1px solid ${roleCol}44` } }, FORM_ROLE_LABELS[g.role] || g.role), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, g.name), /* @__PURE__ */ React.createElement("span", { className: "imeta", style: { fontSize: "var(--text-xs)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, "C:N ", g.cn || "—", " · N ", g.n || "—", "%")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: `mix-lock-btn${isLocked ? " is-locked" : ""}`,
+        onClick: () => toggleLock(r.id),
+        "aria-label": isLocked ? `Desbloquear porcentaje de ${g.name}` : `Fijar porcentaje de ${g.name}`,
+        title: isLocked ? "Desbloquear (se ajusta al auto-balancear)" : "Fijar este % (no cambia al auto-balancear)"
+      },
+      isLocked ? "🔒 Fijado" : "🔓 Libre"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "mix-del-btn",
+        onClick: () => {
+          remI(r.id);
+          setLockedIds((l) => l.filter((x) => x !== r.id));
+        },
+        "aria-label": `Quitar ${g.name} de la receta`,
+        title: `Quitar ${g.name}`
+      },
+      "✕"
+    ))), /* @__PURE__ */ React.createElement("div", { className: "mix-controls-row" }, /* @__PURE__ */ React.createElement("div", { className: "mix-steppers", role: "group", "aria-label": `Ajuste de porcentaje para ${g.name}` }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "mix-step-btn",
+        disabled: isLocked || r.p <= 0,
+        onClick: () => !isLocked && updP(r.id, Math.max(0, Math.round((r.p - 5) * 10) / 10)),
+        title: "-5%"
+      },
+      "-5%"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "mix-step-btn",
+        disabled: isLocked || r.p <= 0,
+        onClick: () => !isLocked && updP(r.id, Math.max(0, Math.round((r.p - 1) * 10) / 10)),
+        title: "-1%"
+      },
+      "-1%"
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "number",
+        min: "0",
+        max: "100",
+        step: "0.5",
+        required: true,
+        value: r.p,
+        readOnly: isLocked,
+        onChange: (e) => !isLocked && updP(r.id, parseFloat(e.target.value) || 0),
+        "aria-label": `Porcentaje de ${g.name}`,
+        className: "mix-num-input"
+      }
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-700)" } }, "%"), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "mix-step-btn",
+        disabled: isLocked || r.p >= 100,
+        onClick: () => !isLocked && updP(r.id, Math.min(100, Math.round((r.p + 1) * 10) / 10)),
+        title: "+1%"
+      },
+      "+1%"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "mix-step-btn",
+        disabled: isLocked || r.p >= 100,
+        onClick: () => !isLocked && updP(r.id, Math.min(100, Math.round((r.p + 5) * 10) / 10)),
+        title: "+5%"
+      },
+      "+5%"
+    )), rowFlag && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-xs)", fontWeight: 700, color: rowFlag.priority === "critical" ? "var(--coral-500)" : "#7A5A10", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("span", null, rowFlag.priority === "critical" ? "⚠" : "!"), /* @__PURE__ */ React.createElement("span", null, rowFlag.label))), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "range",
+        min: "0",
+        max: "100",
+        step: "0.5",
+        value: r.p,
+        onChange: (e) => !isLocked && updP(r.id, parseFloat(e.target.value) || 0),
+        disabled: isLocked,
+        "aria-label": `Deslizador de porcentaje para ${g.name}`,
+        style: { width: "100%", accentColor: "var(--accent-olive)", opacity: isLocked ? 0.4 : 1 }
+      }
+    ));
+  }))), /* @__PURE__ */ React.createElement("div", { className: "bg-wrap recipe-live-evaluation" }, /* @__PURE__ */ React.createElement("div", { style: { display: "none" } }, "Perito + Automejora"), an && (() => {
+    const hasPer = recipe.length > 0;
+    const { score, status, items } = hasPer ? opt : { score: 0, status: "sin_receta", items: [] };
+    const criticals = items.filter((s) => s.priority === "critical");
+    const warnings = items.filter((s) => s.priority === "warning");
+    const tips = items.filter((s) => s.priority === "tip");
+    const infos = items.filter((s) => s.priority === "info");
+    const sm = PERITO_STATUS[status] || PERITO_STATUS.sin_receta;
+    const max = 150, oMin = sp?.cn_optimal?.min, oMax = sp?.cn_optimal?.max;
+    const cur = sp ? Math.min(an.cn, max) : 0;
+    const cnOk = sp && an.cn >= oMin && an.cn <= oMax;
+    return /* @__PURE__ */ React.createElement("div", { className: "panel print-panel", id: "bl-perito", style: { background: hasPer ? sm.bg : "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: 12, transition: "background .3s,border-color .3s" } }, hasPer && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${sm.border}40`, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 62, height: 62, borderRadius: "50%", background: sm.badge, flexShrink: 0, transition: "background .3s" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 24, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.7)", letterSpacing: "var(--tracking-button)", marginTop: 1 } }, "SCORE")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, fontWeight: 800 } }, "Perito · Diagnóstico"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 5px", background: "rgba(0,0,0,.06)", borderRadius: 2, color: "var(--ink-600)", fontWeight: 700 } }, "ESTIMADO · EB"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 5px", background: "rgba(0,0,0,.06)", borderRadius: 2, color: "var(--ink-600)", fontWeight: 700 } }, "CALCULADO · C:N")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 800, color: sm.txt, lineHeight: 1.1, transition: "color .3s" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, marginTop: 4, lineHeight: 1.4 } }, sm.accion && /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700 } }, sm.accion), (() => {
+      const causa = peritoMainLimiter(opt, an);
+      return causa ? /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.8, marginTop: 2 } }, /* @__PURE__ */ React.createElement("b", null, "Causa:"), " ", causa) : null;
+    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 12px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"))), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
+      { l: "C:N", v: `${an.cn.toFixed(1)}:1`, ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max },
+      { l: "Nitrógeno", v: `${an.avgN.toFixed(2)}%`, ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max },
+      { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
+      { l: "Costo / kg", v: `$${Math.round(an.cost)} COP`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
+      { l: "pH estimado", v: an.avgPh?.toFixed(1) || "—", ok: sp && an.avgPh >= sp.ph_optimal?.min && an.avgPh <= sp.ph_optimal?.max, w: false },
+      { l: "Digestibilidad", v: `${an.avgDig?.toFixed(1) || "—"}/10`, ok: an.avgDig >= 7, w: an.avgDig >= 4 && an.avgDig < 7 }
+    ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "mc" }, /* @__PURE__ */ React.createElement("div", { className: "mlbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "mval" }, m.v), /* @__PURE__ */ React.createElement("span", { className: `mbadge ${m.ok ? "bgood" : m.w ? "bwarn" : "bbad"}` }, m.ok ? "Óptimo" : m.w ? "Aceptable" : "Ajustar")))), /* @__PURE__ */ React.createElement(EBDial, { an, sp }), sp && an.cn > 0 && /* @__PURE__ */ React.createElement("div", { className: "gauge-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-hdr" }, /* @__PURE__ */ React.createElement("span", { className: "gauge-cur" }, "C:N ", an.cn.toFixed(1), ":1"), /* @__PURE__ */ React.createElement("span", { className: "gauge-tgt" }, "objetivo ", oMin, "–", oMax, ":1")), /* @__PURE__ */ React.createElement("div", { className: "gauge-tr" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-zn", style: { left: `${oMin / max * 100}%`, width: `${(oMax - oMin) / max * 100}%` } }), /* @__PURE__ */ React.createElement("div", { className: "gauge-nd", style: { left: `${cur / max * 100}%`, background: cnOk ? "var(--accent-olive)" : an.cn < oMin ? "var(--coral-500)" : "var(--ochre-500,#A07828)" } })), /* @__PURE__ */ React.createElement("div", { className: "gauge-ft" }, /* @__PURE__ */ React.createElement("span", null, "0"), /* @__PURE__ */ React.createElement("span", null, oMin, "–", oMax), /* @__PURE__ */ React.createElement("span", null, "150+"))), /* @__PURE__ */ React.createElement(NitrogenChart, { recipe }), hasPer && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, marginTop: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango")), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }));
+  })(), /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats })), /* @__PURE__ */ React.createElement("div", { id: "bl-batch", style: { display: "none" } }), tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento de inocuidad"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía técnica")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-md)" } }, "⚡"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico: ${tr.energy.kwh_per_kg} kWh/kg · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel", style: { display: "flex", flexDirection: "column", gap: 10, background: "var(--paper-100)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      "aria-label": "Nombre de la receta",
+      autoComplete: "off",
+      placeholder: "Nombre para guardar la receta…",
+      value: saveName,
+      onChange: (e) => setSaveName(e.target.value),
+      onKeyDown: (e) => e.key === "Enter" && saveR(),
+      maxLength: 60,
+      style: { flex: 1, minWidth: 200, minHeight: 42, padding: "8px 12px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--paper-0)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 600 }
     }
-    const el = document.querySelector(".print-panel");
-    if (!el) {
-      setNoticeDlg({ msg: "Genera análisis primero." });
-      return;
-    }
-    html2pdf().set({ margin: 10, filename: `receta_${sKey}_${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.pdf`, html2canvas: { scale: 2 }, jsPDF: { format: "a4", orientation: "portrait" } }).from(el).save();
-  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↓"), " PDF"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
-    if (!recipe.length) {
-      setNoticeDlg({ msg: "No hay receta." });
-      return;
-    }
-    const p = { version: "1.0", exportedAt: (/* @__PURE__ */ new Date()).toISOString(), especie: { key: sKey, nombre: an?.sp?.name }, receta: recipe.map((r) => {
-      const g = INGS.find((i) => i.id === r.id);
-      return { id: r.id, nombre: g?.name, porcentaje: r.p };
-    }), analisis: an ? { cn: an.cn, n: an.avgN, eb: an.eb, costo: an.cost, score: opt.score } : null, tratamiento: tr ? { metodo: tr.name, temp: tr.temp, tiempo: tr.time } : null };
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 2)], { type: "application/json" }));
-    a.download = `receta_${sKey}_${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
-    a.click();
-  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↓"), " JSON"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const p = JSON.parse(ev.target.result);
-          if (p.receta && p.especie) {
-            const apply = () => {
-              if (p.especie.key && SPP[p.especie.key]) setSKey(p.especie.key);
-              setRecipe(p.receta.map((r) => ({ id: r.id, p: r.porcentaje })));
-            };
-            if (recipe.length > 0) {
-              setConfirmDlg({ title: "Reemplazar receta activa", msg: `¿Reemplazar la receta actual con "${p.especie.nombre || p.especie.key}"?`, onConfirm: apply });
-            } else apply();
-          } else {
-            setNoticeDlg({ msg: "JSON inválido — no contiene los campos receta/especie." });
-          }
-        } catch (err) {
-          setNoticeDlg({ msg: "Error al leer el archivo JSON. Verifica que sea un archivo exportado desde el simulador." });
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !balanced, title: balanced ? "" : balMsg }, flash ? "✓ Guardada" : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "sbtn", onClick: () => {
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: `sbtn${flash ? " fl" : ""}`,
+      onClick: saveR,
+      disabled: !saveName.trim() || !balanced,
+      title: balanced ? "Guardar receta en recetario" : balMsg,
+      style: { minHeight: 42, padding: "8px 18px", background: balanced ? "var(--moss-700)" : "var(--paper-300)", color: balanced ? "#fff" : "var(--ink-500)", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: balanced ? "pointer" : "not-allowed" }
+    },
+    flash ? "✓ Guardada" : "Guardar en Recetario"
+  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", paddingTop: 8, borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => goTab("produccion"),
+      style: { minHeight: 42, padding: "8px 20px", background: "var(--moss-600,var(--accent-olive))", color: "#fff", border: "none", borderRadius: "var(--radius-sm)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }
+    },
+    /* @__PURE__ */ React.createElement("span", null, "Preparar Mezcla en Producción →")
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => {
     setBitNuevoForm(buildBitNuevoForm());
     setShowBitNuevo(true);
-  }, disabled: !balanced, title: balanced ? "Crear lote experimental en la Bitácora con esta receta" : balMsg, style: { background: balanced ? "var(--moss-700,#2E3B2F)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", cursor: balanced ? "pointer" : "not-allowed" } }, "Prueba →"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" }, title: saveSyncErr }, "⚠ sin sincronizar"))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-md)" } }, "⚡"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
-    const s2 = SPP[e.sKey];
-    const isEven = idx % 2 === 0;
-    return /* @__PURE__ */ React.createElement("div", { key: e.id, style: { display: "flex", alignItems: "flex-start", marginBottom: 20, paddingLeft: 40 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 8, top: 6, width: 14, height: 14, background: "var(--coral-500)", border: "2px solid var(--paper-50)", borderRadius: "50%", zIndex: "var(--z-sticky)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-900)", marginBottom: 2 } }, e.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", background: "var(--paper-200)", padding: "2px 7px", borderRadius: 3, fontWeight: 600 } }, s2?.name), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 600 } }, "C:N ", e.cn, ":1"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: e.eb >= 100 ? "var(--accent-olive)" : e.eb >= 70 ? "var(--ochre-500,#A07828)" : "#C53030" } }, "EB estimada ", e.eb, "%"), e.ebReal != null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: Math.abs(e.ebReal - parseFloat(e.eb)) <= 10 ? "var(--accent-olive)" : "#C53030" } }, "EB real ", e.ebReal, "% (", e.ebReal >= parseFloat(e.eb) ? "+" : "", Math.round((e.ebReal - parseFloat(e.eb)) * 10) / 10, ")"), liveScoreFor(e) > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", fontWeight: 600 } }, "Score ", liveScoreFor(e), "/100"), e.cost && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, "$", e.cost, "/kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, e.date), /* @__PURE__ */ React.createElement("button", { className: "sload", onClick: () => loadR(e), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { className: "sebreal", onClick: () => setEbRealFor(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--ink-700)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, e.ebReal != null ? "Editar EB real" : "+ EB real"), /* @__PURE__ */ React.createElement("button", { className: "sdel", onClick: () => delR(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--coral-500)", border: "1px solid var(--coral-200)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Eliminar"))));
-  }))))), tab === "formular" && /* @__PURE__ */ React.createElement("div", { className: "formular-workspace" }, /* @__PURE__ */ React.createElement("div", { id: "gen-panel", className: "panel opt-panel", "aria-labelledby": "gen-panel-title", style: { marginTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)", position: "sticky", top: 0, zIndex: "var(--z-sticky-panel)", background: "var(--paper-50,#fff)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", id: "gen-panel-title", style: { marginBottom: 0, borderBottom: "none" } }, "Automejora · Generador de recetas"), /* @__PURE__ */ React.createElement("button", { className: "tog", "aria-pressed": showOptimizer, onClick: () => setShowOptimizer((s) => !s) }, showOptimizer ? "Ocultar" : "Mostrar")), showOptimizer && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "seg-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "seg" + (formularMode === "auto" ? " on" : ""), "aria-pressed": formularMode === "auto", onClick: () => setFormularMode("auto") }, "Automática"), /* @__PURE__ */ React.createElement("button", { className: "seg" + (formularMode === "manual" ? " on" : ""), "aria-pressed": formularMode === "manual", onClick: () => setFormularMode("manual") }, "Por objetivo C:N")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--paper-300)" } }, formularMode === "auto" ? "Genera combinaciones base×suplemento óptimas para tu especie — desde tu bodega o toda la paleta." : "Elige dos ingredientes y un C:N objetivo. El sistema calcula las proporciones exactas."), formularMode === "auto" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--ink-900)", paddingBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, "Especie objetivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "var(--text-md)", color: "var(--ink-900)", padding: "2px 0" } }, SPP[optTarget]?.name)), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--ink-900)", paddingBottom: 4 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "opt-max-cost", style: { display: "block", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, "Costo máximo por kg"), /* @__PURE__ */ React.createElement(
+  }, disabled: !balanced }, "+ Crear Lote de Prueba"), /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => window.print() }, "Imprimir"))), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" }, title: saveSyncErr }, "⚠ sin sincronizar")))))), tab === "formular" && /* @__PURE__ */ React.createElement("div", { className: "formular-workspace", style: { display: builderSubTab === "generador" ? "block" : "none" } }, /* @__PURE__ */ React.createElement("div", { id: "gen-panel", className: "panel opt-panel", "aria-labelledby": "gen-panel-title", style: { marginTop: 0, background: "var(--paper-0)", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", padding: "20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { id: "gen-panel-title", style: { margin: 0, fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 800, color: "var(--ink-900)" } }, "⚡ Generador de Recetas"), /* @__PURE__ */ React.createElement("p", { style: { margin: "4px 0 0", fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Calcula automáticamente combinaciones óptimas de sustrato basadas en requerimientos biológicos y stock en bodega.")), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "tog",
+      onClick: () => setBuilderSubTab("formular"),
+      style: { padding: "8px 14px", fontWeight: 700 }
+    },
+    "← Volver a Mesa de Mezcla"
+  )), /* @__PURE__ */ React.createElement("div", { className: "seg-row", style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("button", { className: "seg" + (formularMode === "auto" ? " on" : ""), "aria-pressed": formularMode === "auto", onClick: () => setFormularMode("auto") }, "Automática (IA / Escenarios)"), /* @__PURE__ */ React.createElement("button", { className: "seg" + (formularMode === "manual" ? " on" : ""), "aria-pressed": formularMode === "manual", onClick: () => setFormularMode("manual") }, "Por objetivo C:N (Solver)")), formularMode === "auto" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 18, background: "var(--paper-100)", padding: "16px", borderRadius: "var(--radius-sm)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 4 } }, "Especie objetivo"), /* @__PURE__ */ React.createElement("select", { value: optTarget, onChange: (e) => setOptTarget(e.target.value), style: { width: "100%", minHeight: 40, padding: "6px 10px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--paper-0)", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700 } }, Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "opt-max-cost", style: { display: "block", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 4 } }, "Costo máx. COP/kg (opcional)"), /* @__PURE__ */ React.createElement(
     "input",
     {
       id: "opt-max-cost",
@@ -3816,184 +3721,113 @@ Click para ver análisis completo`
       step: "100",
       value: optMaxCost || "",
       onChange: (e) => setOptMaxCost(parseInt(e.target.value) || 0),
-      autoComplete: "off",
-      "aria-describedby": "opt-max-cost-help",
-      style: { width: "100%", border: "none", background: "transparent", fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)", padding: "2px 0" },
-      placeholder: "Sin límite"
+      placeholder: "Sin límite",
+      style: { width: "100%", minHeight: 40, padding: "6px 10px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--paper-0)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" }
     }
-  ), /* @__PURE__ */ React.createElement("span", { id: "opt-max-cost-help", className: "sr-only" }, "Deja el campo vacío para no aplicar un límite de costo."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "flex-end", marginBottom: 14, flexWrap: "wrap", position: "sticky", top: 0, zIndex: "var(--z-sticky)", background: "var(--paper-50,#fff)", padding: "10px 0 10px", borderBottom: "1px solid var(--border-soft)", marginLeft: 0, marginRight: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Nivel"), /* @__PURE__ */ React.createElement("div", { className: "chip-row" }, Object.entries(OPT_PROFILES).map(([k, p]) => /* @__PURE__ */ React.createElement("button", { key: k, className: "chip" + (optProfile === k ? " on" : ""), "aria-pressed": optProfile === k, style: optProfile === k ? { color: p.color, borderBottomColor: p.color } : void 0, onClick: () => setOptProfile(k) }, p.label)))), /* @__PURE__ */ React.createElement(
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 4 } }, "Origen de insumos"), /* @__PURE__ */ React.createElement("div", { className: "chip-row" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "chip" + (optUseStock ? " on" : ""), onClick: () => setOptUseStock(true) }, "Solo bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "chip" + (!optUseStock ? " on" : ""), onClick: () => setOptUseStock(false) }, "Paleta completa")))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 8 } }, "Selecciona un Perfil de Optimización"), /* @__PURE__ */ React.createElement("div", { className: "gen-profile-cards" }, Object.entries(OPT_PROFILES).map(([k, p]) => /* @__PURE__ */ React.createElement(
     "button",
     {
-      className: "btn dark",
+      key: k,
+      type: "button",
+      className: `gen-profile-card${optProfile === k ? " is-active" : ""}`,
+      onClick: () => setOptProfile(k)
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: "var(--text-sm)", color: optProfile === k ? p.color : "var(--ink-900)", marginBottom: 4 } }, p.label),
+    /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-600)", lineHeight: 1.4 } }, p.desc || (k === "rescate" ? "Maximiza uso de materias primas en stock" : "Equilibrio entre rendimiento y costo"))
+  )))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "gen-calc-btn",
+      disabled: optRunning,
       onClick: () => {
         setOptRunning(true);
-        setOptResults(null);
         setTimeout(() => {
-          let noStock = false;
-          let _diag = null;
-          const byProfile = {};
-          Object.keys(OPT_PROFILES).forEach((pk) => {
-            try {
-              const out = runHybridRecipeSearch({
-                targetKey: optTarget,
-                recipe: [],
-                invLotes,
-                maxCost: optMaxCost,
-                ingredients: optimizerINGS,
-                useStock: optUseStock,
-                profileKey: pk,
-                stockMap
-              });
-              noStock = noStock || !!out.noStock;
-              byProfile[pk] = (out.ranked || []).slice(0, 12).map(
-                (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk)
-              );
-              const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
-              const stockCount = diag.stockIds;
-              byProfile[`_diag_${pk}`] = { stockCount, diag };
-              if (pk === optProfile) _diag = { stockCount, diag };
-            } catch (e) {
-              byProfile[pk] = [];
-              const diag = { error: e.message || String(e), profileKey: pk, targetKey: optTarget };
-              byProfile[`_diag_${pk}`] = { stockCount: 0, diag };
-              if (pk === optProfile) _diag = { stockCount: 0, diag };
-            }
-          });
-          setOptResults({ ...byProfile, noStock, _diag });
-          setOptRunning(false);
+          try {
+            const out = runHybridRecipeSearch({
+              targetKey: optTarget,
+              recipe: [],
+              invLotes,
+              maxCost: optMaxCost,
+              ingredients: effectiveINGS,
+              useStock: optUseStock,
+              profileKey: optProfile,
+              stockMap
+            });
+            const rankedList = (out.ranked || []).slice(0, 12).map(
+              (c) => hybridOptimizerRow(c, optTarget, effectiveINGS, stockMap, optProfile)
+            );
+            const diag = hybridOptimizerDiag(out, optTarget, effectiveINGS, optUseStock, invLotes, optProfile);
+            setOptResults({ [optProfile]: rankedList, [`_diag_${optProfile}`]: { stockCount: diag.stockIds, diag } });
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setOptRunning(false);
+          }
         }, 50);
-      },
-      style: { marginLeft: "auto", flex: "none", minWidth: 0, padding: "6px 16px" }
+      }
     },
-    optRunning ? /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "spin" }, "↻"), " …") : "Calcular"
-  )), optUseStock ? (() => {
-    const sc = [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0).map((l) => l.ingredienteId))].length;
-    return sc > 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700,var(--accent-olive))", marginBottom: 12 } }, "Usando solo ingredientes en stock · ", sc, " disponibles en inventario") : /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 14px", background: "#FBF6E8", border: "1px solid #D4A838", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "#7A5A10", marginBottom: 12 } }, "Inventario vacío. Cambia a ", /* @__PURE__ */ React.createElement("strong", null, "Paleta completa"), " para generar recetas con toda la paleta, o registra compras en Inventario.");
-  })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-50,#FCEEE9)", border: "1px solid var(--coral-300,#E8B4A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, optResults[optProfile].length, " combinaciones exclusivas · perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " · ", optUseStock ? "solo stock" : "paleta completa", " · C:N objetivo ", SPP[optTarget]?.cn_optimal.ideal, ":1"), optResults[optProfile].map((r, i) => {
-    const mainIngs = r.recipe.map((x) => {
-      const g = INGS.find((ing) => ing.id === x.id);
-      return g ? `${g.name} ${x.p}%` : x.id;
-    }).filter(Boolean);
-    const baseSig = r.recipe.map((x) => x.id).filter((id) => {
-      const g = INGS.find((ing) => ing.id === id);
-      return g && g.role === "base_carbono";
-    }).sort().join("+");
-    return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention)" } }, "⚠ Supl. ", r.suppPct.toFixed(0), "% > límite")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
-      setSKey(optTarget);
-      setRecipe(r.recipe);
-      setLockedIds([]);
-      goTab("formular");
-      ;
-      setLoadedFlash(true);
-      setTimeout(() => setLoadedFlash(false), 2200);
-    } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { className: "opt-load", style: { background: "var(--moss-600,var(--accent-olive))", borderColor: "var(--moss-700,var(--accent-olive))" }, onClick: () => {
-      setSKey(optTarget);
-      setRecipe(r.recipe);
-      setLockedIds([]);
-      goTab("produccion");
-    } }, "Producir"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
-      const tOpt = calcTreatment(r.an, optTarget, SPP);
-      const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
-      const totalCost = Math.round(r.an.cost) + eCost;
-      return [
-        { l: "C:N", v: `${r.an.cn.toFixed(1)}:1` },
-        { l: "N%", v: `${r.an.avgN.toFixed(2)}%` },
-        { l: "EB", v: r.an.ebLow && r.an.ebHigh ? `${r.an.ebLow}–${r.an.ebHigh}%` : `${r.an.eb.toFixed(0)}%` },
-        {
-          l: "Costo total/kg",
-          v: totalCost > 0 ? `${totalCost.toLocaleString("es-CO")}` : "--",
-          sub: eCost > 0 ? `ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}` : null
-        }
-      ];
-    })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Riesgo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500,#A07828)" : "#C53030" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
-      const tOpt2 = calcTreatment(r.an, optTarget, SPP);
-      const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
-      const bags = [
-        { nom: "Bolsa 20×50", kgH: 1.8 },
-        { nom: "Bolsa 18×35", kgH: 1 },
-        { nom: "Punch bag", kgH: 3.5 }
-      ];
-      const hFactor = optTarget.includes("shiitake") || optTarget.includes("lions") || optTarget.includes("reishi") ? 0.4 : 0.35;
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--border-soft)", borderBottom: "none" } }, bags.map((b) => {
-        const kgSeco = b.kgH * hFactor;
-        const costBolsa = Math.round((r.an.cost + eCost2) * kgSeco);
-        return /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "5px 8px", borderRight: "1px solid var(--border-soft)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginBottom: 2, letterSpacing: "var(--tracking-label)", fontWeight: 600 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--coral-700)", fontWeight: 700 } }, "$", costBolsa.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, "COP / bolsa"));
-      }));
-    })(), (() => {
-      const t = calcTreatment(r.an, optTarget, SPP);
-      if (!t) return null;
-      const tc = t.col === "autoclave" ? { bg: "#FCEEE9", br: "#E8B4A0", fg: "#B5451F", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "#EEF3EA", br: "#90A870", fg: "#3D5520", icon: "❄", lbl: "CWLP — Cal en Frío pH≥12" };
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));
-    })());
-  })), !optRunning && optResults && !optResults.noStock && optResults[optProfile]?.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "18px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-100)" } }, (() => {
-    const d = optResults[`_diag_${optProfile}`] || { diag: optResults._diag?.diag };
-    const diag = d?.diag;
-    return diag ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--coral-700)", marginBottom: 10 } }, "Sin combinaciones válidas — diagnóstico"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px", marginBottom: 12 } }, [
-      ["Stock en bodega", diag.stockIds],
-      ["Disponibles para especie (pool)", diag.poolSize],
-      ["Bases carbono compatibles", diag.bases],
-      ["Suplementos N compatibles", diag.supps],
-      ["Combinaciones evaluadas", diag.tried],
-      ["Resultados antes de filtros", diag.resultsRaw],
-      ["Límite suplementación", diag.suppLimit + "%"],
-      ["Perfil activo", OPT_PROFILES[diag.profileKey]?.label || diag.profileKey]
-    ].map(([lb, v]) => /* @__PURE__ */ React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-500)" } }, lb), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: Number(v) === 0 ? "var(--coral-700)" : "var(--ink-900)" } }, v)))), diag.bases === 0 && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--coral-700)", marginBottom: 6 } }, "⚠ Ningún ingrediente en bodega tiene rol ", /* @__PURE__ */ React.createElement("b", null, "base carbono"), " compatible con esta especie."), diag.supps === 0 && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--coral-700)", marginBottom: 6 } }, "⚠ Ningún suplemento N en bodega es compatible con esta especie."), diag.bases > 0 && diag.supps > 0 && diag.tried === 0 && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--coral-700)", marginBottom: 6 } }, "⚠ C y N de base y suplemento son demasiado similares para resolver la ecuación."), diag.tried > 0 && diag.resultsRaw === 0 && /* @__PURE__ */ React.createElement("div", { style: { color: "#7A5A10", marginBottom: 6 } }, "⚠ Tus bases requieren más suplementación de la que permite el perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " (límite ", diag.suppLimit, "%). Prueba con perfil ", /* @__PURE__ */ React.createElement("b", null, "Producción"), " o añade paja de trigo/cebada a tu bodega."), diag.bases > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Bases:"), " ", diag.baseNames.join(", ")), diag.supps > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 3, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "Suplementos:"), " ", diag.suppNames.join(", "))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "var(--ink-500)" } }, "Selecciona especie y presiona Calcular.");
-  })()), !optRunning && optResults && optResults.noStock && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
-    goTab("inventario");
-    setInvTab("compra");
-  }, style: { width: "100%", font: "inherit", cursor: "pointer", textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--status-attention)", border: "1px dashed var(--status-attention)", borderRadius: "var(--r-sm)", background: "#FBF6E8" } }, "Sin stock registrado. Ve a ", /* @__PURE__ */ React.createElement("strong", null, "Bodega → Compra"), " para agregar ingredientes."))), "                              ", formularMode === "manual" && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent" }, /* @__PURE__ */ React.createElement("div", { className: "sec" }, "Formulación por Objetivo C:N"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: "8px 12px", background: "var(--paper-200)", border: "1px solid var(--paper-300)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", lineHeight: 1.6 } }, "Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas."), sp && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 24, marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "Especie activa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.name)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "C:N ideal"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.cn_optimal.ideal, ":1")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "Rango"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.cn_optimal.min, "–", sp.cn_optimal.max)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "N objetivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.n_optimal.min, "–", sp.n_optimal.max, "%"))), /* @__PURE__ */ React.createElement("div", { className: "inv-grid" }, /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-base" }, "Ingrediente base (carbono)"), /* @__PURE__ */ React.createElement("select", { id: "inv-base", value: invBase, onChange: (e) => setInvBase(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Seleccionar —"), INGS.filter((g) => g.role === "base_carbono" && g.cn > 0 && g.n > 0 && g.cs.includes(sKey)).map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name, " · C:N ", g.cn, ":1 · N ", g.n, "%")))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-supp" }, "Suplemento nitrógeno"), /* @__PURE__ */ React.createElement("select", { id: "inv-supp", value: invSupp, onChange: (e) => setInvSupp(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Seleccionar —"), INGS.filter((g) => ["suplemento_n", "suplemento_medio"].includes(g.role) && g.cn > 0 && g.n > 0 && g.cs.includes(sKey)).map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name, " · C:N ", g.cn, ":1 · N ", g.n, "%")))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-aer" }, "Aireador (opcional)"), /* @__PURE__ */ React.createElement("select", { id: "inv-aer", value: invAer, onChange: (e) => setInvAer(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Ninguno —"), INGS.filter((g) => g.role === "aireador" && g.cs.includes(sKey)).map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name)))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-min" }, "Mineral / corrector pH (%)"), /* @__PURE__ */ React.createElement("input", { id: "inv-min", type: "number", min: "0", max: "10", step: "0.5", required: true, value: invMin, onChange: (e) => setInvMin(parseFloat(e.target.value) || 0) })), invAer && /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-aerpct" }, "Aireador fijo (%)"), /* @__PURE__ */ React.createElement("input", { id: "inv-aerpct", type: "number", min: "5", max: "25", step: "1", required: true, value: invAerPct, onChange: (e) => setInvAerPct(parseInt(e.target.value) || 10) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "C:N objetivo"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 28, fontWeight: 600, color: sp && invTargetCN >= sp.cn_optimal.min && invTargetCN <= sp.cn_optimal.max ? "var(--moss-500)" : "var(--coral-500)" } }, invTargetCN, ":1")), /* @__PURE__ */ React.createElement("input", { type: "range", min: "10", max: "120", step: "1", value: invTargetCN, onChange: (e) => setInvTargetCN(parseInt(e.target.value)), "aria-label": "Relación C:N objetivo", "aria-valuetext": `${invTargetCN}:1`, style: { width: "100%", accentColor: "var(--coral-500)", marginBottom: 6 } }), sp && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 4, background: "var(--paper-300)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${(sp.cn_optimal.min - 10) / 110 * 100}%`, width: `${(sp.cn_optimal.max - sp.cn_optimal.min) / 110 * 100}%`, height: "100%", background: "rgba(77,98,53,.35)", borderRadius: 2 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${(sp.cn_optimal.ideal - 10) / 110 * 100}%`, width: 2, height: "220%", top: "-60%", background: "var(--moss-500)", borderRadius: 1 } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 7, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", null, "10"), sp && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--moss-500)" } }, "óptimo ", sp.cn_optimal.min, "–", sp.cn_optimal.max), /* @__PURE__ */ React.createElement("span", null, "120"))), /* @__PURE__ */ React.createElement(
+    optRunning ? "Calculando combinaciones..." : "⚡ Calcular Mejores Recetas"
+  ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24 } }, optResults && optResults[optProfile] && optResults[optProfile].length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 } }, optResults[optProfile].map((r, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, className: "opt-card", style: { border: "1.5px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--paper-0)", overflow: "hidden", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", background: "var(--paper-100)", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 800, fontSize: "var(--text-xs)", background: "var(--moss-700)", color: "#fff", padding: "2px 6px", borderRadius: 2 } }, "#", idx + 1), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-700)" } }, "Score: ", Math.round(r.score), "/100")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "sload",
+      onClick: () => {
+        setSKey(optTarget);
+        setRecipe(r.recipe);
+        setLockedIds([]);
+        setBuilderSubTab("formular");
+        setLoadedFlash(true);
+        setTimeout(() => setLoadedFlash(false), 2200);
+      },
+      style: { padding: "6px 12px", background: "var(--moss-700)", color: "#fff", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: "pointer", fontSize: "var(--text-xs)" }
+    },
+    "🥣 Cargar en Mesa"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => {
+        setSKey(optTarget);
+        setRecipe(r.recipe);
+        setLockedIds([]);
+        goTab("produccion");
+      },
+      style: { padding: "6px 10px", background: "transparent", color: "var(--ink-800)", border: "1px solid var(--border-soft)", borderRadius: "var(--radius-sm)", fontWeight: 600, cursor: "pointer", fontSize: "var(--text-xs)" }
+    },
+    "Producir"
+  ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 } }, r.recipe.map((ing) => {
+    const g = INGS.find((x) => x.id === ing.id);
+    return /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { padding: "3px 8px", background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 600 } }, g?.name || ing.id, ": ", /* @__PURE__ */ React.createElement("b", null, ing.p, "%"));
+  })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, textAlign: "center", background: "var(--paper-50)", padding: "8px", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", color: "var(--ink-500)", textTransform: "uppercase" } }, "C:N"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700 } }, r.an.cn.toFixed(1), ":1")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", color: "var(--ink-500)", textTransform: "uppercase" } }, "EB Est."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--moss-700)" } }, r.an.eb.toFixed(0), "%")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", color: "var(--ink-500)", textTransform: "uppercase" } }, "Costo/kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700 } }, "$", Math.round(r.an.cost)))))))))), formularMode === "manual" && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent" }, /* @__PURE__ */ React.createElement("div", { className: "sec" }, "Formulación por Objetivo C:N (Solver)"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: "8px 12px", background: "var(--paper-200)", border: "1px solid var(--paper-300)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", lineHeight: 1.6 } }, "Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas."), sp && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 24, marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-soft)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "Especie activa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.name)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "C:N ideal"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.cn_optimal.ideal, ":1")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, "Rango"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, sp.cn_optimal.min, "–", sp.cn_optimal.max))), /* @__PURE__ */ React.createElement("div", { className: "inv-grid" }, /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-base" }, "Ingrediente base (carbono)"), /* @__PURE__ */ React.createElement("select", { id: "inv-base", value: invBase, onChange: (e) => setInvBase(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Seleccionar —"), INGS.filter((g) => g.role === "base_carbono" && g.cn > 0 && g.n > 0 && g.cs.includes(sKey)).map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name, " · C:N ", g.cn, ":1 · N ", g.n, "%")))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-supp" }, "Suplemento (nitrógeno)"), /* @__PURE__ */ React.createElement("select", { id: "inv-supp", value: invSupp, onChange: (e) => setInvSupp(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Seleccionar —"), INGS.filter((g) => g.role === "suplemento_n" && g.cn > 0 && g.n > 0 && g.cs.includes(sKey)).map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name, " · C:N ", g.cn, ":1 · N ", g.n, "%")))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-aer" }, "Aireador opcional"), /* @__PURE__ */ React.createElement("select", { id: "inv-aer", value: invAer, onChange: (e) => setInvAer(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Ninguno (0%) —"), INGS.filter((g) => g.role === "aireador").map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name)))), /* @__PURE__ */ React.createElement("div", { className: "inv-field" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "inv-min" }, "Mineral opcional (1%)"), /* @__PURE__ */ React.createElement("select", { id: "inv-min", value: invMin, onChange: (e) => setInvMin(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— Ninguno (0%) —"), INGS.filter((g) => g.role === "mineral").map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.name))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "btn pri",
-      style: { width: "100%", padding: 13, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-button)" },
       disabled: !invBase || !invSupp,
       onClick: () => {
-        const bI = INGS.find((i) => i.id === invBase);
-        const sI = INGS.find((i) => i.id === invSupp);
-        if (!bI || !sI) return;
-        const T = invTargetCN, pMin = invMin, pAer = invAer ? invAerPct : 0;
-        const pRem = 100 - pMin - pAer;
-        if (pRem <= 2) {
-          setInvResult({ error: "Los porcentajes fijos superan 98%. Reduce mineral o aireador." });
-          return;
-        }
-        const bDry = 1 - Math.min(0.92, Math.max(0, (bI.moisture || 0) / 100));
-        const sDry = 1 - Math.min(0.92, Math.max(0, (sI.moisture || 0) / 100));
-        const cb = bI.c * bDry, nb = bI.n * bDry, cs = sI.c * sDry, ns = sI.n * sDry;
-        const denom = cb - cs - T * (nb - ns);
-        if (Math.abs(denom) < 1e-3) {
-          setInvResult({ error: "Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N." });
-          return;
-        }
-        const ps = pRem * (cb - T * nb) / denom;
-        const pb = pRem - ps;
-        if (ps < 0 || pb < 0 || ps > pRem) {
-          const cnMin = Math.min(bI.cn, sI.cn).toFixed(0), cnMax = Math.max(bI.cn, sI.cn).toFixed(0);
-          setInvResult({ error: `C:N ${T}:1 no alcanzable con estos ingredientes. Rango posible: ${cnMin}–${cnMax}:1` });
-          return;
-        }
-        const res = [];
-        res.push({ id: invBase, p: Math.round(pb * 10) / 10 });
-        res.push({ id: invSupp, p: Math.round(ps * 10) / 10 });
-        if (invAer && pAer > 0) res.push({ id: invAer, p: pAer });
-        if (pMin > 0) res.push({ id: "carbonato_calcio", p: pMin });
-        const anRes = analyze(res, sKey, effectiveINGS);
-        setInvResult({ recipe: res, an: anRes });
+        const res = solveCN(invBase, invSupp, invTargetCN, { aerId: invAer, aerPct: invAerPct, minId: invMin });
+        setInvResult(res);
+      },
+      style: { width: "100%", minHeight: 44, fontWeight: 700 }
+    },
+    "Calcular proporciones exactas"
+  )), invResult && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, padding: "14px", background: "var(--paper-100)", borderRadius: "var(--radius-sm)" } }, invResult.error ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--coral-600)", fontWeight: 700 } }, invResult.error) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, marginBottom: 10 } }, "Fórmula calculada:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 } }, invResult.recipe.map((r) => {
+    const g = INGS.find((x) => x.id === r.id);
+    return /* @__PURE__ */ React.createElement("span", { key: r.id, style: { padding: "6px 12px", background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 4, fontFamily: "var(--font-mono)", fontWeight: 700 } }, g?.name || r.id, ": ", r.p, "%");
+  })), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "btn pri",
+      style: { width: "100%", minHeight: 44, background: "var(--moss-700)", color: "#fff", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 800 },
+      onClick: () => {
+        setRecipe(invResult.recipe);
+        setBuilderSubTab("formular");
+        setLoadedFlash(true);
+        setTimeout(() => setLoadedFlash(false), 2200);
       }
     },
-    "⇌ Calcular proporciones exactas"
-  ), invResult && /* @__PURE__ */ React.createElement("div", { className: "inv-result" }, invResult.error ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--coral-500)", fontFamily: "var(--font-num)", fontSize: 18, fontStyle: "italic", lineHeight: 1.5 } }, invResult.error) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 0 } }, "Resultado"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 } }, invResult.recipe.map((r) => {
-    const g = INGS.find((i) => i.id === r.id);
-    return g ? /* @__PURE__ */ React.createElement("div", { key: r.id, style: { padding: "10px 16px", background: "var(--paper-50)", border: "1px solid var(--border-soft)", minWidth: 100, textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, g.name.length > 18 ? g.name.slice(0, 18) + "…" : g.name), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 32, fontWeight: 300, color: "var(--coral-500)", lineHeight: 1 } }, r.p, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-base)", color: "var(--ink-500)", marginLeft: 1 } }, "%"))) : null;
-  })), invResult.an && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginBottom: 14 } }, [
-    { l: "C:N logrado", v: `${invResult.an.cn.toFixed(1)}:1`, ok: sp && invResult.an.cn >= sp.cn_optimal.min && invResult.an.cn <= sp.cn_optimal.max },
-    { l: "Nitrógeno", v: `${invResult.an.avgN.toFixed(2)}%`, ok: sp && invResult.an.avgN >= sp.n_optimal.min && invResult.an.avgN <= sp.n_optimal.max },
-    { l: "EB esperada", v: invResult.an.ebLow && invResult.an.ebHigh ? `${invResult.an.ebLow}–${invResult.an.ebHigh}%` : `${invResult.an.eb.toFixed(0)}%`, ok: invResult.an.eb >= 90 },
-    { l: "Costo/kg", v: `${Math.round(invResult.an.cost)}`, ok: invResult.an.cost < 1e3 }
-  ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", border: `1px solid ${m.ok ? "var(--moss-500)" : "var(--border-soft)"}`, padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: m.ok ? "var(--moss-500)" : "var(--coral-500)" } }, m.v)))), /* @__PURE__ */ React.createElement("button", { className: "btn pri", style: { width: "100%" }, onClick: () => {
-    setRecipe(invResult.recipe);
-    goTab("formular");
-  } }, "Cargar en Formulador")))))))), tab === "schedule" && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent" }, /* @__PURE__ */ React.createElement("div", { className: "schctrl" }, /* @__PURE__ */ React.createElement("div", { className: "schctl" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "sch-date" }, "Fecha de inoculación"), /* @__PURE__ */ React.createElement("input", { id: "sch-date", type: "date", value: schDate, onChange: (e) => setSchDate(e.target.value) })), /* @__PURE__ */ React.createElement("div", { className: "schctl" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "sch-key" }, "Especie"), /* @__PURE__ */ React.createElement("select", { id: "sch-key", value: schKey, onChange: (e) => setSchKey(e.target.value) }, Object.entries(SPP).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.name)))), an && /* @__PURE__ */ React.createElement("div", { style: { padding: "9px 13px", border: "1px solid var(--border-soft)", background: "var(--paper-100)", fontSize: "var(--text-sm)", color: "var(--coral-500)", fontFamily: "var(--font-mono)", alignSelf: "flex-end" } }, "EB ", an.eb.toFixed(0), "% → tiempos ajustados")), sch && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "schsum" }, /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv" }, sch.inc, " días"), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Incubación")), /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv", style: { fontSize: 20, fontWeight: 400, paddingTop: 5 } }, sch.first), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Primera cosecha")), /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv" }, sch.tot, " días"), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Ciclo completo"))), /* @__PURE__ */ React.createElement("div", { className: "tl" }, sch.evts.map((e) => /* @__PURE__ */ React.createElement("div", { key: e.key, className: `tle ${e.type}` }, /* @__PURE__ */ React.createElement("div", { className: "tle-dt" }, "Día ", e.day, " · ", e.ds), /* @__PURE__ */ React.createElement("div", { className: "tle-t" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "tle-d" }, e.detail)))), /* @__PURE__ */ React.createElement("div", { className: "lnote" }, "Tiempos para Tenjo, Cundinamarca (2600 m.s.n.m., 12–18°C ambiente). Ajustados por EB estimada de la receta activa."))), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
+    "🥣 Cargar en Mesa de Mezcla"
+  ))))), ")}"), tab === "schedule" && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent" }, /* @__PURE__ */ React.createElement("div", { className: "schctrl" }, /* @__PURE__ */ React.createElement("div", { className: "schctl" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "sch-date" }, "Fecha de inoculación"), /* @__PURE__ */ React.createElement("input", { id: "sch-date", type: "date", value: schDate, onChange: (e) => setSchDate(e.target.value) })), /* @__PURE__ */ React.createElement("div", { className: "schctl" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "sch-key" }, "Especie"), /* @__PURE__ */ React.createElement("select", { id: "sch-key", value: schKey, onChange: (e) => setSchKey(e.target.value) }, Object.entries(SPP).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.name)))), an && /* @__PURE__ */ React.createElement("div", { style: { padding: "9px 13px", border: "1px solid var(--border-soft)", background: "var(--paper-100)", fontSize: "var(--text-sm)", color: "var(--coral-500)", fontFamily: "var(--font-mono)", alignSelf: "flex-end" } }, "EB ", an.eb.toFixed(0), "% → tiempos ajustados")), sch && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "schsum" }, /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv" }, sch.inc, " días"), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Incubación")), /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv", style: { fontSize: 20, fontWeight: 400, paddingTop: 5 } }, sch.first), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Primera cosecha")), /* @__PURE__ */ React.createElement("div", { className: "ssc" }, /* @__PURE__ */ React.createElement("div", { className: "ssv" }, sch.tot, " días"), /* @__PURE__ */ React.createElement("div", { className: "ssl" }, "Ciclo completo"))), /* @__PURE__ */ React.createElement("div", { className: "tl" }, sch.evts.map((e) => /* @__PURE__ */ React.createElement("div", { key: e.key, className: `tle ${e.type}` }, /* @__PURE__ */ React.createElement("div", { className: "tle-dt" }, "Día ", e.day, " · ", e.ds), /* @__PURE__ */ React.createElement("div", { className: "tle-t" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "tle-d" }, e.detail)))), /* @__PURE__ */ React.createElement("div", { className: "lnote" }, "Tiempos para Tenjo, Cundinamarca (2600 m.s.n.m., 12–18°C ambiente). Ajustados por EB estimada de la receta activa."))), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
     const on = prodBagType === bt.id;
     return /* @__PURE__ */ React.createElement("button", { key: bt.id, onClick: () => {
       setProdBagType(bt.id);
