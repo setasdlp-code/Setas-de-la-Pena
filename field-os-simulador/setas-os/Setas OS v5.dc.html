@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f4ec">
 <script src="./error-buffer.js"></script>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
@@ -14,6 +15,7 @@
 <helmet>
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
@@ -22,13 +24,16 @@
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
 <link rel="stylesheet" href="fieldos-tokens.css">
 <script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
 <script src="qr-mini.js"></script>
 <script src="bridge-protocol.js"></script>
+<script src="setas-os-workflow.js"></script>
 <link rel="stylesheet" href="sim.css">
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
+<script src="bitacora-model.js"></script>
     <script src="historical-calibration.js"></script>
 <script src="recipe-optimizer.js"></script>
 <script src="perito-scenarios.js"></script>
@@ -63,6 +68,10 @@
   html, body { margin:0; background: var(--paper-1); }
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  [role="dialog"] { overscroll-behavior:contain; }
+  .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+  .skip-link { position:fixed;left:12px;top:10px;z-index:1000;transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
+  .skip-link:focus-visible { transform:translateY(0); }
   /* Tactile press feedback — inline styles (used on ~all buttons here) can't express
      :active, so this is the only place a physical "push" confirmation can live.
      Buttons that already declare their own inline `transition` keep that untouched
@@ -106,7 +115,7 @@
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
-  .workspace-subnav { position:sticky; top:43px; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .workspace-subnav { position:sticky; top:0; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .workspace-subnav::-webkit-scrollbar { display:none; }
   .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
@@ -150,18 +159,13 @@
     .rail-btn.on { background:var(--paper-2); }
     .rail-btn span { font-size:8.5px; }
     .app-main { margin-left:0; padding-bottom:62px; }
-    .workspace-subnav { top:43px; min-height:44px; padding:0 10px; }
+    .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     .workspace-tab { min-height:44px; padding:8px 10px; }
 
-    /* Header simplificado: el clima completo, el nombre del operador y el
-       hint "⌘K" no son esenciales en móvil — sobran espacio vertical/horizontal
-       en una fila que ya compite con el breadcrumb y los botones de acción. */
-    .fos-weather-text { display:none; }
-    .fos-hide-guantes { display:none; }
-    .fos-btn-label { display:none; }
-    /* Botón flotante de dev (firebase/auth-gate.js) — en móvil la acción de
-       cerrar sesión vive dentro del menú del operador (ver signOutApp). */
-    #setas-auth-signout { display:none !important; }
+    /* El botón flotante de cerrar sesión (firebase/auth-gate.js) ya no tiene
+       alternativa en móvil desde que el picker de operador (que llevaba
+       "Cerrar sesión" en su menú) se reemplazó por el selector de rol —
+       queda visible en todos los tamaños. */
     /* Lotes activos (Hoy): 2 columnas fijas no dejaban espacio para el texto
        (nombre, contenedores, etapa/receta) junto a la miniatura de 101px —
        el texto se salía de la tarjeta. A 1 columna cabe todo sin envolver mal. */
@@ -173,8 +177,7 @@
   .gloves textarea, .gloves input { font-size:17px !important; }
   .gloves .fos-hide-guantes { display:none; }
   @media (prefers-reduced-motion: reduce) {
-    .app-rail, .rail-btn, .workspace-tab { transition:none !important; }
-    .rail-badge { animation:none !important; }
+    *, *::before, *::after { animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important; }
   }
   @media print {
     body * { visibility:hidden !important; }
@@ -187,6 +190,7 @@
 </helmet>
 
 <div class="app-shell {{ shellCls }}">
+  <a class="skip-link" href="#setas-main">Saltar al contenido</a>
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
   <nav class="app-rail" aria-label="Espacios de trabajo">
@@ -211,44 +215,8 @@
     </button>
   </nav>
 
-  <main class="app-main fos-scroll" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
-
-    <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 26px;background:color-mix(in oklab, var(--paper-1) 88%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border-hairline);">
-      <span data-testid="breadcrumb" style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata);">{{ crumb }}</span>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-sans);font-weight:300;font-style:italic;font-size:14px;color:var(--text-metadata);"><span style="display:inline-flex" title="{{ weatherText }}">{{ weatherIcon }}</span><span class="fos-weather-text">{{ weatherText }}</span></div><div style="display:flex;align-items:center;gap:8px;">
-        <button onClick="{{ openSyncQueue }}" title="{{ syncPillText }}" aria-label="{{ syncPillText }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
-          <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};flex:none;"></span><span class="fos-btn-label">{{ syncPillText }}</span>
-        </button>
-        <div style="position:relative;display:inline-block;">
-          <button onClick="{{ togglePicker }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:999px;padding:4px 10px 4px 4px;">
-            <span style="width:18px;height:18px;border-radius:50%;background:var(--ink-0);color:var(--paper-0);font-family:var(--font-sans);font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center;flex:none;">{{ operatorInitial }}</span>
-            <span class="fos-hide-guantes" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">{{ operator }}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;color:var(--text-metadata);transform:{{ pickerChevron }};transition:transform .15s ease;flex:none;"><path d="M6 9l6 6 6-6"></path></svg>
-          </button>
-          <sc-if value="{{ pickerOpen }}" hint-placeholder-val="{{ false }}">
-          <div onClick="{{ closePicker }}" style="position:fixed;inset:0;z-index:9;"></div>
-          <div style="position:absolute;top:calc(100% + 8px);right:0;z-index:10;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);min-width:210px;overflow:hidden;animation:fos-fade .15s ease;box-shadow:0 10px 30px color-mix(in oklab, var(--ink-0) 16%, transparent);">
-            <div style="font:var(--t-eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--text-metadata);padding:10px 14px 6px;">Cambiar de operador</div>
-            <sc-for list="{{ operators }}" as="op" hint-placeholder-count="3">
-              <button onClick="{{ op.pick }}" style="{{ op.rowStyle }}">
-                <span style="font-family:var(--font-sans);font-weight:700;font-size:14px;">{{ op.name }}</span>
-                <span style="font:var(--t-caption);color:var(--text-metadata);">{{ op.role }}</span>
-              </button>
-            </sc-for>
-            <button onClick="{{ signOutApp }}" style="cursor:pointer;display:block;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border-strong);padding:9px 14px;font:var(--t-caption);font-weight:700;color:var(--status-error, #C53030);">Cerrar sesión</button>
-          </div>
-          </sc-if>
-        </div>
-        <button onClick="{{ toggleGloves }}" aria-pressed="{{ gloves }}" title="{{ glovesLabel }}" aria-label="{{ glovesLabel }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:14px;height:14px;"><path d="M6 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V5.5a1.5 1.5 0 0 1 3 0V12"></path><path d="M15 12V8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-3"></path></svg>
-          <span class="fos-btn-label">Guantes</span>
-        </button>
-        <button onClick="{{ openCmd }}" aria-label="Buscar" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:999px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-1);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <span class="fos-btn-label">Buscar</span> <span class="fos-hide-guantes" style="color:var(--text-metadata);">⌘K</span>
-        </button>
-      </div>
-    </div>
+  <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
+    <span data-testid="breadcrumb" class="sr-only" aria-live="polite">{{ crumb }}</span>
 
     <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
       <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
@@ -264,161 +232,6 @@
         </sc-if>
       </sc-if>
     </nav>
-
-    <!-- =================== INICIO / LAUNCHER =================== -->
-    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
-    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px calc(50px + env(safe-area-inset-bottom));">
-      <div class="col">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
-          
-          
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
-          
-          <div data-testid="role-selector" style="display:flex;border:1px solid var(--border-hairline);">
-            <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="3">
-
-            </sc-for>
-          </div>
-        </div>
-        <div style="margin-top:14px;">
-          <h1 style="font-family: var(--font-sans); font-weight: 900; font-size: clamp(32px, 9vw, 53px); letter-spacing: -.02em; color: var(--ink-1); margin: 0">Cuaderno de Campo</h1>
-          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;max-width:420px;">Registro de campo, trazabilidad por contenedor y formulación de sustratos.</p>
-        </div>
-        
-
-        <sc-if value="{{ hasActiveSession }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:18px;">
-          <button onClick="{{ openSession }}" style="cursor:pointer;width:100%;text-align:left;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:21px;letter-spacing:-.01em;">{{ primaryActionLabel }}</span>
-              <span style="font:var(--t-body-sm);color:color-mix(in oklab, var(--paper-0) 82%, transparent);">{{ primaryActionSub }}</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:22px;height:22px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-        </div>
-        </sc-if>
-        <sc-if value="{{ noActiveSession }}" hint-placeholder-val="{{ true }}">
-        <div style="margin-top:22px;">
-          <div style="font-family:var(--font-sans);font-weight:200;font-style:italic;font-size:16px;color:var(--text-metadata);">{{ greeting }} Abre una sesión para empezar.</div>
-          <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
-            <button onClick="{{ startCult }}" style="cursor: pointer; text-align: left; border: 1px solid var(--ink-0); color: var(--paper-0); border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; gap: 3px; background-color: var(--ink-0)">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:20px;">Registrar</span>
-              <span style="font: var(--t-body-sm); color: #FAF8F3">Manejo, observación, cosecha</span>
-            </button>
-          </div>
-        </div>
-        <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
-        <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
-          <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
-          <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
-        </div>
-        </sc-if>
-        </sc-if>
-
-        <div style="margin-top:14px;">
-          <button onClick="{{ goRevision }}" style="cursor:pointer;width:100%;text-align:left;border:1px solid var(--accent-terracotta);background:var(--paper-0);color:var(--accent-terracotta);border-radius:var(--radius-md);padding:16px 20px;display:flex;align-items:center;gap:14px;">
-            <span style="flex:1;display:flex;flex-direction:column;gap:3px;">
-              <span style="font-family:var(--font-sans);font-weight:800;font-size:18px;letter-spacing:-.01em;">Revisión diaria</span>
-              <span style="font:var(--t-body-sm);color:var(--ink-1);">Anomalías, eventos y rendimiento del día</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:none;width:22px;height:22px;opacity:.8;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-          </button>
-        </div>
-
-        <sc-if value="{{ hasHandoff }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:22px;border:1px solid var(--accent-blue-grey);border-radius:var(--radius-md);padding:15px 17px;background:var(--paper-0);">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <span style="font:var(--t-label);color:var(--accent-blue-grey);">Traspaso del turno anterior</span>
-            <button onClick="{{ clearHandoff }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);color:var(--text-metadata);">Leído</button>
-          </div>
-          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:6px;line-height:1.5;">{{ handoffText }}</div>
-        </div>
-        </sc-if>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:30px 0 12px;">Cámaras activas</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
-          <sc-for list="{{ camarasQuick }}" as="cm" hint-placeholder-count="4">
-            <button onClick="{{ cm.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
-              <span style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:{{ cm.accent }};"></span><span style="font:var(--t-label);color:var(--ink-0);">{{ cm.name }}</span></span>
-              <span style="font:var(--t-caption);color:var(--text-metadata);">Zona {{ cm.zona }} · {{ cm.sppName }}</span>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:2px;">
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">T°</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.temp }}°</span></div>
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">HR</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.hum }}%</span></div>
-                <div style="display:flex;flex-direction:column;"><span style="font:var(--t-caption);color:var(--text-metadata);">CO₂</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{{ cm.accent }};">{{ cm.co2 }}</span></div>
-              </div>
-            </button>
-          </sc-for>
-        </div>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 12px;">Lotes activos</div>
-        <sc-if value="{{ hasLotesQuick }}" hint-placeholder-val="{{ true }}">
-        <div class="lotes-quick-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
-          <sc-for list="{{ lotesQuick }}" as="l" hint-placeholder-count="4">
-            <button onClick="{{ l.go }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px 10px 10px;display:flex;align-items:center;gap:12px;justify-content:space-between;min-width:0;overflow:hidden;">
-              <span style="display:flex;align-items:center;gap:12px;min-width:0;">
-                <sc-if value="{{ l.img }}" hint-placeholder-val="{{ false }}"><img ref="{{ l.imgRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="{{ l.sppName }}" style="width: 101px; height: 100px; border-radius: 6px; object-fit: cover; flex: none"></sc-if>
-                <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
-                  <span style="font:var(--t-label);color:var(--ink-0);font-family:var(--font-mono);">{{ l.batch }}</span>
-                  <span style="font:var(--t-caption);color:var(--text-metadata);">{{ l.summary }}</span>
-                  <span style="font:var(--t-caption);color:var(--text-metadata);">Etapa: {{ l.stagesLabel }} · Receta {{ l.recipe }} · {{ l.oldest }}</span>
-                </span>
-              </span>
-              <sc-if value="{{ l.hasAlert }}" hint-placeholder-val="{{ false }}"><span title="{{ l.alertLabel }}" aria-label="{{ l.alertLabel }}" style="flex: none; display:flex;align-items:center;justify-content:center; background: var(--accent-rust); border-radius: 3px; width: 42px; height: 29px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--paper-0)" stroke-width="2.2" style="width:15px;height:15px;"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r="0.6" fill="var(--paper-0)" stroke="none"></circle></svg></span></sc-if>
-            </button>
-          </sc-for>
-        </div>
-        </sc-if>
-
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:26px 0 10px;">
-          <span style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Hoy</span>
-          <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-          <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ tasksOpenCount }} tareas</span>
-          </sc-if>
-        </div>
-
-        <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-          <sc-for list="{{ tasksToday }}" as="t" hint-placeholder-count="3">
-            <div style="{{ t.rowStyle }}">
-              <button onClick="{{ t.toggle }}" aria-pressed="{{ t.done }}" aria-label="Marcar tarea" style="{{ t.boxStyle }}"><span style="{{ t.boxInnerStyle }}">✓</span></button>
-              <button onClick="{{ t.go }}" style="cursor:pointer;flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;display:flex;flex-direction:column;gap:3px;">
-                <span style="{{ t.titleStyle }}">{{ t.title }}</span>
-                <span style="font:var(--t-caption);color:var(--text-metadata);"><span style="font-family:var(--font-mono);">{{ t.id }}</span> · {{ t.why }}</span>
-              </button>
-              <span style="flex:none;font:var(--t-caption);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{ t.prioAccent }};border:1px solid {{ t.prioAccent }};padding:2px 7px;border-radius:3px;">{{ t.prio }}</span>
-            </div>
-          </sc-for>
-        </div>
-        </sc-if>
-
-        <div style="display:grid;grid-template-columns:1fr;gap:10px;">
-          <button onClick="{{ goSim }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-            <span style="display:flex;flex-direction:column;gap:2px;">
-              <span style="font:var(--t-label);color:var(--ink-0);">{{ simCardLabel }}</span>
-              <span style="font:var(--t-caption);color:var(--text-metadata);">{{ simCardSub }}</span>
-            </span>
-            <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--accent-terracotta);">→</span>
-          </button>
-        </div>
-
-        <sc-if value="{{ hasRecentActivity }}" hint-placeholder-val="{{ true }}">
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Actividad reciente</div>
-        <div style="display:flex;flex-direction:column;">
-          <sc-for list="{{ recentActivity }}" as="ev" hint-placeholder-count="2">
-            <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);">
-              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div>
-                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-        </sc-if>
-      </div>
-    </div>
-    </sc-if>
 
     <!-- =================== SESIÓN (Field OS) =================== -->
     <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
@@ -621,7 +434,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasObsPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;">
-              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ obsPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo capturada" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearObsPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -741,7 +554,7 @@
           <div style="font:var(--t-label);color:var(--ink-0);margin:18px 0 10px;">Foto <span style="font-weight:400;color:var(--text-metadata);">· opcional</span></div>
           <sc-if value="{{ hasQuickPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
+              <img ref="{{ quickPhotoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto adjunta" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);">
               <button onClick="{{ clearQuickPhoto }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">Quitar foto</button>
             </div>
           </sc-if>
@@ -802,7 +615,7 @@
             <div class="fos-scroll" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">
               <sc-for list="{{ photoStrip }}" as="p" hint-placeholder-count="3">
                 <div style="flex:none;display:flex;flex-direction:column;gap:5px;">
-                  <img ref="{{ p.ref }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de seguimiento" style="width:132px;height:132px;object-fit:cover;border:1px solid var(--border-soft);border-radius:var(--radius-sm);">
+                  <img ref="{{ p.ref }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de seguimiento" width="132" height="132" style="width:132px;height:132px;object-fit:cover;border:1px solid var(--border-soft);border-radius:var(--radius-sm);">
                   <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-1);">{{ p.label }}</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);">{{ p.date }}</span>
                 </div>
@@ -847,7 +660,7 @@
                     <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.date }}</span></div>
                     <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
                     <sc-if value="{{ ev.hasPhoto }}" hint-placeholder-val="{{ false }}">
-                      <img ref="{{ ev.photoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo" style="width:84px;height:84px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);margin-top:8px;">
+                      <img ref="{{ ev.photoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo" width="84" height="84" style="width:84px;height:84px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);margin-top:8px;">
                     </sc-if>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;">
                       <span style="font:var(--t-caption);color:var(--text-disabled);">{{ ev.by }}</span>
@@ -1004,10 +817,13 @@
                   <span style="font-family:var(--font-mono);font-size:15px;color:{{ cm.liveAccent }};">{{ cm.liveCo2 }} ppm CO₂</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);align-self:center;">{{ cm.liveStatusLabel }}</span>
                 </div>
-                <svg viewBox="0 0 280 56" preserveAspectRatio="none" style="width:100%;height:44px;overflow:visible;">
-                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="1.6"></polyline>
-                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="1.6"></polyline>
-                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="1.6"></polyline>
+                <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ cm.sparkTrendLabel }}" style="width:100%;height:44px;overflow:visible;">
+                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="3" fill="var(--accent-terracotta)"></circle>
+                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="3" fill="var(--accent-blue-grey)"></circle>
+                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="3" fill="var(--accent-olive)"></circle>
                 </svg>
                 <div style="display:flex;gap:12px;">
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp.</span>
@@ -1080,10 +896,13 @@
               <span style="font-family:var(--font-mono);font-size:20px;color:{{ camDetail.liveAccent }};">{{ camDetail.liveCo2 }} ppm CO₂</span>
               <span style="font:var(--t-caption);color:var(--text-metadata);">{{ camDetail.liveStatusLabel }}</span>
             </div>
-            <svg viewBox="0 0 280 56" preserveAspectRatio="none" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
-              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="1.6"></polyline>
-              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="1.6"></polyline>
-              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="1.6"></polyline>
+            <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ camDetail.sparkTrendLabel }}" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
+              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="3.5" fill="var(--accent-terracotta)"></circle>
+              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="3.5" fill="var(--accent-blue-grey)"></circle>
+              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="3.5" fill="var(--accent-olive)"></circle>
             </svg>
             <div style="display:flex;gap:12px;margin-top:6px;">
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura</span>
@@ -1118,9 +937,17 @@
     </div>
     </sc-if>
 
+    <!-- =================== TRANSICIÓN DE JORNADA (global, no depende de qué pantalla la abrió) =================== -->
+    <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
+      <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
+      <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
+    </div>
+    </sc-if>
+
     <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
     <div class="sim-root" style="{{ simRootStyle }}">
-      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
@@ -1732,7 +1559,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;border-top:1px solid var(--border-soft);padding-top:18px;">
           <div style="font:var(--t-caption);color:var(--text-metadata);">Informe generado {{ dateStr }} · {{ operator }} · lote {{ traceTitle }}</div>
           <sc-if value="{{ hasTraceQr }}" hint-placeholder-val="{{ false }}">
-            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" style="width:64px;height:64px;">
+            <img ref="{{ traceQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR de trazabilidad del lote" width="64" height="64" style="width:64px;height:64px;">
           </sc-if>
         </div>
       </div>
@@ -1885,7 +1712,7 @@
   <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
   <div onClick="{{ closeCmd }}" role="dialog" aria-modal="true" aria-label="Buscar" style="position:fixed;inset:0;z-index:95;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .16s ease;display:flex;align-items:flex-start;justify-content:center;padding:12vh 20px 20px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border:1px solid var(--border-strong);border-radius:16px;width:100%;max-width:540px;overflow:hidden;animation:fos-screen .2s cubic-bezier(.32,.72,.36,1);">
-      <input autoFocus="{{ true }}" value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);outline:none;">
+      <input value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" name="setas-search" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);">
       <sc-if value="{{ hasCmdResults }}" hint-placeholder-val="{{ false }}">
       <div class="fos-scroll" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;">
         <sc-for list="{{ cmdResults }}" as="r" hint-placeholder-count="4">
@@ -1916,7 +1743,7 @@
         <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:.75;">{{ pubSci }}</div>
       </div>
       <div style="padding:22px 24px;display:flex;gap:18px;align-items:flex-start;">
-        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
+        <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" width="92" height="92" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
         <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-1);line-height:1.9;">
           <div>Contenedor · {{ pubId }}</div>
           <div>Lote · {{ pubBatch }}</div>
@@ -1965,7 +1792,7 @@
       <div style="display:flex;flex-direction:column;gap:12px;max-height:56vh;overflow-y:auto;">
       <sc-for list="{{ labelItems }}" as="li" hint-placeholder-count="1">
       <div class="qr-print" style="border:1px solid var(--border-strong);border-radius:12px;padding:18px;background:#fff;display:flex;gap:16px;align-items:center;">
-        <img ref="{{ li.qrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Código QR del contenedor" style="width:120px;height:120px;flex:none;">
+        <img ref="{{ li.qrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Código QR del contenedor" width="120" height="120" style="width:120px;height:120px;flex:none;">
         <div style="min-width:0;flex:1;">
           <div style="font-family:var(--font-sans);font-weight:900;font-size:27px;color:var(--ink-0);line-height:1;letter-spacing:-.01em;">{{ li.id }}</div>
           <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;color:var(--text-secondary);margin-top:3px;">{{ li.sci }}</div>
@@ -2306,7 +2133,7 @@ class Component extends DCLogic {
     stockAlertCount: 0,
     workspaceMoreOpen: false,
     role: 'operator',
-    operator: 'Germán', operatorKey: 'inigo', pickerOpen: false, sessionLoading: false, pendingSessionType: null,
+    operator: 'Germán', operatorKey: 'inigo', sessionLoading: false, pendingSessionType: null,
     reviewTab: 'eventos',
     camDetail: null,
     labelFor: null,
@@ -2380,8 +2207,7 @@ class Component extends DCLogic {
       if(this.state.publicFor){ this.setState({publicFor:null}); return; }
       if(this.state.recallLote){ this.setState({recallLote:null}); return; }
       const s=this.state;
-      if(s.pickerOpen) this.setState({pickerOpen:false});
-      else if(s.capture) this.setState({capture:false});
+      if(s.capture) this.setState({capture:false});
       else if(s.labelFor) this.setState({labelFor:null});
       else if(s.correcting!=null) this.closeCorrection();
       else if(s.scanning) this.closeScan();
@@ -2560,13 +2386,23 @@ class Component extends DCLogic {
       const ci = ((cR[0]+cR[1])/2 + wave(3,tk)*((cR[1]-cR[0])/2+40));
       tPts.push(ti); hPts.push(hi); cPts.push(ci);
     }
-    const toPath=(arr)=>{ const mn=Math.min(...arr), mx=Math.max(...arr), span=Math.max(0.1,mx-mn); return arr.map((v,i)=>(i/(N-1)*W).toFixed(1)+','+((1-(v-mn)/span)*H).toFixed(1)).join(' '); };
+    // toPath también devuelve endY (última coordenada Y) para anclar el punto
+    // "ahora" al final de cada línea — el sparkline no lleva eje, así que ese
+    // punto es la única pista visual de cuál es el valor más reciente.
+    const toPath=(arr)=>{
+      const mn=Math.min(...arr), mx=Math.max(...arr), span=Math.max(0.1,mx-mn);
+      const pts=arr.map((v,i)=>[(i/(N-1)*W).toFixed(1), ((1-(v-mn)/span)*H).toFixed(1)]);
+      return { d:pts.map(p=>p.join(',')).join(' '), endY:pts[pts.length-1][1] };
+    };
+    const tSpark=toPath(tPts), hSpark=toPath(hPts), cSpark=toPath(cPts);
     return {
       liveTemp: temp, liveHum: hum, liveCo2: co2,
       liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
       liveStatusLabel: outOfRange?'Fuera de rango':'Dentro de rango',
       hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
-      tempSpark: toPath(tPts), humSpark: toPath(hPts), co2Spark: toPath(cPts),
+      tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
+      tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
+      sparkTrendLabel: `Tendencia últimas horas: temperatura, humedad y CO₂ (${temp}°C, ${hum}% HR, ${co2} ppm)`,
     };
   }
   dismissClimateBanner(){ this.setState({ climateBanner:null }); }
@@ -2617,7 +2453,7 @@ class Component extends DCLogic {
     const a=this.state.chamberAlerts[key]; if(!a) return;
     const rest=Object.assign({},this.state.chamberAlerts); delete rest[key];
     this.setState(s=>({ chamberAlerts:rest, climateBanner: s.climateBanner&&s.climateBanner.key===key?null:s.climateBanner,
-      module:'inicio', quickType:'correccion', screen:'quick', capture:false, quickNote:'Acción correctiva · '+a.note }));
+      quickType:'correccion', screen:'quick', capture:false, quickNote:'Acción correctiva · '+a.note }));
   }
   dismissAlert(key){
     const rest=Object.assign({},this.state.chamberAlerts); delete rest[key];
@@ -2968,10 +2804,9 @@ class Component extends DCLogic {
                : base+'var(--border-soft);background:var(--paper-0);';
   }
   setRole(role){
-    this.setState(s=>{
-      const gate = ROLE_GATE[s.module];
-      return { role, module: (gate && !gate.includes(role)) ? 'inicio' : s.module };
-    });
+    const gate = ROLE_GATE[this.state.module];
+    if(gate && !gate.includes(role)) this.goSimTab('home');
+    this.setState({ role });
   }
   tagStyle(color){
     return 'display:inline-flex;align-items:center;border:1px solid '+color+';color:'+color+';padding:2px 9px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;';
@@ -3030,6 +2865,7 @@ class Component extends DCLogic {
       };
     });
     const camD = s.camDetail ? camView.find(c=>c.id===s.camDetail) : null;
+    const camViewLive = camView.map(c=>({ ...c, ...this.liveMonitor(c) }));
 
     // ---- Rendimiento: BE por sustrato (receta) y por especie ----
     const beOf = y => y.freshG/(y.dryKg*1000)*100;
@@ -3175,8 +3011,7 @@ class Component extends DCLogic {
       contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
     ];
     if(activeWorkspace==='control') workspaceTabs = [
-      contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
-      contextTab('Sesión',s.module==='inicio',()=>this.setState({module:'inicio',capture:false,workspaceMoreOpen:false})),
+      contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
       contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
@@ -3188,7 +3023,7 @@ class Component extends DCLogic {
 
     return {
       // modules
-      isInicio:s.module==='inicio', isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
+      isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
       workspaceLabel:'Navegación de '+({formular:'Formular',produccion:'Producción',bitacora:'Bitácora',control:'Control'}[activeWorkspace]),
@@ -3210,9 +3045,9 @@ class Component extends DCLogic {
       workspaceMoreCls:s.workspaceMoreOpen?'on':'',
       toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
       onWorkspaceKeyDown:e=>this.handleWorkspaceKeys(e),
-      navInicioCls:navCls('inicio'), navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
+      navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
-      curInicio:s.module==='inicio'?'page':undefined, curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
+      curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
       curRevision:s.module==='revision'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
       navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
@@ -3230,13 +3065,14 @@ class Component extends DCLogic {
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
       goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
+      // "Registrar Evento" en Acciones Rápidas de Hoy — mismo destino que la
+      // pestaña de navegación "Registrar evento" (contextTab de module:'sesion').
+      onGoSesion:()=>this.setState({module:'sesion',capture:false,workspaceMoreOpen:false}),
       // Las barras antiguas por pantalla quedan vacías: workspaceTabs es la única
       // navegación contextual visible y evita dos fuentes de verdad.
       prodTabs: [],
       regTabs: [],
-      goInicio:()=>this.setState({module:'inicio',capture:false}),
       goSesion:()=>this.setState({module:'sesion',capture:false}),
-      goSim:()=>{ this.refreshSim(); this.goSimTab((s.simRecipes||[]).length>0?'dashboard':'formular'); },
       toggleSimFlyout:()=>this.setState(s=>({simFlyoutOpen:!s.simFlyoutOpen})),
       openSimFlyout:()=>this.setState({simFlyoutOpen:true}),
       closeSimFlyout:()=>this.setState({simFlyoutOpen:false}),
@@ -3259,7 +3095,6 @@ class Component extends DCLogic {
       showPlan:ROLE_GATE.plan.includes(s.role), showInventario:ROLE_GATE.inventario.includes(s.role), showCalidad:ROLE_GATE.calidad.includes(s.role), showAprender:ROLE_GATE.aprender.includes(s.role), showComercial:ROLE_GATE.comercial.includes(s.role),
       roleOptions: ROLE_LABELS.map((r,i)=>{ const sel = s.role===r.key; return { label:r.label, sel, select:()=>this.setRole(r.key),
         style:'cursor:pointer;padding:8px 14px;border:none;'+(i<ROLE_LABELS.length-1?'border-right:1px solid var(--border-hairline);':'')+'background:'+(sel?'var(--ink-0)':'var(--paper-0)')+';color:'+(sel?'var(--paper-0)':'var(--ink-1)')+';font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;' }; }),
-
       // plan
       planMetrics:PLAN_METRICS, scheduleRows, demandRows,
       // inventario
@@ -3281,8 +3116,20 @@ class Component extends DCLogic {
       ],
       commercialRows:commercialClients,
       zonas:ZONAS,
-      camaras: camView.map(c=>({ ...c, ...this.liveMonitor(c), open:()=>this.setState({camDetail:c.id}) })),
+      camaras: camViewLive.map(c=>({ ...c, open:()=>this.setState({camDetail:c.id}) })),
       hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
+      // Cámaras reales (no las "salas" ilustrativas que Hoy usaba antes) para la
+      // vista previa de Ambientes & Sensores en Hoy — mismos datos que alimentan
+      // el módulo Cámaras, sin inventar una correspondencia con las 4 salas mock.
+      hoyCamarasJson: JSON.stringify(camViewLive.map(c=>({
+        id:c.id, name:c.name, zona:c.zona, sppName:c.sppName, estadoLabel:c.estadoLabel, estadoAccent:c.estadoAccent,
+        count:c.count, capKg:c.capKg, occupancy:c.occupancy, note:c.note,
+        liveTemp:c.liveTemp, liveHum:c.liveHum, liveCo2:c.liveCo2, liveStatusLabel:c.liveStatusLabel,
+        hasLiveAlert:c.hasLiveAlert, liveAlertNote:c.liveAlertNote,
+        tempSpark:c.tempSpark, humSpark:c.humSpark, co2Spark:c.co2Spark,
+        tempSparkEndY:c.tempSparkEndY, humSparkEndY:c.humSparkEndY, co2SparkEndY:c.co2SparkEndY,
+      }))),
+      onOpenCamara:(id)=>this.setState({module:'camaras',capture:false,camDetail:id}),
       simTab:s.simTab, simTabNonce:s.simTabNonce, bitSubtab:s.bitSubtab, bitSubtabNonce:s.bitSubtabNonce,
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
@@ -3307,38 +3154,11 @@ class Component extends DCLogic {
       hasActiveSession: !!s.sessionType, noActiveSession: !s.sessionType,
       openSession:()=>this.setState({module:'sesion',screen:'home',capture:false}),
       simRecipeCount:(s.simRecipes||[]).length,
-      simCardLabel: (s.simRecipes||[]).length>0 ? ((s.simRecipes||[]).length+' recetas guardadas') : 'Formular un sustrato',
-      simCardSub: (s.simRecipes||[]).length>0 ? 'Abrir el recetario' : 'A\u00fan no hay recetas \u00b7 empieza una',
-      camarasQuick: CAMARAS.filter(cm=>cm.estado==='activo').map(cm=>{
-        const r=this.liveMonitor(cm);
-        return { name:cm.name, zona:cm.zona, sppName: cm.spp?spName(cm.spp):'Mixto / sin asignar',
-          temp:r.liveTemp, hum:r.liveHum, co2:r.liveCo2, accent:r.liveAccent,
-          go:()=>this.setState({module:'camaras',capture:false,camDetail:cm.id}) };
-      }),
-      lotesQuick: (()=>{
-        const g={}; s.containers.forEach(c=>{ (g[c.batch]=g[c.batch]||[]).push(c); });
-        return Object.keys(g).map(batch=>{
-          const cs=g[batch], bad=cs.filter(c=>c.status==='contaminado').length, active=cs.filter(c=>c.status==='activo').length;
-          const sp = SPECIES.find(x=>x.key===cs[0].key);
-          const stages=[...new Set(cs.map(c=>c.stage))];
-          const recipe = cs[0].recipe||'—';
-          const oldest = cs.reduce((a,c)=>this.diasDesde(c.tl[c.tl.length-1].date)>a?this.diasDesde(c.tl[c.tl.length-1].date):a,0);
-          return { batch, sppName: sp?sp.name:'Mixto',
-            summary: (sp?sp.name+' · ':'')+cs.length+' contenedores · '+active+' activos',
-            stagesLabel: stages.join(', '), recipe, oldest: oldest+' d sin evento',
-            hasAlert:bad>0, alertLabel:bad+' contaminado'+(bad>1?'s':''),
-            img: resolveImg(sp?sp.img:'_standalone_imgs/grey-mushroom.png'),
-            imgRef:(el)=>{ if(el) el.src = resolveImg(sp?sp.img:'_standalone_imgs/grey-mushroom.png'); },
-            go:()=>this.setState({module:'sesion', screen:'history', detail:cs[0].id, capture:false}) };
-        });
-      })(),
-      hasLotesQuick: s.containers.length>0,
       primaryActionLabel: s.sessionType ? 'Continuar jornada' : 'Iniciar jornada',
       primaryActionSub: s.sessionType ? ('Sesi\u00f3n de '+sessionLabel+' \u00b7 '+s.clock) : 'No hay una sesi\u00f3n activa',
       needsReviewCount: s.containers.filter(c=>c.status==='contaminado').length,
       goHistoryFromInicio:()=>this.setState({module:'sesion', screen:'history', detail:null, capture:false}),
-      hasRecentActivity: s.ledger.length>0,
-      recentActivity: s.ledger.slice(0,3).map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
+      recentActivityJson: JSON.stringify(s.ledger.slice(0,3).map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent }))),
 
       // session screen flags
       isStart:s.screen==='start', isHome:s.screen==='home', isRegister:s.screen==='register',
@@ -3409,14 +3229,7 @@ class Component extends DCLogic {
       corrDisabled:!(s.corrNote&&s.corrNote.trim()), corrBtnStyle:this.primaryBtn(!!(s.corrNote&&s.corrNote.trim())),
 
       dateStr:this.todayStr(), operator:s.operator, sessionLabel, sessionClock:s.clock,
-      operators: OPERATORS.map(o=>{ const sel=s.operatorKey===o.key; return { name:o.name, role:o.role, sel,
-        rowStyle:'cursor:pointer;display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;background:'+(sel?'var(--paper-1)':'none')+';border:none;border-top:1px solid var(--border-soft);padding:9px 14px;color:'+(sel?'var(--ink-0)':'var(--ink-1)')+';',
-        pick:()=>this.setState({operator:o.name, operatorKey:o.key, pickerOpen:false}) }; }),
-      pickerOpen: s.pickerOpen, togglePicker:()=>this.setState(s2=>({pickerOpen:!s2.pickerOpen})), closePicker:()=>this.setState({pickerOpen:false}),
-      signOutApp:()=>{ this.setState({pickerOpen:false}); if(typeof window.__setasSignOut==='function') window.__setasSignOut(); },
-      operatorInitial: (s.operator||'')[0]||'', operatorRole: (OPERATORS.find(o=>o.key===s.operatorKey)||{}).role||'',
       isAdminOperator: !!(OPERATORS.find(o=>o.key===s.operatorKey)||{}).admin,
-      pickerChevron: s.pickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
       sessionLoading: s.sessionLoading, loadingLabel: s.pendingSessionType==='lab' ? 'laboratorio' : 'cultivo',
       greeting:this.greetingStr(),
       weatherText: s.weather ? ('Tenjo · '+s.weather.temp+'°C · '+s.weather.label+' · '+s.weather.hum+'% hum.') : 'Tenjo · cargando clima…',
@@ -3494,7 +3307,7 @@ class Component extends DCLogic {
 
       // end
       endBreakdown,
-      confirmEnd:()=>{ clearInterval(this._t); this.setState({module:'inicio', sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
+      confirmEnd:()=>{ clearInterval(this._t); this.goSimTab('home'); this.setState({sessionType:null}); this.toast('Sesión cerrada. Los eventos permanecen.'); },
 
       // review
       reviewTab:s.reviewTab, isTabEventos:s.reviewTab==='eventos', isTabRend:s.reviewTab==='rendimiento', isTabSalidas:s.reviewTab==='salidas', isTabConoc:s.reviewTab==='conocimiento',
@@ -3765,7 +3578,7 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Hoy' };
+    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Tablero de Control' };
     const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
@@ -3813,6 +3626,25 @@ class Component extends DCLogic {
         style:'cursor:pointer;text-align:left;border:1px solid '+(s.qCause===k.key?'var(--ink-0)':'var(--border-soft)')+';background:'+(s.qCause===k.key?'var(--ink-0)':'var(--paper-0)')+';color:'+(s.qCause===k.key?'var(--paper-0)':'var(--ink-0)')+';border-radius:var(--radius-sm);padding:11px 13px;display:flex;flex-direction:column;gap:2px;font:var(--t-label);' })),
       tasksToday: tareas5, hasTasks: tareas5.length>0,
       tasksOpenCount: tareas5.filter(t=>!t.done).length+' abiertas',
+      // versión serializable de tareas5 para cruzar al cockpit de React (las
+      // funciones go/toggle no sobreviven JSON — se resuelven por key desde acá)
+      tasksHoyJson: JSON.stringify(tareas5.map(t=>({ key:t.key, id:t.id, title:t.title, why:t.why, prio:t.prio, done:t.done }))),
+      onTaskGo:(key)=>{ const t=tareas5.find(x=>x.key===key); if(t) t.go(); },
+      onTaskToggle:(key)=>this.setState(x=>({ taskDone:{...x.taskDone, [key]:!x.taskDone[key]} })),
+      // Actividad reciente (cockpit "Hoy") — cada fila lleva al incidente/lote de
+      // origen del evento. Los eventos type:'clima' guardan el NOMBRE de la
+      // cámara en `container` (ej. "CLOUDLAB 844"), no un id de contenedor —
+      // hay que resolverlo contra CAMARAS y abrir el módulo Cámaras, igual que
+      // onOpenCamara. Todo lo demás guarda un id real de contenedor (ver TYPES).
+      onActivityGo:(containerId,evType)=>{
+        if(!containerId) return;
+        if(evType==='clima'){
+          const cam=CAMARAS.find(c=>c.name===containerId||c.id===containerId);
+          this.setState({module:'camaras',capture:false,camDetail:cam?cam.id:null});
+          return;
+        }
+        this.setState({module:'sesion', screen:'history', detail:containerId, capture:false});
+      },
       cp, beLoteRows: beRows, hasBeRows: beRows.length>0,
       goCalidadFromInicio:()=>this.setState({ module:'calidad', capture:false }),
       // pronóstico + semana
@@ -3827,6 +3659,19 @@ class Component extends DCLogic {
       isTabTrabajo:s.reviewTab==='trabajo', isTabSuper:s.reviewTab==='supervision',
       tabTrabajoStyle:this.tabStyle(s.reviewTab==='trabajo'), tabSuperStyle:this.tabStyle(s.reviewTab==='supervision'),
       setTabTrabajo:()=>this.setState({reviewTab:'trabajo'}), setTabSuper:()=>this.setState({reviewTab:'supervision'}),
+      // vista previa WF-9 en "Hoy"
+      isHomeTab: s.module==='sim' && s.simTab==='home',
+      hoyPreviewEventos: s.reviewEvents.length,
+      hoyPreviewBE: isNaN(Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length))?'—':Math.round(s.yields.reduce((a,y)=>a+(y.freshG/(y.dryKg*1000)*100),0)/s.yields.length),
+      hoyPreviewHoras: (s.workLog||[]).reduce((a,w)=>a+w.horas,0).toFixed(1),
+      hoyPreviewAnomalias: s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length,
+      hoyPreviewAnomaliasColor: (s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length)>0?'var(--status-attention)':'var(--ink-0)',
+      hoyPreviewSalidas: (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2),
+      goRevEventos:()=>this.setState({module:'revision',reviewTab:'eventos',capture:false,workspaceMoreOpen:false}),
+      goRevRendimiento:()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false}),
+      goRevTrabajo:()=>this.setState({module:'revision',reviewTab:'trabajo',capture:false,workspaceMoreOpen:false}),
+      goRevSuper:()=>this.setState({module:'revision',reviewTab:'supervision',capture:false,workspaceMoreOpen:false}),
+      goRevSalidas:()=>this.setState({module:'revision',reviewTab:'salidas',capture:false,workspaceMoreOpen:false}),
       // handoff
       hasHandoff:!!s.handoff, handoffText:s.handoff, handoffDraft:s.handoffDraft,
       setHandoffDraft:(e)=>this.setState({handoffDraft:e.target.value}),

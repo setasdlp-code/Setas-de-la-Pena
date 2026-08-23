@@ -1,16 +1,24 @@
-/* Structure: rules, radii, focus — no shadows, no glass, no floating panels. */
 :root {
   --radius-none: 0px;
-  --radius-sm: 2px;   /* tags, inputs only */
-  --radius-md: 3px;   /* rare — small controls */
+  --radius-sm: 2px;
+  --radius-md: 3px;
 
   --rule-hairline: 1px solid var(--border-hairline);
   --rule-strong: 1px solid var(--border-strong);
   --rule-heavy: 2px solid var(--border-heavy);
 
   --focus-outline: 2px solid var(--focus-ring);
-
   --shadow-none: none;
+
+  --field-cell-min-height: 48px;
+  --field-print-margin: 10mm;
+
+  --tap-target-min: 44px;
+  --tap-target-gap-min: 8px;
+
+  --pictogram-grid: 48;
+  --pictogram-safe: 36;
+  --pictogram-stroke: 3;
 }
 
 * { box-sizing: border-box; }
@@ -20,12 +28,14 @@ html, body {
   background: var(--surface-page);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: var(--text-base);
+  font-size: var(--text-prose);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--link); text-decoration: none; border-bottom: 1px solid var(--border-hairline); }
-a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--link-hover); }
+
+table, td, th, .mono, [data-numeric] { font-variant-numeric: tabular-nums; }
 
 ::selection { background: var(--accent-olive-dim); }

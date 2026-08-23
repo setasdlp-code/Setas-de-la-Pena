@@ -1,30 +1,36 @@
 :root {
   /* ---- Base: paper & ink ---- */
-  --paper-0: #F7F4EC;   /* page background */
-  --paper-1: #EFEBE0;   /* section / panel background */
-  --paper-2: #E5DFD0;   /* table stripe, recessed field */
-  --paper-3: #DCD5C2;   /* stronger recessed / pressed */
+  --paper-0: #F7F4EC;
+  --paper-1: #EFEBE0;
+  --paper-2: #E5DFD0;
+  --paper-3: #DCD5C2;
 
-  --ink-0: #1E1D19;     /* primary text, near-black warm */
-  --ink-1: #3C392F;     /* secondary text */
-  --ink-2: #6B6759;     /* tertiary text, captions, metadata */
-  --ink-3: #96907C;     /* disabled / placeholder text */
+  --ink-0: #1E1D19;
+  --ink-1: #3C392F;
+  --ink-2: #6B6759;
+  --ink-3: #96907C;
 
-  --line-0: #C9C1A9;    /* hairline rule, default */
-  --line-1: #A69E86;    /* stronger rule, table borders, active underline */
-  --line-2: #1E1D19;    /* heaviest rule — section dividers, print borders */
+  --line-0: #988C6C;
+  --line-1: #8C7F5B;
+  --line-2: #1E1D19;
 
   /* ---- Accents: classification & status only, never decoration ---- */
   --accent-olive: #5B6B44;
-  --accent-olive-dim: #DCE1D1;      /* olive tint for backgrounds/chips */
+  --accent-olive-dim: #DCE1D1;
   --accent-terracotta: #A85C32;
   --accent-terracotta-dim: #EFE0D3;
   --accent-blue-grey: #5E7080;
   --accent-blue-grey-dim: #DEE5E7;
   --accent-mushroom: #7A6A52;
   --accent-mushroom-dim: #E7E0D3;
-  --accent-rust: #8C3223;           /* reserved for error / contamination only */
+  --accent-rust: #8C3223;
   --accent-rust-dim: #EEDAD3;
+
+  --accent-olive-hover: #4A5737;
+  --accent-terracotta-hover: #894B29;
+  --accent-blue-grey-hover: #4D5B68;
+  --accent-mushroom-hover: #645643;
+  --accent-rust-hover: #72291C;
 
   /* ---- Semantic aliases ---- */
   --surface-page: var(--paper-0);
@@ -43,17 +49,21 @@
 
   --status-active: var(--accent-olive);
   --status-active-bg: var(--accent-olive-dim);
+  --status-active-hover: var(--accent-olive-hover);
   --status-attention: var(--accent-terracotta);
   --status-attention-bg: var(--accent-terracotta-dim);
+  --status-attention-hover: var(--accent-terracotta-hover);
   --status-info: var(--accent-blue-grey);
   --status-info-bg: var(--accent-blue-grey-dim);
+  --status-info-hover: var(--accent-blue-grey-hover);
   --status-archived: var(--accent-mushroom);
   --status-archived-bg: var(--accent-mushroom-dim);
+  --status-archived-hover: var(--accent-mushroom-hover);
   --status-error: var(--accent-rust);
   --status-error-bg: var(--accent-rust-dim);
+  --status-error-hover: var(--accent-rust-hover);
 
   --link: var(--accent-blue-grey);
   --link-hover: var(--ink-0);
-
   --focus-ring: var(--accent-olive);
 }

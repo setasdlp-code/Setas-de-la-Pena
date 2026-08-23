@@ -682,7 +682,7 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
   
   if(fullscreen) return(
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
       <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
       <RadarSVG size={600}/>
       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
@@ -848,25 +848,25 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
   const catEntries=catOrder.filter(k=>bycat[k]).map(k=>[k,bycat[k]]);
 
   if(!open) return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
+    <button type="button" aria-expanded="false" style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',width:'100%',marginBottom:12,borderRadius:5,border:`1px solid color-mix(in oklab,${band} 30%,rgba(26,20,16,0.11))`,background:`color-mix(in oklab,${band} 5%,var(--paper-50))`,boxShadow:'0 1px 4px rgba(26,20,16,0.07)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,padding:'8px 14px',font:'inherit',textAlign:'left'}} onClick={()=>setOpen(true)} title="Ver guía de especie">
       <div style={{width:20,height:4,borderRadius:2,background:band,flexShrink:0}}/>
       <span style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Guía de especie</span>
         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:band,opacity:.8}}>ver ▼</span>
       </span>
       <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:`color-mix(in oklab,${band} 85%,var(--ink-900))`}}>{sp.name}</span>
-    </div>
+    </button>
   );
 
   return(
-    <div style={{position:'sticky',top:54,zIndex:20,marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
+    <div style={{position:'sticky',top:54,zIndex:'var(--z-sticky-panel)',marginBottom:12,borderRadius:5,border:'1px solid rgba(26,20,16,0.11)',boxShadow:'0 1px 6px rgba(26,20,16,0.08)',background:'var(--paper-50)',overflow:'hidden'}}>
       {/* Franja lateral familia */}
       <div className="p-family-strip" style={{background:`color-mix(in oklab,${band} 10%,var(--paper-100))`,borderRight:`1px solid color-mix(in oklab,${band} 25%,transparent)`}}>
         <span style={{color:band}}>{family}</span>
       </div>
       <div style={{marginLeft:15}}>
         {/* Cabecera archival */}
-        <div className="p-arch-head" style={{marginLeft:0,cursor:'pointer'}} onClick={()=>setOpen(o=>!o)}>
+        <button type="button" className="p-arch-head" aria-expanded="true" style={{marginLeft:0,cursor:'pointer',width:'100%',border:0,background:'transparent',font:'inherit',textAlign:'left'}} onClick={()=>setOpen(o=>!o)}>
           <div className="p-arch-left">
             <span className="p-arch-num" style={{color:band}}>{num}</span>
             <span className="p-arch-code">{code}</span>
@@ -875,11 +875,11 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
             <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>▲</span>
           </div>
-        </div>
+        </button>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
-          {img&&<img src={img} alt={sp.name} style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
-          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:1,maxWidth:img?'60%':'100%'}}>
+          {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
+          <div style={{padding:'14px 16px 16px',position:'relative',zIndex:'var(--z-local)',maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
             {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
@@ -965,6 +965,8 @@ const PERITO_STATUS={
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
+const FORM_ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
+const FORM_ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
 const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
@@ -992,7 +994,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
         {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a "Todo el catálogo".</div>}
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
@@ -1015,9 +1017,37 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
 });
 
 // ── Modales genéricos: reemplazan window.confirm/prompt/alert en el flujo de recetas ──
-const ConfirmModal=({dlg,onClose})=>(
+const useDialogA11y=(onClose)=>{
+  const dialogRef=React.useRef(null);
+  const closeRef=React.useRef(onClose);
+  closeRef.current=onClose;
+  React.useEffect(()=>{
+    const previous=document.activeElement;
+    const dialog=dialogRef.current;
+    if(!dialog) return;
+    const selector='button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusables=()=>Array.from(dialog.querySelectorAll(selector));
+    const preferred=dialog.querySelector('[data-autofocus]')||focusables()[0]||dialog;
+    preferred.focus();
+    const onKeyDown=e=>{
+      if(e.key==='Escape'){e.preventDefault();closeRef.current();return;}
+      if(e.key!=='Tab') return;
+      const items=focusables();
+      if(!items.length){e.preventDefault();dialog.focus();return;}
+      const first=items[0],last=items[items.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    };
+    dialog.addEventListener('keydown',onKeyDown);
+    return()=>{dialog.removeEventListener('keydown',onKeyDown);if(previous&&typeof previous.focus==='function')previous.focus();};
+  },[]);
+  return dialogRef;
+};
+const ConfirmModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
@@ -1026,16 +1056,18 @@ const ConfirmModal=({dlg,onClose})=>(
       </div>
     </div>
   </div>
-);
+  );
+};
 const PromptModal=({dlg,onClose})=>{
   const[val,setVal]=React.useState(dlg.defaultValue||'');
+  const dialogRef=useDialogA11y(onClose);
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="inv-modal" style={{width:420}}>
+      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
-        {dlg.label&&<label className="inv-label">{dlg.label}</label>}
-        <input className="inv-input" autoFocus value={val} placeholder={dlg.placeholder||''} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
+        {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
+        <input data-autofocus id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
         <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
@@ -1044,9 +1076,11 @@ const PromptModal=({dlg,onClose})=>{
     </div>
   );
 };
-const NoticeModal=({dlg,onClose})=>(
+const NoticeModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div className="inv-modal" style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
       <div style={{display:'flex',justifyContent:'flex-end'}}>
@@ -1054,7 +1088,8 @@ const NoticeModal=({dlg,onClose})=>(
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
@@ -1086,7 +1121,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const craPct=ing.cra/5;                                     // 0–5 → 0–1
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
-    <div className={'ing-item '+(expanded?'expanded':'')} onClick={()=>setExpanded(!expanded)}>
+    <div className={'ing-item '+(expanded?'expanded':'')}>
       <div className="ing-badge" style={{background:cat}} title={ing.cat}>{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
@@ -1130,6 +1165,9 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
 
         )}
       </div>
+      <button type="button" className="ing-expand-btn" aria-expanded={expanded} aria-label={`${expanded?'Ocultar':'Mostrar'} perfil de ${ing.name}`} onClick={()=>setExpanded(!expanded)}>
+        <span aria-hidden="true">{expanded?'−':'+'}</span>
+      </button>
     </div>
   );
 };
@@ -1162,7 +1200,7 @@ const EBDial=({an,sp})=>{
             <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontFamily="var(--font-mono)" fontSize="9.5" fill="var(--ink-500)">{tv}</text>
           </g>
         );})}
-        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'all .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
         <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="#9C3F1F">{an.ebLow}–{an.ebHigh}</text>
@@ -1348,6 +1386,12 @@ const IconSeed = ({ size = 12, color = 'currentColor' }) => (
     <path d="M3 13l5-5" />
   </svg>
 );
+const IconNut = ({ size = 12, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M8 1.5c-2.5 1.5-4 4-4 7 0 2.7 1.8 5.5 4 6 2.2-.5 4-3.3 4-6 0-3-1.5-5.5-4-7z" />
+    <path d="M8 6.2v8.3" />
+  </svg>
+);
 const IconScale = ({ size = 12, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <line x1="8" y1="1" x2="8" y2="14" />
@@ -1417,12 +1461,21 @@ const IconPause = ({ size = 12, color = 'currentColor' }) => (
 );
 
 const RecipeGauges=({an,sp,optimalAn,historical})=>{
-  if(!sp||!an||!an.cn) return null;
+  if(!sp||!an||!an.cn) return (
+    <aside className="bg-wrap recipe-live-evaluation is-empty" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
+      <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
+      <div className="recipe-live-empty">
+        <span aria-hidden="true"><IconTarget size={22}/></span>
+        <strong>Aún no hay una fórmula que evaluar</strong>
+        <span>Agrega el primer ingrediente y aquí aparecerán C:N, nitrógeno y EB estimada.</span>
+      </div>
+    </aside>
+  );
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   const blendedEB=blendEBWithHistory(an,historical);
   return (
-    <div className="bg-wrap">
-      <div className="bg-eyebrow">Parámetros de sustrato</div>
+    <aside className="bg-wrap recipe-live-evaluation" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
+      <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
@@ -1450,7 +1503,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 };
 
@@ -1736,8 +1789,8 @@ function App(props){
   const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
-  const [tab,setTab]=useState('home');
-  const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
+  const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
@@ -1750,7 +1803,8 @@ function App(props){
   const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
   const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
-  const goTab=t=>{const next=applyTab(t);if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
+  useEffect(()=>{const onPop=()=>{try{applyTab(new URLSearchParams(window.location.search).get('view')||'home');}catch(e){}};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
   useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
@@ -1776,7 +1830,6 @@ function App(props){
   const [balanceMode,setBalanceMode]=useState('proportional');
   // v3 new state
   const [pantryIds,setPantryIds]=useState([]);
-  const [usePantry,setUsePantry]=useState(false);
   const [showCompatOnly,setShowCompatOnly]=useState(false);
   const [disabledIngIds,setDisabledIngIds]=useState([]);
   const toggleDisabledIng=(id)=>setDisabledIngIds(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
@@ -1803,10 +1856,13 @@ function App(props){
     } catch(e) {}
     return 'produccion';
   });
+  const [usePantry,setUsePantry]=useState(globalMode === 'produccion');
   const [optUseStock, setOptUseStock] = useState(globalMode === 'produccion');
   const setGlobalWorkMode = (mode) => {
     setGlobalMode(mode);
-    setOptUseStock(mode === 'produccion');
+    const stockOnly=mode === 'produccion';
+    setOptUseStock(stockOnly);
+    setUsePantry(stockOnly);
     try {
       localStorage.setItem('setas_global_workmode', mode);
       localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
@@ -1823,10 +1879,11 @@ function App(props){
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  const [showLiveChips,setShowLiveChips]=useState(false);
+  const [showLiveChips,setShowLiveChips]=useState(true);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({});
+  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
+  const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   const [optProfile,setOptProfile]=useState('produccion');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
@@ -1889,6 +1946,8 @@ function App(props){
   const [cmpPasteText,setCmpPasteText]=useState('');
   const [cmpParsing,setCmpParsing]=useState(false);
   const [cmpParseErr,setCmpParseErr]=useState('');
+  const [huboParseIA,setHuboParseIA]=useState(false); // true tras interpretar foto/texto — el resumen se deriva de cmpItems en cada render, no se guarda como snapshot
+  const [cmpLastFoto,setCmpLastFoto]=useState(null); // {fileBlock,esPDF,name} — para reintentar sin resubir
   const [cmpConfirm,setCmpConfirm]=useState(null);
   const cmpFileRef=useRef(null);
   const [showProvModal,setShowProvModal]=useState(false);
@@ -2022,10 +2081,16 @@ function App(props){
         if(c) setInvCompras(JSON.parse(c));
         if(l) setInvLotes(JSON.parse(l));
         if(m) setInvMovimientos(JSON.parse(m));
-        const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
-        if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
       }
     }catch(e){}
+    // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
+    // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
+    try{
+      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
+      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
+    }catch(e){
+      setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+    }
   },[]);
 
   // ── v4: sincronizar pantry con stock
@@ -2152,6 +2217,23 @@ function App(props){
     const roleMatch=cat==='all'||(cat==='aditivo'?['aditivo_ph','aditivo_estructura','aditivo_micronutriente','aditivo_arrancador'].includes(g.role):g.role===cat);
     return ms&&roleMatch;
   }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
+  const visibleIngredients=useMemo(()=>{
+    let rows=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
+    if(showCompatOnly){
+      const compatibleIds=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
+      rows=rows.filter(g=>compatibleIds.has(g.id));
+    }
+    return rows;
+  },[usePantry,fings,pantryIds,showCompatOnly,sKey]);
+  const showRoleGroups=groupByRole&&cat==='all'&&search.trim().length===0;
+  const hasIngredientViewFilters=cat!=='all'||search.trim().length>0||showCompatOnly;
+  const resetIngredientView=()=>{
+    setSearch('');
+    setCat('all');
+    setShowCompatOnly(false);
+    setGroupByRole(true);
+    setAllRoleGroups(false);
+  };
 
   // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
   // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
@@ -2465,12 +2547,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
   };
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         // allSettled, no await secuencial: un fallo en guardarLote no debe
@@ -2493,7 +2576,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
-    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
@@ -2502,7 +2585,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const updateBitBolsa=(bolsaId,fields)=>{
-    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});}return upd;});
+    const fechaKey=['col25','col50','col100'].find(k=>k in fields);
+    if(fechaKey&&fields[fechaKey]){
+      const bolsa=bitBolsas.find(b=>b.id===bolsaId);
+      const lote=bolsa&&bitLotes.find(l=>l.id===bolsa.loteId);
+      if(lote&&!window.SetasBitacora.isFechaColValida(fields[fechaKey],lote.fechaInoculacion)){
+        setNoticeDlg({title:'Fecha inválida',msg:'La fecha de colonización no puede ser anterior a la fecha de inoculación del lote ('+lote.fechaInoculacion+').'});
+        return;
+      }
+    }
+    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
@@ -2512,7 +2604,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
-    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){}return upd;});
+    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
@@ -2546,30 +2638,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
+  // Cálculo puro en bitacora-model.js (testeado por separado) — aquí solo se
+  // resuelve el loteId contra el estado de React y se delega.
   const calcLoteStats=(loteId)=>{
     const lote=bitLotes.find(lt=>lt.id===loteId);if(!lote) return null;
-    const bolsas=bitBolsas.filter(b=>b.loteId===loteId);if(!bolsas.length) return null;
-    const cosechas=bitCosechas.filter(c=>c.loteId===loteId);
-    const bolsasSanas=bolsas.filter(b=>b.estado==='sana').length;
-    const bolsasContaminadas=bolsas.filter(b=>b.estado==='contaminada').length;
-    const contPct=bolsas.length?(bolsasContaminadas/bolsas.length)*100:0;
-    const totalFresco=cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
-    const peseSeco=parseFloat(lote.peseSeco)||0;
-    const be=peseSeco>0?(totalFresco/peseSeco)*100:null;
-    const col100s=bolsas.filter(b=>b.col100&&lote.fechaInoculacion).map(b=>Math.round((new Date(b.col100)-new Date(lote.fechaInoculacion))/86400000));
-    const diasCol=col100s.length?col100s.reduce((s,d)=>s+d,0)/col100s.length:null;
-    const costoKg=totalFresco>0&&lote.costoIngKg>0?(lote.costoIngKg*peseSeco)/totalFresco:null;
-    return{bolsasSanas,bolsasContaminadas,contPct,totalFresco,be,diasCol,costoKg,numBolsas:bolsas.length};
+    return window.SetasBitacora.calcLoteStats(lote,bitBolsas.filter(b=>b.loteId===loteId),bitCosechas.filter(c=>c.loteId===loteId));
   };
-  const calcLoteScore=(stats)=>{
-    if(!stats||stats.totalFresco===0) return null;
-    let s=0;
-    if(stats.be!=null) s+=Math.min(40,(stats.be/150)*40);
-    s+=(1-stats.contPct/100)*30;
-    s+=stats.diasCol!=null?(stats.diasCol<=18?15:stats.diasCol<=25?10:5):7;
-    s+=stats.costoKg!=null?(stats.costoKg<=2000?15:stats.costoKg<=4000?10:5):7;
-    return Math.round(s);
-  };
+  const calcLoteScore=(stats)=>window.SetasBitacora.calcLoteScore(stats);
   // Genera la receta óptima para la especie activa con toda la paleta y la carga
   const loadOptimal=()=>{
     try{
@@ -2651,21 +2726,75 @@ body{margin:0;padding:20px 24px;background:#fff;}
     img.onerror=e=>{URL.revokeObjectURL(url);reject(e);};
     img.src=url;
   });
-  const matchIngId=nombre=>{
+  // Empareja un nombre (de la IA o pegado) contra una lista con {id,<getName>} por
+  // coincidencia exacta y luego por substring — solo si el substring tiene largo
+  // suficiente (evita falsos positivos con fragmentos cortos tipo "el"/"sas") y solo
+  // si es inequívoco (si matchean 2+ candidatos por substring, no se autocompleta).
+  const matchByName=(list,getName,nombre,minSubstringLen=4)=>{
     if(!nombre) return '';
-    const n=nombre.toLowerCase().trim();
-    let hit=INGS.find(g=>g.name.toLowerCase()===n||g.id===n);
-    if(hit) return hit.id;
-    hit=INGS.find(g=>g.name.toLowerCase().includes(n)||n.includes(g.name.toLowerCase()));
-    return hit?hit.id:'';
+    const n=String(nombre).toLowerCase().trim();
+    if(!n) return '';
+    const exact=list.find(x=>getName(x).toLowerCase()===n||x.id===n);
+    if(exact) return exact.id;
+    if(n.length<minSubstringLen) return '';
+    const subHits=list.filter(x=>{
+      const gn=getName(x).toLowerCase();
+      return (gn.length>=minSubstringLen&&gn.includes(n))||(n.length>=minSubstringLen&&n.includes(gn));
+    });
+    return subHits.length===1?subHits[0].id:'';
   };
+  const matchIngId=nombre=>matchByName(INGS,g=>g.name,nombre);
+  // Empareja el nombre de proveedor que devuelve la IA contra los proveedores ya
+  // registrados — solo precarga si hay coincidencia inequívoca; nunca crea proveedores nuevos.
+  const matchProvId=nombre=>matchByName(invProveedores,p=>p.nombre,nombre);
   const applyParsedItems=parsed=>{
-    if(!Array.isArray(parsed)||!parsed.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');return;}
-    setCmpItems(parsed.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''})));
+    const items=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.items)?parsed.items:null);
+    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');setHuboParseIA(false);return;}
+    const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''}));
+    setCmpItems(mapped);
+    setHuboParseIA(true);
+    if(parsed&&!Array.isArray(parsed)){
+      if(parsed.proveedor){const pid=matchProvId(parsed.proveedor);if(pid) setCmpProvId(pid);}
+      if(parsed.fecha&&/^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
+    }
     setCmpMode('manual');
   };
-  const extraerJSON=txt=>{const m=txt.match(/\[[\s\S]*\]/);return JSON.parse(m?m[0]:txt);};
+  // Acepta tanto el formato nuevo {proveedor,fecha,items:[...]} como un array plano de
+  // ítems (compatibilidad con respuestas que no incluyan proveedor/fecha).
+  const extraerJSON=txt=>{
+    // Solo se acepta el objeto {proveedor,fecha,items} si de verdad trae la clave
+    // "items" — si no, un array plano en formato legado (p.ej. un solo ítem suelto)
+    // podría matchear las llaves de su único elemento y perder el resto de la data.
+    const objMatch=txt.match(/\{[\s\S]*\}/);
+    if(objMatch){
+      try{
+        const o=JSON.parse(objMatch[0]);
+        if(o&&typeof o==='object'&&Array.isArray(o.items)) return o;
+      }catch(e){}
+    }
+    const arrMatch=txt.match(/\[[\s\S]*\]/);
+    if(arrMatch) return JSON.parse(arrMatch[0]);
+    return JSON.parse(objMatch?objMatch[0]:txt);
+  };
   const CMP_MAX_BYTES=10*1024*1024;
+  // Ejecuta el parseo de una foto/PDF ya codificado — separado de capturarFoto para
+  // poder reintentar (botón "Reintentar") sin pedirle al usuario que resuba el archivo.
+  const parseFotoPayload=async(fileBlock,esPDF)=>{
+    setCmpParsing(true);setCmpParseErr('');
+    try{
+      const listaIngs=INGS.map(g=>g.name).join(', ');
+      const resp=await window.claude.complete({messages:[{role:'user',content:[
+        fileBlock,
+        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
+      ]}]});
+      try{
+        applyParsedItems(extraerJSON(resp));
+      }catch(parseErr){
+        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+      }
+    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    setCmpParsing(false);
+  };
   const capturarFoto=async e=>{
     const file=e.target.files&&e.target.files[0]; if(!file) return;
     const esPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
@@ -2677,31 +2806,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
       e.target.value=''; return;
     }
-    setCmpParsing(true);setCmpParseErr('');setCmpFuente('ocr');
+    setCmpParseErr('');setHuboParseIA(false);setCmpParsing(true);setCmpFuente('ocr');
     try{
       const b64=await fileToBase64(file);
-      const listaIngs=INGS.map(g=>g.name).join(', ');
       const fileBlock=esPDF
         ?{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
         :{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}};
-      const resp=await window.claude.complete({messages:[{role:'user',content:[
-        fileBlock,
-        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Extrae cada ítem comprado como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
-      ]}]});
-      try{
-        applyParsedItems(extraerJSON(resp));
-      }catch(parseErr){
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
-      }
-    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
-    setCmpParsing(false); e.target.value='';
+      setCmpLastFoto({fileBlock,esPDF,name:file.name});
+      await parseFotoPayload(fileBlock,esPDF);
+    }catch(err){setCmpParsing(false);setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    e.target.value='';
+  };
+  const reintentarFoto=()=>{
+    if(!cmpLastFoto||cmpParsing) return;
+    setHuboParseIA(false);setCmpFuente('ocr');
+    parseFotoPayload(cmpLastFoto.fileBlock,cmpLastFoto.esPDF);
   };
   const parsearTexto=async()=>{
     if(!cmpPasteText.trim()) return;
-    setCmpParsing(true);setCmpParseErr('');setCmpFuente('email');
+    setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
       const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nExtrae cada ítem como JSON puro (sin texto ni markdown): [{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]. Ingredientes conocidos: ${listaIngs}.`}]});
+      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
       applyParsedItems(extraerJSON(resp));
     }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intenta de nuevo o usa Manual.');}
     setCmpParsing(false);
@@ -2735,7 +2861,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
     setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen});
     setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
-    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');
+    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
   };
 
   const autoBalance=(mode=balanceMode)=>{
@@ -2838,7 +2964,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
                       <div className="inv-section">
-                        <table className="inv-table">
+                        <table className="inv-table inventory-stock-table">
                           <thead>
                             <tr>
                               <th>Ingrediente</th>
@@ -2856,7 +2982,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               return(
                                 <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
                                   {/* INGREDIENTE */}
-                                  <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
+                                  <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
                                     {isEditing?(
                                       <select value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
@@ -2866,9 +2992,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* STOCK */}
-                                  <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                  <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
                                     {isEditing?(
-                                      <input autoFocus type="number" min="0" step="0.5"
+                                      <input type="number" min="0" step="0.5"
                                         value={editingRowData.stock}
                                         onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
                                         onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
@@ -2879,7 +3005,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* PRECIO */}
-                                  <td style={{color:'var(--ink-500)',minWidth:100}}>
+                                  <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
                                     {isEditing?(
                                       <input type="number" min="0" step="100"
                                         value={editingRowData.precio}
@@ -2892,7 +3018,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* PROVEEDOR */}
-                                  <td style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
+                                  <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
                                     {isEditing?(
                                       <select value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         <option value="">Sin especificar</option>
@@ -2903,7 +3029,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* ALERTA MÍN */}
-                                  <td style={{minWidth:90}}>
+                                  <td data-label="Alerta mínima" style={{minWidth:90}}>
                                     {isEditing?(
                                       <input type="number" min="0" step="0.5"
                                         value={editingRowData.alertaMin}
@@ -2916,7 +3042,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     )}
                                   </td>
                                   {/* ESTADO */}
-                                  <td>
+                                  <td data-label="Estado">
                                     {r.stock<r.alertaMin
                                       ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                       :r.stock<r.alertaMin*2.5
@@ -2924,11 +3050,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                   </td>
                                   {/* ACCIONES */}
-                                  <td>
+                                  <td data-label="Acciones">
                                     {isEditing?(
                                       <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar">✓</button>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar">✕</button>
+                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
+                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
                                       </div>
                                     ):(
                                       <div style={{display:'flex',gap:4}}>
@@ -2936,7 +3062,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
                                           ✎ Editar
                                         </button>
-                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente"
+                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
                                           style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
                                           onClick={()=>eliminarIngrediente(r.id,r.name)}>
                                           ×
@@ -3005,33 +3131,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   ):(
                   <div>
-                  <div style={{display:'flex',gap:6,marginBottom:14}}>
-                    {[['manual','✎ Manual'],['foto','📷 Foto / PDF de recibo'],['texto','✉ Pegar texto']].map(([v,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec inv-btn-sm" style={{flex:1,whiteSpace:'normal',lineHeight:1.25,textAlign:'center',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');}}>{l}</button>
+                  <div style={{display:'flex',gap:8,marginBottom:14}}>
+                    {[['manual','✎','Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto','✉','Pegar texto']].map(([v,icon,l])=>(
+                      <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
+                        <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
+                      </button>
                     ))}
                   </div>
 
                   {cmpMode==='foto'&&(
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
-                      <input type="file" accept="image/*,application/pdf" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
-                      <button className="inv-btn inv-btn-pri inv-btn-sm" disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':'📷 Tomar foto / subir recibo (o PDF)'}</button>
-                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena los ítems abajo — revisa antes de registrar.</div>
+                      <input type="file" accept="image/*,application/pdf" capture="environment" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
+                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{display:'inline-flex',alignItems:'center',gap:6}} disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':<><IconCamera size={12}/> Tomar foto / subir recibo (o PDF)</>}</button>
+                      {cmpLastFoto&&!cmpParsing&&(
+                        <button className="inv-btn inv-btn-sec inv-btn-sm" style={{marginLeft:8,maxWidth:220,overflow:'hidden',textOverflow:'ellipsis'}} onClick={reintentarFoto} title={`Reintentar con ${cmpLastFoto.name}`}>↻ Reintentar{cmpLastFoto.name?` (${cmpLastFoto.name.length>18?cmpLastFoto.name.slice(0,15)+'…':cmpLastFoto.name})`:''}</button>
+                      )}
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisa antes de registrar.</div>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
                   {cmpMode==='texto'&&(
                     <div style={{marginBottom:16}}>
                       <textarea className="inv-input" rows="4" style={{width:'100%',resize:'vertical',fontFamily:"var(--font-body)"}} placeholder="Pega aquí el mensaje o correo del proveedor…" value={cmpPasteText} onChange={e=>setCmpPasteText(e.target.value)}/>
-                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':'Interpretar texto'}</button>
+                      <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':cmpParseErr?'↻ Reintentar':'Interpretar texto'}</button>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
 
+                  {huboParseIA&&(()=>{
+                    const total=cmpItems.length;
+                    const sinMatch=cmpItems.filter(it=>!it.ingId).length;
+                    return(
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,color:'var(--ink-800)'}}>
+                        Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
+                        {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
+                      </div>
+                    );
+                  })()}
+
                   <div className="inv-row inv-row-2">
                     <div>
-                      <label className="inv-label">Proveedor</label>
+                      <label className="inv-label" htmlFor="purchase-provider">Proveedor</label>
                       <div style={{display:'flex',gap:6}}>
-                        <select className="inv-input" value={cmpProvId} onChange={e=>setCmpProvId(e.target.value)} style={{flex:1}}>
+                        <select id="purchase-provider" name="purchaseProvider" className="inv-input" value={cmpProvId} onChange={e=>setCmpProvId(e.target.value)} style={{flex:1}}>
                           <option value="">Seleccionar…</option>
                           {invProveedores.map(p=>(
                             <option key={p.id} value={p.id}>{p.nombre} — {p.municipio}</option>
@@ -3041,12 +3184,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                     <div>
-                      <label className="inv-label">Fecha de compra</label>
-                      <input type="date" className="inv-input" value={cmpFecha} onChange={e=>setCmpFecha(e.target.value)}/>
+                      <label className="inv-label" htmlFor="purchase-date">Fecha de compra</label>
+                      <input id="purchase-date" name="purchaseDate" type="date" className="inv-input" value={cmpFecha} onChange={e=>setCmpFecha(e.target.value)}/>
                     </div>
                   </div>
 
-                  <label className="inv-label">Ítems</label>
+                  <span className="inv-label">Ítems</span>
                   {cmpItems.map(it=>{
                     const g=INGS.find(x=>x.id===it.ingId);
                     return(
@@ -3081,7 +3224,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div style={{display:'flex',gap:10}}>
                     <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>✓ Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');}}>✕ Limpiar</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
                   </div>
                   </div>
                   )}
@@ -3110,13 +3253,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const label=new Date(parseInt(yr),parseInt(mo)-1,1).toLocaleDateString('es-CO',{month:'long',year:'numeric'});
                         return(
                           <div key={mes} className="inv-month-group">
-                            <div className="inv-month-head" onClick={()=>setCollapsedMonths(prev=>({...prev,[mes]:!prev[mes]}))}>
+                            <button type="button" className="inv-month-head" aria-expanded={!collapsed} onClick={()=>setCollapsedMonths(prev=>({...prev,[mes]:!prev[mes]}))}>
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
                                 <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
                                 <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
                               </div>
-                            </div>
+                            </button>
                             {!collapsed&&(
                               <table className="inv-table">
                                 <thead>
@@ -3140,7 +3283,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                             })}
                                           </div>
                                         </td>
-                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--coral-700)'}}>${tot.toLocaleString('es-CO')}</td>
+                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--ink-900)'}}>${tot.toLocaleString('es-CO')}</td>
                                         <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
                                       </tr>
                                     );
@@ -3184,24 +3327,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* MODAL NUEVO PROVEEDOR */}
             {showProvModal&&(
               <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowProvModal(false);}}>
-                <div className="inv-modal">
+                <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nuevo proveedor">
                   <div className="inv-modal-title">Nuevo Proveedor</div>
                   <div style={{marginBottom:12}}>
-                    <label className="inv-label">Nombre</label>
-                    <input className="inv-input" value={newProv.nombre} onChange={e=>setNewProv(p=>({...p,nombre:e.target.value}))} placeholder="Ej. Distribuidora Agro Sabana"/>
+                    <label className="inv-label" htmlFor="provider-name">Nombre</label>
+                    <input id="provider-name" name="providerName" autoComplete="organization" className="inv-input" value={newProv.nombre} onChange={e=>setNewProv(p=>({...p,nombre:e.target.value}))} placeholder="Ej. Distribuidora Agro Sabana"/>
                   </div>
                   <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                     <div>
-                      <label className="inv-label">Tipo</label>
-                      <select className="inv-input" value={newProv.tipo} onChange={e=>setNewProv(p=>({...p,tipo:e.target.value}))}>
+                      <label className="inv-label" htmlFor="provider-type">Tipo</label>
+                      <select id="provider-type" name="providerType" className="inv-input" value={newProv.tipo} onChange={e=>setNewProv(p=>({...p,tipo:e.target.value}))}>
                         {[['plaza','Plaza de mercado'],['industrial','Industrial'],['artesanal','Artesanal'],['directo','Directo / Finca'],['otro','Otro']].map(([v,l])=>(
                           <option key={v} value={v}>{l}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="inv-label">Municipio</label>
-                      <input className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
+                      <label className="inv-label" htmlFor="provider-city">Municipio</label>
+                      <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
                   </div>
                   <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
@@ -3213,6 +3356,76 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}
           </div>
   );
+
+  const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
+  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded'};
+  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado'};
+  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
+  const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
+  const runBatchAction=(action,lote)=>{
+    if(action==='harvest'){
+      const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
+      setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
+      setShowBitCosecha(true);return;
+    }
+    if(action==='advance_stage'){
+      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
+      const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
+      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
+        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+      }
+      return;
+    }
+    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
+    if(action==='contamination'){goBitTab('bit_bolsas',true);return;}
+    setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
+  };
+  const TodayV2=()=>{
+    const now=Date.now();
+    const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
+      const stats=calcLoteStats(lote.id);
+      const contaminated=stats&&stats.contPct>0;
+      const inoculated=Date.parse(lote.fechaInoculacion||'');
+      const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
+      return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+        dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
+        title:contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
+        why:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+    });
+    const queue=workflow?workflow.buildTodayQueue(source,now):source;
+    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
+    return <section className="os-today-v2" data-testid="ux-v2-today">
+      <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
+      <button className="os-scan-target" type="button" onClick={()=>setNoticeDlg({title:'Escanear lote',msg:'Usa el lector de campo para resolver el lote y mostrar sus acciones válidas.'})}>Escanear lote o registrar evento</button>
+      {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
+      {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
+        <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
+        {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
+          <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
+          <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+        </div>)}
+      </section>;})}
+    </section>;
+  };
+  const BatchDetailV2=({lote})=>{
+    const stats=calcLoteStats(lote.id);const state=legacyLifecycle[lote.estado]||'planned';
+    const isAdmin=props.isAdmin===true||props.isAdmin==='true';
+    const actions=workflow?workflow.validActions(state,isAdmin?'direccion':'operario'):[];
+    const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
+    const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
+    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
+      <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
+        <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
+        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
+      <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
+      <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
+        <aside className="os-detail-panel"><h2>Acciones válidas ahora</h2><div className="os-valid-actions">{actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}</div><span className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span></aside></div>
+    </article>;
+  };
 
   const BitacoraSection=()=>(
 <div>
@@ -3230,8 +3443,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes experimentales <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
                   <div style={{display:'flex',gap:6}}>
-                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>⊞ Cuadrícula</button>
-                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'all .12s'}}>≡ Tabla</button>
+                    <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
+                    <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
                     <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
@@ -3275,7 +3488,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3349,6 +3562,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const cosechas=[...bitCosechas.filter(c=>c.loteId===bitActiveLoteId)].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
               const stats=calcLoteStats(bitActiveLoteId);const score=stats?calcLoteScore(stats):null;
+              return <BatchDetailV2 lote={lote}/>;
+              /* Legacy printable sheet retained below during migration, but no longer rendered. */
               return(
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
@@ -3379,7 +3594,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
-                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
+                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
                   </div>
                 </div>
               );
@@ -3391,7 +3606,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   return(
     <div>
       <div className="topbar">
-        <div className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</div>
+        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</button>
       </div>
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,height:106,display:'block'}}>
@@ -3411,7 +3626,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="hero-lede" style={{display:'block',marginTop:14,fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Cálculo, optimización y trazabilidad de mezclas.</div>
           </div>
           <div className="hero-art">
-            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" />
+            <img src={(window.__resources&&window.__resources.img_banner)||'_standalone_imgs/banner.png'} alt="" aria-hidden="true" width="720" height="480" />
           </div>
         </div>
       </header>
@@ -3451,312 +3666,204 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalCosechasCount = bitCosechas.length;
           const activeRecipeCount = recipe.length;
           const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
+          const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const operationalNow = Date.now();
+          const operationalSource = activeLotes.map((lote,index)=>{
+            const stats=calcLoteStats(lote.id);
+            const contaminated=stats&&stats.contPct>0;
+            const inoculated=Date.parse(lote.fechaInoculacion||'');
+            const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
+            return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString()};
+          });
+          const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
+          const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
+          const overdueTaskCount=operationalQueue.filter(item=>item.bucket==='overdue').length;
+          const blockedTaskCount=operationalQueue.filter(item=>item.bucket==='blocked').length;
+          const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
+          const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
+          const operationStatus=criticalTaskCount>0
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)'}
+            :(overdueTaskCount>0||incidentCount>0)
+              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
+              :{label:'Operación estable',color:'var(--moss-700)'};
 
-          // Sección A: Datos de telemetría de las 4 salas y cámaras
-          const salas = [
-            {
-              id: 'sala-1',
-              nombre: 'Sala 1 · Incubación',
-              fase: 'Colonización en oscuridad',
-              temp: '22.4°C',
-              tempRango: '20–24°C',
-              hum: '76%',
-              humRango: '70–80%',
-              co2: '3.150 ppm',
-              co2Note: 'Colonización micelial',
-              estadoLabel: 'En Rango',
-              bolsas: bolsasIncubacion || 36,
-              capacidad: 48
-            },
-            {
-              id: 'sala-2',
-              nombre: 'Sala 2 · Fructificación A',
-              fase: 'Orellana / Pleurotus',
-              temp: '16.5°C',
-              tempRango: '14–18°C',
-              hum: '88%',
-              humRango: '85–92%',
-              co2: '780 ppm',
-              co2Note: 'Ventilación activa (12 R/h)',
-              estadoLabel: 'Fructificación',
-              bolsas: bolsasFructificacion || 24,
-              capacidad: 36
-            },
-            {
-              id: 'sala-3',
-              nombre: 'Sala 3 · Cámara Climatizada',
-              fase: 'Shiitake & Melena de León',
-              temp: '17.8°C',
-              tempRango: '16–20°C',
-              hum: '93%',
-              humRango: '90–95%',
-              co2: '920 ppm',
-              co2Note: 'Nebulización ultrasónica',
-              estadoLabel: 'En Rango',
-              bolsas: 16,
-              capacidad: 24
-            },
-            {
-              id: 'area-tecnica',
-              nombre: 'Área Técnica · Bodega & Autoclave',
-              fase: 'Preparación de sustratos Tenjo',
-              temp: '14.0°C',
-              tempRango: 'Ambiente Tenjo',
-              hum: '62%',
-              humRango: 'Almacén seco',
-              co2: '420 ppm',
-              co2Note: 'Autoclave 121°C / 15 PSI Standby',
-              estadoLabel: 'Operativo',
-              bolsas: `${totalStockKg.toFixed(0)} kg`,
-              capacidad: `${stockIds.size} insumos`
-            }
-          ];
+          // Ambientes & Sensores: cámaras físicas REALES (mismos datos que el
+          // módulo Cámaras — id, temp/hum/CO₂ en vivo, sparkline). Antes esta
+          // sección mostraba 4 "salas" ilustrativas sin relación con las cámaras
+          // reales (incub/martha/cloudlab); ahora son los mismos 3 registros,
+          // así que un clic en "Ver en Cámaras" siempre abre la cámara correcta.
+          let camaras=[];
+          try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // Sección C: Fases del ciclo de cultivo
-          const pipelineStages = [
-            {
-              num: '01',
-              title: 'Preparación & Mezcla',
-              sub: 'Pesado, hidratación 65–68% y pasteurización/autoclave Tenjo (P.Eb 91.4°C)',
-              badge: activeRecipeCount > 0 ? `${activeRecipeCount} insumos en receta activa` : 'En espera de receta',
-              active: activeRecipeCount > 0,
-              linkTab: 'formular'
-            },
-            {
-              num: '02',
-              title: 'Inoculación & Incubación',
-              sub: 'Días 1–18 · Oscuridad 22–24°C · Inoculación spawn 8–10%',
-              badge: `${bolsasIncubacion || (bitBolsas.length > 0 ? bolsasIncubacion : 18)} bolsas en incubación`,
-              active: bolsasIncubacion > 0,
-              linkTab: 'bitacora'
-            },
-            {
-              num: '03',
-              title: 'Inducción / Primordios',
-              sub: 'Días 19–23 · Shock térmico Sabana (12–16°C), luz difusa y CO₂ <900ppm',
-              badge: `${bitBolsas.filter(b=>b.col100).length} bolsas colonizadas 100%`,
-              active: bitBolsas.filter(b=>b.col100).length > 0,
-              linkTab: 'schedule'
-            },
-            {
-              num: '04',
-              title: 'Fructificación & Cosecha',
-              sub: 'Días 24–45 · Humedad 85–92% · Cosecha en botón / sombrero',
-              badge: `${totalCosechasCount} cortes (${totalCosechasKg.toFixed(1)} kg totales)`,
-              active: totalCosechasCount > 0,
-              linkTab: 'bitacora'
-            },
-            {
-              num: '05',
-              title: 'Post-Cosecha & Descanso',
-              sub: '2° y 3° flush · Trazabilidad de Eficiencia Biológica · Sustrato gastado (SMS)',
-              badge: `${bitLotes.length} lotes con trazabilidad`,
-              active: bitLotes.length > 0,
-              linkTab: 'dashboard'
-            }
-          ];
+          // tasksHoy/recentActivity se parsean una sola vez acá: Tareas de hoy ahora
+          // vive en Sección A (junto a Acciones Rápidas) y Actividad reciente en
+          // Sección C, así que ambas secciones necesitan estos datos.
+          let tasksHoy=[], recentActivity=[];
+          try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+          try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
+          const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
           return (
-            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:32,marginBottom:48}}>
+            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
                 borderRadius:'var(--r-md)',
-                padding:'28px 32px',
+                padding:'18px 22px',
                 position:'relative',
                 overflow:'hidden'
               }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:20}}>
-                  <div style={{maxWidth:680}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                        FIELD OS · CENTRO DE MANDO OPERATIVO
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+                  <div style={{minWidth:240}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:operationStatus.color,display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:operationStatus.color}}>
+                        CONTROL · TURNO ACTUAL
                       </span>
                     </div>
-                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-3xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',marginBottom:10}}>
-                      Setas de la Peña
+                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',margin:0}}>
+                      Tablero de Control
                     </h1>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-base)',color:'var(--ink-700)',margin:0,lineHeight:1.5}}>
-                      Biogranja fungícola en Tenjo, Cundinamarca · 2.600 msnm. Control ambiental, formulación estequiométrica, trazabilidad de lotes e indicadores de cultivo.
-                    </p>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        ⛰️ Tenjo 2.600 msnm
-                      </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--ink-700)'}}>
-                        💧 H₂O Eb. 91.4°C
-                      </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'4px 10px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',color:'var(--moss-700)'}}>
-                        ● Sistema Nominal
-                      </span>
-                    </div>
-                    {/* Especie Activa badge */}
-                    <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--paper-50)',border:'1px solid var(--paper-300)',padding:'8px 14px',borderRadius:'var(--r-sm)',marginTop:4}}>
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Especie en foco</div>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                          {sp?.name || 'Orellana Gris'} <em style={{fontStyle:'italic',fontWeight:400,fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>({sp?.scientific})</em>
-                        </div>
-                      </div>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'4px 10px',background:'transparent',border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',color:'var(--coral-500)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap'}}>
-                        Cambiar
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
+                    {[
+                      {value:activeLotes.length,label:'Lotes activos',icon:IconMicroscope,tone:'neutral'},
+                      {value:pendingTaskCount,label:'Tareas pendientes',icon:IconClipboard,tone:pendingTaskCount>0?'attention':'neutral'},
+                      {value:incidentCount,label:'Incidencias',icon:IconAlert,tone:incidentCount>0?'critical':'neutral'}
+                    ].map(kpi=>{
+                      const tones={
+                        neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
+                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'var(--ochre-700)',weight:800},
+                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'var(--coral-700)',weight:800}
+                      };
+                      const t=tones[kpi.tone];
+                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
+                        <kpi.icon size={12}/>
+                        <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:t.ink}}>{kpi.value}</strong> {kpi.label}
+                      </span>;
+                    })}
+                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
+                      {operationStatus.label}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',flexShrink:0}}>
+                    Registro de cultivo · vista previa
+                  </span>
+                  <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
+                    {[
+                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
+                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
+                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
+                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
+                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                    ].map(m=>(
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'5px 10px'}}>
+                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-900)'}}>{m.value}</span>
                       </button>
+                    ))}
+                  </div>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                </div>
+
+                {(props.hasHandoff===true||props.hasHandoff==='true')&&(
+                  <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
+                  <div style={{border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--slate-700)'}}>Traspaso del turno anterior</span>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
                     </div>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
-                </div>
+                  </div>
+                )}
               </div>
 
-              {/* SECCIÓN D: ACCIONES RÁPIDAS (Zona Superior / Pulgar) */}
-              <div>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                  <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN D · OPERACIÓN INMEDIATA
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Acciones Rápidas
-                    </h2>
-                  </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
-                </div>
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap:12
-                }}>
-                  {[
-                    {label:'Formular Receta',sub:'Balance C:N & Perito',icon:'⚡',tab:'formular',onClick:()=>goTab('formular'),pri:true},
-                    {label:'Ficha de Producción',sub:'Báscula & mezcla del día',icon:'📋',tab:'produccion',onClick:()=>goTab('produccion')},
-                    {label:'Registrar Cosecha',sub:'Pesaje de flush en gramos',icon:'🍄',tab:'bitacora',onClick:()=>setShowBitCosecha(true)},
-                    {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:'📦',tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                    {label:'Nueva Prueba / Lote',sub:'Crear código y bolsas',icon:'🔬',tab:'bitacora',onClick:()=>setShowBitNuevo(true)},
-                    {label:'Catálogo Especies',sub:'Requerimientos climáticos',icon:'📖',tab:'catalogo',onClick:()=>goTab('catalogo')}
-                  ].map(btn=>(
-                    <button
-                      key={btn.label}
-                      onClick={btn.onClick}
-                      style={{
-                        display:'flex',
-                        alignItems:'center',
-                        gap:12,
-                        padding:'14px 16px',
-                        background:btn.pri?'var(--paper-0)':'var(--paper-0)',
-                        border:btn.pri?'1.5px solid var(--coral-500)':'1px solid var(--border-soft)',
-                        borderRadius:'var(--r-sm)',
-                        textAlign:'left',
-                        cursor:'pointer',
-                        transition:'all .15s ease',
-                        boxShadow:'var(--shadow-card-rest)',
-                        position:'relative'
-                      }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='var(--shadow-card-hover)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow-card-rest)';}}
-                    >
-                      <span style={{fontSize:'var(--text-xl)',lineHeight:1,flexShrink:0}}>{btn.icon}</span>
-                      <div style={{minWidth:0,flex:1}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-700)':'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                          {btn.label}
-                        </div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                          {btn.sub}
-                        </div>
-                      </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:btn.pri?'var(--coral-500)':'var(--ink-400)',fontWeight:700}}>→</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* SECCIÓN A: TELEMETRÍA / ESTADO OPERATIVO DE SALAS */}
-              <div>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                  <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN A · AMBIENTES & SENSORES
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Telemetría de Salas de Cultivo
-                    </h2>
-                  </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● 4 zonas monitoreadas</span>
-                </div>
-                
-                {/* Responsive Grid/Carousel container */}
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap:16,
-                  overflowX:'auto',
-                  paddingBottom:4
-                }}>
-                  {salas.map(s=>(
-                    <div
-                      key={s.id}
-                      style={{
-                        background:'var(--paper-0)',
-                        border:'1px solid var(--border-soft)',
-                        borderRadius:'var(--r-md)',
-                        padding:'20px',
-                        display:'flex',
-                        flexDirection:'column',
-                        justifyContent:'space-between',
-                        gap:16,
-                        boxShadow:'var(--shadow-card-rest)'
-                      }}
-                    >
-                      <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                            {s.nombre}
-                          </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                            {s.estadoLabel}
+              {/* SECCIÓN A: ACCIONES RÁPIDAS + ESPACIOS DE TRABAJO lado a lado — ambas
+                  son accesos a los mismos módulos, así que comparten fila en vez de
+                  competir por el scroll en secciones separadas. */}
+              {(()=>{
+                return (
+                  <div className="home-acciones-espacios-row">
+                    <div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                        <div>
+                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                            SECCIÓN A · OPERACIÓN INMEDIATA
                           </span>
+                          <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                            Acciones Rápidas
+                          </h2>
                         </div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
-                          {s.fase}
-                        </div>
-
-                        {/* Indicadores climáticos */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.temp}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.tempRango}</div>
-                          </div>
-                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.hum}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>{s.humRango}</div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{s.co2}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-400)'}}>PPM</div>
-                          </div>
-                        </div>
+                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
                       </div>
-
-                      {/* Footer de sala con ocupación */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                        <span>Ocupación / Carga:</span>
-                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{s.bolsas} <span style={{fontWeight:400,color:'var(--ink-500)'}}>/ {s.capacidad}</span></b>
+                      <div style={{
+                        display:'grid',
+                        gridTemplateColumns:'1fr',
+                        gap:12
+                      }}>
+                        {/* Una sola columna, los 5 botones del mismo ancho: le cede el resto
+                            del ancho de la fila a Espacios de Trabajo para que sus 3 tarjetas
+                            quepan lado a lado. Lotes/Módulos de cultivo se quedan fuera: llevan
+                            a la misma pestaña que "Ver Bitácora"/"Ficha de Mezclado" en Espacios
+                            de Trabajo y no agregan nada nuevo. */}
+                        {[
+                          {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                            const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                            if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                            else props.onStartSession&&props.onStartSession();
+                          },jornada:true},
+                          {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                          {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                          {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                          {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
+                        ].map(btn=>{
+                          const accent=btn.jornada?'var(--coral-600)':(btn.pri?'var(--moss-700)':null);
+                          return (
+                          <button
+                            key={btn.label}
+                            onClick={btn.onClick}
+                            className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                            style={{
+                              display:'flex',
+                              alignItems:'center',
+                              gap:12,
+                              padding:'14px 16px',
+                              borderRadius:'var(--r-sm)',
+                              textAlign:'left',
+                              cursor:'pointer',
+                              position:'relative'
+                            }}
+                          >
+                            <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={20}/></span>
+                            <div style={{minWidth:0,flex:1}}>
+                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                                {btn.label}
+                              </div>
+                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                                {btn.sub}
+                              </div>
+                            </div>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
+                          </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SECCIÓN B: ESPACIOS DE TRABAJO / MÓDULOS DE OPERACIÓN */}
+              {/* Espacios de Trabajo — se movió acá (columna derecha de Sección A, donde
+                  antes vivía Tareas de hoy) porque su contenido y el de Acciones Rápidas
+                  (columna izquierda) son ambos accesos a los mismos módulos: quedan uno al
+                  lado del otro en vez de en secciones separadas del scroll. */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN B · MÓDULOS DE CAMPO
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      MÓDULOS DE CAMPO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
                       Espacios de Trabajo
@@ -3765,15 +3872,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>Flujos principales</span>
                 </div>
 
-                <div style={{
+                <div className="home-workspaces-grid" style={{
                   display:'grid',
-                  gridTemplateColumns:props.isAdmin!==false ? 'repeat(auto-fit, minmax(280px, 1fr))' : 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns:'repeat(3, 1fr)', // Acciones Rápidas pasó a una sola columna angosta para cederle ancho a esta: las 3 tarjetas caben lado a lado
                   gap:20
                 }}>
                   {/* WORKSPACE 1: FORMULACIÓN & I+D */}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--coral-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3784,8 +3892,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          LABORATORIO & NUTRICIÓN
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
+                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
                       </div>
@@ -3812,7 +3920,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
                             {an?.eb ? `~${an.eb}%` : '—'}
                           </div>
                         </div>
@@ -3826,10 +3934,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} style={{flex:1,padding:'8px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('formular')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ir al Formulador
                       </button>
-                      <button onClick={()=>goTab('catalogo')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('catalogo')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Catálogo
                       </button>
                     </div>
@@ -3839,6 +3947,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--moss-700)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3849,8 +3958,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          PLANTA & INSUMOS
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
+                          <IconBox size={11}/> PLANTA & INSUMOS
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
                       </div>
@@ -3891,10 +4000,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('produccion')} style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('produccion')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         Ficha de Mezclado
                       </button>
-                      <button onClick={()=>goTab('inventario')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('inventario')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Bodega
                       </button>
                     </div>
@@ -3904,6 +4013,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
+                    borderTop:'3px solid var(--slate-500)',
                     borderRadius:'var(--r-md)',
                     padding:'24px',
                     display:'flex',
@@ -3914,8 +4024,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}>
                     <div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          TRAZABILIDAD & CAMPO
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
+                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
                         </span>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
                       </div>
@@ -3936,7 +4046,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--moss-700)'}}>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                             {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
                           </div>
                         </div>
@@ -3956,10 +4066,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         + Registrar Cosecha
                       </button>
-                      <button onClick={()=>goTab('bitacora')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                      <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                         Ver Bitácora
                       </button>
                     </div>
@@ -3970,6 +4080,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{
                       background:'var(--paper-0)',
                       border:'1px solid var(--border-soft)',
+                      borderTop:'3px solid var(--ink-700)',
                       borderRadius:'var(--r-md)',
                       padding:'24px',
                       display:'flex',
@@ -3980,8 +4091,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }}>
                       <div>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            GESTIÓN & FINANZAS (ADMIN)
+                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
                           </span>
                           <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
                         </div>
@@ -3996,13 +4107,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
                           <div>
                             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--coral-700)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
                               ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
                             </div>
                           </div>
@@ -4022,10 +4133,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
 
                       <div style={{display:'flex',gap:8}}>
-                        <button onClick={()=>goTab('dashboard')} style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('dashboard')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                           Dashboard
                         </button>
-                        <button onClick={()=>goTab('schedule')} style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
+                        <button onClick={()=>goTab('schedule')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
                           Cronograma
                         </button>
                       </div>
@@ -4033,8 +4144,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </div>
               </div>
+                  </div>
+                );
+              })()}
 
-              {/* SECCIÓN C: PIPELINE DE LOTES ACTIVOS / CICLO DE CULTIVO */}
+              {/* SECCIÓN B: TAREAS DE HOY + SEGUIMIENTO DE LOTES POR FASE lado a lado —
+                  el trabajo del día (tareas puntuales) y el estado de los lotes activos
+                  son ambos "qué hacer/qué está pasando ahora", así que van juntos. */}
+              <div className="home-tareas-lotes-row">
+                <div style={{height:'100%'}}>
+                    {/* height:100% en el wrapper y en la tarjeta: la fila usa
+                        align-items:stretch para que esta columna iguale la altura de
+                        Seguimiento de Lotes por Fase (a la derecha), que normalmente es
+                        más alta por su kanban de 4 fases. */}
+                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
+                        {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
+                      </div>
+                      {tasksHoy.length===0 ? (
+                        <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
+                          Sin tareas pendientes por ahora.
+                        </div>
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {/* Se muestran máx. 5: tasksHoy no tiene tope propio (puede crecer con
+                              cada contenedor activo + alerta de clima) y sin este límite la
+                              columna de tareas desbalanceaba la fila frente a Acciones Rápidas,
+                              de altura fija. El total real ya está en el contador de arriba. */}
+                          {tasksHoy.slice(0,5).map(t=>(
+                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              </button>
+                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              </button>
+                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                            </div>
+                          ))}
+                          {tasksHoy.length>5 && (
+                            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
+                              +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más — ver contador arriba
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                </div>
+              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — movida arriba, justo después de
+                  Acciones Rápidas: es el trabajo operativo real (qué lote está en qué fase),
+                  no debe quedar por debajo de tarjetas de navegación como Espacios de Trabajo.
+                  kanban de lotes activos agrupado
+                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
+                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
+                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
+                  en la Bitácora, así que no hay lote que ubicar ahí. */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
@@ -4045,10 +4212,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      SECCIÓN C · CICLO BIOLÓGICO TENJO
+                      SECCIÓN B · CICLO BIOLÓGICO TENJO
                     </span>
                     <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Pipeline de Lotes & Fases de Cultivo
+                      Seguimiento de Lotes por Fase
                     </h2>
                   </div>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
@@ -4056,114 +4223,265 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
-                {/* 5 Stages Horizontal Stepper */}
-                <div style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap:12,
-                  marginBottom:20
-                }}>
-                  {pipelineStages.map((st,idx)=>(
-                    <div
-                      key={st.num}
-                      onClick={()=>goTab(st.linkTab)}
-                      style={{
-                        background:st.active?'var(--paper-50)':'var(--paper-100)',
-                        border:st.active?'1px solid var(--moss-300)':'1px solid var(--paper-300)',
-                        borderRadius:'var(--r-sm)',
-                        padding:'14px',
-                        cursor:'pointer',
-                        transition:'all .15s ease',
-                        position:'relative'
-                      }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--coral-500)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=st.active?'var(--moss-300)':'var(--paper-300)';}}
-                    >
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:st.active?'var(--moss-700)':'var(--ink-400)'}}>
-                          Fase {st.num}
-                        </span>
-                        <span style={{fontSize:'var(--text-micro)',fontFamily:'var(--font-mono)',padding:'1px 5px',borderRadius:2,background:st.active?'var(--status-active-bg)':'var(--paper-200)',color:st.active?'var(--moss-700)':'var(--ink-500)'}}>
-                          {st.active?'En curso':'Plan'}
-                        </span>
-                      </div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:4}}>
-                        {st.title}
-                      </div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.35,marginBottom:8}}>
-                        {st.sub}
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-800)',borderTop:'1px solid var(--paper-300)',paddingTop:6}}>
-                        {st.badge}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Resumen de lotes activos si existen en la bitácora */}
-                {bitLotes.length>0 ? (
-                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:16}}>
-                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:10}}>
-                      Lotes Recientes en Seguimiento
-                    </div>
-                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                      {bitLotes.slice(0,4).map(lt=>{
-                        const stats = calcLoteStats(lt.id);
-                        return (
-                          <div
-                            key={lt.id}
-                            data-lote-id={lt.id}
-                            onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
-                            style={{
-                              display:'flex',
-                              justifyContent:'space-between',
-                              alignItems:'center',
-                              padding:'10px 14px',
-                              background:'var(--paper-50)',
-                              border:'1px solid var(--paper-300)',
-                              borderRadius:'var(--r-xs)',
-                              cursor:'pointer',
-                              flexWrap:'wrap',
-                              gap:8,
-                              transition:'background .15s'
-                            }}
-                            onMouseEnter={e=>e.currentTarget.style.background='var(--paper-100)'}
-                            onMouseLeave={e=>e.currentTarget.style.background='var(--paper-50)'}
-                          >
-                            <div style={{display:'flex',alignItems:'center',gap:12}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                                {lt.codigo}
-                              </span>
-                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                                {lt.especie} · {lt.numBolsas || 1} bolsas · {lt.fechaInoculacion || lt.fechaMezcla || 'Sin fecha'}
-                              </span>
+                {bitLotes.length>0 ? (()=>{
+                  const columnas = [
+                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
+                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
+                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
+                  ];
+                  const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
+                    const stats = calcLoteStats(lote.id);
+                    const bolsasLote = bitBolsas.filter(b=>b.loteId===lote.id);
+                    const sanas = bolsasLote.filter(b=>b.estado==='sana');
+                    const colonizado = sanas.length>0 && sanas.every(b=>!!b.col100);
+                    const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
+                    const inoculated = Date.parse(lote.fechaInoculacion||'');
+                    const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
+                    return {lote,stats,columna,age};
+                  });
+                  const descartados = bitLotes.length-clasificados.length;
+                  return (
+                    <div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:14}}>
+                        {columnas.map(col=>{
+                          const items = clasificados.filter(c=>c.columna===col.key);
+                          return (
+                            <div key={col.key} style={{background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderTop:`3px solid ${col.accent}`,borderRadius:'var(--r-sm)',padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
+                              <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
+                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
+                                  <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
+                                    <col.icon size={13}/>
+                                    <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{col.title}</span>
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-600)'}}>{items.length}</span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',lineHeight:1.3}}>{col.sub}</div>
+                              </button>
+                              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                                {items.length===0 && <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)',fontStyle:'italic'}}>Sin lotes</div>}
+                                {items.map(({lote:lt,stats,age})=>{
+                                  const critical = stats && stats.contPct>=20;
+                                  const contaminated = stats && stats.contPct>0;
+                                  return (
+                                    <button
+                                      key={lt.id}
+                                      data-lote-id={lt.id}
+                                      aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
+                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                                      className="home-lote-card"
+                                      style={{
+                                        display:'flex',flexDirection:'column',gap:4,
+                                        padding:'9px 10px',
+                                        background:'var(--paper-0)',
+                                        border:`1px solid ${critical?'var(--coral-500)':'var(--paper-300)'}`,
+                                        borderRadius:'var(--r-xs)',
+                                        cursor:'pointer',
+                                        textAlign:'left',
+                                        fontFamily:'inherit',
+                                        width:'100%'
+                                      }}
+                                    >
+                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{lt.codigo}</span>
+                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>día {age}</span>}
+                                      </div>
+                                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>
+                                        {lt.especie} · {lt.numBolsas || 1} bolsas
+                                      </div>
+                                      {(contaminated||stats?.totalFresco>0) && (
+                                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                                          {contaminated && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,color:critical?'var(--coral-700)':'var(--ochre-700)',background:critical?'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))':'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))'}}>
+                                              {stats.contPct.toFixed(0)}% contam.
+                                            </span>
+                                          )}
+                                          {stats?.totalFresco>0 && (
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--moss-700)',fontWeight:700}}>
+                                              {stats.totalFresco.toFixed(2)} kg
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
-                            <div style={{display:'flex',alignItems:'center',gap:16}}>
-                              {stats?.totalFresco>0 && (
-                                <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)',fontWeight:700}}>
-                                  {stats.totalFresco.toFixed(2)} kg cosechados
-                                </span>
-                              )}
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-500)',fontWeight:700}}>
-                                Ver lote →
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                      {descartados>0 && (
+                        <div style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>
+                          {descartados} lote{descartados===1?'':'s'} descartado{descartados===1?'':'s'} (oculto{descartados===1?'':'s'} del tablero)
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : (
-                  <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:14,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                  );
+                })() : (
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                       No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
                 )}
               </div>
+              </div>
+
+              {/* SECCIÓN C: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                  <div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      SECCIÓN C · AMBIENTES & SENSORES
+                    </span>
+                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      Cámaras de Cultivo
+                    </h2>
+                  </div>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● {camaras.length} {camaras.length===1?'cámara monitoreada':'cámaras monitoreadas'}</span>
+                </div>
+
+                {/* 3 columnas fijas (3 cámaras reales), responsive: 2 columnas <960px, 1 columna <640px */}
+                {camaras.length===0 ? (
+                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'20px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                    Sin datos de cámaras disponibles.
+                  </div>
+                ) : (
+                <div className="home-salas-grid">
+                  {camaras.map(c=>{
+                    const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
+                    return (
+                    <div
+                      key={c.id}
+                      style={{
+                        background:'var(--paper-0)',
+                        border:'1px solid var(--border-soft)',
+                        borderTop:`3px solid ${c.estadoAccent||'var(--ink-500)'}`,
+                        borderRadius:'var(--r-md)',
+                        padding:'20px',
+                        display:'flex',
+                        flexDirection:'column',
+                        justifyContent:'space-between',
+                        gap:16,
+                        boxShadow:'var(--shadow-card-rest)'
+                      }}
+                    >
+                      <div>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                          <div style={{display:'flex',alignItems:'center',gap:7}}>
+                            <span style={{display:'inline-flex',flexShrink:0,color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={14}/></span>
+                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
+                              {c.name}
+                            </div>
+                          </div>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                            {c.estadoLabel}
+                          </span>
+                        </div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
+                          Zona {c.zona} · {c.sppName}
+                        </div>
+
+                        {/* Indicadores climáticos en vivo */}
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveTemp}°C</div>
+                          </div>
+                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveHum}%</div>
+                          </div>
+                          <div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveCo2} <span style={{fontSize:'var(--text-micro)'}}>ppm</span></div>
+                          </div>
+                        </div>
+                        {c.hasLiveAlert && (
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--coral-700)',marginTop:8}}>{c.liveAlertNote}</div>
+                        )}
+                      </div>
+
+                      {/* Footer con ocupación real (contenedores activos / capacidad kg) */}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                        <span>Ocupación / Carga:</span>
+                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{c.occupancy}% <span style={{fontWeight:400,color:'var(--ink-500)'}}>· {c.capKg} kg cap.</span></b>
+                      </div>
+
+                      {/* Gráfica de tendencia real (temp/hum/CO₂) — mismos datos y mismo lenguaje
+                          visual que el módulo Cámaras: trazo 2px redondeado, punto "ahora", leyenda. */}
+                      {hasSpark && (
+                        <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:12}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Tendencia</span>
+                            <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
+                              <IconCamera size={11}/> Ver detalle →
+                            </button>
+                          </div>
+                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
+                            <polyline points={c.tempSpark} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={c.humSpark} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points={c.co2Spark} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx={280} cy={c.tempSparkEndY} r="3" fill="var(--coral-500)"/>
+                            <circle cx={280} cy={c.humSparkEndY} r="3" fill="var(--slate-500)"/>
+                            <circle cx={280} cy={c.co2SparkEndY} r="3" fill="var(--moss-500)"/>
+                          </svg>
+                          <div style={{display:'flex',gap:10,marginTop:6}}>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--coral-500)',display:'inline-block'}}/>Temp.</span>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--slate-500)',display:'inline-block'}}/>Humedad</span>
+                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--moss-500)',display:'inline-block'}}/>CO₂</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    );
+                  })}
+                </div>
+                )}
+              </div>
+
+
+              {/* SECCIÓN D: ACTIVIDAD RECIENTE — Tareas de hoy se movió a Sección A, junto
+                  a Acciones Rápidas. Cada evento es un botón: lleva directo al lote/
+                  contenedor/cámara de origen vía props.onActivityGo(container, type) —
+                  se pasa el tipo porque los eventos 'clima' no guardan un id de
+                  contenedor sino un nombre de cámara (se resuelve del otro lado). */}
+              {recentActivity.length>0 && (
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                        SECCIÓN D · SEGUIMIENTO DEL DÍA
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                        Actividad Reciente
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                    <div style={{display:'flex',flexDirection:'column'}}>
+                      {recentActivity.map((ev,i)=>(
+                        <button key={i} onClick={()=>props.onActivityGo&&props.onActivityGo(ev.container,ev.type)} className="home-activity-row" style={{cursor:'pointer',display:'flex',gap:12,padding:'11px 4px',borderTop:'none',borderLeft:'none',borderRight:'none',borderBottom:i<recentActivity.length-1?'1px solid var(--paper-300)':'none',background:'none',width:'100%',textAlign:'left',borderRadius:'var(--r-xs)'}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                            </div>
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                          </div>
+                          <span style={{flexShrink:0,alignSelf:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-400)',fontWeight:700}}>→</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           );
         })()}
@@ -4190,7 +4508,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="p-activa">Activa</span>
                     </div>
                     {hasImg
-                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} loading="lazy" decoding="async"/></div>
+                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
                       :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--accent-blue-grey)':'var(--accent-mushroom)'}/></div>
                     }
                     <div className="p-body">
@@ -4206,7 +4524,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div className="p-chips-row p-chips-row2">
                         <div className="p-chip"><span className="p-chip-txt"><span className="p-chip-lbl">pH</span><span className="p-chip-val">{d.ph_optimal.min}–{d.ph_optimal.max}</span></span></div>
                         <div className="p-chip"><span className="p-chip-txt"><span className="p-chip-lbl">C:N</span><span className="p-chip-val">{d.cn_optimal.min}–{d.cn_optimal.max}</span></span></div>
-                        <div className="p-chip p-chip-arr" onClick={e=>{e.stopPropagation();setSKey(k);setCatalogModalOpen(true);}}><IcoArrow/></div>
+                        <div className="p-chip p-chip-arr" aria-hidden="true"><IcoArrow/></div>
                       </div>
                     </div>
                     </div>
@@ -4293,7 +4611,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* RIGHT: Ilustración full-bleed + CTA */}
                 <div className="spp-info-center" style={{display:'flex',flexDirection:'column'}}>
                   <div className="spp-img-wrap" style={{flex:1,position:'relative',minHeight:320}}>
-                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
+                    {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} width="520" height="390" className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
@@ -4312,59 +4630,79 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="builder-wrap" data-tab={tab}>
           {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
 
-          {/* ── SELECTOR DE MODO GLOBAL: PRODUCCIÓN VS INVESTIGACIÓN ── */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'10px 14px',background:'var(--paper-100)',border:'1.5px solid '+(globalMode==='produccion'?'var(--moss-600)':'var(--coral-500)'),borderRadius:'var(--r-sm)',marginBottom:10,flexWrap:'wrap'}}>
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{fontSize:22}}>{globalMode==='produccion'?'🏭':'🔬'}</span>
+          {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
+              el editor manual como el Perito y el Generador automático. */}
+          <section className="form-flow" aria-labelledby="form-flow-title">
+            <div className="form-flow-head">
               <div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-600)'}}>
-                    Modo {globalMode==='produccion'?'Producción Oficial (Bodega Tenjo)':'Investigación y Desarrollo (I+D Catálogo)'}
-                  </span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',padding:'2px 6px',background:globalMode==='produccion'?'var(--moss-200)':'var(--coral-100)',borderRadius:3,color:'var(--ink-900)',fontWeight:600}}>
-                    {globalMode==='produccion'?'Stock Bodega Restringido':'Catálogo Abierto sin límites'}
-                  </span>
+                <span className="form-flow-eyebrow">Nueva formulación</span>
+                <h2 id="form-flow-title">Especie → Origen → Ingredientes → Validar y guardar</h2>
+              </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {recipe.length>0?`${recipe.length} ingrediente${recipe.length===1?'':'s'} · Perito ${Math.round(opt.score)}/100`:'Preparado para comenzar'}
+              </span>
+            </div>
+            <ol className="form-flow-grid">
+              <li className="form-step is-ready">
+                <span className="form-step-num">01</span>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
                 </div>
-                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:2}}>
-                  {globalMode==='produccion'
-                    ? 'Optimiza formulaciones con insumos disponibles en Bodega Tenjo y planifica hojas de lote de producción.'
-                    : 'Libre exploración botánica sin límite de stock para maximizar Eficiencia Biológica (EB) y crear fórmulas experimentales.'}
+                <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
+              </li>
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Origen</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
                 </div>
+                <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
+              </li>
+              <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
+                  <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Usar generador</button>
+                </div>
+                <span className="form-step-help">Agrega insumos o calcula una base.</span>
+              </li>
+              <li className={`form-step${recipe.length>0?' is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Validar y guardar</span>
+                <button type="button" className="form-step-primary" disabled={recipe.length===0} onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  {recipe.length>0?'Revisar receta':'Agrega ingredientes'}
+                </button>
+                <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
+              </li>
+            </ol>
+          </section>
+
+          <section className="form-species-context" aria-labelledby="form-species-context-title">
+            <div className="form-species-identity">
+              <span className="form-species-kicker">Especie activa</span>
+              <div>
+                <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
+                <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
               </div>
             </div>
-            <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              <button
-                onClick={()=>setGlobalWorkMode('produccion')}
-                style={{
-                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
-                  background:globalMode==='produccion'?'var(--moss-700,#2E3B2F)':'transparent',
-                  color:globalMode==='produccion'?'var(--paper-0)':'var(--ink-700)',
-                  border:`1px solid ${globalMode==='produccion'?'var(--moss-700)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer'
-                }}>
-                🏭 Producción
-              </button>
-              <button
-                onClick={()=>setGlobalWorkMode('investigacion')}
-                style={{
-                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 12px',
-                  background:globalMode==='investigacion'?'var(--coral-500)':'transparent',
-                  color:globalMode==='investigacion'?'var(--paper-0)':'var(--ink-700)',
-                  border:`1px solid ${globalMode==='investigacion'?'var(--coral-500)':'var(--border-soft)'}`,
-                  borderRadius:'var(--r-xs)',cursor:'pointer'
-                }}>
-                🔬 Investigación
-              </button>
-              {recipe.length>0&&(
-                <button
-                  onClick={()=>promoverReceta()}
-                  title="Promover esta receta a Producción oficial (alerta si faltan insumos)"
-                  style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',padding:'6px 12px',background:'var(--moss-600, #4D6235)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                  ⭐ Promover
-                </button>
-              )}
+            <label className="form-species-picker" htmlFor="form-species-context-select">
+              <span>Cambiar especie</span>
+              <select id="form-species-context-select" name="formSpeciesContext" value={hasPickedSpecies?sKey:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                <option value="" disabled>Elegir especie…</option>
+                {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
+              </select>
+            </label>
+            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
             </div>
-          </div>
+          </section>
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
               Decisión de diseño:
@@ -4396,11 +4734,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="live-dash-bar">
                     {/* Especie y modo */}
                     <div className="live-dash-left">
-                      <span className="live-dash-species" title={sp?.name||'Pleurotus ostreatus'}>
-                        {sp?.name||'Pleurotus'}
+                      <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
+                        Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:globalMode==='produccion'?'rgba(77,98,53,.15)':'rgba(200,90,50,.15)',color:globalMode==='produccion'?'var(--moss-700)':'var(--coral-500)',fontWeight:700,textTransform:'uppercase'}}>
-                        {globalMode==='produccion'?'PROD':'INV'}
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                        evaluación en vivo
                       </span>
                     </div>
 
@@ -4411,6 +4749,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
                         className="live-dash-pill"
                         style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
+                        aria-label={`Score Perito: ${Math.round(opt.score)} de 100, ${sm2.label}. Ver análisis completo`}
                         title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
                         <IconTarget size={11} color={sm2.badge} />
                         <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
@@ -4434,6 +4773,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
 
+                    {/* Región viva para lectores de pantalla: anuncia cambios de estado
+                        que hoy solo se comunican por color (score/EB/balance de masa). */}
+                    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                      {`Score Perito ${Math.round(opt.score)} de 100, ${sm2.label}. `}
+                      {`Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk?', meta alcanzada':(ebMid?', por debajo de la meta':', por debajo de la línea base')}. `}
+                      {`Balance de masa ${an?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
+                    </div>
+
                     {/* Acciones compactas */}
                     <div className="live-dash-actions">
                       {an&&!totOk&&(
@@ -4441,6 +4788,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           onClick={()=>autoBalance(balanceMode)}
                           className="live-dash-btn"
                           style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                          aria-label="Ajustar ingredientes libres al 100%"
                           title="Ajustar ingredientes libres al 100%">
                           <IconBolt size={10} color="#fff" />
                           <span>100%</span>
@@ -4448,8 +4796,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                       <button
                         onClick={()=>setShowLiveChips(!showLiveChips)}
-                        className="live-dash-btn"
+                        className="live-dash-btn live-dash-recipe-toggle"
                         style={{background:showLiveChips?'var(--paper-300)':'var(--paper-100)'}}
+                        aria-label={`${recipe.length} insumos en receta. ${showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}`}
+                        aria-expanded={showLiveChips}
                         title={showLiveChips?'Ocultar detalle de fórmula':'Ver fórmula e insumos'}>
                         <IconRecipe size={11} color="var(--ink-700)" />
                         <span>{recipe.length}</span>
@@ -4469,6 +4819,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         }}
                         className="live-dash-btn"
                         style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
+                        aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
                         title="Guardar receta en Recetario">
                         {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
                       </button>
@@ -4476,10 +4827,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* Bandeja expandible con detalle, chips e hipervínculos */}
-                  {showLiveChips&&(
+                  {(
                     <div className="live-dash-tray">
                       {/* Sub-navegación rápida */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
+                      <div className="live-dash-secondary-nav" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,marginBottom:6,flexWrap:'wrap'}}>
                         <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                           {[
                             {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
@@ -4513,7 +4864,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                       {/* Observación perito si aplica */}
                       {limiter&&(
-                        <div style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
+                        <div className="live-dash-limiter" style={{marginBottom:6,padding:'3px 8px',background:sm2.bg||'var(--paper-100)',borderRadius:2,fontSize:'11px',fontFamily:'var(--font-mono)',color:sm2.txt,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6}}>
                           <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
                             <IconAlert size={11} color={sm2.txt} />
                             <span>{limiter}</span>
@@ -4531,13 +4882,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           const g=INGS.find(i=>i.id===r.id);
                           if(!g) return null;
                           const isLocked=lockedIds.includes(r.id);
-                          const roleCol=ROLE_COLORS[g.role]||'var(--ink-500)';
+                          const roleCol=FORM_ROLE_COLORS[g.role]||'var(--ink-500)';
                           return(
                             <div
                               key={r.id}
                               className="live-ing-chip"
-                              onClick={()=>document.getElementById(`rec-row-${r.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})}
-                              title={`${g.name} (${ROLE_LABELS[g.role]||g.role}) · ${r.p}%\nClick para editar`}>
+                              title={`${g.name} (${FORM_ROLE_LABELS[g.role]||g.role}) · ${r.p}%`}>
                               <span style={{width:6,height:6,borderRadius:'50%',background:roleCol,flexShrink:0}}></span>
                               <span style={{fontWeight:600}}>{g.name}</span>
                               <span style={{fontFamily:'var(--font-mono)',fontWeight:700,color:isLocked?'var(--coral-600)':'var(--ink-800)',display:'inline-flex',alignItems:'center',gap:2}}>
@@ -4546,6 +4896,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <button
                                 className="live-ing-chip-del"
                                 onClick={(e)=>{e.stopPropagation();remI(r.id);}}
+                                aria-label={`Quitar ${g.name} de la receta`}
                                 title={`Quitar ${g.name}`}>
                                 ×
                               </button>
@@ -4557,32 +4908,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </div>
               );
-            })() : (
-              <div className="live-dash-bar" style={{background:'var(--paper-50)'}}>
-                <div className="live-dash-left">
-                  <span className="live-dash-species">{sp?.name||'Pleurotus ostreatus'}</span>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-500)'}}>
-                    · Sin receta activa
-                  </span>
-                </div>
-                <button
-                  onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}
-                  className="live-dash-btn"
-                  style={{fontSize:'10.5px'}}>
-                  + Agregar insumos
-                </button>
-              </div>
-            )}
+            })() : null}
           </div>
-          <div className="builder-cols">
+          <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
+            <header className="active-recipe-workspace-head">
+              <div>
+                <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
+                <h2 id="active-recipe-workspace-title">Receta activa + evaluación en vivo</h2>
+                <p>Los ingredientes de la fórmula y su lectura técnica permanecen juntos y visibles mientras formulas.</p>
+              </div>
+              <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
+            </header>
             <div className="builder-left">
             <div className="panel" id="bl-ingredientes">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
-                <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:18,color:'var(--ink-900)',lineHeight:1}}>Ingredientes</span>
+              <div className="ingredient-section-head">
+                <div>
+                  <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
+                  <h2>Ingredientes</h2>
+                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
+                </div>
+                <span className="ingredient-section-count" aria-live="polite">
+                  {visibleIngredients.length} de {effectiveINGS.length}
+                </span>
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input className="search" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+                <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
               </div>
               {showPrices&&(
                 <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
@@ -4592,7 +4943,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
                     )}
                   </div>
-                  <div style={{maxHeight:260,overflowY:'auto'}}>
+                  <div>
                     {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
                       const isEdited=priceOverrides[ing.id]!==undefined;
                       const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
@@ -4602,7 +4953,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
                             {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
                           </div>
-                          <input type="number" min="0" step="100"
+                          <input type="number" min="0" step="100" required
+                            aria-label={`Precio ${ing.name} por kg`}
                             className={`price-inp${isEdited?' edited':''}`}
                             value={ing.cost}
                             onChange={e=>{
@@ -4618,38 +4970,53 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
               )}
-                <div className="bodega-bar" role="button" tabIndex={0} onClick={()=>goTab('inventario')} onKeyDown={e=>{if(e.key==='Enter')goTab('inventario');}} style={{cursor:'pointer'}} title="Abrir bodega / inventario">
-                <span className="bodega-bar-icon" style={{color:pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)',display:'flex',alignItems:'center'}}><IcoBox color={pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)'}/></span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div className="bodega-bar-title">{pantryIds.length>0?pantryIds.length+' ingredientes en bodega':'Bodega vacía — sin stock registrado'}</div>
-                  {pantryIds.length>0&&<div className="bodega-bar-sub">{Object.values(stockMap).reduce((a,b)=>a+b,0).toFixed(1)} kg disponibles</div>}
-                </div>
+                <div className="bodega-bar" title="Abrir bodega / inventario">
+                <button
+                  type="button"
+                  onClick={()=>goTab('inventario')}
+                  style={{display:'flex',alignItems:'center',gap:'inherit',flex:1,minWidth:0,background:'none',border:'none',padding:0,margin:0,font:'inherit',color:'inherit',textAlign:'left',cursor:'pointer'}}
+                >
+                  <span className="bodega-bar-icon" aria-hidden="true" style={{color:pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)',display:'flex',alignItems:'center'}}><IcoBox color={pantryIds.length>0?'var(--accent-olive)':'var(--border-soft)'}/></span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="bodega-bar-title">{pantryIds.length>0?pantryIds.length+' ingredientes en bodega':'Bodega vacía — sin stock registrado'}</div>
+                    {pantryIds.length>0&&<div className="bodega-bar-sub">{Object.values(stockMap).reduce((a,b)=>a+b,0).toFixed(1)} kg disponibles</div>}
+                  </div>
+                </button>
                 <div className="bodega-bar-right">
-                  <button className={'tog'+(usePantry?' on':'')} onClick={e=>{e.stopPropagation();setUsePantry(!usePantry);}} title={pantryIds.length===0?'Carga ingredientes en Bodega primero':(usePantry?'Ver todos los ingredientes':'Ver solo bodega')}>{usePantry?'Ver todos':'Ver bodega'}</button>
                   <button className="bodega-bar-refresh" onClick={e=>{e.stopPropagation();goTab('inventario');}} title="Actualizar stock" aria-label="Actualizar stock">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
                   </button>
                 </div>
               </div>
               {usePantry&&pantryIds.length>0&&(
                 <div className="pantry-grid" style={{marginBottom:8}}>
                   {pantryIds.slice(0,12).map(id=>{const g=INGS.find(i=>i.id===id);const kg=stockMap[id]||0;return g?(
-                    <span key={id} className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}{' ✕'}</span>
+                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true"> ✕</span></button>
                   ):null;})}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
-              <div className="cats">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
+              <div className="cats" role="group" aria-label="Filtrar por categoría">
+                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
+                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
               </div>
-              <div className="ing-list">
+              <div className="ingredient-view-toolbar">
+                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
+                <div>
+                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
+                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
+                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
+                </div>
+              </div>
+              <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
                 {(()=>{
-                  let base=usePantry&&pantryIds.length>0?fings.filter(g=>pantryIds.includes(g.id)):fings;
-                  if(showCompatOnly){
-                    const compat=new Set(INGS.filter(i=>i.cs&&i.cs.includes(sKey)).map(i=>i.id));
-                    base=base.filter(g=>compat.has(g.id));
+                  const base=visibleIngredients;
+                  if(usePantry&&pantryIds.length===0){
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
+                  }
+                  if(base.length===0){
+                    return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
                   }
 
                   const renderIngRow=(ing)=>{
@@ -4689,7 +5056,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   };
 
-                  if(!groupByRole || cat!=='all' || search.trim().length>0){
+                  if(!showRoleGroups){
                     return base.map(renderIngRow);
                   }
 
@@ -4697,7 +5064,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'base_carbono',
                       label:'Bases de Carbono',
-                      icon:'🌾',
+                      icon:IconSeed,
                       desc:'Estructura primaria de lignina y celulosa (60–85% de la receta)',
                       primary:g=>g.role==='base_carbono',
                       fallback:g=>g.cat==='base'||g.cn>=40
@@ -4705,7 +5072,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'suplemento_n',
                       label:'Suplementos Nitrogenados',
-                      icon:'🥜',
+                      icon:IconNut,
                       desc:'Aporte de proteína y arranque micelial (5–20% máx según especie)',
                       primary:g=>g.role==='suplemento_n'||g.role==='suplemento_medio',
                       fallback:g=>g.n>=1.4
@@ -4713,7 +5080,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'aditivo',
                       label:'Minerales y Tampones de pH',
-                      icon:'⚖️',
+                      icon:IconScale,
                       desc:'Estabilizadores de acidez, calcio y estructura (1–4%)',
                       primary:g=>!!g.role?.startsWith('aditivo_'),
                       fallback:g=>g.cat==='adit'||g.cn===0
@@ -4721,10 +5088,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {
                       key:'aireador',
                       label:'Aireadores y Estructurantes',
-                      icon:'💨',
+                      icon:IconWind,
                       desc:'Porosidad y difusión de oxígeno gaseoso',
                       primary:g=>g.role==='aireador',
                       fallback:g=>g.cat==='trop'||g.cat==='circ'
+                    },
+                    {
+                      key:'otro',
+                      label:'Otros Insumos',
+                      icon:IconSprout,
+                      desc:'Ingredientes complementarios aún no clasificados en los roles anteriores',
+                      primary:()=>false,
+                      fallback:()=>true
                     }
                   ];
 
@@ -4747,48 +5122,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const compatCount=grpIngs.filter(g=>g.cs&&g.cs.includes(sKey)).length;
 
                     return(
-                      <div key={grp.key} className="role-group-box" style={{marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',background:'var(--paper-50)',overflow:'hidden'}}>
-                        <div
+                      <section key={grp.key} className={`role-group-box${isCollapsed?' is-collapsed':''}`}>
+                        <button
+                          type="button"
+                          className="role-group-hdr"
                           onClick={()=>toggleRoleCollapse(grp.key)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={e=>{if(e.key==='Enter') toggleRoleCollapse(grp.key);}}
-                          style={{
-                            padding:'8px 10px',
-                            background:'var(--paper-100)',
-                            borderBottom:isCollapsed?'none':'1px solid var(--border-soft)',
-                            display:'flex',
-                            justifyContent:'space-between',
-                            alignItems:'center',
-                            cursor:'pointer',
-                            userSelect:'none'
-                          }}>
-                          <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{fontSize:16}}>{grp.icon}</span>
+                          aria-expanded={!isCollapsed}
+                          aria-controls={`role-group-${grp.key}`}>
+                          <div className="role-group-heading">
+                            <span className="role-group-icon" aria-hidden="true"><grp.icon size={18}/></span>
                             <div>
-                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)'}}>
-                                {grp.label} <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',fontWeight:500}}>({grpIngs.length})</span>
+                              <div className="role-group-title">
+                                {grp.label} <span>({grpIngs.length})</span>
                               </div>
-                              <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-600)',lineHeight:1.2}}>
-                                {grp.desc}
-                              </div>
+                              <div className="role-group-desc">{grp.desc}</div>
                             </div>
                           </div>
-                          <div style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',background:'rgba(77,98,53,.12)',color:'var(--moss-700)',padding:'2px 5px',borderRadius:3,fontWeight:600}}>
-                              {compatCount} comp.
+                          <div className="role-group-summary">
+                            <span className="role-group-compatible">
+                              {compatCount} compatible{compatCount===1?'':'s'}
                             </span>
-                            <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)',transition:'transform .15s'}}>
-                              ▼
-                            </span>
+                            <span className="role-group-chevron" aria-hidden="true">⌄</span>
                           </div>
+                        </button>
+                        <div id={`role-group-${grp.key}`} className="role-group-content" hidden={isCollapsed}>
+                          {grpIngs.map(renderIngRow)}
                         </div>
-                        {!isCollapsed&&(
-                          <div style={{padding:'4px 6px'}}>
-                            {grpIngs.map(renderIngRow)}
-                          </div>
-                        )}
-                      </div>
+                      </section>
                     );
                   });
                 })()}
@@ -4796,6 +5156,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             </div>
             <div className="builder-right">
+            <header className="form-advanced-tools-head" id="form-advanced-tools-title">
+              <div>
+                <span className="ingredient-section-eyebrow">Herramientas avanzadas</span>
+                <h2>Perito + Automejora</h2>
+                <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
+              </div>
+              <button type="button" onClick={()=>document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'})}>Abrir generador</button>
+            </header>
             {an&&(()=>{
               const hasPer=recipe.length>0;
               const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
@@ -4814,7 +5182,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
                       <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
                         <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
@@ -4827,9 +5195,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>✦ Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
@@ -4876,14 +5244,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── PERITO: INDICADORES + ITEMS ── */}
                   {hasPer&&(
                     <>
-                      {/* ── Modo de trabajo: mismo estado que el Generador — cambiarlo
-                          aquí también cambia qué explora "Calcular" más abajo. ── */}
-                      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Modo:</span>
-                        {[['stock','Solo bodega',true],['full','Todo el catálogo',false]].map(([k,l,v])=>(
-                          <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
-                        ))}
-                      </div>
                       {/* ── barra resumen live: score + EB + costo ── */}
                       <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
                         {[
@@ -4892,7 +5252,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
                         ].map((m,i)=>(
                           <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
+                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
                             <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
                         ))}
@@ -4920,8 +5280,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
                       {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
@@ -4929,9 +5289,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
                   </div>
                   {showFlush&&<FlushChart an={an}/>}
                   {showCompChart&&<CompositionChart recipe={recipe}/>}
@@ -4968,7 +5328,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </select>
                     </div>
                   )}
-                  <button className={`tog${normMode?' on':''}`} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
+                  <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
                   <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
                 </div>}
               </div>
@@ -4979,7 +5339,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
+                    <button onClick={()=>{setShowOptimizer(true);document.getElementById('gen-panel')?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Ver Generador ↓</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -5014,7 +5374,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:4}}>
                         <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
                         <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
+                          <input type="number" min="0" max="100" step=".5" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
                           <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
                         </div>
                       </div>
@@ -5031,14 +5391,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               )}
               {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
-                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'all .4s ease'}}>
+                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
                       <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
                     </div>
                     <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'all .4s ease'}}>{sc}</span>
+                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>{sc}</span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
                     </div>
                   </div>
@@ -5083,14 +5443,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="bwrap" id="bl-batch">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:13}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
-                    <button className={`tog${showBatch?' on':''}`} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
+                    <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
-                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
-                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
@@ -5162,18 +5522,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
               )}
               {recipe.length>0&&<div className="act-row no-print">
                 <button className="btn" onClick={()=>window.print()}>Imprimir ficha</button>
-                <button className="btn pri" onClick={exportR}>↓ Exportar .txt</button>
+                <button className="btn pri" onClick={exportR}><span aria-hidden="true">↓</span> Exportar .txt</button>
                 <button className="btn" onClick={()=>{
                   if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible.'});return;}
                   const el=document.querySelector('.print-panel');
                   if(!el){setNoticeDlg({msg:'Genera análisis primero.'});return;}
                   html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
-                }}>↓ PDF</button>
+                }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
                   const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
-                }}>↓ JSON</button>
+                }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{
                   const input=document.createElement('input');input.type='file';input.accept='.json';
                   input.onchange=e=>{
@@ -5195,14 +5555,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     reader.readAsText(file);
                   };
                   input.click();
-                }}>↑ Importar</button>
+                }}><span aria-hidden="true">↑</span> Importar</button>
               </div>}
               
 {/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
 
 {recipe.length>0&&(
                 <div className="sbar">
-                  <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
+                  <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
@@ -5215,12 +5575,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
 
             </div>
-          </div>
+          </section>
           {tab==='formular'&&tr&&recipe.length>0&&(
             <div className="panel treatment-section" id="bl-tratamiento">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento recomendado</div>
-                <button className={`tog${showGuide?' on':''}`} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
+                <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
               </div>
               <div className={`tcard ${tr.col}`}>
                 <div className="tttl">{tr.name}</div>
@@ -5265,7 +5625,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{position:'absolute',left:15,top:0,bottom:0,width:'1px',background:'var(--border-soft)',opacity:0}}/>
                     {saved.map((e,idx)=>{const s2=SPP[e.sKey];const isEven=idx%2===0;return(
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
-                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:10}}/>
+                        <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
@@ -5278,7 +5638,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           <div style={{display:'flex',gap:6,alignItems:'center'}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>{e.date}</span>
-                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
+                            <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
                             <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
                           </div>
@@ -5295,18 +5655,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-          <div>
+          <div className="formular-workspace">
 {/* ── GENERADOR DE RECETAS ── */}
-            <div id="gen-panel" className="panel opt-panel" style={{marginTop:18}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:20,background:'var(--paper-50,#fff)'}}>
-                <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Generador de recetas</div>
-                <button className="tog" onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
+            <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:18}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
+                <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
+                <button className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
               </div>
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
                   <div className="seg-row" style={{marginBottom:14}}>
-                    <button className={'seg'+(formularMode==='auto'?' on':'')} onClick={()=>setFormularMode('auto')}>Automática</button>
-                    <button className={'seg'+(formularMode==='manual'?' on':'')} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
+                    <button className={'seg'+(formularMode==='auto'?' on':'')} aria-pressed={formularMode==='auto'} onClick={()=>setFormularMode('auto')}>Automática</button>
+                    <button className={'seg'+(formularMode==='manual'?' on':'')} aria-pressed={formularMode==='manual'} onClick={()=>setFormularMode('manual')}>Por objetivo C:N</button>
                   </div>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
                     {formularMode==='auto'
@@ -5320,33 +5680,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <select style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0',cursor:'pointer'}}
-                                  value={optTarget} onChange={e=>setOptTarget(e.target.value)}>
-                                  {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
-                                </select>
+                                <div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}}>{SPP[optTarget]?.name}</div>
                               </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máx. $/kg</div>
-                                <input type="number" min="0" step="100" value={optMaxCost} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
-                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',outline:'none',padding:'2px 0'}} placeholder="Sin límite"/>
+                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máximo por kg</label>
+                                <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
+                                  autoComplete="off" aria-describedby="opt-max-cost-help"
+                                  style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}} placeholder="Sin límite"/>
+                                <span id="opt-max-cost-help" className="sr-only">Deja el campo vacío para no aplicar un límite de costo.</span>
                               </div>
                             </div>
-                            {/* fuente + perfil en una sola fila compacta */}
-                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
-                              <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Origen</div>
-                                <div className="chip-row">
-                                  {[['stock','Solo bodega',true],['full','Paleta completa',false]].map(([k,l,v])=>(
-                                    <button key={k} className={'chip'+(optUseStock===v?' on':'')} onClick={()=>setOptUseStock(v)}>{l}</button>
-                                  ))}
-                                </div>
-                              </div>
-                              <div style={{width:1,height:16,background:'var(--border-soft)'}}></div>
+                            {/* El origen se define una sola vez en el paso 02 del flujo. */}
+                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
                                 <div className="chip-row">
                                   {Object.entries(OPT_PROFILES).map(([k,p])=>(
-                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
+                                    <button key={k} className={'chip'+(optProfile===k?' on':'')} aria-pressed={optProfile===k} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
                                   ))}
                                 </div>
                               </div>
@@ -5543,9 +5893,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <div role="button" tabIndex={0} onClick={()=>{goTab('inventario');setInvTab('compra');}} onKeyDown={e=>{if(e.key==='Enter'){goTab('inventario');setInvTab('compra');}}} style={{cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
-                              </div>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -5605,12 +5955,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="inv-field">
                               <label htmlFor="inv-min">Mineral / corrector pH (%)</label>
-                              <input id="inv-min" type="number" min="0" max="10" step="0.5" value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
+                              <input id="inv-min" type="number" min="0" max="10" step="0.5" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
                             </div>
                             {invAer&&(
                               <div className="inv-field">
                                 <label htmlFor="inv-aerpct">Aireador fijo (%)</label>
-                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
+                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
                               </div>
                             )}
                           </div>
@@ -5743,7 +6093,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {BAG_TYPES.map(bt=>{
                   const on=prodBagType===bt.id;
                   return(
-                    <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'all .12s'}}>
+                    <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
                     </button>
@@ -5778,8 +6128,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel no-print" style={{marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
-                  No hay receta activa. Arma una en <strong>Formulador</strong> o genera una automáticamente en <strong>Generar</strong>.
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                  <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
+                  <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
               ):(
                 <>
@@ -5807,7 +6158,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
                       <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
-                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
+                      <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
                   <div>
@@ -5819,7 +6170,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
                     <div style={{flex:1,minWidth:140}}>
                       <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
-                      <input id="prod-lote" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="L-2026-047" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",outline:'none',boxSizing:'border-box'}}/>
+                      <input id="prod-lote" name="numeroLote" autoComplete="off" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="Ej. L-2026-047…" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",boxSizing:'border-box'}}/>
                     </div>
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
@@ -5891,7 +6242,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ];
               return(
               <div>
-                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:6}}>
+                <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
                       <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
@@ -6069,7 +6420,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
               {saved.length===0
-                ?<div className="rec-empty">No hay recetas guardadas.<br/>Crea y guarda desde el Formulador.</div>
+                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
                 :(()=>{
                   const filtered=saved.filter(e=>dashFilter==='all'||e.sKey===dashFilter);
                   if(!filtered.length) return <div className="sempty">Sin recetas para esta especie.</div>;
@@ -6119,7 +6470,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--coral-700)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -6128,7 +6479,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
                                   <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
                                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
-                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--coral-700)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
+                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
                                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
                                   </div>
                                 ))}
@@ -6165,7 +6516,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
-            <div className="inv-modal" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Ejecutar lote" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
@@ -6192,32 +6543,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitNuevo(false);}}>
-            <div className="inv-modal" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nueva prueba experimental" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
               <div className="inv-modal-title">Nueva prueba experimental</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Código de lote</label><input className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label">Especie</label><input className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Cepa / proveedor</label><input className="inv-input" placeholder="Spawn proveedor X" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label">Operador</label><input className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Fecha mezcla</label><input type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label">Fecha inoculación</label><input type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
-                <div><label className="inv-label"># Bolsas</label><input type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
-                <div><label className="inv-label">kg húmedo/bolsa</label><input type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
-                <div><label className="inv-label">% spawn</label><input type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
-                <div><label className="inv-label">Humedad %</label><input type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa</label><input id="bit-wet-kg" name="wetKgPerBag" type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-spawn">% spawn</label><input id="bit-spawn" name="spawnPercent" type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-moisture">Humedad %</label><input id="bit-moisture" name="moisturePercent" type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Tratamiento</label><select className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-                <div><label className="inv-label">Peso seco (kg)</label><input type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="auto" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco (kg)</label><input id="bit-dry-weight" name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="Calculado automáticamente…" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Objetivo de la prueba</label><input className="inv-input" placeholder="ej. Comparar humedad 63% vs 66%" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
-              <div style={{marginBottom:16}}><label className="inv-label">Notas</label><textarea className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
+              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
@@ -6229,18 +6580,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
           <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitCosecha(false);}}>
-            <div className="inv-modal" style={{width:440}}>
+            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Registrar cosecha" style={{width:440}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Bolsa</label><select className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
-                <div><label className="inv-label">Flush #</label><input type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label">Fecha</label><input type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
-                <div><label className="inv-label">Peso fresco (g)</label><input type="number" className="inv-input" min={0} step={1} placeholder="430" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label">Calidad</label><div style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'all .1s'}}>★</button>))}</div></div>
-              <div style={{marginBottom:16}}><label className="inv-label">Observaciones</label><input className="inv-input" placeholder="Buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
@@ -6252,7 +6603,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         
       </div>
 
-      {(RECETA_TABS.includes(tab)||tab==='produccion'||tab==='schedule')&&(<div data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} style={{cursor:'pointer'}} onClick={()=>setBridgeOpen(o=>!o)}>
+      {((RECETA_TABS.includes(tab)&&tab!=='formular')||tab==='produccion'||tab==='schedule')&&(<section data-testid="species-bridge" className={'species-bridge'+(bridgeHidden?' bridge-hidden':'')} aria-label="Especie activa">
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>
@@ -6262,7 +6613,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
                 Ver catálogo
               </button>
             </div>
@@ -6279,14 +6630,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
-            <span style={{color:'var(--paper-0)',opacity:.6,fontSize:"var(--text-sm)",lineHeight:1,transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
+            <button type="button" className="bridge-toggle" aria-expanded={bridgeOpen} aria-label={bridgeOpen?'Ocultar parámetros de especie':'Mostrar parámetros de especie'} onClick={()=>setBridgeOpen(o=>!o)}>
+              <span aria-hidden="true" style={{display:'inline-block',transform:bridgeOpen?'rotate(0deg)':'rotate(180deg)',transition:'transform .15s'}}>▾</span>
+            </button>
           </div>
           </>)}
         </div>
-      </div>)}
+      </section>)}
     </div>
   );
 }

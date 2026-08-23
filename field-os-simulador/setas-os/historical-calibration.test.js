@@ -3,6 +3,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { bitacoraEBRows, historicalEB } = require('./historical-calibration.js');
 
+test('el módulo puede evaluarse de nuevo en navegador sin redeclarar globals léxicos', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'historical-calibration.js'), 'utf8');
+  assert.match(source, /\(function initHistoricalCalibration\(\) \{/);
+  assert.match(source, /\}\)\(\);\s*$/);
+});
+
 // ── Fixtures ──────────────────────────────────────────────────────
 // Shapes mirror the real Bitácora records built in simulador-app.jsx
 // (crearBitLote / addBitCosecha), not the shell's demo `yields` array.
