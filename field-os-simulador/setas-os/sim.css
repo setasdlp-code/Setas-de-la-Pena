@@ -2982,7 +2982,8 @@
 .sim-root .form-species-picker select:focus-visible,
 .sim-root .form-advanced-tools-head button:focus-visible,
 .sim-root .live-dash-btn:focus-visible,
-.sim-root .live-ing-chip-del:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px}
+.sim-root .live-ing-chip-del:focus-visible,
+.sim-root .rec-pct-input:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px}
 .sim-root .form-step-options button.is-active,
 .sim-root .form-step-primary{
   border-color:var(--accent-olive);
