@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instrucciones para Claude Code en este repositorio. Ver también [`AGENTS.md`](./AGENTS.md) (protocolo de coordinación con Google AI Studio) y [`SETAS_OS_CANONICAL.md`](./SETAS_OS_CANONICAL.md) (qué es la implementación vigente).
+Instrucciones para Claude Code en este repositorio. Ver también [`AGENTS.md`](./AGENTS.md) (protocolo de coordinación con Codex) y [`SETAS_OS_CANONICAL.md`](./SETAS_OS_CANONICAL.md) (qué es la implementación vigente).
 
 ## Qué es este repositorio
 
@@ -17,23 +17,23 @@ Setas de la Peña — cultivo y venta de setas (Tenjo, Colombia). El repo mezcla
 
 ## Rol de Claude Code en el flujo multi-agente
 
-Este proyecto se trabaja con varias herramientas de IA en paralelo, cada una con un rol distinto. Claude Code es el **implementador principal del repositorio**: lee el código, propone plan, crea rama, implementa, prueba y abre PR. No decide solo — `main` está protegido y el merge lo aprueba el humano (Sebastián).
+Este proyecto se orquesta entre dos agentes de código, cada uno con un rol distinto. `main` está protegido y el merge lo aprueba el humano (Sebastián).
 
 | Sistema | Rol | Entregable |
 |---|---|---|
-| ChatGPT Work / Codex | dirección de tarea, investigación, arquitectura, QA final | paquete de trabajo, checklist de merge |
-| **Claude Code** | implementador principal | rama, commits pequeños, tests, PR |
-| Gemini | segunda opinión crítica y multimodal | revisión del brief/diff/capturas — no toca el repo |
-| Google AI Studio | generación amplia (pantallas, rediseños, contenido) | ver división de trabajo abajo |
+| **Codex** | generación amplia y de alto volumen: scaffolding desde cero, tareas bien acotadas que corre de forma autónoma y larga, primeras versiones de pantallas/contenido | paquete de trabajo, checklist de merge, primer borrador de código |
+| **Claude Code** | implementador principal: razonamiento cuidadoso sobre código existente, lógica de negocio, fixes quirúrgicos, y **revisor de lo que entrega Codex** antes de que llegue a PR | rama, commits pequeños, tests, PR, notas de revisión |
 
-### División de trabajo con Google AI Studio
+### División de trabajo con Codex
 
-Ver [`AGENTS.md`](./AGENTS.md) para el protocolo completo (checkpoints de git, riesgo de pisado silencioso, cuándo separar por ramas). Regla rápida:
+Ver [`AGENTS.md`](./AGENTS.md) para el protocolo completo (checkpoints de git, riesgo de pisado silencioso, cuándo separar por ramas). La división sigue la fortaleza real de cada herramienta, no solo el tamaño de la tarea:
 
-- **Studio**: crear/generar/rediseñar ampliamente (pantallas nuevas, rediseños masivos, tokens en todo el sistema, copy/contenido/imágenes).
-- **Claude Code**: arreglar/diagnosticar/verificar con precisión (auditorías, fixes quirúrgicos, lógica de negocio, tests, coordinación de git).
+- **Codex** — volumen y autonomía: generar desde cero (pantallas nuevas, rediseños masivos, tokens en todo el sistema, copy/contenido/imágenes), y tareas largas bien especificadas que puede correr sin supervisión constante (scaffolding, boilerplate, exploración amplia de opciones).
+- **Claude Code** — precisión y contexto: arreglar/diagnosticar con precisión sobre código ya existente (auditorías, fixes quirúrgicos, lógica de negocio, tests), coordinación de git, y **revisión crítica del output de Codex** antes de mergear — detectar over-generation, archivos reescritos innecesariamente, inconsistencias con `knowledge_base/` o `SETAS_OS_CANONICAL.md`, y validar que el paquete de trabajo cumple sus propios criterios de aceptación.
 
-### Si llega un paquete de trabajo de ChatGPT/Codex
+**Regla rápida:** si la tarea es "generar mucho, rápido, desde cero" → Codex. Si es "razonar con cuidado sobre lo que ya existe, o revisar lo que otra herramienta generó" → Claude Code.
+
+### Si llega un paquete de trabajo de Codex
 
 Espera esta estructura (como Issue de GitHub o Markdown enlazado):
 
@@ -48,13 +48,13 @@ Responsable de implementación:
 Revisores:
 ```
 
-Trabaja dentro del alcance declarado. Si algo fuera de alcance parece necesario, señálalo en el PR en vez de tocarlo. Si Gemini deja observaciones sobre un diff tuyo, trátalas como input a reconciliar contra evidencia — no las apliques ciegamente ni las ignores.
+Trabaja dentro del alcance declarado. Si algo fuera de alcance parece necesario, señálalo en el PR en vez de tocarlo. Si Codex deja observaciones sobre un diff tuyo, trátalas como input a reconciliar contra evidencia — no las apliques ciegamente ni las ignores.
 
 ## Flujo de trabajo
 
 - Antes de escribir código, haz hasta tres preguntas de aclaración si algo sobre requisitos, ubicación de archivos o convenciones existentes es ambiguo (regla ya establecida en `AGENTS.md`).
 - Rama por tarea, commits pequeños, PR — no commitear directo a `main`.
-- Antes de editar, `git status`/`git diff` para ver si Studio u otra herramienta dejó cambios sin commitear (riesgo de pisado silencioso documentado en `AGENTS.md`).
+- Antes de editar, `git status`/`git diff` para ver si Codex u otra herramienta dejó cambios sin commitear (riesgo de pisado silencioso documentado en `AGENTS.md`).
 
 ## Límites
 
