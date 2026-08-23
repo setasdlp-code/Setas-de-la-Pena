@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: bd26c4175c3a2fda029df44e8d961a6514da62f319583fac698ef1599013f904
+// source-hash: b2238637406aa44b82a74ea4311863e5a74df56ab0617df568f740a729b8d4f1
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1223,7 +1223,36 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     suppNames: supps.map((g) => g.name)
   };
 };
+const FORM_DRAFT_KEY = "setas_formulator_draft_v1";
+const readFormDraft = () => {
+  try {
+    const raw = localStorage.getItem(FORM_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== 1 || !Array.isArray(draft.recipe)) return null;
+    const validIds = new Set(INGS.map((g) => g.id));
+    const seenIds = /* @__PURE__ */ new Set();
+    const recipe = draft.recipe.filter((r) => {
+      if (!r || !validIds.has(r.id) || seenIds.has(r.id) || !Number.isFinite(Number(r.p))) return false;
+      seenIds.add(r.id);
+      return true;
+    }).map((r) => ({ id: r.id, p: Math.max(0, Math.min(100, Number(r.p))) }));
+    if (!recipe.length) return null;
+    const sKey = SPP[draft.sKey] ? draft.sKey : "p_ostreatus_gris";
+    const recipeIds = new Set(recipe.map((r) => r.id));
+    return {
+      recipe,
+      sKey,
+      hasPickedSpecies: draft.hasPickedSpecies === true && !!SPP[draft.sKey],
+      lockedIds: Array.isArray(draft.lockedIds) ? draft.lockedIds.filter((id) => recipeIds.has(id)) : [],
+      saveName: typeof draft.saveName === "string" ? draft.saveName.slice(0, 60) : ""
+    };
+  } catch (e) {
+    return null;
+  }
+};
 function App(props) {
+  const initialFormDraft = useMemo(() => readFormDraft(), []);
   const [bridgeOpen, setBridgeOpen] = useState(true);
   const [bridgeHidden, setBridgeHidden] = useState(false);
   useEffect(() => {
@@ -1256,7 +1285,7 @@ function App(props) {
       if (pre && SPP[pre]) return true;
     } catch (e) {
     }
-    return false;
+    return initialFormDraft?.hasPickedSpecies || false;
   });
   const [sKey, setSKeyRaw] = useState(() => {
     try {
@@ -1269,7 +1298,7 @@ function App(props) {
       }
     } catch (e) {
     }
-    return "p_ostreatus_gris";
+    return initialFormDraft?.sKey || "p_ostreatus_gris";
   });
   const setSKey = (k) => {
     setHasPickedSpecies(true);
@@ -1277,7 +1306,7 @@ function App(props) {
   };
   const [catalogModalOpen, setCatalogModalOpen] = useState(false);
   const [sppPickerOpen, setSppPickerOpen] = useState(true);
-  const [recipe, setRecipe] = useState([]);
+  const [recipe, setRecipe] = useState(() => initialFormDraft?.recipe || []);
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("all");
   const [numBags, setNumBags] = useState(6);
@@ -1288,7 +1317,7 @@ function App(props) {
   const [showGuide, setShowGuide] = useState(false);
   const [showBatch, setShowBatch] = useState(false);
   const [saved, setSaved] = useState([]);
-  const [saveName, setSaveName] = useState("");
+  const [saveName, setSaveName] = useState(() => initialFormDraft?.saveName || "");
   const [showSaved, setShowSaved] = useState(false);
   const [flash, setFlash] = useState(false);
   const [saveSyncErr, setSaveSyncErr] = useState("");
@@ -1373,7 +1402,7 @@ function App(props) {
   const [invTargetCN, setInvTargetCN] = useState(35);
   const [invResult, setInvResult] = useState(null);
   const [dashFilter, setDashFilter] = useState("all");
-  const [lockedIds, setLockedIds] = useState([]);
+  const [lockedIds, setLockedIds] = useState(() => initialFormDraft?.lockedIds || []);
   const [balanceMode, setBalanceMode] = useState("proportional");
   const [pantryIds, setPantryIds] = useState([]);
   const [showCompatOnly, setShowCompatOnly] = useState(false);
@@ -1415,6 +1444,24 @@ function App(props) {
     } catch (e) {
     }
   };
+  useEffect(() => {
+    try {
+      if (!recipe.length) {
+        localStorage.removeItem(FORM_DRAFT_KEY);
+        return;
+      }
+      localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify({
+        version: 1,
+        savedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        recipe: recipe.map((r) => ({ id: r.id, p: Number(r.p) || 0 })),
+        sKey,
+        hasPickedSpecies,
+        lockedIds: lockedIds.filter((id) => recipe.some((r) => r.id === id)),
+        saveName: saveName.slice(0, 60)
+      }));
+    } catch (e) {
+    }
+  }, [recipe, sKey, hasPickedSpecies, lockedIds, saveName]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== "undefined" ? navigator.onLine : true);
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -3416,7 +3463,7 @@ BATCH (${numBags}×${kgBag} kg):
     },
     /* @__PURE__ */ React.createElement("span", null, "Ruta de producción"),
     /* @__PURE__ */ React.createElement("strong", null, formNextState === "species" ? "Falta definir la especie" : formNextState === "balance" ? "Falta cerrar el balance" : "Receta lista para preparar"),
-    /* @__PURE__ */ React.createElement("em", null, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s", " · Revisar receta")
+    /* @__PURE__ */ React.createElement("em", null, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s", " · Revisar receta · Autoguardado")
   ), /* @__PURE__ */ React.createElement(
     "button",
     {

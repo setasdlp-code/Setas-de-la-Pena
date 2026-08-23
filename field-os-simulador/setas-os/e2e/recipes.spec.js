@@ -163,3 +163,23 @@ test('la barra móvil permite volver a la receta editable desde el catálogo', a
   await expect(pctInput).toBeFocused();
   await expect(pctInput).toBeInViewport();
 });
+
+test('el borrador activo recupera especie, porcentajes, bloqueo y nombre tras recargar', async ({ page }) => {
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await selectSpecies(page, 'p_ostreatus_gris');
+  await addIngredientByName(page, 'Paja de trigo');
+  await setIngredientPct(page, 'Paja de trigo', 63.5);
+  await page.getByRole('button', { name: 'Fijar porcentaje de Paja de trigo' }).click();
+  await page.locator('input[name="recipeName"]').fill('Borrador turno mañana');
+
+  await page.reload();
+  await page.locator('.rail-btn[data-workspace]').first().waitFor();
+  await goWorkspace(page, 'formular');
+
+  await expect(page.locator('#form-species-context-select')).toHaveValue('p_ostreatus_gris');
+  expect(await getIngredientPct(page, 'Paja de trigo')).toBe('63.5');
+  await expect(page.getByRole('button', { name: 'Desbloquear porcentaje de Paja de trigo' })).toBeVisible();
+  await expect(page.locator('input[name="recipeName"]')).toHaveValue('Borrador turno mañana');
+  await expect(page.getByTestId('formulator-review-recipe')).toContainText('Autoguardado');
+});
