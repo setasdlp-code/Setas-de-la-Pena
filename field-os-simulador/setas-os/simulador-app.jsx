@@ -2556,15 +2556,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     if(window.SetasBitacoraDB){
       (async()=>{
-        try{
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        // allSettled, no await secuencial: un fallo en guardarLote no debe
+        // impedir el intento de guardarBolsas — son documentos distintos,
+        // y encadenarlos con await hacía que un solo error dejara las
+        // bolsas del lote sin ningún intento de respaldo.
+        const results=await Promise.allSettled([
+          window.SetasBitacoraDB.guardarLote(lote),
+          window.SetasBitacoraDB.guardarBolsas(bolsas),
+        ]);
+        const failed=results.find(r=>r.status==='rejected');
+        if(failed){
+          const err=failed.reason;
+          setBitSyncErr('No se sincronizó con el servidor: '+(err?.message||err?.code||'error desconocido'));
+        }else{
           setBitSyncErr('');
-        }catch(err){
-          setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
         }
       })();
-    }
+    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -2574,7 +2582,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
-    }
+    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const updateBitBolsa=(bolsaId,fields)=>{
     const fechaKey=['col25','col50','col100'].find(k=>k in fields);
@@ -2592,7 +2600,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
-    }
+    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
@@ -2602,7 +2610,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
-    }
+    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -2611,7 +2619,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{await window.SetasBitacoraDB.eliminarCosecha(id);setBitSyncErr('');}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
-    }
+    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
@@ -2626,7 +2634,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);setBitSyncErr('');}
           catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
         })();
-      }
+      }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };

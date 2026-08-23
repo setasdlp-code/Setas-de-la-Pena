@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: fd8ab158eb785a50cf024fad29c13979130a835fac7835112908e1f720e75b15
+// source-hash: fd1a526c64bedf71e8a9e0f9eae027e07d00aa38188ac21f281953b1a100c622
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2189,14 +2189,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
     if (window.SetasBitacoraDB) {
       (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        const results = await Promise.allSettled([
+          window.SetasBitacoraDB.guardarLote(lote),
+          window.SetasBitacoraDB.guardarBolsas(bolsas)
+        ]);
+        const failed = results.find((r) => r.status === "rejected");
+        if (failed) {
+          const err = failed.reason;
+          setBitSyncErr("No se sincronizó con el servidor: " + (err?.message || err?.code || "error desconocido"));
+        } else {
           setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
       })();
+    } else {
+      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
     return lote.id;
   };
@@ -2219,6 +2225,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
       })();
+    } else {
+      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
   };
   const updateBitBolsa = (bolsaId, fields) => {
@@ -2249,6 +2257,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
       })();
+    } else {
+      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
   };
   const addBitCosecha = (cosecha) => {
@@ -2271,6 +2281,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
       })();
+    } else {
+      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
   };
   const deleteBitCosecha = (id) => {
@@ -2291,6 +2303,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
         }
       })();
+    } else {
+      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
   };
   const deleteBitLote = (loteId) => {
@@ -2334,6 +2348,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
           }
         })();
+      } else {
+        console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
       }
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });

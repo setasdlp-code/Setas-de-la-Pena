@@ -6,7 +6,7 @@
 // Bitácora actualiza y borra registros por ese id local más adelante.
 import { db } from "./firebase-init.js";
 import {
-  doc, setDoc, deleteDoc, serverTimestamp,
+  doc, setDoc, deleteDoc, serverTimestamp, writeBatch,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // bolsa.foto es un data URL base64 (ver compressImageToDataURL en
@@ -26,12 +26,17 @@ export async function actualizarLote(loteId, fields) {
   return setDoc(doc(db, "bitacora_lotes", loteId), { ...fields, syncedAt: serverTimestamp() }, { merge: true });
 }
 
+// writeBatch en vez de Promise.all de escrituras independientes: si una
+// bolsa fallara a mitad del lote, Promise.all dejaría el resto ya escrito
+// — huérfanas sin la bolsa que faltó, sin forma de detectarlo después
+// porque este módulo nunca lee de Firestore. El batch hace que las N
+// bolsas de un lote se escriban todas o ninguna.
 export async function guardarBolsas(bolsas) {
-  return Promise.all(
-    (bolsas || []).map((b) =>
-      setDoc(doc(db, "bitacora_bolsas", b.id), { ...stripFoto(b), syncedAt: serverTimestamp() })
-    )
-  );
+  const batch = writeBatch(db);
+  (bolsas || []).forEach((b) => {
+    batch.set(doc(db, "bitacora_bolsas", b.id), { ...stripFoto(b), syncedAt: serverTimestamp() });
+  });
+  return batch.commit();
 }
 
 export async function actualizarBolsa(bolsaId, fields) {
@@ -46,12 +51,15 @@ export async function eliminarCosecha(id) {
   return deleteDoc(doc(db, "bitacora_cosechas", id));
 }
 
+// Mismo motivo que guardarBolsas: un borrado en cascada a medias deja
+// documentos huérfanos que este módulo, al no leer nunca de Firestore, no
+// puede detectar ni reconciliar después.
 export async function eliminarLoteCascade(loteId, bolsaIds, cosechaIds) {
-  return Promise.all([
-    deleteDoc(doc(db, "bitacora_lotes", loteId)),
-    ...(bolsaIds || []).map((id) => deleteDoc(doc(db, "bitacora_bolsas", id))),
-    ...(cosechaIds || []).map((id) => deleteDoc(doc(db, "bitacora_cosechas", id))),
-  ]);
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "bitacora_lotes", loteId));
+  (bolsaIds || []).forEach((id) => batch.delete(doc(db, "bitacora_bolsas", id)));
+  (cosechaIds || []).forEach((id) => batch.delete(doc(db, "bitacora_cosechas", id)));
+  return batch.commit();
 }
 
 // simulador.html es un <script type="text/babel"> clásico (no un módulo
