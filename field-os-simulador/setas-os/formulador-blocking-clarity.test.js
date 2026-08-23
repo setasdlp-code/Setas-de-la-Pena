@@ -14,3 +14,7 @@ test('las filas de receta no bloqueadas se marcan como ajustables cuando el bala
 test('sim.css define un estilo visible (no solo color) para .is-adjustable', () => {
   assert.match(css, /\.sim-root \.rec-row\.is-adjustable\{/);
 });
+
+test('el banner de bloqueo por producción ofrece un atajo directo a Auto-mejorar cuando el balance es la causa', () => {
+  assert.match(jsx, /⚠ \{productionBlockMsg\}[\s\S]{0,200}!balanced&&<button[\s\S]{0,50}onClick=\{autoImprove\}/);
+});
