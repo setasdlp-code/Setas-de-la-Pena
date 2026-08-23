@@ -97,13 +97,19 @@ test('bitSyncErr existe como estado y se renderiza como aviso no bloqueante', ()
   assert.match(jsx, /\{bitSyncErr&&<span[^>]*title=\{bitSyncErr\}/);
 });
 
-test('los 6 mutadores de Bitácora llaman a setBitSyncErr en su catch (no dejan el error en silencio)', () => {
+test('los 6 mutadores de Bitácora surfacean el fallo vía setBitSyncErr (no dejan el error en silencio)', () => {
   const jsx = read('simulador-app.jsx');
-  // \s* tolera el bloque catch de crearBitLote (Tarea 2), que envuelve dos
-  // awaits y por eso separa "catch(err){" de "setBitSyncErr(" en líneas
-  // distintas; los otros 5 sitios usan la forma de una sola línea.
-  const calls = jsx.match(/catch\(err\)\{\s*setBitSyncErr\(/g) || [];
-  assert.equal(calls.length, 6, `se esperaban 6 llamadas a setBitSyncErr en catch, hubo ${calls.length}`);
+  // 5 sitios usan try/catch(err){setBitSyncErr(...)} de una sola llamada
+  // await. crearBitLote es distinto desde el fix de allSettled: dos
+  // llamadas independientes, sin catch — el fallo se detecta revisando
+  // results.find(r=>r.status==='rejected') y de ahí llama a setBitSyncErr.
+  const catchCalls = jsx.match(/catch\(err\)\{\s*setBitSyncErr\(/g) || [];
+  assert.equal(catchCalls.length, 5, `se esperaban 5 sitios con catch(err){setBitSyncErr(, hubo ${catchCalls.length}`);
+  const start = jsx.indexOf('const crearBitLote=');
+  const end = jsx.indexOf('const updateBitLote=');
+  const crearBitLoteBody = jsx.slice(start, end);
+  assert.match(crearBitLoteBody, /status==='rejected'/, 'crearBitLote debe detectar el fallo entre las promesas de allSettled');
+  assert.match(crearBitLoteBody, /setBitSyncErr\(/, 'crearBitLote debe surfacear el fallo detectado');
 });
 
 test('bitacora-sync.js nunca importa ni llama una API de lectura de Firestore (invariante de un solo sentido)', () => {
@@ -115,4 +121,33 @@ test('los 6 sitios de cableado en simulador-app.jsx conservan el guard if(window
   const jsx = read('simulador-app.jsx');
   const guards = jsx.match(/if\(window\.SetasBitacoraDB\)\{/g) || [];
   assert.equal(guards.length, 6, `se esperaban 6 guards if(window.SetasBitacoraDB){, hubo ${guards.length}`);
+});
+
+// ── Hallazgos menores de la revisión final, ahora corregidos ──────────
+
+test('guardarBolsas y eliminarLoteCascade usan writeBatch, no N escrituras independientes', () => {
+  const src = read('firebase/bitacora-sync.js');
+  assert.match(src, /import\s*\{[^}]*writeBatch[^}]*\}/, 'writeBatch no está importado');
+  const guardarBolsasStart = src.indexOf('export async function guardarBolsas');
+  const guardarBolsasEnd = src.indexOf('export async function actualizarBolsa');
+  assert.match(src.slice(guardarBolsasStart, guardarBolsasEnd), /writeBatch\(db\)/, 'guardarBolsas debe usar writeBatch');
+  const cascadeStart = src.indexOf('export async function eliminarLoteCascade');
+  assert.match(src.slice(cascadeStart), /writeBatch\(db\)/, 'eliminarLoteCascade debe usar writeBatch');
+});
+
+test('crearBitLote intenta guardar la receta y las bolsas de forma independiente (allSettled, no await secuencial)', () => {
+  const jsx = read('simulador-app.jsx');
+  const start = jsx.indexOf('const crearBitLote=');
+  const end = jsx.indexOf('const updateBitLote=');
+  const body = jsx.slice(start, end);
+  assert.match(body, /Promise\.allSettled\(/, 'un fallo en guardarLote no debe impedir el intento de guardarBolsas');
+  assert.doesNotMatch(body, /await window\.SetasBitacoraDB\.guardarLote\(lote\);\s*\n\s*await window\.SetasBitacoraDB\.guardarBolsas/, 'no debe quedar el await secuencial anterior');
+});
+
+test('los 6 sitios de cableado avisan por consola si SetasBitacoraDB no está disponible', () => {
+  const jsx = read('simulador-app.jsx');
+  // Ventana amplia: el sitio de crearBitLote es más largo que los otros 5
+  // (usa Promise.allSettled con un comentario explicativo).
+  const warns = jsx.match(/if\(window\.SetasBitacoraDB\)\{[\s\S]{0,900}?\}else\{console\.warn\(/g) || [];
+  assert.equal(warns.length, 6, `se esperaban 6 sitios con aviso por consola, hubo ${warns.length}`);
 });

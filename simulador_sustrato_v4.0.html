@@ -468,6 +468,18 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     let recipeScore=0;if(sp){const cnNear=Math.max(0,1-Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)||1));const nNear=Math.max(0,1-Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)||1));const phNear=sp.ph_optimal?Math.max(0,1-Math.abs(avgPh-(( sp.ph_optimal.min+sp.ph_optimal.max)/2))/((sp.ph_optimal.max-sp.ph_optimal.min)||1)):0.5;const ebNorm=Math.min(1,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline));const costScore=cost<800?1:cost<1500?0.7:0.4;const trichPen=trichoderma?0.5:1;const totPen=(tot>=97&&tot<=103)?1:0.9;recipeScore=Math.round((cnNear*25+nNear*20+ebNorm*25+costScore*10+phNear*10+10)*trichPen*totPen);}return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,recipeScore,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
+// Balance de masa: misma fuente de verdad y tolerancia que el Formulador canónico
+// (field-os-simulador/setas-os/simulador-app.jsx) — ±0.5 pp.
+const MASS_BALANCE_TOL=0.5;
+const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
+const massBalanceMsg=a=>{
+  if(!a) return'';
+  const d=a.tot-100;
+  if(Math.abs(d)<=MASS_BALANCE_TOL) return`Balance de masa: ${a.tot.toFixed(1)}% = 100% ✓`;
+  return d<0?`Balance de masa: ${a.tot.toFixed(1)}% − 100% = ${d.toFixed(1)} pp · faltan ${Math.abs(d).toFixed(1)}%`
+            :`Balance de masa: ${a.tot.toFixed(1)}% − 100% = +${d.toFixed(1)} pp · sobran ${d.toFixed(1)}%`;
+};
+
 const diagnose=(a,sKey)=>{
   if(!a) return{main:'Selecciona ingredientes para comenzar.',sugs:[]};
   const{tot,cn,avgN,suppP,baseP,addP,cafeP,airP,densaP,incompat,eb,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra}=a;const s=[];
@@ -1545,6 +1557,8 @@ function App(){
   }).sort((a,b)=>{const ac=a.cs.includes(sKey),bc=b.cs.includes(sKey);if(ac&&!bc) return-1;if(!ac&&bc) return 1;return a.name.localeCompare(b.name);}),[search,cat,sKey,effectiveINGS]);
 
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const balanced=isMassBalanced(an);
+  const balMsg=balanced?'':massBalanceMsg(an);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
   const tr=useMemo(()=>calcTreatment(an,sKey),[an,sKey]);
   const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS]);
@@ -1837,7 +1851,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {Object.entries(PRESETS).map(([k,pr])=><button key={k} className="pre" onClick={()=>loadPre(k)}>{pr.name}</button>)}
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center'}}>
-                <input className="search" style={{marginBottom:0,flex:1}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:1}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
                 <button className={`tog${showPrices?' on':''}`} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg">Precios</button>
               </div>
               {showPrices&&(
@@ -1858,7 +1872,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{fontSize:13,fontWeight:500,color:'var(--TXT)'}}>{ing.name}</div>
                             {isEdited&&<div style={{fontSize:10,color:'var(--MID)',fontFamily:"var(--font-mono)"}}>Orig: ${orig}/kg</div>}
                           </div>
-                          <input type="number" min="0" step="100"
+                          <input type="number" min="0" step="100" inputMode="numeric"
+                            aria-label={`Precio ${ing.name} por kg`}
                             className={`price-inp${isEdited?' edited':''}`}
                             value={ing.cost}
                             onChange={e=>{
@@ -1949,20 +1964,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div>
                         <div style={{display:'flex',alignItems:'center',gap:5}}>
                           <div style={{fontSize:14,fontWeight:500,flex:1}}>{g.name}</div>
-                          <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'}>
+                          <button className={`lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'}>
                             {isLocked?'●':'○'}
                           </button>
                         </div>
                         <div className="imeta">C:N {g.cn||'—'} · N {g.n||'—'}%</div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:3}}>
-                        <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} style={{opacity:isLocked?.5:1}}/>
+                        <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1}}/>
                         <div style={{display:'flex',alignItems:'center',gap:3}}>
-                          <input type="number" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} style={{flex:1,padding:'3px 5px',border:'1px solid var(--SL)',background:isLocked?'var(--B)':'var(--CR)',fontFamily:"var(--font-mono)",fontSize:11,textAlign:'center',color:'var(--TXT)',outline:'none'}}/>
+                          <input type="number" min="0" max="100" step=".5" inputMode="decimal" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{flex:1,padding:'3px 5px',border:'1px solid var(--SL)',background:isLocked?'var(--B)':'var(--CR)',fontFamily:"var(--font-mono)",fontSize:11,textAlign:'center',color:'var(--TXT)'}}/>
                           <span className="pct" style={{fontSize:11}}>%</span>
                         </div>
                       </div>
-                      <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}}>✕</button>
+                      <button className="rem" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`}>✕</button>
                     </div>
                   );})}
                 </div>
@@ -2023,12 +2038,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className={`tog${showBatch?' on':''}`} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
-                    <div className="bf"><label>Nº bolsas</label><input type="number" min="1" max="500" value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
-                    <div className="bf"><label>kg / bolsa</label><input type="number" min=".5" max="5" step=".1" value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label>Humedad obj. % △</label><input type="number" min="55" max="80" value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--V)':'var(--T)'}}/></div>
-                    <div className="bf"><label>Costo spawn ($/kg)</label><input type="number" min="0" step="1000" value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label>Precio venta ($/kg )</label><input type="number" min="0" step="1000" value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label>Total</label><input readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--T)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--V)':'var(--T)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--T)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
                     <div>
@@ -2135,9 +2150,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 {/* viejo optimizador colapsado eliminado — reemplazado por Perito de Receta */}
 
 {recipe.length>0&&(
+                <div>
                 <div className="sbar">
-                  <input placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()}>{flash?'✓ Guardada':'Guardar'}</button>
+                  <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
+                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
+                </div>
+                {!balanced&&(
+                  <div role="status" aria-live="polite" style={{marginTop:6,fontFamily:'var(--font-mono)',fontSize:11,color:'#C53030'}}>
+                    ⚠ {balMsg}
+                  </div>
+                )}
                 </div>
               )}
             </div>
@@ -2478,13 +2500,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </select>
               </div>
               <div className="inv-field">
-                <label>Mineral / corrector pH (%)</label>
-                <input type="number" min="0" max="10" step="0.5" value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
+                <label htmlFor="inv-min">Mineral / corrector pH (%)</label>
+                <input id="inv-min" type="number" min="0" max="10" step="0.5" inputMode="decimal" value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
               </div>
               {invAer&&(
                 <div className="inv-field">
-                  <label>Aireador fijo (%)</label>
-                  <input type="number" min="5" max="25" step="1" value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
+                  <label htmlFor="inv-aerpct">Aireador fijo (%)</label>
+                  <input id="inv-aerpct" type="number" min="5" max="25" step="1" inputMode="numeric" value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
                 </div>
               )}
             </div>
@@ -2589,9 +2611,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </select>
                 </div>
                 <div>
-                  <label style={{fontFamily:"var(--font-body)",fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Costo máx. $/kg (0=sin límite)</label>
-                  <input type="number" min="0" step="100" value={optMaxCost} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
-                    style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:"var(--font-mono)",fontSize:13,color:'var(--ink-900)',outline:'none'}}/>
+                  <label htmlFor="opt-max-cost" style={{fontFamily:"var(--font-body)",fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Costo máx. $/kg (0=sin límite)</label>
+                  <input id="opt-max-cost" type="number" min="0" step="100" inputMode="numeric" value={optMaxCost} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
+                    style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:"var(--font-mono)",fontSize:13,color:'var(--ink-900)'}}/>
                 </div>
                 <button
                   onClick={()=>{
@@ -2785,29 +2807,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ):(
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Especie</label>
-                    <select value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:13}}>
+                    <label htmlFor="prod-especie" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Especie</label>
+                    <select id="prod-especie" value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:13}}>
                       {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <input type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(parseInt(e.target.value)||1)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
+                    <label htmlFor="prod-bolsas" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}># Bolsas</label>
+                    <input id="prod-bolsas" type="number" min="1" step="1" inputMode="numeric" value={prodBags} onChange={e=>setProdBags(parseInt(e.target.value)||1)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
                   </div>
                   <div>
-                    <label style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <input type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(parseFloat(e.target.value)||0.1)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
+                    <label htmlFor="prod-kgbolsa" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>kg / bolsa</label>
+                    <input id="prod-kgbolsa" type="number" min="0.1" step="0.1" inputMode="decimal" value={prodKg} onChange={e=>setProdKg(parseFloat(e.target.value)||0.1)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
                   </div>
                   <div>
                     <label style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input type="number" min="55" max="75" step="1" value={prodH} onChange={e=>setProdH(parseInt(e.target.value)||67)} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
-                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:11}}/>
+                      <input type="number" min="55" max="75" step="1" inputMode="numeric" value={prodH} onChange={e=>setProdH(parseInt(e.target.value)||67)} aria-label="Humedad objetivo %" style={{width:'50%',padding:'9px 8px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}/>
+                      <input type="date" value={prodDate} onChange={e=>setProdDate(e.target.value)} aria-label="Fecha de inoculación" style={{width:'50%',padding:'9px 6px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:11}}/>
                     </div>
                   </div>
                   <div>
-                    <label style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Báscula (g)</label>
-                    <select value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}>
+                    <label htmlFor="prod-bascula" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:9,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--MID)',display:'block',marginBottom:5}}>Báscula (g)</label>
+                    <select id="prod-bascula" value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--BR)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:13}}>
                       {[['0.1','0.1 g (100 mg)'],['1','1 g'],['5','5 g'],['10','10 g'],['50','50 g']].map(([v,l])=><option key={v} value={v}>{l}</option>)}
                     </select>
                   </div>

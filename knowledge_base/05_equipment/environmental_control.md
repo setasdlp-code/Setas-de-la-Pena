@@ -2,12 +2,14 @@
 title: Control Ambiental — ESP32 / ESPHome / Home Assistant
 category: equipment
 load_priority: selective
-last_reviewed: 2026-07-16
+last_reviewed: 2026-08-23
 confidence: medium
 primary_sources:
   - ESPHome documentation
   - Home Assistant documentation
   - Internal design Setas de la Peña
+  - Sensirion SCD30 and SHT3x technical documentation
+  - 09_research/incubation_fruiting_chambers_2026.md
 related_documents:
   - martha.md
   - 04_facility/fruiting.md
@@ -20,8 +22,10 @@ La arquitectura prevista usa ESP32 con ESPHome por módulo y Home Assistant en R
 # Core Principles
 - ESP32 por carpa = autonomía local. HA = supervisión, no dependencia.
 - Toda la electrónica (ESP32, relay, PSU) va FUERA de la carpa (IP67).
-- Compensar altitud Tenjo (2600 m s.n.m.) en SCD30 — parámetro `altitude` en ESPHome.
+- Compensar altitud Tenjo (2600 m s.n.m.) en SCD30 — parámetro `altitude_compensation` en ESPHome.
 - Banco de pruebas antes de producción — no instalar directamente en campo.
+- Un sensor de control se declara representativo solo después de mapeo multipunto con carga real.
+- Las protecciones críticas operan localmente aunque fallen Wi‑Fi o Home Assistant.
 - **Automation augments observation.** Automation never replaces biological understanding.
 - Cada módulo de control ambiental debe operar independientemente si supervisión central falla. Referencia: CANON, sección 7 — Automation Philosophy.
 
@@ -54,11 +58,22 @@ La arquitectura prevista usa ESP32 con ESPHome por módulo y Home Assistant en R
 - **Parámetro crítico:** `altitude_compensation: 2600` (Tenjo)
 - Precisión: ±30 ppm + 3% del valor
 - Calienta en ~2 min — dar tiempo antes de leer
+- ESPHome ignora `altitude_compensation` si también se configura `ambient_pressure_compensation`; seleccionar un método y documentarlo.
+- `automatic_self_calibration` no debe quedar implícita: desactivar hasta validar que el sensor ve periódicamente una referencia exterior conocida, o ejecutar calibración forzada con referencia trazable.
+- Proteger de gotas y condensación sin encerrar en un volumen muerto.
 
 ### Inkbird IBS-TH2 Plus (BLE — Redundancia)
 - No integrado en ESP32 ESPHome directamente
 - App de teléfono para lectura
 - Comparar vs SHT3x semanalmente (delta aceptable: ±0.5°C / ±3% HR)
+
+## Variables Derivadas y Calidad del Dato
+
+- Calcular punto de rocío y VPD del aire a partir de T/HR como variables diagnósticas.
+- Marcar como inválidos los datos durante condensación, desconexión, calentamiento inicial o valores físicamente imposibles.
+- Registrar ubicación del sensor, fecha de verificación, offset aplicado y referencia utilizada.
+- No controlar por VPD hasta contar con temperatura superficial y validación biológica local.
+- Conservar mínimo, máximo, duración fuera de banda y estado de actuadores; el promedio por sí solo oculta eventos críticos.
 
 ## Actuadores
 
@@ -95,6 +110,8 @@ donde `duty_cycle = tiempo ON / (tiempo ON + tiempo OFF)`. El caudal efectivo de
 3. Registrar respuesta del CO₂ con cámara cargada.
 4. Definir velocidad/línea base mínima y control por CO₂.
 5. Verificar que la ventilación no saque HR del rango.
+6. Mapear CO₂ y T/HR en entrada, salida, centro, varias alturas y esquina remota con cámara vacía y cargada.
+7. Confirmar que el sensor permanente representa la exposición de los cuerpos fructíferos y no el aire recién impulsado o extraído.
 
 Fuentes de ingeniería: [CDC — definición y fórmula de ACH](https://stacks.cdc.gov/view/cdc/157087/cdc_157087_DS1.pdf), [AC Infinity — CLOUDLAB 844](https://acinfinity.com/cloudlab-844-advance-grow-tent-4x4-thickest-poles-and-canvas-48-x-48-x-80/), [AC Infinity — CLOUDLINE H4](https://acinfinity.com/cloudline-h4-humidity-proof-inline-fan-4-with-speed-controller/).
 
@@ -143,6 +160,7 @@ sensor:
     humidity:
       name: "Martha01 CO2 HR"
     altitude_compensation: 2600
+    automatic_self_calibration: false  # Activar solo si el protocolo de referencia se valida
     update_interval: 30s
 
 switch:
@@ -159,6 +177,8 @@ switch:
 # No fijar un intervalo de producción antes del commissioning.
 # El control por CO2 y el failsafe se configuran después de medir caudal efectivo.
 ```
+
+`automatic_self_calibration: false` evita que el algoritmo ASC asuma una referencia mínima inadecuada en una cámara que podría no alcanzar aire exterior conocido. La calibración forzada requiere exponer el sensor a una referencia fiable y documentar fecha/valor. Ver documentación oficial de ESPHome y Sensirion.
 
 ## Automatización Home Assistant
 
@@ -196,6 +216,19 @@ automation:
 | SCD30 | IP30 | Dentro caja IP67 con tubo de muestreo |
 | Prensaestopas | IP68 | Entradas TICONN |
 
+Una caja IP67 no debe sellar al SCD30 respecto al aire que se quiere medir. El diseño de muestreo debe permitir intercambio representativo, evitar condensación y minimizar volumen muerto; validar el tiempo de respuesta del conjunto completo, no solo del sensor desnudo.
+
+## Estados Seguros Locales
+
+| Falla | Respuesta mínima local a validar |
+|---|---|
+| SHT3x inválido/desconectado | Apagar humidificador; conservar ventilación segura; alarmar |
+| SCD30 inválido/desconectado | Pasar a línea base de ventilación validada; alarmar; no mantener último valor indefinidamente |
+| Wi‑Fi/HA caído | Continuar límites locales e histórico temporal si es posible |
+| Reinicio de ESP32 | Actuadores arrancan en estado seguro y respetan anti-ciclo corto |
+| Condensación/fuga de agua | Cortar humidificación y proteger electrónica; inspección manual |
+| Sobretemperatura | Desactivar calefacción, aumentar retirada de calor dentro de límites biológicos y alarmar |
+
 ## Plan de Validación (Banco de Pruebas)
 
 ```
@@ -206,6 +239,8 @@ automation:
 5. Simular >85% HR en zona cerrada → confirmar lectura SHT3x
 6. Probar relay T7 y relay H4 con comandos HA
 7. Solo después de validación: instalar en Martha Tent
+8. Repetir 48–72h con carga real y sensores temporales multipunto
+9. Simular pérdida de Wi‑Fi, sensor inválido, reinicio y sobretemperatura
 ```
 
 # Best Practices
@@ -231,3 +266,8 @@ automation:
 - Home Assistant Documentation. https://home-assistant.io
 - Sensirion SCD30 Datasheet.
 - AC Infinity T7 Manual.
+- ESPHome. *SCD30 CO₂, Temperature and Relative Humidity Sensor*. https://esphome.io/components/sensor/scd30/
+- ESPHome. *SHT3X-D Temperature+Humidity Sensor*. https://esphome.io/components/sensor/sht3xd/
+- Sensirion. *SCD30 product specifications, interface description and field calibration note*. https://sensirion.com/products/catalog/SCD30
+- Sensirion. *SHT3x datasheet and SHT/STS design-in guide*. https://sensirion.com/products/downloads
+- `09_research/incubation_fruiting_chambers_2026.md`.
