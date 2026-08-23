@@ -1734,7 +1734,37 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
   };
 };
 
+const FORM_DRAFT_KEY='setas_formulator_draft_v1';
+const readFormDraft=()=>{
+  try{
+    const raw=localStorage.getItem(FORM_DRAFT_KEY);
+    if(!raw) return null;
+    const draft=JSON.parse(raw);
+    if(!draft||draft.version!==1||!Array.isArray(draft.recipe)) return null;
+    const validIds=new Set(INGS.map(g=>g.id));
+    const seenIds=new Set();
+    const recipe=draft.recipe
+      .filter(r=>{
+        if(!r||!validIds.has(r.id)||seenIds.has(r.id)||!Number.isFinite(Number(r.p))) return false;
+        seenIds.add(r.id);
+        return true;
+      })
+      .map(r=>({id:r.id,p:Math.max(0,Math.min(100,Number(r.p)))}));
+    if(!recipe.length) return null;
+    const sKey=SPP[draft.sKey]?draft.sKey:'p_ostreatus_gris';
+    const recipeIds=new Set(recipe.map(r=>r.id));
+    return{
+      recipe,
+      sKey,
+      hasPickedSpecies:draft.hasPickedSpecies===true&&!!SPP[draft.sKey],
+      lockedIds:Array.isArray(draft.lockedIds)?draft.lockedIds.filter(id=>recipeIds.has(id)):[],
+      saveName:typeof draft.saveName==='string'?draft.saveName.slice(0,60):'',
+    };
+  }catch(e){return null;}
+};
+
 function App(props){
+  const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
   // ya compite con el rail inferior) y la reaparece al subir o cerca del tope.
@@ -1765,7 +1795,7 @@ function App(props){
       const pre=normSpp(localStorage.getItem('sim_preselect_spp'));
       if(pre&&SPP[pre]) return true;
     }catch(e){}
-    return false;
+    return initialFormDraft?.hasPickedSpecies||false;
   });
   const [sKey,setSKeyRaw]=useState(()=>{
     try{
@@ -1774,12 +1804,12 @@ function App(props){
       const pre=normSpp(localStorage.getItem('sim_preselect_spp'));
       if(pre&&SPP[pre]){localStorage.removeItem('sim_preselect_spp');return pre;}
     }catch(e){}
-    return 'p_ostreatus_gris';
+    return initialFormDraft?.sKey||'p_ostreatus_gris';
   });
   const setSKey=(k)=>{setHasPickedSpecies(true);setSKeyRaw(k);};
   const [catalogModalOpen,setCatalogModalOpen]=useState(false);
   const [sppPickerOpen,setSppPickerOpen]=useState(true); // legacy — kept for compat
-  const [recipe,setRecipe]=useState([]);
+  const [recipe,setRecipe]=useState(()=>initialFormDraft?.recipe||[]);
   const [search,setSearch]=useState('');
   const [cat,setCat]=useState('all');
   const [numBags,setNumBags]=useState(6);
@@ -1790,7 +1820,7 @@ function App(props){
   const [showGuide,setShowGuide]=useState(false);
   const [showBatch,setShowBatch]=useState(false);
   const [saved,setSaved]=useState([]);
-  const [saveName,setSaveName]=useState('');
+  const [saveName,setSaveName]=useState(()=>initialFormDraft?.saveName||'');
   const [showSaved,setShowSaved]=useState(false);
   const [flash,setFlash]=useState(false);
   const [saveSyncErr,setSaveSyncErr]=useState('');
@@ -1835,7 +1865,7 @@ function App(props){
   const [invTargetCN,setInvTargetCN]=useState(35);
   const [invResult,setInvResult]=useState(null);
   const [dashFilter,setDashFilter]=useState('all');
-  const [lockedIds,setLockedIds]=useState([]);
+  const [lockedIds,setLockedIds]=useState(()=>initialFormDraft?.lockedIds||[]);
   const [balanceMode,setBalanceMode]=useState('proportional');
   // v3 new state
   const [pantryIds,setPantryIds]=useState([]);
@@ -1877,6 +1907,20 @@ function App(props){
       localStorage.setItem('setas_workmode', mode === 'produccion' ? 'bodega' : 'catalogo');
     } catch(e) {}
   };
+  useEffect(()=>{
+    try{
+      if(!recipe.length){localStorage.removeItem(FORM_DRAFT_KEY);return;}
+      localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({
+        version:1,
+        savedAt:new Date().toISOString(),
+        recipe:recipe.map(r=>({id:r.id,p:Number(r.p)||0})),
+        sKey,
+        hasPickedSpecies,
+        lockedIds:lockedIds.filter(id=>recipe.some(r=>r.id===id)),
+        saveName:saveName.slice(0,60),
+      }));
+    }catch(e){}
+  },[recipe,sKey,hasPickedSpecies,lockedIds,saveName]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -4794,7 +4838,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               aria-label={`Revisar receta activa: ${recipe.length} ingrediente${recipe.length===1?'':'s'}`}>
               <span>Ruta de producción</span>
               <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Receta lista para preparar'}</strong>
-              <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta</em>
+              <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta · Autoguardado</em>
             </button>
             <button
               type="button"
