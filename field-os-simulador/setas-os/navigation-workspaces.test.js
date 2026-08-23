@@ -122,6 +122,39 @@ test('generic dialogs trap focus, close with Escape and restore the trigger', ()
   assert.match(jsx, /data-autofocus id="setas-prompt-input"/);
 });
 
+test('all application dialogs share keyboard focus management', () => {
+  assert.match(jsx, /const AccessibleModal=/);
+  assert.match(jsx, /showProvModal&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /<AccessibleModal onClose=\{\(\)=>setCatalogModalOpen\(false\)\}[\s\S]*?backdropClassName="cat-modal-bg"/);
+  assert.match(jsx, /loteBatchConfirm&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /showBitNuevo&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /showBitCosecha&&\(\s*<AccessibleModal/);
+  assert.match(shell, /dialogIsOpen\(s\)[\s\S]*s\.cmdOpen[\s\S]*s\.syncQueueOpen/);
+  assert.match(shell, /e\.key==='Tab' && this\.dialogIsOpen\(this\.state\)/);
+  assert.match(shell, /window\.removeEventListener\('keydown', this\._onKeyDown\)/);
+});
+
+test('Bitácora and Producción controls expose contextual accessible names', () => {
+  assert.match(jsx, /className="inv-table-link"[\s\S]*?aria-label=\{`Abrir lote/);
+  assert.match(jsx, /aria-label=\{`Estado de la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /aria-label=\{`Quitar foto de la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /aria-label=\{`Registrar cosecha para la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /title:'Eliminar cosecha'[\s\S]*onConfirm:\(\)=>deleteBitCosecha/);
+  assert.match(jsx, /aria-label=\{`Humedad real de \$\{x\.g\?x\.g\.name:id\}, porcentaje`\}/);
+  assert.match(jsx, /aria-label=\{`Paso \$\{i\+1\} completado: \$\{t\}`\}/);
+  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true" className=\{'os-sync-state/);
+  assert.match(jsx, /name=\{`stockKg-\$\{r\.id\}`\} aria-label=\{`Stock de \$\{r\.name\} en kg`\}/);
+  assert.match(jsx, /name="newStockIngredient" aria-label="Ingrediente que se agregará al stock"/);
+});
+
+test('Formular preserves a full-page ingredient list with unambiguous touch targets', () => {
+  assert.match(css, /\.builder-wrap \.ing-card-item\{[\s\S]*content-visibility:auto;[\s\S]*contain-intrinsic-size:auto 104px;/);
+  assert.match(css, /\.qa-mini-btn\{[\s\S]*min-width:40px!important;[\s\S]*min-height:40px!important;/);
+  assert.doesNotMatch(css, /\.qa-mini-btn::before/);
+  assert.match(jsx, /name="balanceStrategy" aria-label="Estrategia de balanceo"/);
+  assert.match(jsx, /name="ingredientSearch" type="search"/);
+});
+
 test('loading a saved recipe from Recetario notifies the shell instead of desyncing it', () => {
   const loadR = jsx.match(/const loadR=e=>\{[\s\S]*?\n  \};/);
   assert.ok(loadR, 'loadR function not found');

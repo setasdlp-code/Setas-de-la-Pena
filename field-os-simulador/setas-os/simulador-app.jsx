@@ -1043,6 +1043,16 @@ const useDialogA11y=(onClose)=>{
   },[]);
   return dialogRef;
 };
+const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
+  const dialogRef=useDialogA11y(onClose);
+  return(
+    <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
+        {children}
+      </div>
+    </div>
+  );
+};
 const ConfirmModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
@@ -1768,7 +1778,6 @@ function App(props){
   });
   const setSKey=(k)=>{setHasPickedSpecies(true);setSKeyRaw(k);};
   const [catalogModalOpen,setCatalogModalOpen]=useState(false);
-  useEffect(()=>{if(!catalogModalOpen)return;const onEsc=e=>{if(e.key==='Escape')setCatalogModalOpen(false);};document.addEventListener('keydown',onEsc);return()=>document.removeEventListener('keydown',onEsc);},[catalogModalOpen]);
   const [sppPickerOpen,setSppPickerOpen]=useState(true); // legacy — kept for compat
   const [recipe,setRecipe]=useState([]);
   const [search,setSearch]=useState('');
@@ -2984,7 +2993,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* INGREDIENTE */}
                                   <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
                                     {isEditing?(
-                                      <select value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                      <select name={`stockIngredient-${r.id}`} aria-label={`Ingrediente de la fila ${r.name}`} value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
                                       </select>
                                     ):(
@@ -2994,7 +3003,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* STOCK */}
                                   <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
                                     {isEditing?(
-                                      <input type="number" min="0" step="0.5"
+                                      <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
                                         value={editingRowData.stock}
                                         onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
                                         onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
@@ -3007,7 +3016,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* PRECIO */}
                                   <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
                                     {isEditing?(
-                                      <input type="number" min="0" step="100"
+                                      <input name={`stockPrice-${r.id}`} aria-label={`Precio de ${r.name} por kg`} type="number" min="0" step="100"
                                         value={editingRowData.precio}
                                         onChange={e=>setEditingRowData(p=>({...p,precio:e.target.value}))}
                                         style={INP}
@@ -3020,7 +3029,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* PROVEEDOR */}
                                   <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
                                     {isEditing?(
-                                      <select value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                      <select name={`stockProvider-${r.id}`} aria-label={`Proveedor de ${r.name}`} value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
                                         <option value="">Sin especificar</option>
                                         {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                                       </select>
@@ -3031,7 +3040,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   {/* ALERTA MÍN */}
                                   <td data-label="Alerta mínima" style={{minWidth:90}}>
                                     {isEditing?(
-                                      <input type="number" min="0" step="0.5"
+                                      <input name={`stockAlert-${r.id}`} aria-label={`Alerta mínima de ${r.name} en kg`} type="number" min="0" step="0.5"
                                         value={editingRowData.alertaMin}
                                         onChange={e=>setEditingRowData(p=>({...p,alertaMin:e.target.value}))}
                                         style={INP}
@@ -3082,11 +3091,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setShowAddStockForm(v=>!v)}>＋ Agregar ingrediente al stock</button>
                     {showAddStockForm&&(
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',padding:'10px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',width:'100%',boxSizing:'border-box'}}>
-                        <select className="inv-input" style={{flex:2,minWidth:180}} value={addStockId} onChange={e=>setAddStockId(e.target.value)}>
+                        <select name="newStockIngredient" aria-label="Ingrediente que se agregará al stock" className="inv-input" style={{flex:2,minWidth:180}} value={addStockId} onChange={e=>setAddStockId(e.target.value)}>
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(i=>(<option key={i.id} value={i.id}>{i.name}</option>))}
                         </select>
-                        <input type="number" className="inv-input" style={{width:100,flex:'none'}} placeholder="kg" min="0" step="0.5" value={addStockKg} onChange={e=>setAddStockKg(e.target.value)}/>
+                        <input name="newStockKg" aria-label="Cantidad que se agregará al stock, en kg" type="number" className="inv-input" style={{width:100,flex:'none'}} placeholder="kg" min="0" step="0.5" value={addStockKg} onChange={e=>setAddStockKg(e.target.value)}/>
                         <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>{
                           if(!addStockId) return;
                           const kg=parseFloat(addStockKg)||0;
@@ -3195,21 +3204,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     return(
                     <div key={it.uid} style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',padding:'10px 12px',marginBottom:8,background:'var(--paper-50)'}}>
                       <div style={{display:'flex',gap:8,marginBottom:8}}>
-                        <select className="inv-input" style={{flex:1,fontSize:"var(--text-sm)"}} value={it.ingId} onChange={e=>updCmpItem(it.uid,'ingId',e.target.value)}>
+                        <select name={`purchaseIngredient-${it.uid}`} aria-label="Ingrediente de la compra" className="inv-input" style={{flex:1,fontSize:"var(--text-sm)"}} value={it.ingId} onChange={e=>updCmpItem(it.uid,'ingId',e.target.value)}>
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(gg=>(<option key={gg.id} value={gg.id}>{gg.name}</option>))}
                         </select>
-                        <button className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1}>✕</button>
+                        <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}>✕</button>
                       </div>
                       {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8}}>⚠ Sin coincidencia automática — elige el ingrediente.</div>}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:4}}>
-                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))}>−</button>
-                          <input type="number" className="inv-input" style={{width:64,textAlign:'center',fontSize:"var(--text-sm)"}} min="0" step="0.5" value={it.kg} onChange={e=>updCmpItem(it.uid,'kg',e.target.value)} placeholder="kg"/>
-                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String((parseFloat(it.kg)||0)+1))}>＋</button>
+                          <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))} aria-label={`Reducir cantidad de ${g?.name||'ingrediente'} en 1 kg`}>−</button>
+                          <input name={`purchaseKg-${it.uid}`} aria-label={`Cantidad en kg de ${g?.name||'ingrediente'}`} type="number" className="inv-input" style={{width:64,textAlign:'center',fontSize:"var(--text-sm)"}} min="0" step="0.5" value={it.kg} onChange={e=>updCmpItem(it.uid,'kg',e.target.value)} placeholder="kg"/>
+                          <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String((parseFloat(it.kg)||0)+1))} aria-label={`Aumentar cantidad de ${g?.name||'ingrediente'} en 1 kg`}>＋</button>
                           <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>kg</span>
                         </div>
-                        <input type="number" className="inv-input" style={{width:90,fontSize:"var(--text-sm)"}} min="0" step="100" value={it.precio} onChange={e=>updCmpItem(it.uid,'precio',e.target.value)} placeholder="$/kg"/>
+                        <input name={`purchasePrice-${it.uid}`} aria-label={`Precio por kg de ${g?.name||'ingrediente'} en pesos colombianos`} type="number" className="inv-input" style={{width:90,fontSize:"var(--text-sm)"}} min="0" step="100" value={it.precio} onChange={e=>updCmpItem(it.uid,'precio',e.target.value)} placeholder="$/kg"/>
                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',marginLeft:'auto',whiteSpace:'nowrap'}}>${((parseFloat(it.kg)||0)*(parseFloat(it.precio)||0)).toLocaleString('es-CO')}</span>
                       </div>
                     </div>
@@ -3315,7 +3324,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="prov-name">{p.nombre}</div>
                             <div className="prov-muni">{p.municipio}</div>
                           </div>
-                          <button className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)}>✕</button>
+                          <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}>✕</button>
                         </div>
                       ))}
                     </div>
@@ -3326,8 +3335,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
             {/* MODAL NUEVO PROVEEDOR */}
             {showProvModal&&(
-              <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowProvModal(false);}}>
-                <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nuevo proveedor">
+              <AccessibleModal onClose={()=>setShowProvModal(false)} label="Nuevo proveedor">
                   <div className="inv-modal-title">Nuevo Proveedor</div>
                   <div style={{marginBottom:12}}>
                     <label className="inv-label" htmlFor="provider-name">Nombre</label>
@@ -3351,8 +3359,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className="inv-btn inv-btn-sec" onClick={()=>setShowProvModal(false)}>Cancelar</button>
                     <button className="inv-btn inv-btn-pri" onClick={agregarProveedor}>Guardar proveedor</button>
                   </div>
-                </div>
-              </div>
+              </AccessibleModal>
             )}
           </div>
   );
@@ -3423,7 +3430,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
-        <aside className="os-detail-panel"><h2>Acciones válidas ahora</h2><div className="os-valid-actions">{actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}</div><span className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span></aside></div>
+        <aside className="os-detail-panel"><h2>Acciones válidas ahora</h2><div className="os-valid-actions">{actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}</div><span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span></aside></div>
     </article>;
   };
 
@@ -3488,7 +3495,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id} style={{cursor:'pointer'}} onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}>{lote.codigo}</td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td onClick={e=>e.stopPropagation()}><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -3509,11 +3516,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{lote.especieCientifico}</div>}
                     </div>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      <select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
+                      <select name={`loteVerdict-${lote.id}`} aria-label={`Veredicto del lote ${lote.codigo}`} value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
                       </select>
-                      <select value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
+                      <select name={`loteStatus-${lote.id}`} aria-label={`Estado del lote ${lote.codigo}`} value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         {['incubacion','fructificacion','completado','descartado'].map(st=><option key={st} value={st}>{st}</option>)}
                       </select>
                     </div>
@@ -3522,7 +3529,40 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table bolsas-table">
                       <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th></tr></thead>
-                      <tbody>{bolsas.map(bolsa=>{const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);const est=EB[bolsa.estado]||EB.sana;return(<tr key={bolsa.id}><td data-label="Código" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td><td data-label="Estado"><select value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>{Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select></td>{[['col25','Col 25%'],['col50','Col 50%'],['col100','Col 100%']].map(([f,lbl])=>(<td key={f} data-label={lbl}><input type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td>))}<td data-label="Observaciones"><input type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/></td><td data-label="Foto" style={{textAlign:'center'}}>{bolsa.foto?<img src={bolsa.foto} alt="" style={{width:28,height:28,objectFit:'cover',borderRadius:3,cursor:'pointer',display:'block',margin:'0 auto'}} onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} title="Clic para quitar"/>:<label style={{cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',textDecoration:'underline',display:'block',textAlign:'center'}}>+foto<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Intenta con otra imagen.'}));e.target.value='';}}/></label>}</td><td data-label="Cosechas"><div style={{display:'flex',alignItems:'center',gap:5}}><span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button></div></td></tr>);})}</tbody>
+                      <tbody>{bolsas.map(bolsa=>{
+                        const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
+                        const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
+                        const est=EB[bolsa.estado]||EB.sana;
+                        return(
+                          <tr key={bolsa.id}>
+                            <td data-label="Código" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td>
+                            <td data-label="Estado">
+                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
+                                {Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+                              </select>
+                            </td>
+                            {[['col25','Col 25%'],['col50','Col 50%'],['col100','Col 100%']].map(([f,lbl])=>(
+                              <td key={f} data-label={lbl}>
+                                <input name={`${f}-${bolsa.id}`} aria-label={`${lbl} de la bolsa ${bolsa.codigo}`} type="date" value={bolsa[f]||''} onChange={e=>updateBitBolsa(bolsa.id,{[f]:e.target.value})} style={{width:'100%',padding:'2px 3px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/>
+                              </td>
+                            ))}
+                            <td data-label="Observaciones">
+                              <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/>
+                            </td>
+                            <td data-label="Foto" style={{textAlign:'center'}}>
+                              {bolsa.foto
+                                ?<button type="button" className="inv-photo-remove" onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
+                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Intenta con otra imagen.'}));e.target.value='';}}/></label>}
+                            </td>
+                            <td data-label="Cosechas">
+                              <div style={{display:'flex',alignItems:'center',gap:5}}>
+                                <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
+                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}</tbody>
                     </table>
                   </div>
                 </div>
@@ -3542,7 +3582,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
                   {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
-                  {cosechas.length>0&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Bolsa</th><th>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th>Calidad</th><th>Observaciones</th><th></th></tr></thead><tbody>{cosechas.map(c=>(<tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.codigo}</td><td style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.fecha}</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td><td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td><td><button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>deleteBitCosecha(c.id)}>✕</button></td></tr>))}<tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)",fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr></tbody></table></div>)}
+                  {cosechas.length>0&&(
+                    <div className="inv-section">
+                      <table className="inv-table">
+                        <thead><tr><th scope="col">Bolsa</th><th scope="col">Flush</th><th scope="col">Fecha</th><th scope="col" style={{textAlign:'right'}}>Peso fresco (g)</th><th scope="col">Calidad</th><th scope="col">Observaciones</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
+                        <tbody>
+                          {cosechas.map(c=>(
+                            <tr key={c.id}>
+                              <td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.codigo}</td>
+                              <td style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",textAlign:'center'}}>{c.flush}</td>
+                              <td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.fecha}</td>
+                              <td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td>
+                              <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td>
+                              <td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td>
+                              <td><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button></td>
+                            </tr>
+                          ))}
+                          <tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)",fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -4538,8 +4598,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const IcoSab=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M6 2c-2.5 0-4 1.5-4 3.5 0 3 4 5.5 4 5.5s4-2.5 4-5.5C10 3.5 8.5 2 6 2z"/></svg>;
               const IcoUso=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 6h8M6 2v8"/><rect x="1" y="1" width="10" height="10" rx="1"/></svg>;
               return(
-              <div className="cat-modal-bg" onClick={()=>setCatalogModalOpen(false)}>
-              <div className="cat-modal-box" onClick={e=>e.stopPropagation()}>
+              <AccessibleModal onClose={()=>setCatalogModalOpen(false)} label={`Ficha de especie: ${sp.name}`} backdropClassName="cat-modal-bg" dialogClassName="cat-modal-box">
               <button className="cat-modal-close" onClick={()=>setCatalogModalOpen(false)} title="Cerrar" aria-label="Cerrar ficha de especie">✕</button>
               <div className="spp-info-2col" style={{margin:0}}>
                 {/* LEFT: Texto + franja de parámetros + CTA */}
@@ -4619,8 +4678,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
               </div>
-              </div>
-              </div>
+              </AccessibleModal>
               );
             })()}
           </div>
@@ -4932,7 +4990,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </span>
               </div>
               <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
                 <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
               </div>
               {showPrices&&(
@@ -4953,7 +5011,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
                             {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
                           </div>
-                          <input type="number" min="0" step="100" inputMode="numeric" required
+                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
                             aria-label={`Precio ${ing.name} por kg`}
                             className={`price-inp${isEdited?' edited':''}`}
                             value={ing.cost}
@@ -5321,7 +5379,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {an&&Math.abs(an.tot-100)>0.5&&(
                     <div style={{display:'flex',gap:2,alignItems:'center'}}>
                       <button className="tog" onClick={()=>autoBalance(balanceMode)}>Balancear</button>
-                      <select className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
+                      <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
                         <option value="proportional">Proporcional</option>
                         <option value="equal">Igualando</option>
                         <option value="last">Al último</option>
@@ -5563,7 +5621,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 {recipe.length>0&&(
                 <div>
                 <div className="sbar">
-                  <input aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
+                  <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
@@ -6311,14 +6369,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · ajustado</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
-                          <input type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
+                          <input name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
                             onChange={e=>{const v=e.target.value;setProdMoist(prev=>{const n={...prev};if(v==='')delete n[id];else n[id]=Math.min(92,Math.max(0,parseFloat(v)||0));return n;});}}
                             style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
                         </td>
                         <td className="num">{Math.round(x.grR).toLocaleString()}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
                         <td className="num" style={{color:'var(--ink-500)'}}>{x.masaSecaR.toFixed(2)}</td>
-                        <td style={{textAlign:'center'}}><input type="checkbox" checked={!!checkedSteps['ing_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['ing_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer'}}/></td>
+                        <td style={{textAlign:'center'}}><input name={`ingredientDone-${id}`} type="checkbox" aria-label={`${x.g?x.g.name:id} pesado`} checked={!!checkedSteps['ing_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['ing_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer'}}/></td>
                       </tr>
                     );})}
                     <tr className="tot"><td>Total a pesar (húmedo comercial)</td><td className="num">100</td><td></td><td className="num">{Math.round(kgComR*1000).toLocaleString()}</td><td className="num">{kgComR.toFixed(2)}</td><td className="num">{dryR.toFixed(2)}</td><td></td></tr>
@@ -6362,7 +6420,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{marginBottom:18}}>
                   {steps.map((t,i)=>(
                     <div key={i} className="prod-step" style={{opacity:checkedSteps['step_'+i]?0.4:1,transition:'opacity .2s'}}>
-                      <input type="checkbox" checked={!!checkedSteps['step_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['step_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer',flexShrink:0,marginTop:3}}/>
+                      <input name={`procedureStep-${i}`} type="checkbox" aria-label={`Paso ${i+1} completado: ${t}`} checked={!!checkedSteps['step_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['step_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer',flexShrink:0,marginTop:3}}/>
                       <div className="prod-step-n">{i+1}</div>
                       <div className="prod-step-t" style={{textDecoration:checkedSteps['step_'+i]?'line-through':'none'}}>{t}</div>
                     </div>
@@ -6500,7 +6558,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="dash-card-foot">
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)}>✕</button>
+                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
                             </div>
                           </div>
                         );
@@ -6522,8 +6580,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setLoteBatchConfirm(null);}}>
-            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Ejecutar lote" style={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
@@ -6544,13 +6601,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
               </div>
-            </div>
-          </div>
+          </AccessibleModal>
         )}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
-          <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitNuevo(false);}}>
-            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Nueva prueba experimental" style={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
               <div className="inv-modal-title">Nueva prueba experimental</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
@@ -6581,13 +6636,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
-            </div>
-          </div>
+          </AccessibleModal>
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowBitCosecha(false);}}>
-            <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Registrar cosecha" style={{width:440}}>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:440}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
@@ -6603,8 +6656,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
               </div>
-            </div>
-          </div>
+          </AccessibleModal>
         )}
         <div style={{height:40}}/>
         

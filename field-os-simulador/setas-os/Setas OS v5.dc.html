@@ -66,7 +66,8 @@
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner-botanico-sketch.jpg" data-resource-id="imgBannerBotanico">
 <style>
   html, body { margin:0; background: var(--paper-1); }
-  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  * { box-sizing: border-box; }
+  :is(button,a,input,select,textarea,[role="button"],[role="tab"]) { -webkit-tap-highlight-color:rgba(180,88,58,.18); }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   [role="dialog"] { overscroll-behavior:contain; }
   .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
@@ -355,7 +356,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
           </div>
 
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Especie</div>
@@ -411,7 +412,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Contenedores <span style="font-weight:400;color:var(--text-metadata);">· selecciona uno o varios</span></div>
@@ -475,7 +476,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Contenedor</div>
@@ -519,7 +520,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">{{ quickHint }}</p>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
@@ -577,7 +578,7 @@
           <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-7 · Historia</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h1>
             <div style="display:flex;flex-direction:column;gap:10px;">
               <sc-for list="{{ allContainers }}" as="c" hint-placeholder-count="5">
                 <button onClick="{{ c.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;gap:14px;">
@@ -683,7 +684,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Volver</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
-            <h2 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
           </div>
           <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
@@ -746,7 +747,7 @@
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;">
           <div style="min-width:0;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Planta de Tenjo · en vivo</div>
-            <h2 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h2>
+            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h1>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font:var(--t-caption);color:var(--text-metadata);">Ocupación de planta</span>
@@ -964,7 +965,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · solo lectura</div>
-        <h2 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h2>
+        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
 
         <div class="fos-scroll" style="display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid var(--border-soft);margin:20px 0 4px;mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);-webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);">
@@ -1814,7 +1815,7 @@
 
   <!-- SCAN OVERLAY -->
   <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:88;background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div role="dialog" aria-modal="true" aria-label="Escanear etiqueta QR" style="position:fixed;inset:0;z-index:88;background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
     <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-0);opacity:.7;margin-bottom:18px;">Escanear etiqueta QR</div>
     <div style="position:relative;width:min(72vw,280px);aspect-ratio:1;border-radius:22px;overflow:hidden;background:color-mix(in oklab,var(--ink-0) 60%, #000);">
       <sc-if value="{{ camActive }}" hint-placeholder-val="{{ false }}">
@@ -2197,11 +2198,29 @@ class Component extends DCLogic {
     ],
   };
 
+  dialogIsOpen(s){
+    return !!(s.capture || s.cmdOpen || s.publicFor || s.recallLote || s.labelFor || s.correcting!=null || s.scanning || s.syncQueueOpen);
+  }
+  activeDialog(){
+    const dialogs=document.querySelectorAll('[role="dialog"][aria-modal="true"]');
+    return dialogs.length?dialogs[dialogs.length-1]:null;
+  }
+  trapDialogFocus(e){
+    const dialog=this.activeDialog();
+    if(!dialog) return;
+    const selector='button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const items=Array.from(dialog.querySelectorAll(selector));
+    if(!items.length){e.preventDefault();dialog.focus();return;}
+    const first=items[0], last=items[items.length-1];
+    if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+  }
   componentDidMount(){
     this.loadPersisted();
     this.setState({ online: navigator.onLine!==false });
     this._onKeyDown = (e)=>{
       if((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')){ e.preventDefault(); this.setState(s=>({cmdOpen:!s.cmdOpen, cmdQ:''})); return; }
+      if(e.key==='Tab' && this.dialogIsOpen(this.state)){this.trapDialogFocus(e);return;}
       if(e.key!=='Escape') return;
       if(this.state.cmdOpen){ this.setState({cmdOpen:false}); return; }
       if(this.state.publicFor){ this.setState({publicFor:null}); return; }
@@ -2211,6 +2230,7 @@ class Component extends DCLogic {
       else if(s.labelFor) this.setState({labelFor:null});
       else if(s.correcting!=null) this.closeCorrection();
       else if(s.scanning) this.closeScan();
+      else if(s.syncQueueOpen) this.setState({syncQueueOpen:false});
     };
     window.addEventListener('keydown', this._onKeyDown);
     this._onOnline = ()=>this.setState({online:true}, ()=>this.drainSync());
@@ -2250,19 +2270,22 @@ class Component extends DCLogic {
     window.removeEventListener('message', this._onClimate);
     window.removeEventListener('online', this._onOnline);
     window.removeEventListener('offline', this._onOffline);
+    window.removeEventListener('keydown', this._onKeyDown);
   }
   componentDidUpdate(pp, ps){
     if(!ps) return;
     const k=['containers','ledger','seq','salidas','yields','operator','operatorKey'];
     if(k.some(x=>ps[x]!==this.state[x])) this.persist();
-    const wasOpen = ps.capture || !!ps.labelFor || ps.correcting!=null || ps.scanning;
-    const isOpen = this.state.capture || !!this.state.labelFor || this.state.correcting!=null || this.state.scanning;
+    const wasOpen = this.dialogIsOpen(ps);
+    const isOpen = this.dialogIsOpen(this.state);
     if(!wasOpen && isOpen){
       this._preDialogFocus = document.activeElement;
       setTimeout(()=>{
-        const dlg = document.querySelector('[role="dialog"]');
+        const dlg = this.activeDialog();
+        if(dlg && !dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex','-1');
         const target = dlg && (dlg.querySelector('button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'));
         if(target) target.focus();
+        else if(dlg) dlg.focus();
       }, 30);
     } else if(wasOpen && !isOpen && this._preDialogFocus){
       const el = this._preDialogFocus; this._preDialogFocus = null;
