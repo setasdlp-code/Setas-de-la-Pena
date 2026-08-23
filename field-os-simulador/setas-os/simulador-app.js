@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b68129d959137a1087e479ca4a23af22cd01ece24cee82e44c729ee4c38eeba8
+// source-hash: bd26c4175c3a2fda029df44e8d961a6514da62f319583fac698ef1599013f904
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1493,6 +1493,10 @@ function App(props) {
   const focusIngredientCatalog = () => {
     document.getElementById("bl-ingredientes")?.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => document.querySelector("#bl-ingredientes .search")?.focus(), 250);
+  };
+  const focusActiveRecipe = () => {
+    document.getElementById("bl-receta")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => document.querySelector("#bl-receta .rec-pct-input")?.focus(), 250);
   };
   const openBuilderSubTab = (next, { focusTab = false } = {}) => {
     setBuilderSubTab(next);
@@ -3401,7 +3405,19 @@ BATCH (${numBags}×${kgBag} kg):
     },
     /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "⚡"),
     /* @__PURE__ */ React.createElement("span", null, "Generador de Recetas")
-  )), tab === "formular" && builderSubTab === "formular" && recipe.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "form-mobile-start", "data-testid": "form-mobile-start", "aria-labelledby": "form-mobile-start-title" }, /* @__PURE__ */ React.createElement("header", null, /* @__PURE__ */ React.createElement("span", null, "Inicio rápido"), /* @__PURE__ */ React.createElement("strong", { id: "form-mobile-start-title" }, "Configura y empieza la receta")), /* @__PURE__ */ React.createElement("label", { className: "form-mobile-start-field", htmlFor: "form-mobile-species-select" }, /* @__PURE__ */ React.createElement("span", null, "1 · Especie"), /* @__PURE__ */ React.createElement("select", { id: "form-mobile-species-select", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-field" }, /* @__PURE__ */ React.createElement("span", null, "2 · Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-origin-options", role: "group", "aria-label": "Origen de ingredientes para inicio rápido" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo"))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-actions", "aria-label": "Método para comenzar" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "is-primary", onClick: focusIngredientCatalog }, "Elegir insumos"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Usar generador"))), tab === "formular" && builderSubTab === "formular" && recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: `form-production-command is-${formNextState}`, "aria-label": "Siguiente paso de producción" }, /* @__PURE__ */ React.createElement("div", { className: "form-production-command-copy" }, /* @__PURE__ */ React.createElement("span", null, "Ruta de producción"), /* @__PURE__ */ React.createElement("strong", null, formNextState === "species" ? "Falta definir la especie" : formNextState === "balance" ? "Falta cerrar el balance" : "Receta lista para preparar")), /* @__PURE__ */ React.createElement(
+  )), tab === "formular" && builderSubTab === "formular" && recipe.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "form-mobile-start", "data-testid": "form-mobile-start", "aria-labelledby": "form-mobile-start-title" }, /* @__PURE__ */ React.createElement("header", null, /* @__PURE__ */ React.createElement("span", null, "Inicio rápido"), /* @__PURE__ */ React.createElement("strong", { id: "form-mobile-start-title" }, "Configura y empieza la receta")), /* @__PURE__ */ React.createElement("label", { className: "form-mobile-start-field", htmlFor: "form-mobile-species-select" }, /* @__PURE__ */ React.createElement("span", null, "1 · Especie"), /* @__PURE__ */ React.createElement("select", { id: "form-mobile-species-select", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-field" }, /* @__PURE__ */ React.createElement("span", null, "2 · Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-origin-options", role: "group", "aria-label": "Origen de ingredientes para inicio rápido" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo"))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-actions", "aria-label": "Método para comenzar" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "is-primary", onClick: focusIngredientCatalog }, "Elegir insumos"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Usar generador"))), tab === "formular" && builderSubTab === "formular" && recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: `form-production-command is-${formNextState}`, "aria-label": "Siguiente paso de producción" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      "data-testid": "formulator-review-recipe",
+      className: "form-production-command-copy",
+      onClick: focusActiveRecipe,
+      "aria-label": `Revisar receta activa: ${recipe.length} ingrediente${recipe.length === 1 ? "" : "s"}`
+    },
+    /* @__PURE__ */ React.createElement("span", null, "Ruta de producción"),
+    /* @__PURE__ */ React.createElement("strong", null, formNextState === "species" ? "Falta definir la especie" : formNextState === "balance" ? "Falta cerrar el balance" : "Receta lista para preparar"),
+    /* @__PURE__ */ React.createElement("em", null, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s", " · Revisar receta")
+  ), /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",

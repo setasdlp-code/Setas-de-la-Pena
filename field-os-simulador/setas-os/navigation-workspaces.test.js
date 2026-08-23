@@ -177,8 +177,10 @@ test('Formular V2 separates Mesa and Generator without undefined replacement hel
 test('mobile production flow resets scroll and exposes one progressive next action', () => {
   assert.match(jsx, /const focusFormTop=.*getElementById\('setas-main'\)/s);
   assert.match(jsx, /const focusIngredientCatalog=.*#bl-ingredientes \.search/s);
+  assert.match(jsx, /const focusActiveRecipe=.*#bl-receta \.rec-pct-input/s);
   assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':'produce'/);
   assert.match(jsx, /data-testid="formulator-next-action"/);
+  assert.match(jsx, /data-testid="formulator-review-recipe"[\s\S]*onClick=\{focusActiveRecipe\}/);
   assert.match(jsx, /data-testid="form-mobile-start"[\s\S]*id="form-mobile-species-select"[\s\S]*Elegir insumos[\s\S]*Usar generador/);
   assert.match(jsx, /form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}/);
   assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);

@@ -3395,9 +3395,12 @@
 }
 .sim-root .form-production-command.is-species,
 .sim-root .form-production-command.is-balance{border-left-color:var(--coral-600)}
-.sim-root .form-production-command-copy{display:grid;gap:3px;min-width:0;margin-right:auto}
+.sim-root .form-production-command-copy{display:grid;gap:3px;min-width:0;margin-right:auto;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}
 .sim-root .form-production-command-copy span{color:var(--ink-500);font:800 var(--text-micro)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
 .sim-root .form-production-command-copy strong{overflow:hidden;color:var(--ink-900);font:800 var(--text-sm)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-production-command-copy em{color:var(--ink-600);font:700 var(--text-2xs)/1.15 var(--font-mono);font-style:normal}
+.sim-root .form-production-command-copy:hover strong{color:var(--accent-olive)}
+.sim-root .form-production-command-copy:focus-visible{outline:2px solid var(--accent-olive);outline-offset:3px}
 .sim-root .form-production-command-btn{
   min-width:170px;
   min-height:46px;

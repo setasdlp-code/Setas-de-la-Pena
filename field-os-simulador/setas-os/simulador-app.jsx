@@ -1954,6 +1954,10 @@ function App(props){
     document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'});
     setTimeout(()=>document.querySelector('#bl-ingredientes .search')?.focus(),250);
   };
+  const focusActiveRecipe=()=>{
+    document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>document.querySelector('#bl-receta .rec-pct-input')?.focus(),250);
+  };
   const openBuilderSubTab=(next,{focusTab=false}={})=>{
     setBuilderSubTab(next);
     focusFormTop();
@@ -4782,10 +4786,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='formular'&&recipe.length>0&&(
           <section className={`form-production-command is-${formNextState}`} aria-label="Siguiente paso de producción">
-            <div className="form-production-command-copy">
+            <button
+              type="button"
+              data-testid="formulator-review-recipe"
+              className="form-production-command-copy"
+              onClick={focusActiveRecipe}
+              aria-label={`Revisar receta activa: ${recipe.length} ingrediente${recipe.length===1?'':'s'}`}>
               <span>Ruta de producción</span>
               <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Receta lista para preparar'}</strong>
-            </div>
+              <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta</em>
+            </button>
             <button
               type="button"
               data-testid="formulator-next-action"
