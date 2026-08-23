@@ -1593,6 +1593,12 @@
 .sim-root .inv-table td{font-family:var(--font-mono);font-size:13px;color:var(--ink-900);padding:8px 12px;border-bottom:1px solid var(--paper-300);vertical-align:middle;}
 .sim-root .inv-table tr:last-child td{border-bottom:none;}
 .sim-root .inv-table tr:hover td{background:var(--paper-100);}
+.sim-root .inv-table-link{border:0;background:transparent;padding:4px 2px;color:var(--coral-700);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.sim-root .inv-table-link:hover{color:var(--moss-700);}
+.sim-root .inv-photo-remove{display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center;padding:0;border:1px solid var(--border-soft);border-radius:var(--r-xs);background:var(--paper-50);cursor:pointer;}
+.sim-root .inv-photo-remove img{display:block;width:28px;height:28px;object-fit:cover;border-radius:3px;}
+.sim-root .inv-photo-upload{position:relative;display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center;cursor:pointer;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--coral-500);text-decoration:underline;}
+.sim-root .inv-photo-upload input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .sim-root .inv-subtab-bar{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border-soft);padding-bottom:0;}
 .sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);margin-bottom:-1px;}
 .sim-root .inv-subtab.on{background:transparent;color:var(--ink-900);border-bottom-color:var(--coral-500);}
@@ -1970,8 +1976,7 @@
   .sim-root .cat-modal-close{ width:48px!important; height:48px!important; }
 
   /* 30. Mini-botones de ingrediente (✕ excluir / + agregar en catálogo): más separación
-     entre ambos para evitar toques accidentales. La hit-area a 48px vive en las reglas
-     de .qa-mini-btn más abajo en el archivo (editadas para el mismo objetivo). */
+     entre ambos para evitar toques accidentales; su tamaño táctil real se define abajo. */
   .sim-root .ing-card-item > div:last-child{ gap:10px!important; padding:6px 4px 8px!important; }
 
   /* 31. Cabeceras de acordeón de categoría (Bases de Carbono, Suplementos…): más altas,
@@ -2233,34 +2238,27 @@
 @keyframes rowFlash{0%{background:color-mix(in oklab,var(--moss-500) 18%,var(--paper-50));}100%{background:transparent;}}
 .sim-root .ing-row-flash > div:first-child{animation:rowFlash .65s ease-out;}
 
-/* Hit-area táctil ampliada para los mini-botones de ingrediente (visual pequeño, toque ≥44px vía ::before) */
+/* Objetivos táctiles reales para evitar áreas invisibles superpuestas entre acciones. */
 .sim-root .qa-mini-btn{
   position:relative;
-  min-width:15px!important;
-  min-height:15px!important;
+  min-width:40px!important;
+  min-height:40px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
   border-radius:50%!important;
 }
-.sim-root .qa-mini-btn::before{
-  content:'';
-  position:absolute;
-  inset:-15px;
-}
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
-    min-width:18px!important;
-    min-height:18px!important;
+    min-width:44px!important;
+    min-height:44px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-15px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
-    min-width:20px!important;
-    min-height:20px!important;
+    min-width:44px!important;
+    min-height:44px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-14px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
@@ -3193,6 +3191,8 @@
 .sim-root .formular-workspace .seg:first-child{border-left:var(--form-control-border)}
 
 .sim-root .builder-wrap .ing-card-item{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 104px;
   border:var(--form-control-border)!important;
   border-radius:var(--form-control-radius)!important;
   background:var(--paper-0)!important;
