@@ -61,3 +61,42 @@ test('la especie seleccionada sobrevive Producción → Control → Formular', a
   await expect(page.locator('.form-species-context')).toContainText('Orellana Gris');
   await expect(page.locator('#form-species-context-select')).toHaveValue('p_ostreatus_gris');
 });
+
+test('Mesa de Mezcla y Generador son paneles separados y navegables', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+
+  const mesaTab = page.getByRole('tab', { name: /Mesa de Mezcla/ });
+  const generatorTab = page.getByRole('tab', { name: /Generador de Recetas/ });
+  await expect(mesaTab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#formular-panel-mesa')).toBeVisible();
+  await expect(page.locator('#formular-panel-generador')).toHaveCount(0);
+
+  await generatorTab.click();
+  await expect(generatorTab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#formular-panel-generador')).toBeVisible();
+  await expect(page.locator('#formular-panel-mesa')).toHaveCount(0);
+  expect(pageErrors).toEqual([]);
+});
+
+test('el solver C:N calcula una receta y la carga en la Mesa de Mezcla', async ({ page }) => {
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await page.getByRole('tab', { name: /Generador de Recetas/ }).click();
+  await page.getByRole('button', { name: 'Por objetivo C:N' }).click();
+
+  await page.locator('#inv-base').selectOption('paja_trigo');
+  await page.locator('#inv-supp').selectOption('salvado_trigo');
+  await page.getByRole('button', { name: /Calcular proporciones exactas/ }).click();
+
+  await expect(page.locator('.inv-result')).toBeVisible();
+  await expect(page.locator('.inv-result')).not.toContainText(/no alcanzable|demasiado similares/i);
+  await page.getByRole('button', { name: /Cargar en Mesa de Mezcla/ }).click();
+
+  await expect(page.getByRole('tab', { name: /Mesa de Mezcla/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.rec-row')).toHaveCount(3);
+  await expect(page.locator('.rec-row', { hasText: 'Paja de trigo' })).toBeVisible();
+});
