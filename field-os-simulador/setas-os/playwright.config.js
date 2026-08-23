@@ -15,6 +15,7 @@ if (fs.existsSync(envPath)) {
 
 module.exports = defineConfig({
   testDir: './e2e',
+  testIgnore: '**/*.spec.cjs', // la suite canónica del CI usa playwright.config.cjs
   fullyParallel: false, // la app comparte localStorage/estado entre specs; correr en serie evita flakiness
   workers: 1,
   retries: process.env.CI ? 1 : 0,

@@ -952,7 +952,7 @@
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
-    <iframe src="{{ climaSrc }}" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
+    <iframe src="climate-bench.html" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
 
     <!-- =================== REVISIÓN DIARIA =================== -->
     <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
@@ -3170,7 +3170,6 @@ class Component extends DCLogic {
       },
       onSimSaved:(list)=>{ if(Array.isArray(list)) this.setState({ simRecipes:list }); },
       historicalYieldsJson: JSON.stringify(s.yields||[]),
-      climaSrc:(window.__resources && window.__resources.climaBenchHtml ? window.__resources.climaBenchHtml : 'climate-bench.html'),
       climaFrameStyle: 'width:1px;height:1px;border:none;position:absolute;opacity:0;pointer-events:none;',
 
       // inicio
