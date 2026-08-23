@@ -5588,7 +5588,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     };
                     const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                     return(
-                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
+                    <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
                       {/* Header: nombre + lock + remove */}
                       <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
                         <div style={{flex:1}}>
@@ -5807,8 +5807,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
-                  <div role="status" aria-live="polite" style={{marginTop:6,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    ⚠ {productionBlockMsg}
+                  <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
+                    <span>⚠ {productionBlockMsg}</span>
+                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
                   </div>
                 )}
                 </div>

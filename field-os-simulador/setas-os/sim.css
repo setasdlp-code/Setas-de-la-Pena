@@ -1314,7 +1314,8 @@
 
 /* ── LOCK / BALANCE (field notebook annotations) ──────────────────── */
 .sim-root .rec-locked{ background:var(--paper-1) !important; border-left:3px dashed var(--line-1); }
-.sim-root .lock-btn{ 
+.sim-root .rec-row.is-adjustable{ border-left:3px solid var(--coral-500); }
+.sim-root .lock-btn{
   background:none; border:none; cursor:pointer; font-size:11px; 
   padding:0 3px; opacity:.5; transition:opacity .12s var(--ease);
   line-height:1; flex-shrink:0; color:var(--ink-2); 
