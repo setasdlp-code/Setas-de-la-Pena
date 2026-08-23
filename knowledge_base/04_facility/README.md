@@ -36,6 +36,7 @@ These documents cover specific topics in depth:
 - **[incubation.md](incubation.md)** — Spawn run setup, temperature optimization, inspection protocols
 - **[fruiting.md](fruiting.md)** — Fruiting chamber parameters, pinning triggers, harvest procedures
 - **[laboratory.md](laboratory.md)** — Lab equipment priorities, aseptic protocols
+- **[incubation_fruiting_chambers_2026.md](../09_research/incubation_fruiting_chambers_2026.md)** — Evidence review: thermal load, spatial mapping, sensors, bioaerosols and 2024–2026 advances
 
 ### Equipment & Systems
 - See `../05_equipment/` for detailed equipment documentation:
@@ -67,7 +68,7 @@ These documents cover specific topics in depth:
 → Read `incubation.md` + relevant sections in `comprehensive_guide.md`
 
 **Build fructification chamber:**
-→ Read `fruiting.md` + `../05_equipment/environmental_control.md` + `comprehensive_guide.md`
+→ Read `fruiting.md` + `../05_equipment/environmental_control.md` + `../09_research/incubation_fruiting_chambers_2026.md` + `comprehensive_guide.md`
 
 **Pasteurize substrate:**
 → Go directly to `comprehensive_guide.md` section "Tratamiento de Sustrato: Pasteurización"

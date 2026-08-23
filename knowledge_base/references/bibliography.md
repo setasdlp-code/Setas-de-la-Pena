@@ -2,7 +2,7 @@
 title: Bibliografía Completa
 category: references
 load_priority: on_request
-last_reviewed: 2026-07-04
+last_reviewed: 2026-08-23
 confidence: high
 primary_sources:
   - literature_database.md
@@ -25,6 +25,20 @@ Zurbano, L. Y., Bellere, A. D., & Savilla, L. C. (2017). Mycelial growth, fruiti
 Mori, K., Obara, Y., Hirota, M., Azumi, Y., Kinugasa, S., Inatomi, S., & Nakahata, N. (2008). Nerve growth factor-inducing activity of *Hericium erinaceus* in 1321N1 human astrocytoma cells. *Biological & Pharmaceutical Bulletin*, 31(9), 1727–1732. https://doi.org/10.1248/bpb.31.1727 [paper_002]
 
 Mori, K., Inatomi, S., Ouchi, K., Azumi, Y., & Tuchida, T. (2009). Improving effects of the mushroom *Yamabushitake* (*Hericium erinaceus*) on mild cognitive impairment: A double-blind placebo-controlled clinical trial. *Phytotherapy Research*, 23(3), 367–372. https://doi.org/10.1002/ptr.2634 [paper_007]
+
+Chong, J. L., Chew, K. W., Peter, A. P., Ting, H. Y., & Show, P. L. (2023). Internet of Things (IoT)-based environmental monitoring and control system for home-based mushroom cultivation. *Biosensors, 13*(1), 98. https://doi.org/10.3390/bios13010098 [paper_011]
+
+Elewi, A., Hajhamed, A., Khankan, R., Duman, S., Souag, A., & Ahmed, A. (2024). Design and implementation of a cost-aware and smart oyster mushroom cultivation system. *Smart Agricultural Technology, 8*, 100439. https://doi.org/10.1016/j.atech.2024.100439 [paper_012]
+
+Ahmad Termizi, S. N. A., Zakaria, Z., Khor, C. Y., Mohd Nawi, M. A., Thing, C. P., Ishak, M. I., & Rosli, M. U. (2021). Computation fluid dynamics simulation of airflow ventilation system in 3D indoor mushroom cultivation house model. *Lecture Notes in Mechanical Engineering*. https://doi.org/10.1007/978-981-16-0866-7_61 [paper_013]
+
+Duman, S., Elewi, A., Hajhamed, A., Khankan, R., Souag, A., & Ahmed, A. (2024). A novel dataset of annotated oyster mushroom images with environmental context for machine learning applications. *Data in Brief, 57*, 111074. https://doi.org/10.1016/j.dib.2024.111074 [paper_014]
+
+Kong, X., Wang, M., Li, Z., & Zheng, W. (2026). Energy-saving control method for air conditioning in mushroom room based on a simplified PINN model. *Energy Reports, 15*, 108970. https://doi.org/10.1016/j.egyr.2025.108970 [paper_015]
+
+Vereda, A., Quirce, S., Fernández-Nieto, M., Bartolomé, B., & Sastre, J. (2007). Occupational asthma due to spores of *Pleurotus ostreatus*. *Allergy, 62*(2), 211–212. https://doi.org/10.1111/j.1398-9995.2006.01286.x [paper_016]
+
+Tarigan, Y. G., Chen, R. Y., Lin, H. C., Jung, C. Y., Kallawicha, K., Chang, T. P., Hung, P. C., Chen, C. Y., & Chao, H. J. (2017). Fungal bioaerosol exposure and its effects on the health of mushroom and vegetable farm workers in Taiwan. *Aerosol and Air Quality Research, 17*, 2064–2075. https://doi.org/10.4209/aaqr.2016.09.0401 [paper_017]
 
 ICAR-Directorate of Mushroom Research. (2020). *Growing oyster mushroom* (Technical Bulletin). ICAR-DMR, Chambaghat, Solan (HP), India. [guide_002 — instituto nacional; protocolo cuantificado P. djamor/ostreatus/citrinopileatus]
 
@@ -96,9 +110,19 @@ Sensirion AG. (2021). *SCD30 CO₂ and RH/T sensor module datasheet*. Document N
 
 Sensirion AG. (2023). *SHT3x-DIS humidity and temperature sensor datasheet*. Document Number: Sensirion_Humidity_SHT3x_Datasheet_digital.
 
+Sensirion AG. (2024). *SHT/STS design-in guide*. https://sensirion.com/products/downloads
+
+Sensirion AG. (2020). *SCD30 interface description* and *field calibration application note*. https://sensirion.com/products/catalog/SCD30
+
 Espressif Systems. (2022). *ESP32-WROOM-32 technical reference manual*. Espressif Systems.
 
 ESPHome. (2024). *ESPHome documentation — SCD30 component*. https://esphome.io/components/sensor/scd30.html
+
+ESPHome. (2026). *SHT3X-D temperature and humidity sensor*. https://esphome.io/components/sensor/sht3xd/
+
+ASHRAE. (n.d.). *ASHRAE Handbook: CO₂ monitoring and room air distribution*. https://handbook.ashrae.org/
+
+Centers for Disease Control and Prevention, National Institute for Occupational Safety and Health. (2024). *Ventilation FAQs*. https://www.cdc.gov/niosh/ventilation/faq/index.html
 
 ---
 
