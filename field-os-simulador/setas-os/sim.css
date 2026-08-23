@@ -2663,14 +2663,21 @@
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
    Intentionally scoped to the two containers rendered only when
    tab === 'formular'. The Control cockpit, shell and other workspaces
-   remain untouched and act as the visual reference. */
+   remain untouched and act as the visual reference.
+
+   2026-08: estructura brutalista industrial, acotada solo a este tab.
+   Paleta e identidad de marca (papel/tinta, pigmentos tierra, Gaya
+   Patched) se mantienen intactas — no se toca colors_and_type.css.
+   Lo que cambia es la GEOMETRÍA: sin radios, sin sombras decorativas,
+   bordes duros, densidad tabular. Ver bloque "brutalist structure"
+   más abajo para los radios/sombras que no pasan por estos tokens. */
 .sim-root .builder-wrap,
 .sim-root .formular-workspace{
   --font-body:var(--font-display);
-  --form-control-radius:var(--radius-sm);
+  --form-control-radius:0;
   --form-control-min-height:44px;
   --form-control-padding:8px 12px;
-  --form-control-border:1px solid var(--border-strong);
+  --form-control-border:2px solid var(--ink-900);
   --form-control-bg:var(--paper-0);
   --form-control-fg:var(--text-metadata);
   --form-control-active-bg:var(--accent-olive);
@@ -3211,6 +3218,55 @@
   font-weight:600!important;
 }
 .sim-root .builder-wrap .ing-card-item .ing-meta span{font-family:var(--font-mono)!important}
+
+/* ── FORMULAR · BRUTALIST STRUCTURE ───────────────────────────────
+   Segundo tramo del reskin: cubre los contenedores del Formulador que
+   NO pasan por --form-control-radius/--form-control-border (arriba)
+   porque usan directamente var(--radius-sm) o una sombra decorativa
+   propia. Mismo alcance: solo tab==='formular'. Sin color nuevo, sin
+   radios, sin sombras suaves — bordes duros, grid visible, datos en
+   monoespaciada. */
+.sim-root .form-flow,
+.sim-root .form-species-context,
+.sim-root .form-species-picker select,
+.sim-root .builder-wrap > .sim-live-dashboard,
+.sim-root .live-dash-pill,
+.sim-root .live-dash-btn,
+.sim-root .live-ing-chip,
+.sim-root .active-recipe-workspace-head,
+.sim-root .active-recipe-count,
+.sim-root .form-recipe-workspace .recipe-live-evaluation,
+.sim-root .form-advanced-tools-head,
+.sim-root .form-advanced-tools-head button,
+.sim-root .form-step select,
+.sim-root .form-step-actions button,
+.sim-root .form-step-primary,
+.sim-root .form-step-options button,
+.sim-root .form-step-species-state,
+.sim-root .form-step-species-state button,
+.sim-root .ingredient-empty-action,
+.sim-root .ingredient-section-count,
+.sim-root .ingredient-view-toolbar button,
+.sim-root .ingredient-no-results button{
+  border-radius:0!important;
+}
+.sim-root .form-species-context,
+.sim-root .builder-wrap > .sim-live-dashboard{
+  box-shadow:none;
+}
+
+/* Divisores de grid más duros — de línea suave a línea de tinta,
+   reforzando la retícula en vez de disolverla. */
+.sim-root .form-step{border-right:1px solid var(--ink-900)}
+.sim-root .ingredient-section-head{border-bottom:1px solid var(--ink-900)}
+
+/* Marcadores de sección al estilo telemetría — puramente aditivo,
+   no reemplaza el texto existente, solo lo enmarca. */
+.sim-root .form-flow-eyebrow::before,
+.sim-root .ingredient-section-eyebrow::before,
+.sim-root .form-species-kicker::before{
+  content:'>> ';
+}
 
 .sim-root .ing-expand-btn,
 .sim-root .bridge-toggle{
