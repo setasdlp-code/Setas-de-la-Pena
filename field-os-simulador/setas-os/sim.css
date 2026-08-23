@@ -2918,11 +2918,11 @@
   .sim-root .active-recipe-workspace-head,
   .sim-root .form-advanced-tools-head{align-items:flex-start;flex-direction:column}
   .sim-root .form-advanced-tools-head button{width:100%}
-  .sim-root .builder-wrap > .sim-live-dashboard{top:0}
+  .sim-root .builder-wrap > .sim-live-dashboard{position:relative;top:auto}
   .sim-root .live-dash-bar{flex-direction:row;flex-wrap:wrap;gap:6px;padding:7px 8px}
   .sim-root .live-dash-left{min-width:0}
   .sim-root .live-dash-metrics{margin-left:0}
-  .sim-root .live-dash-actions{margin-left:auto}
+  .sim-root .live-dash-actions{width:100%;margin-left:0}
   .sim-root .live-dash-btn{min-height:36px!important;padding:6px!important}
   .sim-root .live-dash-tray{padding:6px 8px}
   .sim-root .live-ing-chip-del{min-height:24px!important;padding:0!important}
@@ -3376,6 +3376,46 @@
   font:800 var(--text-2xs)/1.4 var(--font-mono);
   text-align:center;
 }
+.sim-root .form-production-command{
+  position:sticky;
+  top:0;
+  z-index:var(--z-sticky-panel);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:62px;
+  margin:-6px 0 14px;
+  padding:8px 10px 8px 14px;
+  border:1px solid var(--ink-900);
+  border-left:5px solid var(--moss-700);
+  background:var(--paper-0);
+  box-shadow:0 5px 16px rgba(18,22,17,.13);
+}
+.sim-root .form-production-command.is-species,
+.sim-root .form-production-command.is-balance{border-left-color:var(--coral-600)}
+.sim-root .form-production-command-copy{display:grid;gap:3px;min-width:0;margin-right:auto}
+.sim-root .form-production-command-copy span{color:var(--ink-500);font:800 var(--text-micro)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
+.sim-root .form-production-command-copy strong{overflow:hidden;color:var(--ink-900);font:800 var(--text-sm)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-production-command-btn{
+  min-width:170px;
+  min-height:46px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:8px 14px;
+  border:1px solid var(--moss-900);
+  border-radius:0;
+  background:var(--moss-700);
+  color:var(--paper-0);
+  font:800 var(--text-sm)/1 var(--font-body);
+  cursor:pointer;
+  white-space:nowrap;
+}
+.sim-root .form-production-command-btn.is-species,
+.sim-root .form-production-command-btn.is-balance{border-color:var(--coral-800);background:var(--coral-600)}
+.sim-root .form-production-command-btn:hover,
+.sim-root .form-production-command-btn:focus-visible{filter:brightness(.94);outline:2px solid var(--ink-900);outline-offset:2px}
 .sim-root .mix-lock-btn,
 .sim-root .mix-remove-btn{
   min-width:44px;
@@ -3409,6 +3449,9 @@
 
 @media(max-width:560px){
   .sim-root .formular-mode-nav{grid-template-columns:1fr}
+  .sim-root .form-production-command{gap:8px;min-height:58px;margin:-6px 0 10px;padding:6px 6px 6px 10px}
+  .sim-root .form-production-command-copy strong{font-size:var(--text-xs)}
+  .sim-root .form-production-command-btn{min-width:146px;min-height:46px;padding:8px 10px}
   .sim-root .mix-steppers{grid-template-columns:44px 44px minmax(68px,1fr) 44px 44px}
   .sim-root .mix-step-btn{font-size:10px}
 }

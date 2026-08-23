@@ -1946,12 +1946,22 @@ function App(props){
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
+  const focusFormTop=()=>requestAnimationFrame(()=>{
+    const main=document.getElementById('setas-main');
+    if(main) main.scrollTo({top:0,left:0});
+  });
+  const openBuilderSubTab=(next,{focusTab=false}={})=>{
+    setBuilderSubTab(next);
+    focusFormTop();
+    if(focusTab){
+      requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':'formular-tab-generador')?.focus());
+    }
+  };
   const onBuilderTabKeyDown=e=>{
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
     e.preventDefault();
     const next=e.key==='Home'||e.key==='ArrowLeft'?'formular':'generador';
-    setBuilderSubTab(next);
-    requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':'formular-tab-generador')?.focus());
+    openBuilderSubTab(next,{focusTab:true});
   };
   const [loadedFlash,setLoadedFlash]=useState(false);
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
@@ -2124,7 +2134,7 @@ function App(props){
   useEffect(()=>{try{const s=localStorage.getItem('sdp_prov_override');if(s) setProvOverride(JSON.parse(s));}catch(e){};},[]);
 
   const saveR=()=>{
-    const nm=saveName.trim();if(!nm||!recipe.length||!balanced) return;
+    const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
     const trSave=an?calcTreatment(an, sKey, SPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
@@ -2185,7 +2195,7 @@ function App(props){
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
+    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
     if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
     apply();
   };
@@ -2259,6 +2269,8 @@ function App(props){
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
+  const readyForProduction=balanced&&hasPickedSpecies;
+  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg;
   const optimalAn=useMemo(()=>{try{
     const r=runHybridRecipeSearch({
       targetKey:sKey,
@@ -2906,6 +2918,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const newP=Math.max(0,Math.round((100-sumOthers)*10)/10);
       setRecipe(recipe.map(r=>r.id===lastFree.id?{...r,p:newP}:r));
     }
+  };
+  const formNextState=!hasPickedSpecies?'species':!balanced?'balance':'produce';
+  const formNextLabel=formNextState==='species'?'Elegir especie':formNextState==='balance'?'Balancear 100%':'Preparar lote';
+  const runFormNextAction=()=>{
+    if(formNextState==='species'){
+      focusFormTop();
+      requestAnimationFrame(()=>document.getElementById('form-species-context-select')?.focus());
+      return;
+    }
+    if(formNextState==='balance'){
+      autoBalance(balanceMode);
+      return;
+    }
+    goTab('produccion');
   };
   const exportR=()=>{
     if(!recipe.length) return;
@@ -4681,7 +4707,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="spp-cta-row">
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
-                    <button onClick={()=>{setCatalogModalOpen(false);setBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
+                    <button onClick={()=>{setCatalogModalOpen(false);openBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
               </div>
@@ -4702,7 +4728,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               tabIndex={builderSubTab==='formular'?0:-1}
               className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
               onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>setBuilderSubTab('formular')}>
+              onClick={()=>openBuilderSubTab('formular')}>
               <span aria-hidden="true">🥣</span>
               <span>Mesa de Mezcla</span>
               {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
@@ -4716,11 +4742,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
               tabIndex={builderSubTab==='generador'?0:-1}
               className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
               onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>setBuilderSubTab('generador')}>
+              onClick={()=>openBuilderSubTab('generador')}>
               <span aria-hidden="true">⚡</span>
               <span>Generador de Recetas</span>
             </button>
           </nav>
+        )}
+
+        {tab==='formular'&&builderSubTab==='formular'&&recipe.length>0&&(
+          <section className={`form-production-command is-${formNextState}`} aria-label="Siguiente paso de producción">
+            <div className="form-production-command-copy">
+              <span>Ruta de producción</span>
+              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Receta lista para preparar'}</strong>
+            </div>
+            <button
+              type="button"
+              data-testid="formulator-next-action"
+              onClick={runFormNextAction}
+              className={`form-production-command-btn is-${formNextState}`}
+              aria-label={`${formNextLabel}. ${formNextState==='produce'?'Abrir preparación del lote':'Completar requisito para producción'}`}>
+              {formNextState==='species'?<IconTarget size={15} color="currentColor"/>:formNextState==='balance'?<IconBolt size={15} color="currentColor"/>:<IconBox size={15} color="currentColor"/>}
+              <span>{formNextLabel}</span>
+            </button>
+          </section>
         )}
 
         {tab==='formular'&&builderSubTab==='formular'&&(
@@ -4763,7 +4807,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-label">Ingredientes</span>
                 <div className="form-step-actions">
                   <button type="button" onClick={()=>document.getElementById('bl-ingredientes')?.scrollIntoView({behavior:'smooth',block:'start'})}>Elegir manualmente</button>
-                  <button type="button" onClick={()=>setBuilderSubTab('generador')}>Usar generador</button>
+                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
                 </div>
                 <span className="form-step-help">Agrega insumos o calcula una base.</span>
               </li>
@@ -5259,7 +5303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <h2>Perito + Automejora</h2>
                 <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
               </div>
-              <button type="button" onClick={()=>setBuilderSubTab('generador')}>Abrir generador</button>
+              <button type="button" onClick={()=>openBuilderSubTab('generador')}>Abrir generador</button>
             </header>
             {an&&(()=>{
               const hasPer=recipe.length>0;
@@ -5297,7 +5341,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
-                        <button onClick={()=>goTab('produccion')} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>Producir</button>
+                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
                         {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
@@ -5436,7 +5480,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                    <button onClick={()=>{setShowOptimizer(true);setBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
+                    <button onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
                   </div>
                 </div>
                 :<div style={{border:'1px solid var(--paper-300)'}}>
@@ -5666,13 +5710,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                 <div className="sbar">
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!balanced} title={balanced?'':balMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!balanced} title={balanced?'Crear lote experimental en la Bitácora con esta receta':balMsg} style={{background:balanced?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:balanced?'pointer':'not-allowed'}}>Prueba →</button>}
+                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?'✓ Guardada':'Guardar'}</button>
+                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!readyForProduction} title={readyForProduction?'Crear lote experimental en la Bitácora con esta receta':productionBlockMsg} style={{background:readyForProduction?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:readyForProduction?'pointer':'not-allowed'}}>Prueba →</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                 </div>
-                {!balanced&&(
+                {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    ⚠ {balMsg}
+                    ⚠ {productionBlockMsg}
                   </div>
                 )}
                 </div>
@@ -5770,7 +5814,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                  <button type="button" className="tog" onClick={()=>setBuilderSubTab('formular')}>← Mesa de Mezcla</button>
+                  <button type="button" className="tog" onClick={()=>openBuilderSubTab('formular')}>← Mesa de Mezcla</button>
                   <button type="button" className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
                 </div>
               </div>
@@ -5891,7 +5935,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
+                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('produccion');}}>Producir</button>
                                         </div>
                                       </div>
@@ -6155,7 +6199,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                   )}
-                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setRecipe(invResult.recipe);setBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa de Mezcla</button>
+                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setSKey(sKey);setRecipe(invResult.recipe);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa de Mezcla</button>
                                 </>)
                               }
                             </div>

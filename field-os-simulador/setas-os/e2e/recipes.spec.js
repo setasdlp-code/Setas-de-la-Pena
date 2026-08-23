@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const {
   openApp,
   goWorkspace,
+  activeWorkspace,
   activeContextTab,
   seedLocalStorage,
   confirmDialogIfPresent,
@@ -97,6 +98,30 @@ test('el solver C:N calcula una receta y la carga en la Mesa de Mezcla', async (
   await page.getByRole('button', { name: /Cargar en Mesa de Mezcla/ }).click();
 
   await expect(page.getByRole('tab', { name: /Mesa de Mezcla/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#form-species-context-select')).toHaveValue('p_ostreatus_gris');
+  await expect(page.locator('.form-species-context')).toContainText('Orellana Gris');
+  await expect.poll(()=>page.locator('#setas-main').evaluate(el=>el.scrollTop)).toBe(0);
   await expect(page.locator('.rec-row')).toHaveCount(3);
   await expect(page.locator('.rec-row', { hasText: 'Paja de trigo' })).toBeVisible();
+  await expect(page.getByTestId('formulator-next-action')).toContainText('Preparar lote');
+});
+
+test('la acción móvil principal guía especie → balance → preparación', async ({ page }) => {
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await addIngredientByName(page, 'Paja de trigo');
+
+  const nextAction = page.getByTestId('formulator-next-action');
+  await expect(nextAction).toContainText('Elegir especie');
+  await nextAction.click();
+  await expect(page.locator('#form-species-context-select')).toBeFocused();
+
+  await selectSpecies(page, 'p_ostreatus_gris');
+  await expect(nextAction).toContainText('Balancear 100%');
+  await nextAction.click();
+  await expect(page.locator('.rec-row input.rec-pct-input')).toHaveValue('100');
+  await expect(nextAction).toContainText('Preparar lote');
+
+  await nextAction.click();
+  expect(await activeWorkspace(page)).toBe('produccion');
 });
