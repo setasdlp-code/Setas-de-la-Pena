@@ -2,7 +2,7 @@
 title: Base de Datos de Literatura
 category: research
 load_priority: on_request
-last_reviewed: 2026-07-04
+last_reviewed: 2026-08-23
 confidence: high
 primary_sources:
   - Multiple peer-reviewed sources
@@ -331,6 +331,153 @@ doi: 10.1615/IntJMedMushrooms.2018026412
 **Relevance to Setas de la Peña:** ★★★★★ — Define las directrices de diseño para la cámara CloudLab 844 y los umbrales de alarma en el monitor climático.
 
 **Reliability score:** 5/5 — Estudio experimental riguroso en revista líder de micología medicinal.
+
+---
+
+### paper_011
+
+```
+paper_id: paper_011
+title: Internet of Things (IoT)-Based Environmental Monitoring and Control System for Home-Based Mushroom Cultivation
+authors: Chong, J. L., Chew, K. W., Peter, A. P., Ting, H. Y., & Show, P. L.
+year: 2023
+source: Biosensors, 13(1), 98
+doi: 10.3390/bios13010098
+```
+
+**Main findings:** Prototipo IoT para cultivo doméstico de seta ostra con monitoreo remoto y control por realimentación de temperatura y HR, además de imagen/video. Demuestra viabilidad de microcontroladores y actuadores de bajo costo.
+
+**Limitations:** Cámara de 42 L y estudio de cuatro meses; no valida una sala productiva, control de CO₂ por NDIR, uniformidad espacial ni mejora reproducible de rendimiento entre lotes. El control se basa en umbrales fijos.
+
+**Relevance to Setas de la Peña:** ★★★★☆ para arquitectura modular y validación de sensores; ★★☆☆☆ para parámetros biológicos o escalamiento.
+
+**Reliability score:** 4/5 — Revisado por pares y reproducible como prototipo; transferencia de escala limitada.
+
+---
+
+### paper_012
+
+```
+paper_id: paper_012
+title: Design and implementation of a cost-aware and smart oyster mushroom cultivation system
+authors: Elewi, A., Hajhamed, A., Khankan, R., Duman, S., Souag, A., & Ahmed, A.
+year: 2024
+source: Smart Agricultural Technology, 8, 100439
+doi: 10.1016/j.atech.2024.100439
+```
+
+**Main findings:** Sistema asequible para *P. ostreatus* con monitoreo y gestión remota de temperatura, humedad, calidad de aire e iluminación, orientado a productores con recursos limitados.
+
+**Limitations:** La contribución principal es de diseño y accesibilidad; no sustituye commissioning de caudal, calibración de sensores ni ensayo multilot en Tenjo.
+
+**Relevance to Setas de la Peña:** ★★★★☆ — Apoya la estrategia ESP32/IoT de bajo costo y la importancia de interfaces simples.
+
+**Reliability score:** 4/5 — Artículo revisado por pares y abierto; evidencia de plataforma más fuerte que evidencia agronómica.
+
+---
+
+### paper_013
+
+```
+paper_id: paper_013
+title: Computation Fluid Dynamics Simulation of Airflow Ventilation System in 3D Indoor Mushroom Cultivation House Model
+authors: Ahmad Termizi, S. N. A., Zakaria, Z., Khor, C. Y., Mohd Nawi, M. A., Thing, C. P., Ishak, M. I., & Rosli, M. U.
+year: 2021
+source: Lecture Notes in Mechanical Engineering
+doi: 10.1007/978-981-16-0866-7_61
+```
+
+**Main findings:** Un modelo CFD de una casa de *P. ostreatus* mostró que la velocidad del ventilador alteró la circulación y la acumulación de CO₂; la configuración de mayor eficiencia dentro del modelo fue la que retiró más CO₂.
+
+**Limitations:** Resultado dependiente de geometría y supuestos del modelo; no aporta una velocidad universal y requiere validación experimental a escala real.
+
+**Relevance to Setas de la Peña:** ★★★★☆ — Respalda mapeo espacial y rechazo de ACH/temporizador como prueba suficiente de ventilación.
+
+**Reliability score:** 3/5 — Publicación técnica revisada; información experimental disponible limitada.
+
+---
+
+### paper_014
+
+```
+paper_id: paper_014
+title: A novel dataset of annotated oyster mushroom images with environmental context for machine learning applications
+authors: Duman, S., Elewi, A., Hajhamed, A., Khankan, R., Souag, A., & Ahmed, A.
+year: 2024
+source: Data in Brief, 57, 111074
+doi: 10.1016/j.dib.2024.111074
+```
+
+**Main findings:** Publica 555 imágenes originales de seta ostra, cerca de 16.000 anotaciones derivadas y datos ambientales sincronizados; incluye clases de madurez y anotaciones aptas para modelos de visión.
+
+**Limitations:** Es un artículo de datos, no demuestra que un modelo mejore rendimiento o sustituya inspección. La transferencia a *P. djamor* local requiere imágenes etiquetadas en Tenjo.
+
+**Relevance to Setas de la Peña:** ★★★★☆ — Base realista para una futura cámara fija y detección de madurez/deformación.
+
+**Reliability score:** 5/5 para existencia y estructura del dataset; 2/5 para impacto operacional aún no demostrado.
+
+---
+
+### paper_015
+
+```
+paper_id: paper_015
+title: Energy-saving control method for air conditioning in mushroom room based on a simplified PINN model
+authors: Kong, X., Wang, M., Li, Z., & Zheng, W.
+year: 2026
+source: Energy Reports, 15, 108970
+doi: 10.1016/j.egyr.2025.108970
+```
+
+**Main findings:** En salas de *P. citrinopileatus*, un controlador predictivo con red informada por física reconstruyó el campo térmico con seis sensores (RMSE 0,267°C) y reportó ahorro energético de 9,8–14,6% frente a control por umbrales, con restricción mínima de ciclo de equipo de tres minutos.
+
+**Limitations:** Escala industrial, HVAC y especie diferentes; el ahorro no puede extrapolarse a una CLOUDLAB 844. Requiere datos históricos y una capa de seguridad independiente.
+
+**Relevance to Setas de la Peña:** ★★★☆☆ — Hoja de ruta de I+D después de obtener datos calibrados, energía y resultados biológicos.
+
+**Reliability score:** 4/5 — Artículo experimental reciente; transferibilidad local limitada.
+
+---
+
+### paper_016
+
+```
+paper_id: paper_016
+title: Occupational asthma due to spores of Pleurotus ostreatus
+authors: Vereda, A., Quirce, S., Fernández-Nieto, M., Bartolomé, B., & Sastre, J.
+year: 2007
+source: Allergy, 62(2), 211–212
+doi: 10.1111/j.1398-9995.2006.01286.x
+```
+
+**Main findings:** Caso clínico de asma ocupacional atribuida a esporas de *P. ostreatus*.
+
+**Limitations:** Reporte de caso; demuestra plausibilidad clínica, no incidencia ni umbral seguro de exposición.
+
+**Relevance to Setas de la Peña:** ★★★★☆ — Justifica incorporar descarga exterior, cosecha oportuna y evaluación de protección respiratoria.
+
+**Reliability score:** 4/5 para identificación del peligro; 2/5 para cuantificación del riesgo.
+
+---
+
+### paper_017
+
+```
+paper_id: paper_017
+title: Fungal Bioaerosol Exposure and its Effects on the Health of Mushroom and Vegetable Farm Workers in Taiwan
+authors: Tarigan, Y. G., Chen, R. Y., Lin, H. C., Jung, C. Y., Kallawicha, K., Chang, T. P., Hung, P. C., Chen, C. Y., & Chao, H. J.
+year: 2017
+source: Aerosol and Air Quality Research, 17, 2064–2075
+doi: 10.4209/aaqr.2016.09.0401
+```
+
+**Main findings:** Las granjas de hongos presentaron mayor carga fúngica que las de vegetales y varias concentraciones fúngicas se asociaron negativamente con función pulmonar; cosecha y empaque se asociaron con menor función pulmonar.
+
+**Limitations:** Estudio observacional en Taiwán y con mezcla de exposiciones; no define causalidad individual ni límite ocupacional colombiano.
+
+**Relevance to Setas de la Peña:** ★★★★★ — Evidencia de campo para tratar esporas/bioaerosoles como requisito de diseño y SST.
+
+**Reliability score:** 4/5 — Medición de exposición y salud en trabajadores; transferencia regulatoria requiere evaluación local.
 
 ---
 

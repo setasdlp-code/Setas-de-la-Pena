@@ -2,13 +2,14 @@
 title: Cámara de Fructificación — Setup y Operación
 category: facility
 load_priority: selective
-last_reviewed: 2026-07-16
+last_reviewed: 2026-08-23
 confidence: medium
 primary_sources:
   - Stamets 2000
   - AC Infinity CLOUDLAB 844 manual
   - Internal protocols
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006, construcción de bajo costo)
+  - 09_research/incubation_fruiting_chambers_2026.md
 related_documents:
   - master_blueprint.md
   - incubation.md
@@ -21,9 +22,10 @@ La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El di
 
 # Core Principles
 - La ventilación se valida por CO₂, caudal efectivo y morfología; un temporizador por sí solo no demuestra ACH.
-- El exhaust va SIEMPRE en la parte superior (CO₂ pesado sube entre sustratos).
+- La posición de entrada y extracción se valida con CO₂ y flujo multipunto. El CO₂ se mezcla con el aire; no se diseña suponiendo que siempre sube o baja.
 - Cada cámara es un módulo autónomo con su propio ESP32.
-- Verificar parámetros con dos sensores independientes (SHT3x + Inkbird).
+- Un sensor permanente solo se considera representativo después de un mapeo temporal en varias posiciones.
+- Verificar parámetros con dos sensores independientes (SHT3x + referencia redundante) y protegerlos de niebla/condensación.
 
 > **Alternativa de bajo costo (escalamiento no automatizado).** Para salones de fructificación económicos en clima frío (Tenjo 12–18°C), Cenicafé documenta estructuras livianas (guadua) con **plástico transparente** en el salón de fructificación (vs. negro en incubación), ventilación natural con ventanillas inferiores en malla mosquitera y falso techo para salida de aire. Aplica a expansión de bajo capex; los módulos CLOUDLAB/Martha automatizados siguen siendo el estándar. Dimensionamiento y desinfección de cuarto en `incubation.md`.
 
@@ -46,7 +48,7 @@ La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El di
 
 ```
 ┌─────────────────────────────┐
-│         [EXHAUST H4]        │ ← Extractor ARRIBA
+│         [EXHAUST H4]        │ ← Posición provisional; validar flujo real
 │                             │
 │  [BLOQUES EN ESTANTERÍA]    │
 │                             │
@@ -56,6 +58,28 @@ La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El di
 └─────────────────────────────┘
          ↑ INTAKE (filtrado)
 ```
+
+La ubicación mostrada es el punto de partida del módulo actual, no una regla física universal. Verificar que no exista cortocircuito de aire entre intake y exhaust y medir CO₂ en zona baja, media, alta y esquina remota con la cámara cargada.
+
+## Humedad, Punto de Rocío y VPD
+
+- HR es una razón dependiente de temperatura; no describe por sí sola el potencial de secado.
+- Calcular punto de rocío y VPD del aire en Home Assistant como variables diagnósticas.
+- Si `T_superficie > T_rocío`, existe potencial de evaporación; si `T_superficie < T_rocío`, puede aparecer condensación.
+- No se adopta un setpoint universal de VPD para hongos: requiere temperatura superficial y validación por especie/lote.
+- Evitar niebla directa y agua libre persistente sobre primordios, cuerpos fructíferos, sensores y piso.
+
+Ver fundamento, limitaciones y plan de ensayo en `09_research/incubation_fruiting_chambers_2026.md`.
+
+## Mapeo Ambiental y Capacidad Útil
+
+Antes de declarar operativa una configuración de carga:
+
+1. Registrar T/HR/CO₂ en entrada, salida, centro y extremos durante 48–72 h.
+2. Medir con cámara vacía y con carga representativa.
+3. Confirmar ausencia de chorro directo sobre primordios y zonas estancadas.
+4. Relacionar ubicación del estante con morfología, peso y calidad de cosecha.
+5. Repetir si cambian carga, estanterías, ductos, ventilador o humidificador.
 
 ## Parámetros por Especie
 
@@ -75,6 +99,7 @@ La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El di
 ☐ Verificar CO₂ — en rango para especie activa
 ☐ Verificar T° — en rango
 ☐ Confirmar extractor operativo, CO₂ en rango y ausencia de zonas muertas
+☐ Revisar punto de rocío/VPD y signos de condensación o secado
 ☐ Inspección visual de bloques — buscar pins o señales de contaminación
 ☐ Verificar agua en T7 — rellenar si <20% capacidad
 ☐ Anotar observaciones en bitácora
@@ -92,8 +117,10 @@ La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El di
 # Best Practices
 - Hacer los cortes de fruiting en 2–3 lados de la bolsa, no en la parte inferior (acumula agua).
 - Remojar bloques agotados en agua limpia 12–24h para estimular segunda oleada.
-- Cosechar antes de que los caps suelten esporas (nube visible).
-- Limpiar la cámara con alcohol 70% entre lotes.
+- Cosechar antes de que los sombreros liberen esporas de forma intensa.
+- Entre lotes, retirar materia orgánica, limpiar y aplicar un desinfectante compatible con concentración y tiempo de contacto definidos; alcohol 70% solo sobre superficies compatibles y previamente limpias.
+- Descargar aire de fructificación al exterior lejos de tomas de aire y zonas ocupadas; no recircularlo hacia incubación o inoculación.
+- Usar medidas de protección respiratoria durante cosecha tardía y limpieza según evaluación de SST.
 
 # Common Failure Modes
 | Problema | Causa | Solución |
