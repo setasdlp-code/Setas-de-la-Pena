@@ -4628,7 +4628,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&(
         <div className="builder-wrap" data-tab={tab}>
-          {loadedFlash&&<div className="loaded-toast">✓ Receta cargada</div>}
+          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada</div>}
 
           {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
               el editor manual como el Perito y el Generador automático. */}
@@ -5374,7 +5374,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:4}}>
                         <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
                         <div style={{display:'flex',alignItems:'center',gap:6,justifyContent:'space-between'}}>
-                          <input type="number" min="0" max="100" step=".5" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',outline:'none',borderRadius:'var(--r-xs)'}}/>
+                          <input type="number" min="0" max="100" step=".5" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input" style={{width:'70px',padding:'6px 8px',border:'1px solid var(--paper-300)',background:isLocked?'var(--paper-200)':'var(--paper-100)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",textAlign:'center',color:'var(--ink-900)',borderRadius:'var(--r-xs)'}}/>
                           <span className="pct" style={{fontSize:"var(--text-sm)",fontWeight:600,color:'var(--ink-600)'}}>%</span>
                         </div>
                       </div>
