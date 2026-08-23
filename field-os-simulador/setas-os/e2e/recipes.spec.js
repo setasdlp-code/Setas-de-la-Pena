@@ -145,3 +145,21 @@ test('el inicio rápido móvil pone especie, origen y selección de insumos en l
   await expect(search).toBeFocused();
   await expect(search).toBeInViewport();
 });
+
+test('la barra móvil permite volver a la receta editable desde el catálogo', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'El salto fijo se valida en el recorrido móvil');
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await selectSpecies(page, 'p_ostreatus_gris');
+  await page.getByTestId('form-mobile-start').getByRole('button', { name: 'Catálogo', exact: true }).click();
+  await page.getByTestId('form-mobile-start').getByRole('button', { name: 'Elegir insumos', exact: true }).click();
+  await addIngredientByName(page, 'Paja de trigo');
+
+  const reviewRecipe = page.getByTestId('formulator-review-recipe');
+  await expect(reviewRecipe).toBeInViewport();
+  await reviewRecipe.click();
+
+  const pctInput = page.locator('#bl-receta .rec-pct-input').first();
+  await expect(pctInput).toBeFocused();
+  await expect(pctInput).toBeInViewport();
+});
