@@ -11,7 +11,7 @@ test('las filas de receta no bloqueadas se marcan como ajustables cuando el bala
   assert.match(jsx, /className=\{`rec-row\$\{isLocked\?' rec-locked':''\}\$\{!balanced&&!isLocked\?' is-adjustable':''\}`\}/);
 });
 
-test('sim.css define un estilo visible (no solo color) para .is-adjustable', () => {
+test('sim.css define un estilo para .is-adjustable (border-left, cue complementario — el balance de masa también se comunica sin color vía el banner de estado y el total)', () => {
   assert.match(css, /\.sim-root \.rec-row\.is-adjustable\{/);
 });
 

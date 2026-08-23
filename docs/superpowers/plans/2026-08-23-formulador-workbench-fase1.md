@@ -45,7 +45,9 @@
 
 ---
 
-### Task 1: Persistencia de borrador en localStorage
+### Task 1: Persistencia de borrador en localStorage — ⛔ SUPERSEDED, NO EJECUTAR (ver PR #97)
+
+> Este task quedó reemplazado por PR #97 (ver el banner "UPDATE" al inicio del documento). No implementar — colisionaría con la clave de localStorage ya existente `setas_formulator_draft_v1`.
 
 **Files:**
 - Modify: `field-os-simulador/setas-os/simulador-app.jsx:1773` (junto a `const [recipe,setRecipe]=useState([]);` y el bloque de hooks de montaje ~L2104-2108)
@@ -169,7 +171,7 @@ git commit -m "feat(formulador): persistir borrador de receta en localStorage y 
 
 ---
 
-### Task 2: Indicador "ajustable" en filas no bloqueadas cuando el balance no cierra
+### Task 2: Indicador "ajustable" en filas no bloqueadas cuando el balance no cierra — ✅ COMPLETO
 
 **Files:**
 - Modify: `field-os-simulador/setas-os/simulador-app.jsx:5346-5382` (loop de `.rec-row`)
@@ -180,7 +182,7 @@ git commit -m "feat(formulador): persistir borrador de receta en localStorage y 
 - Consumes: `balanced` (`simulador-app.jsx:2244`, `const balanced=isMassBalanced(an);` — ya existe en scope de componente desde el PR #89), `lockedIds` (`simulador-app.jsx:1829`), `isLocked` (ya calculado por fila en la línea 5346: `const isLocked=lockedIds.includes(r.id);`).
 - Produces: clase CSS `.rec-row.is-adjustable` — no consumida por otras tareas de este plan.
 
-- [ ] **Step 1: Escribir la prueba que falla**
+- [x] **Step 1: Escribir la prueba que falla**
 
 ```js
 'use strict';
@@ -201,12 +203,12 @@ test('sim.css define un estilo visible (no solo color) para .is-adjustable', () 
 });
 ```
 
-- [ ] **Step 2: Correr la prueba y confirmar que falla**
+- [x] **Step 2: Correr la prueba y confirmar que falla**
 
 Run: `cd field-os-simulador/setas-os && node --test formulador-blocking-clarity.test.js`
 Expected: FAIL — ninguna de las dos aserciones existe todavía.
 
-- [ ] **Step 3: Implementar — la clase condicional en el loop de filas**
+- [x] **Step 3: Implementar — la clase condicional en el loop de filas**
 
 En `simulador-app.jsx:5358`, cambiar:
 
@@ -220,7 +222,7 @@ por:
                     <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
 ```
 
-- [ ] **Step 4: Implementar — el estilo en sim.css**
+- [x] **Step 4: Implementar — el estilo en sim.css**
 
 Junto a `.sim-root .rec-locked` (línea 1316), agregar:
 
@@ -228,17 +230,17 @@ Junto a `.sim-root .rec-locked` (línea 1316), agregar:
 .sim-root .rec-row.is-adjustable{ border-left:3px solid var(--coral-500); }
 ```
 
-- [ ] **Step 5: Regenerar el build y correr la prueba**
+- [x] **Step 5: Regenerar el build y correr la prueba**
 
 Run: `cd field-os-simulador/setas-os && node build.js && node --test formulador-blocking-clarity.test.js build.test.js`
 Expected: PASS.
 
-- [ ] **Step 6: Correr el suite completo**
+- [x] **Step 6: Correr el suite completo**
 
 Run: `cd field-os-simulador/setas-os && node --test *.test.js`
 Expected: todos pass, 0 fail.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add field-os-simulador/setas-os/simulador-app.jsx field-os-simulador/setas-os/simulador-app.js field-os-simulador/setas-os/sim.css field-os-simulador/setas-os/formulador-blocking-clarity.test.js
@@ -247,7 +249,7 @@ git commit -m "feat(formulador): marcar visualmente los ingredientes ajustables 
 
 ---
 
-### Task 3: Promover "Auto-mejorar" al banner de bloqueo del Guardar
+### Task 3: Promover "Auto-mejorar" al banner de bloqueo del Guardar — ✅ COMPLETO
 
 **Files:**
 - Modify: `field-os-simulador/setas-os/simulador-app.jsx` (bloque `.sbar` — el banner `{!balanced&&(...)}` añadido en el PR #89, dentro de `{recipe.length>0&&(...)}`)
@@ -257,7 +259,7 @@ git commit -m "feat(formulador): marcar visualmente los ingredientes ajustables 
 - Consumes: `autoImprove` (`simulador-app.jsx:2395`, función sin argumentos que ya ajusta `recipe` internamente), `balMsg`/`balanced` (mismos que Task 2).
 - Produces: ninguno nuevo — solo cablea una función ya existente a un botón nuevo.
 
-- [ ] **Step 1: Escribir la prueba que falla**
+- [x] **Step 1: Escribir la prueba que falla**
 
 Agregar a `formulador-blocking-clarity.test.js`:
 
@@ -267,12 +269,12 @@ test('el banner de bloqueo por balance ofrece un atajo directo a Auto-mejorar', 
 });
 ```
 
-- [ ] **Step 2: Correr la prueba y confirmar que falla**
+- [x] **Step 2: Correr la prueba y confirmar que falla**
 
 Run: `cd field-os-simulador/setas-os && node --test formulador-blocking-clarity.test.js`
 Expected: FAIL — el botón no existe todavía dentro del banner.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 Localizar el bloque agregado en el PR #89 (buscar `role="status" aria-live="polite" style={{marginTop:6,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>` seguido de `⚠ {balMsg}`) y reemplazar:
 
@@ -295,21 +297,21 @@ por:
                 )}
 ```
 
-- [ ] **Step 4: Regenerar el build y correr la prueba**
+- [x] **Step 4: Regenerar el build y correr la prueba**
 
 Run: `cd field-os-simulador/setas-os && node build.js && node --test formulador-blocking-clarity.test.js build.test.js`
 Expected: PASS.
 
-- [ ] **Step 5: Correr el suite completo**
+- [x] **Step 5: Correr el suite completo**
 
 Run: `cd field-os-simulador/setas-os && node --test *.test.js`
 Expected: todos pass, 0 fail.
 
-- [ ] **Step 6: Verificar en navegador**
+- [x] **Step 6: Verificar en navegador**
 
 Harness Playwright: bajar el % de un ingrediente para desbalancear la receta, confirmar que el botón "✦ Auto-mejorar" aparece junto al mensaje y que al hacer click el balance mejora (no necesariamente llega a 100% en un solo click — `autoImprove` itera hasta 6 veces internamente, basta con confirmar que `an.tot` se acerca a 100 o que `opt.score` sube).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add field-os-simulador/setas-os/simulador-app.jsx field-os-simulador/setas-os/simulador-app.js field-os-simulador/setas-os/formulador-blocking-clarity.test.js
@@ -318,7 +320,9 @@ git commit -m "feat(formulador): ofrecer Auto-mejorar directo desde el aviso de 
 
 ---
 
-### Task 4: Steppers +/- en el input de porcentaje (ergonomía con guantes)
+### Task 4: Steppers +/- en el input de porcentaje (ergonomía con guantes) — ⛔ SUPERSEDED, NO EJECUTAR (ver PR #93)
+
+> Este task quedó reemplazado por PR #93 (ver el banner "UPDATE" al inicio del documento). No implementar — el componente `.mix-steppers` ya en producción cubre esta necesidad de forma más completa (botones `-5/-1/+1/+5`, `role="group"`, deshabilitado en filas bloqueadas y en los límites 0/100).
 
 **Files:**
 - Modify: `field-os-simulador/setas-os/simulador-app.jsx:5374-5380` (bloque de controles de cada `.rec-row`)
