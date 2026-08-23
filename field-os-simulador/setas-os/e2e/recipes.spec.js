@@ -58,5 +58,6 @@ test('la especie seleccionada sobrevive Producción → Control → Formular', a
   await goWorkspace(page, 'control');
   await goWorkspace(page, 'formular');
 
-  await expect(page.locator('[data-testid="species-bridge"] .bridge-name')).toHaveText('Orellana Gris');
+  await expect(page.locator('.form-species-context')).toContainText('Orellana Gris');
+  await expect(page.locator('#form-species-context-select')).toHaveValue('p_ostreatus_gris');
 });

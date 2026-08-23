@@ -35,14 +35,16 @@ test('mobile 390px: el rail inferior muestra los 4 espacios sin scroll horizonta
   }
 });
 
-// E2E-10 — Mobile: la barra de especie (species-bridge) nunca tapa el rail
-// de navegación — intersección geométrica debe ser cero, y los 4 botones
-// deben seguir respondiendo al clic.
-test('mobile: la barra de especie no tapa el rail de navegación', async ({ page }) => {
+// E2E-10 — Mobile: Formular integra la especie en su propio contexto; las
+// vistas secundarias conservan la barra sin tapar el rail inferior.
+test('mobile: Formular omite la barra de especie y las vistas secundarias no tapan el rail', async ({ page }) => {
   await openApp(page);
   await goWorkspace(page, 'formular');
 
   const bridge = page.locator('[data-testid="species-bridge"]');
+  await expect(bridge).toHaveCount(0);
+
+  await page.getByRole('tab', { name: 'Recetario' }).click();
   await expect(bridge).toBeVisible();
   const bridgeBox = await bridge.boundingBox();
   const railBox = await page.locator('.app-rail').boundingBox();

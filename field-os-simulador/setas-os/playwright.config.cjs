@@ -1,9 +1,17 @@
 'use strict';
 
 const { defineConfig, devices } = require('@playwright/test');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const APP_DIR = path.resolve(__dirname);
+const envPath = path.join(APP_DIR, '.env');
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+    if (match && !process.env[match[1]]) process.env[match[1]] = (match[2] || '').trim();
+  }
+}
 
 module.exports = defineConfig({
   testDir: path.join(APP_DIR, 'e2e'),

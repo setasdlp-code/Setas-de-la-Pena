@@ -22,7 +22,7 @@ La configuración levanta `python3 -m http.server` automáticamente en `127.0.0.
 - Cargar una receta desde Recetario aterriza en Formulador.
 - Secuencias repetidas de navegación no dejan estado visual residual.
 - Mobile 390 px mantiene exactamente cuatro botones sin overflow horizontal.
-- `.species-bridge` no puede solaparse con el rail inferior.
+- Formular integra la especie en `.form-species-context`; en las vistas secundarias, `.species-bridge` no puede solaparse con el rail inferior.
 - El selector de rol se mantiene como `expected failure` hasta que el cuerpo de su `sc-for` vuelva a renderizar los tres controles.
 
 ## Contratos que deben añadirse en la siguiente iteración
