@@ -822,14 +822,17 @@
                   <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                   <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                   <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="3" fill="var(--accent-terracotta)"></circle>
-                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="3" fill="var(--accent-blue-grey)"></circle>
-                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="3" fill="var(--accent-olive)"></circle>
+                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
+                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
+                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
+                  <sc-for list="{{ cm.sparkPoints }}" as="sp" hint-placeholder-count="6">
+                    <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
+                  </sc-for>
                 </svg>
-                <div style="display:flex;gap:12px;">
-                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp.</span>
-                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad</span>
-                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-olive);display:inline-block;"></span>CO₂</span>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp. <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveTemp }}°</b></span>
+                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveHum }}%</b></span>
+                  <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-olive);display:inline-block;"></span>CO₂ <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveCo2 }}</b></span>
                 </div>
                 <sc-if value="{{ cm.hasLiveAlert }}" hint-placeholder-val="{{ false }}">
                   <span style="font:var(--t-caption);color:var(--status-error);">{{ cm.liveAlertNote }}</span>
@@ -901,14 +904,17 @@
               <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
               <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
               <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="3.5" fill="var(--accent-terracotta)"></circle>
-              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="3.5" fill="var(--accent-blue-grey)"></circle>
-              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="3.5" fill="var(--accent-olive)"></circle>
+              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
+              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
+              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
+              <sc-for list="{{ camDetail.sparkPoints }}" as="sp" hint-placeholder-count="6">
+                <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
+              </sc-for>
             </svg>
-            <div style="display:flex;gap:12px;margin-top:6px;">
-              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura</span>
-              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad</span>
-              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-olive);display:inline-block;"></span>CO₂</span>
+            <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
+              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveTemp }}°C</b></span>
+              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveHum }}%</b></span>
+              <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-olive);display:inline-block;"></span>CO₂ <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveCo2 }} ppm</b></span>
             </div>
             <sc-if value="{{ camDetail.hasLiveAlert }}" hint-placeholder-val="{{ false }}">
               <div style="font:var(--t-caption);color:var(--status-error);margin-top:8px;">{{ camDetail.liveAlertNote }}</div>
@@ -2415,9 +2421,21 @@ class Component extends DCLogic {
     const toPath=(arr)=>{
       const mn=Math.min(...arr), mx=Math.max(...arr), span=Math.max(0.1,mx-mn);
       const pts=arr.map((v,i)=>[(i/(N-1)*W).toFixed(1), ((1-(v-mn)/span)*H).toFixed(1)]);
-      return { d:pts.map(p=>p.join(',')).join(' '), endY:pts[pts.length-1][1] };
+      return { d:pts.map(p=>p.join(',')).join(' '), endY:pts[pts.length-1][1], pts };
     };
     const tSpark=toPath(tPts), hSpark=toPath(hPts), cSpark=toPath(cPts);
+    // Puntos de interacción del sparkline: sin esto el gráfico es mudo al
+    // pasar el mouse — 6 columnas muestreadas a lo largo de las 24h, con el
+    // valor real (no solo la posición en px) para el <title> nativo del
+    // hover. Ver skill de dataviz: "ship the hover layer by default".
+    const sampleIdx=[0,4,9,14,19,23];
+    const sparkPoints=sampleIdx.map(i=>({
+      xStart: Math.max(0,parseFloat(tSpark.pts[i][0])-10).toFixed(1),
+      hoursAgo: N-1-i,
+      temp: Math.round(tPts[i]*10)/10,
+      hum: Math.round(hPts[i]),
+      co2: Math.round(cPts[i]),
+    }));
     return {
       liveTemp: temp, liveHum: hum, liveCo2: co2,
       liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
@@ -2425,6 +2443,7 @@ class Component extends DCLogic {
       hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
       tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
       tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
+      sparkPoints,
       sparkTrendLabel: `Tendencia últimas horas: temperatura, humedad y CO₂ (${temp}°C, ${hum}% HR, ${co2} ppm)`,
     };
   }
