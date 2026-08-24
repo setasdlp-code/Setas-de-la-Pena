@@ -14,12 +14,19 @@
     return Number.isFinite(ms) ? ms : null;
   };
 
+  const numericOrNull = (value) => {
+    if (value == null || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const normalizeBand = (band) => {
     if (!band || typeof band !== 'object') return null;
-    const min = Number.isFinite(Number(band.min)) ? Number(band.min) : null;
-    const max = Number.isFinite(Number(band.max)) ? Number(band.max) : null;
-    const target = Number.isFinite(Number(band.target)) ? Number(band.target) : null;
-    return { min, max, target };
+    return {
+      min: numericOrNull(band.min),
+      max: numericOrNull(band.max),
+      target: numericOrNull(band.target),
+    };
   };
 
   const normalizeRoomCycle = (input = {}) => ({
