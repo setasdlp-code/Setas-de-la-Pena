@@ -1911,7 +1911,7 @@ function App(props){
       getBatchWetKg:()=>batchRef.current.numBags*batchRef.current.kgBag,
       applyRecipe:async(targetRecipe)=>{
         setRecipe(targetRecipe);
-        return{recipe:targetRecipe};
+        return{ok:true,recipe:targetRecipe,adapter:'native'};
       },
     };
     const unregister=api.registerNativeAdapter(adapter);

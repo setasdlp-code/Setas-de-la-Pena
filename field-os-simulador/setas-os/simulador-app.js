@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 821c134ae111418bb506a8066cc827efa918859b59d2f92861214203e7d89b4e
+// source-hash: 8be66352dd616404ba30c9dabe67e0b51749d74770ee74fe7b7fc53b774b515d
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1453,7 +1453,7 @@ function App(props) {
       getBatchWetKg: () => batchRef.current.numBags * batchRef.current.kgBag,
       applyRecipe: async (targetRecipe) => {
         setRecipe(targetRecipe);
-        return { recipe: targetRecipe };
+        return { ok: true, recipe: targetRecipe, adapter: "native" };
       }
     };
     const unregister = api.registerNativeAdapter(adapter);
