@@ -1896,6 +1896,27 @@ function App(props){
     return 'produccion';
   });
   const [usePantry,setUsePantry]=useState(globalMode === 'produccion');
+  const recipeRef=React.useRef(recipe);
+  React.useEffect(()=>{recipeRef.current=recipe;},[recipe]);
+  const lockedIdsRef=React.useRef(lockedIds);
+  React.useEffect(()=>{lockedIdsRef.current=lockedIds;},[lockedIds]);
+  const batchRef=React.useRef({numBags,kgBag});
+  React.useEffect(()=>{batchRef.current={numBags,kgBag};},[numBags,kgBag]);
+  React.useEffect(()=>{
+    const api=globalThis.SetasFormulatorAPI;
+    if(!api||typeof api.registerNativeAdapter!=='function') return;
+    const adapter={
+      getRecipe:()=>recipeRef.current,
+      getLockedIds:()=>new Set(lockedIdsRef.current),
+      getBatchWetKg:()=>batchRef.current.numBags*batchRef.current.kgBag,
+      applyRecipe:async(targetRecipe)=>{
+        setRecipe(targetRecipe);
+        return{recipe:targetRecipe};
+      },
+    };
+    const unregister=api.registerNativeAdapter(adapter);
+    return()=>{if(typeof unregister==='function')unregister();};
+  },[]);
   const [optUseStock, setOptUseStock] = useState(globalMode === 'produccion');
   const setGlobalWorkMode = (mode) => {
     setGlobalMode(mode);
