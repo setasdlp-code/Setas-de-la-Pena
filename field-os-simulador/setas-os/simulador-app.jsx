@@ -1726,6 +1726,29 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
   };
 };
 
+const generateQrSvgDataUrl = (text) => {
+  try {
+    const qrMini = typeof window !== 'undefined' ? window.QRMini : (typeof globalThis !== 'undefined' ? globalThis.QRMini : null);
+    if (!qrMini || typeof qrMini.matrix !== 'function') {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23000"/></svg>';
+    }
+    const m = qrMini.matrix(text || 'SETAS-OS');
+    const n = m.length;
+    const q = 4;
+    const dim = n + q * 2;
+    let rects = '';
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) rects += `<rect x="${c + q}" y="${r + q}" width="1" height="1"/>`;
+      }
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" shape-rendering="crispEdges"><rect width="${dim}" height="${dim}" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
+    return 'data:image/svg+xml;base64,' + (typeof btoa === 'function' ? btoa(svg) : Buffer.from(svg).toString('base64'));
+  } catch (e) {
+    return '';
+  }
+};
+
 function App(props){
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
@@ -1842,6 +1865,15 @@ function App(props){
   const [optMaxCost,setOptMaxCost]=useState(0);
   const [optResults,setOptResults]=useState(null);
   const [optRunning,setOptRunning]=useState(false);
+  const [optProfile,setOptProfile]=useState('produccion');
+  const [showQrSheet,setShowQrSheet]=useState(false);
+  const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
+  const [showThermalModal,setShowThermalModal]=useState(false);
+  const [thermalLote,setThermalLote]=useState(null);
+  const [thermalSize,setThermalSize]=useState('50x30');
+  const [thermalScope,setThermalScope]=useState('all');
+  const [thermalBagStart,setThermalBagStart]=useState(1);
+  const [thermalBagEnd,setThermalBagEnd]=useState(20);
   // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
   // completo. Antes solo alimentaba el Generador automático — ahora también
   // controla las sugerencias individuales del Perito (bestStock en
@@ -1886,9 +1918,6 @@ function App(props){
   const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
-  const [optProfile,setOptProfile]=useState('produccion');
-  const [showQrSheet,setShowQrSheet]=useState(false);
-  const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
   const [prodKg,setProdKg]=useState(1.5);
@@ -1960,7 +1989,7 @@ function App(props){
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showProvModal||catalogModalOpen);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showProvModal||catalogModalOpen);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
@@ -3431,7 +3460,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
-        <aside className="os-detail-panel"><h2>Acciones válidas ahora</h2><div className="os-valid-actions">{actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}</div><span className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span></aside></div>
+        <aside className="os-detail-panel">
+          <h2>Acciones válidas ahora</h2>
+          <div className="os-valid-actions">
+            {actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}
+            <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
+              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+            </button>
+          </div>
+          <span className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
+        </aside>
+      </div>
     </article>;
   };
 
@@ -6688,6 +6727,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setThermalLote(currentLote);
+                          setThermalBagEnd(currentLote.numBolsas||12);
+                          setThermalScope('all');
+                          setShowQrSheet(false);
+                          setShowThermalModal(true);
+                        }}
+                      >
+                        🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                      </button>
+                      <button
+                        type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-1)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setShowQrSheet(false);
@@ -6707,6 +6759,179 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           );
         })()}
+
+        {showThermalModal && thermalLote && (() => {
+          const lote = thermalLote;
+          const totalBags = Math.max(1, lote.numBolsas || 12);
+          const items = [];
+
+          if (thermalScope === 'lote') {
+            items.push({
+              id: lote.codigo,
+              bagCode: 'LOTE MAESTRO',
+              species: lote.especie || 'Sustrato colonizado',
+              date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
+              recipe: lote.recipeRef?.name || 'Receta Estándar',
+              bagsText: `${totalBags} bolsas`,
+              qrUrl: `https://setasdelapena.co/l/${lote.codigo}`
+            });
+          } else {
+            const start = thermalScope === 'custom' ? Math.max(1, Math.min(thermalBagStart, totalBags)) : 1;
+            const end = thermalScope === 'custom' ? Math.max(start, Math.min(thermalBagEnd, totalBags)) : totalBags;
+            for (let i = start; i <= end; i++) {
+              const bagNum = String(i).padStart(2, '0');
+              const bagId = `${lote.codigo}-B${bagNum}`;
+              items.push({
+                id: bagId,
+                bagCode: `BOLSA #${bagNum} de ${totalBags}`,
+                species: lote.especie || 'Sustrato colonizado',
+                date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
+                recipe: lote.recipeRef?.name || 'Receta Estándar',
+                bagsText: `Bolsa ${i}/${totalBags}`,
+                qrUrl: `https://setasdelapena.co/c/${bagId}`
+              });
+            }
+          }
+
+          return (
+            <div className="inv-modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowThermalModal(false); }}>
+              <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Generador de etiquetas térmicas" style={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>
+                      🏷 Impresión Térmica · Rollo Adhesivo
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
+                      Lote {lote.codigo} · {lote.especie}
+                    </div>
+                  </div>
+                  <button onClick={() => setShowThermalModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--ink-2)' }}>✕</button>
+                </div>
+
+                {/* CONTROLES DE CONFIGURACIÓN */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                      Formato de Rollo
+                    </label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('50x30')}
+                        style={{ flex: 1, minHeight: 36, padding: '6px 8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        50 × 30 mm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('60x40')}
+                        style={{ flex: 1, minHeight: 36, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        60 × 40 mm
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                      Alcance de Impresión
+                    </label>
+                    <select
+                      className="inv-input"
+                      style={{ height: 36, fontSize: 11 }}
+                      value={thermalScope}
+                      onChange={e => setThermalScope(e.target.value)}
+                    >
+                      <option value="all">Todas las bolsas (1 a {totalBags})</option>
+                      <option value="lote">Solo etiqueta maestra de lote</option>
+                      <option value="custom">Rango personalizado</option>
+                    </select>
+                  </div>
+                </div>
+
+                {thermalScope === 'custom' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, background: 'var(--paper-0, #F7F4EC)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline, #8C7F5B)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Desde bolsa:</span>
+                    <input type="number" min={1} max={totalBags} value={thermalBagStart} onChange={e => setThermalBagStart(parseInt(e.target.value) || 1)} style={{ width: 60, height: 28, fontSize: 11, textAlign: 'center' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>hasta:</span>
+                    <input type="number" min={thermalBagStart} max={totalBags} value={thermalBagEnd} onChange={e => setThermalBagEnd(parseInt(e.target.value) || totalBags)} style={{ width: 60, height: 28, fontSize: 11, textAlign: 'center' }} />
+                  </div>
+                )}
+
+                {/* PREVIEW EN PANTALLA */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase' }}>
+                      Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                      Escala 1:1 ({thermalSize === '50x30' ? '50×30 mm' : '60×40 mm'})
+                    </span>
+                  </div>
+                  <div className="thermal-preview-container">
+                    {items.map(item => {
+                      const qrSrc = generateQrSvgDataUrl(item.qrUrl);
+                      return (
+                        <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
+                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} />
+                          <div className="thermal-body">
+                            <div className="thermal-code">{item.id}</div>
+                            <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-meta">
+                              <div>{item.bagCode}</div>
+                              <div>Inoc: {item.date}</div>
+                              <div>Fórmula: {item.recipe}</div>
+                            </div>
+                            <div className="thermal-footer">Setas de la Peña · Tenjo</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* BOTONES DE ACCIÓN */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 12 }}>
+                  <button onClick={() => setShowThermalModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      try { window.print(); } catch (e) { console.error(e); }
+                    }}
+                    className="inv-btn inv-btn-pri"
+                    style={{ minHeight: 40, padding: '6px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
+                  >
+                    🖨 Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
+                  </button>
+                </div>
+
+                {/* CONTENEDOR OCULTO PARA IMPRESIÓN DIRECTA (@media print) */}
+                <div className="thermal-print-roll" style={{ display: 'none' }}>
+                  {items.map(item => {
+                    const qrSrc = generateQrSvgDataUrl(item.qrUrl);
+                    return (
+                      <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
+                        <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} />
+                        <div className="thermal-body">
+                          <div className="thermal-code">{item.id}</div>
+                          <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-meta">
+                            <div>{item.bagCode}</div>
+                            <div>Inoc: {item.date}</div>
+                            <div>Fórmula: {item.recipe}</div>
+                          </div>
+                          <div className="thermal-footer">Setas de la Peña · Tenjo</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{height:40}}/>
         
       </div>
