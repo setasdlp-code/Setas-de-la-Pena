@@ -1,13 +1,21 @@
-# Setas de la Peña — MCP Server
+# Setas de la Peña — MCP Servers
 
-MCP server local (stdio) que expone el conocimiento operacional del cultivo a Claude y ChatGPT.
+Dos servidores MCP locales (stdio), independientes entre sí:
+
+| Servidor | Datos | Uso |
+|---|---|---|
+| `setas_mcp.py` | Parámetros de cultivo embebidos en el código (especies, FAE, automatización, inventario) | Consultas rápidas y estables sobre cultivo — no requiere que el repo esté clonado localmente para responder |
+| `setas_bridge_mcp.py` | Lee `knowledge_base/`, `field_os/`, `field-os-simulador/` y docs del repo **en vivo desde disco** — sin datos hardcodeados | Puente de lectura/escritura para que cualquier agente (Claude, ChatGPT, Codex, Antigravity) vea el estado actual del repo y coordine cambios (`CHANGELOG.md`, `FARM_BRAIN.md`) sin editar el filesystem a ciegas |
+
+Ambos pueden correr en paralelo — no comparten estado ni se importan entre sí.
 
 ## Archivos
 
 | Archivo | Descripción |
 |---|---|
-| `setas_mcp.py` | Servidor MCP principal (FastMCP/Python) |
-| `claude_desktop_config_snippet.json` | Snippet para `claude_desktop_config.json` |
+| `setas_mcp.py` | Servidor MCP principal (FastMCP/Python) — datos de cultivo embebidos |
+| `setas_bridge_mcp.py` | Servidor puente (FastMCP/Python) — lectura/escritura en vivo sobre el repo |
+| `claude_desktop_config_snippet.json` | Snippet para `claude_desktop_config.json` (ambos servidores) |
 | `chatgpt_system_prompt.md` | System prompt para Custom GPT en OpenAI |
 
 ## Instalación
@@ -39,7 +47,7 @@ ChatGPT no soporta MCP nativo. La integración es vía **system prompt** (`chatg
 2. Pega el contenido de `chatgpt_system_prompt.md` en "Instructions"
 3. El GPT tendrá el contexto embebido; para datos técnicos en tiempo real usará a Claude como fuente de verdad
 
-## Tools disponibles
+## Tools disponibles — `setas_mcp.py`
 
 | Tool | Descripción |
 |---|---|
@@ -52,6 +60,23 @@ ChatGPT no soporta MCP nativo. La integración es vía **system prompt** (`chatg
 | `setas_get_inventario` | Inventario hardware y consumibles |
 | `setas_get_pedidos_pendientes` | Recepciones por verificar + pendientes de compra |
 | `setas_generar_sop` | Genera SOPs: inoculacion, fruiting_setup, cosecha, fae_check, sensor_check |
+
+## Tools disponibles — `setas_bridge_mcp.py`
+
+Todas las rutas son relativas a la raíz del repo. Las tools de lectura recorren el filesystem en cada llamada (sin caché ni datos embebidos); las de escritura solo pueden **agregar** contenido a `CHANGELOG.md` y `FARM_BRAIN.md` — nunca sobrescriben ni borran.
+
+| Tool | Tipo | Descripción |
+|---|---|---|
+| `setas_bridge_list_tools` | lectura | Catálogo de tools de este servidor |
+| `setas_bridge_read_file` | lectura | Lee un archivo del repo en vivo (path relativo) |
+| `setas_bridge_list_directory` | lectura | Lista archivos/subdirectorios de una carpeta |
+| `setas_bridge_search` | lectura | Busca texto literal en archivos bajo un directorio |
+| `setas_bridge_get_farm_brain` | lectura | Atajo: `knowledge_base/FARM_BRAIN.md` completo |
+| `setas_bridge_get_index` | lectura | Atajo: `knowledge_base/INDEX.yaml` completo |
+| `setas_bridge_append_changelog` | escritura | Agrega una entrada a `CHANGELOG.md` |
+| `setas_bridge_append_farm_brain_note` | escritura | Agrega una nota fechada a `FARM_BRAIN.md` |
+
+Archivos con credenciales (`gmail_credentials.json`, `gmail_token.json`, `firebase/` bajo `setas-os/`, cualquier ruta que contenga `secret`/`credentials`/`token.json`/`.env`) están bloqueados en ambas direcciones.
 
 ## División Claude / ChatGPT
 

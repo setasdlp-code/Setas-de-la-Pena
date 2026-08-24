@@ -1,10 +1,17 @@
 {
-  "_instrucciones": "Agrega el bloque 'setas' dentro de 'mcpServers' en tu claude_desktop_config.json (~/.config/claude/claude_desktop_config.json en Mac).",
+  "_instrucciones": "Agrega los bloques 'setas' y 'setas_bridge' dentro de 'mcpServers' en tu claude_desktop_config.json (~/.config/claude/claude_desktop_config.json en Mac). Ambos usan el mismo entorno .venv; si mueves el proyecto, actualiza las cuatro rutas absolutas.",
   "mcpServers": {
     "setas": {
       "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
       "args": [
         "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_mcp.py"
+      ],
+      "env": {}
+    },
+    "setas_bridge": {
+      "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
+      "args": [
+        "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_bridge_mcp.py"
       ],
       "env": {}
     }
