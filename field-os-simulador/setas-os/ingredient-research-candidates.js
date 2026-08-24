@@ -109,7 +109,7 @@ const RESEARCH_CANDIDATES = [
     priority:11, cat:'sup', role:'suplemento_n', researchStatus:'candidate', availability:'Distribuidores de alimento animal; seco y relativamente estandarizado.', locality:'Bogotá/Sabana',
     moistureBasis:'as_received', composition:{dry_matter_pct_as_received:89,protein_pct_dm:29.5,fat_pct_dm:11.1,ndf_pct_dm:34.2,starch_pct_dm:9.3,cn:null,n_pct:null,c_pct:null},
     species:['p_ostreatus_gris','p_ostreatus_blanco','lions_mane'], risks:['micotoxinas','grasa_alta','contaminacion_por_sobredosificacion'], suggestedTrial:'2.5–10% como suplemento concentrado.',
-    costPlanningCopKg:{min:2500,max:4500,basis:'pilot_budget_not_market_quote'}, sources:['https://www.feedipedia.org/node/71']
+    costPlanningCopKg:{min:2500,max:4500,basis:'pilot_budget_fresh_material'}, sources:['https://www.feedipedia.org/node/71']
   },
   {
     id:'corn_gluten_feed', name:'Corn gluten feed / gluten feed de maíz', scientific:'Zea mays',
