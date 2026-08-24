@@ -39,3 +39,15 @@ test('Calcular produce >=4 firmas de base distintas en el top-12, sin ninguna en
   );
   expect(new Set(recipeKeys).size).toBe(recipeKeys.length);
 });
+
+// Prueba de vida del adaptador nativo: el Formulador debe registrarse ante
+// SetasFormulatorAPI apenas monta, sin depender de ninguna interacción del
+// usuario. Si esto falla con adapterType()==='dom' (o undefined), el
+// useEffect de registro en simulador-app.jsx no está corriendo — no arreglar
+// aquí, es una señal de regresión en el wiring del adaptador nativo.
+test('Formulador registra el adaptador nativo del Perito al montar', async ({ page }) => {
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  const adapterType = await page.evaluate(() => window.SetasFormulatorAPI?.adapterType?.());
+  expect(adapterType).toBe('native');
+});
