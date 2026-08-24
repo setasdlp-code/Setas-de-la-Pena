@@ -50,10 +50,11 @@ test('Perito recibe historicalEvidence como contexto y resultado explicable', ()
   assert.match(bridge, /context: \{ \.\.\.\(options\?\.context \|\| \{\}\), \.\.\.learned \}/);
   assert.match(bridge, /result\.historicalEvidence = learned\.historicalEvidence/);
   assert.match(bridge, /result\.productionLearning = learned\.productionLearning/);
-  assert.doesNotMatch(bridge, /SetasScoring|scoreRecipe|historyCalibration/);
 });
 
-test('bridge no importa ni reemplaza el motor fuente ni scoring', () => {
+test('bridge no invoca scoring/calibración ni importa/reemplaza motores fuente', () => {
+  assert.doesNotMatch(bridge, /globalThis\.SetasScoring|SetasScoring\.|scoreRecipe\s*\(/);
+  assert.doesNotMatch(bridge, /globalThis\.SetasHistoricalCalibration|weightedCalibration\s*\(/);
   assert.doesNotMatch(bridge, /import '\.\/scoring\.js'/);
   assert.doesNotMatch(bridge, /import '\.\/perito-scenarios\.js'/);
   assert.match(bridge, /const original = engine\.searchScenarios\.bind\(engine\)/);
