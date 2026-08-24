@@ -91,7 +91,7 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
 test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
   assert.match(jsx, /className=\{`form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}`\} aria-labelledby="form-species-context-title"/);
   assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
-  assert.match(jsx, /Receta activa \+ evaluación en vivo/);
+  assert.match(jsx, /Puntaje, gauges y lote/);
   assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
   assert.match(jsx, /Perito \+ Automejora/);
   assert.match(css, /\.form-recipe-workspace\{[\s\S]*"recipe evaluation"/);

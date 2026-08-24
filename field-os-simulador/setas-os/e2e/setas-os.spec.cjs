@@ -115,36 +115,54 @@ test.describe('desktop navigation contract', () => {
     await contextTab(page, 'Formular').click();
 
     const species = page.locator('.form-species-context');
+    const liveSummary = page.locator('.sim-live-dashboard');
     const recipe = page.locator('#bl-receta');
     const evaluation = page.locator('#recipe-live-evaluation');
+    const summary = page.locator('#bl-receta-summary');
     const ingredients = page.locator('#bl-ingredientes');
     const advanced = page.locator('.form-advanced-tools-head');
 
     await expect(species).toBeVisible();
     await expect(species).toContainText('Orellana Gris');
+    // Before any ingredient is added, the sticky bar is the single "Receta activa" home —
+    // it stays visible (no longer disappears) and shows the empty-state prompt.
+    await expect(liveSummary).toBeVisible();
     await expect(recipe).toBeVisible();
+    await expect(recipe).toContainText('Sin ingredientes aún');
     await expect(evaluation).toBeVisible();
     await expect(evaluation).toContainText('Evaluación en vivo');
+    // The score/gauges/batch summary panel only renders once a recipe exists.
+    await expect(summary).toBeHidden();
     await expect(advanced).toContainText('Perito + Automejora');
-    await expect(page.locator('.sim-live-dashboard')).toBeHidden();
 
-    const layout = await page.evaluate(() => {
+    const layoutBefore = await page.evaluate(() => {
       const rect = sel => document.querySelector(sel).getBoundingClientRect();
-      const r = rect('#bl-receta');
       const e = rect('#recipe-live-evaluation');
       const i = rect('#bl-ingredientes');
       const a = rect('.form-advanced-tools-head');
-      return { recipeTop:r.top, evaluationTop:e.top, recipeLeft:r.left, evaluationLeft:e.left, ingredientsTop:i.top, advancedTop:a.top };
+      return { evaluationTop:e.top, ingredientsTop:i.top, advancedTop:a.top };
     });
-    expect(Math.abs(layout.recipeTop-layout.evaluationTop)).toBeLessThan(3);
-    expect(layout.evaluationLeft).toBeGreaterThan(layout.recipeLeft);
-    expect(layout.ingredientsTop).toBeGreaterThan(layout.recipeTop);
-    expect(layout.advancedTop).toBeGreaterThan(layout.ingredientsTop);
+    expect(layoutBefore.ingredientsTop).toBeGreaterThan(layoutBefore.evaluationTop);
+    expect(layoutBefore.advancedTop).toBeGreaterThan(layoutBefore.ingredientsTop);
 
     await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
-    const liveSummary = page.locator('.sim-live-dashboard');
     await expect(liveSummary).toBeVisible();
     await expect(liveSummary).toContainText('Paja de trigo');
+    // Editing lives only in the sticky tray now — the summary panel below has no row list.
+    await expect(recipe).toContainText('Paja de trigo');
+    await expect(summary).toBeVisible();
+    await expect(summary).not.toContainText('Paja de trigo');
+
+    // The score/gauges panel keeps its two-column layout alongside RecipeGauges.
+    const layoutAfter = await page.evaluate(() => {
+      const rect = sel => document.querySelector(sel).getBoundingClientRect();
+      const s = rect('#bl-receta-summary');
+      const e = rect('#recipe-live-evaluation');
+      return { summaryTop:s.top, evaluationTop:e.top, summaryLeft:s.left, evaluationLeft:e.left };
+    });
+    expect(Math.abs(layoutAfter.summaryTop-layoutAfter.evaluationTop)).toBeLessThan(3);
+    expect(layoutAfter.evaluationLeft).toBeGreaterThan(layoutAfter.summaryLeft);
+
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight / 2; });
     const sticky = await liveSummary.evaluate(el => {
       const r = el.getBoundingClientRect();
