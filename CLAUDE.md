@@ -61,3 +61,17 @@ Trabaja dentro del alcance declarado. Si algo fuera de alcance parece necesario,
 - No autenticar, no ejecutar transacciones, no tocar credenciales (`gmail_credentials.json`, `gmail_token.json`, `firebase/` bajo `setas-os/`) más allá de lo estrictamente necesario para una tarea aprobada explícitamente.
 - No reescribir archivos completos cuando un fix quirúrgico basta — ver división de trabajo arriba.
 - No modificar `setasdlp-code/Field-OS` ni `setasdlp-code/simulador`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`setasdlp-code/Setas-de-la-Pena`), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
