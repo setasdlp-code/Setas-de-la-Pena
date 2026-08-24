@@ -9,6 +9,7 @@ const {
   noveltyScore,
   applyMutation,
   paretoFront,
+  generateCoformulationSeeds,
   searchScenarios,
   selectRecommended,
   dominantBaseKey,
@@ -184,7 +185,9 @@ test('Perito consume SetasFormulatorAPI y no conoce controles internos del Formu
   assert.match(bridge, /SetasPeritoScenarios\.searchScenarios/);
   assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);
   assert.match(bridge, /g\.cs\.includes\(sKey\)/);
-  assert.match(bridge, /rawTotal < 99 \|\| rawTotal > 101/);
+  assert.match(bridge, /rawTotal > 101/);
+  assert.match(bridge, /Asistente de Co-formulación/);
+  assert.match(bridge, /Completar mi receta/);
   assert.match(bridge, /__bridgeRecompute:\s*true/);
   assert.match(bridge, /historyCalibrationFor\(context\.sKey/);
   assert.doesNotMatch(bridge, /blendedEB:\s*detail\.baseline/);
@@ -252,4 +255,101 @@ test('selectRecommended prefiere un type no visto sobre repetir type, aunque ten
   ];
   const out = selectRecommended(candidates, { groupKeyFor, limit: 2 });
   assert.deepEqual(out.map(c => c.id), ['c1', 'c3']);
+});
+
+test('generateCoformulationSeeds completa fórmula parcial anclando ingredientes existentes y sumando 100%', () => {
+  const spp = {
+    test_sp: {
+      cn_optimal: { ideal: 30, min: 20, max: 40 },
+      supplementation_max: 20,
+    },
+  };
+  const catalog = [
+    { id: 'aserrin_roble', name: 'Aserrín de Roble', role: 'base_carbono', c: 50, n: 0.1, cn: 500, moisture: 10 },
+    { id: 'salvado_trigo', name: 'Salvado de Trigo', role: 'suplemento_n', c: 45, n: 2.5, cn: 18, moisture: 12 },
+    { id: 'cascarilla_arroz', name: 'Cascarilla de Arroz', role: 'aireador', c: 40, n: 0.5, cn: 80, moisture: 10 },
+    { id: 'carbonato_calcio', name: 'Carbonato de Calcio', role: 'aditivo_ph', c: 0, n: 0, cn: 0, moisture: 0 },
+    { id: 'yeso', name: 'Yeso', role: 'aditivo_estructura', c: 0, n: 0, cn: 0, moisture: 0 },
+  ];
+
+  const partial = [{ id: 'aserrin_roble', p: 40 }];
+  const seeds = generateCoformulationSeeds({
+    targetKey: 'test_sp',
+    partialRecipe: partial,
+    ingredients: catalog,
+    spp,
+    profileKey: 'produccion',
+  });
+
+  assert.ok(seeds.length > 0, 'debe generar semillas co-formuladas');
+  seeds.forEach(s => {
+    const tot = s.recipe.reduce((sum, r) => sum + r.p, 0);
+    assert.ok(Math.abs(tot - 100) < 0.2, `la semilla debe sumar 100%, dio ${tot}`);
+    const oak = s.recipe.find(r => r.id === 'aserrin_roble');
+    assert.ok(oak && oak.p >= 40, 'debe preservar o incrementar la base anclada');
+  });
+});
+
+test('searchScenarios con receta parcial retorna isPartial=true y añade diffs en addedIngredients', () => {
+  const spp = {
+    test_sp: {
+      cn_optimal: { ideal: 30, min: 20, max: 40 },
+      supplementation_max: 20,
+      eb_baseline: 40,
+      eb_optimal: 90,
+      spawn_rate: 8,
+    },
+  };
+  const catalog = [
+    { id: 'aserrin_roble', name: 'Aserrín de Roble', role: 'base_carbono', c: 50, n: 0.1, cn: 500, moisture: 10, cost: 300 },
+    { id: 'salvado_trigo', name: 'Salvado de Trigo', role: 'suplemento_n', c: 45, n: 2.5, cn: 18, moisture: 12, cost: 1200 },
+    { id: 'cascarilla_arroz', name: 'Cascarilla de Arroz', role: 'aireador', c: 40, n: 0.5, cn: 80, moisture: 10, cost: 400 },
+    { id: 'carbonato_calcio', name: 'Carbonato de Calcio', role: 'aditivo_ph', c: 0, n: 0, cn: 0, moisture: 0, cost: 500 },
+    { id: 'yeso', name: 'Yeso', role: 'aditivo_estructura', c: 0, n: 0, cn: 0, moisture: 0, cost: 500 },
+  ];
+
+  const analyzeMock = (recipe) => {
+    const p = Object.fromEntries(recipe.map(r => [r.id, r.p]));
+    return {
+      tot: recipe.reduce((s, r) => s + r.p, 0),
+      eb: 75,
+      cost: 500,
+      cn: 30,
+      sp: spp.test_sp,
+      suppP: p.salvado_trigo || 0,
+      trichoderma: false,
+    };
+  };
+
+  const scoreMock = () => ({
+    score: 85,
+    dimensions: {
+      safety: { score: 85, status: 'approved' },
+      agronomy: { score: 85, status: 'acceptable' },
+      economy: { score: 80, status: 'acceptable' },
+    },
+    uncertainty: { eb: { confidence: 'high' }, risk: { confidence: 'high' } },
+  });
+
+  const partial = [{ id: 'aserrin_roble', p: 45 }];
+  const result = searchScenarios({
+    recipe: partial,
+    context: { sKey: 'test_sp', spp },
+    targetKey: 'test_sp',
+    spp,
+    ingredients: catalog,
+    analyze: analyzeMock,
+    score: scoreMock,
+    searchMode: 'hybrid',
+  });
+
+  assert.equal(result.isPartial, true);
+  assert.equal(result.partialTotal, 45);
+  assert.ok(result.recommended.length > 0, 'debe tener recomendaciones');
+  result.recommended.forEach(rec => {
+    assert.ok(Array.isArray(rec.addedIngredients), 'debe incluir array de addedIngredients');
+    assert.ok(rec.addedIngredients.length > 0, 'debe contener los ingredientes agregados');
+    const tot = rec.recipe.reduce((s, r) => s + r.p, 0);
+    assert.ok(Math.abs(tot - 100) < 0.2, `receta completada debe sumar 100%, dio ${tot}`);
+  });
 });
