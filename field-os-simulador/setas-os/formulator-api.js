@@ -186,6 +186,20 @@
   const applyRecipe = async (targetRecipe, options = {}) => {
     const names = options.names || {};
     const before = getRecipe(names);
+
+    const distanceFn = engine()?.recipeDistance;
+    if (!options.force && options.expectedRecipe && typeof distanceFn === 'function' && distanceFn(before, options.expectedRecipe) > 0.012) {
+      return { ok: false, message: 'La receta cambió desde que se calculó este escenario. Espera el recálculo del Perito.' };
+    }
+    const guardLockedIds = getLockedIds(names);
+    const beforeMap = Object.fromEntries(before.map(r => [r.id, r.p]));
+    const targetMap = Object.fromEntries((targetRecipe || []).map(r => [r.id, Number(r.p) || 0]));
+    for (const id of guardLockedIds) {
+      if (Math.abs((beforeMap[id] || 0) - (targetMap[id] || 0)) > 0.15) {
+        return { ok: false, message: `${names[id] || id} está fijado; la receta propuesta ya no es aplicable.` };
+      }
+    }
+
     let result;
     if (nativeAdapter?.applyRecipe) {
       try {

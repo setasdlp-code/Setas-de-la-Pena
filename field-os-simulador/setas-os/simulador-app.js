@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 8270f40a0877f05c4729917c48361c718f6c1fd8df9dd02b9b19abe04f2f8712
+// source-hash: 8be66352dd616404ba30c9dabe67e0b51749d74770ee74fe7b7fc53b774b515d
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1432,6 +1432,35 @@ function App(props) {
     return "produccion";
   });
   const [usePantry, setUsePantry] = useState(globalMode === "produccion");
+  const recipeRef = React.useRef(recipe);
+  React.useEffect(() => {
+    recipeRef.current = recipe;
+  }, [recipe]);
+  const lockedIdsRef = React.useRef(lockedIds);
+  React.useEffect(() => {
+    lockedIdsRef.current = lockedIds;
+  }, [lockedIds]);
+  const batchRef = React.useRef({ numBags, kgBag });
+  React.useEffect(() => {
+    batchRef.current = { numBags, kgBag };
+  }, [numBags, kgBag]);
+  React.useEffect(() => {
+    const api = globalThis.SetasFormulatorAPI;
+    if (!api || typeof api.registerNativeAdapter !== "function") return;
+    const adapter = {
+      getRecipe: () => recipeRef.current,
+      getLockedIds: () => new Set(lockedIdsRef.current),
+      getBatchWetKg: () => batchRef.current.numBags * batchRef.current.kgBag,
+      applyRecipe: async (targetRecipe) => {
+        setRecipe(targetRecipe);
+        return { ok: true, recipe: targetRecipe, adapter: "native" };
+      }
+    };
+    const unregister = api.registerNativeAdapter(adapter);
+    return () => {
+      if (typeof unregister === "function") unregister();
+    };
+  }, []);
   const [optUseStock, setOptUseStock] = useState(globalMode === "produccion");
   const setGlobalWorkMode = (mode2) => {
     setGlobalMode(mode2);
