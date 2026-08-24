@@ -1875,8 +1875,11 @@
   /* 10. Comparador: 1 col */
   
 
-  /* 11. Recipe row: ingrediente rediseñado como flexbox column */
-  .sim-root .rec-row{ display:flex!important; flex-direction:column!important; gap:8px!important; padding:12px 14px!important; }
+  /* 11. Recipe row: fila compacta (antes columna) — ahora vive en la bandeja sticky
+     del Formulador, donde el alto vertical es el recurso escaso; se mantiene en una
+     sola línea también en móvil y solo el grupo de steppers puede pasar a una segunda
+     línea si el ancho no alcanza. */
+  .sim-root .rec-row{ display:flex!important; flex-wrap:wrap!important; align-items:center!important; gap:6px!important; padding:6px 10px!important; }
 
   /* 14. Wrap: sin padding lateral (paneles ya tienen el suyo); conserva el padding-bottom que reserva espacio para el rail fijo */
   .sim-root .wrap{ padding:0 0 96px!important; }
