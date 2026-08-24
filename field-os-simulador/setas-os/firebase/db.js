@@ -1,13 +1,10 @@
 // Capa de acceso a datos para Setas OS sobre Firestore.
-// Cubre las 3 piezas que requerían persistencia real según la auditoría:
-// recetas (con el mismo balance de masa que ya se valida en simulador.html),
-// inventario con descuento FIFO transaccional, y lotes de producción con
-// snapshot congelado de la receta (mismo patrón que `buildProvenance` en
-// Setas OS.dc.html, ahora en un documento en vez de en memoria).
+// Cubre recetas, inventario FIFO, lotes de producción y la capa de aprendizaje
+// operacional (RoomCycle, telemetría y CycleEvidence).
 import { db } from "./firebase-init.js";
 import {
   collection, addDoc, getDocs, query, where, orderBy,
-  runTransaction, doc, serverTimestamp, updateDoc,
+  runTransaction, doc, serverTimestamp, updateDoc, setDoc,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // Misma tolerancia que MASS_BALANCE_TOL en simulador.html — duplicada a propósito:
@@ -51,14 +48,12 @@ export async function crearLoteProduccion({ codigo, especie, camara, operador, r
   return addDoc(collection(db, "lotes_produccion"), {
     codigo, especie, camara, operador,
     estado: "activo",
-    recetaSnapshot: receta, // copia inmutable — no una referencia al doc de recetas/
+    recetaSnapshot: receta,
     createdAt: serverTimestamp(),
   });
 }
 
 // ── Inventario — descuento FIFO transaccional ─────────────────────────────
-// Evita la condición de carrera de dos operadores ejecutando lotes al mismo
-// tiempo y descontando el mismo kg dos veces.
 export async function descontarInventarioFIFO(ingredienteId, kgNecesarios) {
   return runTransaction(db, async (tx) => {
     const lotesQ = query(
@@ -67,9 +62,7 @@ export async function descontarInventarioFIFO(ingredienteId, kgNecesarios) {
       where("activo", "==", true),
       orderBy("fechaCompra", "asc")
     );
-    const snap = await getDocs(lotesQ); // lectura fuera de tx: Firestore Web SDK exige
-    // reads-antes-que-writes dentro de runTransaction vía tx.get(docRef), así que
-    // resolvemos los docRefs aquí y los releemos dentro de la transacción abajo.
+    const snap = await getDocs(lotesQ);
     let restante = kgNecesarios;
     const actualizaciones = [];
     for (const d of snap.docs) {
@@ -90,7 +83,50 @@ export async function descontarInventarioFIFO(ingredienteId, kgNecesarios) {
   });
 }
 
-// ── Incidencias climáticas — mismo modelo aviso/alarma/crítico de climate-bench ──
+// ── Production Learning Loop ──────────────────────────────────────────────
+// IDs deterministas evitan duplicar el mismo ciclo/evidencia al reintentar una
+// escritura offline. La telemetría usa un id estable derivado de su identidad.
+const safeId = value => String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '_').slice(0, 180);
+const telemetryDocId = reading => safeId(
+  reading.id || [reading.room_id, reading.device_id, reading.metric, reading.observed_at].join('__')
+);
+
+export async function guardarRoomCycle(cycle) {
+  if (!cycle?.id) throw new Error('RoomCycle requiere id.');
+  return setDoc(doc(db, "room_cycles", safeId(cycle.id)), {
+    ...cycle,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function guardarTelemetry(reading) {
+  if (!reading?.room_id || !reading?.device_id || !reading?.metric || !reading?.observed_at) {
+    throw new Error('Telemetría incompleta: room/device/metric/observed_at son obligatorios.');
+  }
+  return setDoc(doc(db, "telemetry_readings", telemetryDocId(reading)), {
+    ...reading,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function guardarCycleEvidence(evidence) {
+  if (!evidence?.sourceId || !evidence?.batchId) throw new Error('CycleEvidence requiere sourceId y batchId.');
+  const id = safeId(`${evidence.sourceId}__${evidence.batchId}`);
+  return setDoc(doc(db, "cycle_evidence", id), {
+    ...evidence,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function listCycleEvidence({ speciesId = null, batchId = null } = {}) {
+  let q = collection(db, "cycle_evidence");
+  if (speciesId) q = query(q, where("speciesId", "==", speciesId));
+  else if (batchId) q = query(q, where("batchId", "==", batchId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ── Incidencias climáticas ────────────────────────────────────────────────
 export async function registrarIncidencia(incidencia) {
   return addDoc(collection(db, "incidencias_climaticas"), { ...incidencia, createdAt: serverTimestamp() });
 }
@@ -99,12 +135,10 @@ export async function actualizarIncidencia(id, campos) {
   return updateDoc(doc(db, "incidencias_climaticas", id), campos);
 }
 
-// simulador.html es un <script type="text/babel"> clásico (no un módulo ES),
-// así que no puede hacer `import` de este archivo — se expone en window para
-// que ese script pueda llamarlo, igual que firebase-init.js hace con window.SetasFirebase.
 window.SetasDB = {
   computeTot, isMassBalanced, saveReceta, listRecetas,
   crearLoteProduccion, descontarInventarioFIFO,
+  guardarRoomCycle, guardarTelemetry, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,
 };
 window.dispatchEvent(new CustomEvent("setas-db-ready"));
