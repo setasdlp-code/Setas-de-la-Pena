@@ -2585,9 +2585,11 @@
 @media(max-width:600px){.sim-root .p-chips-row1{grid-template-columns:1fr 1fr!important;}.sim-root .p-chips-row2{grid-template-columns:1fr 1fr!important;}.sim-root .p-chip-val{font-size:10px;}.sim-root .p-chip-lbl{font-size:8px;}}
 
 
-/* ==== NATIVE MERGE: print visibility override (beats shell body *{visibility:hidden}) ==== */
+/* ==== NATIVE MERGE: print visibility override (beats shell body *{visibility:hidden}) ====
+   Suppressed when a .thermal-print-roll is present so its own isolated print rule
+   (Setas OS v5.dc.html) can hide the rest of the app instead of printing the full screen. */
 @media print{
-  .sim-root, .sim-root *{ visibility:visible !important; }
+  body:not(:has(.thermal-print-roll)) .sim-root, body:not(:has(.thermal-print-roll)) .sim-root *{ visibility:visible !important; }
 }
 /* UX v2 production vertical: object -> lifecycle -> valid action. */
 .sim-root :is(input,select,textarea,button,[role="button"]):focus-visible{outline:2px solid var(--focus-ring,var(--coral-500))!important;outline-offset:2px}
