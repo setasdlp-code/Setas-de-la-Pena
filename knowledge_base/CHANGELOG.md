@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-08-24
+
+| Tipo | Descripción |
+|---|---|
+| `[ARCH]` | Nuevo servidor `mcp/setas_bridge_mcp.py`: puente de lectura/escritura que expone `knowledge_base/`, `field_os/` y `field-os-simulador/` en vivo desde disco (sin datos hardcodeados, a diferencia de `setas_mcp.py`), más tools de escritura coordinada (`setas_bridge_append_changelog`, `setas_bridge_append_farm_brain_note`) para que varios agentes registren cambios sin editar el filesystem a ciegas. Corre en paralelo a `setas_mcp.py`, sin reemplazarlo. |
+
 ### 2026-08-23
 
 | Tipo | Descripción |
