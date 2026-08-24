@@ -5232,34 +5232,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           };
                           const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                           return(
-                          <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderBottom:'1px solid var(--paper-300)'}}>
-                            {/* Header: nombre + lock + remove */}
-                            <div style={{display:'flex',alignItems:'flex-start',gap:6,justifyContent:'space-between'}}>
-                              <div style={{flex:1}}>
-                                <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
-                                  <div style={{fontSize:"var(--text-base)",fontWeight:500}}>{g.name}</div>
-                                  <button type="button" className={`lock-btn mix-lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'}>
-                                    <span aria-hidden="true">{isLocked?'●':'○'}</span> {isLocked?'Fijado':'Libre'}
-                                  </button>
-                                </div>
-                                <div className="imeta" style={{fontSize:"var(--text-xs)"}}>C:N {g.cn||'—'} · N {g.n||'—'}%</div>
-                                {rowFlag&&<div style={{marginTop:4,fontSize:"var(--text-xs)",fontWeight:700,color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',display:'flex',alignItems:'center',gap:4}}><span>{rowFlag.priority==='critical'?'⚠':'!'}</span><span>{rowFlag.label}</span></div>}
-                              </div>
-                              <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`}>✕</button>
+                          <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 10px',borderBottom:'1px solid var(--paper-300)',flexWrap:'wrap'}}>
+                            <button type="button" className={`lock-btn mix-lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{flexShrink:0}}>
+                              <span aria-hidden="true">{isLocked?'●':'○'}</span>
+                            </button>
+                            <div style={{flex:'1 1 100px',minWidth:0,display:'flex',alignItems:'center',gap:4}} title={`${g.name} · C:N ${g.cn||'—'} · N ${g.n||'—'}%${rowFlag?` · ${rowFlag.label}`:''}`}>
+                              <span style={{fontSize:"var(--text-sm)",fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.name}</span>
+                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0}}>{rowFlag.priority==='critical'?'⚠':'!'}</span>}
+                              <span className="sr-only">C:N {g.cn||'—'} · N {g.n||'—'}%{rowFlag?`, ${rowFlag.label}`:''}</span>
                             </div>
-                            {/* Controls: slider + number input */}
-                            <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                              <input type="range" min="0" max="100" step=".5" value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} disabled={isLocked} aria-label={`Porcentaje de ${g.name}`} aria-valuetext={`${r.p}%`} aria-disabled={isLocked} style={{opacity:isLocked?.5:1,width:'100%'}}/>
-                              <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
-                                {[-5,-1].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)<=0} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>{delta}%</button>)}
-                                <label className="mix-number-wrap">
-                                  <span className="sr-only">Porcentaje de {g.name}</span>
-                                  <input type="number" min="0" max="100" step=".5" inputMode="decimal" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input mix-num-input"/>
-                                  <span aria-hidden="true">%</span>
-                                </label>
-                                {[1,5].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)>=100} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>+{delta}%</button>)}
-                              </div>
+                            <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
+                              {[-5,-1].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)<=0} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>{delta}%</button>)}
+                              <label className="mix-number-wrap">
+                                <span className="sr-only">Porcentaje de {g.name}</span>
+                                <input type="number" min="0" max="100" step=".5" inputMode="decimal" required value={r.p} onChange={e=>!isLocked&&updP(r.id,parseFloat(e.target.value)||0)} readOnly={isLocked} aria-label={`Porcentaje de ${g?.name||'ingrediente'} (numérico)`} className="rec-pct-input mix-num-input"/>
+                                <span aria-hidden="true">%</span>
+                              </label>
+                              {[1,5].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)>=100} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>+{delta}%</button>)}
                             </div>
+                            <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0}}>✕</button>
                           </div>
                         );})}
                       </div>
