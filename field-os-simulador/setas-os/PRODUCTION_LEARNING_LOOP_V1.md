@@ -1,6 +1,6 @@
 # Setas OS — Production Learning Loop v1
 
-Status: implementation foundation
+Status: implementation foundation + persistence vertical
 Scope: internal use by Setas de la Peña
 
 ## Product decision
@@ -40,23 +40,60 @@ A single observational cycle is capped at `medium` confidence. `setas.historical
 
 A one-replicate trial is valid but explicitly `exploratory`. Comparative evidence requires randomization and at least three planned replicates per arm. The promotion gate additionally requires completed primary-metric evidence and ingredient/recipe traceability for every arm before results can become a `comparative_evidence_candidate`.
 
+## Persistence and operational bridge
+
+### Firestore
+
+The existing `firebase/db.js` now persists the learning loop in three explicit collections:
+
+- `room_cycles`
+- `telemetry_readings`
+- `cycle_evidence`
+
+Writes use deterministic document IDs where a stable identity exists, so retries do not create duplicate cycles, telemetry points or evidence records.
+
+### `production-learning-bridge.js`
+
+This bridge keeps localStorage as the immediate operational cache while using the existing Firebase layer as persistence. It:
+
+1. validates and stores RoomCycles;
+2. validates, normalizes and stores telemetry;
+3. resolves a Bitácora batch and only its own bags/harvests;
+4. verifies that the batch belongs to the requested RoomCycle;
+5. materializes `CycleEvidence` from Bitácora + cycle telemetry + recipe/ingredient traceability;
+6. persists the evidence with a stable `cycleId + batchId` identity;
+7. builds `setas.historical-evidence.v1` for the active species.
+
+The bridge is loaded from `firebase/db.js` after `window.SetasDB` is published, so it can remain independent from React navigation and component lifecycle.
+
+## Perito integration boundary
+
+`SetasPeritoScenarios.searchScenarios()` is wrapped at runtime only to add:
+
+- `context.historicalEvidence`
+- `context.productionLearning`
+
+The returned scenario result also exposes those two fields for explanation/UI work.
+
+This version does **not** modify `scoring.js`, `perito-scenarios.js`, `historyCalibration`, ranking weights or recipe selection. Production evidence is contextual only. A later calibration change must be separately validated against ground-truth fixtures before it can influence ranking.
+
 ## Explicit non-goals of this PR
 
 - no new navigation state;
 - no React/UI changes;
-- no Firestore collections yet;
-- no automatic sensor ingestion yet;
+- no automatic hardware/sensor transport ingestion yet;
 - no autonomous actuator control;
-- no change to `scoring.js` or `perito-scenarios.js` ranking;
-- no automatic promotion of local observations into canonical agronomic claims.
+- no change to `scoring.js` or the source of `perito-scenarios.js`;
+- no automatic promotion of local observations into canonical agronomic claims;
+- no causal inference from observational production history.
 
 ## Next vertical
 
-1. Persist `RoomCycle` and telemetry through the existing Firebase layer.
-2. Bind Bitácora batches to RoomCycle and preserve recipe/inventory-lot snapshots.
-3. Materialize `CycleEvidence` when a cycle/batch reaches a harvest or close milestone.
-4. Pass `setas.historical-evidence.v1` into the explicit Perito input contract as contextual evidence only.
-5. Add `Hoy` exceptions for stale sensors, invalid readings, environmental deviations and batches deviating materially from historical cycle duration.
+1. Trigger `CycleEvidence` materialization automatically at defined harvest/close milestones instead of requiring an explicit bridge call.
+2. Add a sensor adapter for ESP32 payloads that maps hardware messages into `setas.telemetry.v1` before persistence.
+3. Add `Hoy` exceptions for stale sensors, quarantined readings, environmental deviations and batches deviating materially from historical cycle duration.
+4. Surface the contextual evidence in Perito explanations without changing recommendation scores.
+5. Only after sufficient comparable cycles exist, evaluate a separately gated calibration model against held-out production data.
 
 ## Safety/quality rule
 
