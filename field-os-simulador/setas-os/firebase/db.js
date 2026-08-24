@@ -142,3 +142,9 @@ window.SetasDB = {
   registrarIncidencia, actualizarIncidencia,
 };
 window.dispatchEvent(new CustomEvent("setas-db-ready"));
+
+// Carga la capa de aprendizaje después de publicar SetasDB, de modo que sus
+// escrituras locales puedan sincronizarse sin que el bridge dependa de React.
+import('../production-learning-bridge.js').catch(err => {
+  console.warn('[SetasDB] Production Learning bridge unavailable', err);
+});
