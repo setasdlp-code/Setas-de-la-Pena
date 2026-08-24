@@ -121,5 +121,37 @@ import './cycle-evidence.js';
     historicalEvidenceFor,
     contextForPerito,
   };
+
+  // Inyección no invasiva: el motor recibe historicalEvidence dentro de context,
+  // pero scoring.js no se modifica y searchScenarios sigue decidiendo exactamente
+  // igual. El resultado conserva el contexto para que UI/Perito puedan explicarlo.
+  const attachPeritoEvidenceContext = () => {
+    const engine = globalThis.SetasPeritoScenarios;
+    if (!engine?.searchScenarios || engine.__productionLearningWrapped) return false;
+    const original = engine.searchScenarios.bind(engine);
+    engine.searchScenarios = options => {
+      const speciesId = options?.context?.sKey || options?.targetKey || null;
+      const learned = contextForPerito({ speciesId });
+      const enriched = {
+        ...options,
+        context: { ...(options?.context || {}), ...learned },
+      };
+      const result = original(enriched);
+      if (result && typeof result === 'object') {
+        result.historicalEvidence = learned.historicalEvidence;
+        result.productionLearning = learned.productionLearning;
+      }
+      return result;
+    };
+    engine.__productionLearningWrapped = true;
+    return true;
+  };
+
+  attachPeritoEvidenceContext();
+  // Capture garantiza que, cuando el modelo del Perito dispara por primera vez,
+  // el wrapper se instala antes del listener de cálculo aunque el motor haya
+  // terminado de cargar después de este módulo.
+  window.addEventListener('setas-perito-model', attachPeritoEvidenceContext, { capture: true });
+
   window.dispatchEvent(new CustomEvent('setas-production-learning-ready'));
 })();
