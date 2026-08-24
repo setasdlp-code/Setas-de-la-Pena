@@ -23,6 +23,16 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-08-23
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Nueva revisión `09_research/incubation_fruiting_chambers_2026.md`: calor metabólico, mapeo multipunto, mezcla de aire/CO₂, punto de rocío/VPD, sensores, estados seguros, bioaerosoles y avances IoT/CFD/visión/MPC. Incorpora paper_011…paper_017. |
+| `[SOP]` | `04_facility/incubation.md`: capacidad pasa a validarse por temperatura interna de bloques, ΔT, uniformidad y acceso sanitario; oscuridad total y ausencia de ventilación dejan de presentarse como requisitos universales. |
+| `[SOP]` | `04_facility/fruiting.md`: retirada la regla incorrecta de ubicación del extractor por gravedad del CO₂; se exige mapeo con carga real y se corrige la interpretación superficie–punto de rocío. |
+| `[EQUIP]` | `05_equipment/environmental_control.md`: añadidos mapeo multipunto, calidad de datos, estados seguros locales y protocolo explícito de calibración/ASC del SCD30. |
+| `[KB]` | `literature_database.md`, `literature_index.md`, `research_summaries.md` y `references/bibliography.md` sincronizados con evidencia 2021–2026 y salud ocupacional. |
+
 ### 2026-07-17
 
 | Tipo | Descripción |

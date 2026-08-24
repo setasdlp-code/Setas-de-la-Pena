@@ -73,7 +73,7 @@ El sitio consta de tres espacios en dos niveles: **garaje** (planta baja), **pas
 
 Cuadrilátero irregular, área útil ~21–24 m². Un ducto rotulado **"Chimenea / Ventilación casa"** ocupa parte del costado izquierdo.
 
-- **Cerramiento de una sección** (recomendación): estructura ligera (caseta / mini-invernadero en policarbonato o lona) apoyada contra el **muro largo de 6 m opuesto a la entrada** — da masa térmica, superficie de montaje y protección de viento. Dimensionar según densidad de carga de incubación (ver `incubation.md`: ~1 m³ por 3.7 kg de sustrato) y volumen de la Martha tent.
+- **Cerramiento de una sección** (recomendación): estructura ligera (caseta / mini-invernadero en policarbonato o lona) apoyada contra el **muro largo de 6 m opuesto a la entrada** — da masa térmica, superficie de montaje y protección de viento. El valor Cenicafé de ~1 m³ por 3,7 kg es solo una referencia histórica; dimensionar la capacidad útil por ΔT bloque–aire, uniformidad y acceso sanitario según `incubation.md`.
 - **Incubadoras** contra el muro, dentro o al costado del cerramiento. Al ser gabinetes aislados toleran más la exposición, pero la estabilidad de T° mejora bajo techo. Objetivo 20–24 °C; calefacción cerámica PTC leve si la noche baja de 20 °C (ver `incubation.md`).
 - **Martha tent:** la azotea es ideal por el FAE (aire fresco abundante), pero requiere protección de viento directo o el control de HR se vuelve inviable. Ubicar junto a desagüe existente y a punto de energía. Parámetros y posición de elementos en `fruiting.md`.
 - **Eléctrico exterior IP65 con diferencial (RCD/GFCI)** — no negociable a la intemperie; consistente con la arquitectura de automatización (electrónica en caja estanca IP65+, solo sensores/actuadores dentro de la cámara).

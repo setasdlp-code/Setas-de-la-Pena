@@ -2,7 +2,7 @@
 title: Índice de Literatura
 category: research
 load_priority: on_request
-last_reviewed: 2026-07-04
+last_reviewed: 2026-08-23
 confidence: high
 primary_sources:
   - literature_database.md
@@ -35,6 +35,13 @@ related_documents:
 | paper_008 | Estrada & Royse | 2007 | Sustratos, CO₂ y casing layer en P. eryngii | P. eryngii | ★★★★★ |
 | paper_009 | Royse & Sanchez-Vazquez | 2003 | Amortiguación con CaCO₃ y rendimiento en troncos de L. edodes | L. edodes | ★★★★★ |
 | paper_010 | Chen, Stamets & Zied | 2018 | Cultivo de H. erinaceus en subproductos agrícolas y límites de CO₂ | H. erinaceus | ★★★★★ |
+| paper_011 | Chong et al. | 2023 | Monitoreo y control IoT doméstico | P. ostreatus | ★★★★☆ |
+| paper_012 | Elewi et al. | 2024 | Sistema inteligente de bajo costo para seta ostra | P. ostreatus | ★★★★☆ |
+| paper_013 | Ahmad Termizi et al. | 2021 | CFD de ventilación y distribución de CO₂ | P. ostreatus | ★★★★☆ |
+| paper_014 | Duman et al. | 2024 | Dataset visual anotado con contexto ambiental | Pleurotus spp. | ★★★★☆ |
+| paper_015 | Kong et al. | 2026 | Control predictivo/PINN y ahorro energético | P. citrinopileatus | ★★★☆☆ |
+| paper_016 | Vereda et al. | 2007 | Asma ocupacional por esporas | P. ostreatus | ★★★★☆ |
+| paper_017 | Tarigan et al. | 2017 | Bioaerosoles y salud de trabajadores | Multi-especie | ★★★★★ |
 
 ## Libros Técnicos
 
@@ -101,6 +108,10 @@ related_documents:
 - guide_001 (★★★☆☆) — Diseño de planta, IPM, planificación continua (fuente terciaria; no usar para parámetros biológicos)
 - guide_002 (★★★★★) — BE 70–150% var. florida vs. estándar, protocolo cuantificado
 - book_007 (★★★★★) — BE 80–120%, T° fructificación por variedad
+- paper_011, paper_012 (★★★★☆) — IoT y automatización de bajo costo; evidencia de plataforma, no setpoints universales
+- paper_013 (★★★★☆) — Distribución espacial de aire/CO₂ por CFD
+- paper_014 (★★★★☆) — Dataset visual y ambiental para visión artificial
+- paper_016 (★★★★☆) — Peligro ocupacional por esporas
 
 ### Genética y mejoramiento de cepas (transversal — Fase 3)
 - book_006 (★★★★★ académico / ★★☆☆☆ operacional) — Mating types, hibridación interespecífica de Pleurotus, mejoramiento de Lentinula edodes, protoplastos. Explica variabilidad de BE entre cepas de una misma especie.
@@ -131,6 +142,12 @@ related_documents:
 | Diseño de growing houses por clima / casos de estudio África | guide_003 |
 | Mating types, hibridación interespecífica Pleurotus, mejoramiento Lentinula | book_006 |
 | BE comparada por especie/variedad de Pleurotus (umbral CO₂ micelio vs. fructificación) | book_007 |
+| IoT y automatización modular | paper_011, paper_012 |
+| CFD, mezcla de aire y zonas muertas | paper_013 |
+| Visión artificial, madurez y datasets | paper_014 |
+| Control predictivo, PINN y energía | paper_015 |
+| Esporas, bioaerosoles y salud ocupacional | paper_016, paper_017 |
+| Revisión integral de cámaras 2026 | `incubation_fruiting_chambers_2026.md` |
 
 ## Literatura Pendiente de Incorporar
 

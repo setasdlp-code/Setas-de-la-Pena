@@ -1314,7 +1314,8 @@
 
 /* ── LOCK / BALANCE (field notebook annotations) ──────────────────── */
 .sim-root .rec-locked{ background:var(--paper-1) !important; border-left:3px dashed var(--line-1); }
-.sim-root .lock-btn{ 
+.sim-root .rec-row.is-adjustable{ border-left:3px solid var(--coral-500); }
+.sim-root .lock-btn{
   background:none; border:none; cursor:pointer; font-size:11px; 
   padding:0 3px; opacity:.5; transition:opacity .12s var(--ease);
   line-height:1; flex-shrink:0; color:var(--ink-2); 
@@ -1593,6 +1594,12 @@
 .sim-root .inv-table td{font-family:var(--font-mono);font-size:13px;color:var(--ink-900);padding:8px 12px;border-bottom:1px solid var(--paper-300);vertical-align:middle;}
 .sim-root .inv-table tr:last-child td{border-bottom:none;}
 .sim-root .inv-table tr:hover td{background:var(--paper-100);}
+.sim-root .inv-table-link{border:0;background:transparent;padding:4px 2px;color:var(--coral-700);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.sim-root .inv-table-link:hover{color:var(--moss-700);}
+.sim-root .inv-photo-remove{display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center;padding:0;border:1px solid var(--border-soft);border-radius:var(--r-xs);background:var(--paper-50);cursor:pointer;}
+.sim-root .inv-photo-remove img{display:block;width:28px;height:28px;object-fit:cover;border-radius:3px;}
+.sim-root .inv-photo-upload{position:relative;display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center;cursor:pointer;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--coral-500);text-decoration:underline;}
+.sim-root .inv-photo-upload input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .sim-root .inv-subtab-bar{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border-soft);padding-bottom:0;}
 .sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);margin-bottom:-1px;}
 .sim-root .inv-subtab.on{background:transparent;color:var(--ink-900);border-bottom-color:var(--coral-500);}
@@ -1970,8 +1977,7 @@
   .sim-root .cat-modal-close{ width:48px!important; height:48px!important; }
 
   /* 30. Mini-botones de ingrediente (✕ excluir / + agregar en catálogo): más separación
-     entre ambos para evitar toques accidentales. La hit-area a 48px vive en las reglas
-     de .qa-mini-btn más abajo en el archivo (editadas para el mismo objetivo). */
+     entre ambos para evitar toques accidentales; su tamaño táctil real se define abajo. */
   .sim-root .ing-card-item > div:last-child{ gap:10px!important; padding:6px 4px 8px!important; }
 
   /* 31. Cabeceras de acordeón de categoría (Bases de Carbono, Suplementos…): más altas,
@@ -2233,34 +2239,27 @@
 @keyframes rowFlash{0%{background:color-mix(in oklab,var(--moss-500) 18%,var(--paper-50));}100%{background:transparent;}}
 .sim-root .ing-row-flash > div:first-child{animation:rowFlash .65s ease-out;}
 
-/* Hit-area táctil ampliada para los mini-botones de ingrediente (visual pequeño, toque ≥44px vía ::before) */
+/* Objetivos táctiles reales para evitar áreas invisibles superpuestas entre acciones. */
 .sim-root .qa-mini-btn{
   position:relative;
-  min-width:15px!important;
-  min-height:15px!important;
+  min-width:40px!important;
+  min-height:40px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
   border-radius:50%!important;
 }
-.sim-root .qa-mini-btn::before{
-  content:'';
-  position:absolute;
-  inset:-15px;
-}
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
-    min-width:18px!important;
-    min-height:18px!important;
+    min-width:44px!important;
+    min-height:44px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-15px;}
 }
 @media(max-width:600px){
   .sim-root .qa-mini-btn{
-    min-width:20px!important;
-    min-height:20px!important;
+    min-width:44px!important;
+    min-height:44px!important;
   }
-  .sim-root .qa-mini-btn::before{inset:-14px;}
 }
 
 /* Scroll-snap táctil en filas horizontales de chips/tabs */
@@ -2920,11 +2919,11 @@
   .sim-root .active-recipe-workspace-head,
   .sim-root .form-advanced-tools-head{align-items:flex-start;flex-direction:column}
   .sim-root .form-advanced-tools-head button{width:100%}
-  .sim-root .builder-wrap > .sim-live-dashboard{top:0}
+  .sim-root .builder-wrap > .sim-live-dashboard{position:relative;top:auto}
   .sim-root .live-dash-bar{flex-direction:row;flex-wrap:wrap;gap:6px;padding:7px 8px}
   .sim-root .live-dash-left{min-width:0}
   .sim-root .live-dash-metrics{margin-left:0}
-  .sim-root .live-dash-actions{margin-left:auto}
+  .sim-root .live-dash-actions{width:100%;margin-left:0}
   .sim-root .live-dash-btn{min-height:36px!important;padding:6px!important}
   .sim-root .live-dash-tray{padding:6px 8px}
   .sim-root .live-ing-chip-del{min-height:24px!important;padding:0!important}
@@ -2982,7 +2981,8 @@
 .sim-root .form-species-picker select:focus-visible,
 .sim-root .form-advanced-tools-head button:focus-visible,
 .sim-root .live-dash-btn:focus-visible,
-.sim-root .live-ing-chip-del:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px}
+.sim-root .live-ing-chip-del:focus-visible,
+.sim-root .rec-pct-input:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px}
 .sim-root .form-step-options button.is-active,
 .sim-root .form-step-primary{
   border-color:var(--accent-olive);
@@ -3200,6 +3200,8 @@
 .sim-root .formular-workspace .seg:first-child{border-left:var(--form-control-border)}
 
 .sim-root .builder-wrap .ing-card-item{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 104px;
   border:var(--form-control-border)!important;
   border-radius:var(--form-control-radius)!important;
   background:var(--paper-0)!important;
@@ -3336,6 +3338,166 @@
   .sim-root .p-chip{padding:6px 5px;gap:3px}
   .sim-root .p-chip-lbl{font-size:7px}
   .sim-root .p-chip-val{font-size:9px}
+}
+
+/* Formulador V2 quirúrgico: separa los dos trabajos sin reemplazar el
+   editor, el Perito ni el solver existentes. */
+.sim-root .formular-mode-nav{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  margin:0 0 14px;
+  padding:5px;
+  border:1px solid var(--ink-900);
+  background:var(--paper-200);
+}
+.sim-root .formular-mode-btn{
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:8px 14px;
+  border:1px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--ink-700);
+  font:800 var(--text-sm)/1.2 var(--font-body);
+  cursor:pointer;
+}
+.sim-root .formular-mode-btn:hover,
+.sim-root .formular-mode-btn:focus-visible{border-color:var(--border-strong);background:var(--paper-100);color:var(--ink-900)}
+.sim-root .formular-mode-btn.is-active{border-color:var(--ink-900);background:var(--paper-0);color:var(--ink-900);box-shadow:3px 3px 0 var(--ink-900)}
+.sim-root .formular-mode-badge{
+  min-width:20px;
+  padding:2px 6px;
+  background:var(--moss-700);
+  color:var(--paper-0);
+  font:800 var(--text-2xs)/1.4 var(--font-mono);
+  text-align:center;
+}
+.sim-root .form-mobile-start{display:none}
+.sim-root .form-species-origin-toggle{display:none}
+.sim-root .form-production-command{
+  position:sticky;
+  top:0;
+  z-index:var(--z-sticky-panel);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:62px;
+  margin:-6px 0 14px;
+  padding:8px 10px 8px 14px;
+  border:1px solid var(--ink-900);
+  border-left:5px solid var(--moss-700);
+  background:var(--paper-0);
+  box-shadow:0 5px 16px rgba(18,22,17,.13);
+}
+.sim-root .form-production-command.is-species,
+.sim-root .form-production-command.is-balance{border-left-color:var(--coral-600)}
+.sim-root .form-production-command-copy{display:grid;gap:3px;min-width:0;margin-right:auto;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}
+.sim-root .form-production-command-copy span{color:var(--ink-500);font:800 var(--text-micro)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
+.sim-root .form-production-command-copy strong{overflow:hidden;color:var(--ink-900);font:800 var(--text-sm)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-production-command-copy em{color:var(--ink-600);font:700 var(--text-2xs)/1.15 var(--font-mono);font-style:normal}
+.sim-root .form-production-command-copy:hover strong{color:var(--accent-olive)}
+.sim-root .form-production-command-copy:focus-visible{outline:2px solid var(--accent-olive);outline-offset:3px}
+.sim-root .form-production-command-btn{
+  min-width:170px;
+  min-height:46px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:8px 14px;
+  border:1px solid var(--moss-900);
+  border-radius:0;
+  background:var(--moss-700);
+  color:var(--paper-0);
+  font:800 var(--text-sm)/1 var(--font-body);
+  cursor:pointer;
+  white-space:nowrap;
+}
+.sim-root .form-production-command-btn.is-species,
+.sim-root .form-production-command-btn.is-balance{border-color:var(--coral-800);background:var(--coral-600)}
+.sim-root .form-production-command-btn:hover,
+.sim-root .form-production-command-btn:focus-visible{filter:brightness(.94);outline:2px solid var(--ink-900);outline-offset:2px}
+.sim-root .mix-lock-btn,
+.sim-root .mix-remove-btn{
+  min-width:44px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:6px 10px!important;
+  flex-shrink:0;
+}
+.sim-root .mix-steppers{display:grid;grid-template-columns:44px 44px minmax(76px,1fr) 44px 44px;gap:4px;align-items:center}
+.sim-root .mix-step-btn{
+  min-width:44px;
+  min-height:44px;
+  padding:4px;
+  border:1px solid var(--border-strong);
+  border-radius:0;
+  background:var(--paper-100);
+  color:var(--ink-800);
+  font:700 var(--text-xs)/1 var(--font-mono);
+  cursor:pointer;
+}
+.sim-root .mix-step-btn:hover:not(:disabled),
+.sim-root .mix-step-btn:focus-visible{background:var(--paper-300);border-color:var(--ink-900)}
+.sim-root .mix-step-btn:disabled{opacity:.38;cursor:not-allowed}
+.sim-root .mix-number-wrap{min-height:44px;display:flex;align-items:center;border:1px solid var(--ink-900);background:var(--paper-0)}
+.sim-root .mix-num-input{width:100%!important;min-width:0;min-height:42px;padding:6px 3px!important;border:0!important;border-radius:0!important;background:transparent!important;text-align:center;font:800 var(--text-base)/1 var(--font-mono)!important}
+.sim-root .mix-number-wrap > span:last-child{padding-right:8px;color:var(--ink-600);font:700 var(--text-xs)/1 var(--font-mono)}
+.sim-root .mass-balance-action{min-height:44px}
+
+@media(max-width:560px){
+  .sim-root .formular-mode-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sim-root .formular-mode-btn{min-height:48px;gap:4px;padding:6px 4px;font-size:var(--text-xs)}
+  .sim-root .formular-mode-badge{min-width:18px;padding:2px 4px}
+  .sim-root .form-mobile-start{
+    display:grid;
+    gap:10px;
+    margin:-6px 0 10px;
+    padding:12px;
+    border:1px solid var(--ink-900);
+    border-top:4px solid var(--accent-olive);
+    background:var(--paper-0);
+  }
+  .sim-root .form-mobile-start header{display:grid;gap:3px}
+  .sim-root .form-mobile-start header span,
+  .sim-root .form-mobile-start-field > span,
+  .sim-root .form-species-origin-toggle > span{color:var(--ink-500);font:800 var(--text-2xs)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
+  .sim-root .form-mobile-start header strong{color:var(--ink-900);font:800 var(--text-base)/1.15 var(--font-display)}
+  .sim-root .form-mobile-start-field{display:grid;gap:5px}
+  .sim-root .form-mobile-start select,
+  .sim-root .form-mobile-origin-options button,
+  .sim-root .form-mobile-start-actions button,
+  .sim-root .form-species-origin-toggle button{min-height:46px;border:1px solid var(--ink-900);border-radius:0;background:var(--paper-0);color:var(--ink-900);font:800 var(--text-xs)/1 var(--font-display)}
+  .sim-root .form-mobile-start select{width:100%;padding:8px 10px}
+  .sim-root .form-mobile-origin-options,
+  .sim-root .form-mobile-start-actions,
+  .sim-root .form-species-origin-toggle > div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .sim-root .form-mobile-origin-options button.is-active,
+  .sim-root .form-species-origin-toggle button.is-active,
+  .sim-root .form-mobile-start-actions button.is-primary{background:var(--accent-olive);color:var(--paper-0)}
+  .sim-root .form-flow{display:none}
+  .sim-root .form-species-context.is-empty{display:none}
+  .sim-root .form-species-context.has-recipe{grid-template-columns:minmax(0,1fr);gap:8px;padding:9px 10px}
+  .sim-root .form-species-context.has-recipe .form-species-identity,
+  .sim-root .form-species-context.has-recipe .form-species-targets{display:none}
+  .sim-root .form-species-context.has-recipe .form-species-picker > span{letter-spacing:var(--tracking-button)}
+  .sim-root .form-species-context.has-recipe .form-species-picker select{min-height:46px}
+  .sim-root .form-species-origin-toggle{display:grid;gap:5px}
+  .sim-root .form-species-origin-toggle > span{color:rgba(255,255,255,.6)}
+  .sim-root .form-species-origin-toggle button{border-color:rgba(255,255,255,.42);background:transparent;color:var(--paper-0)}
+  .sim-root .form-species-origin-toggle button.is-active{border-color:var(--paper-0)}
+  .sim-root .form-production-command{gap:8px;min-height:58px;margin:-6px 0 10px;padding:6px 6px 6px 10px}
+  .sim-root .form-production-command-copy strong{font-size:var(--text-xs)}
+  .sim-root .form-production-command-btn{min-width:146px;min-height:46px;padding:8px 10px}
+  .sim-root .mix-steppers{grid-template-columns:44px 44px minmax(68px,1fr) 44px 44px}
+  .sim-root .mix-step-btn{font-size:10px}
 }
 
 /* ── PERITO & CO-FORMULACIÓN CARDS ─────────────────────────────── */
@@ -3506,5 +3668,3 @@
 }
 
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-
-

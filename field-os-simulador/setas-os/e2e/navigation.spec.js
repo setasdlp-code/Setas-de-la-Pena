@@ -14,7 +14,7 @@ test('los 4 workspaces sincronizan rail, pestaña contextual y breadcrumb', asyn
     formular: { tab: 'Formular', crumb: /formulador/i },
     produccion: { tab: 'Preparar mezcla', crumb: /ficha de siembra/i },
     bitacora: { tab: 'Lotes', crumb: /bitácora/i },
-    control: { tab: 'Hoy', crumb: /hoy/i },
+    control: { tab: 'Tablero de Control', crumb: /tablero de control/i },
   };
 
   for (const [workspace, { tab: expectedTab, crumb }] of Object.entries(expected)) {

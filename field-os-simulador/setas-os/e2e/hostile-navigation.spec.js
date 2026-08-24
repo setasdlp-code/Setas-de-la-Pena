@@ -16,7 +16,7 @@ async function assertCoherent(page, expectedWorkspace) {
 }
 
 // E2E-11 — Navegación repetida no acumula desincronización. Secuencia
-// hostil (carga de receta, apertura de lote, vuelta a Hoy) repetida dos
+// hostil (carga de receta, apertura de lote, vuelta a Control) repetida dos
 // veces sin recargar la página: el segundo recorrido debe producir
 // exactamente el mismo estado de navegación que el primero en cada paso.
 test('secuencia hostil de navegación repetida dos veces produce el mismo estado en cada paso', async ({ page }) => {
@@ -55,7 +55,7 @@ test('secuencia hostil de navegación repetida dos veces produce el mismo estado
     await goWorkspace(page, 'control');
     trace.push(await assertCoherent(page, 'control'));
 
-    await page.getByRole('tab', { name: 'Hoy' }).click();
+    await page.getByRole('tab', { name: 'Tablero de Control' }).click();
     trace.push(await assertCoherent(page, 'control'));
 
     await goWorkspace(page, 'formular');

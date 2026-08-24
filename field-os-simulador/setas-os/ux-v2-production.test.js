@@ -96,7 +96,7 @@ test('workspace state is deep-linkable through the view query parameter', () => 
 test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
   assert.match(source, /showQrSheet/);
   assert.match(source, /aria-label="Captura rápida de campo"/);
-  assert.match(source, /Registrar Cosecha \(kg\)/);
+  assert.match(source, /Registrar Cosecha \(g\)/);
   assert.match(source, /Registrar Clima \/ Sala/);
   assert.match(source, /Reportar Contaminación \/ Merma/);
 });
@@ -121,5 +121,4 @@ test('thermal label generator supports 50x30mm and 60x40mm formats with print pa
   assert.match(styles, /\.thermal-card-print/);
   assert.match(shell, /\.thermal-print-roll/);
 });
-
 

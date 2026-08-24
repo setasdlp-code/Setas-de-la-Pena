@@ -89,7 +89,7 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
 });
 
 test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
-  assert.match(jsx, /className="form-species-context" aria-labelledby="form-species-context-title"/);
+  assert.match(jsx, /className=\{`form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}`\} aria-labelledby="form-species-context-title"/);
   assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
   assert.match(jsx, /Receta activa \+ evaluación en vivo/);
   assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
@@ -122,19 +122,96 @@ test('generic dialogs trap focus, close with Escape and restore the trigger', ()
   assert.match(jsx, /data-autofocus id="setas-prompt-input"/);
 });
 
+test('all application dialogs share keyboard focus management', () => {
+  assert.match(jsx, /const AccessibleModal=/);
+  assert.match(jsx, /showProvModal&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /<AccessibleModal onClose=\{\(\)=>setCatalogModalOpen\(false\)\}[\s\S]*?backdropClassName="cat-modal-bg"/);
+  assert.match(jsx, /loteBatchConfirm&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /showBitNuevo&&\(\s*<AccessibleModal/);
+  assert.match(jsx, /showBitCosecha&&\(\s*<AccessibleModal/);
+  assert.match(shell, /dialogIsOpen\(s\)[\s\S]*s\.cmdOpen[\s\S]*s\.syncQueueOpen/);
+  assert.match(shell, /e\.key==='Tab' && this\.dialogIsOpen\(this\.state\)/);
+  assert.match(shell, /window\.removeEventListener\('keydown', this\._onKeyDown\)/);
+});
+
+test('Bitácora and Producción controls expose contextual accessible names', () => {
+  assert.match(jsx, /className="inv-table-link"[\s\S]*?aria-label=\{`Abrir lote/);
+  assert.match(jsx, /aria-label=\{`Estado de la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /aria-label=\{`Quitar foto de la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /aria-label=\{`Registrar cosecha para la bolsa \$\{bolsa\.codigo\}`\}/);
+  assert.match(jsx, /title:'Eliminar cosecha'[\s\S]*onConfirm:\(\)=>deleteBitCosecha/);
+  assert.match(jsx, /aria-label=\{`Humedad real de \$\{x\.g\?x\.g\.name:id\}, porcentaje`\}/);
+  assert.match(jsx, /aria-label=\{`Paso \$\{i\+1\} completado: \$\{t\}`\}/);
+  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true" className=\{'os-sync-state/);
+  assert.match(jsx, /name=\{`stockKg-\$\{r\.id\}`\} aria-label=\{`Stock de \$\{r\.name\} en kg`\}/);
+  assert.match(jsx, /name="newStockIngredient" aria-label="Ingrediente que se agregará al stock"/);
+});
+
+test('Formular preserves a full-page ingredient list with unambiguous touch targets', () => {
+  assert.match(css, /\.builder-wrap \.ing-card-item\{[\s\S]*content-visibility:auto;[\s\S]*contain-intrinsic-size:auto 104px;/);
+  assert.match(css, /\.qa-mini-btn\{[\s\S]*min-width:40px!important;[\s\S]*min-height:40px!important;/);
+  assert.doesNotMatch(css, /\.qa-mini-btn::before/);
+  assert.match(jsx, /name="balanceStrategy" aria-label="Estrategia de balanceo"/);
+  assert.match(jsx, /name="ingredientSearch" type="search"/);
+});
+
 test('loading a saved recipe from Recetario notifies the shell instead of desyncing it', () => {
   const loadR = jsx.match(/const loadR=e=>\{[\s\S]*?\n  \};/);
   assert.ok(loadR, 'loadR function not found');
   assert.doesNotMatch(loadR[0], /setTab\(/);
+  assert.match(loadR[0], /openBuilderSubTab\('formular'\)/);
   assert.match(loadR[0], /goTab\('formular'\)/);
 });
 
+test('Formular V2 separates Mesa and Generator without undefined replacement helpers', () => {
+  assert.match(jsx, /className="formular-mode-nav" role="tablist"/);
+  assert.match(jsx, /id="formular-panel-mesa"[\s\S]*?role="tabpanel"/);
+  assert.match(jsx, /id="formular-panel-generador"[\s\S]*?role="tabpanel"/);
+  assert.match(jsx, /openBuilderSubTab\('formular'\)[\s\S]*?Cargar en Mesa/);
+  assert.match(jsx, /className="mix-steppers" role="group"/);
+  assert.doesNotMatch(jsx, /\bFORM_ROLE_GROUPS\b/);
+  assert.ok(jsx.indexOf('const renderIngRow=') < jsx.lastIndexOf('renderIngRow'), 'renderIngRow must be defined before use');
+  assert.doesNotMatch(jsx, /\bsolveCN\s*\(/);
+});
+
+test('mobile production flow resets scroll and exposes one progressive next action', () => {
+  assert.match(jsx, /const focusFormTop=.*getElementById\('setas-main'\)/s);
+  assert.match(jsx, /const focusIngredientCatalog=.*#bl-ingredientes \.search/s);
+  assert.match(jsx, /const focusActiveRecipe=.*#bl-receta \.rec-pct-input/s);
+  assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':'produce'/);
+  assert.match(jsx, /data-testid="formulator-next-action"/);
+  assert.match(jsx, /data-testid="formulator-review-recipe"[\s\S]*onClick=\{focusActiveRecipe\}/);
+  assert.match(jsx, /data-testid="form-mobile-start"[\s\S]*id="form-mobile-species-select"[\s\S]*Elegir insumos[\s\S]*Usar generador/);
+  assert.match(jsx, /form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}/);
+  assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);
+  assert.match(css, /\.form-production-command\{[\s\S]*position:sticky;[\s\S]*top:0;[\s\S]*z-index:var\(--z-sticky-panel\)/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.formular-mode-nav\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*\.form-mobile-start\{[\s\S]*display:grid[\s\S]*\.form-flow\{display:none\}/);
+  assert.match(css, /\.form-species-context\.is-empty\{display:none\}[\s\S]*\.form-species-context\.has-recipe/);
+});
+
+test('Formular persists and validates the active draft for reload recovery', () => {
+  assert.match(jsx, /const FORM_DRAFT_KEY='setas_formulator_draft_v1'/);
+  assert.match(jsx, /const readFormDraft=\(\)=>\{[\s\S]*draft\.version!==1[\s\S]*validIds\.has\(r\.id\)[\s\S]*recipeIds\.has\(id\)/);
+  assert.match(jsx, /const initialFormDraft=useMemo\(\(\)=>readFormDraft\(\),\[\]\)/);
+  assert.match(jsx, /const \[recipe,setRecipe\]=useState\(\(\)=>initialFormDraft\?\.recipe\|\|\[\]\)/);
+  assert.match(jsx, /localStorage\.setItem\(FORM_DRAFT_KEY,JSON\.stringify\(\{[\s\S]*version:1[\s\S]*hasPickedSpecies[\s\S]*lockedIds[\s\S]*saveName/);
+  assert.match(jsx, /if\(!recipe\.length\)\{localStorage\.removeItem\(FORM_DRAFT_KEY\);return;\}/);
+  assert.match(jsx, /Revisar receta · Autoguardado/);
+});
+
 test('Control remains the visual reference and Formular overrides stay locally scoped', () => {
-  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="builder-wrap"/);
-  assert.match(jsx, /\{tab==='formular'&&\(\s*<div className="formular-workspace"/);
+  assert.match(jsx, /\{tab==='formular'&&builderSubTab==='formular'&&\(\s*<div id="formular-panel-mesa" className="builder-wrap"/);
+  assert.match(jsx, /\{tab==='formular'&&builderSubTab==='generador'&&\(\s*<div id="formular-panel-generador" className="formular-workspace"/);
   const scoped = css.match(/\/\* ── FORMULAR · VISUAL PARITY WITH CONTROL[\s\S]*?(?=@media\(prefers-reduced-motion:reduce\))/);
   assert.ok(scoped, 'Formular scoped visual block not found');
   assert.match(scoped[0], /\.builder-wrap/);
   assert.match(scoped[0], /\.formular-workspace/);
   assert.doesNotMatch(scoped[0], /\.home-/);
+});
+
+test('the climate iframe starts from a concrete URL without a template 404', () => {
+  assert.match(shell, /<iframe src="climate-bench\.html" title="Banco Climático"/);
+  assert.doesNotMatch(shell, /src="\{\{\s*climaSrc\s*\}\}"/);
+  assert.doesNotMatch(shell, /climaSrc:/);
 });

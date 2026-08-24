@@ -2,7 +2,7 @@
 ## Guía Completa de Diseño, Equipamiento y Operación
 
 **Documento compilado desde la Knowledge Base de Setas de la Peña**
-**Última actualización: 2026-07-23**
+**Última actualización: 2026-08-23**
 
 ---
 
@@ -305,11 +305,11 @@ Ejemplo: 10 kg de paja seca → 15.1 L de agua
 **Localización:** Cuarto interior, sótano, armario, o sección cerrada de azotea.
 
 **Características:**
-- Oscuridad total o luz mínima (micelio no necesita luz)
-- Sin corrientes de aire exterior
+- Sin sol directo ni calentamiento por radiación; luz tenue de inspección permitida
+- Renovación suficiente para retirar calor y mantener seguridad, sin corrientes que desestabilicen el cuarto
 - Estantería de metal o madera (bolsas NO en piso)
 - Termómetro digital con registro
-- Ventilación pasiva o control de humedad si ambiente es muy seco
+- Medición de aire y centro de bloques testigo durante commissioning
 
 **Parámetros por Especie:**
 
@@ -322,16 +322,16 @@ Ejemplo: 10 kg de paja seca → 15.1 L de agua
 | G. lucidum | 24–28°C | 30–60 días | 70% (en bolsa) |
 
 **Dimensionamiento:**
-- Densidad de carga: ~1 m³ de cuarto por cada 3.7 kg de sustrato
-- Para 10 kg de sustrato: mínimo 2.7 m³ de volumen
+- Referencia histórica Cenicafé: ~1 m³ de cuarto por cada 3.7 kg de sustrato en su estructura específica
+- Capacidad local: validar por ΔT bloque–aire, uniformidad, acceso sanitario y contaminación
 
 **Equipamiento según clima:**
 - **Climas fríos (Tenjo, 12–18°C):** Calefactor cerámico PTC con termostato (~50–200W)
 - **Climas cálidos (>23°C):** Ventilación pasiva o deshumidificador
 
 **Desinfección previa del cuarto:**
-- Solución de formol comercial al 0.3% en pisos y anaqueles (o alternativas menos tóxicas)
-- Espolvorear carbonato de calcio (CaCO₃) para reducir riesgo de hongos e insectos
+- Cenicafé documentó formol al 0.3% y CaCO₃; no es el SOP vigente por el peligro del formaldehído
+- Preferir limpieza física y desinfectante autorizado con concentración y tiempo de contacto definidos; cualquier formol requiere evaluación formal de SST y normativa
 
 **Cobertura de clima (Tenjo 12–18°C):**
 - Plástico **negro** en salón de incubación (retiene calor)
@@ -366,7 +366,7 @@ Ejemplo: 10 kg de paja seca → 15.1 L de agua
 **Posicionamiento de elementos:**
 ```
 ┌─────────────────────────────┐
-│      [EXHAUST ARRIBA]       │ ← Extractor en techo
+│      [EXHAUST PROVISIONAL]  │ ← Validar posición por flujo y CO₂ multipunto
 │                             │
 │  [BLOQUES EN ESTANTERÍA]    │
 │                             │
@@ -542,6 +542,7 @@ Para presupuesto muy limitado, un SAB optimizado (caja cerrada con puertos later
 - No apilar bolsas muy juntas — calor metabólico crea puntos calientes
 - Separar físicamente bloques de especies con T° óptima diferente
 - No abrir bolsas durante incubación (rompe hermetismo)
+- Medir el centro de bloques testigo: el aire puede estar en rango mientras el sustrato se sobrecalienta
 
 ---
 
@@ -628,6 +629,7 @@ Después de la primera cosecha:
 - **Parámetro crítico:** `altitude_compensation: 2600` (para Tenjo)
 - Precisión: ±30 ppm + 3% del valor
 - Ubicación: Protegida en caja estanca con tubo de muestreo
+- Desactivar ASC hasta validar exposición periódica a referencia exterior conocida; no combinar compensación de altitud y presión
 
 #### Inkbird IBS-TH2 Plus (Redundancia — BLE)
 - Comparar vs SHT3x semanalmente
@@ -653,7 +655,7 @@ Para un CLOUDLAB 844 (~2.88 m³):
 
 **Fórmula ACH (Air Changes per Hour):**
 ```
-ACH = Q efectivo medido (CFM) × duty_cycle × 60 / volumen (CFM)
+ACH = Q efectivo medido (CFM) × duty_cycle × 60 / volumen de cámara (ft³)
 ```
 
 **Pasos:**
@@ -705,6 +707,7 @@ sensor:
     humidity:
       name: "Martha01 CO2 HR"
     altitude_compensation: 2600
+    automatic_self_calibration: false  # Activar solo con referencia exterior validada
     update_interval: 30s
 
 switch:
@@ -1258,10 +1261,10 @@ Antes de iniciar producción, verificar:
 
 ### Zona de Incubación
 - [ ] Termómetro calibrado (verificar contra otro termómetro)
-- [ ] Oscuridad total (sin luz residual)
+- [ ] Sin sol directo; luz de inspección controlada
 - [ ] Estanterías de metal o madera (no piso)
 - [ ] Calefactor PTC con termostato (si T° <20°C)
-- [ ] Dimensionamiento correcto (1 m³ por 3.7 kg de sustrato)
+- [ ] Capacidad validada con temperatura de bloque, carga real y acceso sanitario
 
 ### Zona de Fructificación
 - [ ] CLOUDLAB o Martha Tent construida/instalada
@@ -1269,6 +1272,7 @@ Antes de iniciar producción, verificar:
 - [ ] Extractor de aire instalado (H4 o equivalente)
 - [ ] Sensores T/HR conectados y calibrados
 - [ ] Sensor CO₂ instalado y compensado a altitud
+- [ ] Mapeo multipunto T/HR/CO₂ completado con carga real
 - [ ] Timer para luz configurado (3–5h/día)
 - [ ] Desagüe funcional
 - [ ] Punto de energía IP65
@@ -1311,10 +1315,11 @@ Antes de iniciar producción, verificar:
 ---
 
 **Documento compilado desde la Knowledge Base de Setas de la Peña**
-**Última revisión: 2026-07-23 (Completado)**
+**Última revisión: 2026-08-23 (Completado)**
 **Completitud: 90% — Cubre todas las zonas, parámetros, equipamiento, protocolos, limpieza y troubleshooting**
 **Confianza: Media-Alta (diseños probados; instalación real pendiente de validación de campo)**
 
 ### Historial de Versiones
 - **v1.0 (2026-07-23):** Compilación inicial — 70% de contenido
 - **v2.0 (2026-07-23):** Completado con pasteurización, esterilización, limpieza, biosecurity y contaminantes — 90% de contenido
+- **v2.1 (2026-08-23):** Reconciliado con revisión 2026 de cámaras: carga térmica, mapeo multipunto, CO₂, punto de rocío, ASC y SST

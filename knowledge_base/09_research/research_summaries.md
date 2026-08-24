@@ -2,7 +2,7 @@
 title: Resúmenes de Investigación por Tema
 category: research
 load_priority: on_request
-last_reviewed: 2026-07-16
+last_reviewed: 2026-08-23
 confidence: medium
 primary_sources:
   - literature_database.md
@@ -10,6 +10,7 @@ related_documents:
   - literature_database.md
   - literature_index.md
   - unresolved_questions.md
+  - incubation_fruiting_chambers_2026.md
 ---
 
 # Executive Summary
@@ -36,22 +37,22 @@ Síntesis temática del estado del conocimiento científico aplicado a Setas de 
 
 ---
 
-## TEMA 2: Humedad Relativa y Dew Point
+## TEMA 2: Humedad Relativa, Punto de Rocío y VPD
 
 ### Lo que la ciencia dice con certeza (★★★★★)
-- La HR del 85–95% es necesaria para fructificación, pero la métrica crítica es el **dew point** (punto de rocío), no la HR en el aire.
-- Si el dew point del aire está por debajo de la temperatura de la superficie del cap, el cap pierde agua → se reseca → crack en los bordes.
+- La HR de fructificación depende de la especie y debe interpretarse junto con temperatura; el punto de rocío y el VPD ayudan a diagnosticar evaporación y condensación.
+- Si la temperatura superficial está por encima del punto de rocío, existe potencial de evaporación; si está por debajo, puede condensarse agua sobre el tejido.
 - El sensor de HR mide el aire, no la superficie del hongo.
 
 ### Aplicación práctica
-- HR 90% a 24°C → dew point ~22°C → si el cap está a 22°C o menos, se reseca.
-- La humidificación por niebla fría es más efectiva que vapor caliente porque enfría ligeramente la superficie.
-- El parámetro de operación real es: temperatura de la niebla + temperatura del cap + HR del aire.
+- HR 90% a 24°C produce un punto de rocío cercano a 22,3°C: una superficie a 21°C puede condensar; una superficie a 24°C todavía tiene potencial de evaporación.
+- La niebla fría puede modificar simultáneamente HR y temperatura superficial; su efecto debe medirse, no asumirse siempre beneficioso.
+- El VPD del aire sirve para comparar condiciones, pero no se adopta un setpoint universal para hongos sin temperatura superficial y validación por especie.
 
 ### Implicación para Setas de la Peña
 - Usar SHT3x para medir T° y HR del aire.
-- En HA: calcular dew point como parámetro de alarma (no solo HR %).
-- Si caps muestran grietas o bordes secos: primer diagnóstico = dew point, no solo HR.
+- En HA: calcular punto de rocío y VPD como variables diagnósticas, además de HR.
+- Ante grietas, bordes secos, abortos o tejido mojado: revisar margen superficie–punto de rocío, patrón de aire y agua libre; no diagnosticar por HR sola.
 
 ---
 
@@ -127,6 +128,29 @@ Síntesis temática del estado del conocimiento científico aplicado a Setas de 
 - Fase 1 (sin autoclave): solo paja pasteurizada = P. djamor, P. ostreatus.
 - Fase 2 (con autoclave): desbloquea Master's Mix, granos, H. erinaceus, L. edodes.
 
+---
+
+## TEMA 7: Cámaras de Cultivo, Sensores y Automatización Avanzada
+
+### Lo que está respaldado
+
+- Un valor central de T/HR/CO₂ no demuestra uniformidad; posición de entradas, salidas, carga y estanterías puede crear zonas muertas.
+- El CO₂ se mezcla con el aire en presencia de movimiento. La altura del extractor no se define solo por densidad del gas.
+- La temperatura interna del sustrato puede superar la del aire por calor metabólico durante colonización.
+- Sistemas IoT de bajo costo permiten monitoreo y control remoto, pero muchos estudios validan la plataforma más que el rendimiento biológico multilot.
+- Esporas y otros bioaerosoles de salas de fructificación constituyen un riesgo ocupacional documentado.
+
+### Avances 2024–2026
+
+- Datos visuales de *Pleurotus* con variables ambientales sincronizadas habilitan investigación local de madurez y deformaciones (paper_014).
+- Control predictivo y redes informadas por física reportan ahorro energético en salas industriales de otras especies (paper_015), pero no son todavía transferibles como controlador operativo de una CLOUDLAB en Tenjo.
+
+### Implicación para Setas de la Peña
+
+- Priorizar mapeo multipunto, calibración, estados seguros y calidad de datos antes de IA.
+- Mantener control local determinista; usar analítica predictiva inicialmente en modo observación.
+- Ver revisión completa y plan por fases en `incubation_fruiting_chambers_2026.md`.
+
 # References
-- Ver `literature_database.md` para citas completas de cada afirmación.
+- Ver `literature_database.md` y `incubation_fruiting_chambers_2026.md` para citas completas de cada afirmación.
 - Stamets (2000, 2005); Friedman (2015); Mori et al. (2009).

@@ -68,17 +68,20 @@ async function confirmDialogIfPresent(page, label = 'Confirmar') {
   await modal.waitFor({ state: 'hidden', timeout: 3000 });
 }
 
-/** Selecciona una especie desde el selector de la barra species-bridge. */
+/** Selecciona una especie desde el contexto persistente del Formulador. */
 async function selectSpecies(page, sKey) {
-  await page.locator('[data-testid="species-bridge"] select').selectOption(sKey);
+  const quickStartSelect = page.locator('#form-mobile-species-select');
+  if (await quickStartSelect.isVisible()) {
+    await quickStartSelect.selectOption(sKey);
+    return;
+  }
+  await page.locator('#form-species-context-select').selectOption(sKey);
 }
 
 /** Busca un ingrediente por nombre en el catálogo del Formulador y lo agrega a la receta activa. */
 async function addIngredientByName(page, name) {
   await page.locator('.search').fill(name);
-  const card = page.locator('.ing-item', { hasText: name }).first();
-  await card.click(); // expande la ficha
-  await card.getByRole('button', { name: 'Agregar a receta' }).click();
+  await page.getByRole('button', { name: `Agregar ${name} a la receta`, exact: true }).click();
   await page.locator('.search').fill('');
 }
 
