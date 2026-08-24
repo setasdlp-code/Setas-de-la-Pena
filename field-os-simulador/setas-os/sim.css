@@ -3330,7 +3330,6 @@
   .sim-root .p-body{padding:8px!important}
   .sim-root .p-sci{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sim-root .p-common{font-size:16px;line-height:1.15;overflow-wrap:anywhere}
-  .sim-root .p-chips{margin-left:0;padding-top:0}
   .sim-root .p-chips-row1{grid-template-columns:1fr 1fr}
   .sim-root .p-chips-row1 .p-chip:nth-child(3){display:none}
   .sim-root .p-chips-row2{grid-template-columns:1fr 1fr 34px}
@@ -3339,4 +3338,19 @@
   .sim-root .p-chip-val{font-size:9px}
 }
 
+/* ── PERITO & CO-FORMULACIÓN CARDS ─────────────────────────────── */
+.sim-root .coform-card {
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.sim-root .coform-card:hover {
+  box-shadow: var(--shadow-card-hover, 0 4px 12px rgba(26,20,16,0.09));
+}
+.sim-root .coform-card button[data-scenario-action="apply"]:hover {
+  filter: brightness(0.92);
+}
+.sim-root .coform-card button[data-scenario-action="apply"]:active {
+  transform: scale(0.985);
+}
+
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+

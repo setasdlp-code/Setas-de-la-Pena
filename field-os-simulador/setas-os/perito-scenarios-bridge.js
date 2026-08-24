@@ -46,17 +46,17 @@ import './formulator-api.js';
   };
 
   const resolveRuntime = an => {
-    const analyzeFn = readLexical('typeof analyze === "function" ? analyze : null');
-    const ings = readLexical('typeof INGS !== "undefined" ? INGS : null');
-    const spp = readLexical('typeof SPP !== "undefined" ? SPP : null');
+    let analyzeFn = (typeof globalThis.analyze === 'function' ? globalThis.analyze : null) || readLexical('typeof analyze === "function" ? analyze : null') || (typeof globalThis.SetasRecipeOptimizer?.analyze === 'function' ? globalThis.SetasRecipeOptimizer.analyze : null);
+    let ings = (Array.isArray(globalThis.INGS) && globalThis.INGS.length ? globalThis.INGS : null) || readLexical('typeof INGS !== "undefined" ? INGS : null');
+    let spp = (globalThis.SPP && typeof globalThis.SPP === 'object' ? globalThis.SPP : null) || readLexical('typeof SPP !== "undefined" ? SPP : null');
     if (typeof analyzeFn !== 'function' || !Array.isArray(ings)) return null;
     let sKey = null;
-    if (spp && an?.sp) sKey = Object.keys(spp).find(k => spp[k] === an.sp) || null;
+    if (spp && an?.sp) sKey = Object.keys(spp).find(k => spp[k] === an.sp || spp[k]?.name === an.sp?.name) || null;
     if (!sKey) {
       const name = an?.sp?.name || an?.sp?.common || an?.sp?.label;
       sKey = SPECIES_KEY_BY_NAME[name] || null;
     }
-    return sKey ? { analyzeFn, ings, spp, sKey } : null;
+    return sKey ? { analyzeFn, ings, spp: spp || {}, sKey } : null;
   };
 
   const catalogNames = ingredients => Object.fromEntries((ingredients || []).map(g => [g.id, g.name || g.id]));
@@ -140,8 +140,21 @@ import './formulator-api.js';
     });
   };
 
-  const recipeText = (recipe, names) => recipe.slice().sort((a, b) => b.p - a.p)
-    .map(r => `${esc(names[r.id] || r.id)} ${Number(r.p).toFixed(1)}%`).join(' · ');
+  const recipeText = (recipe, names, addedIngredients = []) => {
+    const addedMap = new Map((addedIngredients || []).map(x => [x.id, x]));
+    return recipe.slice().sort((a, b) => b.p - a.p)
+      .map(r => {
+        const added = addedMap.get(r.id);
+        const name = esc(names[r.id] || r.id);
+        if (added && added.isNew) {
+          return `<strong style="color:var(--accent-olive,#496E4C)">+ ${name} ${Number(r.p).toFixed(1)}%</strong>`;
+        }
+        if (added && added.delta > 0) {
+          return `<span style="color:var(--accent-olive,#496E4C)">${name} ${Number(r.p).toFixed(1)}% (+${added.delta}%)</span>`;
+        }
+        return `${name} ${Number(r.p).toFixed(1)}%`;
+      }).join(' · ');
+  };
 
   const deltaText = (candidate, baseline) => {
     const cd = candidate.evaluation?.dimensions || {};
@@ -193,6 +206,45 @@ import './formulator-api.js';
     if (lastDetail) compute(lastDetail);
   };
 
+  const TYPE_CONFIG = {
+    conservadora: {
+      label: 'Conservadora · Estándar',
+      badgeBg: 'var(--accent-blue-grey-dim, #DEE5E7)',
+      badgeColor: 'var(--accent-blue-grey, #5E7080)',
+      btnBg: 'var(--accent-blue-grey, #5E7080)',
+      btnColor: 'var(--paper-0, #F7F4EC)',
+    },
+    rendimiento: {
+      label: 'Rendimiento · Alta Proteína',
+      badgeBg: 'var(--accent-olive-dim, #DCE1D1)',
+      badgeColor: 'var(--accent-olive, #5B6B44)',
+      btnBg: 'var(--accent-olive, #5B6B44)',
+      btnColor: 'var(--paper-0, #F7F4EC)',
+    },
+    economia: {
+      label: 'Económica · Subproductos',
+      badgeBg: 'var(--accent-terracotta-dim, #EFE0D3)',
+      badgeColor: 'var(--accent-terracotta, #A85C32)',
+      btnBg: 'var(--accent-terracotta, #A85C32)',
+      btnColor: 'var(--paper-0, #F7F4EC)',
+    },
+    experimental: {
+      label: 'Experimental · Novedad',
+      badgeBg: 'var(--accent-mushroom-dim, #E7E0D3)',
+      badgeColor: 'var(--accent-mushroom, #7A6A52)',
+      btnBg: 'var(--paper-0, #F7F4EC)',
+      btnColor: 'var(--accent-mushroom, #7A6A52)',
+      btnBorder: '1px solid var(--accent-mushroom, #7A6A52)',
+    },
+    alternativa: {
+      label: 'Alternativa Equilibrada',
+      badgeBg: 'var(--paper-2, #E5DFD0)',
+      badgeColor: 'var(--ink-1, #3C392F)',
+      btnBg: 'var(--accent-olive, #5B6B44)',
+      btnColor: 'var(--paper-0, #F7F4EC)',
+    },
+  };
+
   const render = (result, names) => {
     const root = document.getElementById('bl-perito');
     if (!root) return false;
@@ -200,7 +252,7 @@ import './formulator-api.js';
     if (!box) {
       box = document.createElement('section');
       box.id = 'perito-scenarios-v1';
-      box.style.cssText = 'margin:12px 0 14px;padding:12px 14px;border:1px solid rgba(26,20,16,.14);border-radius:6px;background:var(--paper-50);font-family:var(--font-body);';
+      box.style.cssText = 'margin:12px 0 14px;padding:12px 14px;border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-md,3px);background:var(--paper-0,#F7F4EC);font-family:var(--font-body);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));';
       const model = document.getElementById('perito-model-v2');
       if (model?.parentElement === root) root.insertBefore(box, model.nextSibling);
       else root.insertBefore(box, root.firstChild?.nextSibling || null);
@@ -209,30 +261,62 @@ import './formulator-api.js';
     const formulator = globalThis.SetasFormulatorAPI;
     const canUndo = !!formulator?.canUndo();
     const adapter = formulator?.adapterType?.() || 'none';
+    const isPartial = !!result.isPartial;
+    const partialTotal = result.partialTotal ?? 0;
+
     box.innerHTML = `
-      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:8px">
-        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500)">Perito · escenarios</div>
-        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">${result.explored} variantes · ${result.pareto.length} Pareto · API ${esc(adapter)}</div>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:8px;flex-wrap:wrap">
+        <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${isPartial ? 'var(--accent-olive,#5B6B44)' : 'var(--ink-0,#1E1D19)'};font-weight:700">${isPartial ? `🌱 Asistente de Co-formulación · ${partialTotal}% anclado` : 'Perito · Escenarios Recomendados'}</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-2)">${result.explored} explorados · ${result.pareto?.length || 0} Pareto</div>
       </div>
-      ${canUndo ? '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button data-scenario-action="undo" style="cursor:pointer;border:1px solid var(--border-soft);background:var(--paper-0);padding:5px 9px;border-radius:4px;font-family:var(--font-mono);font-size:10px">↶ Deshacer escenario</button></div>' : ''}
+      ${canUndo ? '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button data-scenario-action="undo" style="cursor:pointer;min-height:36px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:5px 10px;border-radius:var(--radius-sm,2px);font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--ink-0)">↶ Deshacer escenario</button></div>' : ''}
       ${rows.length ? rows.map((c, i) => {
         const d = c.evaluation?.dimensions || {};
-        const experimental = c.type === 'experimental';
-        return `<article style="padding:${i ? '10px 0 0' : '0'};${i ? 'border-top:1px solid rgba(26,20,16,.10);margin-top:10px;' : ''}">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><strong style="font-size:13px">${TYPE_LABEL[c.type] || 'Alternativa'}</strong><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Novedad ${Math.round(c.evaluation?.novelty || 0)}/100</span></div>
-          <div style="font-family:var(--font-mono);font-size:11px;line-height:1.45;margin-top:4px">${recipeText(c.recipe, names)}</div>
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500);margin-top:4px">Seguridad ${Math.round(d.safety?.score || 0)} · Agronomía ${Math.round(d.agronomy?.score || 0)} · Economía ${Math.round(d.economy?.score || 0)} · ${deltaText(c, result.baseline)}</div>
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500);margin-top:3px">Ruta: ${c.path.map(x => esc(x.label || `${x.id} ${x.delta || x.value || ''}`)).join(' → ')}</div>
-          <div style="display:flex;justify-content:flex-end;margin-top:7px"><button data-scenario-action="apply" data-scenario-id="${esc(c.id)}" style="cursor:pointer;border:1px solid ${experimental ? 'var(--accent-terracotta)' : 'var(--accent-olive)'};background:${experimental ? 'transparent' : 'var(--accent-olive)'};color:${experimental ? 'var(--accent-terracotta)' : 'var(--paper-0)'};padding:6px 10px;border-radius:4px;font-family:var(--font-mono);font-size:10px;font-weight:700">${experimental ? 'Probar escenario' : 'Aplicar escenario'}</button></div>
+        const an = c.evaluation?.analysis || {};
+        const conf = TYPE_CONFIG[c.type] || TYPE_CONFIG.alternativa;
+        const buttonLabel = isPartial ? 'Completar mi receta' : (c.type === 'experimental' ? 'Probar escenario' : 'Aplicar a mi receta');
+        return `<article class="coform-card" style="padding:10px 12px;margin-top:10px;border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-md,3px);background:var(--paper-1,#EFEBE0);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;background:${conf.badgeBg};color:${conf.badgeColor};border:1px solid ${conf.badgeColor};letter-spacing:.04em;text-transform:uppercase;">${conf.label}</span>
+            <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${c.evaluation?.score ? `Score ${Math.round(c.evaluation.score)} pts` : ''}</span>
+          </div>
+          <div style="font-family:var(--font-sans);font-size:12px;line-height:1.45;color:var(--ink-0);margin-bottom:6px;font-weight:500;">
+            ${recipeText(c.recipe, names, c.addedIngredients)}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:8px;padding:4px 6px;background:var(--paper-0,#F7F4EC);border:1px solid var(--border-hairline,#8C7F5B);border-radius:2px;text-align:center;">
+            <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">C:N</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${Math.round(an.cn || 0)}:1</div></div>
+            <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">EB est.</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${Math.round(an.eb || 0)}%</div></div>
+            <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">Costo</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">$${Math.round(an.cost || 0)}/kg</div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button data-scenario-action="apply" data-scenario-id="${esc(c.id)}" style="cursor:pointer;min-height:44px;width:100%;border:${conf.btnBorder || '1px solid ' + conf.btnBg};background:${conf.btnBg};color:${conf.btnColor};padding:8px 14px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:filter .15s;">
+              ${buttonLabel} →
+            </button>
+          </div>
         </article>`;
       }).join('') : `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-500)">${esc(result.blockedReason || 'No apareció una alternativa viable bajo las restricciones activas.')}</div>`}
+      ${!isPartial && rows.length ? `
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(26,20,16,.1)">
+        <button data-scenario-action="save-receta" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">💾 Guardar en Recetario</button>
+        <button data-scenario-action="create-batch" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">📦 Crear Lote en Bitácora</button>
+      </div>` : ''}
       <div id="perito-scenarios-status" style="min-height:14px;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-500)"></div>
-      <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">El Perito consume SetasFormulatorAPI; no conoce controles internos del Formulador. Experimental = propuesta para ensayo, no rendimiento garantizado.</div>`;
+      <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">El Perito consume SetasFormulatorAPI; no conoce controles internos del Formulador. Co-formulación ajusta reactivamente las sugerencias respetando tus ingredientes.</div>`;
     box.onclick = event => {
       const btn = event.target.closest('button[data-scenario-action]');
       if (!btn) return;
-      if (btn.dataset.scenarioAction === 'apply') applyScenario(btn.dataset.scenarioId);
-      else if (btn.dataset.scenarioAction === 'undo') undoScenario();
+      const action = btn.dataset.scenarioAction;
+      if (action === 'apply') applyScenario(btn.dataset.scenarioId);
+      else if (action === 'undo') undoScenario();
+      else if (action === 'save-receta') {
+        const saveBtn = document.querySelector('button[aria-label="Guardar receta en Recetario"]');
+        if (saveBtn) saveBtn.click();
+        setStatus('Receta lista para guardar en Recetario.', 'ok');
+      }
+      else if (action === 'create-batch') {
+        document.getElementById('bl-batch')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setStatus('Desplazado a sección de Lote / Batch.', 'ok');
+      }
     };
     return true;
   };
@@ -251,8 +335,8 @@ import './formulator-api.js';
     const formState = formulator.getState(names);
     const liveRecipe = formState.recipe?.length ? formState.recipe : detail.recipe;
     const rawTotal = liveRecipe.reduce((sum, r) => sum + (Number(r.p) || 0), 0);
-    if (rawTotal < 99 || rawTotal > 101) {
-      const blocked = { baseline: { recipe: liveRecipe, evaluation: { dimensions: {} } }, explored: 0, pareto: [], recommended: [], blockedReason: `La receta suma ${rawTotal.toFixed(1)}%. Llévala a 100% (±1%) antes de explorar escenarios.` };
+    if (rawTotal > 101) {
+      const blocked = { baseline: { recipe: liveRecipe, evaluation: { dimensions: {} } }, explored: 0, pareto: [], recommended: [], blockedReason: `La receta suma ${rawTotal.toFixed(1)}%. Reduce ingredientes para no superar 100%.` };
       lastResult = blocked;
       catalogCache = names;
       globalThis.__setasLastScenarios = blocked;
@@ -295,10 +379,6 @@ import './formulator-api.js';
       ingredientCaps: ingredientCaps(compatibleIngs, detail.an),
       lockedIds: formState.lockedIds,
     });
-    // SetasFormulatorAPI does not expose optimizer profile, maxCost, maxSupp,
-    // maxCafe, forceLowRisk or spawnOverride here. Do not synthesize operator
-    // choices; the engine keeps its documented production-profile defaults
-    // until those constraints are part of the formulator state/API.
     lastResult = result;
     catalogCache = names;
     globalThis.__setasLastScenarios = result;

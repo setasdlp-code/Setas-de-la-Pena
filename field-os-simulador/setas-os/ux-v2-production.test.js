@@ -92,3 +92,20 @@ test('workspace state is deep-linkable through the view query parameter', () => 
   assert.match(source, /searchParams\.set\('view',next\)/);
   assert.match(source, /addEventListener\('popstate',onPop\)/);
 });
+
+test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
+  assert.match(source, /showQrSheet/);
+  assert.match(source, /aria-label="Captura rápida de campo"/);
+  assert.match(source, /Registrar Cosecha \(kg\)/);
+  assert.match(source, /Registrar Clima \/ Sala/);
+  assert.match(source, /Reportar Contaminación \/ Merma/);
+});
+
+test('perito bridge renders structured co-formulation cards with DS tokens and 44px targets', () => {
+  const bridge = fs.readFileSync(path.join(root, 'perito-scenarios-bridge.js'), 'utf8');
+  assert.match(bridge, /class="coform-card"/);
+  assert.match(bridge, /TYPE_CONFIG/);
+  assert.match(bridge, /min-height:44px/);
+  assert.match(styles, /\.sim-root \.coform-card/);
+});
+

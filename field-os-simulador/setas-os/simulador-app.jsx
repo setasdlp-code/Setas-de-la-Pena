@@ -423,6 +423,8 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   }
     const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
+if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
+if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
 //    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp.
@@ -1885,6 +1887,8 @@ function App(props){
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   const [optProfile,setOptProfile]=useState('produccion');
+  const [showQrSheet,setShowQrSheet]=useState(false);
+  const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
   // ── Producción: lote propio de la hoja imprimible ──
   const [prodBags,setProdBags]=useState(6);
   const [prodKg,setProdKg]=useState(1.5);
@@ -3399,7 +3403,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
     return <section className="os-today-v2" data-testid="ux-v2-today">
       <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
-      <button className="os-scan-target" type="button" onClick={()=>setNoticeDlg({title:'Escanear lote',msg:'Usa el lector de campo para resolver el lote y mostrar sus acciones válidas.'})}>Escanear lote o registrar evento</button>
+      <button className="os-scan-target" type="button" onClick={()=>{
+        const firstActive=bitLotes.find(l=>!['completado','descartado'].includes(l.estado));
+        setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
+        setShowQrSheet(true);
+      }}>Escanear lote o registrar evento</button>
       {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
       {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
         <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
@@ -6599,6 +6607,106 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
         )}
+        {/* MODAL / ACTION SHEET QR DE CAMPO */}
+        {showQrSheet&&(()=>{
+          const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const currentLote=bitLotes.find(l=>l.id===(qrSelectedLoteId||bitActiveLoteId))||activeBatches[0]||bitLotes[0];
+          return(
+            <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowQrSheet(false);}}>
+              <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Captura rápida de campo" style={{width:'min(440px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)'}}>
+                    📷 Captura Rápida · Registro en Sala
+                  </div>
+                  <button onClick={()=>setShowQrSheet(false)} style={{background:'none',border:'none',fontSize:16,cursor:'pointer',color:'var(--ink-2)'}}>✕</button>
+                </div>
+                {currentLote?(
+                  <>
+                    <div style={{padding:'10px 12px',background:'var(--paper-0,#F7F4EC)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-sm,2px)',marginBottom:14}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+                        <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-0)'}}>{currentLote.codigo}</strong>
+                        <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',marginTop:4}}>
+                        Estado: {currentLote.estado} · {currentLote.numBolsas||0} bolsas
+                      </div>
+                      {activeBatches.length>1&&(
+                        <select
+                          className="inv-input"
+                          style={{marginTop:8,fontSize:11,height:32}}
+                          value={currentLote.id}
+                          onChange={e=>setQrSelectedLoteId(e.target.value)}
+                          aria-label="Cambiar lote activo"
+                        >
+                          {activeBatches.map(l=>(
+                            <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.estado})</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      <button
+                        type="button"
+                        style={{minHeight:46,cursor:'pointer',background:'var(--accent-olive,#5B6B44)',color:'var(--paper-0,#F7F4EC)',border:'1px solid var(--accent-olive,#5B6B44)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setBitActiveLoteId(currentLote.id);
+                          setBitCosechaForm({
+                            loteId:currentLote.id,
+                            bolsaId:'',
+                            flush:1,
+                            fecha:new Date().toISOString().split('T')[0],
+                            pesoFresco:'',
+                            calidad:3,
+                            observaciones:''
+                          });
+                          setShowQrSheet(false);
+                          setShowBitCosecha(true);
+                        }}
+                      >
+                        🌾 Registrar Cosecha (kg)
+                      </button>
+                      <button
+                        type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setShowQrSheet(false);
+                          goTab('control');
+                        }}
+                      >
+                        🌡 Registrar Clima / Sala
+                      </button>
+                      <button
+                        type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setBitActiveLoteId(currentLote.id);
+                          setShowQrSheet(false);
+                          goBitTab('bit_bolsas',true);
+                        }}
+                      >
+                        ⚠ Reportar Contaminación / Merma
+                      </button>
+                      <button
+                        type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-1)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setShowQrSheet(false);
+                          openBatchDetail(currentLote.id);
+                        }}
+                      >
+                        📋 Ver Ficha y Ciclo de Vida →
+                      </button>
+                    </div>
+                  </>
+                ):(
+                  <div style={{textAlign:'center',padding:'16px 0',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)'}}>
+                    No hay lotes activos registrados para escanear.
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
         <div style={{height:40}}/>
         
       </div>

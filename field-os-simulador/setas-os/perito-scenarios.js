@@ -360,6 +360,292 @@
     return seeds;
   };
 
+  // Co-formulation solver: given a partial recipe (e.g. 40% oak sawdust), anchors
+  // existing ingredients and generates closed-form completions for remaining %
+  // using available stock or catalog ingredients to hit target C:N, aeration & pH.
+  const generateCoformulationSeeds = ({
+    targetKey,
+    partialRecipe = [],
+    ingredients = [],
+    spp = {},
+    useStock = false,
+    stockIds = new Set(),
+    profileKey = 'produccion',
+    maxSupp = null,
+  } = {}) => {
+    const sp = spp?.[targetKey];
+    if (!sp) return [];
+
+    const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
+    const cleanAnchor = (partialRecipe || [])
+      .map(r => ({ id: r.id, p: Number(r.p ?? r.pct) || 0 }))
+      .filter(r => r.id && r.p > 0);
+    const anchorTotal = cleanAnchor.reduce((s, r) => s + r.p, 0);
+
+    const ingById = new Map(ingredients.map(g => [g.id, g]));
+    const anchorBaseIds = cleanAnchor
+      .filter(r => ingById.get(r.id)?.role === 'base_carbono')
+      .map(r => r.id);
+
+    const pool = useStock
+      ? ingredients.filter(g => stock.has(g.id))
+      : ingredients.filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+
+    // Prioritize bases according to affinity with anchored recipe:
+    // 1) Same base already present in anchor (highest priority)
+    // 2) Standard clean cereal straws/woods (paja_trigo, aserrin_roble, paja_arroz)
+    // 3) Alternative / byproduct bases (bagazo_caña, rastrojo, etc.)
+    const baseAffinityScore = b => {
+      if (anchorBaseIds.includes(b.id)) return 0;
+      if (['aserrin_roble', 'paja_trigo', 'paja_arroz', 'aserrin_alamo'].includes(b.id)) return 1;
+      return 2;
+    };
+    const bases = pool.filter(g =>
+      g.role === 'base_carbono' &&
+      (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey)) &&
+      Number(g.cn) > 0 &&
+      Number(g.n) > 0
+    ).sort((a, b) => baseAffinityScore(a) - baseAffinityScore(b));
+
+    // Prioritize diverse supplement families:
+    // 1) Gold standard / high protein supplements (salvado_trigo, harina_soya, cascarilla_soya, salvado_arroz)
+    // 2) Other nutritional supplements & byproducts
+    const suppAffinityScore = s => {
+      if (['salvado_trigo', 'harina_soya', 'cascarilla_soya', 'salvado_arroz'].includes(s.id)) return 0;
+      if (['harina_maiz', 'pulpa_alfalfa', 'borra_cafe'].includes(s.id)) return 1;
+      return 2;
+    };
+    const supps = pool.filter(g =>
+      (g.role === 'suplemento_n' || g.role === 'suplemento_medio') &&
+      (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey)) &&
+      Number(g.cn) > 0 &&
+      Number(g.n) > 0
+    ).sort((a, b) => suppAffinityScore(a) - suppAffinityScore(b));
+
+    const aers = pool.filter(g => g.role === 'aireador');
+
+    const calAvail = pool.some(g => g.id === 'carbonato_calcio') || (!useStock && ingredients.some(g => g.id === 'carbonato_calcio'));
+    const yesoAvail = pool.some(g => g.id === 'yeso') || (!useStock && ingredients.some(g => g.id === 'yeso'));
+    const profile = resolveProfile({ profileKey, species: sp, maxSupp });
+    const suppLimit = profile.maxSupp;
+
+    // Safe agronomic caps per supplement type (e.g. wet spent grain max 12% to prevent souring)
+    const suppMaxFor = s => {
+      if (s.id === 'afrecho_cerveceria') return Math.min(suppLimit, 12);
+      return suppLimit;
+    };
+
+    const aerOpts = [null, ...aers.slice(0, 2)];
+    const calOpts = calAvail ? [0, 3] : [0];
+    const yesoOpts = yesoAvail ? [0, 2] : [0];
+    const tried = new Set();
+    const seeds = [];
+    const T = Number(sp.cn_optimal?.ideal);
+
+    if (!Number.isFinite(T)) return [];
+
+    let anchorC = 0, anchorN = 0, anchorSuppP = 0, anchorHasAer = false, anchorHasCal = false, anchorHasYeso = false;
+    cleanAnchor.forEach(r => {
+      const g = ingById.get(r.id);
+      if (!g) return;
+      const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
+      const dryFrac = r.p * (1 - Math.min(0.92, Math.max(0, Number(g.moisture || 0) / 100)));
+      if (Number(g.cn) > 0 && !esAditivoSeco) {
+        anchorC += Number(g.c || 0) * dryFrac;
+        anchorN += Number(g.n || 0) * dryFrac;
+      }
+      if (g.role === 'suplemento_n' || g.role === 'suplemento_medio') anchorSuppP += r.p;
+      if (g.role === 'aireador') anchorHasAer = true;
+      if (r.id === 'carbonato_calcio') anchorHasCal = true;
+      if (r.id === 'yeso') anchorHasYeso = true;
+    });
+
+    const remPct = Math.max(0, 100 - anchorTotal);
+    if (remPct <= 2) return [];
+
+    const tryAddSeed = (completions, mode, label, metadata = {}) => {
+      const mergedMap = new Map();
+      cleanAnchor.forEach(r => mergedMap.set(r.id, (mergedMap.get(r.id) || 0) + r.p));
+      completions.forEach(r => mergedMap.set(r.id, (mergedMap.get(r.id) || 0) + r.p));
+      const merged = [...mergedMap.entries()].map(([id, p]) => ({ id, p: round2(p) }));
+      const tot = merged.reduce((s, r) => s + r.p, 0);
+      if (Math.abs(tot - 100) > 0.5) return;
+      const norm = normalizeRecipe(merged);
+      const key = canonicalRecipeKey(norm);
+      if (tried.has(key)) return;
+      tried.add(key);
+      seeds.push(makeStructuralSeed(norm, mode, label, metadata));
+    };
+
+    // Strategy 1: Complete with Base + Supplement (closed form for target C:N)
+    bases.forEach(base => {
+      // If user anchored a specific base (e.g. aserrin_roble), don't introduce bagazo_caña
+      // unless user anchored bagazo_caña or no other bases exist.
+      if (anchorBaseIds.length > 0 && !anchorBaseIds.includes(base.id) && base.id === 'bagazo_caña' && bases.some(b => anchorBaseIds.includes(b.id))) {
+        return;
+      }
+      supps.forEach(supp => {
+        if (base.id === supp.id) return;
+        const currentAerOpts = anchorHasAer ? [null] : aerOpts;
+        const currentCalOpts = anchorHasCal ? [0] : calOpts;
+        const currentYesoOpts = anchorHasYeso ? [0] : yesoOpts;
+
+        currentAerOpts.forEach(aer => {
+          currentCalOpts.forEach(calP => {
+            currentYesoOpts.forEach(yesoP => {
+              const aerP = aer ? 10 : 0;
+              const fixedAddPct = calP + yesoP + aerP;
+              const P_free = remPct - fixedAddPct;
+              if (P_free < 5) return;
+
+              const b = dryTerms(base);
+              const s = dryTerms(supp);
+              const denom = (b.c - s.c) - T * (b.n - s.n);
+              if (Math.abs(denom) < 0.001) return;
+
+              const ps = (anchorC - T * anchorN + P_free * (b.c - T * b.n)) / denom;
+              const pb = P_free - ps;
+
+              if (ps < 0 || pb < 0) return;
+              if (anchorSuppP + ps > suppMaxFor(supp)) return;
+
+              const comp = [];
+              if (pb > 0.5) comp.push({ id: base.id, p: round1(pb) });
+              if (ps > 0.5) comp.push({ id: supp.id, p: round1(ps) });
+              if (calP > 0) comp.push({ id: 'carbonato_calcio', p: calP });
+              if (yesoP > 0) comp.push({ id: 'yeso', p: yesoP });
+              if (aer) comp.push({ id: aer.id, p: aerP });
+
+              tryAddSeed(
+                comp,
+                'coform_1b1s',
+                `Co-formulación · ${base.id} + ${supp.id}`,
+                { baseId: base.id, suppId: supp.id, aeratorId: aer?.id || null, calP, yesoP }
+              );
+            });
+          });
+        });
+      });
+    });
+
+    // Strategy 2: Complete with Base only (only if total C:N is within species acceptable max)
+    bases.forEach(base => {
+      if (anchorBaseIds.length > 0 && !anchorBaseIds.includes(base.id) && base.id === 'bagazo_caña' && bases.some(b => anchorBaseIds.includes(b.id))) {
+        return;
+      }
+      const b = dryTerms(base);
+      const currentAerOpts = anchorHasAer ? [null] : aerOpts;
+      const currentCalOpts = anchorHasCal ? [0] : calOpts;
+      const currentYesoOpts = anchorHasYeso ? [0] : yesoOpts;
+      currentAerOpts.forEach(aer => {
+        currentCalOpts.forEach(calP => {
+          currentYesoOpts.forEach(yesoP => {
+            const aerP = aer ? 10 : 0;
+            const fixedAddPct = calP + yesoP + aerP;
+            const P_free = remPct - fixedAddPct;
+            if (P_free < 5) return;
+
+            const totalC = anchorC + P_free * b.c;
+            const totalN = anchorN + P_free * b.n;
+            const estCN = totalN > 0 ? totalC / totalN : 999;
+            const maxAllowedCN = (sp.cn_optimal?.max || 45) * 1.25;
+            if (estCN > maxAllowedCN) return;
+
+            const comp = [{ id: base.id, p: round1(P_free) }];
+            if (calP > 0) comp.push({ id: 'carbonato_calcio', p: calP });
+            if (yesoP > 0) comp.push({ id: 'yeso', p: yesoP });
+            if (aer) comp.push({ id: aer.id, p: aerP });
+
+            tryAddSeed(
+              comp,
+              'coform_base_only',
+              `Co-formulación base · ${base.id}`,
+              { baseId: base.id, aeratorId: aer?.id || null, calP, yesoP }
+            );
+          });
+        });
+      });
+    });
+
+    // Strategy 3: Complete with Supplement only
+    supps.forEach(supp => {
+      const currentAerOpts = anchorHasAer ? [null] : aerOpts;
+      const currentCalOpts = anchorHasCal ? [0] : calOpts;
+      const currentYesoOpts = anchorHasYeso ? [0] : yesoOpts;
+      currentAerOpts.forEach(aer => {
+        currentCalOpts.forEach(calP => {
+          currentYesoOpts.forEach(yesoP => {
+            const aerP = aer ? 10 : 0;
+            const fixedAddPct = calP + yesoP + aerP;
+            const P_free = remPct - fixedAddPct;
+            if (P_free < 2 || anchorSuppP + P_free > suppLimit) return;
+            const comp = [{ id: supp.id, p: round1(P_free) }];
+            if (calP > 0) comp.push({ id: 'carbonato_calcio', p: calP });
+            if (yesoP > 0) comp.push({ id: 'yeso', p: yesoP });
+            if (aer) comp.push({ id: aer.id, p: aerP });
+
+            tryAddSeed(
+              comp,
+              'coform_supp_only',
+              `Co-formulación suplemento · ${supp.id}`,
+              { suppId: supp.id, aeratorId: aer?.id || null, calP, yesoP }
+            );
+          });
+        });
+      });
+    });
+
+    // Strategy 4: Complete with Base + Stepped Safe Supplementation
+    const suppStepLevels = [5, 8, 12, 15, suppLimit].filter(v => v > 0 && v <= suppLimit && v <= remPct);
+    bases.forEach(base => {
+      if (anchorBaseIds.length > 0 && !anchorBaseIds.includes(base.id) && base.id === 'bagazo_caña' && bases.some(b => anchorBaseIds.includes(b.id))) {
+        return;
+      }
+      supps.forEach(supp => {
+        if (base.id === supp.id) return;
+        const currentAerOpts = anchorHasAer ? [null] : aerOpts;
+        const currentCalOpts = anchorHasCal ? [0] : calOpts;
+        const currentYesoOpts = anchorHasYeso ? [0] : yesoOpts;
+
+        currentAerOpts.forEach(aer => {
+          currentCalOpts.forEach(calP => {
+            currentYesoOpts.forEach(yesoP => {
+              const aerP = aer ? 10 : 0;
+              const fixedAddPct = calP + yesoP + aerP;
+              const P_free = remPct - fixedAddPct;
+              if (P_free < 5) return;
+
+              suppStepLevels.forEach(targetSuppPct => {
+                const ps = Math.min(targetSuppPct, P_free - 2);
+                if (ps < 2) return;
+                const pb = P_free - ps;
+                if (pb < 2) return;
+                if (anchorSuppP + ps > suppMaxFor(supp)) return;
+
+                const comp = [
+                  { id: base.id, p: round1(pb) },
+                  { id: supp.id, p: round1(ps) },
+                ];
+                if (calP > 0) comp.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) comp.push({ id: 'yeso', p: yesoP });
+                if (aer) comp.push({ id: aer.id, p: aerP });
+
+                tryAddSeed(
+                  comp,
+                  'coform_stepped',
+                  `Co-formulación balanceada · ${base.id} + ${supp.id}`,
+                  { baseId: base.id, suppId: supp.id, aeratorId: aer?.id || null, calP, yesoP }
+                );
+              });
+            });
+          });
+        });
+      });
+    });
+
+    return seeds;
+  };
+
   const applyMutation = (recipe, mutation, caps = {}) => {
     const map = recipeMap(recipe);
     const id = mutation.id;
@@ -389,6 +675,17 @@
         ? map[k] / adjustableTotal * room
         : room / Math.max(1, adjustable.length);
     });
+
+    if (locked.size > 0) {
+      const norm = Object.entries(map).map(([rid, p]) => ({ id: rid, p: round2(p) }));
+      const currentTot = norm.reduce((s, r) => s + r.p, 0);
+      if (Math.abs(currentTot - 100) > 0.001 && adjustable.length > 0) {
+        const diff = round2(100 - currentTot);
+        const adj = norm.find(r => !locked.has(r.id) && r.id !== id);
+        if (adj) adj.p = round2(adj.p + diff);
+      }
+      return norm.filter(r => r.p > 0);
+    }
 
     return normalizeRecipe(Object.entries(map).map(([rid, p]) => ({ id: rid, p })));
   };
@@ -488,9 +785,21 @@
     return Object.keys(w).reduce((s, k) => s + (v[k] || 0) * w[k], 0);
   };
 
-  const classifyScenario = (candidate, baseline) => {
+  const classifyScenario = (candidate, baseline, isPartial = false) => {
     const c = dimensionVector(candidate.evaluation);
     const b = dimensionVector(baseline.evaluation);
+    if (c.safety < 50) return 'descartar';
+    if (isPartial) {
+      const rec = candidate.recipe || [];
+      const hasClassic = rec.some(r => ['salvado_trigo', 'salvado_arroz', 'harina_maiz'].includes(r.id));
+      const hasYield = rec.some(r => ['harina_soya', 'cascarilla_soya', 'salvado_arroz'].includes(r.id));
+      const hasEconomy = rec.some(r => ['afrecho_cerveceria', 'bagazo_caña', 'borra_cafe'].includes(r.id));
+      if (hasClassic && c.safety >= 60) return 'conservadora';
+      if (hasYield && c.agronomy >= 55) return 'rendimiento';
+      if (hasEconomy && c.economy >= 75) return 'economia';
+      if (c.novelty >= 40) return 'experimental';
+      return 'alternativa';
+    }
     if (c.safety < 60) return 'descartar';
     if (c.novelty >= 55 && c.agronomy >= b.agronomy - 8) return 'experimental';
     if (c.economy >= b.economy + 8 && c.agronomy >= b.agronomy - 5) return 'economia';
@@ -524,10 +833,14 @@
     return totals;
   };
 
-  const lockedCompositionMatches = (candidate, baseline, lockedIds) => {
+  const lockedCompositionMatches = (candidate, baseline, lockedIds, isPartial = false) => {
     const locked = lockedIds instanceof Set ? lockedIds : new Set(lockedIds || []);
     if (!locked.size) return true;
     const a = recipeMap(candidate);
+    if (isPartial) {
+      const b = Object.fromEntries((baseline || []).map(r => [r.id, Number(r.p ?? r.pct) || 0]));
+      return [...locked].every(id => (a[id] || 0) >= (b[id] || 0) - 0.011);
+    }
     const b = recipeMap(baseline);
     return [...locked].every(id => Math.abs((a[id] || 0) - (b[id] || 0)) < 0.011);
   };
@@ -544,6 +857,7 @@
     ingredientCaps,
     lockedIds,
     baselineRecipe,
+    isPartial = false,
   }) => {
     const failures = [];
     const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
@@ -568,7 +882,7 @@
     if (Number(analysis?.cafeP || 0) > Number(profile.maxCafe) + 0.011) failures.push('maxCafe');
     if (Number(maxCost || 0) > 0 && Number(analysis?.cost || 0) > Number(maxCost)) failures.push('maxCost');
 
-    if (!lockedCompositionMatches(recipe, baselineRecipe, lockedIds)) failures.push('locked');
+    if (!lockedCompositionMatches(recipe, baselineRecipe, lockedIds, isPartial)) failures.push('locked');
 
     return [...new Set(failures)];
   };
@@ -589,6 +903,7 @@
     ingredientCaps = {},
     lockedIds = new Set(),
     baselineRecipe = [],
+    isPartial = false,
   }) => {
     if (typeof analyze !== 'function' || typeof score !== 'function') {
       throw new Error('evaluateScenario requiere analyze(recipe, context) y score(analysis, context).');
@@ -626,6 +941,7 @@
       ingredientCaps,
       lockedIds,
       baselineRecipe,
+      isPartial,
     });
 
     const scored = score(analysis, { ...context, recipe: normalized });
@@ -691,30 +1007,53 @@
   // c.type no visto todavía (diversidad secundaria de relleno) antes que orden
   // de utilidad puro. La diversidad de grupo nunca se sacrifica por type: type
   // solo decide el ORDEN de relleno una vez que el grupo ya se repitió.
-  const selectRecommended = (candidates = [], { groupKeyFor, limit = 4 } = {}) => {
+  const selectRecommended = (candidates = [], { groupKeyFor, limit = 4, isPartial = false, roleById = new Map() } = {}) => {
     const seenGroups = new Set();
     const seenTypes = new Set();
+    const seenSupps = new Set();
     const diverse = [];
     const leftovers = [];
+
+    const getDominantAddedSupp = c => {
+      const added = (c.addedIngredients || []).filter(x => {
+        const role = roleById.get(x.id);
+        return (role === 'suplemento_n' || role === 'suplemento_medio') && (x.isNew || x.delta > 0);
+      });
+      return added[0]?.id || null;
+    };
+
     (candidates || []).forEach((c) => {
       const k = groupKeyFor(c);
+      const suppId = isPartial ? getDominantAddedSupp(c) : null;
       if (!seenGroups.has(k)) {
-        seenGroups.add(k);
-        seenTypes.add(c.type);
-        diverse.push(c);
+        if (isPartial && suppId && seenSupps.has(suppId) && diverse.length > 0) {
+          leftovers.push(c);
+        } else {
+          seenGroups.add(k);
+          seenTypes.add(c.type);
+          if (suppId) seenSupps.add(suppId);
+          diverse.push(c);
+        }
       } else {
         leftovers.push(c);
       }
     });
     const added = new Set(diverse);
-    const newTypeFill = leftovers.filter((c) => {
-      if (added.has(c) || seenTypes.has(c.type)) return false;
-      seenTypes.add(c.type);
-      added.add(c);
-      return true;
+    const newSuppOrTypeFill = leftovers.filter((c) => {
+      if (added.has(c)) return false;
+      const suppId = isPartial ? getDominantAddedSupp(c) : null;
+      const isNewType = !seenTypes.has(c.type);
+      const isNewSupp = isPartial && suppId ? !seenSupps.has(suppId) : false;
+      if (isNewType || isNewSupp) {
+        seenTypes.add(c.type);
+        if (suppId) seenSupps.add(suppId);
+        added.add(c);
+        return true;
+      }
+      return false;
     });
     const repeatFill = leftovers.filter((c) => !added.has(c));
-    return diverse.concat(newTypeFill, repeatFill).slice(0, limit);
+    return diverse.concat(newSuppOrTypeFill, repeatFill).slice(0, limit);
   };
 
   // Cheap pre-rank for structural seeds, used only to cap how many seeds
@@ -810,8 +1149,14 @@
       throw new Error(`searchMode inválido: ${searchMode}`);
     }
 
-    const baseRecipe = normalizeRecipe(recipe);
-    const locked = lockedIds instanceof Set ? lockedIds : new Set(lockedIds || []);
+    const rawTotal = (recipe || []).reduce((sum, r) => sum + (Number(r.p ?? r.pct) || 0), 0);
+    const isPartial = rawTotal < 99 || rawTotal > 101;
+    const partialRecipe = isPartial ? (recipe || []).filter(r => (Number(r.p ?? r.pct) || 0) > 0) : [];
+
+    const baseRecipe = isPartial && partialRecipe.length ? normalizeRecipe(partialRecipe) : normalizeRecipe(recipe);
+    const locked = lockedIds instanceof Set
+      ? (lockedIds.size ? lockedIds : new Set(isPartial && partialRecipe.length ? partialRecipe.map(r => r.id) : []))
+      : new Set(lockedIds?.length ? lockedIds : (isPartial && partialRecipe.length ? partialRecipe.map(r => r.id) : []));
     const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
     const species = spp?.[targetKey] || context.species || context.sp || null;
     const profile = resolveProfile({
@@ -823,6 +1168,7 @@
       spawnOverride,
     });
 
+    const baselineAnchorRecipe = isPartial && partialRecipe.length ? partialRecipe : baseRecipe;
     let evaluationCount = 0;
     const evaluate = candidateRecipe => {
       evaluationCount += 1;
@@ -841,7 +1187,8 @@
         roleCaps,
         ingredientCaps,
         lockedIds: locked,
-        baselineRecipe: baseRecipe,
+        baselineRecipe: baselineAnchorRecipe,
+        isPartial,
       });
     };
 
@@ -850,6 +1197,8 @@
       recipe: baseRecipe,
       path: [],
       structuralMode: null,
+      isPartial,
+      partialTotal: round1(rawTotal),
       evaluation: evaluate(baseRecipe),
     };
     baseline.utility = weightedUtility(baseline.evaluation, weights);
@@ -862,6 +1211,8 @@
       return {
         baseline,
         searchMode,
+        isPartial,
+        partialTotal: round1(rawTotal),
         noStock: true,
         explored: 0,
         evaluations: evaluationCount,
@@ -895,36 +1246,42 @@
     let structuralSeedsGenerated = 0;
     let structuralSeedsCapped = false;
     if (searchMode === 'global' || searchMode === 'hybrid') {
-      let structuralSeeds = generateStructuralSeeds({
-        targetKey,
-        ingredients,
-        spp,
-        useStock,
-        stockIds: stock,
-        profileKey,
-        maxSupp: profile.maxSupp,
-      });
-      structuralSeedsGenerated = structuralSeeds.length;
+      let coformSeeds = [];
+      if (isPartial && partialRecipe.length > 0) {
+        coformSeeds = generateCoformulationSeeds({
+          targetKey,
+          partialRecipe,
+          ingredients,
+          spp,
+          useStock,
+          stockIds: stock,
+          profileKey,
+          maxSupp: profile.maxSupp,
+        });
+      }
 
-      // Full catalogs can generate tens of thousands of structural seeds
-      // (bases × supplements grows quadratically for the 2-base/2-supplement
-      // spaces). Evaluating every one against SetasScoring is what caused a
-      // measured 60s+ stall on the real production ingredient catalog. Cap
-      // to the cheapest/simplest structuralSeedCap seeds BEFORE the
-      // expensive evaluate() call — the "evaluate before pruning" gate still
-      // holds for whatever reaches evaluate(), it just no longer means
-      // "literally every mathematically valid combination" once the
-      // catalog is large enough to make that combinatorially unsafe.
-      if (structuralSeeds.length > structuralSeedCap) {
-        structuralSeeds = cheapSeedRank(structuralSeeds, ingredients).slice(0, structuralSeedCap);
+      let structuralSeeds = (isPartial && partialRecipe.length > 0)
+        ? []
+        : generateStructuralSeeds({
+            targetKey,
+            ingredients,
+            spp,
+            useStock,
+            stockIds: stock,
+            profileKey,
+            maxSupp: profile.maxSupp,
+          });
+
+      // Place co-formulation seeds first to prioritize completions anchored on user ingredients
+      let combinedSeeds = [...coformSeeds, ...structuralSeeds];
+      structuralSeedsGenerated = combinedSeeds.length;
+
+      if (combinedSeeds.length > structuralSeedCap) {
+        combinedSeeds = cheapSeedRank(combinedSeeds, ingredients).slice(0, structuralSeedCap);
         structuralSeedsCapped = true;
       }
 
-      // Gate requirement: every (post-cap) structural seed is evaluated
-      // before any beam pruning. This prevents topology changes from being
-      // discarded only because they begin outside the current local
-      // neighborhood.
-      structuralSeeds.forEach((seed, i) => {
+      combinedSeeds.forEach((seed, i) => {
         const key = canonicalRecipeKey(seed.recipe);
         if (!key || seen.has(key)) return;
         seen.add(key);
@@ -938,7 +1295,7 @@
           evaluation: evaluate(seed.recipe),
         };
         candidate.utility = weightedUtility(candidate.evaluation, weights);
-        candidate.type = classifyScenario(candidate, baseline);
+        candidate.type = classifyScenario(candidate, baseline, isPartial);
         structuralCandidates.push(candidate);
         all.push(candidate);
       });
@@ -978,7 +1335,7 @@
               evaluation,
             };
             candidate.utility = weightedUtility(evaluation, weights);
-            candidate.type = classifyScenario(candidate, baseline);
+            candidate.type = classifyScenario(candidate, baseline, isPartial);
 
             if (evaluation.allowed && dimensionVector(evaluation).safety >= 45) next.push(candidate);
             all.push(candidate);
@@ -994,16 +1351,13 @@
     let allowed = all.filter(c => c.id !== 'baseline' && c.evaluation?.allowed);
     allowed = applyForceLowRisk(allowed, profile.forceLowRisk);
 
-    // Diversidad estructural en el top-12: sin esto, el beam de mutaciones converge sobre
-    // el/los pocos roles estructurales (1b1s/2b1s/1b2s) que puntúan mejor y el ranking
-    // final queda dominado por variantes casi idénticas del mismo par/trío de ingredientes
-    // base con distintos suplementos secundarios. Se agrupa por la identidad de los
-    // ingredientes base_carbono de cada receta, se limita cuántos candidatos por grupo
-    // entran en una primera pasada, y se rellena con lo que sobre (mejor score primero) si
-    // aún hay espacio en el límite — así no se acorta la lista cuando de verdad no hay más
-    // variedad estructural disponible.
     const roleByIdForRanking = new Map(ingredients.map(g => [g.id, g.role]));
-    const structKeyFor = c => dominantBaseKey(c.recipe, roleByIdForRanking);
+    const structKeyFor = c => {
+      if (isPartial && partialRecipe.length > 0) {
+        return c.type || 'alternativa';
+      }
+      return dominantBaseKey(c.recipe, roleByIdForRanking);
+    };
     const RANKED_LIMIT = 12;
     const RANKED_PER_GROUP_CAP = 3;
     const rankedGroupCounts = new Map();
@@ -1019,23 +1373,44 @@
     const viable = allowed.filter(c => dimensionVector(c.evaluation).safety >= 60);
     const pareto = paretoFront(viable).sort(utilitySort);
 
-    // recommended son las tarjetas de escenario que perito-scenarios-bridge.js
-    // le muestra al operador. Antes se deduplicaban por c.type (conservadora/
-    // rendimiento/economia/experimental/alternativa): si el Pareto colapsa a
-    // 1-2 types dominantes — plausible cuando una base gana en casi todas las
-    // dimensiones — todas las tarjetas terminaban usando esa misma base con
-    // distinto tratamiento o suplemento secundario, aunque ranked (que el
-    // operador nunca ve) sí tuviera variedad de bases disponible. Diversidad
-    // de bases (structKeyFor) es el criterio primario; entre bases repetidas,
-    // un type aún no mostrado decide el relleno antes que la utilidad pura —
-    // así, cuando hay margen, las tarjetas cubren tanto bases como etiquetas
-    // distintas, sin sacrificar nunca la diversidad de bases por eso.
+    // Compute added ingredients diff against partial/baseline recipe
+    const baseMap = isPartial
+      ? Object.fromEntries(partialRecipe.map(r => [r.id, Number(r.p ?? r.pct) || 0]))
+      : recipeMap(baseRecipe);
+    const attachDiff = c => {
+      if (!c) return;
+      c.addedIngredients = (c.recipe || []).map(r => {
+        const baseP = baseMap[r.id] || 0;
+        const delta = round1(r.p - baseP);
+        return {
+          id: r.id,
+          p: r.p,
+          delta,
+          isNew: baseP === 0,
+        };
+      }).filter(x => Math.abs(x.delta) >= 0.5);
+    };
+    all.forEach(attachDiff);
+    attachDiff(baseline);
+
+    const coformPool = structuralCandidates.filter(c => c.evaluation?.allowed);
+    const poolToRecommend = (isPartial && coformPool.length >= 3)
+      ? coformPool.sort(candidateSort)
+      : pareto;
+
     const RECOMMENDED_LIMIT = 5;
-    const recommended = selectRecommended(pareto, { groupKeyFor: structKeyFor, limit: RECOMMENDED_LIMIT });
+    const recommended = selectRecommended(poolToRecommend, {
+      groupKeyFor: structKeyFor,
+      limit: RECOMMENDED_LIMIT,
+      isPartial,
+      roleById: roleByIdForRanking,
+    });
 
     return {
       baseline,
       searchMode,
+      isPartial,
+      partialTotal: round1(rawTotal),
       noStock: false,
       explored: all.length - 1,
       evaluations: evaluationCount,
@@ -1081,6 +1456,7 @@
     realCostFor,
     resolveProfile,
     generateStructuralSeeds,
+    generateCoformulationSeeds,
     cheapSeedRank,
     applyMutation,
     makeMutations,
