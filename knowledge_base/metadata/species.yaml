@@ -1,6 +1,6 @@
 # Metadata — Especies Cultivadas
 # Setas de la Peña
-# Última actualización: 2026-07-16
+# Última actualización: 2026-08-25
 
 species:
   - id: pleurotus_djamor
@@ -12,8 +12,9 @@ species:
     fruiting_temp_c: [20, 30]
     incubation_temp_c: [24, 28]
     humidity_percent: [85, 90]
-    co2_target_ppm: [500, 1500]
-    co2_alarm_ppm: 2000
+    co2_target_ppm: [500, 800]       # Actualizado 2026-08-25: óptimo calidad comercial
+    co2_alarm_ppm: 1000               # Actualizado 2026-08-25: >1000 causa piernas largas
+    co2_pinning_tolerance_ppm: 1500   # Tolerancia durante inducción de primordios
     fae_ach_provisional: [5, 8]
     fae_validation_status: commissioning_required
     substrate_primary: wheat_straw
@@ -21,7 +22,7 @@ species:
     be_potential_percent: [80, 100]
     be_validation_status: field_validation_required
     cycle_days: [28, 40]
-    status_notes: "Especie prioritaria Fase 1. Rangos provisionales de guide_002/guide_003; validar BE, caudal y CO2 antes de declarar configuración productiva."
+    status_notes: "Especie prioritaria Fase 1. CO₂ óptimo 500-800 ppm (actualizado ago 2026); >1000 ppm degrada calidad comercial. Validar BE, caudal y CO₂ en campo."
 
   - id: hericium_erinaceus
     common_name: Lion's Mane

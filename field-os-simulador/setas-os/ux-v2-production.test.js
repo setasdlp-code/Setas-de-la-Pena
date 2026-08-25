@@ -95,7 +95,7 @@ test('workspace state is deep-linkable through the view query parameter', () => 
 
 test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
   assert.match(source, /showQrSheet/);
-  assert.match(source, /aria-label="Captura rápida de campo"/);
+  assert.match(source, /<AccessibleModal[\s\S]*?label="Captura rápida de campo"/);
   assert.match(source, /Registrar Cosecha \(g\)/);
   assert.match(source, /Registrar Clima \/ Sala/);
   assert.match(source, /Reportar Contaminación \/ Merma/);
@@ -114,11 +114,10 @@ test('thermal label generator supports 50x30mm and 60x40mm formats with print pa
   assert.match(source, /50 × 30 mm/);
   assert.match(source, /60 × 40 mm/);
   assert.match(source, /generateQrSvgDataUrl/);
-  assert.match(source, /aria-label="Generador de etiquetas térmicas"/);
+  assert.match(source, /<AccessibleModal[\s\S]*?label="Generador de etiquetas térmicas"/);
   assert.match(styles, /\.sim-root \.thermal-preview-container/);
   assert.match(styles, /\.sim-root \.thermal-card-50x30/);
   assert.match(styles, /\.sim-root \.thermal-card-60x40/);
   assert.match(styles, /\.thermal-card-print/);
   assert.match(shell, /\.thermal-print-roll/);
 });
-

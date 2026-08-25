@@ -31,7 +31,7 @@ async function breadcrumbText(page) {
 
 /** @param {import('@playwright/test').Page} page */
 async function activeContextTab(page) {
-  const active = page.locator('[role="tab"][aria-selected="true"]');
+  const active = page.locator('.workspace-subnav [role="tab"][aria-selected="true"]');
   if (!(await active.count())) return null;
   return (await active.first().textContent())?.trim();
 }

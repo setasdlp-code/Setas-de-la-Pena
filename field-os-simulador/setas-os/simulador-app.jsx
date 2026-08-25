@@ -4373,7 +4373,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         </div>
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
-          <h2 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h2>
+          <h1 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h1>
           <div className="page-title-rule"></div>
         </div>
         {tab!=='inicio'&&(()=>{
@@ -4609,11 +4609,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 <div className="home-workspaces-grid" style={{
                   display:'grid',
-                  gridTemplateColumns:'repeat(3, 1fr)', // Acciones Rápidas pasó a una sola columna angosta para cederle ancho a esta: las 3 tarjetas caben lado a lado
+                  gridTemplateColumns:'repeat(2, minmax(0, 1fr))',
                   gap:20
                 }}>
                   {/* WORKSPACE 1: FORMULACIÓN & I+D */}
-                  <div style={{
+                  <div className="home-workspace-card" style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
                     borderTop:'3px solid var(--coral-500)',
@@ -4679,7 +4679,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* WORKSPACE 2: PRODUCCIÓN & BODEGA */}
-                  <div style={{
+                  <div className="home-workspace-card" style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
                     borderTop:'3px solid var(--moss-700)',
@@ -4745,7 +4745,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* WORKSPACE 3: BITÁCORA & COSECHAS */}
-                  <div style={{
+                  <div className="home-workspace-card" style={{
                     background:'var(--paper-0)',
                     border:'1px solid var(--border-soft)',
                     borderTop:'3px solid var(--slate-500)',
@@ -4812,7 +4812,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* WORKSPACE 4: FINANZAS & DASHBOARD (Solo visible para Administradores / Roles no-operario) */}
                   {props.isAdmin!==false && (
-                    <div style={{
+                    <div className="home-workspace-card" style={{
                       background:'var(--paper-0)',
                       border:'1px solid var(--border-soft)',
                       borderTop:'3px solid var(--ink-700)',
@@ -7464,13 +7464,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const currentLote=bitLotes.find(l=>l.id===(qrSelectedLoteId||bitActiveLoteId))||activeBatches[0]||bitLotes[0];
           return(
-            <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowQrSheet(false);}}>
-              <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Captura rápida de campo" style={{width:'min(440px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}>
+            <AccessibleModal
+              onClose={()=>setShowQrSheet(false)}
+              label="Captura rápida de campo"
+              dialogStyle={{width:'min(440px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+            >
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)'}}>
                     📷 Captura Rápida · Registro en Sala
                   </div>
-                  <button onClick={()=>setShowQrSheet(false)} style={{background:'none',border:'none',fontSize:16,cursor:'pointer',color:'var(--ink-2)'}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>setShowQrSheet(false)}>✕</button>
                 </div>
                 {currentLote?(
                   <>
@@ -7485,7 +7488,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {activeBatches.length>1&&(
                         <select
                           className="inv-input"
-                          style={{marginTop:8,fontSize:11,height:32}}
+                          style={{marginTop:8,fontSize:11,minHeight:44}}
                           value={currentLote.id}
                           onChange={e=>setQrSelectedLoteId(e.target.value)}
                           aria-label="Cambiar lote activo"
@@ -7574,8 +7577,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     No hay lotes activos registrados para escanear.
                   </div>
                 )}
-              </div>
-            </div>
+            </AccessibleModal>
           );
         })()}
 
@@ -7613,8 +7615,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
           }
 
           return (
-            <div className="inv-modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowThermalModal(false); }}>
-              <div className="inv-modal" role="dialog" aria-modal="true" aria-label="Generador de etiquetas térmicas" style={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}>
+            <AccessibleModal
+              onClose={() => setShowThermalModal(false)}
+              label="Generador de etiquetas térmicas"
+              dialogStyle={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+            >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>
@@ -7624,27 +7629,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Lote {lote.codigo} · {lote.especie}
                     </div>
                   </div>
-                  <button onClick={() => setShowThermalModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--ink-2)' }}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}>✕</button>
                 </div>
 
                 {/* CONTROLES DE CONFIGURACIÓN */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 14 }}>
                   <div>
-                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                    <span id="thermal-format-label" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
                       Formato de Rollo
-                    </label>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    </span>
+                    <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'flex', gap: 6 }}>
                       <button
                         type="button"
                         onClick={() => setThermalSize('50x30')}
-                        style={{ flex: 1, minHeight: 36, padding: '6px 8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ flex: 1, minHeight: 44, padding: '8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         50 × 30 mm
                       </button>
                       <button
                         type="button"
                         onClick={() => setThermalSize('60x40')}
-                        style={{ flex: 1, minHeight: 36, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ flex: 1, minHeight: 44, padding: '8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         60 × 40 mm
                       </button>
@@ -7652,12 +7657,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
+                    <label htmlFor="thermal-scope" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
                       Alcance de Impresión
                     </label>
                     <select
+                      id="thermal-scope"
+                      name="thermal-scope"
                       className="inv-input"
-                      style={{ height: 36, fontSize: 11 }}
+                      style={{ minHeight: 44, fontSize: 11 }}
                       value={thermalScope}
                       onChange={e => setThermalScope(e.target.value)}
                     >
@@ -7670,10 +7677,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {thermalScope === 'custom' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, background: 'var(--paper-0, #F7F4EC)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline, #8C7F5B)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Desde bolsa:</span>
-                    <input type="number" min={1} max={totalBags} value={thermalBagStart} onChange={e => setThermalBagStart(parseInt(e.target.value) || 1)} style={{ width: 60, height: 28, fontSize: 11, textAlign: 'center' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>hasta:</span>
-                    <input type="number" min={thermalBagStart} max={totalBags} value={thermalBagEnd} onChange={e => setThermalBagEnd(parseInt(e.target.value) || totalBags)} style={{ width: 60, height: 28, fontSize: 11, textAlign: 'center' }} />
+                    <label htmlFor="thermal-bag-start" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Desde bolsa:</label>
+                    <input id="thermal-bag-start" name="thermal-bag-start" type="number" min={1} max={totalBags} value={thermalBagStart} onChange={e => setThermalBagStart(parseInt(e.target.value) || 1)} style={{ width: 68, minHeight: 44, fontSize: 11, textAlign: 'center' }} />
+                    <label htmlFor="thermal-bag-end" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Hasta:</label>
+                    <input id="thermal-bag-end" name="thermal-bag-end" type="number" min={thermalBagStart} max={totalBags} value={thermalBagEnd} onChange={e => setThermalBagEnd(parseInt(e.target.value) || totalBags)} style={{ width: 68, minHeight: 44, fontSize: 11, textAlign: 'center' }} />
                   </div>
                 )}
 
@@ -7692,7 +7699,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const qrSrc = generateQrSvgDataUrl(item.qrUrl);
                       return (
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
-                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} />
+                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
                           <div className="thermal-body">
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-species">{item.species}</div>
@@ -7711,7 +7718,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* BOTONES DE ACCIÓN */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 12 }}>
-                  <button onClick={() => setShowThermalModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
+                  <button type="button" onClick={() => setShowThermalModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 44, padding: '8px 14px' }}>
                     Cancelar
                   </button>
                   <button
@@ -7719,7 +7726,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       try { window.print(); } catch (e) { console.error(e); }
                     }}
                     className="inv-btn inv-btn-pri"
-                    style={{ minHeight: 40, padding: '6px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
+                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
                   >
                     🖨 Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
                   </button>
@@ -7731,7 +7738,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const qrSrc = generateQrSvgDataUrl(item.qrUrl);
                     return (
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
-                        <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} />
+                        <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
                         <div className="thermal-body">
                           <div className="thermal-code">{item.id}</div>
                           <div className="thermal-species">{item.species}</div>
@@ -7746,8 +7753,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   })}
                 </div>
-              </div>
-            </div>
+            </AccessibleModal>
           );
         })()}
 

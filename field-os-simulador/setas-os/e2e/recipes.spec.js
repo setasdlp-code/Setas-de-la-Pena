@@ -153,10 +153,16 @@ test('la barra móvil permite volver a la receta editable desde el catálogo', a
   await selectSpecies(page, 'p_ostreatus_gris');
   await page.getByTestId('form-mobile-start').getByRole('button', { name: 'Catálogo', exact: true }).click();
   await page.getByTestId('form-mobile-start').getByRole('button', { name: 'Elegir insumos', exact: true }).click();
-  await addIngredientByName(page, 'Paja de trigo');
+  const search = page.locator('#bl-ingredientes .search');
+  await search.fill('Paja de trigo');
+  await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
 
   const reviewRecipe = page.getByTestId('formulator-review-recipe');
-  await expect(reviewRecipe).toBeInViewport();
+  await expect(reviewRecipe).toBeVisible();
+  await expect.poll(async () => reviewRecipe.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.bottom > 0 && box.top < window.innerHeight;
+  })).toBe(true);
   await reviewRecipe.click();
 
   const pctInput = page.locator('#bl-receta .rec-pct-input').first();
