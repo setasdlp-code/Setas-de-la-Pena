@@ -7,7 +7,7 @@
 import { db } from "./firebase-init.js";
 import {
   collection, addDoc, getDocs, query, where, orderBy,
-  runTransaction, doc, serverTimestamp, updateDoc,
+  runTransaction, doc, serverTimestamp, updateDoc, setDoc,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // Misma tolerancia que MASS_BALANCE_TOL en simulador.html — duplicada a propósito:
@@ -90,6 +90,50 @@ export async function descontarInventarioFIFO(ingredienteId, kgNecesarios) {
   });
 }
 
+// ── Production Learning Loop ──────────────────────────────────────────────
+// IDs deterministas evitan duplicar el mismo ciclo/evidencia al reintentar una
+// escritura. La telemetría usa un id estable derivado de su identidad.
+const safeId = value => String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '_').slice(0, 180);
+const telemetryDocId = reading => safeId(
+  reading.id || [reading.room_id, reading.device_id, reading.metric, reading.observed_at].join('__')
+);
+
+export async function guardarRoomCycle(cycle) {
+  if (!cycle?.id) throw new Error('RoomCycle requiere id.');
+  return setDoc(doc(db, "room_cycles", safeId(cycle.id)), {
+    ...cycle,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function guardarTelemetry(reading) {
+  if (!reading?.room_id || !reading?.device_id || !reading?.metric || !reading?.observed_at) {
+    throw new Error('Telemetría incompleta: room/device/metric/observed_at son obligatorios.');
+  }
+  return setDoc(doc(db, "telemetry_readings", telemetryDocId(reading)), {
+    ...reading,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function guardarCycleEvidence(evidence) {
+  if (!evidence?.sourceId || !evidence?.batchId) throw new Error('CycleEvidence requiere sourceId y batchId.');
+  const id = safeId(`${evidence.sourceId}__${evidence.batchId}`);
+  return setDoc(doc(db, "cycle_evidence", id), {
+    ...evidence,
+    syncedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function listCycleEvidence({ speciesId = null, batchId = null } = {}) {
+  let q = collection(db, "cycle_evidence");
+  if (speciesId && batchId) q = query(q, where("speciesId", "==", speciesId), where("batchId", "==", batchId));
+  else if (speciesId) q = query(q, where("speciesId", "==", speciesId));
+  else if (batchId) q = query(q, where("batchId", "==", batchId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
 // ── Incidencias climáticas — mismo modelo aviso/alarma/crítico de climate-bench ──
 export async function registrarIncidencia(incidencia) {
   return addDoc(collection(db, "incidencias_climaticas"), { ...incidencia, createdAt: serverTimestamp() });
@@ -105,6 +149,13 @@ export async function actualizarIncidencia(id, campos) {
 window.SetasDB = {
   computeTot, isMassBalanced, saveReceta, listRecetas,
   crearLoteProduccion, descontarInventarioFIFO,
+  guardarRoomCycle, guardarTelemetry, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,
 };
 window.dispatchEvent(new CustomEvent("setas-db-ready"));
+
+// El bridge se carga después de publicar SetasDB para que sus escrituras locales
+// puedan sincronizarse sin depender del ciclo de vida de React.
+import('../production-learning-bridge.js').catch(err => {
+  console.warn('[SetasDB] Production Learning bridge unavailable', err);
+});
