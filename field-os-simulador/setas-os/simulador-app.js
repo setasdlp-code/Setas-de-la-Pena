@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 0ceb9794ebb4e5cf9e3b375736426226d5092dbf13d18fefeda93af156a1913e
+// source-hash: 50fa620f289373b35a8422aa7ebcfd9d2f3437ca385492ed66d6e038835ef823
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2669,16 +2669,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setCmpParsing(true);
     setCmpParseErr("");
     try {
-      const listaIngs = INGS.map((g) => g.name).join(", ");
-      const resp = await window.claude.complete({ messages: [{ role: "user", content: [
-        fileBlock,
-        { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
-      ] }] });
-      try {
-        applyParsedItems(extraerJSON(resp));
-      } catch (parseErr) {
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
+      if (window.SetasAI && typeof window.SetasAI.parseInvoiceImage === "function") {
+        const parsed = await window.SetasAI.parseInvoiceImage({
+          base64Data: fileBlock.source.data,
+          mimeType: fileBlock.source.media_type,
+          knownIngredients: INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
       }
+      if (window.claude && typeof window.claude.complete === "function") {
+        const listaIngs = INGS.map((g) => g.name).join(", ");
+        const resp = await window.claude.complete({ messages: [{ role: "user", content: [
+          fileBlock,
+          { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
+        ] }] });
+        try {
+          applyParsedItems(extraerJSON(resp));
+        } catch (parseErr) {
+          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
+        }
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error("Servicio de IA no disponible");
     } catch (err) {
       setCmpParseErr(`No se pudo leer ${esPDF ? "el PDF" : "la foto"}. Intenta de nuevo o usa Manual.`);
     }
@@ -2693,7 +2708,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       e.target.value = "";
       return;
     }
-    if (!window.claude || typeof window.claude.complete !== "function") {
+    const hasAI = window.SetasAI && typeof window.SetasAI.parseInvoiceImage === "function" || window.claude && typeof window.claude.complete === "function";
+    if (!hasAI) {
       setCmpParseErr("La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.");
       e.target.value = "";
       return;
@@ -2726,13 +2742,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setHuboParseIA(false);
     setCmpFuente("email");
     try {
-      const listaIngs = INGS.map((g) => g.name).join(", ");
-      const resp = await window.claude.complete({ messages: [{ role: "user", content: `Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:
+      if (window.SetasAI && typeof window.SetasAI.parseInvoiceText === "function") {
+        const parsed = await window.SetasAI.parseInvoiceText({
+          text: cmpPasteText,
+          knownIngredients: INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
+      }
+      if (window.claude && typeof window.claude.complete === "function") {
+        const listaIngs = INGS.map((g) => g.name).join(", ");
+        const resp = await window.claude.complete({ messages: [{ role: "user", content: `Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:
 
 """${cmpPasteText}"""
 
 Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.` }] });
-      applyParsedItems(extraerJSON(resp));
+        applyParsedItems(extraerJSON(resp));
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error("Servicio de IA no disponible");
     } catch (err) {
       setCmpParseErr("No se pudo interpretar el texto. Intenta de nuevo o usa Manual.");
     }
