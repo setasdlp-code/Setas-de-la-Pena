@@ -73,6 +73,16 @@
   --tracking-wide: .2em;      /* rare — large sparse headers only */
   --tracking-tight: -.02em;   /* large display numerals/headings */
 
+  /* ── TEXT ON COLOR BACKGROUNDS (ensure contrast) ── */
+  --text-on-dark: var(--paper-50);
+  --text-on-success: var(--paper-50);
+  --text-on-accent: var(--paper-50);
+
+  /* ── SURFACE VARIANTS — specialized backgrounds ── */
+  --surface-accent-soft: #e8f0e0;  /* soft olive for status badges, stock indicators */
+  --surface-accent-soft-text: #3a5a28;  /* dark olive text on soft olive bg */
+  --surface-selected: #F4F7F8;  /* card selection highlight (cool blue-gray) */
+
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
      Remove after verifying no external script reads them. */
@@ -442,7 +452,7 @@
 .sim-root .add-btn:hover{ background:var(--coral-700); border-color:var(--coral-700); transform:translateY(-1px); }
 .sim-root .add-btn:active{ transform:translateY(0); }
 .sim-root .add-btn:disabled{ background:var(--ink-300); color:var(--paper-100); border-color:var(--ink-300); cursor:default; }
-.sim-root .add-btn.ni{ background:var(--ochre-500); border-color:var(--ochre-500); color:#fff; }
+.sim-root .add-btn.ni{ background:var(--ochre-500); border-color:var(--ochre-500); color:var(--text-on-dark); }
 .sim-root .add-btn.ni:hover{ background:var(--ochre-700); border-color:var(--ochre-700); }
 
 /* ── RECIPE ─────────────────────────────────────────────────────── */
@@ -461,7 +471,7 @@
   border-bottom:1px solid rgba(26,20,16,0.09); background:var(--paper-50);
   transition:background .12s var(--ease);
 }
-.sim-root .rec-row:hover{ background:#FEFDF9; }
+.sim-root .rec-row:hover{ background:var(--paper-50); }
 .sim-root .rec-row input[type=number]{ 
   width:100%; padding:9px 11px; border:1px solid var(--line-1); 
   border-radius:0; background:var(--paper-0); 
@@ -523,7 +533,7 @@
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
 .sim-root .sbar input{ flex:1; padding:11px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); }
 .sim-root .sbar input:focus-visible{ border-color:var(--coral-500);outline:2px solid var(--coral-500);outline-offset:2px; }
-.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:#fff; border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:background-color .15s var(--ease),transform .15s var(--ease); }
+.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:var(--text-on-dark); border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:background-color .15s var(--ease),transform .15s var(--ease); }
 .sim-root .sbtn:hover{ background:var(--moss-900); transform:translateY(-1px); }
 .sim-root .sbtn:active{ transform:translateY(0); }
 .sim-root .sbtn:disabled{ background:var(--ink-300); cursor:default; }
@@ -536,7 +546,7 @@
 
 .sim-root .sm{ font-size:13px; color:var(--ink-500); margin-top:2px; font-family:var(--font-mono); }
 
-.sim-root .sload{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:7px 12px; background:var(--moss-700); color:#fff; border:none; border-radius:var(--r-xs); cursor:pointer; }
+.sim-root .sload{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:7px 12px; background:var(--moss-700); color:var(--text-on-dark); border:none; border-radius:var(--r-xs); cursor:pointer; }
 .sim-root .sload:hover{ background:var(--moss-900); }
 .sim-root .sdel{ font-size:12px; padding:7px 10px; background:var(--paper-50); color:var(--coral-700); border:1px solid var(--border-soft); border-radius:var(--r-xs); cursor:pointer; }
 .sim-root .sdel:hover{ border-color:var(--coral-500); }
@@ -694,7 +704,7 @@
 
 /* ── C:N GAUGE (field measurement) ──────────────────────────────── */
 .sim-root .gauge-wrap{ margin:0 0 24px; }
-.sim-root .gauge-hdr{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+.sim-root .gauge-hdr{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--space-7); }
 .sim-root .gauge-cur{ font-family:var(--font-display); font-size:26px; color:var(--ink-1); font-weight:400; }
 .sim-root .gauge-tgt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-700); font-weight:600; }
 .sim-root .gauge-tr{ height:6px; background:var(--line-1); border-radius:0; position:relative; }
@@ -738,8 +748,8 @@
 .sim-root .tcard.autoclave{ border-top-color:var(--coral-500); }
 .sim-root .tcard.thermal{ border-top-color:var(--ochre-500); }
 .sim-root .tcard.cwlp{ border-top-color:var(--moss-500); }
-.sim-root .tttl{ font-family:var(--font-display); font-size:24px; margin-bottom:12px; color:var(--ink-1); font-weight:400; }
-.sim-root .tparams{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.sim-root .tttl{ font-family:var(--font-display); font-size:24px; margin-bottom:var(--space-7); color:var(--ink-1); font-weight:400; }
+.sim-root .tparams{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:var(--space-7); }
 .sim-root .tp{ 
   font-family:var(--font-mono); font-size:12px; padding:4px 12px; 
   border:1px solid var(--line-1); border-radius:0; color:var(--ink-2);
@@ -833,7 +843,7 @@
 .sim-root .sbtn{ 
   font-family:var(--font-body); font-weight:700; font-size:12px; 
   letter-spacing:.1em; text-transform:uppercase; 
-  padding:11px 22px; background:#6B8E5A; color:#fff; 
+  padding:11px 22px; background:var(--moss-600); color:var(--text-on-dark); 
   border:none; border-radius:0; cursor:pointer; white-space:nowrap; 
   transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
@@ -922,7 +932,7 @@
 
 /* ── PRINT ──────────────────────────────────────────────────────── */
 @media print{
-  .sim-root{ background:#fff; font-size:12px; }
+  .sim-root{ background:var(--paper-0); font-size:12px; }
   .sim-root .topbar, .sim-root .tabs, .sim-root .no-print, .sim-root .spp-sect, .sim-root .panel:not(.print-panel), .sim-root .bwrap, .sim-root .sbar, .sim-root .act-row, .sim-root .tog, .sim-root .add-btn, .sim-root .rem, .sim-root .ing-list, .sim-root .search, .sim-root .cats, .sim-root .presets, .sim-root button{ display:none !important; }
   .sim-root .hero{ display:none !important; }
   .sim-root .print-header{ display:block !important; text-align:center; padding-bottom:12px; margin-bottom:0; border-bottom:2px solid var(--coral-700); }
@@ -1034,7 +1044,7 @@
   .sim-root .mlbl{ font-size:10px; }
   
   /* ── Batch ── */
-  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:12px; }
+  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:var(--space-7); }
   .sim-root .bf{ padding:0 0 10px 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); }
   .sim-root .bf label{ font-size:7px; }
   .sim-root .bf input{ font-size:13px; }
@@ -1064,7 +1074,7 @@
   .sim-root .presets{ gap:3px; margin-bottom:10px; }
   
   /* ── Treatment cards ── */
-  .sim-root .tcard{ padding:12px 12px; margin-bottom:12px; }
+  .sim-root .tcard{ padding:12px 12px; margin-bottom:var(--space-7); }
   .sim-root .tttl{ font-size:17px; margin-bottom:8px; }
   .sim-root .tparams{ gap:4px; margin-bottom:8px; }
   .sim-root .tp{ font-size:9px; padding:3px 8px; }
@@ -1119,7 +1129,7 @@
   
   
   /* ── Species cards ── */
-  .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:12px; }
+  .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:var(--space-7); }
   
   .sim-root .p-family{ font-size:7px; letter-spacing:.08em; }
   
@@ -1210,7 +1220,7 @@
   .sim-root .tproc{ margin-top:8px; padding-top:8px; font-size:11px; }
   
   /* ── Diagnosis ── */
-  .sim-root .dbox{ padding:8px 0; margin-bottom:12px; }
+  .sim-root .dbox{ padding:8px 0; margin-bottom:var(--space-7); }
   .sim-root .dttl{ font-size:8px; margin-bottom:6px; }
   .sim-root .dtxt{ font-size:13px; line-height:1.5; }
   .sim-root .sug{ font-size:10px; padding:6px 0; gap:8px; }
@@ -1437,7 +1447,7 @@
 }
 .sim-root .seg:first-child{ border-left:none; }
 .sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
-.sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;white-space:nowrap;}
+.sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--coral-500);color:var(--text-on-dark);border:none;border-radius:var(--r-xs);cursor:pointer;white-space:nowrap;}
 .sim-root .opt-load:hover{background:var(--coral-700);}
 .sim-root .opt-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-soft);border-top:none;}
 .sim-root .opt-met{background:var(--paper-100);padding:12px 10px;text-align:center;}
@@ -1477,7 +1487,7 @@
 
 .sim-root .bst.on{color:var(--coral-500);border-bottom-color:var(--coral-500);background:color-mix(in oklab,var(--coral-500) 6%,var(--paper-50,#fff));}
 .sim-root .bst:hover:not(.on){color:var(--ink-900);background:rgba(0,0,0,.03);}
-.sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:#fff;font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide .3s ease;}
+.sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:var(--text-on-dark);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide .3s ease;}
 @keyframes fadeInSlide{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
 /* Panel visibility by sub-tab — controlled via React inline styles */
 .sim-root .opt-panel{margin-top:0;}
@@ -1537,7 +1547,7 @@
   .sim-root .print-header{ display: block; }
   @page { margin: 1.2cm 1.5cm; }
 }
-.sim-root .prod-sheet{background:#fff;}
+.sim-root .prod-sheet{background:var(--paper-0);}
 .sim-root .prod-tbl{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:14px;}
 .sim-root .prod-tbl th{text-align:left;font-family:var(--font-body);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-800);border-bottom:1.5px solid var(--ink-900,#222);padding:8px 8px;font-weight:700;}
 .sim-root .prod-tbl td{padding:7px 8px;border-bottom:1px solid var(--paper-300);color:var(--ink-900);}
@@ -1558,7 +1568,7 @@
    class with the unrelated recipe-list-row button below — the bare
    .sload/.sdel rules here now unambiguously belong to that one (currently
    display:none) button at simulador-app.jsx:4057. */
-.sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:#fff;border:none;border-radius:var(--r-xs);cursor:pointer;transition:background .15s var(--ease);}
+.sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:var(--text-on-dark);border:none;border-radius:var(--r-xs);cursor:pointer;transition:background .15s var(--ease);}
 .sim-root .sload:hover{background:var(--coral-600,var(--accent-terracotta));}
 .sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);}
 .sim-root .sdel:hover{background:var(--paper-200);color:var(--coral-500);}
@@ -1631,34 +1641,34 @@
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
-.sim-root .inv-row{display:grid;gap:12px;margin-bottom:12px;}
+.sim-root .inv-row{display:grid;gap:12px;margin-bottom:var(--space-7);}
 .sim-root .inv-row-2{grid-template-columns:1fr 1fr;}
 
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
 .sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease);white-space:nowrap;}
 .sim-root .inv-btn:active{transform:translateY(0);}
-.sim-root .inv-btn-pri{background:var(--moss-700);color:#fff;}
+.sim-root .inv-btn-pri{background:var(--moss-700);color:var(--text-on-dark);}
 .sim-root .inv-btn-pri:hover{background:var(--moss-800,var(--moss-700));transform:translateY(-1px);}
 .sim-root .inv-btn-sec{background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);}
 .sim-root .inv-btn-sec:hover{border-color:var(--coral-500);color:var(--coral-500);}
 .sim-root .inv-btn-sm{padding:5px 10px;font-size:11px;}
 .sim-root .inv-btn-danger{background:transparent;color:var(--coral-700);border:1px solid var(--coral-200);}
-.sim-root .inv-btn-danger:hover{background:var(--coral-700);color:#fff;}
+.sim-root .inv-btn-danger:hover{background:var(--coral-700);color:var(--text-on-dark);}
 .sim-root .stock-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;flex-shrink:0;}
 .sim-root .inv-month-group{border:1px solid var(--border-soft);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px;}
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 14px;background:var(--paper-200);color:inherit;border:0;font:inherit;text-align:left;cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
-.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;overscroll-behavior:contain;}
+.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--space-20);overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
-.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:32px 24px;backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
+.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--space-16) var(--space-12);backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
 .sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn .22s var(--ease);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);font-size:16px;line-height:1;}
-.sim-root .cat-modal-close:hover{background:var(--coral-500);color:#fff;border-color:var(--coral-500);}
-.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:22px;width:440px;max-width:calc(100vw - 32px);}
-.sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
+.sim-root .cat-modal-close:hover{background:var(--coral-500);color:var(--text-on-dark);border-color:var(--coral-500);}
+.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--space-10);width:440px;max-width:calc(100vw - 32px);}
+.sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--space-10);padding-bottom:var(--space-7);border-bottom:1px solid var(--border-soft);}
 .sim-root .prov-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
 .sim-root .prov-row:last-child{border-bottom:none;}
 .sim-root .prov-tipo-chip{font-family:var(--font-mono);font-size:12px;padding:3px 8px;border-radius:20px;background:var(--paper-200);color:var(--ink-700);flex-shrink:0;font-weight:600;}
@@ -1684,8 +1694,8 @@
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
 .sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
 
-.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:10.35px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:var(--accent-olive);border:1px solid var(--accent-olive);padding:4px 8px;border-radius:0;flex-shrink:0;}
-.sim-root .bridge-dot{font-size:10.35px;color:#fff!important;}
+.sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:10.35px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:4px 8px;border-radius:0;flex-shrink:0;}
+.sim-root .bridge-dot{font-size:10.35px;color:var(--text-on-dark)!important;}
 .sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:22.25px!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
 .sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--paper-2)!important;opacity:.85;flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
@@ -1725,8 +1735,8 @@
 @media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
 .sim-root .spp-card{transition:background .15s var(--ease),box-shadow .15s var(--ease),transform .15s var(--ease);border-radius:var(--r-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:var(--shadow-card-rest)!important;contain:paint;isolation:isolate;}
 .sim-root .spp-card:hover{box-shadow:var(--shadow-card-hover)!important;transform:translateY(-1px);}
-.sim-root .spp-card.on{background:#F4F7F8!important;box-shadow:var(--shadow-ring-accent)!important;transform:translateY(-2px);position:relative;}
-.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:var(--shadow-badge-accent);}
+.sim-root .spp-card.on{background:var(--surface-selected)!important;box-shadow:var(--shadow-ring-accent)!important;transform:translateY(-2px);position:relative;}
+.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:var(--text-on-dark);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:var(--shadow-badge-accent);}
 /* Scientific name — smaller italic, warm grey for editorial contrast */
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
 .sim-root .p-common{font-family:var(--font-display);font-weight:400;font-size:28px;color:var(--ink-900);line-height:1.1;}
@@ -1940,7 +1950,7 @@
   .sim-root .prod-batch-grid{ grid-template-columns:1fr 1fr!important; }
 
   /* 23. Modal: full ancho + alto seguro con scroll interno (aplica a todos los modales, no solo los que traen override inline) */
-  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:16px!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
+  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:var(--space-9)!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
   .sim-root .inv-modal-bg{ padding-top:50px; }
 
   /* 24. Botones de acción: ancho completo */
@@ -2069,7 +2079,7 @@
 .sim-root .pantry-chip-kg{font-family:var(--font-mono);font-size:9px;color:var(--accent-olive);opacity:.8;font-weight:400;margin-left:1px;}
 /* ── v6.0: STOCK DOTS ─────────────────────────────────────── */
 .sim-root .ing-stock-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0;}
-.sim-root .ing-stock-kg{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:8px;background:#e8f0e0;color:#3a5a28;margin-left:3px;}
+.sim-root .ing-stock-kg{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:8px;background:var(--surface-accent-soft);color:var(--surface-accent-soft-text);margin-left:3px;}
 @media(max-width:600px){
   .sim-root .page-title-bar{padding:16px 16px 0;}
   .sim-root .page-title-h{font-size:28px;}
@@ -2089,7 +2099,7 @@
 .sim-root .pi-action{font-size:12px;color:var(--ink-900);margin-bottom:2px;line-height:1.5;}
 .sim-root .pi-effect{font-size:11px;color:var(--ink-700);font-family:var(--font-mono);line-height:1.5;}
 .sim-root .pi-actions{padding:10px 10px 10px 0;display:flex;align-items:center;}
-.sim-root .pi-apply{font-family:var(--font-body);font-size:10px;font-weight:700;padding:5px 10px;background:var(--pi-color);color:#fff;border:none;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;letter-spacing:.04em;transition:opacity .15s var(--ease),transform .15s var(--ease);}
+.sim-root .pi-apply{font-family:var(--font-body);font-size:10px;font-weight:700;padding:5px 10px;background:var(--pi-color);color:var(--text-on-dark);border:none;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;letter-spacing:.04em;transition:opacity .15s var(--ease),transform .15s var(--ease);}
 .sim-root .pi-apply:hover{opacity:.85;transform:translateY(-1px);}
 .sim-root .pi-apply:active{transform:translateY(0);}
 .sim-root .pi-spacer{width:60px;}
@@ -2284,35 +2294,35 @@
 /* ── CAT BUTTONS — same color coding as ingredient badges ─────── */
 .sim-root .cat[data-cat="base"]{ border-left:3px solid #5A7042; }
 .sim-root .cat[data-cat="base"]:hover{ background:color-mix(in oklab,#5A7042 12%,var(--paper-0))!important; border-color:#5A7042!important; color:#3a4f2a!important; }
-.sim-root .cat[data-cat="base"].on{ background:#5A7042!important; border-color:#5A7042!important; color:#fff!important; }
+.sim-root .cat[data-cat="base"].on{ background:#5A7042!important; border-color:#5A7042!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="cafe"]{ border-left:3px solid #7A4A2F; }
 .sim-root .cat[data-cat="cafe"]:hover{ background:color-mix(in oklab,#7A4A2F 12%,var(--paper-0))!important; border-color:#7A4A2F!important; color:#7A4A2F!important; }
-.sim-root .cat[data-cat="cafe"].on{ background:#7A4A2F!important; border-color:#7A4A2F!important; color:#fff!important; }
+.sim-root .cat[data-cat="cafe"].on{ background:#7A4A2F!important; border-color:#7A4A2F!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="sup"]{ border-left:3px solid #C68F2C; }
 .sim-root .cat[data-cat="sup"]:hover{ background:color-mix(in oklab,#C68F2C 12%,var(--paper-0))!important; border-color:#C68F2C!important; color:#8B6014!important; }
-.sim-root .cat[data-cat="sup"].on{ background:#C68F2C!important; border-color:#C68F2C!important; color:#fff!important; }
+.sim-root .cat[data-cat="sup"].on{ background:#C68F2C!important; border-color:#C68F2C!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="est"]{ border-left:3px solid #6B4E31; }
 .sim-root .cat[data-cat="est"]:hover{ background:color-mix(in oklab,#6B4E31 12%,var(--paper-0))!important; border-color:#6B4E31!important; color:#6B4E31!important; }
-.sim-root .cat[data-cat="est"].on{ background:#6B4E31!important; border-color:#6B4E31!important; color:#fff!important; }
+.sim-root .cat[data-cat="est"].on{ background:#6B4E31!important; border-color:#6B4E31!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="local"]{ border-left:3px solid #7A5A3F; }
 .sim-root .cat[data-cat="local"]:hover{ background:color-mix(in oklab,#7A5A3F 12%,var(--paper-0))!important; border-color:#7A5A3F!important; color:#7A5A3F!important; }
-.sim-root .cat[data-cat="local"].on{ background:#7A5A3F!important; border-color:#7A5A3F!important; color:#fff!important; }
+.sim-root .cat[data-cat="local"].on{ background:#7A5A3F!important; border-color:#7A5A3F!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="trop"]{ border-left:3px solid #B8694B; }
 .sim-root .cat[data-cat="trop"]:hover{ background:color-mix(in oklab,#B8694B 12%,var(--paper-0))!important; border-color:#B8694B!important; color:#B8694B!important; }
-.sim-root .cat[data-cat="trop"].on{ background:#B8694B!important; border-color:#B8694B!important; color:#fff!important; }
+.sim-root .cat[data-cat="trop"].on{ background:#B8694B!important; border-color:#B8694B!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="circ"]{ border-left:3px solid #6B7C5F; }
 .sim-root .cat[data-cat="circ"]:hover{ background:color-mix(in oklab,#6B7C5F 12%,var(--paper-0))!important; border-color:#6B7C5F!important; color:#6B7C5F!important; }
-.sim-root .cat[data-cat="circ"].on{ background:#6B7C5F!important; border-color:#6B7C5F!important; color:#fff!important; }
+.sim-root .cat[data-cat="circ"].on{ background:#6B7C5F!important; border-color:#6B7C5F!important; color:var(--text-on-dark)!important; }
 
 .sim-root .cat[data-cat="adit"]{ border-left:3px solid var(--accent-blue-grey); }
 .sim-root .cat[data-cat="adit"]:hover{ background:color-mix(in oklab,var(--accent-blue-grey) 12%,var(--paper-0))!important; border-color:var(--accent-blue-grey)!important; color:var(--accent-blue-grey)!important; }
-.sim-root .cat[data-cat="adit"].on{ background:var(--accent-blue-grey)!important; border-color:var(--accent-blue-grey)!important; color:#fff!important; }
+.sim-root .cat[data-cat="adit"].on{ background:var(--accent-blue-grey)!important; border-color:var(--accent-blue-grey)!important; color:var(--text-on-dark)!important; }
 
 /* ── DASH CARDS — editorial redesign ───────────────────────── */
 .sim-root .dash-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;gap:16px!important;}
@@ -2692,7 +2702,7 @@
 /* Flujo guiado del Formulador. Mantiene las cuatro decisiones principales
    visibles sin convertirlas en un asistente que esconda información técnica. */
 .sim-root .form-flow{
-  margin-bottom:12px;
+  margin-bottom:var(--space-7);
   border:1px solid var(--border-strong);
   border-top:3px solid var(--accent-olive);
   border-radius:var(--radius-sm);
@@ -2758,7 +2768,7 @@
   color:var(--paper-0);
   box-shadow:0 5px 18px rgba(18,22,17,.14);
 }
-.sim-root .form-species-identity{display:flex;align-items:center;gap:10px;min-width:0}
+.sim-root .form-species-identity{display:flex;align-items:center;gap:var(--space-6);min-width:0}
 .sim-root .form-species-kicker,
 .sim-root .form-species-picker > span{
   display:block;
@@ -2770,7 +2780,7 @@
 .sim-root .form-species-identity > div{display:flex;flex-direction:column;min-width:0}
 .sim-root .form-species-identity strong{overflow:hidden;color:var(--paper-0);font:800 var(--text-base)/1.15 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-identity em{overflow:hidden;color:rgba(255,255,255,.68);font:italic var(--text-xs)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
-.sim-root .form-species-picker{display:grid;gap:4px;min-width:0}
+.sim-root .form-species-picker{display:grid;gap:var(--space-3);min-width:0}
 .sim-root .form-species-picker select{
   width:100%;
   min-height:38px;
@@ -2809,7 +2819,7 @@
 .sim-root .live-dash-pill{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-800);font:700 var(--text-xs)/1 var(--font-mono)}
 .sim-root .live-dash-pill-label{color:var(--ink-500);font-size:var(--text-2xs)}
 .sim-root .live-dash-actions{display:flex;align-items:center;gap:5px}
-.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer}
+.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-3);min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer}
 .sim-root .live-dash-secondary-nav,
 .sim-root .live-dash-limiter{display:none!important}
 .sim-root .live-dash-tray{padding:7px 10px;background:var(--paper-50);max-height:min(60vh,520px);overflow-y:auto}
@@ -2976,7 +2986,7 @@
 }
 .sim-root .form-step-options,
 .sim-root .form-step-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.sim-root .form-step-species-state{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;min-height:44px;padding:5px 5px 5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0)}
+.sim-root .form-step-species-state{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-4);min-height:44px;padding:5px 5px 5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0)}
 .sim-root .form-step-species-state strong{overflow:hidden;color:var(--ink-900);font:700 var(--text-xs)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-step-species-state button{min-height:32px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-700);font:700 var(--text-2xs)/1 var(--font-mono);cursor:pointer}
 .sim-root .form-step-species-state button:hover{border-color:var(--accent-olive);color:var(--accent-olive)}
@@ -3127,7 +3137,7 @@
   user-select:none;
 }
 .sim-root .builder-wrap .role-group-box.is-collapsed > .role-group-hdr{border-bottom-color:transparent}
-.sim-root .role-group-heading{display:flex;align-items:center;gap:10px;min-width:0}
+.sim-root .role-group-heading{display:flex;align-items:center;gap:var(--space-6);min-width:0}
 .sim-root .role-group-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border:1px solid var(--border-soft);color:var(--accent-olive)}
 .sim-root .role-group-title{color:var(--ink-900);font:800 var(--text-xs)/1.2 var(--font-body);letter-spacing:var(--tracking-button);text-transform:uppercase}
 .sim-root .role-group-title span{color:var(--ink-600);font:600 var(--text-2xs)/1 var(--font-mono)}
@@ -3531,7 +3541,7 @@
 }
 
 .sim-root .thermal-card-preview {
-  background: #ffffff;
+  background: var(--paper-0);
   color: #000000;
   border: 1px dashed #777777;
   border-radius: 2px;
@@ -3640,7 +3650,7 @@
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    background: #ffffff !important;
+    background: var(--paper-0) !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -3649,7 +3659,7 @@
     align-items: center !important;
     break-inside: avoid !important;
     page-break-after: always !important;
-    background: #ffffff !important;
+    background: var(--paper-0) !important;
     color: #000000 !important;
     border: none !important;
     box-sizing: border-box !important;
@@ -3689,7 +3699,7 @@
 }
 
 .sim-root .econ-metric-box {
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: 2px;
   padding: 8px 10px;
@@ -3745,7 +3755,7 @@
   gap: 5px;
   padding: 3px 6px;
   border-radius: 2px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
 }
 
@@ -3800,7 +3810,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: 2px;
   font-family: var(--font-mono, monospace);
@@ -3841,7 +3851,7 @@
 .sim-root .os-diag-result-card {
   margin-top: 14px;
   padding: 14px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -3894,7 +3904,7 @@
 
 .sim-root .climate-room-btn {
   padding: 8px 16px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   font-family: var(--font-sans);
@@ -3910,7 +3920,7 @@
 
 .sim-root .climate-room-btn.on {
   background: var(--moss-700, #385933);
-  color: #ffffff;
+  color: var(--text-on-dark)fff;
   border-color: var(--moss-700, #385933);
 }
 
@@ -3934,7 +3944,7 @@
 
 .sim-root .climate-kpi-card {
   padding: 14px 16px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -3976,7 +3986,7 @@
 
 .sim-root .climate-chart-panel {
   padding: 16px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -4011,7 +4021,7 @@
 
 .sim-root .climate-range-pill.on {
   background: var(--ink-0);
-  color: #ffffff;
+  color: var(--text-on-dark)fff;
   border-color: var(--ink-0);
 }
 
@@ -4035,7 +4045,7 @@
 
 .sim-root .today-climate-card {
   padding: 12px 14px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -4053,7 +4063,7 @@
 /* ── Panel de Actuadores y Relés de Potencia ─────────────────────────────────── */
 .sim-root .climate-actuators-panel {
   padding: 16px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -4094,12 +4104,12 @@
 
 .sim-root .climate-actuator-badge.on {
   background: var(--moss-700, #385933);
-  color: #ffffff;
+  color: var(--text-on-dark)fff;
 }
 
 .sim-root .climate-actuator-badge.pulse {
   background: #2563EB;
-  color: #ffffff;
+  color: var(--text-on-dark)fff;
 }
 
 .sim-root .climate-actuator-badge.off {
@@ -4116,7 +4126,7 @@
 
 .sim-root .climate-actuator-btn {
   padding: 8px 12px;
-  background: #ffffff;
+  background: var(--paper-0);
   border: 1px solid var(--border-hairline, #8C7F5B);
   border-radius: var(--radius-sm, 2px);
   font-family: var(--font-sans);

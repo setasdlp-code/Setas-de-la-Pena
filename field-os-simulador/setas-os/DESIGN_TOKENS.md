@@ -152,11 +152,32 @@ Replace these with their referents if found in new code.
 
 ---
 
+## Text on Dark Backgrounds
+
+White text on colored/dark backgrounds now uses a unified token for consistency:
+
+| Token | Use | Value |
+|-------|-----|-------|
+| `--text-on-dark` | Text on moss, ink, coral, olive, or other dark fills | `var(--paper-50)` |
+| `--text-on-success` | Text on success/positive state backgrounds | `var(--paper-50)` |
+| `--text-on-accent` | Text on accent-color backgrounds | `var(--paper-50)` |
+
+## Surface Variants
+
+Two specialized background tokens for UI patterns that don't fit the standard paper scale:
+
+| Token | Use | Value | Text color |
+|-------|-----|-------|-----------|
+| `--surface-accent-soft` | Status badges, stock indicators (soft olive) | `#e8f0e0` | `--surface-accent-soft-text` |
+| `--surface-accent-soft-text` | Dark olive text on soft olive background | `#3a5a28` | — |
+| `--surface-selected` | Card selection highlight (cool blue-gray) | `#F4F7F8` | `--text-primary` |
+
 ## Implementation Notes
 
 - All ingredient category colors use `color-mix(in oklab, ...)` for the hover tint to ensure perceptually uniform lightness across the palette.
 - Button disabled state uses opacity rather than desaturation or border changes, making it uniform across all button variants.
 - Spacing tokens are defined in pixel values (not rem) because they're used in dense, fixed-layout components where relative units would create cascading size shifts.
+- White text (`#fff`) replaced with `--text-on-dark` throughout. Pure white backgrounds (`#fff`, `#ffffff`) replaced with `--paper-0` (off-white for UI elements).
 
 ---
 
