@@ -3,4 +3,6 @@
 @import url('./tokens/typography.css');
 @import url('./tokens/spacing.css');
 @import url('./tokens/structure.css');
+@import url('./tokens/motion.css');
 @import url('./tokens/setas-os-components.css');
+

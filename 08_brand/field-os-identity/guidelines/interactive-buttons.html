@@ -1,0 +1,46 @@
+<!-- @dsCard group="Interactive" viewport="700x320" name="Button-in-Button & Haptics · FOS-08" subtitle="Botones táctiles con icono anidado y micro-física de resorte" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="min-height:320px;background:var(--surface-panel);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;font-family:var(--font-sans)">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:var(--rule-hairline);padding-bottom:10px">
+    <div>
+      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)">FOS-08 · Interactive Architecture</span>
+      <h3 style="margin:2px 0 0;font-size:18px;font-weight:var(--weight-medium)">Botones Táctiles Hápticos</h3>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-metadata)">min-height: 44px (WCAG 2.5.5)</span>
+  </div>
+
+  <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <!-- Primary Button (Olive) -->
+    <a href="#" class="fos-btn fos-btn--primary">
+      <span>Registrar Lote</span>
+      <span class="fos-btn__icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </span>
+    </a>
+
+    <!-- Secondary Button -->
+    <a href="#" class="fos-btn fos-btn--secondary">
+      <span>Consultar Sensor</span>
+      <span class="fos-btn__icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </span>
+    </a>
+
+    <!-- Terracotta Action Button -->
+    <a href="#" class="fos-btn fos-btn--terracotta">
+      <span>Finalizar Cosecha</span>
+      <span class="fos-btn__icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </span>
+    </a>
+
+    <!-- Ghost Button -->
+    <a href="#" class="fos-btn fos-btn--ghost">
+      <span>Ver Historial</span>
+    </a>
+  </div>
+
+  <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);border-top:1px dashed var(--border-hairline);padding-top:12px">
+    <strong>El patrón "Button-in-Button":</strong> El glifo nunca se coloca suelto junto al texto. Habita dentro de su propia órbita circular que se desplaza sutilmente (<code>translate(2px, -1px) scale(1.05)</code>) al pasar el cursor. Al presionar, el botón ejecuta una escala física (<code>active:scale-[0.98]</code>).
+  </div>
+</div>
