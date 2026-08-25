@@ -4050,6 +4050,113 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
+/* ── Panel de Actuadores y Relés de Potencia ─────────────────────────────────── */
+.sim-root .climate-actuators-panel {
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sim-root .climate-actuators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.sim-root .climate-actuator-card {
+  padding: 14px 16px;
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-root .climate-actuator-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sim-root .climate-actuator-badge {
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.sim-root .climate-actuator-badge.on {
+  background: var(--moss-700, #385933);
+  color: #ffffff;
+}
+
+.sim-root .climate-actuator-badge.pulse {
+  background: #2563EB;
+  color: #ffffff;
+}
+
+.sim-root .climate-actuator-badge.off {
+  background: var(--paper-200, #DCD8CD);
+  color: var(--ink-1, #4A473E);
+}
+
+.sim-root .climate-actuator-meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink-1);
+  line-height: 1.4;
+}
+
+.sim-root .climate-actuator-btn {
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-0);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background .15s, border-color .15s;
+}
+
+.sim-root .climate-actuator-btn:hover {
+  background: var(--paper-1);
+  border-color: var(--moss-700);
+}
+
+.sim-root .climate-actuator-logs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.sim-root .climate-log-row {
+  padding: 6px 10px;
+  background: var(--paper-1, #EFECE1);
+  border-left: 3px solid var(--moss-700, #385933);
+  border-radius: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-0);
+}
+
+
 
 
 
