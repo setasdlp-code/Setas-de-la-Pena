@@ -1,0 +1,39 @@
+<!-- @dsCard group="Structure" viewport="700x400" name="Editorial Folio System · FOS-14" subtitle="Arquitectura de folio continuo y regla del 40% de espacio negativo" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="min-height:400px;background:var(--surface-panel);padding:24px;box-sizing:border-box;display:flex;gap:24px;font-family:var(--font-sans)">
+  <!-- Simulated Editorial Folio Page -->
+  <div style="flex:1.2;background:var(--surface-page);border:1px solid var(--border-hairline);padding:28px 32px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;min-height:340px">
+    <div class="fos-folio-header" style="margin-bottom:18px">
+      <span>Setas de la Peña · Panorama General</span>
+      <span>Doc. GEN-01 · Rev. 2026</span>
+    </div>
+
+    <div style="max-width:32ch">
+      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--status-active)">Capítulo I · Territorio</span>
+      <h2 style="font-size:24px;line-height:1.2;font-weight:600;margin:8px 0 12px;color:var(--text-primary)">
+        Tenjo fija las condiciones antes que cualquier decisión de diseño.
+      </h2>
+      <p style="font-size:13px;line-height:1.6;color:var(--text-secondary);margin:0">
+        El clima frío andino a 2.592 msnm modera la temperatura de fructificación y exige precisión térmica en incubación.
+      </p>
+    </div>
+
+    <div class="fos-folio-footer" style="margin-top:18px">
+      <span>I. Territorio y Condiciones</span>
+      <span>p. 03 / 39 · Tenjo, Cundinamarca</span>
+    </div>
+  </div>
+
+  <!-- Editorial Rules -->
+  <div style="flex:0.8;display:flex;flex-direction:column;justify-content:space-between;font-size:13px;line-height:1.55;color:var(--text-secondary)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata);margin-bottom:4px">FOS-14 · Editorial Standard</div>
+      <h4 style="margin:0 0 8px;font-size:15px;color:var(--text-primary)">La Regla del 40%</h4>
+      <p style="margin:0 0 8px">Inspirada en <em>Cereal Magazine</em> y <em>Aesop</em>. Toda presentación institucional preserva un mínimo de 35%–40% de espacio negativo puro.</p>
+      <p style="margin:0">Los encabezados y pies de página de folio continuo proporcionan anclaje de archivo sin invadir la lectura.</p>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-metadata);border-top:var(--rule-hairline);padding-top:8px">
+      Tokens: <code>.fos-folio-header</code> + <code>.fos-folio-footer</code>
+    </div>
+  </div>
+</div>

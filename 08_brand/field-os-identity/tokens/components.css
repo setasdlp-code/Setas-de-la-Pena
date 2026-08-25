@@ -88,3 +88,38 @@
 .fos-meter__fill--warning{background:var(--accent-terracotta)}
 .fos-meter__fill--error{background:var(--accent-rust)}
 
+/* ---- FOS-11 · Culinary Tasting & Botanical Origin Sheet ---- */
+.fos-tasting{background:var(--surface-page);border:1px solid var(--border-hairline);width:100%;max-width:680px;display:grid;grid-template-columns:240px 1fr;box-sizing:border-box;overflow:hidden}
+.fos-tasting__media{background:var(--surface-panel);border-right:1px solid var(--border-hairline);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-sizing:border-box}
+.fos-tasting__media img{max-width:100%;max-height:220px;object-fit:contain}
+.fos-tasting__body{padding:20px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.fos-tasting__latin{font-family:var(--font-sans);font-size:18px;font-weight:var(--weight-medium);font-style:italic;color:var(--text-primary);margin:0}
+.fos-tasting__common{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-metadata)}
+.fos-tasting__grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;border-top:1px solid var(--border-hairline);padding-top:10px}
+.fos-tasting__k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-metadata);display:block}
+.fos-tasting__v{font-size:13px;color:var(--text-primary);line-height:1.35}
+.fos-tasting__foot{display:flex;justify-content:space-between;align-items:center;border-top:var(--rule-hairline);padding-top:10px}
+
+/* ---- FOS-12 · Botanical Specimen Cartouche & Limited Batch Seal ---- */
+.fos-cartouche{background:var(--surface-page);border:1px solid var(--border-strong);padding:4px;box-sizing:border-box;max-width:580px;width:100%}
+.fos-cartouche__inner{border:1px solid var(--border-hairline);padding:18px 22px;display:flex;flex-direction:column;gap:12px;position:relative}
+.fos-cartouche__hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border-hairline);padding-bottom:8px}
+.fos-cartouche__title{font-family:var(--font-sans);font-size:20px;font-weight:var(--weight-medium);font-style:italic;color:var(--text-primary);margin:0}
+.fos-cartouche__loc{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)}
+.fos-cartouche__seal{position:absolute;top:14px;right:18px;width:44px;height:44px;border:1px dashed var(--border-strong);border-radius:9999px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-terracotta);text-align:center;line-height:1.1;transform:rotate(-6deg)}
+
+/* ---- FOS-13 · Cultivation Telemetry Console ---- */
+.fos-console{background:var(--surface-panel);border:1px solid var(--border-strong);border-radius:8px;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;width:100%}
+.fos-console__hd{display:flex;justify-content:space-between;align-items:center;border-bottom:var(--rule-hairline);padding-bottom:8px}
+.fos-console__title{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:var(--weight-bold);color:var(--text-primary)}
+.fos-console__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.fos-console__cell{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.fos-console__metric{font-family:var(--font-mono);font-size:24px;font-weight:var(--weight-bold);font-variant-numeric:tabular-nums;color:var(--text-primary);line-height:1}
+.fos-console__target{font-family:var(--font-mono);font-size:9.5px;color:var(--text-metadata)}
+
+/* ---- FOS-14 · Editorial Folio System & Spatial Pause ---- */
+.fos-folio-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border-hairline);padding-bottom:10px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata);margin-bottom:var(--space-6)}
+.fos-folio-footer{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border-hairline);padding-top:10px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--text-metadata);margin-top:var(--space-7)}
+.fos-folio-page{background:var(--surface-page);padding:48px;box-sizing:border-box;min-height:500px;display:flex;flex-direction:column;justify-content:space-between}
+
+
