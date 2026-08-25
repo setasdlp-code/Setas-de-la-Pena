@@ -99,7 +99,7 @@ La arquitectura prevista usa ESP32 con ESPHome por módulo y Home Assistant en R
 ### AC Infinity Cloudline H4 (Extractor FAE 4")
 - Control: Relay simple ON/OFF conmutado en pulsos.
 - Regulación física: Potenciómetro/controlador EC ajustado a **Velocidad 1 o 2**.
-- Lógica: Pulsos de 30–45s cuando CO₂ > 1.000 ppm (o ciclo periódico de línea base). Previene el vaciado violento de humedad de la carpa de 3 m³.
+- Lógica: Pulsos de 30–45s cuando CO₂ > 800 ppm (o ciclo periódico de línea base). Previene el vaciado violento de humedad de la carpa de 3 m³. Objetivo óptimo de fructificación: 500–800 ppm.
 
 ### Malla Radiante QuietWarmth Float (Incubadora 100L)
 - Potencia: 120V / 90W con placa difusora de aluminio y lámina dieléctrica.
@@ -121,6 +121,25 @@ El CLOUDLAB 844 mide 120 × 120 × 200 cm: volumen aproximado **3,02 m³ / 106,6
 |---|---:|
 | 5 ACH | 8,5 CFM |
 | 8 ACH | 13,6 CFM |
+
+### Compensación por Altitud (2,600 m s.n.m.) — CRÍTICO
+
+Los ventiladores son máquinas de "volumen constante" — un ventilador de 100 CFM mueve 100 CFM tanto a nivel del mar como a 2,600m. **Sin embargo**, a 2,600m ese mismo volumen contiene ~26% menos masa de aire (menos O₂ entrando, menos masa de CO₂ siendo extraída).
+
+**Factor de corrección por densidad:**
+
+`CFM ajustado = CFM nivel del mar / (P_Tenjo / P_nivel_mar) = CFM / 0.74`
+
+**Ejemplo práctico con pérdidas:**
+
+| Parámetro | Cálculo |
+|-----------|---------|
+| ACH objetivo | 6 (medio del rango) |
+| CFM nivel del mar | 106.6 × 6 / 60 = **10.7 CFM** |
+| CFM ajustado altitud (÷0.74) | **14.4 CFM** |
+| CFM con pérdidas (filtros/ductos, η=0.8) | **~18 CFM** |
+
+**Equipo recomendado:** Ventiladores de flujo mixto con motor EC (serie **AC Infinity Cloudline** o clones). Silenciosos, alta presión estática, controlador de velocidad. Extraer aire (presión negativa) desde la parte superior.
 
 Con operación intermitente:
 
@@ -249,7 +268,7 @@ automation:
     trigger:
       platform: numeric_state
       entity_id: sensor.cloudlab01_co2
-      above: 1100
+      above: 850  # Óptimo fructificación: 500-800 ppm; alarma >1000 ppm
     action:
       - service: switch.turn_on
         target:
