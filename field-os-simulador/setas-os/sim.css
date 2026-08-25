@@ -2606,16 +2606,17 @@
    JS (didn't reach keyboard focus, never fired on touch, and there was no
    :active feedback anywhere). Moved to CSS so :hover, :active and
    :focus-visible (global rule above) all come for free. ── */
-.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow var(--duration-fast, .15s) var(--ease-spring, ease),border-color var(--duration-fast, .15s) var(--ease-spring, ease),transform var(--duration-fast, .1s) var(--ease-spring, ease)}
 .sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
 .sim-root .home-quick-action.is-jornada{border:1.5px solid var(--coral-500)}
 .sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
 .sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
 
-.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color var(--duration-fast, .15s) var(--ease-spring, ease),border-color var(--duration-fast, .15s) var(--ease-spring, ease),transform var(--duration-fast, .1s) var(--ease-spring, ease)}
 .sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
 .sim-root .home-stage-card:hover{border-color:var(--stage-accent,var(--coral-500))}
 .sim-root .home-stage-card:active{transform:scale(.98)}
+
 
 .sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .15s ease,transform .1s ease}
 .sim-root .home-lote-row:hover{background:var(--paper-100)}
