@@ -172,12 +172,24 @@ Two specialized background tokens for UI patterns that don't fit the standard pa
 | `--surface-accent-soft-text` | Dark olive text on soft olive background | `#3a5a28` | — |
 | `--surface-selected` | Card selection highlight (cool blue-gray) | `#F4F7F8` | `--text-primary` |
 
+## Component-Specific Colors
+
+Some specialized UI elements use dedicated color tokens for semantic meaning:
+
+| Token | Use | Value | Notes |
+|-------|-----|-------|-------|
+| `--color-norm-bar` | Normalization/balance indicators | #6B8E5A | Moss-green for positive status |
+| `--color-investigacion` | Investigation/experimental modes | #f0b093 | Warm peach for exploratory states |
+
+These colors are applied to specific features (perito analysis, form modes) and don't conflict with the general palette.
+
 ## Implementation Notes
 
 - All ingredient category colors use `color-mix(in oklab, ...)` for the hover tint to ensure perceptually uniform lightness across the palette.
 - Button disabled state uses opacity rather than desaturation or border changes, making it uniform across all button variants.
 - Spacing tokens are defined in pixel values (not rem) because they're used in dense, fixed-layout components where relative units would create cascading size shifts.
 - White text (`#fff`) replaced with `--text-on-dark` throughout. Pure white backgrounds (`#fff`, `#ffffff`) replaced with `--paper-0` (off-white for UI elements).
+- Remaining hardcoded colors in CSS are either: (1) token names themselves (intentional hex values for ingredient categories), (2) fallback values inside `var()` expressions (CSS cascade pattern), or (3) single-use specialized colors with their own tokens. True inline `style=""` attributes are not used.
 
 ---
 
