@@ -3671,3 +3671,87 @@
 }
 
 @media(prefers-reduced-motion:reduce){.sim-root *,.sim-root *::before,.sim-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ── BATCH ECONOMICS & UNIT MARGIN ────────────────────────────── */
+.sim-root .economic-summary-card {
+  background: var(--paper-50, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-md, 3px);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.sim-root .economics-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sim-root .econ-metric-box {
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: 2px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-root .econ-metric-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-2, #6B6759);
+  letter-spacing: .04em;
+}
+
+.sim-root .econ-metric-value {
+  font-family: var(--font-mono, monospace);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-0, #1E1D19);
+  margin-top: 3px;
+}
+
+.sim-root .econ-metric-sub {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 10.5px;
+  color: var(--ink-1, #3C392F);
+  margin-top: 2px;
+}
+
+.sim-root .econ-breakdown-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 10px;
+  background: var(--paper-2, #E5DFD0);
+}
+
+.sim-root .econ-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+}
+
+.sim-root .econ-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: 2px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+}
+
+.sim-root .econ-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+

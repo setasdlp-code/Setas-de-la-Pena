@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 0ceb9794ebb4e5cf9e3b375736426226d5092dbf13d18fefeda93af156a1913e
+// source-hash: 5ff8cf240dc14dad93c38265fafea71f216df421645320f37bb107fe126aab86
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -517,7 +517,18 @@ const scoreAn = (an, extraCtx = {}) => {
   const sev = SetasScoring.assessSeverity(an);
   return SetasScoring.scoreRecipe(an, { ...extraCtx, criticals: sev.criticals, warnings: sev.warnings, severity: sev.severity });
 };
-const calcBatch = (recipe, n, kg, hObj = 67, spawnCostKg = 12e3, ings = INGS, dynSpawn = 8) => {
+const DEFAULT_FRESH_PRICES = {
+  p_ostreatus_gris: 2e4,
+  p_ostreatus_blanco: 22e3,
+  p_djamor_rosa: 25e3,
+  p_eryngii: 35e3,
+  shiitake: 38e3,
+  lions_mane: 55e3,
+  reishi: 6e4,
+  enoki: 28e3,
+  nameko: 32e3
+};
+const calcBatch = (recipe, n, kg, hObj = 67, spawnCostKg = 12e3, ings = INGS, dynSpawn = 8, tr = null, eb = null, sKey = "p_ostreatus_gris", customFreshPrice = null, customBagConsumable = 300) => {
   if (!recipe.length || !n || !kg) return null;
   const wet = n * kg;
   const hF = Math.min(0.85, Math.max(0.4, hObj / 100));
@@ -539,9 +550,61 @@ const calcBatch = (recipe, n, kg, hObj = 67, spawnCostKg = 12e3, ings = INGS, dy
   const sustCost = items.reduce((s, i) => s + i.cost, 0);
   const spawnKg = wet * spawnRate;
   const spawnCostTotal = spawnKg * spawnCostKg;
-  const totalCost = sustCost + spawnCostTotal;
+  const energyCostKgSeco = tr?.energy?.cop_per_kg_seco || 0;
+  const energyCostTotal = dry * energyCostKgSeco;
+  const bagConsumableCostUnit = customBagConsumable != null ? customBagConsumable : 300;
+  const bagConsumableCostTotal = n * bagConsumableCostUnit;
+  const totalCost = sustCost + spawnCostTotal + energyCostTotal + bagConsumableCostTotal;
   const costPerBag = n > 0 ? totalCost / n : 0;
-  return { items, wet, dry, kgComercialTotal, aguaTot, aguaInh, cost: sustCost, spawn: spawnKg, spawnCostTotal, totalCost, costPerBag, agua, hObj };
+  const dryPerBag = n > 0 ? dry / n : 0;
+  const ebRate = Math.max(0, (eb != null ? eb : 85) / 100);
+  const projectedFreshKgPerBag = dryPerBag * ebRate;
+  const projectedFreshKgTotal = dry * ebRate;
+  const freshPriceKg = customFreshPrice || DEFAULT_FRESH_PRICES[sKey] || 22e3;
+  const projectedRevenuePerBag = projectedFreshKgPerBag * freshPriceKg;
+  const projectedGrossMarginPerBag = projectedRevenuePerBag - costPerBag;
+  const projectedMarginPct = projectedRevenuePerBag > 0 ? projectedGrossMarginPerBag / projectedRevenuePerBag * 100 : 0;
+  const productionCostPerKgFresh = projectedFreshKgPerBag > 0 ? costPerBag / projectedFreshKgPerBag : 0;
+  return {
+    items,
+    wet,
+    dry,
+    kgComercialTotal,
+    aguaTot,
+    aguaInh,
+    cost: sustCost,
+    spawn: spawnKg,
+    spawnCostTotal,
+    energyCostTotal,
+    energyCostKgSeco,
+    bagConsumableCostUnit,
+    bagConsumableCostTotal,
+    totalCost,
+    costPerBag,
+    agua,
+    hObj,
+    dryPerBag,
+    ebRate,
+    projectedFreshKgPerBag,
+    projectedFreshKgTotal,
+    freshPriceKg,
+    projectedRevenuePerBag,
+    projectedGrossMarginPerBag,
+    projectedMarginPct,
+    productionCostPerKgFresh,
+    costBreakdown: {
+      sustrato: sustCost,
+      spawn: spawnCostTotal,
+      energia: energyCostTotal,
+      consumibles: bagConsumableCostTotal
+    },
+    costBreakdownPerBag: {
+      sustrato: n > 0 ? sustCost / n : 0,
+      spawn: n > 0 ? spawnCostTotal / n : 0,
+      energia: n > 0 ? energyCostTotal / n : 0,
+      consumibles: bagConsumableCostUnit
+    }
+  };
 };
 const calcSchedule = (sKey, dateStr, eb) => {
   const sp = SPP[sKey];
@@ -2669,16 +2732,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setCmpParsing(true);
     setCmpParseErr("");
     try {
-      const listaIngs = INGS.map((g) => g.name).join(", ");
-      const resp = await window.claude.complete({ messages: [{ role: "user", content: [
-        fileBlock,
-        { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
-      ] }] });
-      try {
-        applyParsedItems(extraerJSON(resp));
-      } catch (parseErr) {
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
+      if (window.SetasAI && typeof window.SetasAI.parseInvoiceImage === "function") {
+        const parsed = await window.SetasAI.parseInvoiceImage({
+          base64Data: fileBlock.source.data,
+          mimeType: fileBlock.source.media_type,
+          knownIngredients: INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
       }
+      if (window.claude && typeof window.claude.complete === "function") {
+        const listaIngs = INGS.map((g) => g.name).join(", ");
+        const resp = await window.claude.complete({ messages: [{ role: "user", content: [
+          fileBlock,
+          { type: "text", text: `Esta es ${esPDF ? "un PDF" : "una foto"} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.` }
+        ] }] });
+        try {
+          applyParsedItems(extraerJSON(resp));
+        } catch (parseErr) {
+          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF ? "el PDF" : "la foto"}. Revisa que sea legible o usa Manual.`);
+        }
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error("Servicio de IA no disponible");
     } catch (err) {
       setCmpParseErr(`No se pudo leer ${esPDF ? "el PDF" : "la foto"}. Intenta de nuevo o usa Manual.`);
     }
@@ -2693,7 +2771,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       e.target.value = "";
       return;
     }
-    if (!window.claude || typeof window.claude.complete !== "function") {
+    const hasAI = window.SetasAI && typeof window.SetasAI.parseInvoiceImage === "function" || window.claude && typeof window.claude.complete === "function";
+    if (!hasAI) {
       setCmpParseErr("La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.");
       e.target.value = "";
       return;
@@ -2726,13 +2805,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setHuboParseIA(false);
     setCmpFuente("email");
     try {
-      const listaIngs = INGS.map((g) => g.name).join(", ");
-      const resp = await window.claude.complete({ messages: [{ role: "user", content: `Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:
+      if (window.SetasAI && typeof window.SetasAI.parseInvoiceText === "function") {
+        const parsed = await window.SetasAI.parseInvoiceText({
+          text: cmpPasteText,
+          knownIngredients: INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
+      }
+      if (window.claude && typeof window.claude.complete === "function") {
+        const listaIngs = INGS.map((g) => g.name).join(", ");
+        const resp = await window.claude.complete({ messages: [{ role: "user", content: `Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:
 
 """${cmpPasteText}"""
 
 Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.` }] });
-      applyParsedItems(extraerJSON(resp));
+        applyParsedItems(extraerJSON(resp));
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error("Servicio de IA no disponible");
     } catch (err) {
       setCmpParseErr("No se pudo interpretar el texto. Intenta de nuevo o usa Manual.");
     }
@@ -4226,8 +4319,8 @@ Click para ver análisis completo`
     if (prodH === "" || isNaN(prodH)) setProdH(67);
   }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => prodRows && ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !prodRows, title: prodRows ? "Descontar kg comerciales del inventario (FIFO)" : !balanced ? balMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows ? "var(--moss-700)" : "var(--paper-300)", color: prodRows ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: prodRows ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, "⚡ Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9 }, title: loteSyncErr }, "⚠ sin sincronizar"))))), recipe.length > 0 && an && balanced && (() => {
     const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
-    const pb = calcBatch(recipe, prodBags || 1, prodKg || 1.5, prodH || 67, spawnCost, prodIngs, an?.dynSpawn);
     const ptr = calcTreatment(an, sKey, SPP);
+    const pb = calcBatch(recipe, prodBags || 1, prodKg || 1.5, prodH || 67, spawnCost, prodIngs, an?.dynSpawn, ptr, an?.eb, sKey);
     const psch = calcSchedule(sKey, prodDate, an?.eb);
     const spn = an?.dynSpawn || ptr?.spawn || 8;
     if (!pb) return null;
@@ -4278,13 +4371,13 @@ Click para ver análisis completo`
     return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "no-print", style: { display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "8px 12px", background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderBottom: "none", position: "sticky", top: 0, zIndex: "var(--z-sticky-sub)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", flex: 1 } }, psSections.map((s) => /* @__PURE__ */ React.createElement("button", { key: s.id, onClick: () => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { fontFamily: "var(--font-body)", fontSize: 10, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", padding: "6px 10px", background: "var(--paper-50)", color: "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", cursor: "pointer", whiteSpace: "nowrap" } }, s.l))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 70, height: 6, background: "var(--paper-300)", borderRadius: 3, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${totalChecks > 0 ? Math.round(doneChecks / totalChecks * 100) : 0}%`, height: "100%", background: doneChecks === totalChecks && totalChecks > 0 ? "var(--moss-600,var(--accent-olive))" : "var(--coral-500)", transition: "width .2s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-700)", whiteSpace: "nowrap" } }, doneChecks, "/", totalChecks, " pasos"))), /* @__PURE__ */ React.createElement("div", { className: "panel prod-sheet", style: { padding: "26px 28px" } }, /* @__PURE__ */ React.createElement("div", { className: "ps-head", style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid var(--ink-900,#222)", paddingBottom: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Setas de la Peña · Tenjo 2.600 msnm"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 26, fontWeight: 700, color: "var(--ink-900,#222)", lineHeight: 1.1, marginTop: 2 } }, "Hoja de Producción"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", color: "var(--ink-900)", marginTop: 2 } }, an.sp?.name, " · ", /* @__PURE__ */ React.createElement("i", null, an.sp?.scientific))), /* @__PURE__ */ React.createElement("div", { className: "ps-head-right", style: { textAlign: "right", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, /* @__PURE__ */ React.createElement("div", null, "Fecha lote: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, prodDate)), /* @__PURE__ */ React.createElement("div", null, prodBags, " bolsas × ", prodKg, " kg = ", pb.wet.toFixed(1), " kg húmedo"), /* @__PURE__ */ React.createElement("div", null, (() => {
       const bt = BAG_TYPES.find((b) => b.id === prodBagType);
       return bt ? /* @__PURE__ */ React.createElement("span", null, bt.icon, " ", bt.name.split("·")[0].trim(), " · ", bt.dim) : null;
-    })()), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700, color: "var(--ink-900)" } }, "N.º " + (prodLoteNum || "___________")))), /* @__PURE__ */ React.createElement("div", { className: "ps-kpi", style: { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 1, background: "var(--border-soft)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", marginBottom: 20 } }, [
+    })()), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700, color: "var(--ink-900)" } }, "N.º " + (prodLoteNum || "___________")))), /* @__PURE__ */ React.createElement("div", { className: "ps-kpi", style: { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 1, background: "var(--border-soft)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", overflow: "hidden", marginBottom: 14 } }, [
       ["C:N", an.cn.toFixed(1) + ":1", "relación"],
       ["Nitrógeno", an.avgN.toFixed(2) + "%", "total"],
       ["Ef. biológica", (an.ebLow ?? an.eb.toFixed(0)) + "–" + (an.ebHigh ?? an.eb.toFixed(0)) + "%", "estimada"],
       ["Score", opt.score + "/100", "perito"],
       ["Costo/kg", "$" + Math.round(an.cost).toLocaleString("es-CO"), "estimado"]
-    ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-50)", padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--ink-900)", lineHeight: 1, marginBottom: 2 } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-400)" } }, s)))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-1", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "1"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Pesado de ingredientes"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "báscula · res. ", resG, " g"))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 8 } }, "Masa seca requerida: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, dryR.toFixed(2), " kg"), " = ", pb.wet.toFixed(1), " kg húmedo × (1 − ", prodH, "%). Gramos redondeados a la báscula (", resG, " g). Edita la columna ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, "H₂O%"), " con la humedad real del insumo del día."), /* @__PURE__ */ React.createElement("div", { className: "ps-tbl-wrap" }, /* @__PURE__ */ React.createElement("table", { className: "prod-tbl", style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 62 } }, "H₂O%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Gramos"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Seco kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 46 } }, "Hecho"))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((x, i) => {
+    ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-50)", padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--ink-900)", lineHeight: 1, marginBottom: 2 } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-400)" } }, s)))), /* @__PURE__ */ React.createElement("div", { className: "economic-summary-card", style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2,#6B6759)" } }, "💰 Análisis Económico & Rentabilidad por Bolsa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1,#3C392F)", marginTop: 2 } }, "Costeo unitario real en Tenjo para bolsa de ", prodKg, " kg húmedo al ", prodH, "% H₂O")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Precio venta fresco:"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)" } }, "$", Math.round(pb.freshPriceKg).toLocaleString("es-CO"), " COP/kg"))), /* @__PURE__ */ React.createElement("div", { className: "economics-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo por Bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(pb.costPerBag).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Sustrato + Spawn + Autoclave + Bolsa")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Cosecha Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, pb.projectedFreshKgPerBag.toFixed(2), " kg"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Hongo fresco (EB ", Math.round(pb.ebRate * 100), "%)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Fresco"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(pb.productionCostPerKgFresh).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Costo unitario de cosecha")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: "var(--accent-olive-dim, #DCE1D1)", borderColor: "var(--accent-olive, #5B6B44)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label", style: { color: "var(--accent-olive, #5B6B44)" } }, "Margen Bruto / Bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value", style: { color: "var(--accent-olive, #5B6B44)" } }, "+$", Math.round(pb.projectedGrossMarginPerBag).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub", style: { fontWeight: 700, color: "var(--accent-olive, #5B6B44)" } }, pb.projectedMarginPct.toFixed(1), "% margen"))), /* @__PURE__ */ React.createElement("div", { className: "econ-pills-row" }, /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#5E7080" } }), "Sustrato: $", Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#5B6B44" } }), "Micelio: $", Math.round(pb.costBreakdownPerBag.spawn).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#A85C32" } }), "Tratamiento Térmico: $", Math.round(pb.costBreakdownPerBag.energia).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#7A6A52" } }), "Bolsa PP: $", Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString("es-CO"), "/bolsa"))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-1", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "1"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Pesado de ingredientes"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "báscula · res. ", resG, " g"))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 8 } }, "Masa seca requerida: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, dryR.toFixed(2), " kg"), " = ", pb.wet.toFixed(1), " kg húmedo × (1 − ", prodH, "%). Gramos redondeados a la báscula (", resG, " g). Edita la columna ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, "H₂O%"), " con la humedad real del insumo del día."), /* @__PURE__ */ React.createElement("div", { className: "ps-tbl-wrap" }, /* @__PURE__ */ React.createElement("table", { className: "prod-tbl", style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 62 } }, "H₂O%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Gramos"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Seco kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 46 } }, "Hecho"))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((x, i) => {
       const id = x.r.id;
       const baseM = x.g ? x.g.moisture : 0;
       const ov = prodMoist[id] != null;

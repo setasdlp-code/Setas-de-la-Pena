@@ -532,11 +532,24 @@ const scoreAn = (an, extraCtx = {}) => {
 };
 
 
-// B · Balance de masas húmedas industrial.
+// B · Balance de masas húmedas industrial y costeo económico por bolsa.
 // Convierte la receta teórica (% base seca) en órdenes de pesado reales en báscula,
 // derivando la masa seca del objetivo de humedad del lote y la humedad intrínseca de
-// cada insumo comercial. Cierra el balance al peso húmedo objetivo exacto.
-const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8)=>{
+// cada insumo comercial. Cierra el balance al peso húmedo objetivo exacto y
+// calcula el costo total (sustrato + micelio + energía térmica + bolsa PP) y margen.
+const DEFAULT_FRESH_PRICES={
+  p_ostreatus_gris:20000,
+  p_ostreatus_blanco:22000,
+  p_djamor_rosa:25000,
+  p_eryngii:35000,
+  shiitake:38000,
+  lions_mane:55000,
+  reishi:60000,
+  enoki:28000,
+  nameko:32000
+};
+
+const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
   if(!recipe.length||!n||!kg) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
   const hF=Math.min(0.85,Math.max(0.40,hObj/100));  // fracción de humedad objetivo
@@ -557,9 +570,48 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8)=>{
   const sustCost=items.reduce((s,i)=>s+i.cost,0);
   const spawnKg=wet*spawnRate;
   const spawnCostTotal=spawnKg*spawnCostKg;
-  const totalCost=sustCost+spawnCostTotal;
+  const energyCostKgSeco=tr?.energy?.cop_per_kg_seco||0;
+  const energyCostTotal=dry*energyCostKgSeco;
+  const bagConsumableCostUnit=customBagConsumable!=null?customBagConsumable:300;
+  const bagConsumableCostTotal=n*bagConsumableCostUnit;
+  const totalCost=sustCost+spawnCostTotal+energyCostTotal+bagConsumableCostTotal;
   const costPerBag=n>0?totalCost/n:0;
-  return{items,wet,dry,kgComercialTotal,aguaTot,aguaInh,cost:sustCost,spawn:spawnKg,spawnCostTotal,totalCost,costPerBag,agua,hObj};
+
+  // Proyección de cosecha en fresco y margen comercial
+  const dryPerBag=n>0?dry/n:0;
+  const ebRate=Math.max(0,(eb!=null?eb:85)/100);
+  const projectedFreshKgPerBag=dryPerBag*ebRate;
+  const projectedFreshKgTotal=dry*ebRate;
+  const freshPriceKg=customFreshPrice||DEFAULT_FRESH_PRICES[sKey]||22000;
+  const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
+  const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
+  const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
+  const productionCostPerKgFresh=projectedFreshKgPerBag>0?costPerBag/projectedFreshKgPerBag:0;
+
+  return{
+    items,wet,dry,kgComercialTotal,aguaTot,aguaInh,
+    cost:sustCost,spawn:spawnKg,spawnCostTotal,
+    energyCostTotal,energyCostKgSeco,
+    bagConsumableCostUnit,bagConsumableCostTotal,
+    totalCost,costPerBag,agua,hObj,
+    dryPerBag,ebRate,
+    projectedFreshKgPerBag,projectedFreshKgTotal,
+    freshPriceKg,projectedRevenuePerBag,
+    projectedGrossMarginPerBag,projectedMarginPct,
+    productionCostPerKgFresh,
+    costBreakdown:{
+      sustrato:sustCost,
+      spawn:spawnCostTotal,
+      energia:energyCostTotal,
+      consumibles:bagConsumableCostTotal
+    },
+    costBreakdownPerBag:{
+      sustrato:n>0?sustCost/n:0,
+      spawn:n>0?spawnCostTotal/n:0,
+      energia:n>0?energyCostTotal/n:0,
+      consumibles:bagConsumableCostUnit
+    }
+  };
 };
 
 const calcSchedule=(sKey,dateStr,eb)=>{
@@ -2915,20 +2967,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const CMP_MAX_BYTES=10*1024*1024;
   // Ejecuta el parseo de una foto/PDF ya codificado — separado de capturarFoto para
-  // poder reintentar (botón "Reintentar") sin pedirle al usuario que resuba el archivo.
   const parseFotoPayload=async(fileBlock,esPDF)=>{
     setCmpParsing(true);setCmpParseErr('');
     try{
-      const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:[
-        fileBlock,
-        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
-      ]}]});
-      try{
-        applyParsedItems(extraerJSON(resp));
-      }catch(parseErr){
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+      if(window.SetasAI&&typeof window.SetasAI.parseInvoiceImage==='function'){
+        const parsed=await window.SetasAI.parseInvoiceImage({
+          base64Data:fileBlock.source.data,
+          mimeType:fileBlock.source.media_type,
+          knownIngredients:INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
       }
+      if(window.claude&&typeof window.claude.complete==='function'){
+        const listaIngs=INGS.map(g=>g.name).join(', ');
+        const resp=await window.claude.complete({messages:[{role:'user',content:[
+          fileBlock,
+          {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
+        ]}]});
+        try{
+          applyParsedItems(extraerJSON(resp));
+        }catch(parseErr){
+          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+        }
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error('Servicio de IA no disponible');
     }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
     setCmpParsing(false);
   };
@@ -2939,7 +3005,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setCmpParseErr(`El archivo pesa ${(file.size/1024/1024).toFixed(1)} MB — el máximo es 10 MB. Comprime ${esPDF?'el PDF':'la foto'} o usa Manual.`);
       e.target.value=''; return;
     }
-    if(!window.claude||typeof window.claude.complete!=='function'){
+    const hasAI=(window.SetasAI&&typeof window.SetasAI.parseInvoiceImage==='function')||(window.claude&&typeof window.claude.complete==='function');
+    if(!hasAI){
       setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
       e.target.value=''; return;
     }
@@ -2963,9 +3030,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!cmpPasteText.trim()) return;
     setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
-      const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
-      applyParsedItems(extraerJSON(resp));
+      if(window.SetasAI&&typeof window.SetasAI.parseInvoiceText==='function'){
+        const parsed=await window.SetasAI.parseInvoiceText({
+          text:cmpPasteText,
+          knownIngredients:INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
+      }
+      if(window.claude&&typeof window.claude.complete==='function'){
+        const listaIngs=INGS.map(g=>g.name).join(', ');
+        const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
+        applyParsedItems(extraerJSON(resp));
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error('Servicio de IA no disponible');
     }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intenta de nuevo o usa Manual.');}
     setCmpParsing(false);
   };
@@ -6484,8 +6565,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {recipe.length>0&&an&&balanced&&(()=>{
               // Override de humedad por insumo: usa el valor real medido del lote del día
               const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-              const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn);
               const ptr=calcTreatment(an, sKey, SPP);
+              const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
               const psch=calcSchedule(sKey,prodDate,an?.eb);
               const spn=an?.dynSpawn||ptr?.spawn||8;
               if(!pb) return null;
@@ -6568,7 +6649,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
                 {/* KPIs */}
-                <div className="ps-kpi" style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',marginBottom:20}}>
+                <div className="ps-kpi" style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',overflow:'hidden',marginBottom:14}}>
                   {[
                     ['C:N',an.cn.toFixed(1)+':1','relaci\u00f3n'],
                     ['Nitr\u00f3geno',an.avgN.toFixed(2)+'%','total'],
@@ -6583,6 +6664,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   ))}
                 </div>
+
+                {/* Costeo Unitario y Margen Real */}
+                <div className="economic-summary-card" style={{marginBottom: 20}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8}}>
+                    <div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2,#6B6759)'}}>
+                        💰 Análisis Económico & Rentabilidad por Bolsa
+                      </div>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1,#3C392F)',marginTop:2}}>
+                        Costeo unitario real en Tenjo para bolsa de {prodKg} kg húmedo al {prodH}% H₂O
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)'}}>Precio venta fresco:</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-0)'}}>${Math.round(pb.freshPriceKg).toLocaleString('es-CO')} COP/kg</span>
+                    </div>
+                  </div>
+
+                  <div className="economics-metric-grid">
+                    <div className="econ-metric-box">
+                      <span className="econ-metric-label">Costo por Bolsa</span>
+                      <span className="econ-metric-value">${Math.round(pb.costPerBag).toLocaleString('es-CO')}</span>
+                      <span className="econ-metric-sub">Sustrato + Spawn + Autoclave + Bolsa</span>
+                    </div>
+                    <div className="econ-metric-box">
+                      <span className="econ-metric-label">Cosecha Estimada</span>
+                      <span className="econ-metric-value">{pb.projectedFreshKgPerBag.toFixed(2)} kg</span>
+                      <span className="econ-metric-sub">Hongo fresco (EB {Math.round(pb.ebRate*100)}%)</span>
+                    </div>
+                    <div className="econ-metric-box">
+                      <span className="econ-metric-label">Costo / kg Fresco</span>
+                      <span className="econ-metric-value">${Math.round(pb.productionCostPerKgFresh).toLocaleString('es-CO')}</span>
+                      <span className="econ-metric-sub">Costo unitario de cosecha</span>
+                    </div>
+                    <div className="econ-metric-box" style={{background:'var(--accent-olive-dim, #DCE1D1)',borderColor:'var(--accent-olive, #5B6B44)'}}>
+                      <span className="econ-metric-label" style={{color:'var(--accent-olive, #5B6B44)'}}>Margen Bruto / Bolsa</span>
+                      <span className="econ-metric-value" style={{color:'var(--accent-olive, #5B6B44)'}}>+${Math.round(pb.projectedGrossMarginPerBag).toLocaleString('es-CO')}</span>
+                      <span className="econ-metric-sub" style={{fontWeight:700,color:'var(--accent-olive, #5B6B44)'}}>{pb.projectedMarginPct.toFixed(1)}% margen</span>
+                    </div>
+                  </div>
+
+                  <div className="econ-pills-row">
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5E7080'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5B6B44'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'#A85C32'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'#7A6A52'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
+                  </div>
+                </div>
+
                 {/* Tabla de pesado — kg comerciales reales (báscula) por balance de masas */}
                 <div id="ps-sec-1" style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8,scrollMarginTop:52}}>
                   <span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-500)',lineHeight:1,flexShrink:0}}>1</span>
