@@ -68,6 +68,49 @@ test('calcLoteStats: costoKg se calcula cuando hay cosecha y peseSeco > 0', () =
   assert.equal(stats.costoKg, (1000 * 1) / 0.5);
 });
 
+test('calcLoteStats calcula cierre financiero, margenes reales y varianzas', () => {
+  const lote = baseLote({
+    peseSeco: 2.0,
+    costoIngKg: 1500, // sustrato = 3000 COP
+    spawnKg: 0.32,
+    spawnCostKg: 12000, // spawn = 3840 COP
+    energyCopKg: 400, // energia = 800 COP
+    bagConsumableCostUnit: 300, // 2 bolsas = 600 COP
+    precioVentaKg: 20000,
+    ebEstimada: 80
+  });
+  const bolsas = [bolsa({ id: 'b1' }), bolsa({ id: 'b2' })];
+  const cosechas = [
+    cosecha({ id: 'c1', flush: 1, pesoFresco: '1200' }), // 1.2 kg
+    cosecha({ id: 'c2', flush: 2, pesoFresco: '600' })   // 0.6 kg
+  ];
+
+  const stats = calcLoteStats(lote, bolsas, cosechas);
+  assert.equal(stats.totalFresco, 1.8);
+  assert.equal(stats.be, (1.8 / 2.0) * 100); // 90%
+  assert.equal(stats.ebEstimada, 80);
+  assert.equal(stats.varianzaEB, 10); // +10%
+
+  // Inversión incurrida: 3000 + 3840 + 800 + 600 = 8240 COP
+  assert.equal(stats.costoIncurridoTotal, 8240);
+  assert.equal(stats.costoIncurridoPorBolsa, 4120);
+
+  // Ingreso real: 1.8 kg * 20000 = 36000 COP
+  assert.equal(stats.ingresoRealTotal, 36000);
+  // Margen bruto real: 36000 - 8240 = 27760 COP
+  assert.equal(stats.margenRealTotal, 27760);
+  assert.equal(Math.round(stats.margenRealPct * 10) / 10, 77.1);
+
+  // Desglose por oleadas (flushes)
+  assert.equal(stats.flushes.length, 2);
+  assert.equal(stats.flushes[0].flush, 1);
+  assert.equal(stats.flushes[0].kg, 1.2);
+  assert.equal(stats.flushes[0].ingreso, 24000);
+  assert.equal(stats.flushes[1].flush, 2);
+  assert.equal(stats.flushes[1].kg, 0.6);
+  assert.equal(stats.flushes[1].ingreso, 12000);
+});
+
 test('calcLoteScore devuelve null sin stats o sin cosecha (totalFresco 0)', () => {
   assert.equal(calcLoteScore(null), null);
   assert.equal(calcLoteScore({ totalFresco: 0 }), null);
