@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setas OS — Guía Operativa y Manual Canónico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* ==========================================================================
+     SETAS DE LA PEÑA · FIELD OPERATING SYSTEM (FOS) DESIGN SYSTEM TOKENS
+     ========================================================================== */
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../08_brand/field-os-identity/assets/fonts/GayaPatched-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../08_brand/field-os-identity/assets/fonts/GayaPatched-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../08_brand/field-os-identity/assets/fonts/GayaPatched-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../08_brand/field-os-identity/assets/fonts/GayaPatched-BoldItalic.otf') format('opentype');
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  :root {
+    /* Paper Scale */
+    --paper-0: #F7F4EC;   /* Page background */
+    --paper-1: #EFEBE0;   /* Panels & cards */
+    --paper-2: #E5DFD0;   /* Table stripes & recessed inputs */
+    --paper-3: #DCD5C2;   /* Strong recessed / borders */
+
+    /* Ink Scale */
+    --ink-0: #1E1D19;     /* Primary text (warm near-black) */
+    --ink-1: #3C392F;     /* Secondary body text */
+    --ink-2: #6B6759;     /* Tertiary, captions & metadata */
+    --ink-3: #96907C;     /* Disabled / placeholder */
+
+    /* Line Scale */
+    --line-0: #988C6C;    /* Hairline rule (3.03:1 on paper-0) */
+    --line-1: #8C7F5B;    /* Strong table rule & dividers */
+    --line-2: #1E1D19;    /* Heavy borders & outer frames */
+
+    /* Functional Accents */
+    --accent-olive: #5B6B44;
+    --accent-olive-dim: #DCE1D1;
+    --accent-olive-hover: #4A5737;
+
+    --accent-terracotta: #A85C32;
+    --accent-terracotta-dim: #EFE0D3;
+    --accent-terracotta-hover: #894B29;
+
+    --accent-blue-grey: #5E7080;
+    --accent-blue-grey-dim: #DEE5E7;
+    --accent-blue-grey-hover: #4D5B68;
+
+    --accent-mushroom: #7A6A52;
+    --accent-mushroom-dim: #E7E0D3;
+    --accent-mushroom-hover: #645643;
+
+    --accent-rust: #8C3223;       /* Exclusively for errors & contamination */
+    --accent-rust-dim: #EEDAD3;
+    --accent-rust-hover: #72291C;
+
+    /* Semantic Status */
+    --surface-page: var(--paper-0);
+    --surface-panel: var(--paper-1);
+    --surface-recessed: var(--paper-2);
+    --surface-pressed: var(--paper-3);
+
+    --text-primary: var(--ink-0);
+    --text-secondary: var(--ink-1);
+    --text-metadata: var(--ink-2);
+    --text-disabled: var(--ink-3);
+
+    --border-hairline: var(--line-0);
+    --border-strong: var(--line-1);
+    --border-heavy: var(--line-2);
+
+    --status-active: var(--accent-olive);
+    --status-active-bg: var(--accent-olive-dim);
+    --status-attention: var(--accent-terracotta);
+    --status-attention-bg: var(--accent-terracotta-dim);
+    --status-info: var(--accent-blue-grey);
+    --status-info-bg: var(--accent-blue-grey-dim);
+    --status-archived: var(--accent-mushroom);
+    --status-archived-bg: var(--accent-mushroom-dim);
+    --status-error: var(--accent-rust);
+    --status-error-bg: var(--accent-rust-dim);
+
+    /* Fonts & Typography */
+    --font-display: 'Gaya', Georgia, serif;
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+
+    --text-2xs: 10.5px;
+    --text-xs: 11.5px;
+    --text-sm: 13px;
+    --text-base: 14.5px;
+    --text-prose: 16px;
+    --text-md: 17px;
+    --text-lg: 20px;
+    --text-xl: 26px;
+    --text-2xl: 34px;
+    --text-3xl: 46px;
+
+    --leading-tight: 1.15;
+    --leading-snug: 1.35;
+    --leading-normal: 1.55;
+    --leading-relaxed: 1.7;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+
+    --radius-none: 0px;
+    --radius-sm: 2px;
+
+    --rule-hairline: 1px solid var(--border-hairline);
+    --rule-strong: 1px solid var(--border-strong);
+    --rule-heavy: 2px solid var(--border-heavy);
+  }
+
+  /* Reset & Document Baseline */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html {
+    background: var(--paper-0);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-prose);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--paper-0);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Layout Container */
+  .doc-wrapper {
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-5);
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+
+  /* Sticky Navigation Sidebar */
+  .doc-sidebar {
+    position: sticky;
+    top: var(--space-6);
+    height: fit-content;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding-right: var(--space-4);
+    border-right: var(--rule-hairline);
+  }
+  .doc-sidebar::-webkit-scrollbar { width: 4px; }
+  .doc-sidebar::-webkit-scrollbar-thumb { background: var(--border-hairline); }
+
+  .brand-tag {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+    margin-bottom: var(--space-2);
+  }
+  .brand-title {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin-bottom: var(--space-5);
+  }
+  .brand-title span {
+    font-style: italic;
+    color: var(--accent-terracotta);
+  }
+
+  .nav-group-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-2);
+    border-bottom: 1px dashed var(--border-hairline);
+    padding-bottom: 4px;
+  }
+  .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .nav-link {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 4px 6px;
+    border-left: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+  .nav-link:hover {
+    color: var(--ink-0);
+    background: var(--paper-1);
+    border-left-color: var(--accent-terracotta);
+  }
+  .nav-link.active {
+    color: var(--ink-0);
+    font-weight: 500;
+    border-left-color: var(--accent-olive);
+    background: var(--paper-1);
+  }
+
+  /* Main Document Canvas */
+  .doc-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+  }
+
+  /* Masthead & Document Control Box */
+  .masthead {
+    border-bottom: var(--rule-heavy);
+    padding-bottom: var(--space-5);
+  }
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+    margin-bottom: var(--space-3);
+  }
+  .doc-h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--ink-0);
+    margin-bottom: var(--space-3);
+  }
+  .doc-lead {
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--text-secondary);
+    max-width: 780px;
+    margin-bottom: var(--space-5);
+  }
+
+  /* FOS Document Control Box */
+  .control-box {
+    border-top: var(--rule-heavy);
+    border-bottom: var(--rule-strong);
+    background: var(--paper-1);
+    padding: var(--space-3) var(--space-4);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3) var(--space-5);
+  }
+  .control-item { display: flex; flex-direction: column; gap: 2px; }
+  .control-k {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+  }
+  .control-v {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* Section Styles */
+  .doc-section {
+    padding-top: var(--space-4);
+    border-top: var(--rule-strong);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-olive);
+    font-weight: 600;
+  }
+  .section-h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink-0);
+  }
+  .section-h3 {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    color: var(--ink-0);
+    margin-top: var(--space-3);
+  }
+
+  p { margin-bottom: var(--space-3); }
+  p:last-child { margin-bottom: 0; }
+
+  /* Architecture Ribbon / Workspace Cards */
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-3) 0;
+  }
+  .workspace-card {
+    background: var(--paper-1);
+    border: var(--rule-strong);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .workspace-card__icon {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-olive);
+    text-transform: uppercase;
+  }
+  .workspace-card__name {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 700;
+    color: var(--ink-0);
+  }
+  .workspace-card__desc {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: var(--leading-snug);
+  }
+
+  /* Data Tables */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: var(--space-3) 0;
+    border: var(--rule-strong);
+    background: var(--surface-page);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    text-align: left;
+  }
+  thead {
+    background: var(--paper-1);
+    border-bottom: var(--rule-strong);
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+    font-weight: 600;
+    padding: 8px 12px;
+    vertical-align: bottom;
+  }
+  td {
+    padding: 9px 12px;
+    border-bottom: var(--rule-hairline);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--paper-1); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  em, .sci { font-family: var(--font-display); font-style: italic; }
+
+  /* FOS Components */
+  /* FOS-01 Lot Identifier */
+  .fos-lot {
+    background: var(--surface-page);
+    border: 1px solid var(--border-heavy);
+    padding: 10px 14px;
+    display: grid;
+    gap: 6px;
+    max-width: 320px;
+    font-family: var(--font-mono);
+  }
+  .fos-lot__code {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text-primary);
+  }
+  .fos-lot__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-hairline);
+    padding-top: 6px;
+  }
+  .fos-lot__k {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+  }
+
+  /* FOS-02 Ficha de Campo */
+  .fos-ficha {
+    background: var(--surface-page);
+    border: var(--rule-heavy);
+    width: 100%;
+    margin: var(--space-3) 0;
+  }
+  .fos-ficha__hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 16px;
+    border-bottom: var(--rule-heavy);
+    background: var(--paper-1);
+  }
+  .fos-ficha__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-style: italic;
+    font-weight: 500;
+  }
+  .fos-ficha__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .fos-field {
+    padding: 10px 14px;
+    border-right: var(--rule-hairline);
+    border-bottom: var(--rule-hairline);
+    min-height: 48px;
+  }
+  .fos-field:last-child { border-right: none; }
+  .fos-field__k {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-metadata);
+    margin-bottom: 2px;
+  }
+  .fos-field__v {
+    font-size: var(--text-base);
+    font-family: var(--font-sans);
+  }
+
+  /* FOS-05 Status Text */
+  .fos-status {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-top: 1.5px solid currentColor;
+    padding-top: 2px;
+    font-weight: 600;
+  }
+  .fos-status--active { color: var(--status-active); }
+  .fos-status--attention { color: var(--status-attention); }
+  .fos-status--info { color: var(--status-info); }
+  .fos-status--archived { color: var(--status-archived); }
+  .fos-status--error { color: var(--status-error); }
+
+  /* Callout & Note Blocks */
+  .doc-callout {
+    background: var(--paper-1);
+    border-left: 3px solid var(--accent-olive);
+    padding: var(--space-4);
+    margin: var(--space-3) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .doc-callout--attention { border-left-color: var(--accent-terracotta); }
+  .doc-callout--error { border-left-color: var(--accent-rust); }
+  .doc-callout__title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  /* State Machine Flowchart Box */
+  .state-flow {
+    background: var(--paper-1);
+    border: var(--rule-strong);
+    padding: var(--space-4);
+    margin: var(--space-3) 0;
+    overflow-x: auto;
+  }
+  .state-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .state-badge {
+    background: var(--paper-0);
+    border: var(--rule-strong);
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-0);
+  }
+  .state-arrow {
+    font-family: var(--font-mono);
+    color: var(--text-metadata);
+    font-weight: bold;
+  }
+  .state-badge.highlight {
+    border-color: var(--accent-olive);
+    color: var(--accent-olive);
+  }
+
+  /* Code & Math Blocks */
+  .math-block {
+    background: var(--paper-1);
+    border: var(--rule-hairline);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--ink-0);
+    margin: var(--space-3) 0;
+    overflow-x: auto;
+  }
+
+  /* Interactive Recipe Breakdown Widget */
+  .recipe-widget {
+    border: var(--rule-strong);
+    background: var(--paper-1);
+    padding: var(--space-4);
+    margin: var(--space-3) 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .ratio-bar {
+    height: 14px;
+    display: flex;
+    width: 100%;
+    border: var(--rule-hairline);
+  }
+  .ratio-carbon { background: var(--accent-mushroom); width: 65%; }
+  .ratio-nitrogen { background: var(--accent-olive); width: 30%; }
+  .ratio-minerals { background: var(--accent-terracotta); width: 5%; }
+  .ratio-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .ratio-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; vertical-align: middle; }
+
+  /* Print Optimization */
+  @media print {
+    body { background: #fff; color: #000; font-size: 12pt; }
+    .doc-wrapper { display: block; padding: 0; max-width: 100%; }
+    .doc-sidebar { display: none; }
+    .doc-section { page-break-before: always; border-top: 1pt solid #000; padding-top: 15pt; }
+    .masthead { border-bottom: 2pt solid #000; }
+    .control-box { background: #fff; border: 1pt solid #000; }
+    .table-container { border: 1pt solid #000; }
+    tbody tr:nth-child(even) { background: #f0f0f0; }
+    a { text-decoration: none; color: #000; }
+    .fos-lot, .fos-ficha, .workspace-card { border: 1pt solid #000; background: #fff; }
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 860px) {
+    .doc-wrapper { grid-template-columns: 1fr; padding: var(--space-4) var(--space-3); }
+    .doc-sidebar { position: static; max-height: none; border-right: none; border-bottom: var(--rule-strong); padding-bottom: var(--space-4); }
+    .doc-h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-wrapper">
+
+  <!-- ==================== SIDEBAR DE NAVEGACIÓN ==================== -->
+  <aside class="doc-sidebar">
+    <div class="brand-tag">Documentación Canónica</div>
+    <div class="brand-title">Setas OS <span>v5.1</span></div>
+    
+    <div class="nav-group-title">Estructura</div>
+    <ul class="nav-list">
+      <li><a href="#introduccion" class="nav-link">1. Introducción y Filosofía</a></li>
+      <li><a href="#espacios" class="nav-link">2. Espacios de Trabajo</a></li>
+      <li><a href="#formular" class="nav-link">3. Formular & Sustratos</a></li>
+      <li><a href="#bodega" class="nav-link">4. Bodega & FIFO</a></li>
+      <li><a href="#produccion" class="nav-link">5. Preparación de Lotes</a></li>
+      <li><a href="#bitacora" class="nav-link">6. Bitácora & Cosechas</a></li>
+      <li><a href="#control" class="nav-link">7. Control & Telemetría V1</a></li>
+      <li><a href="#learning-loop" class="nav-link">8. Production Learning Loop</a></li>
+      <li><a href="#rutina" class="nav-link">9. Rutina Día 0 a 60</a></li>
+      <li><a href="#troubleshooting" class="nav-link">10. Matriz de Diagnóstico</a></li>
+      <li><a href="#persistencia" class="nav-link">11. Persistencia & MCP</a></li>
+    </ul>
+
+    <div class="nav-group-title">Design System</div>
+    <ul class="nav-list">
+      <li><a href="#normativa-visual" class="nav-link">Normativa Visual FOS</a></li>
+      <li><a href="#componentes-fos" class="nav-link">Componentes FOS-01..05</a></li>
+    </ul>
+
+    <div style="margin-top: var(--space-6); padding: var(--space-3); background: var(--paper-1); border: var(--rule-hairline); font-family: var(--font-mono); font-size: 10px; color: var(--text-metadata);">
+      <div>TENJO · CUNDINAMARCA</div>
+      <div>2.585 m s. n. m. · Colombia</div>
+      <div style="margin-top:4px; color:var(--accent-olive); font-weight:600;">SISTEMA ACTIVO 2026</div>
+    </div>
+  </aside>
+
+  <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+  <main class="doc-main">
+
+    <!-- MASTHEAD -->
+    <header class="masthead">
+      <div class="masthead-top">
+        <span>Setas de la Peña · Ingeniería de Cultivo</span>
+        <span>SOP-SYS-001 · Rev. Agosto 2026</span>
+      </div>
+      <h1 class="doc-h1">Setas OS — Guía Operativa de Precisión</h1>
+      <p class="doc-lead">
+        Manual canónico de uso, arquitectura de datos y protocolos de campo para la plataforma operativa de cultivo de hongos comestibles y medicinales en Tenjo, Colombia.
+      </p>
+
+      <!-- FOS Control Box -->
+      <div class="control-box">
+        <div class="control-item">
+          <span class="control-k">Documento</span>
+          <span class="control-v">Guía Maestra Setas OS</span>
+        </div>
+        <div class="control-item">
+          <span class="control-k">Versión / Hash</span>
+          <span class="control-v mono">v5.1-FOS (Aug 2026)</span>
+        </div>
+        <div class="control-item">
+          <span class="control-k">Design System</span>
+          <span class="control-v">Field Operating System (FOS)</span>
+        </div>
+        <div class="control-item">
+          <span class="control-k">Especies en Matriz</span>
+          <span class="control-v mono">9 especies estandarizadas</span>
+        </div>
+        <div class="control-item">
+          <span class="control-k">Learning Loop</span>
+          <span class="control-v mono">Production Learning Loop v1</span>
+        </div>
+        <div class="control-item">
+          <span class="control-k">Unidad de Trazabilidad</span>
+          <span class="control-v mono">Lote Canónico (LP-XXXX-AA)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECCIÓN 1: INTRODUCCIÓN -->
+    <section id="introduccion" class="doc-section">
+      <span class="section-eyebrow">Sección 01</span>
+      <h2 class="section-h2">1. Introducción y Filosofía del Sistema</h2>
+      <p>
+        <strong>Setas OS</strong> es la plataforma tecnológica central de <em>Setas de la Peña</em>. Nace para sustituir planillas desconectadas y cálculos dispersos por un entorno unificado, robusto y diseñado para operar directamente en el entorno de cultivo y laboratorio.
+      </p>
+      
+      <div class="doc-callout">
+        <div class="doc-callout__title">Principio del Modelo de Interacción</div>
+        <p style="font-size: var(--text-sm);">
+          Setas OS modela la operación exactamente como la finca la vive. Los objetos operativos reales (lotes, cuartos, recetas, materias primas e incidentes) dictan las acciones. El flujo canónico es: 
+          <strong class="mono" style="color:var(--ink-0);">Objeto &rarr; Estado &rarr; Siguiente Acción Válida</strong>.
+        </p>
+      </div>
+
+      <p>
+        El sistema opera bajo arquitectura <strong>Offline-First</strong> (sin requerir conexión a internet obligatoria en campo), persistiendo datos en almacenamiento local y sincronizando con <strong>Firebase Firestore</strong> y el servidor <strong>MCP Bridge</strong> (<code>setas_bridge_mcp.py</code>) para coordinación de agentes de IA y consolidación multi-dispositivo.
+      </p>
+
+      <div class="doc-callout doc-callout--attention">
+        <div class="doc-callout__title">Regla de Seguridad de Clases de Datos</div>
+        <p style="font-size: var(--text-sm);">
+          Setpoints operacionales, límites físicos de sensores, objetivos de literatura científica y distribuciones históricas medidas son clases de datos distintas. Nunca deben intercambiarse silenciosamente.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: ESPACIOS DE TRABAJO -->
+    <section id="espacios" class="doc-section">
+      <span class="section-eyebrow">Sección 02</span>
+      <h2 class="section-h2">2. Los Cuatro Espacios de Trabajo</h2>
+      <p>
+        La interfaz se organiza en cuatro espacios de trabajo principales accesibles desde el riel de navegación, más herramientas especializadas:
+      </p>
+
+      <div class="workspace-grid">
+        <div class="workspace-card">
+          <span class="workspace-card__icon">[ 01 · Formular ]</span>
+          <div class="workspace-card__name">Formular</div>
+          <p class="workspace-card__desc">Barra sticky con Receta Activa, catálogo de especies, balance estequiométrico C:N, cálculo de humedad y motor Perito IA.</p>
+        </div>
+        <div class="workspace-card">
+          <span class="workspace-card__icon">[ 02 · Producción ]</span>
+          <div class="workspace-card__name">Producción</div>
+          <p class="workspace-card__desc">Planificador semanal de siembras, preparación de lotes de sustrato, bodega de insumos con deducción FIFO y emisión de etiquetas térmicas aisladas.</p>
+        </div>
+        <div class="workspace-card">
+          <span class="workspace-card__icon">[ 03 · Bitácora ]</span>
+          <div class="workspace-card__name">Bitácora</div>
+          <p class="workspace-card__desc">Cuaderno de campo inmutable, escaneo QR de lotes, registro de inspecciones, seguimiento de bolsas y pesaje de cosechas (EB%).</p>
+        </div>
+        <div class="workspace-card">
+          <span class="workspace-card__icon">[ 04 · Control ]</span>
+          <div class="workspace-card__name">Control</div>
+          <p class="workspace-card__desc">Tablero maestro, RoomCycles, Banco Climático con sensores de precisión (SCD30 con compensación de altitud a 2.600 m s. n. m., SHT31/45 y DS18B20).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: FORMULAR -->
+    <section id="formular" class="doc-section">
+      <span class="section-eyebrow">Sección 03</span>
+      <h2 class="section-h2">3. Formulación & Simulación de Sustratos</h2>
+      <p>
+        La versión actual consolida la <strong>Receta Activa</strong> en la barra superior persistente (*sticky bar*), permitiendo edición directa de ingredientes en la bandeja y eliminando duplicidades en paneles inferiores.
+      </p>
+
+      <h3 class="section-h3">Matriz de Parámetros Fisiológicos por Especie</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Especie Científica</th>
+              <th>Nombre Común</th>
+              <th>C:N Óptimo</th>
+              <th>T° Incubación</th>
+              <th>T° Fructificación</th>
+              <th>HR Óptima</th>
+              <th>Método Térmico</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="sci">Pleurotus ostreatus</span></td>
+              <td>Orellana Gris</td>
+              <td class="mono">25:1 – 50:1 (35:1)</td>
+              <td class="mono">22–25 °C</td>
+              <td class="mono">15–20 °C</td>
+              <td class="mono">85–90 %</td>
+              <td>Pasteurización / Vapor</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Pleurotus ostreatus var. florida</span></td>
+              <td>Orellana Blanca</td>
+              <td class="mono">25:1 – 45:1 (32:1)</td>
+              <td class="mono">23–26 °C</td>
+              <td class="mono">18–24 °C</td>
+              <td class="mono">85–92 %</td>
+              <td>Pasteurización / Vapor</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Pleurotus djamor</span></td>
+              <td>Orellana Rosa (Prioritaria)</td>
+              <td class="mono">25:1 – 40:1 (30:1)</td>
+              <td class="mono">26–28 °C</td>
+              <td class="mono">22–28 °C</td>
+              <td class="mono">85–90 %</td>
+              <td>Pasteurización / Vapor</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Pleurotus eryngii</span></td>
+              <td>Seta de Cardo</td>
+              <td class="mono">20:1 – 28:1 (24:1)</td>
+              <td class="mono">21–24 °C</td>
+              <td class="mono">13–16 °C</td>
+              <td class="mono">88–92 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Lentinula edodes</span></td>
+              <td>Shiitake</td>
+              <td class="mono">35:1 – 70:1 (50:1)</td>
+              <td class="mono">22–24 °C</td>
+              <td class="mono">12–18 °C</td>
+              <td class="mono">80–85 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Hericium erinaceus</span></td>
+              <td>Melena de León</td>
+              <td class="mono">30:1 – 45:1 (35:1)</td>
+              <td class="mono">21–24 °C</td>
+              <td class="mono">16–20 °C</td>
+              <td class="mono">85–92 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Ganoderma lucidum</span></td>
+              <td>Reishi / Lingzhi</td>
+              <td class="mono">45:1 – 80:1 (60:1)</td>
+              <td class="mono">24–28 °C</td>
+              <td class="mono">25–30 °C</td>
+              <td class="mono">80–90 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Flammulina velutipes</span></td>
+              <td>Enoki</td>
+              <td class="mono">25:1 – 40:1 (27:1)</td>
+              <td class="mono">20–22 °C</td>
+              <td class="mono">8–12 °C</td>
+              <td class="mono">85–90 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+            <tr>
+              <td><span class="sci">Pholiota nameko</span></td>
+              <td>Nameko</td>
+              <td class="mono">30:1 – 50:1 (38:1)</td>
+              <td class="mono">21–24 °C</td>
+              <td class="mono">10–15 °C</td>
+              <td class="mono">90–95 %</td>
+              <td>Esterilización (15 PSI)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-h3">Estructura de Tres Capas y Balance Hídrico</h3>
+      <div class="recipe-widget">
+        <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:12px;">
+          <span>PROPORCIÓN BASE DE SUSTRATO SECO</span>
+          <span class="mono">HUMEDAD OBJETIVO: 63–65 %</span>
+        </div>
+        <div class="ratio-bar">
+          <div class="ratio-carbon" title="Base Carbono (65%)"></div>
+          <div class="ratio-nitrogen" title="Suplemento Nitrógeno (30%)"></div>
+          <div class="ratio-minerals" title="Minerales y Buffer (5%)"></div>
+        </div>
+        <div class="ratio-legend">
+          <div><span class="ratio-dot" style="background:var(--accent-mushroom)"></span>Base Carbono (55–75%): Paja, Aserrín de Roble, Bagazo</div>
+          <div><span class="ratio-dot" style="background:var(--accent-olive)"></span>Suplemento Nitrógeno (15–30%): Salvado de Trigo, Afrecho, Soya</div>
+          <div><span class="ratio-dot" style="background:var(--accent-terracotta)"></span>Aditivos & Buffer (2–5%): CaCO3 (pH 6.5), Yeso (CaSO4), Zeolita</div>
+        </div>
+      </div>
+
+      <div class="math-block">
+        <strong>Fórmula de Balance de Humedad en Setas OS:</strong><br>
+        Humedad Total (%) = [ (Agua Añadida en kg + &sum;(Masa_i &times; H_i)) / Masa Total Húmeda en kg ] &times; 100
+      </div>
+    </section>
+
+    <!-- SECCIÓN 4: BODEGA -->
+    <section id="bodega" class="doc-section">
+      <span class="section-eyebrow">Sección 04</span>
+      <h2 class="section-h2">4. Bodega e Inventario FIFO</h2>
+      <p>
+        El inventario gestiona insumos y materias primas mediante rotación estricta <strong>First-In, First-Out</strong> para garantizar que los lotes más antiguos de salvado o granos no pierdan calidad ni acumulen humedad.
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:var(--space-4); margin: var(--space-3) 0;">
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Recepción de Materia Prima</div>
+          <p style="font-size:var(--text-sm);">Al ingresar un cargamento (paja, afrecho, cal), se registra lote de proveedor, fecha de entrada, costo por kg y stock inicial.</p>
+          <span class="fos-status fos-status--active">Stock Disponible</span>
+        </div>
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Deducción Automática</div>
+          <p style="font-size:var(--text-sm);">Al presionar "Preparar Lote" en el formulador, Setas OS resta del inventario las materias primas consumidas sin requerir doble ingreso.</p>
+          <span class="fos-status fos-status--attention">Alerta Reorden &lt; 20 kg</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 5: PRODUCCIÓN -->
+    <section id="produccion" class="doc-section">
+      <span class="section-eyebrow">Sección 05</span>
+      <h2 class="section-h2">5. Preparación de Lotes & Identificación FOS</h2>
+      <p>
+        Al ejecutar una mezcla, el sistema genera el código de trazabilidad unívoco y emite la ficha técnica del lote para control visual en sala.
+      </p>
+
+      <h3 class="section-h3">Identificador Canónico de Lote (FOS-01) y Ficha de Campo (FOS-02)</h3>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:var(--space-5); align-items:start; margin: var(--space-3) 0;">
+        <!-- FOS-01 -->
+        <div class="fos-lot">
+          <div class="fos-lot__k">Identificador de Lote</div>
+          <div class="fos-lot__code">LP-0418-26</div>
+          <div class="fos-lot__row">
+            <div><span class="fos-lot__k">Especie</span>P. djamor</div>
+            <div><span class="fos-lot__k">Sustrato</span>Paja + Salvado 20%</div>
+          </div>
+          <div class="fos-lot__row">
+            <div><span class="fos-lot__k">Spawn %</span>8.0 % trigo</div>
+            <div><span class="fos-lot__k">Unidades</span>40 bloques (2 kg)</div>
+          </div>
+        </div>
+
+        <!-- FOS-05 Status Overview -->
+        <div style="flex:1; min-width:240px; background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:8px;">Protocolo de Identificación Física</div>
+          <ul style="font-size:var(--text-sm); padding-left:18px; line-height:1.6; color:var(--text-secondary);">
+            <li>Cada bloque lleva el código <strong class="mono" style="color:var(--ink-0);">LP-XXXX-AA</strong> impreso en etiqueta térmica aislada (50&times;30mm o 60&times;40mm).</li>
+            <li>En sala se cuelga la Ficha FOS-02 en la cabecera de la estantería correspondiente.</li>
+            <li>La captura en campo se realiza escaneando el código QR con cualquier smartphone autorizado.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FOS-02 Ejemplo Vivo -->
+      <div class="fos-ficha">
+        <div class="fos-ficha__hd">
+          <div>
+            <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-metadata);">Ficha de Lote · CLOUDLAB 844</div>
+            <div class="fos-ficha__title">Pleurotus djamor (Orellana Rosa)</div>
+          </div>
+          <div class="mono" style="font-size:18px; font-weight:700;">LP-0418-26</div>
+        </div>
+        <div class="fos-ficha__grid">
+          <div class="fos-field"><span class="fos-field__k">Fecha Siembra</span><span class="fos-field__v mono">2026-08-25</span></div>
+          <div class="fos-field"><span class="fos-field__k">Receta</span><span class="fos-field__v">PD-01 (C:N 30:1)</span></div>
+          <div class="fos-field"><span class="fos-field__k">Masa Húmeda Lote</span><span class="fos-field__v mono">80.0 kg (40 bl.)</span></div>
+          <div class="fos-field"><span class="fos-field__k">Estado Actual</span><span class="fos-field__v"><span class="fos-status fos-status--active">Incubación</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 6: BITÁCORA -->
+    <section id="bitacora" class="doc-section">
+      <span class="section-eyebrow">Sección 06</span>
+      <h2 class="section-h2">6. Bitácora, Ciclo de Vida & Cosechas</h2>
+      
+      <h3 class="section-h3">Máquina de Estados Canónica del Lote</h3>
+      <p style="font-size:var(--text-sm);">
+        Todo lote transita por 11 estados formales. Las transiciones registran fecha, operario e incidencias:
+      </p>
+
+      <div class="state-flow">
+        <div class="state-steps">
+          <span class="state-badge">planned</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">mix_prepared</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">thermal_treatment</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">cooling</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">inoculated</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge highlight">incubation</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">maturation</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">induction</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge highlight">fruiting</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">resting</span> <span class="state-arrow">&rarr;</span>
+          <span class="state-badge">closed</span>
+        </div>
+        <div style="margin-top:10px; font-family:var(--font-mono); font-size:11px; color:var(--text-metadata);">
+          Estados de Excepción: <span class="fos-status fos-status--attention">quarantine</span> &nbsp; <span class="fos-status fos-status--error">discarded</span> &nbsp; <span class="fos-status fos-status--error">failed</span>
+        </div>
+      </div>
+
+      <h3 class="section-h3">Registro de Cosechas & Eficiencia Biológica (EB%)</h3>
+      <p>
+        Al cosechar cada oleada (Flush 1, Flush 2, Flush 3), se pesa en limpio y se ingresa en Setas OS para comparar el rendimiento real frente al estimado en el formulador.
+      </p>
+
+      <div class="math-block">
+        <strong>Fórmula de Eficiencia Biológica (EB%):</strong><br>
+        EB (%) = [ Peso Fresco Total Cosechado (kg) / Peso de Sustrato Seco Inicial (kg) ] &times; 100<br><br>
+        <strong>Ejemplo Real:</strong> Bloque de 2.0 kg húmedo (0.70 kg seco). Flush 1 = 780 g; Flush 2 = 270 g. Total = 1.05 kg.<br>
+        EB = (1.05 / 0.70) &times; 100 = <strong>150.0 %</strong>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 7: CONTROL Y CÁMARAS -->
+    <section id="control" class="doc-section">
+      <span class="section-eyebrow">Sección 07</span>
+      <h2 class="section-h2">7. Control Ambiental & Telemetría V1</h2>
+      <p>
+        El espacio <strong>Control</strong> integra el Banco Climático y supervisa en tiempo real las salas e incubadoras con hardware operativo en Tenjo (Agosto 2026).
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Recinto / Activo</th>
+              <th>Uso Principal</th>
+              <th>Hardware & Sensores</th>
+              <th>Temperatura Setpoint</th>
+              <th>Humedad Relativa (HR)</th>
+              <th>CO2 Límite</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CLOUDLAB 844 (Carpa 4&times;4 ft)</strong></td>
+              <td>Fructificación Principal</td>
+              <td>CloudForge T7 (15L), Cloudline H4, SHT31, SCD30</td>
+              <td class="mono">18.0 – 24.0 °C</td>
+              <td class="mono">85 – 90 %</td>
+              <td class="mono">&lt; 1.000 ppm</td>
+            </tr>
+            <tr>
+              <td><strong>Martha Tent 65"</strong></td>
+              <td>I+D & Cuarentena</td>
+              <td>VIVOSUN H05 (control ON/OFF), Noctua NF-P12, SHT45</td>
+              <td class="mono">20.0 – 24.0 °C</td>
+              <td class="mono">85 – 92 %</td>
+              <td class="mono">&lt; 1.200 ppm</td>
+            </tr>
+            <tr>
+              <td><strong>Incubadora 100 L</strong></td>
+              <td>Incubación Térmica</td>
+              <td>Malla QuietWarmth (90W), Calefactor PTC 24V, DS18B20</td>
+              <td class="mono">22.0 – 25.0 °C</td>
+              <td class="mono">60 – 70 %</td>
+              <td class="mono">&gt; 3.000 ppm</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-callout">
+        <div class="doc-callout__title">Contrato de Telemetría (telemetry-contract.js)</div>
+        <p style="font-size: var(--text-sm);">
+          Toda lectura se normaliza como <code>temperature_c</code>, <code>rh_pct</code>, <code>co2_ppm</code> y <code>substrate_temperature_c</code>. El SCD30 opera con compensación obligatoria <code>altitude_compensation: 2600</code>. Lecturas físicamente anómalas se envían a cuarentena automática.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 8: PRODUCTION LEARNING LOOP -->
+    <section id="learning-loop" class="doc-section">
+      <span class="section-eyebrow">Sección 08</span>
+      <h2 class="section-h2">8. Production Learning Loop & Promoción de Ensayos</h2>
+      <p>
+        Setas OS no trata los datos como registros muertos; alimenta un bucle de calibración continuo:
+      </p>
+
+      <div class="math-block">
+        Lote Insumo &rarr; Versión Receta &rarr; Lote Producción &rarr; RoomCycle &rarr; Telemetría &rarr; Cosechas &rarr; EB/Costo &rarr; Evidencia &rarr; Contexto Perito IA
+      </div>
+
+      <h3 class="section-h3">Puerta de Promoción de Ensayos (experiment-model.js)</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:var(--space-4); margin: var(--space-3) 0;">
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Ensayo Exploratorio (1 Réplica)</div>
+          <p style="font-size:var(--text-sm);">Permite probar ingredientes candidatos o aditivos. Queda etiquetado como observación y nunca genera afirmaciones agronómicas automáticas.</p>
+        </div>
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Evidencia Comparativa (&ge; 3 Réplicas)</div>
+          <p style="font-size:var(--text-sm);">Exige aleatorización, grupo control, tratamientos y trazabilidad completa de lotes antes de postularse como candidato a SOP aprobado.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 9: RUTINA OPERATIVA -->
+    <section id="rutina" class="doc-section">
+      <span class="section-eyebrow">Sección 09</span>
+      <h2 class="section-h2">9. Rutina Operativa Paso a Paso (Ciclo de 60 Días)</h2>
+      <p>
+        Flujo de trabajo para un ciclo estándar de cultivo de <em>Pleurotus ostreatus</em> en Tenjo:
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Día / Fase</th>
+              <th>Operación en Granja</th>
+              <th>Acción en Setas OS</th>
+              <th>Estado del Lote</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">Día -1</td>
+              <td>Revisar bodega: paja de trigo, salvado, yeso y bolsas de inóculo.</td>
+              <td>Validar receta en <strong>Formular</strong>. Crear orden en <strong>Planificar</strong>.</td>
+              <td><span class="fos-status fos-status--info">planned</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 0</td>
+              <td>Picar, hidratar al 65%, pasteurizar por inmersión/vapor, enfriar a 24°C e inocular al 8%.</td>
+              <td>Registrar pesaje en <strong>Producción</strong>. Emitir lote <strong>LP-0418-26</strong>.</td>
+              <td><span class="fos-status fos-status--active">inoculated</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 1–18</td>
+              <td>Incubar en oscuridad en Incubadora 100L a 23°C. Revisar semanalmente avance micelial.</td>
+              <td>Registrar inspecciones táctiles en <strong>Bitácora</strong> con foto.</td>
+              <td><span class="fos-status fos-status--active">incubation</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 19–21</td>
+              <td>Trasladar a CLOUDLAB 844. Choque térmico a 18°C, luz 12h y nebulización continua.</td>
+              <td>Mover lote a CLOUDLAB 844 y registrar cambio de fase en <strong>Bitácora</strong>.</td>
+              <td><span class="fos-status fos-status--attention">induction</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 22–28</td>
+              <td>Hacer cortes en bolsas. Desarrollo de primordios a setas adultas.</td>
+              <td>Anotar fecha de primer primordio visible en <strong>Bitácora</strong>.</td>
+              <td><span class="fos-status fos-status--active">fruiting</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 29–31</td>
+              <td>Cosechar racimos de primera oleada (Flush 1) a ras de bolsa.</td>
+              <td>Pesar en fresco y registrar en <strong>Cosechas</strong>. Setas OS calcula EB1.</td>
+              <td><span class="fos-status fos-status--active">fruiting</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 32–40</td>
+              <td>Sumergir bloques en agua limpia fría por 12–24h para rehidratación.</td>
+              <td>Cambiar estado del lote a reposo en <strong>Bitácora</strong>.</td>
+              <td><span class="fos-status fos-status--archived">resting</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 41–48</td>
+              <td>Aparición y cosecha de segunda oleada (Flush 2).</td>
+              <td>Registrar pesaje de Flush 2 y calcular EB acumulada.</td>
+              <td><span class="fos-status fos-status--active">fruiting</span></td>
+            </tr>
+            <tr>
+              <td class="mono">Día 50</td>
+              <td>Retirar sustrato gastado a compostera y desinfectar sala con ácido peracético.</td>
+              <td>Cerrar lote en Setas OS; transferir métricas al historial.</td>
+              <td><span class="fos-status fos-status--archived">closed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 10: TROUBLESHOOTING -->
+    <section id="troubleshooting" class="doc-section">
+      <span class="section-eyebrow">Sección 10</span>
+      <h2 class="section-h2">10. Matriz de Diagnóstico y Troubleshooting</h2>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Síntoma en Granja</th>
+              <th>Causa Biológica / Operativa</th>
+              <th>Acción Correctiva Inmediata</th>
+              <th>Registro en Setas OS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>EB Real &lt;&lt; EB Proyectada</strong></td>
+              <td>Baja dosificación de inóculo (&lt;5%), sustrato seco o exceso de lignina.</td>
+              <td>Elevar spawn al 10% en próxima mezcla; verificar hidratación en prueba de puño.</td>
+              <td>Calibrar receta en <strong>Formular</strong>; documentar desvío en <strong>Bitácora</strong>.</td>
+            </tr>
+            <tr>
+              <td><strong>Aborto de Primordios (Pebbles amarillos)</strong></td>
+              <td>Caída de humedad &lt;80% o ráfagas directas de ventilador sin nebulización.</td>
+              <td>Ajustar timer de humidificadores ultrasónicos; reorientar toberas de ventilación.</td>
+              <td>Registrar incidencia ambiental en <strong>Bitácora</strong>; ajustar alarma en <strong>Control</strong>.</td>
+            </tr>
+            <tr>
+              <td><strong>Estípites Largos / Sombreros Enanos</strong></td>
+              <td>Nivel excesivo de CO2 (&gt;1.100 ppm) por baja renovación de aire.</td>
+              <td>Aumentar ciclos de extracción forzada y entrada de aire filtrado exterior.</td>
+              <td>Comprobar lecturas de sensores en <strong>Control &rarr; Tablero</strong>.</td>
+            </tr>
+            <tr>
+              <td><strong>Parches Verde Oscuro (Trichoderma)</strong></td>
+              <td>Pasteurización deficiente, siembra sobre sustrato caliente (&gt;28°C) o esporas en aire.</td>
+              <td>Aislar y embolsar bloque de inmediato; retirar de la granja y fumigar con peracético.</td>
+              <td>Marcar bloque en estado <span class="fos-status fos-status--error">discarded</span> con motivo patógeno.</td>
+            </tr>
+            <tr>
+              <td><strong>Micelio Velloso / Estroma Denso</strong></td>
+              <td>Exceso de nitrógeno en sustrato o temperaturas de colonización muy elevadas.</td>
+              <td>Reducir porcentaje de salvado en receta; aumentar ventilación en sala de incubación.</td>
+              <td>Revisar relación C:N en <strong>Formular</strong> (mantener en rango 35:1).</td>
+            </tr>
+            <tr>
+              <td><strong>Pérdida de Conexión / Sin Internet</strong></td>
+              <td>Corte de señal o trabajo en zona ciega de la finca.</td>
+              <td>Ninguna: Setas OS opera 100% offline en localStorage sin interrupción.</td>
+              <td>Al reconectar, verificar indicador de sincronización en encabezado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 11: PERSISTENCIA -->
+    <section id="persistencia" class="doc-section">
+      <span class="section-eyebrow">Sección 11</span>
+      <h2 class="section-h2">11. Persistencia, Seguridad & Herramientas MCP</h2>
+      <p>
+        Setas OS combina autonomía de campo y centralización en la nube:
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:var(--space-4); margin: var(--space-3) 0;">
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Persistencia Local (PWA)</div>
+          <p style="font-size:var(--text-sm); line-height:1.5;">Todo registro se guarda instantáneamente en el dispositivo del operario. La memoria local retiene recetarios, lotes activos y eventos sin depender de conectividad.</p>
+        </div>
+        <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">MCP Bridge Server</div>
+          <p style="font-size:var(--text-sm); line-height:1.5;">El servidor <code>setas_bridge_mcp.py</code> lee en tiempo real el árbol de archivos y coordina la adición estructurada de notas y logs de producción sin riesgo de sobrescrituras.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer style="border-top:var(--rule-heavy); padding-top:var(--space-5); margin-top:var(--space-7); display:flex; justify-content:space-between; align-items:baseline; font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">
+      <div>SETAS DE LA PEÑA · TENJO, COLOMBIA</div>
+      <div>FOS-SYS-001 · GUÍA CANÓNICA 2026</div>
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>
