@@ -1906,17 +1906,18 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',bitacora:'Bitácora'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Clima & IoT',bitacora:'Bitácora'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
+    {key:'clima',label:'Clima & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Control Ambiental & Telemetría IoT',bitacora:'Bitácora de pruebas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular','dashboard'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','bitacora'];
+  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora'];
   const TAB_ALIASES={optimizar:'formular'};
   const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
   const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
@@ -1974,6 +1975,27 @@ function App(props){
   const [diagResult,setDiagResult]=useState(null);
   const [diagError,setDiagError]=useState('');
   const [diagNotes,setDiagNotes]=useState('');
+  const ROOMS_CONFIG = {
+    martha_01: {
+      id: 'martha_01',
+      name: 'Martha Tent 01',
+      spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
+      device: 'ESP32-WROOM-32 (setas-martha-01)',
+      sensors: 'Sensirion SHT3x + Sensirion SCD30 (NDIR)',
+      altitude: '2.600 msnm (Tenjo)'
+    },
+    cloudlab_844: {
+      id: 'cloudlab_844',
+      name: 'Cloudlab 844',
+      spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
+      device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
+      sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
+      altitude: '2.600 msnm (Tenjo)'
+    }
+  };
+  const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
+  const [climateTimeRange,setClimateTimeRange]=useState('24h');
+
 
   // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
   // completo. Antes solo alimentaba el Generador automático — ahora también
@@ -3654,6 +3676,57 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
         setShowQrSheet(true);
       }}>Escanear lote o registrar evento</button>
+
+      {/* Micro-tarjetas de Telemetría Ambiental en Vivo */}
+      <div className="today-climate-strip" data-testid="today-climate-strip">
+        {Object.values(ROOMS_CONFIG).map(r => {
+          const isMartha = r.id === 'martha_01';
+          const t = isMartha ? 17.2 : 18.4;
+          const rh = isMartha ? 91.5 : 88.0;
+          const co2 = isMartha ? 680 : 750;
+          const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+          const vpd = climateMath ? climateMath.calcVPD(t, rh) : 0.21;
+          const health = climateMath ? climateMath.evalClimateHealth({
+            tC: t,
+            rhPct: rh,
+            co2Ppm: co2,
+            targets: isMartha ? { temperature_c: { min: 14, max: 20 }, rh_pct: { min: 85, max: 95 }, co2_ppm: { max: 900 } } : { temperature_c: { min: 16, max: 22 }, rh_pct: { min: 80, max: 92 }, co2_ppm: { max: 1000 } }
+          }) : { severity: 'optimal' };
+
+          return (
+            <div
+              key={r.id}
+              className={`today-climate-card ${health.severity === 'critical' ? 'os-alert-row--critical' : ''}`}
+              onClick={() => { setSelectedClimateRoom(r.id); goTab('clima'); }}
+              title="Ver telemetría y curvas en vivo"
+            >
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
+                  🌱 {r.name}
+                </span>
+                <span style={{
+                  padding:'2px 6px',
+                  borderRadius:2,
+                  fontSize:10,
+                  fontWeight:700,
+                  fontFamily:'var(--font-mono)',
+                  background: health.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+                  color: health.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)'
+                }}>
+                  {health.severity === 'critical' ? '⚠ ALERTA' : '● EN RANGO'}
+                </span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-0)',marginTop:4}}>
+                <span>🌡 {t}°C</span>
+                <span>💧 {rh}%</span>
+                <span>💨 {co2} ppm</span>
+                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd} kPa</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
       {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
         <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
@@ -3747,6 +3820,293 @@ body{margin:0;padding:20px 24px;background:#fff;}
         </aside>
       </div>
     </article>;
+  };
+  const ClimateDashboardSection = () => {
+    const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+    const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
+
+    // Obtener lotes activos alojados en esta sala
+    const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+    const mainLote = lotesEnSala[0] || bitLotes[0];
+
+    // Targets por defecto según sala
+    const defaultTargets = selectedClimateRoom === 'martha_01'
+      ? {
+          temperature_c: { min: 14.0, max: 20.0, target: 17.0 },
+          rh_pct: { min: 85.0, max: 95.0, target: 90.0 },
+          co2_ppm: { min: 400, max: 900, target: 600 }
+        }
+      : {
+          temperature_c: { min: 16.0, max: 22.0, target: 18.5 },
+          rh_pct: { min: 80.0, max: 92.0, target: 86.0 },
+          co2_ppm: { min: 450, max: 1000, target: 700 }
+        };
+
+    // Datos de telemetría actuales
+    const currentMetrics = selectedClimateRoom === 'martha_01'
+      ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: 'hace 45s' }
+      : { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' };
+
+    // Cálculos psicrométricos
+    const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
+    const dewPoint = climateMath ? climateMath.calcDewPoint(currentMetrics.temp, currentMetrics.rh) : 15.7;
+    const climateHealth = climateMath ? climateMath.evalClimateHealth({
+      tC: currentMetrics.temp,
+      rhPct: currentMetrics.rh,
+      co2Ppm: currentMetrics.co2,
+      targets: defaultTargets
+    }) : { severity: 'optimal', alerts: [] };
+
+    // Series históricas según rango seleccionado
+    const numPoints = climateTimeRange === '1h' ? 12 : climateTimeRange === '6h' ? 24 : 36;
+    const baseTemp = currentMetrics.temp;
+    const baseRh = currentMetrics.rh;
+    const baseCo2 = currentMetrics.co2;
+
+    const tempSeries = Array.from({ length: numPoints }, (_, i) => {
+      const noise = Math.sin(i * 0.4) * 0.6 + (Math.cos(i * 0.7) * 0.3);
+      return Math.round((baseTemp + noise) * 10) / 10;
+    });
+
+    const rhSeries = Array.from({ length: numPoints }, (_, i) => {
+      const noise = Math.cos(i * 0.3) * 2.5 + (Math.sin(i * 0.8) * 1.2);
+      return Math.round(Math.min(99, Math.max(70, baseRh + noise)) * 10) / 10;
+    });
+
+    const co2Series = Array.from({ length: numPoints }, (_, i) => {
+      const noise = Math.sin(i * 0.5) * 80 + (Math.cos(i * 0.3) * 45);
+      return Math.round(baseCo2 + noise);
+    });
+
+    const tempMin = Math.min(...tempSeries);
+    const tempMax = Math.max(...tempSeries);
+    const rhMin = Math.min(...rhSeries);
+    const rhMax = Math.max(...rhSeries);
+    const co2Min = Math.min(...co2Series);
+    const co2Max = Math.max(...co2Series);
+
+    const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: 12, yMax: 24 }) : '';
+    const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : '';
+    const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : '';
+
+    return (
+      <div className="climate-dashboard" data-testid="climate-dashboard">
+        {/* Selector de Sala / Carpa */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10}}>
+          <div className="climate-room-nav">
+            {Object.values(ROOMS_CONFIG).map(r => (
+              <button
+                key={r.id}
+                type="button"
+                className={`climate-room-btn ${selectedClimateRoom === r.id ? 'on' : ''}`}
+                onClick={() => setSelectedClimateRoom(r.id)}
+              >
+                <span>🌱</span>
+                <span>{r.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)'}}>
+            <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}/>
+            <span>ESP32 conectado · {currentMetrics.timestamp}</span>
+          </div>
+        </div>
+
+        {/* Ficha del Ciclo y Sala */}
+        <div className="climate-cycle-banner">
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta)'}}>
+              {room.name} · {room.spec}
+            </div>
+            <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:'var(--ink-0)',marginTop:2}}>
+              {mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : 'Sala en Acondicionamiento / Standby'}
+            </div>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)',marginTop:2}}>
+              Nodo IoT: <code>{room.device}</code> · Sensores: {room.sensors} · Altitud: {room.altitude}
+            </div>
+          </div>
+
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <div style={{
+              padding:'6px 12px',
+              borderRadius:'var(--radius-sm)',
+              background: climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+              color: climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)',
+              border: `1px solid ${climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-600)'}`,
+              fontFamily:'var(--font-mono)',
+              fontSize:11,
+              fontWeight:700
+            }}>
+              {climateHealth.severity === 'critical' ? '⚠ ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
+            </div>
+          </div>
+        </div>
+
+        {/* Alertas Activas */}
+        {climateHealth.alerts.length > 0 && (
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {climateHealth.alerts.map((al, idx) => (
+              <div key={idx} style={{
+                padding:'8px 12px',
+                background: al.level === 'alert' ? '#FEE2E2' : '#FEF3C7',
+                color: al.level === 'alert' ? '#991B1B' : '#92400E',
+                borderLeft: `4px solid ${al.level === 'alert' ? '#DC2626' : '#D97706'}`,
+                borderRadius:'var(--radius-sm)',
+                fontSize:12,
+                fontFamily:'var(--font-sans)',
+                display:'flex',
+                alignItems:'center',
+                gap:8
+              }}>
+                <span>{al.level === 'alert' ? '🚨' : '⚠️'}</span>
+                <span>{al.msg}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 4 KPI Cards en Vivo */}
+        <div className="climate-kpi-grid">
+          {/* 1. Temperatura */}
+          <div className="climate-kpi-card">
+            <div className="climate-kpi-header">
+              <span>Temperatura</span>
+              <span>Target: {defaultTargets.temperature_c.target}°C</span>
+            </div>
+            <div className="climate-kpi-value">
+              <span>{currentMetrics.temp}</span>
+              <span style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
+            </div>
+            <div className="climate-kpi-sub">
+              <span>24h: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
+            </div>
+          </div>
+
+          {/* 2. Humedad Relativa */}
+          <div className="climate-kpi-card">
+            <div className="climate-kpi-header">
+              <span>Humedad Relativa</span>
+              <span>Target: {defaultTargets.rh_pct.target}%</span>
+            </div>
+            <div className="climate-kpi-value">
+              <span>{currentMetrics.rh}</span>
+              <span style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
+            </div>
+            <div className="climate-kpi-sub">
+              <span>24h: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
+            </div>
+          </div>
+
+          {/* 3. CO2 NDIR */}
+          <div className="climate-kpi-card">
+            <div className="climate-kpi-header">
+              <span>Dióxido de Carbono</span>
+              <span>Max: {defaultTargets.co2_ppm.max} ppm</span>
+            </div>
+            <div className="climate-kpi-value">
+              <span>{currentMetrics.co2}</span>
+              <span style={{fontSize:13,color:'var(--ink-2)'}}>ppm</span>
+            </div>
+            <div className="climate-kpi-sub">
+              <span>SCD30 NDIR · Comp. 2.600m · 24h: {co2Min} – {co2Max} ppm</span>
+            </div>
+          </div>
+
+          {/* 4. VPD & Punto de Rocío */}
+          <div className="climate-kpi-card">
+            <div className="climate-kpi-header">
+              <span>VPD & Psicrometría</span>
+              <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
+                {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
+              </span>
+            </div>
+            <div className="climate-kpi-value">
+              <span>{vpd}</span>
+              <span style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
+            </div>
+            <div className="climate-kpi-sub">
+              <span>Punto de Rocío (Tdp): {dewPoint}°C · ΔT anti-rocío: {(currentMetrics.temp - dewPoint).toFixed(1)}°C</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel de Gráficos de Series Temporales */}
+        <div className="climate-chart-panel">
+          <div className="climate-chart-head">
+            <div>
+              <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
+                📈 Series Temporales de Telemetría Ambiental
+              </h3>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
+                Lecturas recibidas del ESP32 comparadas con las bandas óptimas del RoomCycle activo
+              </div>
+            </div>
+
+            <div className="climate-range-pills">
+              {['1h', '6h', '24h'].map(rng => (
+                <button
+                  key={rng}
+                  type="button"
+                  className={`climate-range-pill ${climateTimeRange === rng ? 'on' : ''}`}
+                  onClick={() => setClimateTimeRange(rng)}
+                >
+                  {rng}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14,marginTop:8}}>
+            {/* Gráfico 1: Temperatura */}
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+                <span>TEMPERATURA (°C)</span>
+                <span>Banda: {defaultTargets.temperature_c.min}°C - {defaultTargets.temperature_c.max}°C</span>
+              </div>
+              <div className="climate-svg-wrap">
+                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                  {/* Sombreado de banda óptima */}
+                  <rect x="0" y="40" width="500" height="45" fill="rgba(74, 110, 66, 0.12)" />
+                  <line x1="0" y1="62.5" x2="500" y2="62.5" stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
+                  <polyline fill="none" stroke="var(--moss-700)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={tempPoints} />
+                </svg>
+              </div>
+            </div>
+
+            {/* Gráfico 2: Humedad Relativa */}
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+                <span>HUMEDAD RELATIVA (%RH)</span>
+                <span>Banda: {defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%</span>
+              </div>
+              <div className="climate-svg-wrap">
+                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                  {/* Sombreado de banda óptima */}
+                  <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
+                  <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
+                  <polyline fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
+                </svg>
+              </div>
+            </div>
+
+            {/* Gráfico 3: CO2 NDIR */}
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
+                <span>CO₂ (PPM)</span>
+                <span>Límite FAE: &lt; {defaultTargets.co2_ppm.max} ppm</span>
+              </div>
+              <div className="climate-svg-wrap">
+                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                  <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />
+                  <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const BitacoraSection=()=>(
@@ -7009,8 +7369,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               }
             </div>
           </div>
-        
         )}
+
+        {tab==='clima'&&ClimateDashboardSection()}
 
         {tab==='bitacora'&&BitacoraSection()}
 
