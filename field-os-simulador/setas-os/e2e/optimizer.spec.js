@@ -1,6 +1,6 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
-const { openApp, goWorkspace } = require('./helpers.js');
+const { openApp, goWorkspace, selectSpecies } = require('./helpers.js');
 
 // E2E-07 — "Calcular" produce diversidad estructural real. Protege la
 // política de group-cap + backfill de perito-scenarios.js (RANKED_LIMIT=12,
@@ -9,12 +9,22 @@ const { openApp, goWorkspace } = require('./helpers.js');
 test('Calcular produce >=4 firmas de base distintas en el top-12, sin ninguna en más de 3 posiciones', async ({ page }) => {
   await openApp(page);
   await goWorkspace(page, 'formular');
+  await selectSpecies(page, 'p_ostreatus_gris');
 
-  // Especie objetivo por defecto (Orellana Gris) tiene >=4 bases compatibles
-  // en el catálogo — paleta completa, no solo bodega, para no artificialmente
-  // limitar la diversidad disponible.
-  await page.getByRole('button', { name: 'Paleta completa' }).click();
-  await page.getByRole('button', { name: 'Calcular' }).click();
+  // Orellana Gris tiene >=4 bases compatibles en el catálogo. El control de
+  // origen cambia de etiqueta en la superficie de inicio rápido móvil.
+  const quickStart = page.getByTestId('form-mobile-start');
+  if (await quickStart.isVisible()) {
+    await quickStart.getByRole('button', { name: 'Catálogo', exact: true }).click();
+  } else {
+    await page.getByRole('group', { name: 'Origen de ingredientes' })
+      .getByRole('button', { name: 'Paleta completa', exact: true }).click();
+  }
+
+  await page.getByRole('tab', { name: /Generador de Recetas/ }).click();
+  const generator = page.locator('#formular-panel-generador');
+  await expect(generator).toBeVisible();
+  await generator.getByRole('button', { name: 'Calcular', exact: true }).click();
 
   const results = page.locator('.opt-result');
   await expect(results).not.toHaveCount(0, { timeout: 15_000 });

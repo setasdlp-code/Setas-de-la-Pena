@@ -73,6 +73,82 @@
   --tracking-wide: .2em;      /* rare — large sparse headers only */
   --tracking-tight: -.02em;   /* large display numerals/headings */
 
+  /* ── SPACING SCALE — replaces 41 ad-hoc px values ── */
+  --space-1: 2px;
+  --space-2: 3px;
+  --space-3: 4px;
+  --space-4: 6px;
+  --space-5: 8px;
+  --space-6: 10px;
+  --space-7: 12px;
+  --space-8: 14px;
+  --space-9: 16px;
+  --space-10: 20px;
+  --space-12: 24px;
+  --space-14: 28px;
+  --space-16: 32px;
+  --space-20: 40px;
+
+  /* ── INGREDIENT CATEGORY COLORS — ingredient badges & tab accents ── */
+  /* base: legumes, cereals, substrate base layers */
+  --cat-base: #5A7042;
+  --cat-base-hover: color-mix(in oklab, #5A7042 12%, var(--paper-0));
+  --cat-base-text: #3a4f2a;
+
+  /* cafe: composted coffee grounds, fermented media */
+  --cat-cafe: #7A4A2F;
+  --cat-cafe-hover: color-mix(in oklab, #7A4A2F 12%, var(--paper-0));
+  --cat-cafe-text: #7A4A2F;
+
+  /* sup: premium/supplement layers (specialty ingredients) */
+  --cat-sup: #C68F2C;
+  --cat-sup-hover: color-mix(in oklab, #C68F2C 12%, var(--paper-0));
+  --cat-sup-text: #8B6014;
+
+  /* est: stabilizers, structural amendments */
+  --cat-est: #6B4E31;
+  --cat-est-hover: color-mix(in oklab, #6B4E31 12%, var(--paper-0));
+  --cat-est-text: #6B4E31;
+
+  /* local: sourced locally within region */
+  --cat-local: #7A5A3F;
+  --cat-local-hover: color-mix(in oklab, #7A5A3F 12%, var(--paper-0));
+  --cat-local-text: #7A5A3F;
+
+  /* trop: tropical specialty materials */
+  --cat-trop: #B8694B;
+  --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
+  --cat-trop-text: #B8694B;
+
+  /* circ: circular/waste materials, by-products */
+  --cat-circ: #6B7C5F;
+  --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
+  --cat-circ-text: #6B7C5F;
+
+  /* adit: additives, amendments, biotech inputs */
+  --cat-adit: var(--accent-blue-grey);
+  --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
+  --cat-adit-text: var(--accent-blue-grey);
+
+  /* ── BUTTON STATE SCALE ── */
+  --btn-bg: var(--paper-0);
+  --btn-border: var(--ink-900);
+  --btn-text: var(--ink-900);
+  --btn-hover-bg: var(--paper-50);
+  --btn-hover-shadow: 0 2px 4px rgba(11, 11, 11, 0.08);
+  --btn-active-transform: translateY(-1px);
+  --btn-disabled-opacity: 0.4;
+
+  --btn-pri-bg: var(--moss-700);
+  --btn-pri-border: var(--moss-700);
+  --btn-pri-text: var(--paper-50);
+  --btn-pri-hover-bg: var(--moss-900);
+
+  --btn-dark-bg: var(--ink-900);
+  --btn-dark-border: var(--ink-900);
+  --btn-dark-text: var(--paper-50);
+  --btn-dark-hover-bg: var(--ink-700);
+
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
      Remove after verifying no external script reads them. */
@@ -356,7 +432,7 @@
   width:100%; padding:12px 14px; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
   background:var(--paper-0); font-family:var(--font-mono); font-size:13px;
   color:var(--ink-1); margin-bottom:14px; transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
-  box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.03); min-height:44px;
 }
 .sim-root .search:focus-visible{
   outline:2px solid var(--focus-ring,var(--coral-500));outline-offset:2px;
@@ -500,24 +576,33 @@
 
 /* ── ACTIONS ────────────────────────────────────────────────────── */
 .sim-root .act-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
-.sim-root .btn{ 
-  flex:1; min-width:120px; padding:12px 18px; 
-  font-family:var(--font-body); font-weight:800; font-size:9.5px; 
-  letter-spacing:.14em; text-transform:uppercase; 
-  border:1px solid var(--ink-900); border-radius:0; background:var(--paper-50); 
-  cursor:pointer; color:var(--ink-900); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+.sim-root .btn{
+  flex:1; min-width:120px; padding:12px 18px;
+  font-family:var(--font-body); font-weight:800; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase;
+  border:1px solid var(--btn-border); border-radius:0; background:var(--btn-bg);
+  cursor:pointer; color:var(--btn-text); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
 .sim-root .btn:hover{
-  background:var(--paper-200);
+  background:var(--btn-hover-bg);
   transform:translateY(-1px);
+  box-shadow:var(--btn-hover-shadow);
 }
 .sim-root .btn:active{ transform:translateY(0px); box-shadow:none; }
-.sim-root .btn.pri{ 
-  background:var(--moss-700); color:var(--paper-50); border-color:var(--moss-700);
+.sim-root .btn:disabled{
+  opacity:var(--btn-disabled-opacity);
+  cursor:not-allowed;
+  background:var(--btn-bg);
+  color:var(--btn-text);
 }
-.sim-root .btn.pri:hover{ background:var(--moss-900); border-color:var(--moss-900); color:var(--paper-50); }
-.sim-root .btn.dark{ background:var(--ink-900); color:var(--paper-50); border-color:var(--ink-900); }
-.sim-root .btn.dark:hover{ background:var(--ink-700); border-color:var(--ink-700); }
+.sim-root .btn.pri{
+  background:var(--btn-pri-bg); color:var(--btn-pri-text); border-color:var(--btn-pri-border);
+}
+.sim-root .btn.pri:hover{ background:var(--btn-pri-hover-bg); border-color:var(--btn-pri-hover-bg); color:var(--btn-pri-text); }
+.sim-root .btn.pri:disabled{ opacity:var(--btn-disabled-opacity); }
+.sim-root .btn.dark{ background:var(--btn-dark-bg); color:var(--btn-dark-text); border-color:var(--btn-dark-border); }
+.sim-root .btn.dark:hover{ background:var(--btn-dark-hover-bg); border-color:var(--btn-dark-hover-bg); }
+.sim-root .btn.dark:disabled{ opacity:var(--btn-disabled-opacity); }
 
 /* ── SAVE BAR ───────────────────────────────────────────────────── */
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
@@ -798,20 +883,27 @@
 .sim-root .tle-d{ font-size:13px; color:var(--ink-500); margin-top:3px; font-style:italic; }
 
 /* ── TOGGLE BUTTONS (field notebook controls) ────────────────────── */
-.sim-root .tog{ 
-  font-family:var(--font-body); font-weight:800; font-size:9.5px; 
-  letter-spacing:.14em; text-transform:uppercase; 
-  padding:10px 16px; border:1px solid var(--ink-900); 
-  border-radius:0; background:var(--paper-50); 
-  color:var(--ink-900); cursor:pointer; 
+.sim-root .tog{
+  font-family:var(--font-body); font-weight:800; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase;
+  padding:10px 16px; border:1px solid var(--btn-border);
+  border-radius:0; background:var(--btn-bg);
+  color:var(--btn-text); cursor:pointer;
   transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
 }
-.sim-root .tog:hover{ 
-  background:var(--paper-200);
+.sim-root .tog:hover{
+  background:var(--btn-hover-bg);
+  box-shadow:var(--btn-hover-shadow);
 }
-.sim-root .tog.on{ 
+.sim-root .tog.on{
   background:var(--ink-900); color:var(--paper-50);
   border-color:var(--ink-900);
+}
+.sim-root .tog:disabled{
+  opacity:var(--btn-disabled-opacity);
+  cursor:not-allowed;
+  background:var(--btn-bg);
+  color:var(--btn-text);
 }
 
 .sim-root .lnote{ 
@@ -1403,7 +1495,7 @@
 
 
 .sim-root .pantry-grid{display:flex;flex-wrap:wrap;gap:4px 6px;margin:10px 0;}
-.sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);font-weight:600;}
+.sim-root .pantry-chip{font-family:var(--font-mono);font-size:var(--text-2xs,10.5px);letter-spacing:.04em;padding:8px 11px;min-height:44px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background-color .18s var(--ease),border-color .18s var(--ease),color .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease);font-weight:600;}
 .sim-root .pantry-chip.on{border-color:var(--moss-600,var(--accent-olive));background:color-mix(in oklab,var(--accent-olive) 10%,var(--paper-50));color:var(--accent-olive);font-weight:700;}
 .sim-root .pantry-chip:hover{border-color:var(--coral-500);color:var(--coral-600);}
 
@@ -1657,6 +1749,8 @@
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:#fff;border-color:var(--coral-500);}
+.sim-root .modal-icon-close{width:44px;height:44px;flex:0 0 44px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--ink-2);font-size:18px;line-height:1;cursor:pointer;transition:background-color .22s var(--ease),border-color .22s var(--ease),color .22s var(--ease),transform .22s var(--ease);}
+.sim-root .modal-icon-close:hover{background:var(--paper-200);border-color:var(--border-soft);color:var(--ink-0);}
 .sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:22px;width:440px;max-width:calc(100vw - 32px);}
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
 .sim-root .prov-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
@@ -2281,38 +2375,38 @@
   }
 }
 
-/* ── CAT BUTTONS — same color coding as ingredient badges ─────── */
-.sim-root .cat[data-cat="base"]{ border-left:3px solid #5A7042; }
-.sim-root .cat[data-cat="base"]:hover{ background:color-mix(in oklab,#5A7042 12%,var(--paper-0))!important; border-color:#5A7042!important; color:#3a4f2a!important; }
-.sim-root .cat[data-cat="base"].on{ background:#5A7042!important; border-color:#5A7042!important; color:#fff!important; }
+/* ── CAT BUTTONS — ingredient category colors, now tokenized ─────── */
+.sim-root .cat[data-cat="base"]{ border-left:3px solid var(--cat-base); }
+.sim-root .cat[data-cat="base"]:hover{ background:var(--cat-base-hover)!important; border-color:var(--cat-base)!important; color:var(--cat-base-text)!important; }
+.sim-root .cat[data-cat="base"].on{ background:var(--cat-base)!important; border-color:var(--cat-base)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="cafe"]{ border-left:3px solid #7A4A2F; }
-.sim-root .cat[data-cat="cafe"]:hover{ background:color-mix(in oklab,#7A4A2F 12%,var(--paper-0))!important; border-color:#7A4A2F!important; color:#7A4A2F!important; }
-.sim-root .cat[data-cat="cafe"].on{ background:#7A4A2F!important; border-color:#7A4A2F!important; color:#fff!important; }
+.sim-root .cat[data-cat="cafe"]{ border-left:3px solid var(--cat-cafe); }
+.sim-root .cat[data-cat="cafe"]:hover{ background:var(--cat-cafe-hover)!important; border-color:var(--cat-cafe)!important; color:var(--cat-cafe-text)!important; }
+.sim-root .cat[data-cat="cafe"].on{ background:var(--cat-cafe)!important; border-color:var(--cat-cafe)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="sup"]{ border-left:3px solid #C68F2C; }
-.sim-root .cat[data-cat="sup"]:hover{ background:color-mix(in oklab,#C68F2C 12%,var(--paper-0))!important; border-color:#C68F2C!important; color:#8B6014!important; }
-.sim-root .cat[data-cat="sup"].on{ background:#C68F2C!important; border-color:#C68F2C!important; color:#fff!important; }
+.sim-root .cat[data-cat="sup"]{ border-left:3px solid var(--cat-sup); }
+.sim-root .cat[data-cat="sup"]:hover{ background:var(--cat-sup-hover)!important; border-color:var(--cat-sup)!important; color:var(--cat-sup-text)!important; }
+.sim-root .cat[data-cat="sup"].on{ background:var(--cat-sup)!important; border-color:var(--cat-sup)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="est"]{ border-left:3px solid #6B4E31; }
-.sim-root .cat[data-cat="est"]:hover{ background:color-mix(in oklab,#6B4E31 12%,var(--paper-0))!important; border-color:#6B4E31!important; color:#6B4E31!important; }
-.sim-root .cat[data-cat="est"].on{ background:#6B4E31!important; border-color:#6B4E31!important; color:#fff!important; }
+.sim-root .cat[data-cat="est"]{ border-left:3px solid var(--cat-est); }
+.sim-root .cat[data-cat="est"]:hover{ background:var(--cat-est-hover)!important; border-color:var(--cat-est)!important; color:var(--cat-est-text)!important; }
+.sim-root .cat[data-cat="est"].on{ background:var(--cat-est)!important; border-color:var(--cat-est)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="local"]{ border-left:3px solid #7A5A3F; }
-.sim-root .cat[data-cat="local"]:hover{ background:color-mix(in oklab,#7A5A3F 12%,var(--paper-0))!important; border-color:#7A5A3F!important; color:#7A5A3F!important; }
-.sim-root .cat[data-cat="local"].on{ background:#7A5A3F!important; border-color:#7A5A3F!important; color:#fff!important; }
+.sim-root .cat[data-cat="local"]{ border-left:3px solid var(--cat-local); }
+.sim-root .cat[data-cat="local"]:hover{ background:var(--cat-local-hover)!important; border-color:var(--cat-local)!important; color:var(--cat-local-text)!important; }
+.sim-root .cat[data-cat="local"].on{ background:var(--cat-local)!important; border-color:var(--cat-local)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="trop"]{ border-left:3px solid #B8694B; }
-.sim-root .cat[data-cat="trop"]:hover{ background:color-mix(in oklab,#B8694B 12%,var(--paper-0))!important; border-color:#B8694B!important; color:#B8694B!important; }
-.sim-root .cat[data-cat="trop"].on{ background:#B8694B!important; border-color:#B8694B!important; color:#fff!important; }
+.sim-root .cat[data-cat="trop"]{ border-left:3px solid var(--cat-trop); }
+.sim-root .cat[data-cat="trop"]:hover{ background:var(--cat-trop-hover)!important; border-color:var(--cat-trop)!important; color:var(--cat-trop-text)!important; }
+.sim-root .cat[data-cat="trop"].on{ background:var(--cat-trop)!important; border-color:var(--cat-trop)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="circ"]{ border-left:3px solid #6B7C5F; }
-.sim-root .cat[data-cat="circ"]:hover{ background:color-mix(in oklab,#6B7C5F 12%,var(--paper-0))!important; border-color:#6B7C5F!important; color:#6B7C5F!important; }
-.sim-root .cat[data-cat="circ"].on{ background:#6B7C5F!important; border-color:#6B7C5F!important; color:#fff!important; }
+.sim-root .cat[data-cat="circ"]{ border-left:3px solid var(--cat-circ); }
+.sim-root .cat[data-cat="circ"]:hover{ background:var(--cat-circ-hover)!important; border-color:var(--cat-circ)!important; color:var(--cat-circ-text)!important; }
+.sim-root .cat[data-cat="circ"].on{ background:var(--cat-circ)!important; border-color:var(--cat-circ)!important; color:#fff!important; }
 
-.sim-root .cat[data-cat="adit"]{ border-left:3px solid var(--accent-blue-grey); }
-.sim-root .cat[data-cat="adit"]:hover{ background:color-mix(in oklab,var(--accent-blue-grey) 12%,var(--paper-0))!important; border-color:var(--accent-blue-grey)!important; color:var(--accent-blue-grey)!important; }
-.sim-root .cat[data-cat="adit"].on{ background:var(--accent-blue-grey)!important; border-color:var(--accent-blue-grey)!important; color:#fff!important; }
+.sim-root .cat[data-cat="adit"]{ border-left:3px solid var(--cat-adit); }
+.sim-root .cat[data-cat="adit"]:hover{ background:var(--cat-adit-hover)!important; border-color:var(--cat-adit)!important; color:var(--cat-adit-text)!important; }
+.sim-root .cat[data-cat="adit"].on{ background:var(--cat-adit)!important; border-color:var(--cat-adit)!important; color:#fff!important; }
 
 /* ── DASH CARDS — editorial redesign ───────────────────────── */
 .sim-root .dash-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;gap:16px!important;}
@@ -2599,29 +2693,29 @@
 .os-today-v2,.os-batch-detail-v2{max-width:1080px;margin:0 auto 48px}.os-page-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}.os-page-title{font-family:var(--font-sans);font-size:var(--text-2xl);margin:var(--space-2) 0 var(--space-5)}.os-today-group{margin-top:var(--space-6)}.os-section-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:var(--rule-heavy);padding-bottom:var(--space-2)}.os-section-head h2,.os-detail-panel h2{font-family:var(--font-sans);font-size:var(--text-lg);margin:0}.os-section-head span{font-family:var(--font-mono);color:var(--text-metadata)}.os-task-marker{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}.os-v2-empty{padding:var(--space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}.os-lifecycle-state{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid var(--status-active);padding-top:3px;color:var(--status-active)}.os-detail-back{margin-bottom:var(--space-3)}.os-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}.os-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--space-5);margin-top:var(--space-6);align-items:start}.os-detail-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--space-4)}.os-valid-actions{display:grid;gap:var(--tap-target-gap-min);margin:var(--space-3) 0 var(--space-4)}
 @media(max-width:700px){.os-today-v2,.os-batch-detail-v2{margin-bottom:24px}.os-page-title{font-size:var(--text-xl)}.os-metric-grid,.os-detail-grid{grid-template-columns:1fr}.os-task-row{grid-template-columns:auto minmax(0,1fr)}.os-task-row>.os-action{grid-column:2;width:100%}}
 /* os-action/os-scan-target ya definen :focus-visible en setas-os-components.css pero no :hover/transition — el botón se sentía inerte hasta el click. */
-.os-action,.os-icon-action,.os-scan-target{transition:background-color .15s ease,border-color .15s ease}
+.os-action,.os-icon-action,.os-scan-target{transition:background-color .22s var(--ease),border-color .22s var(--ease)}
 .os-scan-target:hover{background:var(--surface-recessed);border-color:var(--ink-0)}
 
 /* ── HOME COCKPIT — hover/press states, previously mutated via onMouseEnter/Leave
    JS (didn't reach keyboard focus, never fired on touch, and there was no
    :active feedback anywhere). Moved to CSS so :hover, :active and
    :focus-visible (global rule above) all come for free. ── */
-.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .28s var(--ease),border-color .22s var(--ease),transform .22s var(--ease)}
 .sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
 .sim-root .home-quick-action.is-jornada{border:1.5px solid var(--coral-500)}
 .sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
 .sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
 
-.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .22s var(--ease),border-color .22s var(--ease),transform .22s var(--ease)}
 .sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
 .sim-root .home-stage-card:hover{border-color:var(--stage-accent,var(--coral-500))}
 .sim-root .home-stage-card:active{transform:scale(.98)}
 
-.sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .15s ease,transform .1s ease}
+.sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .22s var(--ease),transform .22s var(--ease)}
 .sim-root .home-lote-row:hover{background:var(--paper-100)}
 .sim-root .home-lote-row:active{background:var(--paper-200);transform:scale(.99)}
 
-.sim-root .home-panel-btn{transition:filter .15s ease,background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-panel-btn{min-height:44px;transition:filter .22s var(--ease),background-color .22s var(--ease),border-color .22s var(--ease),transform .22s var(--ease)}
 .sim-root .home-panel-btn.is-primary:hover{filter:brightness(1.08)}
 .sim-root .home-panel-btn.is-primary:active{filter:brightness(.94);transform:scale(.97)}
 .sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
@@ -2632,17 +2726,17 @@
    se había resuelto para home-quick-action y home-panel-btn. Mismo
    enfoque: CSS, no JS, para que :focus-visible (regla global arriba) y
    prefers-reduced-motion (regla al final) apliquen gratis. */
-.sim-root .home-handoff-dismiss{transition:color .15s ease}
+.sim-root .home-handoff-dismiss{transition:color .22s var(--ease)}
 .sim-root .home-handoff-dismiss:hover{color:var(--ink-900)}
 .sim-root .home-handoff-dismiss:active{transform:scale(.96)}
 
 /* Registro de cultivo · vista previa (cabecera de Hoy) y Actividad reciente
    (Sección C) — mismo patrón: :hover/:active en CSS, no JS. */
-.sim-root .home-registro-chip{transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-registro-chip{transition:background-color .22s var(--ease),border-color .22s var(--ease),transform .22s var(--ease)}
 .sim-root .home-registro-chip:hover{background:var(--paper-200);border-color:var(--ink-400)}
 .sim-root .home-registro-chip:active{background:var(--paper-300);transform:scale(.97)}
 
-.sim-root .home-activity-row{transition:background-color .15s ease}
+.sim-root .home-activity-row{transition:background-color .22s var(--ease)}
 .sim-root .home-activity-row:hover{background:var(--paper-50)}
 .sim-root .home-activity-row:active{background:var(--paper-100)}
 
@@ -2657,7 +2751,10 @@
 .sim-root .home-acciones-espacios-row{display:grid;grid-template-columns:1fr 4fr;gap:20px;align-items:start}
 .sim-root .home-acciones-espacios-row > *,
 .sim-root .home-workspaces-grid > *{min-width:0;overflow-wrap:anywhere}
-.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.sim-root .home-workspace-card{transition:border-color .24s var(--ease),box-shadow .28s var(--ease),transform .24s var(--ease)}
+.sim-root .home-workspace-card:hover{border-color:var(--ink-300);box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
+.sim-root .home-workspace-card:last-child:nth-child(3){grid-column:1/-1}
 @media(max-width:1200px){.sim-root .home-workspaces-grid{grid-template-columns:1fr!important}}
 @media(max-width:900px){ .sim-root .home-acciones-espacios-row{ grid-template-columns:minmax(0,1fr)!important; } }
 
@@ -3327,20 +3424,42 @@
   .sim-root .spp-sect-catalog{padding:14px 10px!important}
   .sim-root .catalog-hdr{margin-bottom:16px}
   .sim-root .catalog-title{font-size:28px}
-  .sim-root .spp-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .sim-root .spp-grid{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
   .sim-root .spp-card .p-img{aspect-ratio:4/3!important;padding:8px!important}
   .sim-root .p-family-strip{display:none}
   .sim-root .p-arch-head{padding:7px 8px}
-  .sim-root .p-arch-code{font-size:8px}
+  .sim-root .p-arch-code{font-size:var(--text-2xs,10.5px)}
   .sim-root .p-body{padding:8px!important}
-  .sim-root .p-sci{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sim-root .p-common{font-size:16px;line-height:1.15;overflow-wrap:anywhere}
-  .sim-root .p-chips-row1{grid-template-columns:1fr 1fr}
-  .sim-root .p-chips-row1 .p-chip:nth-child(3){display:none}
-  .sim-root .p-chips-row2{grid-template-columns:1fr 1fr 34px}
-  .sim-root .p-chip{padding:6px 5px;gap:3px}
-  .sim-root .p-chip-lbl{font-size:7px}
-  .sim-root .p-chip-val{font-size:9px}
+  .sim-root .p-sci{font-size:var(--text-xs,12px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sim-root .p-common{font-size:19px;line-height:1.15;overflow-wrap:anywhere}
+  .sim-root .p-chips-row1{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sim-root .p-chips-row1 .p-chip:nth-child(3){display:flex!important}
+  .sim-root .p-chips-row2{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sim-root .p-chip{padding:8px 7px;gap:4px}
+  .sim-root .p-chip-lbl{font-size:var(--text-2xs,10.5px)}
+  .sim-root .p-chip-val{font-size:var(--text-xs,12px)}
+}
+
+/* Peritaje visual: en teléfonos, ninguna acción o etiqueta operativa depende
+   de microtipografía. Los datos puramente auxiliares conservan su escala. */
+@media(max-width:480px){
+  .sim-root .page-title-eyebrow,
+  .sim-root .inv-field label,
+  .sim-root .bf label,
+  .sim-root .dttl,
+  .sim-root .sug-mark,
+  .sim-root .bal-mode,
+  .sim-root .imeta{font-size:var(--text-2xs,10.5px)}
+  .sim-root .add-btn,
+  .sim-root .tog,
+  .sim-root .btn,
+  .sim-root .cat,
+  .sim-root .pre,
+  .sim-root .sbtn,
+  .sim-root .sload,
+  .sim-root .sdel{font-size:var(--text-2xs,10.5px);min-height:44px}
+  .sim-root .bridge-activo{font-size:10px!important}
+  .sim-root .page-title-h{font-size:30px;text-wrap:balance}
 }
 
 /* Formulador V2 quirúrgico: separa los dos trabajos sin reemplazar el
@@ -3496,7 +3615,19 @@
   .sim-root .form-species-origin-toggle > span{color:rgba(255,255,255,.6)}
   .sim-root .form-species-origin-toggle button{border-color:rgba(255,255,255,.42);background:transparent;color:var(--paper-0)}
   .sim-root .form-species-origin-toggle button.is-active{border-color:var(--paper-0)}
-  .sim-root .form-production-command{gap:8px;min-height:58px;margin:-6px 0 10px;padding:6px 6px 6px 10px}
+  .sim-root .form-production-command{
+    position:fixed;
+    top:auto;
+    right:8px;
+    bottom:calc(66px + env(safe-area-inset-bottom));
+    left:8px;
+    z-index:var(--z-sticky-panel);
+    gap:8px;
+    min-height:58px;
+    margin:0;
+    padding:6px 6px 6px 10px;
+  }
+  .sim-root #formular-panel-mesa{padding-bottom:74px}
   .sim-root .form-production-command-copy strong{font-size:var(--text-xs)}
   .sim-root .form-production-command-btn{min-width:146px;min-height:46px;padding:8px 10px}
   .sim-root .mix-steppers{grid-template-columns:44px 44px minmax(68px,1fr) 44px 44px}
@@ -3505,7 +3636,7 @@
 
 /* ── PERITO & CO-FORMULACIÓN CARDS ─────────────────────────────── */
 .sim-root .coform-card {
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform .24s var(--ease), box-shadow .28s var(--ease);
 }
 .sim-root .coform-card:hover {
   box-shadow: var(--shadow-card-hover, 0 4px 12px rgba(26,20,16,0.09));
@@ -3754,4 +3885,3 @@
   height: 6px;
   border-radius: 50%;
 }
-

@@ -23,7 +23,7 @@ test('los 4 workspaces sincronizan rail, pestaña contextual y breadcrumb', asyn
     await expect(page.locator('.rail-btn[data-workspace][aria-current="page"]')).toHaveCount(1);
     expect(await activeWorkspace(page)).toBe(workspace);
 
-    await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveCount(1);
+    await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveCount(1);
     expect(await activeContextTab(page)).toBe(expectedTab);
 
     await expect(page.locator('[data-testid="breadcrumb"]')).toContainText(crumb);
@@ -36,11 +36,11 @@ test('cambiar de pestaña contextual dentro de Formular actualiza el shell (Reac
   await goWorkspace(page, 'formular');
 
   await page.getByRole('tab', { name: 'Recetario' }).click();
-  await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
   await expect(page.locator('[data-testid="breadcrumb"]')).toContainText(/recetario/i);
   expect(await activeWorkspace(page)).toBe('formular');
 
   await page.getByRole('tab', { name: 'Formular' }).click();
-  await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveText('Formular');
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Formular');
   await expect(page.locator('[data-testid="breadcrumb"]')).toContainText(/formulador/i);
 });

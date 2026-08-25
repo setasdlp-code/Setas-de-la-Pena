@@ -10,7 +10,7 @@ async function breadcrumb(page) {
 async function assertCoherent(page, expectedWorkspace) {
   await expect(page.locator('.rail-btn[data-workspace][aria-current="page"]')).toHaveCount(1);
   expect(await activeWorkspace(page)).toBe(expectedWorkspace);
-  const tabs = page.locator('[role="tab"][aria-selected="true"]');
+  const tabs = page.locator('.workspace-subnav [role="tab"][aria-selected="true"]');
   if (await tabs.count()) await expect(tabs).toHaveCount(1);
   return { workspace: expectedWorkspace, tab: await activeContextTab(page), crumb: await breadcrumb(page) };
 }
