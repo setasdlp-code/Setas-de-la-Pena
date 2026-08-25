@@ -3656,6 +3656,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
+      {stats&&(
+        <section className="os-finance-panel" data-testid="batch-financial-closure">
+          <div className="os-finance-header">
+            <div>
+              <span className="os-finance-title">💰 Cierre Financiero & Rendimiento Real</span>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
+                Balance económico del lote · Precio venta: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
+              </div>
+            </div>
+            {stats.totalFresco>0&&(
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:stats.margenRealTotal>=0?'var(--moss-200,#DCE1D1)':'var(--coral-100,#FDE8E8)',color:stats.margenRealTotal>=0?'var(--moss-700,#404D2E)':'var(--coral-700,#A83232)'}}>
+                {stats.margenRealTotal>=0?'+':''}${Math.round(stats.margenRealTotal).toLocaleString('es-CO')} ({stats.margenRealPct.toFixed(1)}% margen)
+              </span>
+            )}
+          </div>
+          <div className="os-finance-grid">
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">Inversión Incurrida</span>
+              <span className="econ-metric-value">${Math.round(stats.costoIncurridoTotal).toLocaleString('es-CO')}</span>
+              <span className="econ-metric-sub">${Math.round(stats.costoIncurridoPorBolsa).toLocaleString('es-CO')} / bolsa ({stats.numBolsas} bolsas)</span>
+            </div>
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">Ingreso Cosechas</span>
+              <span className="econ-metric-value">${Math.round(stats.ingresoRealTotal).toLocaleString('es-CO')}</span>
+              <span className="econ-metric-sub">{stats.totalFresco.toFixed(2)} kg hongo fresco</span>
+            </div>
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">EB Real vs Estimada</span>
+              <span className="econ-metric-value">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</span>
+              <span className="econ-metric-sub">{stats.varianzaEB!=null?`${stats.varianzaEB>=0?'+':''}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)`:'Sin receta base'}</span>
+            </div>
+            <div className="econ-metric-box" style={{background:stats.margenRealTotal>=0?'var(--paper-100,#EFEBE0)':'var(--paper-50)'}}>
+              <span className="econ-metric-label">Costo / kg Cosechado</span>
+              <span className="econ-metric-value">{stats.costoRealPorKgCosechado!=null?'$'+Math.round(stats.costoRealPorKgCosechado).toLocaleString('es-CO'):'—'}</span>
+              <span className="econ-metric-sub">{stats.totalFresco>0?'Costo unitario real':'Pendiente cosecha'}</span>
+            </div>
+          </div>
+          {stats.flushes&&stats.flushes.length>0&&(
+            <div style={{marginTop:12}}>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte por Oleada (Flushes)</div>
+              <div className="os-flush-bar-container">
+                {stats.flushes.map((f,i)=>(
+                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
+                ))}
+              </div>
+              <div className="os-flush-list">
+                {stats.flushes.map(f=>(
+                  <div className="os-flush-item" key={f.flush}>
+                    <span>Flush {f.flush}</span>
+                    <span>{f.kg.toFixed(2)} kg ({f.pctTotal.toFixed(1)}%)</span>
+                    <span>+${Math.round(f.ingreso).toLocaleString('es-CO')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
