@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b95356d370f7a04cafddd5958dd5afd858e89a22c6ca25f1541c5b8550e7cd14
+// source-hash: 9a77afbc37cd74e5599768a3dec4f8c169dfeec50d1072da22c9b5025f2df43f
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1525,6 +1525,15 @@ function App(props) {
   const [thermalScope, setThermalScope] = useState("all");
   const [thermalBagStart, setThermalBagStart] = useState(1);
   const [thermalBagEnd, setThermalBagEnd] = useState(20);
+  const [showDiagModal, setShowDiagModal] = useState(false);
+  const [diagLoteId, setDiagLoteId] = useState("");
+  const [diagBolsaId, setDiagBolsaId] = useState("");
+  const [diagImageBase64, setDiagImageBase64] = useState("");
+  const [diagImageMime, setDiagImageMime] = useState("image/jpeg");
+  const [diagRunning, setDiagRunning] = useState(false);
+  const [diagResult, setDiagResult] = useState(null);
+  const [diagError, setDiagError] = useState("");
+  const [diagNotes, setDiagNotes] = useState("");
   const [globalMode, setGlobalMode] = useState(() => {
     try {
       const v = localStorage.getItem("setas_global_workmode");
@@ -1712,14 +1721,14 @@ function App(props) {
   const [showProvModal, setShowProvModal] = useState(false);
   const [newProv, setNewProv] = useState({ nombre: "", tipo: "plaza", municipio: "" });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showProvModal || catalogModalOpen);
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showProvModal, catalogModalOpen]);
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -3143,7 +3152,14 @@ BATCH (${numBags}×${kgBag} kg):
       return;
     }
     if (action === "contamination") {
-      goBitTab("bit_bolsas", true);
+      setDiagLoteId(lote.id);
+      const b = bitBolsas.find((x) => x.loteId === lote.id && x.estado !== "descartada");
+      setDiagBolsaId(b?.id || "");
+      setDiagImageBase64("");
+      setDiagResult(null);
+      setDiagError("");
+      setDiagNotes("");
+      setShowDiagModal(true);
       return;
     }
     setNoticeDlg({ title: actionLabel[action] || "Acción de lote", msg: "Esta captura conserva el flujo operativo existente del lote." });
@@ -4507,9 +4523,15 @@ Click para ver análisis completo`
         type: "button",
         style: { minHeight: 44, cursor: "pointer", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", border: "1px solid var(--accent-terracotta,#A85C32)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
         onClick: () => {
-          setBitActiveLoteId(currentLote.id);
+          setDiagLoteId(currentLote.id);
+          const b = bitBolsas.find((x) => x.loteId === currentLote.id && x.estado !== "descartada");
+          setDiagBolsaId(b?.id || "");
+          setDiagImageBase64("");
+          setDiagResult(null);
+          setDiagError("");
+          setDiagNotes("");
           setShowQrSheet(false);
-          goBitTab("bit_bolsas", true);
+          setShowDiagModal(true);
         }
       },
       "⚠ Reportar Contaminación / Merma"
@@ -4623,6 +4645,215 @@ Click para ver análisis completo`
       const qrSrc = generateQrSvgDataUrl(item.qrUrl);
       return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}` }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, "Inoc: ", item.date), /* @__PURE__ */ React.createElement("div", null, "Fórmula: ", item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, "Setas de la Peña · Tenjo")));
     }))));
+  })(), showDiagModal && (() => {
+    const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];
+    const bolsasDelLote = currentLote ? bitBolsas.filter((b) => b.loteId === currentLote.id) : [];
+    const currentBolsa = bolsasDelLote.find((b) => b.id === diagBolsaId) || bolsasDelLote[0];
+    const handleFileSelect = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        setDiagError("La imagen supera los 10 MB. Comprímela o toma una foto de menor resolución.");
+        return;
+      }
+      try {
+        const b64 = await fileToBase64(file);
+        setDiagImageBase64(b64);
+        setDiagImageMime(file.type || "image/jpeg");
+        setDiagError("");
+        setDiagResult(null);
+      } catch (err) {
+        setDiagError("Error al cargar la fotografía.");
+      }
+    };
+    const handleRunDiagnosis = async () => {
+      if (!diagImageBase64) {
+        setDiagError("Selecciona o toma una fotografía primero.");
+        return;
+      }
+      setDiagRunning(true);
+      setDiagError("");
+      try {
+        if (window.SetasAI && typeof window.SetasAI.diagnoseContaminationImage === "function") {
+          const diag = await window.SetasAI.diagnoseContaminationImage({
+            base64Data: diagImageBase64,
+            mimeType: diagImageMime,
+            speciesName: currentLote?.especie || "",
+            stage: currentLote?.estado || "",
+            roomName: currentLote?.sala || "",
+            notes: diagNotes
+          });
+          setDiagResult(diag);
+          setDiagRunning(false);
+          return;
+        }
+        if (window.claude && typeof window.claude.complete === "function") {
+          const prompt = `Eres el experto micólogo de Setas de la Peña en Tenjo. Analiza esta foto de una bolsa de cultivo de ${currentLote?.especie || "hongos"}. Emite un JSON estricto: {"patogeno":"nombre","tipo":"hongo_competidor|moho_parasito|bacteria|micelio_sano|estres_ambiental","urgencia":"critica|alta|media|baja|ninguna","confianza":"alta|media|bajo","descripcion_visual":"...","accion_recomendada":"...","posible_causa":"...","estado_bolsa_sugerido":"contaminada|dudosa|descartada|sana"}`;
+          const fileBlock = { type: "image", source: { type: "base64", media_type: diagImageMime, data: diagImageBase64 } };
+          const resp = await window.claude.complete({
+            messages: [{ role: "user", content: [fileBlock, { type: "text", text: prompt }] }]
+          });
+          setDiagResult(extraerJSON(resp));
+          setDiagRunning(false);
+          return;
+        }
+        throw new Error("Servicio de IA no configurado en este navegador.");
+      } catch (err) {
+        setDiagError(err.message || "No se pudo completar el diagnóstico.");
+        setDiagRunning(false);
+      }
+    };
+    const handleApplyVerdict = () => {
+      if (!currentBolsa || !diagResult) return;
+      const nuevoEstado = diagResult.estado_bolsa_sugerido || "contaminada";
+      const anotacion = `[IA Gemini] ${diagResult.patogeno} (${diagResult.urgencia}): ${diagResult.accion_recomendada}`;
+      const obsFinal = currentBolsa.obs ? `${currentBolsa.obs} · ${anotacion}` : anotacion;
+      updateBitBolsa(currentBolsa.id, {
+        estado: nuevoEstado,
+        obs: obsFinal
+      });
+      if (workflow && currentLote) {
+        const fromState = legacyLifecycle[currentLote.estado] || "incubation";
+        const contBags = bolsasDelLote.filter((b) => b.id !== currentBolsa.id && b.estado === "contaminada").length + (nuevoEstado === "contaminada" ? 1 : 0);
+        const contPct = bolsasDelLote.length ? Math.round(contBags / bolsasDelLote.length * 100) : 0;
+        if (contPct >= 50 && fromState !== "discarded") {
+          const evt = workflow.transitionEvent({
+            batchId: currentLote.id,
+            from: fromState,
+            to: "discarded",
+            reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
+          });
+          updateBitLote(currentLote.id, {
+            estado: "descartado",
+            lifecycleState: "discarded",
+            lifecycleEvents: [...currentLote.lifecycleEvents || [], evt]
+          });
+        }
+      }
+      setShowDiagModal(false);
+      setNoticeDlg({
+        title: "🛡 Dictamen Aplicado",
+        msg: `Bolsa ${currentBolsa.codigo} actualizada a estado: ${nuevoEstado.toUpperCase()}. ${diagResult.accion_recomendada}`
+      });
+    };
+    return /* @__PURE__ */ React.createElement("div", { className: "inv-modal-bg", style: { zIndex: 99999 }, onClick: () => setShowDiagModal(false) }, /* @__PURE__ */ React.createElement("div", { className: "os-diag-modal", "data-testid": "ai-contamination-diagnosis-modal", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-terracotta)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Microbiología & Sanidad · Setas OS"), /* @__PURE__ */ React.createElement("h2", { style: { margin: "2px 0 0", fontFamily: "var(--font-display)", fontSize: 18, color: "var(--ink-0)" } }, "🔬 Diagnóstico Visual de Contaminaciones")), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--ink-2)" },
+        onClick: () => setShowDiagModal(false),
+        "aria-label": "Cerrar diagnóstico"
+      },
+      "×"
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 2 } }, "Lote"), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        style: { width: "100%", padding: "6px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+        value: currentLote?.id || "",
+        onChange: (e) => {
+          setDiagLoteId(e.target.value);
+          const b = bitBolsas.find((x) => x.loteId === e.target.value);
+          setDiagBolsaId(b?.id || "");
+          setDiagResult(null);
+        }
+      },
+      bitLotes.map((l) => /* @__PURE__ */ React.createElement("option", { key: l.id, value: l.id }, l.codigo, " — ", l.especie))
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 2 } }, "Bolsa Específica"), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        style: { width: "100%", padding: "6px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+        value: currentBolsa?.id || "",
+        onChange: (e) => setDiagBolsaId(e.target.value)
+      },
+      bolsasDelLote.map((b) => /* @__PURE__ */ React.createElement("option", { key: b.id, value: b.id }, b.codigo, " (", b.estado, ")"))
+    ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, "Fotografía de la Bolsa / Síntoma"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "file",
+        accept: "image/*",
+        capture: "environment",
+        style: { fontFamily: "var(--font-sans)", fontSize: 12, width: "100%" },
+        onChange: handleFileSelect
+      }
+    ), diagImageBase64 && /* @__PURE__ */ React.createElement(
+      "img",
+      {
+        src: `data:${diagImageMime};base64,${diagImageBase64}`,
+        alt: "Muestra de bolsa",
+        className: "os-diag-preview"
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 2 } }, "Observaciones del Operario (opcional)"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        placeholder: "Ej. Olor agrio, manchas circulares, 3 días de incubación...",
+        style: { width: "100%", boxSizing: "border-box", padding: "6px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+        value: diagNotes,
+        onChange: (e) => setDiagNotes(e.target.value)
+      }
+    )), diagError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "#FEE2E2", color: "#991B1B", borderRadius: "var(--radius-sm)", fontSize: 12, marginBottom: 12 } }, "⚠ ", diagError), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: {
+          width: "100%",
+          minHeight: 44,
+          cursor: !diagImageBase64 || diagRunning ? "not-allowed" : "pointer",
+          background: !diagImageBase64 || diagRunning ? "var(--paper-2)" : "var(--accent-terracotta)",
+          color: !diagImageBase64 || diagRunning ? "var(--ink-2)" : "#ffffff",
+          border: "none",
+          borderRadius: "var(--radius-md)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8
+        },
+        disabled: !diagImageBase64 || diagRunning,
+        onClick: handleRunDiagnosis
+      },
+      diagRunning ? "⏳ Analizando imagen con Gemini 2.5 Flash..." : "🔍 Diagnosticar con Gemini AI"
+    ), diagResult && /* @__PURE__ */ React.createElement("div", { className: "os-diag-result-card" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 700, color: "var(--ink-0)" } }, diagResult.patogeno), /* @__PURE__ */ React.createElement("span", { className: `os-diag-urgency-${diagResult.urgencia}`, style: { padding: "3px 8px", borderRadius: 2, fontSize: 10, fontWeight: 700, textTransform: "uppercase", fontFamily: "var(--font-mono)" } }, "Urgencia: ", diagResult.urgencia)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--ink-1)", lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("strong", null, "Signos visibles:"), " ", diagResult.descripcion_visual), diagResult.posible_causa && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("strong", null, "Posible causa:"), " ", diagResult.posible_causa), /* @__PURE__ */ React.createElement("div", { className: "os-diag-protocol-box" }, /* @__PURE__ */ React.createElement("strong", null, "Protocolo Inmediato:"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 2 } }, diagResult.accion_recomendada)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 6 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: {
+          flex: 1,
+          minHeight: 42,
+          cursor: "pointer",
+          background: "var(--moss-700,#385933)",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          fontWeight: 700
+        },
+        onClick: handleApplyVerdict
+      },
+      "🛡 Aplicar Dictamen & Actualizar Bolsa"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: {
+          minHeight: 42,
+          padding: "0 14px",
+          cursor: "pointer",
+          background: "var(--paper-1)",
+          color: "var(--ink-0)",
+          border: "1px solid var(--border-hairline)",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          fontWeight: 600
+        },
+        onClick: () => setShowDiagModal(false)
+      },
+      "Cerrar"
+    )))));
   })(), /* @__PURE__ */ React.createElement("div", { style: { height: 40 } })), (RECETA_TABS.includes(tab) && tab !== "formular" || tab === "produccion" || tab === "schedule") && /* @__PURE__ */ React.createElement("section", { "data-testid": "species-bridge", className: "species-bridge" + (bridgeHidden ? " bridge-hidden" : ""), "aria-label": "Especie activa" }, /* @__PURE__ */ React.createElement("div", { className: "bridge-inner" }, !hasPickedSpecies ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "bridge-activo" }, /* @__PURE__ */ React.createElement("span", { className: "bridge-dot" }, "●"), "Sin especie"), /* @__PURE__ */ React.createElement("span", { className: "bridge-name" }, "Elige una especie para empezar"), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("select", { className: "bridge-select", value: "", onClick: (e) => e.stopPropagation(), onChange: (e) => {
     if (e.target.value) setSKey(e.target.value);
   }, "aria-label": "Elegir especie" }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name))), /* @__PURE__ */ React.createElement("button", { className: "bridge-cambiar", onClick: (e) => {
