@@ -55,3 +55,36 @@
 .fos-market__price{font-family:var(--font-mono);font-size:var(--text-md);font-variant-numeric:tabular-nums;color:var(--text-primary)}
 /* 06.1 no lot codes, room names or operator names ever surface to a customer view — trace via QR only */
 /* 06.2 photography or QR only inside .fos-market__img — never a pictogram, which is an operational glyph */
+
+/* ---- FOS-07 Digital · Double-Bezel Architecture (Doppelrand) ---- */
+.fos-bezel{background:var(--surface-panel);border:1px solid var(--border-hairline);padding:6px;border-radius:16px;transition:var(--transition-fast);box-sizing:border-box}
+.fos-bezel__core{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:calc(16px - 6px);padding:18px 20px;box-sizing:border-box;transition:var(--transition-fast)}
+.fos-bezel--elevated:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.fos-bezel--elevated:hover .fos-bezel__core{border-color:var(--border-strong)}
+
+/* ---- FOS-08 Digital · Button-in-Button Architecture ---- */
+.fos-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;min-height:var(--tap-target-min,44px);padding:8px 18px;font-family:var(--font-sans);font-size:var(--text-base);font-weight:var(--weight-medium);border-radius:9999px;cursor:pointer;text-decoration:none;user-select:none;border:1px solid transparent;transition:var(--transition-fast);box-sizing:border-box}
+.fos-btn:active{transform:scale(0.98)}
+.fos-btn--primary{background:var(--accent-olive);color:var(--paper-0);border-color:var(--accent-olive-hover)}
+.fos-btn--primary:hover{background:var(--accent-olive-hover)}
+.fos-btn--terracotta{background:var(--accent-terracotta);color:var(--paper-0);border-color:var(--accent-terracotta-hover)}
+.fos-btn--terracotta:hover{background:var(--accent-terracotta-hover)}
+.fos-btn--secondary{background:var(--surface-panel);color:var(--text-primary);border-color:var(--border-hairline)}
+.fos-btn--secondary:hover{background:var(--surface-recessed);border-color:var(--border-strong)}
+.fos-btn--ghost{background:transparent;color:var(--text-primary);border-color:transparent}
+.fos-btn--ghost:hover{background:var(--surface-panel);border-color:var(--border-hairline)}
+.fos-btn__icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:rgba(0,0,0,0.08);transition:var(--transition-fast);flex-shrink:0}
+.fos-btn--primary .fos-btn__icon,.fos-btn--terracotta .fos-btn__icon{background:rgba(255,255,255,0.18)}
+.fos-btn:hover .fos-btn__icon{transform:translate(2px,-1px) scale(1.05)}
+
+/* ---- FOS-09 Digital · Telemetry & Hardware Instrument Readout ---- */
+.fos-telemetry{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;width:100%}
+.fos-telemetry__card{background:var(--surface-page);border:1px solid var(--border-hairline);padding:12px 14px;border-radius:6px;display:flex;flex-direction:column;gap:6px}
+.fos-telemetry__hd{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-metadata)}
+.fos-telemetry__val{font-family:var(--font-mono);font-size:22px;font-weight:var(--weight-bold);font-variant-numeric:tabular-nums;line-height:1;color:var(--text-primary)}
+.fos-telemetry__unit{font-family:var(--font-mono);font-size:11px;font-weight:var(--weight-regular);color:var(--text-metadata);margin-left:3px}
+.fos-meter{height:6px;background:var(--surface-recessed);border-radius:3px;overflow:hidden;margin-top:4px}
+.fos-meter__fill{height:100%;background:var(--accent-olive);transition:width var(--duration-fluid) var(--ease-out-expo)}
+.fos-meter__fill--warning{background:var(--accent-terracotta)}
+.fos-meter__fill--error{background:var(--accent-rust)}
+

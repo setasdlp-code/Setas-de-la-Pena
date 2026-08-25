@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
 <link rel="stylesheet" href="fieldos-tokens.css">
@@ -34,6 +35,7 @@
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
 <script src="bitacora-model.js"></script>
+<script src="climate-math.js"></script>
     <script src="historical-calibration.js"></script>
 <script src="recipe-optimizer.js"></script>
 <script src="perito-scenarios.js"></script>
@@ -3056,6 +3058,7 @@ class Component extends DCLogic {
     ];
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
+      contextTab('Telemetría IoT',s.module==='sim'&&s.simTab==='clima',()=>this.goSimTab('clima')),
       contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];

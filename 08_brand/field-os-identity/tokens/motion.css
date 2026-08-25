@@ -1,0 +1,93 @@
+/* FOS-MOT-001 · Motion & Kinetic Dynamics
+   Normative CSS for digital interfaces, interactive tools and web apps.
+   Print artifacts remain 100% static and unaffected by this layer. */
+
+:root {
+  /* ---- Kinetic Easing Curves (Spring Physics & Smooth Deceleration) ---- */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);      /* Natural mechanical spring response */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* Smooth tactile deceleration */
+  --ease-in-out-smooth: cubic-bezier(0.65, 0, 0.35, 1); /* Symmetrical smooth interpolation */
+  --ease-snap: cubic-bezier(0.2, 0.8, 0.2, 1);        /* Snappy toggle / state switch */
+
+  /* ---- Transition Durations ---- */
+  --duration-instant: 120ms;  /* Micro-state: toggle, active press, checkbox */
+  --duration-fast: 240ms;     /* Hover states, tooltips, button micro-motion */
+  --duration-base: 400ms;     /* Expand / collapse, accordion, tab change */
+  --duration-fluid: 700ms;    /* Modal entry, page transition, card reveals */
+  --duration-slow: 1000ms;    /* Telemetry gauges, ambient transitions */
+
+  /* ---- Composite Kinetic Transition Tokens ---- */
+  --transition-fast: background-color var(--duration-fast) var(--ease-spring), border-color var(--duration-fast) var(--ease-spring), color var(--duration-fast) var(--ease-spring), transform var(--duration-fast) var(--ease-spring);
+  --transition-base: background-color var(--duration-base) var(--ease-spring), border-color var(--duration-base) var(--ease-spring), opacity var(--duration-base) var(--ease-spring), transform var(--duration-base) var(--ease-spring);
+  --transition-fluid: opacity var(--duration-fluid) var(--ease-out-expo), transform var(--duration-fluid) var(--ease-out-expo);
+  --transition-transform: transform var(--duration-fast) var(--ease-spring);
+}
+
+/* ---- Keyframe Animations (GPU accelerated: transform + opacity only) ---- */
+@keyframes fosFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fosFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fosScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fosPulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ---- Kinetic Utility Classes ---- */
+.fos-reveal {
+  animation: fosFadeUp var(--duration-fluid) var(--ease-out-expo) forwards;
+  will-change: transform, opacity;
+}
+
+.fos-reveal--scale {
+  animation: fosScaleIn var(--duration-fluid) var(--ease-out-expo) forwards;
+  will-change: transform, opacity;
+}
+
+.fos-pulse-beacon {
+  animation: fosPulseSoft 2s var(--ease-in-out-smooth) infinite;
+}
+
+/* Staggered entrance delays for lists and grids */
+.fos-stagger > *:nth-child(1) { animation-delay: 40ms; }
+.fos-stagger > *:nth-child(2) { animation-delay: 90ms; }
+.fos-stagger > *:nth-child(3) { animation-delay: 140ms; }
+.fos-stagger > *:nth-child(4) { animation-delay: 190ms; }
+.fos-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.fos-stagger > *:nth-child(6) { animation-delay: 290ms; }
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .fos-reveal,
+  .fos-reveal--scale,
+  .fos-pulse-beacon,
+  .fos-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

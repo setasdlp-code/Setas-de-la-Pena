@@ -1,0 +1,45 @@
+<!-- @dsCard group="Structure" viewport="700x380" name="Double-Bezel Architecture · FOS-07" subtitle="Contenedores digitales de doble marco concéntrico vs. fichas de campo" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="min-height:380px;background:var(--surface-recessed);padding:24px;box-sizing:border-box;display:flex;gap:20px;font-family:var(--font-sans)">
+  <!-- Left: Digital Double Bezel Container -->
+  <div style="flex:1">
+    <div class="fos-bezel fos-bezel--elevated">
+      <div class="fos-bezel__core">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:var(--rule-hairline);padding-bottom:10px">
+          <div>
+            <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)">FOS-07 · Digital Bezel</span>
+            <h4 style="margin:2px 0 0;font-size:16px;font-weight:600">Cámara 03 · Incubación</h4>
+          </div>
+          <span class="fos-status fos-status--active">En Rango</span>
+        </div>
+
+        <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:var(--surface-panel);padding:8px 10px;border-radius:4px;border:1px solid var(--border-hairline)">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-metadata);text-transform:uppercase">Temp</span>
+            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700">22.8 °C</div>
+          </div>
+          <div style="background:var(--surface-panel);padding:8px 10px;border-radius:4px;border:1px solid var(--border-hairline)">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-metadata);text-transform:uppercase">HR</span>
+            <div style="font-family:var(--font-mono);font-size:16px;font-weight:700">84 %</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;font-size:12px;color:var(--text-secondary);line-height:1.4">
+          Chasis exterior recesado + núcleo concéntrico. Radio interior = calc(16px - 6px) = 10px.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Explanatory note -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;font-size:13px;line-height:1.6;color:var(--text-secondary)">
+    <div>
+      <h4 style="margin:0 0 8px;font-size:15px;color:var(--text-primary)">Arquitectura Háptica Digital</h4>
+      <p style="margin:0 0 10px">En pantallas y dashboards interactivos, las tarjetas no flotan con sombras borrosas genéricas. Utilizan la técnica de <strong>Doble Bisel (Doppelrand)</strong>: un chasis exterior mecanizado que abraza el núcleo de datos.</p>
+      <p style="margin:0">El soporte impreso de campo (FOS-01/02) permanece 100% plano sin biseles para garantizar máxima legibilidad en papel y fotocopia.</p>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata);border-top:var(--rule-hairline);padding-top:8px">
+      Tokens: <code>.fos-bezel</code> + <code>.fos-bezel__core</code>
+    </div>
+  </div>
+</div>
