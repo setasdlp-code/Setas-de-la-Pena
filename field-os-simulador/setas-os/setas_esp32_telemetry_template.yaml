@@ -75,11 +75,29 @@ sensor:
     automatic_self_calibration: false
     update_interval: 30s
 
+# ── Relés de Potencia Hosyond (Actuadores de Sala) ────────────────────────────
+switch:
+  # Canal 1: Humidificador AC Infinity CloudForge T7 / H05
+  - platform: gpio
+    pin: GPIO18
+    name: "Humidificador Sala"
+    id: relay_ch1_humidifier
+    restore_mode: ALWAYS_OFF
+    inverted: false
+
+  # Canal 2: Extractor FAE AC Infinity Cloudline H4 (Pulsos)
+  - platform: gpio
+    pin: GPIO19
+    name: "Extractor FAE Sala"
+    id: relay_ch2_fae
+    restore_mode: ALWAYS_OFF
+    inverted: false
+
 http_request:
   id: http_client
   timeout: 5s
 
-# ── Enlace Periódico con Setas OS (Adaptador de Telemetría) ───────────────────
+# ── Enlace Periódico con Setas OS (Adaptador de Telemetría y Actuación) ───────
 interval:
   - interval: 60s
     then:
@@ -99,3 +117,4 @@ interval:
                   humidity: !lambda 'return id(room_humidity).state;'
                   co2: !lambda 'return id(room_co2).state;'
                   source: "esp32_esphome"
+

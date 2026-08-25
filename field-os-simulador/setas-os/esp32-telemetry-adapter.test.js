@@ -199,5 +199,51 @@ test('createTelemetryServer atiende POST /api/telemetry, GET /active-cycles y GE
   assert.equal(postJson.success, true);
   assert.equal(postJson.count, 2);
   assert.equal(receivedReadings.length, 2);
+  assert.ok(postJson.commands);
+
+  // 4. Test GET /api/actuators/status
+  const reqActStatus = new EventEmitter();
+  reqActStatus.method = 'GET';
+  reqActStatus.url = '/api/actuators/status';
+
+  let actStatus = 0;
+  let actBody = '';
+  const resAct = {
+    setHeader: () => {},
+    writeHead: (st) => { actStatus = st; },
+    end: (data) => { actBody = data; }
+  };
+  serverInst.server.emit('request', reqActStatus, resAct);
+  assert.equal(actStatus, 200);
+  const actJson = JSON.parse(actBody);
+  assert.equal(actJson.status, 'ok');
+  assert.ok(actJson.actuatorStates.martha_01);
+
+  // 5. Test POST /api/actuators/override
+  const reqOverride = new EventEmitter();
+  reqOverride.method = 'POST';
+  reqOverride.url = '/api/actuators/override';
+
+  let ovStatus = 0;
+  let ovBody = '';
+  const resOv = {
+    setHeader: () => {},
+    writeHead: (st) => { ovStatus = st; },
+    end: (data) => { ovBody = data; }
+  };
+  serverInst.server.emit('request', reqOverride, resOv);
+  reqOverride.emit('data', JSON.stringify({
+    room_id: 'martha_01',
+    relay_ch1: 'OFF',
+    relay_ch2: 'ON'
+  }));
+  reqOverride.emit('end');
+
+  assert.equal(ovStatus, 200);
+  const ovJson = JSON.parse(ovBody);
+  assert.equal(ovJson.success, true);
+  assert.equal(ovJson.state.manualCommands.relay_ch1_humidifier, 'OFF');
+  assert.equal(ovJson.state.manualCommands.relay_ch2_fae, 'ON');
 });
+
 

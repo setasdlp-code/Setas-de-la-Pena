@@ -1995,6 +1995,9 @@ function App(props){
   };
   const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
   const [climateTimeRange,setClimateTimeRange]=useState('24h');
+  const [faePulseActive,setFaePulseActive]=useState(false);
+  const [humidifierOverride,setHumidifierOverride]=useState(null);
+
 
 
   // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
@@ -4101,6 +4104,109 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />
                   <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
                 </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel de Actuadores y Relés de Potencia Hosyond (2ch) */}
+        <div className="climate-actuators-panel" data-testid="climate-actuators-panel">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <div>
+              <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
+                ⚡ Actuadores y Relés de Potencia (Hosyond 2ch)
+              </h3>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
+                Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
+              </div>
+            </div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',fontWeight:700}}>
+              ● Lógica Local Activa (ESP32)
+            </div>
+          </div>
+
+          <div className="climate-actuators-grid">
+            {/* Canal 1: Humidificador CloudForge T7 */}
+            <div className="climate-actuator-card">
+              <div className="climate-actuator-head">
+                <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
+                  💧 Humidificador (Relay Ch1 · T7/H05)
+                </span>
+                <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min) ? 'on' : 'off'}`}>
+                  {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
+                </span>
+              </div>
+              <div className="climate-actuator-meta">
+                <b>Potencia:</b> 100% · <b>Modo:</b> {humidifierOverride ? 'Manual' : 'Bang-Bang con Histéresis'} (Min idle: 120s)<br/>
+                <b>Diagnóstico:</b> {humidifierOverride === 'ON' ? 'Forzado manualmente por el operario.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
+              </div>
+              <div style={{display:'flex',gap:6,marginTop:4}}>
+                <button
+                  type="button"
+                  className="climate-actuator-btn"
+                  onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
+                >
+                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '⚡ Forzar Humidificación (1m)'}
+                </button>
+                {humidifierOverride !== null && (
+                  <button
+                    type="button"
+                    className="climate-actuator-btn"
+                    onClick={() => setHumidifierOverride(null)}
+                  >
+                    Restablecer
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Canal 2: Extractor FAE Cloudline H4 */}
+            <div className="climate-actuator-card">
+              <div className="climate-actuator-head">
+                <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
+                  💨 Extractor FAE (Relay Ch2 · Cloudline H4)
+                </span>
+                <span className={`climate-actuator-badge ${faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'pulse' : 'off'}`}>
+                  {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'PULSO ACTIVO (35s)' : 'AUTO [EN ESPERA]'}
+                </span>
+              </div>
+              <div className="climate-actuator-meta">
+                <b>Velocidad física:</b> 1–2 (~18 CFM efectivo) · <b>Duración pulso:</b> 35s<br/>
+                <b>Diagnóstico:</b> {faePulseActive ? 'Evacuando CO2 y renovando aire fresco...' : (currentMetrics.co2 > defaultTargets.co2_ppm.max ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
+              </div>
+              <div style={{display:'flex',gap:6,marginTop:4}}>
+                <button
+                  type="button"
+                  className="climate-actuator-btn"
+                  onClick={() => {
+                    setFaePulseActive(true);
+                    setTimeout(() => setFaePulseActive(false), 5000);
+                  }}
+                  disabled={faePulseActive}
+                >
+                  {faePulseActive ? '⏳ Pulso en Curso...' : '🌀 Disparar Pulso FAE (35s)'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Historial de Eventos Recientes de Actuación */}
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
+              📋 Historial Reciente de Conmutación de Relés
+            </div>
+            <div className="climate-actuator-logs">
+              <div className="climate-log-row">
+                <span>[Ch2 · Extractor H4] Pulso periódico FAE completado (35s a vel. 1)</span>
+                <span style={{color:'var(--ink-2)'}}>hace 14m</span>
+              </div>
+              <div className="climate-log-row">
+                <span>[Ch1 · Humidificador T7] Apagado al alcanzar HR target (91.5% >= 90%)</span>
+                <span style={{color:'var(--ink-2)'}}>hace 22m</span>
+              </div>
+              <div className="climate-log-row">
+                <span>[Ch1 · Humidificador T7] Encendido por banda mínima (84.2% &lt; 85%)</span>
+                <span style={{color:'var(--ink-2)'}}>hace 26m</span>
               </div>
             </div>
           </div>

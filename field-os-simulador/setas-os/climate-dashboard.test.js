@@ -79,4 +79,15 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.climate-kpi-card/);
   assert.match(css, /\.today-climate-strip/);
   assert.match(css, /\.climate-svg-wrap/);
+  assert.match(css, /\.climate-actuators-panel/);
+  assert.match(css, /\.climate-actuator-card/);
 });
+
+test('simulador-app.jsx renders relay actuator controls and interactive overrides', () => {
+  assert.match(jsx, /data-testid="climate-actuators-panel"/);
+  assert.match(jsx, /Relay Ch1 · T7\/H05/);
+  assert.match(jsx, /Relay Ch2 · Cloudline H4/);
+  assert.match(jsx, /Disparar Pulso FAE/);
+  assert.match(jsx, /Forzar Humidificación/);
+});
+
