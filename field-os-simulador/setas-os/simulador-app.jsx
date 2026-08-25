@@ -2915,20 +2915,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const CMP_MAX_BYTES=10*1024*1024;
   // Ejecuta el parseo de una foto/PDF ya codificado — separado de capturarFoto para
-  // poder reintentar (botón "Reintentar") sin pedirle al usuario que resuba el archivo.
   const parseFotoPayload=async(fileBlock,esPDF)=>{
     setCmpParsing(true);setCmpParseErr('');
     try{
-      const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:[
-        fileBlock,
-        {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
-      ]}]});
-      try{
-        applyParsedItems(extraerJSON(resp));
-      }catch(parseErr){
-        setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+      if(window.SetasAI&&typeof window.SetasAI.parseInvoiceImage==='function'){
+        const parsed=await window.SetasAI.parseInvoiceImage({
+          base64Data:fileBlock.source.data,
+          mimeType:fileBlock.source.media_type,
+          knownIngredients:INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
       }
+      if(window.claude&&typeof window.claude.complete==='function'){
+        const listaIngs=INGS.map(g=>g.name).join(', ');
+        const resp=await window.claude.complete({messages:[{role:'user',content:[
+          fileBlock,
+          {type:'text',text:`Esta es ${esPDF?'un PDF':'una foto'} de una factura/recibo de compra de insumos para cultivo de hongos. Puede tener varias páginas o incluir varias facturas: extrae los ítems de todas ellas. Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor/vendedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra/factura, o null si no aparece","items":[{"ingrediente":"nombre tal cual","kg":numero,"precio":numero_precio_por_kg_COP}]}. Si el recibo trae precio total por línea en vez de precio por kg, calcula precio/kg dividiendo entre los kg. Ignora subtotales, impuestos y totales generales — solo ítems comprados. Ingredientes conocidos del inventario (usa el más parecido si aplica): ${listaIngs}.`}
+        ]}]});
+        try{
+          applyParsedItems(extraerJSON(resp));
+        }catch(parseErr){
+          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+        }
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error('Servicio de IA no disponible');
     }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
     setCmpParsing(false);
   };
@@ -2939,7 +2953,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setCmpParseErr(`El archivo pesa ${(file.size/1024/1024).toFixed(1)} MB — el máximo es 10 MB. Comprime ${esPDF?'el PDF':'la foto'} o usa Manual.`);
       e.target.value=''; return;
     }
-    if(!window.claude||typeof window.claude.complete!=='function'){
+    const hasAI=(window.SetasAI&&typeof window.SetasAI.parseInvoiceImage==='function')||(window.claude&&typeof window.claude.complete==='function');
+    if(!hasAI){
       setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
       e.target.value=''; return;
     }
@@ -2963,9 +2978,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!cmpPasteText.trim()) return;
     setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
-      const listaIngs=INGS.map(g=>g.name).join(', ');
-      const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
-      applyParsedItems(extraerJSON(resp));
+      if(window.SetasAI&&typeof window.SetasAI.parseInvoiceText==='function'){
+        const parsed=await window.SetasAI.parseInvoiceText({
+          text:cmpPasteText,
+          knownIngredients:INGS
+        });
+        applyParsedItems(parsed);
+        setCmpParsing(false);
+        return;
+      }
+      if(window.claude&&typeof window.claude.complete==='function'){
+        const listaIngs=INGS.map(g=>g.name).join(', ');
+        const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
+        applyParsedItems(extraerJSON(resp));
+        setCmpParsing(false);
+        return;
+      }
+      throw new Error('Servicio de IA no disponible');
     }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intenta de nuevo o usa Manual.');}
     setCmpParsing(false);
   };

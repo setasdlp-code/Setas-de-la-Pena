@@ -16,6 +16,7 @@ import {
   signOut,
 } from "../vendor/firebase/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { initSetasAI } from "./ai-logic.js";
 
 const app = initializeApp(firebaseConfig);
 
@@ -30,8 +31,10 @@ const db = initializeFirestore(app, {
 });
 
 const auth = getAuth(app);
+const ai = initSetasAI(app);
 
-window.SetasFirebase = { app, db, auth, onAuthStateChanged, signInWithEmailAndPassword, signOut };
+window.SetasFirebase = { app, db, auth, ai, onAuthStateChanged, signInWithEmailAndPassword, signOut };
 window.dispatchEvent(new CustomEvent("setas-firebase-ready"));
 
-export { app, db, auth };
+export { app, db, auth, ai };
+
