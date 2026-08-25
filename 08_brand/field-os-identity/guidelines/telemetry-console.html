@@ -1,0 +1,60 @@
+<!-- @dsCard group="Field components" viewport="700x360" name="Cultivation Telemetry Console · FOS-13" subtitle="Consola instrumental IoT: sensores SHT3x y SCD30 compensados a 2.592 m" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="min-height:360px;background:var(--surface-panel);padding:24px;box-sizing:border-box;display:flex;gap:20px;font-family:var(--font-sans)">
+  <!-- Console Instrument Panel -->
+  <div style="flex:1.2">
+    <div class="fos-console">
+      <div class="fos-console__hd">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="fos-pulse-beacon" style="width:7px;height:7px;border-radius:9999px;background:var(--accent-olive);display:inline-block"></span>
+          <span class="fos-console__title">Túnel 03 · Fructificación</span>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-metadata)">ESP32 · SHT3x / SCD30</span>
+      </div>
+
+      <div class="fos-console__grid">
+        <!-- Temp -->
+        <div class="fos-console__cell">
+          <span style="font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;color:var(--text-metadata)">Temperatura</span>
+          <div class="fos-console__metric">17.4 <span style="font-size:12px;font-weight:400">°C</span></div>
+          <span class="fos-console__target">Target: 16–18 °C</span>
+          <div class="fos-meter"><div class="fos-meter__fill" style="width:85%"></div></div>
+        </div>
+
+        <!-- HR -->
+        <div class="fos-console__cell">
+          <span style="font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;color:var(--text-metadata)">Humedad Relativa</span>
+          <div class="fos-console__metric">88.2 <span style="font-size:12px;font-weight:400">%</span></div>
+          <span class="fos-console__target">Banda Óptima: 85–90%</span>
+          <div class="fos-meter"><div class="fos-meter__fill" style="width:92%"></div></div>
+        </div>
+
+        <!-- CO2 -->
+        <div class="fos-console__cell">
+          <span style="font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;color:var(--text-metadata)">CO₂ (Alt. 2.592m)</span>
+          <div class="fos-console__metric">740 <span style="font-size:11px;font-weight:400">PPM</span></div>
+          <span class="fos-console__target">Límite: &lt; 900 PPM</span>
+          <div class="fos-meter"><div class="fos-meter__fill" style="width:65%"></div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:var(--rule-hairline);padding-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--text-metadata)">
+        <span>Ventilación: Activa (Relay 01)</span>
+        <span>Última lectura: hace 12s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design Notes -->
+  <div style="flex:0.8;display:flex;flex-direction:column;justify-content:space-between;font-size:13px;line-height:1.55;color:var(--text-secondary)">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--status-active);margin-bottom:4px">FOS-13 · Telemetry Hardware</div>
+      <h4 style="margin:0 0 8px;font-size:15px;color:var(--text-primary)">Consola Táctil</h4>
+      <p style="margin:0 0 8px">Inspirada en <em>Teenage Engineering</em> y <em>Braun</em>. Visualización de parámetros de cámara como un instrumento de laboratorio calibrado.</p>
+      <p style="margin:0">Mediciones en tiempo real sin gradientes sintéticos ni adornos.</p>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-metadata);border-top:var(--rule-hairline);padding-top:8px">
+      Tokens: <code>.fos-console</code> + <code>.fos-meter</code>
+    </div>
+  </div>
+</div>
