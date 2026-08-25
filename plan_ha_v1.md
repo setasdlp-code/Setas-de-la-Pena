@@ -1,78 +1,74 @@
 # Plan de Automatización — Home Assistant
 
-**Estado:** diseño provisional, no comisionado  
-**Última revisión:** 2026-07-16  
+**Estado:** diseño validado con inventario físico (Agosto 2026), pendiente comisionamiento en banco  
+**Última revisión:** 2026-08-25  
 **Fuente de estado:** `knowledge_base/CURRENT_OPERATIONS.md`  
-**Fuente de parámetros:** `knowledge_base/01_species/pleurotus_djamor.md`
+**Fuente de parámetros:** `knowledge_base/05_equipment/environmental_control.md`
 
-Este documento no certifica que el hardware esté recibido, instalado o configurado. Ninguna salida automática debe habilitarse antes de completar el inventario físico, la validación eléctrica, la comparación de sensores y el commissioning de ventilación.
+Este documento define la arquitectura de supervisión y el protocolo de commissioning para los nodos ESP32/ESPHome integrados con Home Assistant en Setas de la Peña (Tenjo, Cundinamarca).
 
 ## Arquitectura Objetivo
 
 ```text
-SHT3x + SCD30 ──> ESP32/ESPHome ──> control local seguro
-                         │
-                         └──> Home Assistant: historial, alarmas y supervisión
+SHT45 (I²C) + MH-Z19C (UART) ──> ESP32/ESPHome ──> control local seguro en lazo cerrado
+                                        │
+                                        └──> Home Assistant: historial, alarmas y supervisión
 
-Inkbird ──> verificación cruzada independiente
-Operador ──> paro y control manual disponibles en todo momento
+Inkbird IBS-TH2 Plus ──────────> verificación cruzada independiente (BLE)
+Operador ──────────────────────> paro manual y control disponible en todo momento
 ```
 
 - Cada ambiente usa `ENV-XXXX`; equipos y sensores usan `EQ-XXXX` y `SNS-XXXX`.
-- El ESP32 conserva la lógica crítica local si HA o la red fallan.
-- HA no sustituye límites físicos, fusibles, protecciones ni inspección humana.
-- El sensor HR integrado del VIVOSUN H05 está invalidado.
+- El ESP32 conserva la lógica crítica local con `restore_mode: ALWAYS_OFF` y `min_idle_time: 120s` ante caída de red.
+- Home Assistant no sustituye límites físicos, fusibles bimetálicos ni inspección humana.
+- El sensor HR integrado del VIVOSUN H05 permanece invalidado.
 
-## Estado de Inventario
+## Parámetros Operacionales de Control por Especie
 
-Todos los equipos permanecen en `verification_required` hasta registrar foto, ubicación, número de serie y prueba funcional en `knowledge_base/metadata/equipment.yaml`.
-
-No usar expresiones como “inventario real”, “instalado” o “activo” basadas únicamente en pedidos o fechas estimadas de entrega.
-
-## Parámetros Provisionales — P. djamor
-
-| Variable | Objetivo | Alarma / condición |
-|---|---:|---:|
-| Temperatura | 20–30°C | <18°C o >32°C |
-| HR | 85–90% | <82% o >92% |
-| CO₂ | 500–1.500 ppm | >2.000 ppm |
-| Luz | 750–1.500 lux, 3–5 h/día | Verificar respuesta biológica |
-| Ventilación | 5–8 ACH provisional | Solo después de medir caudal efectivo |
-
-Los umbrales no son resultados de producción local. Deben actualizarse después de obtener datos de lotes trazables.
+| Variable | P. ostreatus (Lote 01) | H. erinaceus | P. djamor (Tropical) | Alarma / Condición Crítica |
+|---|:---:|:---:|:---:|:---:|
+| **Temperatura** | 14–20 °C | 15–20 °C | 20–28 °C | < 12 °C o > 30 °C |
+| **Humedad Relativa (HR)** | 85–90% | 85–92% | 85–90% | < 80% o > 95% |
+| **CO₂ Máximo** | ≤ 1.000 ppm | ≤ 900 ppm | ≤ 1.200 ppm | > 1.500 ppm |
+| **Ventilación (FAE)** | Pulsos 30–45s | Pulsos 30–45s | Pulsos 30–45s | Extractor H4 en Velocidad 1–2 |
 
 ## Commissioning Obligatorio
 
-1. Verificar alimentación, tierra, fusibles, relés y estado seguro al reiniciar.
-2. Confirmar I²C `0x44` para SHT3x y `0x61` para SCD30.
-3. Configurar `altitude_compensation: 2600` y comparar sensores contra referencia.
-4. Medir volumen y caudal efectivo del extractor con filtros, ductos y compuertas instalados.
-5. Calcular `ACH = caudal efectivo_CFM × duty_cycle × 60 / volumen_ft3`.
-6. Cargar la cámara con masa térmica representativa y registrar la curva de CO₂/HR.
-7. Definir la línea base mínima y el control por CO₂; documentar zonas muertas.
-8. Probar pérdida de WiFi/HA, sensor inválido, relay pegado y recuperación de energía.
-9. Obtener aprobación humana antes de habilitar acciones automáticas.
-
-Un timer mecánico no demuestra ACH y no es el control primario. Cualquier respaldo debe definirse desde el riesgo real y probarse durante commissioning.
+1. **Alimentación y Seguridad Eléctrica:** Verificar tierra, prensaestopas en caja TICONN IP67, conectores WAGO 221 y estado seguro al reiniciar (`ALWAYS_OFF`).
+2. **Protocolos de Comunicación:**
+   - Confirmar I²C `0x44` para sonda Klanata SHT45.
+   - Confirmar UART a 9600 baud para sensor MH-Z19C.
+3. **Calibración Barométrica Tenjo (2.600 m s.n.m.):**
+   - Configurar en ESPHome `filters: - multiply: 1.369` en el sensor `mhz19`.
+   - **Desactivar obligatoriamente el autocalibrado:** `automatic_baseline_calibration: false`.
+4. **Commissioning de Ventilación (Cloudline H4):**
+   - Ajustar perilla de velocidad del extractor a Nivel 1 o 2.
+   - Configurar alivio de CO₂ en pulsos cortos de 30–45s para no desplomar la humedad del CloudForge T7.
+5. **Pruebas de Fallo en Banco (48–72h):**
+   - Simular pérdida de Wi-Fi y verificar continuidad del lazo local del ESP32.
+   - Simular desconexión de sonda SHT45 y verificar apagado inmediato del humidificador.
+   - Contrastar lecturas SHT45 vs. Inkbird IBS-TH2 Plus (delta ≤ 3% RH).
+6. **Aprobación de Arranque:** Registrar firma de prueba antes de introducir sustrato colonizado a la carpa CLOUDLAB 844.
 
 ## Entidades Mínimas en Home Assistant
 
-- T°, HR y CO₂ por `ENV-XXXX` con su `SNS-XXXX` de origen.
-- Estado y disponibilidad de cada actuador `EQ-XXXX`.
-- Delta SHT3x–Inkbird y alerta de sensor sin cambios.
-- Horas dentro de rango por lote `BT-XXXX`.
-- Caudal/ACH de commissioning como metadato, no como lectura inferida del timer.
+- `sensor.cloudlab01_temperatura` (SHT45, °C)
+- `sensor.cloudlab01_humedad` (SHT45, % RH)
+- `sensor.cloudlab01_co2` (MH-Z19C compensado, ppm)
+- `sensor.cloudlab01_delta_humedad_inkbird` (Auditoría cruzada, %)
+- `switch.cloudlab01_humidificador` (Relé CloudForge T7)
+- `switch.cloudlab01_extractor_fae` (Relé Cloudline H4)
 
-## Condiciones para Habilitar Automatización
+## Condiciones para Habilitar Automatización en Producción
 
 ```text
-[ ] inventory_verified
-[ ] electrical_safety_verified
-[ ] sensors_cross_checked
-[ ] ventilation_commissioned
+[ ] inventory_verified (Confirmado Agosto 2026)
+[ ] electrical_safety_verified (TICONN IP67 + WAGO 221)
+[ ] sensors_cross_checked (SHT45 vs. Inkbird BLE)
+[ ] barometric_compensation_applied (MH-Z19C x1.369 / ABC=OFF)
+[ ] ventilation_pulsed_commissioned (Cloudline H4 Vel 1-2)
 [ ] manual_override_tested
-[ ] failure_modes_tested
+[ ] failure_modes_tested (48h en banco de pruebas)
 [ ] CURRENT_OPERATIONS updated with dated evidence
 ```
 
-Hasta completar todos los puntos, `ECC/config/workflow_template.json` mantiene `automated_actions.enabled: false` y `cloudlab_esp32.yaml` se considera configuración de banco de pruebas.

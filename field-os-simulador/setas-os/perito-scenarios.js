@@ -768,6 +768,9 @@
     return neverWorse && strictlyBetter;
   };
 
+  // O(n²) por diseño: compara cada candidato contra todos los demás. Hoy es seguro porque
+  // los llamadores acotan `candidates` con structuralSeedCap/RANKED_LIMIT/beamWidth antes
+  // de invocarla — si alguno de esos límites sube, revisar el costo aquí primero.
   const paretoFront = (candidates = [], objectives) => candidates.filter((c, i) =>
     !candidates.some((other, j) => j !== i && dominates(other.evaluation, c.evaluation, objectives))
   );

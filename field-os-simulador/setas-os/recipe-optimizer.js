@@ -48,6 +48,7 @@
     }, 0);
     const sp = effectiveSPP[sKey];
     let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
+    let phF, aerF, digF, ebMods, ebCvVal, ebLow, ebHigh, ebIndex;
     if (sp) {
       const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - sp.cn_optimal.ideal) / ((sp.cn_optimal.max - sp.cn_optimal.min) / 2), 1.5));
       const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - sp.n_optimal.ideal) / ((sp.n_optimal.max - sp.n_optimal.min) / 2), 1.5));
@@ -59,19 +60,19 @@
       else if (needsAutoclave) eb *= 0.85;
       if (incompat.length) eb *= 0.9;
       if (tot < 95 || tot > 105) eb *= 0.95;
-      var phF = 1;
+      phF = 1;
       if (sp.ph_optimal) {
         if (avgPh < sp.ph_optimal.min) phF = Math.max(0.70, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
         else if (avgPh > sp.ph_optimal.max) phF = Math.max(0.80, 1 - (avgPh - sp.ph_optimal.max) * 0.10);
       }
-      var aerF = 1;
+      aerF = 1;
       if (densaP > 60 && airP < 10) aerF = 0.85;
       else if (densaP > 40 && airP < 8) aerF = 0.93;
       const isLigninSpp = ['shiitake', 'reishi'].includes(sKey);
-      var digF = isLigninSpp ? 1 : (avgDig >= 6 ? 1 : Math.max(0.85, 1 - (6 - avgDig) * 0.03));
+      digF = isLigninSpp ? 1 : (avgDig >= 6 ? 1 : Math.max(0.85, 1 - (6 - avgDig) * 0.03));
       eb = eb * phF * aerF * digF;
-      var ebMods = { phF, aerF, digF };
-      var ebCvVal = 0.18;
+      ebMods = { phF, aerF, digF };
+      ebCvVal = 0.18;
       if (ebMods.phF < 0.95) ebCvVal += 0.05;
       if (ebMods.aerF < 0.95) ebCvVal += 0.05;
       if (ebMods.digF < 0.95) ebCvVal += 0.04;
@@ -79,19 +80,19 @@
       if (suppP > sp.supplementation_max) ebCvVal += 0.10;
       if (trichoderma) ebCvVal = 0.50;
       ebCvVal = Math.min(trichoderma ? 0.50 : 0.40, ebCvVal);
-      var ebLow = Math.round(eb * (1 - ebCvVal));
-      var ebHigh = Math.round(eb * (1 + ebCvVal));
-      var ebIndex = Math.round(Math.max(0, Math.min(100, (eb - sp.eb_baseline) / Math.max(1, sp.eb_optimal - sp.eb_baseline) * 100)));
+      ebLow = Math.round(eb * (1 - ebCvVal));
+      ebHigh = Math.round(eb * (1 + ebCvVal));
+      ebIndex = Math.round(Math.max(0, Math.min(100, (eb - sp.eb_baseline) / Math.max(1, sp.eb_optimal - sp.eb_baseline) * 100)));
       dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppP / 5));
     }
     const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
     const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
     return {
       tot, avgN, cn, cost, eb, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
-      ebLow: typeof ebLow !== 'undefined' ? ebLow : Math.round(eb),
-      ebHigh: typeof ebHigh !== 'undefined' ? ebHigh : Math.round(eb),
-      ebIndex: typeof ebIndex !== 'undefined' ? ebIndex : 0,
-      ebMods: typeof ebMods !== 'undefined' ? ebMods : null
+      ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
+      ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
+      ebIndex: ebIndex !== undefined ? ebIndex : 0,
+      ebMods: ebMods !== undefined ? ebMods : null
     };
   };
 
