@@ -1,0 +1,101 @@
+# ==============================================================================
+# Setas de la Peña — Tenjo (2.600 msnm)
+# Firmware Template: ESP32-WROOM-32 Telemetría Ambiental para Setas OS
+# Sensores: SHT3x/SHT45 (T/HR) + Sensirion SCD30 / MH-Z19C (CO2 NDIR)
+# ==============================================================================
+
+substitutions:
+  device_name: "setas-martha-01"
+  friendly_name: "Martha Tent 01 (Tenjo)"
+  room_id: "martha_01"
+  adapter_host: "192.168.1.100" # IP local del servidor Node.js de Setas OS
+  adapter_port: "8080"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Setas-Fallback-AP"
+    password: !secret fallback_password
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  password: !secret ota_password
+
+# ── I2C Bus para Sensores Ambientales ─────────────────────────────────────────
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  id: bus_a
+
+# ── Sensores Físicos en Sala ──────────────────────────────────────────────────
+sensor:
+  # AC Infinity SHT3x / Sensirion SHT45 (Temperatura y Humedad)
+  - platform: sht3xd
+    i2c_id: bus_a
+    address: 0x44
+    temperature:
+      name: "Temperatura Sala"
+      id: room_temp
+      accuracy_decimals: 1
+    humidity:
+      name: "Humedad Relativa Sala"
+      id: room_humidity
+      accuracy_decimals: 1
+    update_interval: 15s
+
+  # Sensirion SCD30 (Dióxido de Carbono NDIR)
+  # Parámetro crítico: compensación de altitud a 2.600 msnm (Tenjo)
+  - platform: scd30
+    i2c_id: bus_a
+    address: 0x61
+    co2:
+      name: "CO2 Sala"
+      id: room_co2
+      accuracy_decimals: 0
+    altitude_compensation: 2600m
+    automatic_self_calibration: false
+    update_interval: 30s
+
+http_request:
+  id: http_client
+  timeout: 5s
+
+# ── Enlace Periódico con Setas OS (Adaptador de Telemetría) ───────────────────
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - http_request.post:
+                url: !lambda |-
+                  return "http://" + std::string("${adapter_host}") + ":" + std::string("${adapter_port}") + "/api/telemetry";
+                headers:
+                  Content-Type: application/json
+                json:
+                  room_id: ${room_id}
+                  device_id: ${device_name}
+                  temperature: !lambda 'return id(room_temp).state;'
+                  humidity: !lambda 'return id(room_humidity).state;'
+                  co2: !lambda 'return id(room_co2).state;'
+                  source: "esp32_esphome"
