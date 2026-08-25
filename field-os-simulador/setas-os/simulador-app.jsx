@@ -1965,6 +1965,16 @@ function App(props){
   const [thermalScope,setThermalScope]=useState('all');
   const [thermalBagStart,setThermalBagStart]=useState(1);
   const [thermalBagEnd,setThermalBagEnd]=useState(20);
+  const [showDiagModal,setShowDiagModal]=useState(false);
+  const [diagLoteId,setDiagLoteId]=useState('');
+  const [diagBolsaId,setDiagBolsaId]=useState('');
+  const [diagImageBase64,setDiagImageBase64]=useState('');
+  const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
+  const [diagRunning,setDiagRunning]=useState(false);
+  const [diagResult,setDiagResult]=useState(null);
+  const [diagError,setDiagError]=useState('');
+  const [diagNotes,setDiagNotes]=useState('');
+
   // Modo de trabajo del Formulador: bodega (solo stock real) vs. catálogo
   // completo. Antes solo alimentaba el Generador automático — ahora también
   // controla las sugerencias individuales del Perito (bestStock en
@@ -2143,12 +2153,12 @@ function App(props){
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showProvModal||catalogModalOpen);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showProvModal,catalogModalOpen]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -3610,7 +3620,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
     if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
-    if(action==='contamination'){goBitTab('bit_bolsas',true);return;}
+    if(action==='contamination'){
+      setDiagLoteId(lote.id);
+      const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
+      setDiagBolsaId(b?.id||'');
+      setDiagImageBase64('');
+      setDiagResult(null);
+      setDiagError('');
+      setDiagNotes('');
+      setShowDiagModal(true);
+      return;
+    }
     setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
   };
   const TodayV2=()=>{
@@ -3656,6 +3676,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
+      {stats&&(
+        <section className="os-finance-panel" data-testid="batch-financial-closure">
+          <div className="os-finance-header">
+            <div>
+              <span className="os-finance-title">💰 Cierre Financiero & Rendimiento Real</span>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
+                Balance económico del lote · Precio venta: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
+              </div>
+            </div>
+            {stats.totalFresco>0&&(
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:stats.margenRealTotal>=0?'var(--moss-200,#DCE1D1)':'var(--coral-100,#FDE8E8)',color:stats.margenRealTotal>=0?'var(--moss-700,#404D2E)':'var(--coral-700,#A83232)'}}>
+                {stats.margenRealTotal>=0?'+':''}${Math.round(stats.margenRealTotal).toLocaleString('es-CO')} ({stats.margenRealPct.toFixed(1)}% margen)
+              </span>
+            )}
+          </div>
+          <div className="os-finance-grid">
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">Inversión Incurrida</span>
+              <span className="econ-metric-value">${Math.round(stats.costoIncurridoTotal).toLocaleString('es-CO')}</span>
+              <span className="econ-metric-sub">${Math.round(stats.costoIncurridoPorBolsa).toLocaleString('es-CO')} / bolsa ({stats.numBolsas} bolsas)</span>
+            </div>
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">Ingreso Cosechas</span>
+              <span className="econ-metric-value">${Math.round(stats.ingresoRealTotal).toLocaleString('es-CO')}</span>
+              <span className="econ-metric-sub">{stats.totalFresco.toFixed(2)} kg hongo fresco</span>
+            </div>
+            <div className="econ-metric-box">
+              <span className="econ-metric-label">EB Real vs Estimada</span>
+              <span className="econ-metric-value">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</span>
+              <span className="econ-metric-sub">{stats.varianzaEB!=null?`${stats.varianzaEB>=0?'+':''}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)`:'Sin receta base'}</span>
+            </div>
+            <div className="econ-metric-box" style={{background:stats.margenRealTotal>=0?'var(--paper-100,#EFEBE0)':'var(--paper-50)'}}>
+              <span className="econ-metric-label">Costo / kg Cosechado</span>
+              <span className="econ-metric-value">{stats.costoRealPorKgCosechado!=null?'$'+Math.round(stats.costoRealPorKgCosechado).toLocaleString('es-CO'):'—'}</span>
+              <span className="econ-metric-sub">{stats.totalFresco>0?'Costo unitario real':'Pendiente cosecha'}</span>
+            </div>
+          </div>
+          {stats.flushes&&stats.flushes.length>0&&(
+            <div style={{marginTop:12}}>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte por Oleada (Flushes)</div>
+              <div className="os-flush-bar-container">
+                {stats.flushes.map((f,i)=>(
+                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
+                ))}
+              </div>
+              <div className="os-flush-list">
+                {stats.flushes.map(f=>(
+                  <div className="os-flush-item" key={f.flush}>
+                    <span>Flush {f.flush}</span>
+                    <span>{f.kg.toFixed(2)} kg ({f.pctTotal.toFixed(1)}%)</span>
+                    <span>+${Math.round(f.ingreso).toLocaleString('es-CO')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -7092,9 +7170,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
-                          setBitActiveLoteId(currentLote.id);
+                          setDiagLoteId(currentLote.id);
+                          const b=bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
+                          setDiagBolsaId(b?.id||'');
+                          setDiagImageBase64('');
+                          setDiagResult(null);
+                          setDiagError('');
+                          setDiagNotes('');
                           setShowQrSheet(false);
-                          goBitTab('bit_bolsas',true);
+                          setShowDiagModal(true);
                         }}
                       >
                         ⚠ Reportar Contaminación / Merma
@@ -7306,7 +7390,287 @@ body{margin:0;padding:20px 24px;background:#fff;}
           );
         })()}
 
+        {showDiagModal && (() => {
+          const currentLote = bitLotes.find(l => l.id === diagLoteId) || bitLotes[0];
+          const bolsasDelLote = currentLote ? bitBolsas.filter(b => b.loteId === currentLote.id) : [];
+          const currentBolsa = bolsasDelLote.find(b => b.id === diagBolsaId) || bolsasDelLote[0];
+
+          const handleFileSelect = async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+              setDiagError('La imagen supera los 10 MB. Comprímela o toma una foto de menor resolución.');
+              return;
+            }
+            try {
+              const b64 = await fileToBase64(file);
+              setDiagImageBase64(b64);
+              setDiagImageMime(file.type || 'image/jpeg');
+              setDiagError('');
+              setDiagResult(null);
+            } catch (err) {
+              setDiagError('Error al cargar la fotografía.');
+            }
+          };
+
+          const handleRunDiagnosis = async () => {
+            if (!diagImageBase64) {
+              setDiagError('Selecciona o toma una fotografía primero.');
+              return;
+            }
+            setDiagRunning(true);
+            setDiagError('');
+            try {
+              if (window.SetasAI && typeof window.SetasAI.diagnoseContaminationImage === 'function') {
+                const diag = await window.SetasAI.diagnoseContaminationImage({
+                  base64Data: diagImageBase64,
+                  mimeType: diagImageMime,
+                  speciesName: currentLote?.especie || '',
+                  stage: currentLote?.estado || '',
+                  roomName: currentLote?.sala || '',
+                  notes: diagNotes
+                });
+                setDiagResult(diag);
+                setDiagRunning(false);
+                return;
+              }
+              if (window.claude && typeof window.claude.complete === 'function') {
+                const prompt = `Eres el experto micólogo de Setas de la Peña en Tenjo. Analiza esta foto de una bolsa de cultivo de ${currentLote?.especie || 'hongos'}. Emite un JSON estricto: {"patogeno":"nombre","tipo":"hongo_competidor|moho_parasito|bacteria|micelio_sano|estres_ambiental","urgencia":"critica|alta|media|baja|ninguna","confianza":"alta|media|bajo","descripcion_visual":"...","accion_recomendada":"...","posible_causa":"...","estado_bolsa_sugerido":"contaminada|dudosa|descartada|sana"}`;
+                const fileBlock = { type: 'image', source: { type: 'base64', media_type: diagImageMime, data: diagImageBase64 } };
+                const resp = await window.claude.complete({
+                  messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: prompt }] }]
+                });
+                setDiagResult(extraerJSON(resp));
+                setDiagRunning(false);
+                return;
+              }
+              throw new Error('Servicio de IA no configurado en este navegador.');
+            } catch (err) {
+              setDiagError(err.message || 'No se pudo completar el diagnóstico.');
+              setDiagRunning(false);
+            }
+          };
+
+          const handleApplyVerdict = () => {
+            if (!currentBolsa || !diagResult) return;
+            const nuevoEstado = diagResult.estado_bolsa_sugerido || 'contaminada';
+            const anotacion = `[IA Gemini] ${diagResult.patogeno} (${diagResult.urgencia}): ${diagResult.accion_recomendada}`;
+            const obsFinal = currentBolsa.obs ? `${currentBolsa.obs} · ${anotacion}` : anotacion;
+
+            updateBitBolsa(currentBolsa.id, {
+              estado: nuevoEstado,
+              obs: obsFinal
+            });
+
+            if (workflow && currentLote) {
+              const fromState = legacyLifecycle[currentLote.estado] || 'incubation';
+              const contBags = bolsasDelLote.filter(b => b.id !== currentBolsa.id && b.estado === 'contaminada').length + (nuevoEstado === 'contaminada' ? 1 : 0);
+              const contPct = bolsasDelLote.length ? Math.round((contBags / bolsasDelLote.length) * 100) : 0;
+              
+              if (contPct >= 50 && fromState !== 'discarded') {
+                const evt = workflow.transitionEvent({
+                  batchId: currentLote.id,
+                  from: fromState,
+                  to: 'discarded',
+                  reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
+                });
+                updateBitLote(currentLote.id, {
+                  estado: 'descartado',
+                  lifecycleState: 'discarded',
+                  lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
+                });
+              }
+            }
+
+            setShowDiagModal(false);
+            setNoticeDlg({
+              title: '🛡 Dictamen Aplicado',
+              msg: `Bolsa ${currentBolsa.codigo} actualizada a estado: ${nuevoEstado.toUpperCase()}. ${diagResult.accion_recomendada}`
+            });
+          };
+
+          return (
+            <div className="inv-modal-bg" style={{zIndex:99999}} onClick={()=>setShowDiagModal(false)}>
+              <div className="os-diag-modal" data-testid="ai-contamination-diagnosis-modal" onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-terracotta)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                      Microbiología & Sanidad · Setas OS
+                    </div>
+                    <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
+                      🔬 Diagnóstico Visual de Contaminaciones
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}}
+                    onClick={()=>setShowDiagModal(false)}
+                    aria-label="Cerrar diagnóstico"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+                  <div>
+                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Lote</label>
+                    <select
+                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                      value={currentLote?.id||''}
+                      onChange={e=>{
+                        setDiagLoteId(e.target.value);
+                        const b=bitBolsas.find(x=>x.loteId===e.target.value);
+                        setDiagBolsaId(b?.id||'');
+                        setDiagResult(null);
+                      }}
+                    >
+                      {bitLotes.map(l=><option key={l.id} value={l.id}>{l.codigo} — {l.especie}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Bolsa Específica</label>
+                    <select
+                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                      value={currentBolsa?.id||''}
+                      onChange={e=>setDiagBolsaId(e.target.value)}
+                    >
+                      {bolsasDelLote.map(b=><option key={b.id} value={b.id}>{b.codigo} ({b.estado})</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>Fotografía de la Bolsa / Síntoma</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    style={{fontFamily:'var(--font-sans)',fontSize:12,width:'100%'}}
+                    onChange={handleFileSelect}
+                  />
+                  {diagImageBase64 && (
+                    <img
+                      src={`data:${diagImageMime};base64,${diagImageBase64}`}
+                      alt="Muestra de bolsa"
+                      className="os-diag-preview"
+                    />
+                  )}
+                </div>
+
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Observaciones del Operario (opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Olor agrio, manchas circulares, 3 días de incubación..."
+                    style={{width:'100%',boxSizing:'border-box',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                    value={diagNotes}
+                    onChange={e=>setDiagNotes(e.target.value)}
+                  />
+                </div>
+
+                {diagError && (
+                  <div style={{padding:'8px 12px',background:'#FEE2E2',color:'#991B1B',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
+                    ⚠ {diagError}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  style={{
+                    width:'100%',
+                    minHeight:44,
+                    cursor:(!diagImageBase64||diagRunning)?'not-allowed':'pointer',
+                    background:(!diagImageBase64||diagRunning)?'var(--paper-2)':'var(--accent-terracotta)',
+                    color:(!diagImageBase64||diagRunning)?'var(--ink-2)':'#ffffff',
+                    border:'none',
+                    borderRadius:'var(--radius-md)',
+                    fontFamily:'var(--font-sans)',
+                    fontSize:13,
+                    fontWeight:700,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center',
+                    gap:8
+                  }}
+                  disabled={!diagImageBase64||diagRunning}
+                  onClick={handleRunDiagnosis}
+                >
+                  {diagRunning ? '⏳ Analizando imagen con Gemini 2.5 Flash...' : '🔍 Diagnosticar con Gemini AI'}
+                </button>
+
+                {diagResult && (
+                  <div className="os-diag-result-card">
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span style={{fontFamily:'var(--font-display)',fontSize:15,fontWeight:700,color:'var(--ink-0)'}}>
+                        {diagResult.patogeno}
+                      </span>
+                      <span className={`os-diag-urgency-${diagResult.urgencia}`} style={{padding:'3px 8px',borderRadius:2,fontSize:10,fontWeight:700,textTransform:'uppercase',fontFamily:'var(--font-mono)'}}>
+                        Urgencia: {diagResult.urgencia}
+                      </span>
+                    </div>
+
+                    <div style={{fontSize:12,color:'var(--ink-1)',lineHeight:1.4}}>
+                      <strong>Signos visibles:</strong> {diagResult.descripcion_visual}
+                    </div>
+
+                    {diagResult.posible_causa && (
+                      <div style={{fontSize:11,color:'var(--ink-2)'}}>
+                        <strong>Posible causa:</strong> {diagResult.posible_causa}
+                      </div>
+                    )}
+
+                    <div className="os-diag-protocol-box">
+                      <strong>Protocolo Inmediato:</strong>
+                      <div style={{marginTop:2}}>{diagResult.accion_recomendada}</div>
+                    </div>
+
+                    <div style={{display:'flex',gap:8,marginTop:6}}>
+                      <button
+                        type="button"
+                        style={{
+                          flex:1,
+                          minHeight:42,
+                          cursor:'pointer',
+                          background:'var(--moss-700,#385933)',
+                          color:'#ffffff',
+                          border:'none',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:700
+                        }}
+                        onClick={handleApplyVerdict}
+                      >
+                        🛡 Aplicar Dictamen & Actualizar Bolsa
+                      </button>
+                      <button
+                        type="button"
+                        style={{
+                          minHeight:42,
+                          padding:'0 14px',
+                          cursor:'pointer',
+                          background:'var(--paper-1)',
+                          color:'var(--ink-0)',
+                          border:'1px solid var(--border-hairline)',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:600
+                        }}
+                        onClick={()=>setShowDiagModal(false)}
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{height:40}}/>
+        
         
       </div>
 
