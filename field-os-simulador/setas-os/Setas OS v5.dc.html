@@ -3051,7 +3051,7 @@ class Component extends DCLogic {
       contextTab('Bodega',(s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario',()=>this.goSimTab('inventario')),
     ];
     if(activeWorkspace==='bitacora') workspaceTabs = [
-      contextTab('Registrar evento',s.module==='sesion',()=>this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})),
+      contextTab('Registrar evento',s.module==='sesion',()=>this.setState({module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false})),
       contextTab('Lotes',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_dash',()=>this.goBitTab('bit_dash')),
       contextTab('Seguimiento',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_bolsas',()=>this.goBitTab('bit_bolsas')),
       contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
@@ -3112,14 +3112,15 @@ class Component extends DCLogic {
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
       goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
-      // "Registrar Evento" en Acciones Rápidas de Hoy — mismo destino que la
-      // pestaña de navegación "Registrar evento" (contextTab de module:'sesion').
-      onGoSesion:()=>this.setState({module:'sesion',capture:false,workspaceMoreOpen:false}),
+      // Abre la hoja de opciones de inmediato. Cambiar solo module dejaba
+      // screen:'start' activo (sin plantilla visible), por lo que el botón
+      // parecía no responder aunque el estado sí hubiera cambiado.
+      onGoSesion:()=>this.setState({module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false}),
       // Las barras antiguas por pantalla quedan vacías: workspaceTabs es la única
       // navegación contextual visible y evita dos fuentes de verdad.
       prodTabs: [],
       regTabs: [],
-      goSesion:()=>this.setState({module:'sesion',capture:false}),
+      goSesion:()=>this.setState({module:'sesion',screen:'home',capture:false}),
       toggleSimFlyout:()=>this.setState(s=>({simFlyoutOpen:!s.simFlyoutOpen})),
       openSimFlyout:()=>this.setState({simFlyoutOpen:true}),
       closeSimFlyout:()=>this.setState({simFlyoutOpen:false}),

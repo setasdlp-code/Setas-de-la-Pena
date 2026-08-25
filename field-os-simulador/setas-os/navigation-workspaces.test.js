@@ -25,6 +25,8 @@ test('workspace routes preserve the agreed information architecture', () => {
   assert.match(shell, /contextTab\('Bodega'.*goSimTab\('inventario'\)/);
   assert.match(shell, /contextTab\('Métricas'.*reviewTab:'rendimiento'/);
   assert.match(shell, /contextTab\('Registrar evento',s\.module==='sesion'/);
+  assert.match(shell, /contextTab\('Registrar evento',[\s\S]*?screen:'home',capture:true/);
+  assert.match(shell, /onGoSesion:\(\)=>this\.setState\(\{module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false\}\)/);
   assert.match(jsx, /dashboard:'Recetario'/);
 });
 
