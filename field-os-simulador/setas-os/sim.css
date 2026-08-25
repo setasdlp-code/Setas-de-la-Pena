@@ -3879,5 +3879,177 @@
   color: var(--ink-0, #1E1D19);
 }
 
+/* ── Control Ambiental & Dashboard de Telemetría IoT ─────────────────────────── */
+.sim-root .climate-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sim-root .climate-room-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sim-root .climate-room-btn {
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .15s, border-color .15s;
+}
+
+.sim-root .climate-room-btn.on {
+  background: var(--moss-700, #385933);
+  color: #ffffff;
+  border-color: var(--moss-700, #385933);
+}
+
+.sim-root .climate-cycle-banner {
+  padding: 12px 16px;
+  background: var(--paper-1, #EFECE1);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sim-root .climate-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.sim-root .climate-kpi-card {
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sim-root .climate-kpi-card.out-of-band {
+  border-left: 4px solid var(--accent-terracotta, #A85C32);
+  background: #FFFBF7;
+}
+
+.sim-root .climate-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-1);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.sim-root .climate-kpi-value {
+  font-family: var(--font-num, monospace);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-0);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.sim-root .climate-kpi-sub {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.sim-root .climate-chart-panel {
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sim-root .climate-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sim-root .climate-range-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.sim-root .climate-range-pill {
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--paper-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--ink-1);
+}
+
+.sim-root .climate-range-pill.on {
+  background: var(--ink-0);
+  color: #ffffff;
+  border-color: var(--ink-0);
+}
+
+.sim-root .climate-svg-wrap {
+  width: 100%;
+  height: 140px;
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Widget en el cockpit de Hoy */
+.sim-root .today-climate-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sim-root .today-climate-card {
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.sim-root .today-climate-card:hover {
+  border-color: var(--moss-700, #385933);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+
 
 

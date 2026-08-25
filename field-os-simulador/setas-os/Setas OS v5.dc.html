@@ -34,6 +34,7 @@
 <script src="recipe-recommender.js"></script>
 <script src="scoring.js"></script>
 <script src="bitacora-model.js"></script>
+<script src="climate-math.js"></script>
     <script src="historical-calibration.js"></script>
 <script src="recipe-optimizer.js"></script>
 <script src="perito-scenarios.js"></script>
@@ -3056,6 +3057,7 @@ class Component extends DCLogic {
     ];
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
+      contextTab('Telemetría IoT',s.module==='sim'&&s.simTab==='clima',()=>this.goSimTab('clima')),
       contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
