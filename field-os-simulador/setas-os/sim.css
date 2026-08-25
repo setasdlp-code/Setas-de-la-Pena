@@ -2657,7 +2657,7 @@
 .sim-root .home-acciones-espacios-row{display:grid;grid-template-columns:1fr 4fr;gap:20px;align-items:start}
 .sim-root .home-acciones-espacios-row > *,
 .sim-root .home-workspaces-grid > *{min-width:0;overflow-wrap:anywhere}
-.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 @media(max-width:1200px){.sim-root .home-workspaces-grid{grid-template-columns:1fr!important}}
 @media(max-width:900px){ .sim-root .home-acciones-espacios-row{ grid-template-columns:minmax(0,1fr)!important; } }
 
@@ -3327,7 +3327,7 @@
   .sim-root .spp-sect-catalog{padding:14px 10px!important}
   .sim-root .catalog-hdr{margin-bottom:16px}
   .sim-root .catalog-title{font-size:28px}
-  .sim-root .spp-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .sim-root .spp-grid{grid-template-columns:minmax(0,1fr)!important;gap:7px!important}
   .sim-root .spp-card .p-img{aspect-ratio:4/3!important;padding:8px!important}
   .sim-root .p-family-strip{display:none}
   .sim-root .p-arch-head{padding:7px 8px}
