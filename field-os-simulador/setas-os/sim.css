@@ -82,6 +82,19 @@
   --surface-accent-soft: #e8f0e0;  /* soft olive for status badges, stock indicators */
   --surface-accent-soft-text: #3a5a28;  /* dark olive text on soft olive bg */
   --surface-selected: #F4F7F8;  /* card selection highlight (cool blue-gray) */
+  --surface-cream: var(--surface-cream);  /* warm cream for sections, emphasis areas */
+  --surface-cream-alt: var(--surface-cream-alt);  /* lighter cream variant */
+  --surface-green-light: var(--surface-green-light);  /* pale green for growth/positive contexts */
+
+  /* ── SPECIALTY COLORS (chemical, strain, botanical indicators) ── */
+  --color-species-name: #8C7F5B;  /* muted brown for species scientific names */
+  --color-dark-rich: #1E1D19;  /* near-black for strong contrast */
+  --color-dark-secondary: #385933;  /* dark green-brown for secondary emphasis */
+  --color-terracotta: #A85C32;  /* warm earth tone for warnings/attention */
+  --color-brick: #B8614D;  /* brick red for botanical strain indicators */
+  --color-attention: #C5562D;  /* attention/status color (coral-brown) */
+  --color-norm-bar: #6B8E5A;  /* moss-green for normalization/balance indicators */
+  --color-investigacion: #f0b093;  /* peach for investigation/experimental mode */
 
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
@@ -801,8 +814,8 @@
 .sim-root .tle.inoculation::before{ background:var(--coral-500); }
 .sim-root .tle.harvest{ border-color:var(--moss-300); }
 .sim-root .tle.harvest::before{ border-color:var(--moss-500); background:var(--moss-500); }
-.sim-root .tle.warning{ border-color:var(--status-attention, #C5562D); background:var(--status-attention-bg, #FCEEE9); }
-.sim-root .tle.warning::before{ border-color:var(--status-attention, #C5562D); background:var(--status-attention, #C5562D); }
+.sim-root .tle.warning{ border-color:var(--status-attention, var(--color-attention)); background:var(--status-attention-bg, #FCEEE9); }
+.sim-root .tle.warning::before{ border-color:var(--status-attention, var(--color-attention)); background:var(--status-attention, var(--color-attention)); }
 .sim-root .tle-dt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-500); margin-bottom:3px; }
 .sim-root .tle-t{ font-size:14px; font-weight:700; color:var(--ink-900); }
 .sim-root .tle-d{ font-size:13px; color:var(--ink-500); margin-top:3px; font-style:italic; }
@@ -1334,9 +1347,9 @@
 .sim-root .lock-btn.on{ opacity:1; color:var(--accent-terracotta); }
 .sim-root .norm-bar{ 
   display:flex; align-items:center; gap:8px; padding:9px 14px; 
-  background:linear-gradient(135deg, #F0F7ED, #E8F0E5);
-  border:1px solid #6B8E5A; border-top:none; border-radius:0;
-  font-size:11px; color:#6B8E5A; font-family:var(--font-mono);
+  background:linear-gradient(135deg, var(--surface-green-light), #E8F0E5);
+  border:1px solid var(--color-norm-bar); border-top:none; border-radius:0;
+  font-size:11px; color:var(--color-norm-bar); font-family:var(--font-mono);
 }
 .sim-root .bal-mode{ 
   font-family:var(--font-body); font-size:10px; padding:5px 8px; 
@@ -1554,7 +1567,7 @@
 .sim-root .prod-tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .sim-root .prod-tbl tr.tot td{border-top:1.5px solid var(--ink-900,#222);font-weight:700;border-bottom:none;}
 .sim-root .prod-step{display:flex;gap:11px;padding:7px 0;border-bottom:1px dotted var(--paper-300);}
-.sim-root .prod-step-n{font-family:var(--font-num);font-size:18px;font-weight:700;color:var(--coral-500,#B8614D);min-width:22px;line-height:1.2;}
+.sim-root .prod-step-n{font-family:var(--font-num);font-size:18px;font-weight:700;color:var(--coral-500,var(--color-brick));min-width:22px;line-height:1.2;}
 .sim-root .prod-step-t{font-size:14px;line-height:1.45;color:var(--ink-900);}
 
 .sim-root .treatment-section{}
@@ -2796,7 +2809,7 @@
 .sim-root .form-species-targets > span:last-child{border-right:0}
 .sim-root .form-species-targets small{color:rgba(255,255,255,.55);font:700 var(--text-micro)/1.2 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
 .sim-root .form-species-targets b{overflow:hidden;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-mono);text-overflow:ellipsis;white-space:nowrap}
-.sim-root .form-species-mode.is-investigacion b{color:#f0b093}
+.sim-root .form-species-mode.is-investigacion b{color:var(--color-investigacion)}
 
 /* Resumen compacto persistente mientras se recorre el catálogo. La especie vive
    en su propia barra; aquí permanecen únicamente receta y evaluación en vivo. */
@@ -3535,14 +3548,14 @@
   max-height: 48vh;
   overflow-y: auto;
   padding: 12px;
-  background: var(--paper-50, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-50, var(--surface-cream));
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
 }
 
 .sim-root .thermal-card-preview {
   background: var(--paper-0);
-  color: #000000;
+  color: var(--ink-900);
   border: 1px dashed #777777;
   border-radius: 2px;
   box-shadow: var(--shadow-card-rest, 0 1px 4px rgba(26,20,16,0.05));
@@ -3592,7 +3605,7 @@
 .sim-root .thermal-code {
   font-family: var(--font-mono, monospace);
   font-weight: 800;
-  color: #000000;
+  color: var(--ink-900);
 }
 
 .sim-root .thermal-card-50x30 .thermal-code {
@@ -3660,7 +3673,7 @@
     break-inside: avoid !important;
     page-break-after: always !important;
     background: var(--paper-0) !important;
-    color: #000000 !important;
+    color: var(--ink-900) !important;
     border: none !important;
     box-sizing: border-box !important;
     -webkit-print-color-adjust: exact !important;
@@ -3684,8 +3697,8 @@
 
 /* ── BATCH ECONOMICS & UNIT MARGIN ────────────────────────────── */
 .sim-root .economic-summary-card {
-  background: var(--paper-50, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-50, var(--surface-cream));
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-md, 3px);
   padding: 14px 16px;
   margin-top: 14px;
@@ -3700,7 +3713,7 @@
 
 .sim-root .econ-metric-box {
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: 2px;
   padding: 8px 10px;
   display: flex;
@@ -3720,7 +3733,7 @@
   font-family: var(--font-mono, monospace);
   font-size: 16px;
   font-weight: 800;
-  color: var(--ink-0, #1E1D19);
+  color: var(--ink-0, var(--color-dark-rich));
   margin-top: 3px;
 }
 
@@ -3756,7 +3769,7 @@
   padding: 3px 6px;
   border-radius: 2px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
 }
 
 .sim-root .econ-dot {
@@ -3767,8 +3780,8 @@
 
 /* ── BATCH FINANCIAL CLOSING & REAL VS ESTIMATED ───────────────── */
 .sim-root .os-finance-panel {
-  background: var(--paper-50, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-50, var(--surface-cream));
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-md, 3px);
   padding: 14px 16px;
   margin-top: 16px;
@@ -3789,7 +3802,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: var(--ink-0, #1E1D19);
+  color: var(--ink-0, var(--color-dark-rich));
 }
 
 .sim-root .os-finance-grid {
@@ -3811,7 +3824,7 @@
   justify-content: space-between;
   padding: 6px 10px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: 2px;
   font-family: var(--font-mono, monospace);
   font-size: 11px;
@@ -3831,7 +3844,7 @@
   width: min(560px, calc(100vw - 24px));
   max-height: calc(100vh - 32px);
   overflow-y: auto;
-  background: var(--paper-0, #F7F4EC);
+  background: var(--paper-0, var(--surface-cream));
   border: 1px solid var(--border-medium, #4A4433);
   border-radius: var(--radius-md, 3px);
   padding: 20px;
@@ -3843,16 +3856,16 @@
   max-height: 260px;
   object-fit: cover;
   border-radius: var(--radius-sm, 2px);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   margin-top: 10px;
-  background: #000000;
+  background: var(--ink-900);
 }
 
 .sim-root .os-diag-result-card {
   margin-top: 14px;
   padding: 14px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -3862,8 +3875,8 @@
 .sim-root .os-diag-urgency-critica,
 .sim-root .os-diag-urgency-alta {
   background: var(--accent-terracotta-dim, #EFE0D3);
-  color: var(--accent-terracotta, #A85C32);
-  border: 1px solid var(--accent-terracotta, #A85C32);
+  color: var(--accent-terracotta, var(--color-terracotta));
+  border: 1px solid var(--accent-terracotta, var(--color-terracotta));
 }
 
 .sim-root .os-diag-urgency-media {
@@ -3882,11 +3895,11 @@
 .sim-root .os-diag-protocol-box {
   padding: 10px 12px;
   background: var(--paper-1, #EFECE1);
-  border-left: 3px solid var(--accent-terracotta, #A85C32);
+  border-left: 3px solid var(--accent-terracotta, var(--color-terracotta));
   font-family: var(--font-sans, system-ui);
   font-size: 12px;
   line-height: 1.45;
-  color: var(--ink-0, #1E1D19);
+  color: var(--ink-0, var(--color-dark-rich));
 }
 
 /* ── Control Ambiental & Dashboard de Telemetría IoT ─────────────────────────── */
@@ -3905,7 +3918,7 @@
 .sim-root .climate-room-btn {
   padding: 8px 16px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -3919,15 +3932,15 @@
 }
 
 .sim-root .climate-room-btn.on {
-  background: var(--moss-700, #385933);
+  background: var(--moss-700, var(--color-dark-secondary));
   color: var(--text-on-dark)fff;
-  border-color: var(--moss-700, #385933);
+  border-color: var(--moss-700, var(--color-dark-secondary));
 }
 
 .sim-root .climate-cycle-banner {
   padding: 12px 16px;
   background: var(--paper-1, #EFECE1);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   justify-content: space-between;
@@ -3945,7 +3958,7 @@
 .sim-root .climate-kpi-card {
   padding: 14px 16px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -3953,8 +3966,8 @@
 }
 
 .sim-root .climate-kpi-card.out-of-band {
-  border-left: 4px solid var(--accent-terracotta, #A85C32);
-  background: #FFFBF7;
+  border-left: 4px solid var(--accent-terracotta, var(--color-terracotta));
+  background: var(--surface-cream-alt);
 }
 
 .sim-root .climate-kpi-header {
@@ -3987,7 +4000,7 @@
 .sim-root .climate-chart-panel {
   padding: 16px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -4028,8 +4041,8 @@
 .sim-root .climate-svg-wrap {
   width: 100%;
   height: 140px;
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-0, var(--surface-cream));
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   position: relative;
   overflow: hidden;
@@ -4046,7 +4059,7 @@
 .sim-root .today-climate-card {
   padding: 12px 14px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -4056,7 +4069,7 @@
 }
 
 .sim-root .today-climate-card:hover {
-  border-color: var(--moss-700, #385933);
+  border-color: var(--moss-700, var(--color-dark-secondary));
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
@@ -4064,7 +4077,7 @@
 .sim-root .climate-actuators-panel {
   padding: 16px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -4079,8 +4092,8 @@
 
 .sim-root .climate-actuator-card {
   padding: 14px 16px;
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-0, var(--surface-cream));
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
   flex-direction: column;
@@ -4103,7 +4116,7 @@
 }
 
 .sim-root .climate-actuator-badge.on {
-  background: var(--moss-700, #385933);
+  background: var(--moss-700, var(--color-dark-secondary));
   color: var(--text-on-dark)fff;
 }
 
@@ -4127,7 +4140,7 @@
 .sim-root .climate-actuator-btn {
   padding: 8px 12px;
   background: var(--paper-0);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   font-family: var(--font-sans);
   font-size: 12px;
@@ -4156,7 +4169,7 @@
 .sim-root .climate-log-row {
   padding: 6px 10px;
   background: var(--paper-1, #EFECE1);
-  border-left: 3px solid var(--moss-700, #385933);
+  border-left: 3px solid var(--moss-700, var(--color-dark-secondary));
   border-radius: 2px;
   display: flex;
   justify-content: space-between;
