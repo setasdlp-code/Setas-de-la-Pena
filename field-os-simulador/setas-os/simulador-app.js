@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: e304f968d0251786b97ae3a2691f9f4219bb13cc23326b3651b4749d411d9cd3
+// source-hash: 152bb14735c994b303bef9cd50dbfb6b4909f226b6144fc695775168ad1638ac
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -60,6 +60,108 @@ const SPP_DETAILS = {
     "Requiere la mayor humedad relativa del catálogo durante fructificación (90–95%). Por debajo del 88%, las primordias se secan antes de crecer. Un higrometro preciso es equipamiento no-negociable para esta especie.",
     "Produce consistentemente dos cosechas de calidad similar — inusual. La mayoría de especies caen 30–50% en segunda cosecha. Nameko mantiene el 80–85% del primer rendimiento si el bloque se sumerge en agua fría 12 horas entre flush."
   ] }
+};
+const SPECIES_GASTRONOMY = {
+  p_ostreatus_gris: {
+    title: "Orellana Gris · Pleurotus ostreatus",
+    botanical: "Lámina I · Basidiomycota · Pleurotaceae",
+    organoleptic: {
+      aroma: "Terroso suave, bosque andino tras la lluvia, sutil aroma a avellana fresca.",
+      flavor: "Umami equilibrado, dulce vegetal ligero con final almendrado.",
+      texture: "Carnosa, aterciopelada y elástica; gran retención de jugos en cocción."
+    },
+    metrics: { umami: 4, meatiness: 5, aromatics: 3, sweetness: 2 },
+    cooking: [
+      { method: "Salteado a fuego vivo", tip: "En sartén de hierro con mantequilla clarificada y sal marina; no tapar para lograr bordes dorados crujientes." },
+      { method: "Pasta fresca & Risottos", tip: "Incorporar al final del salteado con salvia fresca y reducción de vino blanco." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Chardonnay con crianza en roble o Sauvignon Blanc de altura." },
+      { category: "Quesos", item: "Parmesano Reggiano, queso Paipa añejo o gruyère." },
+      { category: "Hierbas", item: "Salvia, tomillo limonero, ajo negro y estragón." }
+    ],
+    presentation: "Bandeja kraft de 250 g con papel sulfurizado o faja de madera artesanal."
+  },
+  p_djamor: {
+    title: "Orellana Rosada · Pleurotus djamor",
+    botanical: "Lámina II · Basidiomycota · Pleurotaceae",
+    organoleptic: {
+      aroma: "Fresco, ligeramente marino con notas florales y cítricas suaves.",
+      flavor: "Umami brillante, toque mineral que evoca mariscos tiernos (camarón/langostilla).",
+      texture: "Firme, crujiente en láminas finas; tierna y elástica al diente."
+    },
+    metrics: { umami: 3, meatiness: 4, aromatics: 4, sweetness: 3 },
+    cooking: [
+      { method: "Ceviches templados & Carpaccios", tip: "Sellado relámpago de 90 segundos con aceite de oliva y jugo de mandarina o limón mandarino." },
+      { method: "Tacos gourmet & Woks", tip: "Cocción rápida con jengibre fresco, cebolla morada y cilantro cimarrón." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Vino rosado seco (Garnacha/Pinot Noir) o espumoso Brut." },
+      { category: "Aromáticos", item: "Cilantro cimarrón, ají dulce, ralladura de lima y jengibre." },
+      { category: "Aceites", item: "Aceite de oliva virgen extra monovarietal (Picual/Arbequina)." }
+    ],
+    presentation: "Bandeja kraft de 250 g ventilada; consumo preferente dentro de los 4 días."
+  },
+  shiitake: {
+    title: "Shiitake Roble · Lentinula edodes",
+    botanical: "Lámina III · Basidiomycota · Omphalotaceae",
+    organoleptic: {
+      aroma: "Intenso, sotobosque húmedo, notas de humo noble y corteza de roble.",
+      flavor: "Máxima concentración de ácido glutámico natural y guanilato; umami profundo y persistente.",
+      texture: "Densa, coriácea en pie (ideal para caldos), sombrero suculento y esponjoso."
+    },
+    metrics: { umami: 5, meatiness: 5, aromatics: 5, sweetness: 1 },
+    cooking: [
+      { method: "Glaseado & Confitado", tip: "Cocción lenta en salsa de soya artesanal, mirin y miel de Tenjo hasta reducir a textura laca." },
+      { method: "Fondo Dashi & Reducciones", tip: "Extracción en agua a 65 °C durante 45 minutos para maximizar liberación de ribonucleótidos." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Tintos de cuerpo medio: Pinot Noir, Nebbiolo o Carmenere." },
+      { category: "Proteínas", item: "Cortes de res madurada, magret de pato o cerdo confitado." },
+      { category: "Caldos", item: "Dashi, caldos concentrados de hueso y ramen de autor." }
+    ],
+    presentation: "Caja de madera noble con puente QR de trazabilidad de sustrato de roble."
+  },
+  lions_mane: {
+    title: "Melena de León · Hericium erinaceus",
+    botanical: "Lámina IV · Basidiomycota · Hericiaceae",
+    organoleptic: {
+      aroma: "Dulce, notas de mantequilla tibia, frutos secos y rocío matutino.",
+      flavor: "Extraordinaria semejanza gustativa con bogavante, langosta o carne de cangrejo real.",
+      texture: "Mullida, tierna, filamentosa que se deshace delicadamente en boca."
+    },
+    metrics: { umami: 4, meatiness: 4, aromatics: 4, sweetness: 4 },
+    cooking: [
+      { method: "Medallones a la plancha", tip: "Cortar en filetes gruesos de 2 cm, prensar suavemente para dorar en mantequilla marrón y ajo confitado." },
+      { method: "Rolls & Guisos marineros", tip: "Deshilachar a mano en hebras e incorporar en brioche tostado con mayonesa de estragón." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Chardonnay fermentado en barrica, Viognier o Champagne Brut Nature." },
+      { category: "Salsas", item: "Holandesa, bearnesa, mantequilla café de París." },
+      { category: "Botánicos", item: "Flor de sal marina, eneldo fresco y pimienta rosa." }
+    ],
+    presentation: "Caja protectora de madera con lecho de viruta de roble orgánico."
+  },
+  reishi: {
+    title: "Reishi Rojo · Ganoderma lucidum",
+    botanical: "Lámina V · Basidiomycota · Ganodermataceae",
+    organoleptic: {
+      aroma: "Amaderado noble, resina de pino, cuero curtido y tierra profunda.",
+      flavor: "Amargor tónico medicinal elegante con regusto terroso complejo.",
+      texture: "Leñosa no masticable; destinada exclusivamente a extracción hidroalcohólica o decocción."
+    },
+    metrics: { umami: 2, meatiness: 1, aromatics: 5, sweetness: 0 },
+    cooking: [
+      { method: "Doble extracción tónica", tip: "Decocción acuosa de 2 horas seguida de maceración en alcohol neutro de caña al 70%." },
+      { method: "Caldos adaptogénicos", tip: "Infusionar 5 g de láminas secas en caldos de cocción larga con jengibre y cardamomo." }
+    ],
+    pairings: [
+      { category: "Bebidas", item: "Café de especialidad de altura, té negro fermentado (Pu-erh) o mezcal artesanal." },
+      { category: "Chocolates", item: "Cacao colombiano al 75% o 85% de origen Tumaco o Arauca." },
+      { category: "Mieles", item: "Miel cruda de bosque andino y polen de páramo." }
+    ],
+    presentation: "Frasco boticario ámbar de 50 ml con gotero o láminas selladas al vacío."
+  }
 };
 const SPP_SUBSTRATE_GUIDE = {
   p_ostreatus_gris: [
@@ -1527,6 +1629,8 @@ function App(props) {
   const [thermalBagStart, setThermalBagStart] = useState(1);
   const [thermalBagEnd, setThermalBagEnd] = useState(20);
   const [thermalCosechaItem, setThermalCosechaItem] = useState(null);
+  const [showTastingModal, setShowTastingModal] = useState(false);
+  const [tastingSpeciesKey, setTastingSpeciesKey] = useState("p_ostreatus_gris");
   const [showDiagModal, setShowDiagModal] = useState(false);
   const [diagLoteId, setDiagLoteId] = useState("");
   const [diagBolsaId, setDiagBolsaId] = useState("");
@@ -3752,6 +3856,17 @@ BATCH (${numBags}×${kgBag} kg):
     return /* @__PURE__ */ React.createElement("div", { className: "fos-chips" }, activeGroup.tabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, className: t === tab ? "on" : "", onClick: () => goTab(t) }, TAB_LABELS[t])));
   })(), (tab === "home" || tab === "inicio") && (() => {
     const totalStockKg = invLotes.filter((l) => l.activo).reduce((s, l) => s + (Number(l.cantidadKgDisponible) || 0), 0);
+    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
+    const aggregatedStock = {};
+    invLotes.filter((l) => l.activo).forEach((l) => {
+      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
+    });
+    const criticalStockItems = INGS.map((ing) => {
+      const stockKg = aggregatedStock[ing.id] || 0;
+      const threshold = lowStockThresholds[ing.type] || 5;
+      return { ing, stockKg, threshold, isLow: stockKg < threshold };
+    }).filter((item) => item.isLow);
+    const lowStockCount2 = criticalStockItems.length;
     const totalBolsasCount = bitBolsas.length;
     const bolsasIncubacion = bitBolsas.filter((b) => b.estado === "sana" && !b.col100).length;
     const bolsasFructificacion = bitBolsas.filter((b) => b.estado === "sana" && b.col100).length;
@@ -3780,7 +3895,7 @@ BATCH (${numBags}×${kgBag} kg):
     const overdueTaskCount = operationalQueue.filter((item) => item.bucket === "overdue").length;
     const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
     const pendingTaskCount = operationalQueue.filter((item) => !["later", "context"].includes(item.bucket)).length;
-    const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount;
+    const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount2;
     const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)" } : { label: "Operación estable", color: "var(--moss-700)" };
     let camaras = [];
     try {
@@ -3892,7 +4007,10 @@ BATCH (${numBags}×${kgBag} kg):
         justifyContent: "space-between",
         gap: 18,
         boxShadow: "var(--shadow-card-rest)"
-      } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, /* @__PURE__ */ React.createElement(IconBox, { size: 11 }), " PLANTA & INSUMOS"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, stockIds.size, " variedades")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Producción & Bodega"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Stock Disponible"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, totalStockKg.toFixed(1), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Lotes de Insumos"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, invLotes.filter((l) => l.activo).length)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Proveedores"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invProveedores.length, " activos")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Compras Reg."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invCompras.length, " facturas")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("produccion"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Ficha de Mezclado"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("inventario"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Bodega"))), /* @__PURE__ */ React.createElement("div", { className: "home-workspace-card", style: {
+      } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, /* @__PURE__ */ React.createElement(IconBox, { size: 11 }), " PLANTA & INSUMOS"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, stockIds.size, " variedades")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Producción & Bodega"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Stock Disponible"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, totalStockKg.toFixed(1), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Lotes de Insumos"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, invLotes.filter((l) => l.activo).length)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Proveedores"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invProveedores.length, " activos")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Compras Reg."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invCompras.length, " facturas"))), criticalStockItems.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { background: "color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))", border: "1px solid var(--coral-500)", borderLeft: "4px solid var(--coral-700)", borderRadius: "var(--r-xs)", padding: "10px 12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--coral-700)" } }, "⚠ Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+        setInvTab("compra");
+        goTab("inventario");
+      }, style: { background: "none", border: "none", color: "var(--coral-700)", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: 9.5, padding: "2px 5px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "var(--coral-700)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-400)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))) : /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "6px 10px", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--moss-700)", fontSize: 12 } }, "✓"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-600)" } }, "Todos los insumos con stock operativo adecuado"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("produccion"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Ficha de Mezclado"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("inventario"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Bodega"))), /* @__PURE__ */ React.createElement("div", { className: "home-workspace-card", style: {
         background: "var(--paper-0)",
         border: "1px solid var(--border-soft)",
         borderTop: "3px solid var(--slate-500)",
@@ -4037,7 +4155,10 @@ BATCH (${numBags}×${kgBag} kg):
         const w = Math.max(hi - lo, 4);
         return /* @__PURE__ */ React.createElement("div", { key: b.lbl, style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", width: 90, flexShrink: 0 } }, b.lbl), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 5, background: "var(--paper-300)", borderRadius: 3, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${lo}%`, width: `${w}%`, height: "100%", background: b.color, borderRadius: 3, transition: "width .5s cubic-bezier(.32,.72,.36,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", width: 54, textAlign: "right", flexShrink: 0 } }, b.min === b.max ? `${b.min}${b.unit}` : `${b.min}–${b.max}${b.unit}`));
       }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", width: 90, flexShrink: 0 } }, "Dificultad"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", gap: 3 } }, [1, 2, 3, 4].map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: { flex: 1, height: 5, borderRadius: 3, background: d <= diff ? "var(--coral-500)" : "var(--paper-300)", transition: "background .3s" } }))), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", width: 54, textAlign: "right", flexShrink: 0 } }, SPP_DIFFICULTY[sKey] || "Media"))));
-    })())), /* @__PURE__ */ React.createElement("div", { className: "spp-info-center", style: { display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { className: "spp-img-wrap", style: { flex: 1, position: "relative", minHeight: 320 } }, IMG[sKey] && /* @__PURE__ */ React.createElement("img", { src: IMG[sKey], alt: sp.name, width: "520", height: "390", className: "spp-info-img", style: { objectPosition: "center 65%" }, loading: "lazy", decoding: "async" })), /* @__PURE__ */ React.createElement("div", { className: "spp-cta-row" }, /* @__PURE__ */ React.createElement("span", { className: "spp-cta-note" }, "Dificultad: ", SPP_DIFFICULTY[sKey] || "Media"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    })())), /* @__PURE__ */ React.createElement("div", { className: "spp-info-center", style: { display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { className: "spp-img-wrap", style: { flex: 1, position: "relative", minHeight: 320 } }, IMG[sKey] && /* @__PURE__ */ React.createElement("img", { src: IMG[sKey], alt: sp.name, width: "520", height: "390", className: "spp-info-img", style: { objectPosition: "center 65%" }, loading: "lazy", decoding: "async" })), /* @__PURE__ */ React.createElement("div", { className: "spp-cta-row", style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "spp-cta-note" }, "Dificultad: ", SPP_DIFFICULTY[sKey] || "Media"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setTastingSpeciesKey(sKey);
+      setShowTastingModal(true);
+    }, className: "spp-cta", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)" } }, "🍷 Ficha de Cata"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setCatalogModalOpen(false);
       openBuilderSubTab("formular");
       goTab("formular");
@@ -4888,7 +5009,10 @@ Click para ver análisis completo`
       return /* @__PURE__ */ React.createElement("div", { key: e.id, "data-recipe-id": e.id, className: "dash-card", style: { borderTopColor: band } }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-top" }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-name" }, e.name), /* @__PURE__ */ React.createElement("div", { className: "dash-card-spp" }, s2?.name, " · ", e.date)), /* @__PURE__ */ React.createElement("div", { className: "dash-card-body" }, /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "EB estimada"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: eb >= 100 ? "var(--moss-500)" : eb >= 80 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, e.eb, "%")), sc > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Score"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, sc, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "/100"))), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.cn, ":1")), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Ingredientes"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.recipe.length)), costKg > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Costo total/kg"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: "var(--ink-900)", fontFamily: "var(--font-num)", fontSize: "var(--text-base)" }, title: `Ingredientes: $${costIngKg.toLocaleString("es-CO")} + Energía proceso: $${eDash.toLocaleString("es-CO")}` }, "$", costKg.toLocaleString("es-CO"), " COP", eDash > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: 4 } }, "⚡+$", eDash.toLocaleString())))), costKg > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--paper-300)" } }, [{ nom: "20×50", kgH: 1.8 }, { nom: "18×35", kgH: 1 }, { nom: "Punch", kgH: 3.5 }].map((b) => /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "4px 6px", borderRight: "1px solid var(--paper-300)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", marginBottom: 1 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-sm)", color: "var(--ink-900)", fontWeight: 700 } }, "$", Math.round(costKg * b.kgH * hFactor).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)" } }, "COP/bolsa")))), /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 16px 10px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, e.recipe.slice(0, 4).map((r) => {
         const g = INGS.find((i) => i.id === r.id);
         return g ? /* @__PURE__ */ React.createElement("span", { key: r.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)" } }, g.name.length > 15 ? g.name.slice(0, 15) + "…" : g.name, " ", r.p, "%") : null;
-      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot" }, /* @__PURE__ */ React.createElement("button", { className: "dash-sload", style: { flex: 1 }, onClick: () => {
+      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot", style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sload", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)", padding: "4px 10px" }, onClick: () => {
+        setTastingSpeciesKey(e.sKey);
+        setShowTastingModal(true);
+      }, title: "Abrir dossier gastronómico y maridaje" }, "🍷 Cata"), /* @__PURE__ */ React.createElement("button", { className: "dash-sload", style: { flex: 1 }, onClick: () => {
         loadR(e);
       } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sdel", onClick: () => requireAdmin(delR)(e.id), "aria-label": `Eliminar receta ${e.name}` }, "✕")));
     }));
@@ -5085,8 +5209,46 @@ Click para ver análisis completo`
         label: "Generador de etiquetas térmicas",
         dialogStyle: { width: "min(580px, 95vw)", padding: "20px 18px", background: "var(--paper-1, #EFEBE0)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
       },
+      /* @__PURE__ */ React.createElement("style", { dangerouslySetInnerHTML: { __html: `
+                  @media print {
+                    @page {
+                      size: ${thermalSize === "40x30" ? "40mm 30mm" : thermalSize === "50x30" ? "50mm 30mm" : thermalSize === "60x40" ? "60mm 40mm" : thermalSize === "gourmet-wood" ? "180mm 60mm" : thermalSize === "kraft-tray" ? "80mm 120mm" : thermalSize === "apothecary-50" ? "85mm 42mm" : "auto"};
+                      margin: 0 !important;
+                    }
+                    body {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      background: #ffffff !important;
+                    }
+                    .thermal-print-roll {
+                      background: #ffffff !important;
+                    }
+                    .thermal-card-print {
+                      background: #ffffff !important;
+                      color: #000000 !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      filter: contrast(300%) grayscale(100%) !important;
+                    }
+                    .thermal-card-print * {
+                      background: transparent !important;
+                      color: #000000 !important;
+                    }
+                    .thermal-qr-img {
+                      image-rendering: pixelated !important;
+                    }
+                  }
+                ` } }),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid var(--border-hairline, #8C7F5B)", paddingBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)" } }, "🏷 Impresión Térmica · Rollo Adhesivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, "Lote ", lote.codigo, " · ", lote.especie, " ", thermalScope === "cosecha" ? "· Etiqueta Canastilla Cosecha" : "")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar generador de etiquetas", onClick: () => setShowThermalModal(false) }, "✕")),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { id: "thermal-format-label", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Formato de Impresión / Empaque"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-labelledby": "thermal-format-label", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 6 } }, /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { id: "thermal-format-label", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Formato de Impresión / Empaque"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-labelledby": "thermal-format-label", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 6 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => setThermalSize("40x30"),
+          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "40x30" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "40x30" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "40x30" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
+        },
+        "40 × 30 mm"
+      ), /* @__PURE__ */ React.createElement(
         "button",
         {
           type: "button",
@@ -5142,7 +5304,7 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("option", { value: "cosecha" }, "Etiqueta de Canastilla / Cosecha")
       ))),
       thermalScope === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: "var(--paper-0, #F7F4EC)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-start", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Desde bolsa:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-start", name: "thermal-bag-start", type: "number", min: 1, max: totalBags, value: thermalBagStart, onChange: (e) => setThermalBagStart(parseInt(e.target.value) || 1), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } }), /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-end", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Hasta:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-end", name: "thermal-bag-end", type: "number", min: thermalBagStart, max: totalBags, value: thermalBagEnd, onChange: (e) => setThermalBagEnd(parseInt(e.target.value) || totalBags), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } })),
-      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "50x30" ? "50×30 mm" : thermalSize === "60x40" ? "60×40 mm" : thermalSize === "gourmet-wood" ? "Faja Madera 180×60 mm" : thermalSize === "kraft-tray" ? "Bandeja Kraft 80×120 mm" : "Apotecario 50 ml")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
+      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : thermalSize === "50x30" ? "50×30 mm" : thermalSize === "60x40" ? "60×40 mm" : thermalSize === "gourmet-wood" ? "Faja Madera 180×60 mm" : thermalSize === "kraft-tray" ? "Bandeja Kraft 80×120 mm" : "Apotecario 50 ml")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
         return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, "Inoc: ", item.date), /* @__PURE__ */ React.createElement("div", null, "Fórmula: ", item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, "Setas de la Peña · Tenjo · 2.592 m")));
       }))),
@@ -5164,7 +5326,7 @@ Click para ver análisis completo`
         " etiqueta",
         items.length === 1 ? "" : "s"
       )),
-      /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll", style: { display: "none" } }, items.map((item) => {
+      /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
         return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, "Inoc: ", item.date), /* @__PURE__ */ React.createElement("div", null, "Fórmula: ", item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, "Setas de la Peña · Tenjo · 2.592 m")));
       }))
@@ -5226,6 +5388,36 @@ Click para ver análisis completo`
           style: { minHeight: 44, padding: "8px 20px" }
         },
         "🚀 Confirmar y Lanzar Producción"
+      )))
+    );
+  })(), showTastingModal && (() => {
+    const sKey2 = tastingSpeciesKey || "p_ostreatus_gris";
+    const gastro = SPECIES_GASTRONOMY[sKey2] || SPECIES_GASTRONOMY.p_ostreatus_gris;
+    const spInfo = SPP[sKey2] || SPP.p_ostreatus_gris;
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowTastingModal(false),
+        label: `Dossier Gastronómico: ${gastro.title}`,
+        dialogStyle: { width: "min(720px, 95vw)", padding: "24px 22px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid var(--accent-olive, #5B6B44)", paddingBottom: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--accent-olive, #5B6B44)" } }, "Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22, fontWeight: 700, color: "var(--ink-0, #1A1410)", margin: "4px 0 2px 0" } }, gastro.title), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2, #6E6246)" } }, gastro.botanical, " · Cultivo Agroecológico en Tenjo (2.592 m)")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar dossier de cata", onClick: () => setShowTastingModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-1, #EFEBE0)", padding: "16px 14px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 10 } }, "Notas de Cata & Organolépticas"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "👃 Aroma:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.aroma)), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "👅 Sabor & Umami:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.flavor)), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "🥩 Textura en Boca:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.texture)), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px dashed var(--border-hairline, #8C7F5B)", paddingTop: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Umami"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.umami / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.umami, "/5")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Carnosidad"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.meatiness / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.meatiness, "/5")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Aromáticos"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.aromatics / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.aromatics, "/5")))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "🍳 Técnicas Sugeridas por el Chef"), gastro.cooking.map((c, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { marginBottom: 8, background: "var(--paper-50, #F3EFE6)", padding: "8px 10px", borderRadius: 2, borderLeft: "3px solid var(--accent-olive, #5B6B44)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, c.method), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-1)", marginTop: 2 } }, c.tip)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "🍷 Armonía & Maridajes Recomendados"), gastro.pairings.map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { marginBottom: 6, display: "flex", gap: 6, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, color: "var(--accent-olive, #5B6B44)", minWidth: 70 } }, p.category, ":"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-0)" } }, p.item)))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, padding: "8px 10px", background: "var(--paper-1, #EFEBE0)", borderRadius: 2, border: "1px dashed var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)" } }, "📦 Presentación Óptima: "), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-0)" } }, gastro.presentation)))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Setas de la Peña · Sabana Centro · info@setasdelapena.co"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowTastingModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cerrar"), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            try {
+              window.print();
+            } catch (e) {
+              console.error(e);
+            }
+          },
+          className: "inv-btn inv-btn-pri",
+          style: { minHeight: 44, padding: "8px 18px", background: "var(--accent-olive, #5B6B44)", borderColor: "var(--accent-olive, #5B6B44)" }
+        },
+        "🖨 Imprimir Ficha de Cata"
       )))
     );
   })(), showDiagModal && (() => {
