@@ -1085,16 +1085,12 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
           <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-metadata);">Vista real escala 1:1 · 40×30 mm</div>
           <!-- Label container — proporción real 4:3 simulada a 200×150px -->
-          <div style="width:200px; height:150px; background:#FFFFFF; border:2px solid #1E1D19; box-shadow:2px 2px 0 #96907C; padding:6px 7px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
-            <!-- Top row: species + lot code -->
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px;">
-              <div>
-                <div style="font-family:monospace; font-size:6px; letter-spacing:.12em; text-transform:uppercase; color:#6B6759;">SETAS DE LA PEÑA</div>
-                <div style="font-family:monospace; font-size:11px; font-weight:700; line-height:1.15; color:#1E1D19; margin-top:1px;">P. ostreatus</div>
-              </div>
+          <div style="width:200px; height:150px; background:#FFFFFF; border:2px solid #1E1D19; box-shadow:2px 2px 0 #96907C; padding:8px; box-sizing:border-box; display:flex; flex-direction:row; align-items:center; gap:8px;">
+            <!-- Left Column: QR + Code -->
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:65px; flex-shrink:0; gap:4px;">
               <!-- QR placeholder -->
-              <div style="width:34px; height:34px; background:#1E1D19; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg width="26" height="26" viewBox="0 0 7 7" fill="#fff">
+              <div style="width:50px; height:50px; background:#1E1D19; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="40" height="40" viewBox="0 0 7 7" fill="#fff">
                   <rect x="0" y="0" width="3" height="3"/><rect x="4" y="0" width="3" height="3"/>
                   <rect x="0" y="4" width="3" height="3"/><rect x="1" y="1" width="1" height="1" fill="#1E1D19"/>
                   <rect x="5" y="1" width="1" height="1" fill="#1E1D19"/><rect x="1" y="5" width="1" height="1" fill="#1E1D19"/>
@@ -1102,27 +1098,18 @@
                   <rect x="3" y="5" width="2" height="1"/>
                 </svg>
               </div>
+              <div style="font-family:monospace; font-size:6px; font-weight:900; letter-spacing:-0.01em; color:#1E1D19; text-align:center; word-break:break-all; line-height:1;">LP-0418-26</div>
             </div>
-            <!-- Lot ID — hero element -->
-            <div style="font-family:monospace; font-size:16px; font-weight:700; letter-spacing:.06em; color:#1E1D19; text-align:center; border-top:1px solid #DCD5C2; border-bottom:1px solid #DCD5C2; padding:2px 0; margin:2px 0;">LP-0418-26</div>
-            <!-- Bottom fields -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px 6px;">
-              <div>
-                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Inoculación</div>
-                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">2026-08-25</div>
+            
+            <!-- Right Column: Text content -->
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; height:100%; min-width:0; line-height:1.2;">
+              <div style="font-family:monospace; font-size:11px; font-weight:900; text-transform:uppercase; color:#1E1D19; line-height:1.1; margin-bottom:4px;">P. OSTREATUS</div>
+              <div style="font-family:monospace; font-size:6.5px; color:#3C392F; font-weight:800;">
+                <div style="margin-bottom:1px;">BOLSA #01 de 12</div>
+                <div style="margin-bottom:1px;">Inoc: 2026-08-25</div>
+                <div>Fórmula: SP-118-26</div>
               </div>
-              <div>
-                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Sustrato</div>
-                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">SP-118-26</div>
-              </div>
-              <div>
-                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Ubicación</div>
-                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">T03·B·4</div>
-              </div>
-              <div>
-                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Operario</div>
-                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">M. Ramírez</div>
-              </div>
+              <div style="font-family:monospace; font-size:5.5px; font-weight:700; text-transform:uppercase; color:#6B6759; margin-top:6px; letter-spacing:0.05em;">SETAS DE LA PEÑA</div>
             </div>
           </div>
           <div style="font-size:10px; color:var(--text-metadata); text-align:center; max-width:200px; line-height:1.5;">
@@ -1139,12 +1126,11 @@
             <div>
               <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #988C6C; padding-bottom:4px;">
                 <span style="font-family:monospace; font-size:7.5px; letter-spacing:.1em; text-transform:uppercase; color:#6B6759;">SETAS DE LA PEÑA</span>
-                <span style="font-family:monospace; font-size:7px; color:#5B6B44; font-weight:700;">2.585 m</span>
               </div>
               <h4 style="margin:8px 0 2px; font-size:12.5px; font-weight:600; font-style:italic; color:#1E1D19; line-height:1.1;">Pleurotus ostreatus</h4>
               <span style="font-family:monospace; font-size:7.5px; text-transform:uppercase; color:#6B6759; letter-spacing:.05em;">Ostra Gris · Orgánica</span>
               <p style="font-size:9.5px; color:#3C392F; line-height:1.35; margin:6px 0 0; font-family:var(--font-sans);">
-                Textura carnosa y suave sabor umami. Cosechado manualmente a primera hora del día en Tenjo.
+                Textura carnosa y suave sabor umami. Cosechado manualmente a primera hora del día.
               </p>
             </div>
 

@@ -110,14 +110,20 @@ Setas OS formaliza el paso de una receta de prueba a SOP canónico:
 Para garantizar que la información digital en Setas OS coincida exactamente con la realidad física en las salas de cultivo y en la logística de distribución, se utiliza una suite de **6 perfiles de etiquetas térmicas directas** pre-diseñadas y calibradas en el Design System (estilizadas en `sim.css` bajo la clase `.thermal-card-print`):
 
 ##### A. Etiquetas de Trazabilidad en Cultivo (Soportes sintéticos de polipropileno PP, resistentes a HR >85%)
-1. **Etiqueta de Bloque Mini (40×30 mm):** Optimizado para bolsas pequeñas de incubación rápida o espacio limitado. Muestra código de lote `LP`, especie y QR de escaneo rápido.
-2. **Etiqueta de Bloque Estándar (50×30 mm):** Perfil primario para producción. Incluye código `LP` en formato destacado, especie, receta de sustrato, fecha de inoculación y código QR.
-3. **Etiqueta de Bloque Grande / Anotación (60×40 mm):** Se utiliza para lotes de investigación/ensayo de más de 2 kg. Ofrece espacio para anotaciones manuscritas rápidas de campo.
+1. **Etiqueta de Bloque Mini (40×30 mm):** Optimizado para bolsas pequeñas de incubación rápida. Agrupa el QR y la referencia de lote `LP` en una columna izquierda compacta (`.thermal-aside`), dejando la columna derecha libre para el nombre de la especie en tamaño grande y legible.
+2. **Etiqueta de Bloque Estándar (50×30 mm):** Perfil primario para producción. Sigue la misma composición de doble columna con el QR y código en la izquierda, especie destacada en gran tamaño en la derecha, y metadata (fecha de inoculación, fórmula) más aireada.
+3. **Etiqueta de Bloque Grande / Anotación (60×40 mm):** Versión extendida para lotes de investigación/ensayo de más de 2 kg, con mayor área para notas manuscritas rápidas.
 
 ##### B. Etiquetas de Empaque y Despacho Comercial (Papel térmico Kraft o algodón verjurado no blanqueado)
 4. **Faja Gourmet (180×60 mm):** Banda envolvente de seguridad para cajas de madera de pino de despacho Gourmet (1 kg y 3 kg). Muestra información botánica, lote de origen y logo.
-5. **Etiqueta Bandeja Kraft (80×120 mm):** Adhesivo comercial de gran formato para bandejas de cartón Kraft de 250 g. Incluye descripción gastronómica, fecha de cosecha de precisión y precio.
-6. **Etiqueta Apotecario (100×45 mm):** Diseñada específicamente para frascos goteros de ámbar de 50 ml y tinturas de triple extracción (ej. *Hericium erinaceus*).
+5. **Etiqueta Bandeja Kraft (80×120 mm):** Adhesivo comercial de gran formato para bandejas de cartón Kraft de 250 g. Incluye descripción gastronómica y fecha de cosecha de precisión.
+6. **Etiqueta Apotecario (100×45 mm):** Diseñada específicamente para frascos goteros de ámbar de 50 ml y tinturas de triple extracción.
+
+##### Criterios de Diseño Limpio y Trazabilidad Dinámica
+- **Especie Destacada:** Se amplía la jerarquía tipográfica del nombre científico (*ej. PLEUROTUS OSTREATUS*) para diferenciación inmediata en estantería a distancia.
+- **Remoción de redundancias:** Se elimina la indicación estática e innecesaria de "Lote Maestro" (dejando solo etiquetas útiles como `BOLSA #XX de YY`).
+- **Remoción de procedencia territorial:** Se quitan las referencias de "Tenjo" y "altura (2.592 m)" de las etiquetas físicas de trazabilidad para descontaminar el diseño y dar el máximo espacio disponible al texto operativo.
+- **Datos Mutables Excluidos:** Campos dinámicos que cambian con el tiempo (como la sala actual `Sala 1 / Fructificación` o el operario a cargo del turno) no se imprimen en el adhesivo físico. Al escanear el QR, Setas OS consulta Firestore y muestra la información en tiempo real, evitando etiquetas obsoletas.
 
 ##### Integración en el Proceso Operativo
 - **Momento de Inoculación (Día 0):** Al presionar "Preparar Lote", Setas OS genera el código `LP-XXXX-AA`. El operario imprime la cantidad exacta de etiquetas de bloque en la impresora portátil (ej. *Phomemo M110* por Bluetooth) y las pega en las bolsas.

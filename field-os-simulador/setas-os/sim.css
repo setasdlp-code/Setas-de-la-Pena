@@ -3906,6 +3906,15 @@
   height: 20mm;
 }
 
+.sim-root .thermal-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
 .sim-root .thermal-body {
   flex: 1;
   min-width: 0;
@@ -3922,20 +3931,24 @@
 }
 
 .sim-root .thermal-card-40x30 .thermal-code {
-  font-size: 9.5px;
+  font-size: 6px;
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.05;
   color: #000000 !important;
+  text-align: center;
 }
 
 .sim-root .thermal-card-50x30 .thermal-code {
-  font-size: 10.5px;
-  font-weight: 800;
+  font-size: 7px;
+  font-weight: 900;
+  text-align: center;
 }
 
 .sim-root .thermal-card-60x40 .thermal-code {
-  font-size: 12px;
+  font-size: 8px;
+  font-weight: 900;
+  text-align: center;
 }
 
 .sim-root .thermal-card-gourmet-wood .thermal-code {
@@ -3944,26 +3957,26 @@
 
 .sim-root .thermal-species {
   font-family: var(--font-sans, sans-serif);
-  font-weight: 800;
+  font-weight: 900;
   color: #000000;
   margin-top: 1px;
 }
 
 .sim-root .thermal-card-40x30 .thermal-species {
-  font-size: 7.5px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: #000000 !important;
   line-height: 1.1;
 }
 
 .sim-root .thermal-card-50x30 .thermal-species {
-  font-size: 8.5px;
+  font-size: 13px;
 }
 
 .sim-root .thermal-card-60x40 .thermal-species {
-  font-size: 9.5px;
+  font-size: 15px;
 }
 
 .sim-root .thermal-card-gourmet-wood .thermal-species {
@@ -4056,14 +4069,15 @@
     gap: 6px !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-code {
-    font-size: 9.5px !important;
+    font-size: 6px !important;
     font-weight: 900 !important;
     line-height: 1.05 !important;
-    letter-spacing: -0.02em !important;
+    letter-spacing: -0.01em !important;
     color: #000000 !important;
+    text-align: center !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-species {
-    font-size: 8px !important;
+    font-size: 11px !important;
     font-weight: 900 !important;
     text-transform: uppercase !important;
     line-height: 1.1 !important;

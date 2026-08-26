@@ -10513,16 +10513,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const qrSrc = generateQrSvgDataUrl(item.qrUrl);
                       return (
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
-                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-body">
+                          <div className="thermal-aside">
+                            <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
                             <div className="thermal-code">{item.id}</div>
+                          </div>
+                          <div className="thermal-body">
                             <div className="thermal-species">{item.species}</div>
                             <div className="thermal-meta">
-                              <div>{item.bagCode}</div>
+                              {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>Inoc: {item.date}</div>
                               <div>Fórmula: {item.recipe}</div>
                             </div>
-                            <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
+                            <div className="thermal-footer">Setas de la Peña</div>
                           </div>
                         </div>
                       );
@@ -10552,17 +10554,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const qrSrc = generateQrSvgDataUrl(item.qrUrl);
                     return (
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
-                        <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-body">
-                            <div className="thermal-code">{item.id}</div>
-                            <div className="thermal-species">{item.species}</div>
-                            <div className="thermal-meta">
-                              <div>{item.bagCode}</div>
-                              <div>Inoc: {item.date}</div>
-                              <div>Fórmula: {item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
+                        <div className="thermal-aside">
+                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
+                          <div className="thermal-code">{item.id}</div>
+                        </div>
+                        <div className="thermal-body">
+                          <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-meta">
+                            {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
+                            <div>Inoc: {item.date}</div>
+                            <div>Fórmula: {item.recipe}</div>
                           </div>
+                          <div className="thermal-footer">Setas de la Peña</div>
+                        </div>
                       </div>
                     );
                   })}
