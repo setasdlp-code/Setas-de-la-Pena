@@ -69,6 +69,8 @@
 <style>
   html, body { margin:0; background: var(--paper-1); }
   * { box-sizing: border-box; }
+  h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+  p { text-wrap: pretty; max-width: 65ch; }
   :is(button,a,input,select,textarea,[role="button"],[role="tab"]) { -webkit-tap-highlight-color:rgba(180,88,58,.18); }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   [role="dialog"] { overscroll-behavior:contain; }
@@ -79,11 +81,11 @@
      :active, so this is the only place a physical "push" confirmation can live.
      Buttons that already declare their own inline `transition` keep that untouched
      (inline always wins per-property); they still get the instant scale on press. */
-  button:not(:disabled) { transition: transform .12s cubic-bezier(.32,.72,.36,1); }
+  button:not(:disabled) { transition: transform .12s cubic-bezier(.32,.72,.36,1), background-color .15s ease, color .15s ease, border-color .15s ease; }
   button:not(:disabled):active { transform: scale(.97); }
-  a { color: var(--accent-terracotta); }
+  a { color: var(--accent-terracotta); transition: color .15s ease; }
   a:hover { color: color-mix(in oklab, var(--accent-terracotta) 78%, black); }
-  .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
   .fos-scroll::-webkit-scrollbar { display: none; }
   @keyframes fos-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fos-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -105,8 +107,8 @@
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; border:0; background:none; cursor:pointer; }
-  .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--accent-terracotta); outline-offset:2px; }
-  .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:var(--opacity-subtle); }
+  .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+  .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:var(--opacity-subtle, .6); }
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
@@ -299,10 +301,10 @@
         </div>
         </sc-if>
 
-        <div class="col" style="width:100%;padding:22px 26px 4px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
+        <div class="col" style="width:100%;padding:22px 26px 8px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
           <div>
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Registrado en esta sesión</div>
-            <div style="font-family:var(--font-sans);font-weight:900;font-size:15px;color:var(--ink-0);margin-top:2px;"><span style="font-size:36px;line-height:1;letter-spacing:-.02em;">{{ ledgerCount }}</span> <span style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--text-metadata);">eventos</span></div>
+            <div style="font-family:var(--font-sans);font-weight:900;font-size:15px;color:var(--ink-0);margin-top:2px;"><span style="font-size:38px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;">{{ ledgerCount }}</span> <span style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--text-metadata);">eventos</span></div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
             <button onClick="{{ openSyncQueue }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:2px;">Ver cola de sincronización</button>
@@ -315,10 +317,10 @@
         <sc-if value="{{ hasLedger }}" hint-placeholder-val="{{ true }}">
         <div class="col" style="width:100%;padding:6px 26px 20px;display:flex;flex-direction:column;">
           <sc-for list="{{ ledger }}" as="ev" hint-placeholder-count="3">
-            <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-soft);">
+            <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-soft);transition:background-color .15s ease;">
               <div style="flex:none;display:flex;flex-direction:column;align-items:center;padding-top:3px;">
                 <span style="width:10px;height:10px;border-radius:50%;background:{{ ev.accent }};"></span>
-                <span style="font-family:var(--font-mono);color:var(--text-disabled);margin-top:8px;font-size:11px;">{{ ev.time }}</span>
+                <span style="font-family:var(--font-mono);color:var(--text-disabled);margin-top:8px;font-size:11px;font-variant-numeric:tabular-nums;">{{ ev.time }}</span>
               </div>
               <div style="flex:1;min-width:0;">
                 <div style="display:flex;justify-content:space-between;gap:8px;">
@@ -332,9 +334,11 @@
         </div>
         </sc-if>
         <sc-if value="{{ noLedger }}" hint-placeholder-val="{{ false }}">
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:50px 40px;gap:8px;">
-          <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--border-strong);"></div>
-          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;">Aún no has registrado nada. El instrumento espera; tú trabajas.</div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:54px 40px;gap:10px;">
+          <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--text-metadata);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:22px;height:22px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+          </div>
+          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;text-wrap:balance;">Aún no has registrado nada. El instrumento espera; tú trabajas.</div>
         </div>
         </sc-if>
 
@@ -1663,6 +1667,18 @@
               <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:6px;line-height:1.5;">{{ k.note }}</div>
             </div>
           </sc-for>
+        </div>
+
+        <div style="border:1px solid var(--border-strong);background:var(--paper-0);padding:20px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font:var(--t-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-olive);font-weight:700;">Documentación y Protocolos</div>
+            <div style="font-family:var(--font-sans);font-weight:800;font-size:18px;color:var(--ink-0);margin-top:2px;">Guía Operativa Canónica (SOP-SYS-001)</div>
+            <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:4px;">Manual de precisión, balance C:N, telemetría IoT, etiquetas FOS-03 y rutinas de 60 días.</div>
+          </div>
+          <a href="guia-setas-os.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--ink-0);color:var(--paper-0);padding:10px 18px;border-radius:var(--radius-sm);font:var(--t-label);font-weight:600;">
+            <span>Abrir Guía Canónica</span>
+            <span style="color:var(--accent-terracotta);">→</span>
+          </a>
         </div>
       </div>
     </div>
@@ -3575,6 +3591,9 @@ class Component extends DCLogic {
     [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','clima'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
       if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label:m==='clima'?'Cámaras & IoT':label, sub:'Ir al módulo', go:()=>m==='clima'?this.goSimTab('clima'):this.setState({module:m,cmdOpen:false}) });
     });
+    if(/^(gu[ií]a|manual|doc|sop|protocolo)/.test(t)){
+      out.push({ k:'Manual', label:'Guía Operativa Canónica', sub:'Abrir manual y protocolos FOS', go:()=>{ window.open('guia-setas-os.html','_blank'); this.setState({cmdOpen:false}); } });
+    }
     return out.slice(0,12);
   }
 
