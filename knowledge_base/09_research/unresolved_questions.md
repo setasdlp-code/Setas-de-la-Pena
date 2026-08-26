@@ -57,14 +57,14 @@ Registro de preguntas técnicas, comerciales y operacionales que no tienen respu
 | QST-0023 | ¿Timeline realista para laboratorio (LAF + autoclave)? | Media | Programada | Fase 2 (meses 4–6 tras validar primeros lotes con spawn comercial). |
 | QST-0024 | ¿Sensor de fuga de agua necesario en zona electrónica? | Baja | Recomendado | Sensor de humedad de contacto en piso de caja TICONN. |
 
-## Preguntas Biológicas Abiertas en Literatura
+## Preguntas Biológicas y de Altitud en Literatura
 
-| # | Pregunta | Estado en Literatura |
-|---|---|---|
-| QST-0025 | ¿Efecto exacto de altitud (2600m) en tasa de colonización de P. djamor? | Sin datos publicados para esta altitud |
-| QST-0026 | ¿Adaptación de cepas tropicales de P. djamor a temperaturas más frías? | Literatura limitada |
-| QST-0027 | ¿BE de P. djamor con sustratos de bagazo de caña colombiano? | Sin estudios con variedades locales |
-| QST-0028 | ¿SCD30 requiere ajuste adicional más allá de `altitude_compensation: 2600`? | Pendiente banco de pruebas |
+| # | Pregunta | Estado en Literatura | Resolución / Hallazgo Técnico (Ago 2026) |
+|---|---|---|---|
+| QST-0025 | ¿Efecto de altitud (2.600 msnm) en esterilización, vapor y tasa micelial? | **Acotada / Resuelta técnicamente** | Modelado en `ref_alt_001`. Agua hierve a 91.5 °C a presión abierta (extender vapor a 6.5–8 h). Autoclave requiere 19 PSI manométrica para 121 °C (o +50% tiempo si opera a 15 PSI). |
+| QST-0026 | ¿Adaptación de cepas tropicales de *P. djamor* a microclima andino frío? | Pendiente medición de campo | Exige calefacción activa en CLOUDLAB 844 para mantener ≥22–24 °C en fructificación. |
+| QST-0027 | ¿BE y perfil nutricional de *Pleurotus* en bagazo de caña y residuos locales colombianos? | **Resuelta** | `paper_018` (Nieto & Chegwin / UNAL Bogotá) y `paper_019` (Philippoussis) confirman EB 60–90% y proteína 28–31% con suplementación de salvado de maíz/arroz. |
+| QST-0028 | ¿SCD30 y control ambiental requieren ajuste específico por altitud? | **Resuelta** | `ref_alt_001` y documentación Sensirion/ESPHome confirman que `altitude_compensation: 2600` corrige el desfase del ~25% por presión molar parcial. |
 
 ## Método de Resolución
 

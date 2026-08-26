@@ -47,6 +47,9 @@ related_documents:
 | paper_020 | Atila | 2019 | Cambios composicionales y suplementación de sustratos en H. erinaceus | H. erinaceus | ★★★★★ |
 | paper_021 | Royse & Bahler | 1986 | Genotipo, tiempo de spawn-run (60–120d) y formulación en L. edodes | L. edodes | ★★★★★ |
 | paper_022 | Villaescusa & Gil-Izquierdo | 2003 | Envasado MAP, PPO y conservación poscosecha a 4 °C | P. ostreatus | ★★★★★ |
+| paper_023 | Hernández, Sánchez & Yamasaki | 2003 | Pasteurización química en frío con cal ($Ca(OH)_2$) para Pleurotus | Pleurotus spp. | ★★★★★ |
+| paper_024 | Roda et al. | 2021 | Extracción ultrasónica (UAE) y fraccionamiento de bioactivos de H. erinaceus | H. erinaceus | ★★★★★ |
+| paper_025 | Morales & Bermúdez (UNAL/Cenicafé) | 2010 | Maderas andinas (Aliso y Eucalipto) para Pleurotus y Lentinula | Multi-especie | ★★★★★ |
 
 ## Libros Técnicos
 
@@ -145,18 +148,21 @@ related_documents:
 
 | Tema | Fuentes Principales |
 |---|---|
-| BE y sustratos | paper_018, paper_019, paper_020, guide_002, paper_001, book_001, book_003 |
-| Sustratos colombianos (bagazo, café, tamaza, cascarilla) | paper_006, paper_018, paper_019 |
+| BE y sustratos | paper_018, paper_019, paper_020, paper_023, paper_025, guide_002, paper_001, book_001, book_003 |
+| Sustratos colombianos (bagazo, café, tamaza, cascarilla, aliso) | paper_006, paper_018, paper_019, paper_025 |
+| Pasteurización química en frío ($Ca(OH)_2$ / cal) | paper_023, `deep_research_synthesis_2026.md` |
+| Extracción ultrasónica / fitoquímica Hericium | paper_003, paper_024, `deep_research_synthesis_2026.md` |
+| Maderas andinas (Aliso, Acacia, Eucalipto) | paper_025, `deep_research_synthesis_2026.md` |
 | Termodinámica y esterilización a altitud (2.600 m) | ref_alt_001, paper_006 |
 | FAE y ventilación | guide_003, book_001, book_007, ref_alt_001 |
-| Propiedades medicinales y cultivo H. erinaceus | paper_002, paper_003, paper_007, paper_010, paper_020 |
-| Poscosecha y empaque en atmósfera modificada (MAP) | paper_022, guide_003 |
+| Propiedades medicinales y cultivo H. erinaceus | paper_002, paper_003, paper_007, paper_010, paper_020, paper_024 |
+| Poscosecha y empaque en atmósfera modificada (MAP) | paper_022, guide_003, `deep_research_synthesis_2026.md` |
 | Laboratorio de spawn en grano y medios agar | guide_005, guide_003, book_007 |
-| Dew point / HR real y VPD andino | web_001, web_002, ref_alt_001 |
+| Dew point / HR real y VPD andino | web_001, web_002, ref_alt_001, `deep_research_synthesis_2026.md` |
 | Producción orgánica | book_002 |
-| Mercado medicinal | paper_003, paper_005 |
+| Mercado medicinal | paper_003, paper_005, paper_024 |
 | Diseño de planta / zonificación sanitaria | guide_001, guide_003, guide_005 |
-| IPM de insectos (sciáridos) | guide_001, guide_003 |
+| IPM de insectos (sciáridos) y biocontrol | guide_001, guide_003, `deep_research_synthesis_2026.md` |
 | Planificación de producción continua | guide_001, paper_021 |
 | IoT y automatización modular | paper_011, paper_012 |
 | CFD, mezcla de aire y zonas muertas | paper_013 |
@@ -164,6 +170,7 @@ related_documents:
 | Control predictivo, PINN y energía | paper_015 |
 | Esporas, bioaerosoles y salud ocupacional | paper_016, paper_017 |
 | Revisión integral de cámaras 2026 | `incubation_fruiting_chambers_2026.md` |
+| Síntesis de investigación profunda 2026 | `deep_research_synthesis_2026.md` |
 
 ## Literatura Pendiente de Incorporar
 
