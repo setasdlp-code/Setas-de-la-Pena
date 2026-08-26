@@ -4805,4 +4805,104 @@
   border: 1px solid var(--border-hairline, #8C7F5B);
 }
 
+/* ── IOT INTEGRATION HUB & FIRMWARE GENERATOR ───────────────────── */
+.sim-root .iot-hub-sheet {
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  padding: 24px;
+  color: var(--ink-0, #1A1410);
+  box-shadow: 0 8px 30px rgba(26,20,16,0.12);
+  max-width: 860px;
+  width: 100%;
+}
+.sim-root .iot-hub-pills {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-hairline);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+.sim-root .iot-hub-pill {
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  background: var(--paper-100);
+  border: 1px solid var(--border-hairline);
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease);
+}
+.sim-root .iot-hub-pill.on {
+  background: var(--accent-olive);
+  color: #FAF8F5;
+  border-color: var(--accent-olive);
+  font-weight: 700;
+}
+.sim-root .iot-node-card {
+  background: var(--paper-50, #FAF8F2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.sim-root .iot-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sim-root .iot-node-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sim-root .iot-node-badge.online {
+  background: color-mix(in oklab, var(--moss-600) 15%, var(--paper-0));
+  color: var(--moss-800);
+  border: 1px solid var(--moss-500);
+}
+.sim-root .iot-code-box {
+  background: #181512;
+  color: #E6E1D8;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  padding: 16px;
+  border-radius: 4px;
+  overflow-x: auto;
+  max-height: 380px;
+  border: 1px solid #332B24;
+}
+.sim-root .iot-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--paper-200);
+  border: 1px solid var(--border-hairline);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--ink-0);
+  transition: all .2s ease;
+}
+.sim-root .iot-copy-btn:hover {
+  background: var(--paper-100);
+}
+
+
 
