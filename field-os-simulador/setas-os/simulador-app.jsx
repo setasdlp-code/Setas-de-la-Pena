@@ -1525,6 +1525,673 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
   );
 };
 
+// ── IOT INTEGRATION HUB & FIRMWARE GENERATOR ──────────────────────────────────────────
+const DEFAULT_IOT_NODES = [
+  {
+    id: 'node_martha_01',
+    name: 'Nodo Carpa 01 · Fructificación Orellanas',
+    roomId: 'martha_01',
+    mcu: 'esp32dev',
+    ip: '192.168.1.101',
+    mac: '24:6F:28:B4:72:01',
+    rssi: -58,
+    status: 'online',
+    sensors: ['sht3xd', 'scd30'],
+    relays: ['ch1_humidifier', 'ch2_fae'],
+    lastSeen: 'hace 12s',
+    metrics: { temp: 18.2, rh: 89.5, co2: 720, subTemp: 19.1 }
+  },
+  {
+    id: 'node_martha_02',
+    name: 'Nodo Carpa 02 · Fructificación Shiitake',
+    roomId: 'martha_02',
+    mcu: 'esp32c3',
+    ip: '192.168.1.102',
+    mac: '24:6F:28:C9:14:02',
+    rssi: -64,
+    status: 'online',
+    sensors: ['sht45', 'scd30'],
+    relays: ['ch1_humidifier', 'ch2_fae'],
+    lastSeen: 'hace 18s',
+    metrics: { temp: 17.5, rh: 85.0, co2: 840, subTemp: 18.0 }
+  },
+  {
+    id: 'node_incubacion',
+    name: 'Nodo Incubación · Sala Oscura Térmica',
+    roomId: 'incubacion_01',
+    mcu: 'sonoff_th16',
+    ip: '192.168.1.105',
+    mac: 'E8:DB:84:9A:88:05',
+    rssi: -52,
+    status: 'online',
+    sensors: ['dht22', 'ds18b20'],
+    relays: ['ch1_humidifier'],
+    lastSeen: 'hace 35s',
+    metrics: { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8 }
+  }
+];
+
+const generateESPHomeYaml = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', mcu = 'esp32dev', sensors = ['sht3xd', 'scd30'], relays = ['ch1_humidifier', 'ch2_fae'], wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
+  return `# ==============================================================================
+# Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
+# ESPHome Telemetry & Actuation Firmware
+# ==============================================================================
+
+substitutions:
+  device_name: "${deviceName}"
+  room_id: "${roomId}"
+  adapter_host: "${serverHost}"
+  adapter_port: "${serverPort}"
+
+esphome:
+  name: \${device_name}
+  friendly_name: "\${device_name} (Tenjo)"
+
+${mcu.includes('esp8266') || mcu.includes('sonoff') ? `esp8266:
+  board: ${mcu.includes('sonoff') ? 'esp01_1m' : 'd1_mini'}` : `esp32:
+  board: ${mcu}
+  framework:
+    type: arduino`}
+
+wifi:
+  ssid: "${wifiSsid}"
+  password: "${wifiPass}"
+  fast_connect: true
+  ap:
+    ssid: "Setas-Fallback-\${device_name}"
+    password: "setas-recovery"
+
+captive_portal:
+logger:
+  level: INFO
+
+ota:
+  password: "setas-ota-secure"
+
+i2c:
+  sda: ${mcu.includes('esp8266') ? 'GPIO4' : 'GPIO21'}
+  scl: ${mcu.includes('esp8266') ? 'GPIO5' : 'GPIO22'}
+  scan: true
+  id: bus_a
+
+sensor:
+${sensors.includes('sht3xd') ? `  - platform: sht3xd
+    i2c_id: bus_a
+    address: 0x44
+    temperature:
+      name: "Temperatura Sala"
+      id: room_temp
+      accuracy_decimals: 1
+    humidity:
+      name: "Humedad Relativa Sala"
+      id: room_humidity
+      accuracy_decimals: 1
+    update_interval: 15s
+` : ''}${sensors.includes('scd30') ? `  - platform: scd30
+    i2c_id: bus_a
+    address: 0x61
+    altitude_compensation: 2587m # Compensación barométrica de Tenjo
+    co2:
+      name: "CO2 NDIR Sala"
+      id: room_co2
+      accuracy_decimals: 0
+    update_interval: 15s
+` : ''}${sensors.includes('ds18b20') ? `  - platform: dallas
+    address: 0x28...
+    name: "Temperatura Sonda Sustrato"
+    id: sub_temp
+    update_interval: 20s
+` : ''}${sensors.includes('dht22') ? `  - platform: dht
+    pin: GPIO14
+    model: DHT22
+    temperature:
+      name: "Temperatura Incubación"
+      id: room_temp
+    humidity:
+      name: "Humedad Incubación"
+      id: room_humidity
+    update_interval: 15s
+` : ''}
+switch:
+${relays.includes('ch1_humidifier') ? `  - platform: gpio
+    pin: ${mcu.includes('esp8266') ? 'GPIO12' : 'GPIO25'}
+    id: relay_humidifier
+    name: "Relé Humidificador T7 (Ch1)"
+    inverted: false
+` : ''}${relays.includes('ch2_fae') ? `  - platform: gpio
+    pin: ${mcu.includes('esp8266') ? 'GPIO13' : 'GPIO26'}
+    id: relay_fae
+    name: "Relé Extractor FAE (Ch2)"
+    inverted: false
+` : ''}
+http_request:
+  verify_ssl: false
+
+interval:
+  - interval: 15s
+    then:
+      - http_request.post:
+          url: !lambda |-
+            return "http://" + id(adapter_host) + ":" + id(adapter_port) + "/api/telemetry";
+          headers:
+            Content-Type: application/json
+          json: |-
+            root["room_id"] = "${roomId}";
+            root["observed_at"] = "";
+            root["temperature_c"] = id(room_temp).state;
+            root["rh_pct"] = id(room_humidity).state;
+            ${sensors.includes('scd30') ? 'root["co2_ppm"] = id(room_co2).state;' : ''}
+            ${sensors.includes('ds18b20') ? 'root["substrate_temperature_c"] = id(sub_temp).state;' : ''}
+`;
+};
+
+const generateArduinoIno = ({ deviceName = 'setas-carpa-01', roomId = 'martha_01', wifiSsid = 'SetasPeña_2.4G', wifiPass = '**********', serverHost = '192.168.1.100', serverPort = '8080' }) => {
+  return `/* ==============================================================================
+ * Setas de la Peña — Tenjo, Cundinamarca (2.587 msnm)
+ * Sketch Nativo Arduino C++ para Telemetría ESP32 / Setas OS
+ * ============================================================================== */
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <Wire.h>
+#include <Adafruit_SHT31.h>
+
+const char* ssid = "${wifiSsid}";
+const char* password = "${wifiPass}";
+const char* serverUrl = "http://${serverHost}:${serverPort}/api/telemetry";
+const char* roomId = "${roomId}";
+
+Adafruit_SHT31 sht31 = Adafruit_SHT31();
+
+unsigned long lastSend = 0;
+const unsigned long sendInterval = 15000; // Cada 15s
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(21, 22); // I2C SDA=21, SCL=22
+  
+  if (!sht31.begin(0x44)) {
+    Serial.println("Error: Sensor SHT31 no encontrado en 0x44");
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  Serial.print("Conectando a WiFi en Tenjo...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\\nWiFi conectado. IP: " + WiFi.localIP().toString());
+}
+
+void loop() {
+  if (millis() - lastSend >= sendInterval) {
+    lastSend = millis();
+    
+    if (WiFi.status() == WL_CONNECTED) {
+      float t = sht31.readTemperature();
+      float h = sht31.readHumidity();
+      
+      if (!isnan(t) && !isnan(h)) {
+        HTTPClient http;
+        http.begin(serverUrl);
+        http.addHeader("Content-Type", "application/json");
+        
+        String jsonPayload = String("{\\"room_id\\":\\"") + roomId + 
+                             "\\",\\"temperature_c\\":" + String(t, 2) + 
+                             ",\\"rh_pct\\":" + String(h, 2) + "}";
+        
+        int httpCode = http.POST(jsonPayload);
+        Serial.println("POST a Setas OS [" + String(httpCode) + "]: " + jsonPayload);
+        http.end();
+      }
+    }
+  }
+}
+`;
+};
+
+const generateCurlPayload = ({ roomId = 'martha_01', temp = 18.2, rh = 89.5, co2 = 720, subTemp = 19.0, serverHost = '192.168.1.100', serverPort = '8080' }) => {
+  return `curl -X POST "http://${serverHost}:${serverPort}/api/telemetry" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "room_id": "${roomId}",
+    "observed_at": "${new Date().toISOString()}",
+    "temperature_c": ${temp},
+    "rh_pct": ${rh},
+    "co2_ppm": ${co2},
+    "substrate_temperature_c": ${subTemp}
+  }'`;
+};
+
+const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg) => {
+  try {
+    const data = JSON.parse(rawJson);
+    const roomId = data.room_id || data.roomId || 'martha_01';
+    const temp = Number(data.temperature_c ?? data.temp ?? data.temperature ?? 18.0);
+    const rh = Number(data.rh_pct ?? data.rh ?? data.humidity ?? 85.0);
+    const co2 = Number(data.co2_ppm ?? data.co2 ?? 700);
+    const subTemp = data.substrate_temperature_c != null ? Number(data.substrate_temperature_c) : null;
+    
+    if (typeof onInjectReading === 'function') {
+      onInjectReading({
+        roomId,
+        temp,
+        rh,
+        co2,
+        subTemp,
+        timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      });
+    }
+    if (typeof setSelectedClimateRoom === 'function') {
+      setSelectedClimateRoom(roomId);
+    }
+    return {
+      success: true,
+      msg: `Telemetría recibida con éxito para sala "${roomId}": ${temp.toFixed(1)}°C, ${rh.toFixed(1)}% HR, ${co2.toFixed(0)} ppm CO2.`
+    };
+  } catch (err) {
+    return {
+      success: false,
+      msg: `Error al procesar JSON: ${err.message}`
+    };
+  }
+};
+
+const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectReading, setSelectedClimateRoom, setNoticeDlg }) => {
+  const [tab, setTab] = useState('nodos');
+  const [nodes, setNodes] = useState(DEFAULT_IOT_NODES);
+  const [fwMcu, setFwMcu] = useState('esp32dev');
+  const [fwSensors, setFwSensors] = useState(['sht3xd', 'scd30']);
+  const [fwRelays, setFwRelays] = useState(['ch1_humidifier', 'ch2_fae']);
+  const [fwRoom, setFwRoom] = useState(selectedRoomId || 'martha_01');
+  const [fwWifiSsid, setFwWifiSsid] = useState('SetasPeña_2.4G');
+  const [fwWifiPass, setFwWifiPass] = useState('**********');
+  const [fwServerHost, setFwServerHost] = useState('192.168.1.100');
+  const [fwServerPort, setFwServerPort] = useState('8080');
+  const [fwFormat, setFwFormat] = useState('esphome');
+
+  const [webhookJson, setWebhookJson] = useState(`{\n  "room_id": "${selectedRoomId || 'martha_01'}",\n  "temperature_c": 18.4,\n  "rh_pct": 89.2,\n  "co2_ppm": 710,\n  "substrate_temperature_c": 19.3\n}`);
+  const [webhookFeedback, setWebhookFeedback] = useState(null);
+
+  // Automation rules
+  const [autoRhMin, setAutoRhMin] = useState(85);
+  const [autoRhTarget, setAutoRhTarget] = useState(90);
+  const [autoCo2Max, setAutoCo2Max] = useState(900);
+  const [autoFaeDuration, setAutoFaeDuration] = useState(35);
+  const [autoSubTempMax, setAutoSubTempMax] = useState(28.0);
+
+  if (!isOpen) return null;
+
+  const generatedCode = fwFormat === 'esphome'
+    ? generateESPHomeYaml({ deviceName: `setas-${fwRoom}`, roomId: fwRoom, mcu: fwMcu, sensors: fwSensors, relays: fwRelays, wifiSsid: fwWifiSsid, wifiPass: fwWifiPass, serverHost: fwServerHost, serverPort: fwServerPort })
+    : fwFormat === 'arduino'
+    ? generateArduinoIno({ deviceName: `setas-${fwRoom}`, roomId: fwRoom, wifiSsid: fwWifiSsid, wifiPass: fwWifiPass, serverHost: fwServerHost, serverPort: fwServerPort })
+    : generateCurlPayload({ roomId: fwRoom, temp: 18.4, rh: 89.2, co2: 710, subTemp: 19.3, serverHost: fwServerHost, serverPort: fwServerPort });
+
+  const toggleSensor = id => {
+    setFwSensors(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+  const toggleRelay = id => {
+    setFwRelays(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  return (
+    <AccessibleModal
+      onClose={onClose}
+      label="Hub de Integración IoT & Telemetría"
+      dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
+    >
+      {/* Header */}
+      <div style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AppIcon name="temp" size={20} color="var(--accent-olive, #5B6B44)" />
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, margin: 0, fontWeight: 700 }}>
+              Hub de Integración IoT & Hardware de Bajo Costo
+            </h2>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--paper-300, #C8C3B5)', marginTop: 2 }}>
+              Setas de la Peña · Tenjo (2.587 msnm) · ESP32 / Sonoff / SHT3x / SCD30
+            </div>
+          </div>
+        </div>
+        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}>✕</button>
+      </div>
+
+      {/* Navigation Pills */}
+      <div style={{ padding: '16px 24px 0', background: 'var(--paper-50)' }}>
+        <div className="iot-hub-pills">
+          <button type="button" className={`iot-hub-pill ${tab === 'nodos' ? 'on' : ''}`} onClick={() => setTab('nodos')}>
+            📡 Nodos en Finca ({nodes.length})
+          </button>
+          <button type="button" className={`iot-hub-pill ${tab === 'firmware' ? 'on' : ''}`} onClick={() => setTab('firmware')}>
+            ⚡ Generador de Firmware
+          </button>
+          <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
+            🧪 Consola Webhook / Test
+          </button>
+          <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
+            ⚙ Reglas de Automatización
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '20px 24px', maxHeight: '68vh', overflowY: 'auto' }}>
+        {tab === 'nodos' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-2)' }}>
+                Nodos ESP32 y microcontroladores transmitiendo telemetría activa en las carpas de Tenjo:
+              </div>
+              <button
+                type="button"
+                className="btn btn--sm btn--secondary"
+                onClick={() => setTab('firmware')}
+                style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                + Configurar Nuevo Dispositivo
+              </button>
+            </div>
+
+            {nodes.map(n => (
+              <div key={n.id} className="iot-node-card">
+                <div className="iot-node-header">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        {n.name}
+                      </span>
+                      <span className="iot-node-badge online">
+                        ● {n.status}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
+                      IP: {n.ip} · MAC: {n.mac} · RSSI: {n.rssi} dBm (Excelente) · Visto {n.lastSeen}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="btn btn--sm"
+                      style={{ fontSize: 10.5, padding: '3px 8px' }}
+                      onClick={() => {
+                        if (typeof setSelectedClimateRoom === 'function') setSelectedClimateRoom(n.roomId);
+                        onClose();
+                      }}
+                    >
+                      Ver Sala en Clima
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 10 }}>
+                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
+                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.temp.toFixed(1)}°C</div>
+                  </div>
+                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
+                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.rh.toFixed(1)}%</div>
+                  </div>
+                  <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
+                    <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.co2} ppm</div>
+                  </div>
+                  {n.metrics.subTemp != null && (
+                    <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
+                      <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.subTemp.toFixed(1)}°C</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'firmware' && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Microcontrolador</label>
+                <select className="field-input" value={fwMcu} onChange={e => setFwMcu(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                  <option value="esp32dev">ESP32 NodeMCU / WROOM-32 (Recomendado)</option>
+                  <option value="esp32c3">ESP32-C3 SuperMini (Compacto)</option>
+                  <option value="esp8266">ESP8266 Wemos D1 Mini</option>
+                  <option value="sonoff_th16">Sonoff TH16 / DualR3 (Tasmota)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Sala Asignada</label>
+                <select className="field-input" value={fwRoom} onChange={e => setFwRoom(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                  <option value="martha_01">Carpa 01 · Fructificación Orellanas</option>
+                  <option value="martha_02">Carpa 02 · Fructificación Shiitake</option>
+                  <option value="incubacion_01">Sala 03 · Incubación Térmica</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Servidor Setas OS (Host : Puerto)</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input type="text" className="field-input" value={fwServerHost} onChange={e => setFwServerHost(e.target.value)} style={{ flex: 2, fontSize: 12 }} />
+                  <input type="text" className="field-input" value={fwServerPort} onChange={e => setFwServerPort(e.target.value)} style={{ flex: 1, fontSize: 12 }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Sensores y Relés */}
+            <div style={{ background: 'var(--paper-100)', padding: 12, borderRadius: 4, marginBottom: 16, border: '1px solid var(--border-hairline)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>Sensores Conectados:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwSensors.includes('sht3xd')} onChange={() => toggleSensor('sht3xd')} />
+                  SHT3x / SHT45 (T/HR I2C)
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwSensors.includes('scd30')} onChange={() => toggleSensor('scd30')} />
+                  SCD30 NDIR CO2 (I2C · 2.587 msnm)
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwSensors.includes('ds18b20')} onChange={() => toggleSensor('ds18b20')} />
+                  DS18B20 Sonda de Sustrato (OneWire)
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwSensors.includes('dht22')} onChange={() => toggleSensor('dht22')} />
+                  DHT22 Sensor Digital
+                </label>
+              </div>
+
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, margin: '12px 0 8px', textTransform: 'uppercase' }}>Actuadores / Relés:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwRelays.includes('ch1_humidifier')} onChange={() => toggleRelay('ch1_humidifier')} />
+                  Relé Ch1: Humidificador Ultrasónico T7
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={fwRelays.includes('ch2_fae')} onChange={() => toggleRelay('ch2_fae')} />
+                  Relé Ch2: Extractor FAE Cloudline H4
+                </label>
+              </div>
+            </div>
+
+            {/* Selector de formato de exportación */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button type="button" className={`iot-hub-pill ${fwFormat === 'esphome' ? 'on' : ''}`} onClick={() => setFwFormat('esphome')}>
+                  📄 ESPHome (YAML)
+                </button>
+                <button type="button" className={`iot-hub-pill ${fwFormat === 'arduino' ? 'on' : ''}`} onClick={() => setFwFormat('arduino')}>
+                  🛠 Arduino C++ (.ino)
+                </button>
+                <button type="button" className={`iot-hub-pill ${fwFormat === 'curl' ? 'on' : ''}`} onClick={() => setFwFormat('curl')}>
+                  🌐 cURL / Webhook
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="iot-copy-btn"
+                onClick={() => {
+                  navigator.clipboard?.writeText?.(generatedCode);
+                  if (typeof setNoticeDlg === 'function') {
+                    setNoticeDlg({ title: 'Código Copiado', msg: 'La configuración de firmware ha sido copiada al portapapeles.' });
+                  } else {
+                    alert('Código copiado al portapapeles');
+                  }
+                }}
+              >
+                <AppIcon name="print" size={12} /> Copiar Código
+              </button>
+            </div>
+
+            <pre className="iot-code-box">
+              <code>{generatedCode}</code>
+            </pre>
+          </div>
+        )}
+
+        {tab === 'webhook' && (
+          <div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginBottom: 12 }}>
+              Simula el envío de una petición HTTP POST desde un sensor o pasarela MQTT hacia Setas OS. Al procesarse, los datos validarán el contrato canónico y actualizarán en vivo la sala seleccionada:
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() => setWebhookJson(`{\n  "room_id": "${selectedRoomId || 'martha_01'}",\n  "temperature_c": 18.2,\n  "rh_pct": 91.0,\n  "co2_ppm": 680,\n  "substrate_temperature_c": 19.0\n}`)}
+              >
+                Cargar Lectura Nominal (18.2°C · 91% HR)
+              </button>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() => setWebhookJson(`{\n  "room_id": "${selectedRoomId || 'martha_01'}",\n  "temperature_c": 19.5,\n  "rh_pct": 76.5,\n  "co2_ppm": 1150,\n  "substrate_temperature_c": 20.2\n}`)}
+              >
+                Cargar Alerta (CO2 Alto · HR Baja)
+              </button>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() => setWebhookJson(`{\n  "room_id": "incubacion_01",\n  "temperature_c": 24.2,\n  "rh_pct": 70.0,\n  "co2_ppm": 2600,\n  "substrate_temperature_c": 29.1\n}`)}
+              >
+                Cargar Alerta Incubación (Sustrato 29.1°C)
+              </button>
+            </div>
+
+            <textarea
+              className="field-input"
+              rows={8}
+              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: '#181512', color: '#E6E1D8', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
+              value={webhookJson}
+              onChange={e => setWebhookJson(e.target.value)}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg);
+                  setWebhookFeedback(res);
+                }}
+              >
+                🚀 Inyectar Telemetría de Prueba
+              </button>
+
+              {webhookFeedback && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
+                  {webhookFeedback.success ? '✓ ' : '✕ '} {webhookFeedback.msg}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'reglas' && (
+          <div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginBottom: 14 }}>
+              Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                  💧 Humidificación (Bang-Bang con Histéresis)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
+                    <input type="number" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
+                    <input type="number" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                  💨 Renovación de Aire FAE (Extractor Cloudline)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
+                    <input type="number" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
+                    <input type="number" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                  🌡 Seguridad Biológica de Sustrato
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
+                  <input type="number" step="0.5" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>
+                    Si $T_{'{sustrato}'} &gt; 28^\circ\text{C}$ durante incubación, se dispara alerta de riesgo de daño al micelio.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  if (typeof setNoticeDlg === 'function') {
+                    setNoticeDlg({ title: 'Reglas Actualizadas', msg: 'Las reglas de automatización climática para carpas han sido guardadas.' });
+                  }
+                  onClose();
+                }}
+              >
+                Guardar Parámetros de Automatización
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '12px 24px', background: 'var(--paper-100)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end' }}>
+        <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{ fontSize: 11 }}>
+          Cerrar
+        </button>
+      </div>
+    </AccessibleModal>
+  );
+};
+
 const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
@@ -2500,6 +3167,8 @@ function App(props){
   const [humidifierOverride,setHumidifierOverride]=useState(null);
   const [showProdLaunchModal,setShowProdLaunchModal]=useState(false);
   const [prodLaunchForm,setProdLaunchForm]=useState(null);
+  const [showIoTHub,setShowIoTHub]=useState(false);
+  const [injectedClimateReadings,setInjectedClimateReadings]=useState({});
 
 
 
@@ -4648,10 +5317,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           co2_ppm: { min: 450, max: 1000, target: 700 }
         };
 
-    // Datos de telemetría actuales
-    const currentMetrics = selectedClimateRoom === 'martha_01'
+    // Datos de telemetría actuales (con soporte para inyección de telemetría en vivo vía Hub IoT / Webhooks)
+    const baseMetrics = selectedClimateRoom === 'martha_01'
       ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: 'hace 45s' }
-      : { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' };
+      : selectedClimateRoom === 'martha_02'
+      ? { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' }
+      : { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8, timestamp: 'hace 35s' };
+    const injected = injectedClimateReadings[selectedClimateRoom];
+    const currentMetrics = injected ? { ...baseMetrics, ...injected } : baseMetrics;
 
     // Cálculos psicrométricos
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
@@ -4713,9 +5386,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
             ))}
           </div>
 
-          <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)'}}>
-            <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}/>
-            <span>ESP32 conectado · {currentMetrics.timestamp}</span>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <button
+              type="button"
+              className="btn btn--sm btn--secondary"
+              onClick={() => setShowIoTHub(true)}
+              style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',fontSize:11}}
+            >
+              <AppIcon name="temp" size={13} />
+              <span>Hub IoT & Firmware</span>
+            </button>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)'}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}/>
+              <span>ESP32 conectado · {currentMetrics.timestamp}</span>
+            </div>
           </div>
         </div>
 
@@ -9831,6 +10515,29 @@ interval:
             lotes={bitLotes}
             cosechas={bitCosechas}
             onClose={() => setPublicTraceModalLoteId(null)}
+          />
+        )}
+
+        {/* MODAL HUB IOT & TELEMETRÍA ESP32 */}
+        {showIoTHub && (
+          <IoTHubModal
+            isOpen={showIoTHub}
+            onClose={() => setShowIoTHub(false)}
+            selectedRoomId={selectedClimateRoom}
+            onInjectReading={(r) => {
+              setInjectedClimateReadings(prev => ({
+                ...prev,
+                [r.roomId]: {
+                  temp: r.temp,
+                  rh: r.rh,
+                  co2: r.co2,
+                  subTemp: r.subTemp,
+                  timestamp: r.timestamp || 'hace 1s'
+                }
+              }));
+            }}
+            setSelectedClimateRoom={setSelectedClimateRoom}
+            setNoticeDlg={setNoticeDlg}
           />
         )}
 
