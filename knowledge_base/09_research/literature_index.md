@@ -42,6 +42,14 @@ related_documents:
 | paper_015 | Kong et al. | 2026 | Control predictivo/PINN y ahorro energético | P. citrinopileatus | ★★★☆☆ |
 | paper_016 | Vereda et al. | 2007 | Asma ocupacional por esporas | P. ostreatus | ★★★★☆ |
 | paper_017 | Tarigan et al. | 2017 | Bioaerosoles y salud de trabajadores | Multi-especie | ★★★★★ |
+| paper_018 | Nieto & Chegwin (UNAL Bogotá) | 2010 | Influencia del sustrato en valor nutricional/nutracéutico de Pleurotus | Pleurotus spp. | ★★★★★ |
+| paper_019 | Philippoussis | 2009 | Producción de hongos en residuos agroindustriales (revisión y cinéticas) | Multi-especie | ★★★★★ |
+| paper_020 | Atila | 2019 | Cambios composicionales y suplementación de sustratos en H. erinaceus | H. erinaceus | ★★★★★ |
+| paper_021 | Royse & Bahler | 1986 | Genotipo, tiempo de spawn-run (60–120d) y formulación en L. edodes | L. edodes | ★★★★★ |
+| paper_022 | Villaescusa & Gil-Izquierdo | 2003 | Envasado MAP, PPO y conservación poscosecha a 4 °C | P. ostreatus | ★★★★★ |
+| paper_023 | Hernández, Sánchez & Yamasaki | 2003 | Pasteurización química en frío con cal ($Ca(OH)_2$) para Pleurotus | Pleurotus spp. | ★★★★★ |
+| paper_024 | Roda et al. | 2021 | Extracción ultrasónica (UAE) y fraccionamiento de bioactivos de H. erinaceus | H. erinaceus | ★★★★★ |
+| paper_025 | Morales & Bermúdez (UNAL/Cenicafé) | 2010 | Maderas andinas (Aliso y Eucalipto) para Pleurotus y Lentinula | Multi-especie | ★★★★★ |
 
 ## Libros Técnicos
 
@@ -63,6 +71,13 @@ related_documents:
 | guide_002 | ICAR-Directorate of Mushroom Research | 2020 | Growing Oyster Mushroom | Protocolo cuantificado P. djamor/ostreatus/citrinopileatus — BE, spawn, sustrato, ambiente | ★★★★★ |
 | guide_003 | MushWorld (ed.) | 2004 | Mushroom Growers' Handbook 1 — Oyster Mushroom Cultivation | Manual extenso: spawn de grano, sala limpia, sustrato, growing houses, plagas, poscosecha | ★★★★☆ |
 | guide_004 | Chang, S.-T. | ca. 2010 | Training Manual on Mushroom Cultivation Technology (UNAPCAEM/ESCAP) | Plantilla pedagógica — biología, genética básica, principios de cultivo | ★★★☆☆ |
+| guide_005 | Gaitán-Hernández, Salmones et al. (INECOL) | 2006 | Manual práctico del cultivo de setas: aislamiento, siembra y producción | Protocolo integral de laboratorio: medios agar, spawn de grano, suplementación mineral (CaSO₄/CaCO₃) y siembra | ★★★★★ |
+
+## Referencias Técnicas e Ingeniería de Altitud
+
+| ID | Título | Enfoque | Relevancia |
+|---|---|---|---|
+| ref_alt_001 | Termodinámica de Esterilización y Dinámica Ambiental a Gran Altitud (2.600 msnm / Tenjo) | Ajuste barométrico de vapor (91.5 °C), calibración de autoclave a 19 PSI manométrica, compensación NDIR CO₂ y VPD andino | ★★★★★ |
 
 ## Recursos Web
 
@@ -88,75 +103,81 @@ related_documents:
 - paper_007 (★★★☆☆) — Ensayo clínico pequeño en deterioro cognitivo leve
 - paper_003 (★★★★★) — Química y propiedades medicinales
 - paper_010 (★★★★★) — Subproductos agrícolas, optimización C:N y límite estricto de CO₂ <1,000 ppm
+- paper_020 (★★★★★) — Suplementación con salvado de trigo (20–30%) y arroz (20%), cinética de lignina y límite de N (<1.7%)
 - book_003 (★★★★★) — Producción comercial
 
 ### Lentinula edodes
 - paper_006 (★★★★★) — Formulaciones de sustrato de café, BE medida, cepas L54/L4055, esterilización a altitud (Cenicafé, Colombia)
 - paper_009 (★★★★★) — Amortiguación con CaCO₃ 1–2%, optimización C:N y choque térmico en troncos sintéticos
+- paper_021 (★★★★★) — Interacción de genotipo, formulación y spawn run de 120 días (+35–45% BE)
 - book_007 (★★★★★) — Cap. 13, cobertura de producción mundial y parámetros
 
 ### Pleurotus eryngii
 - paper_008 (★★★★★) — Nutrición rica en N (C:N 20–25:1), casing layer, y modulación de CO₂ (1,500–2,200 ppm) para grosor de tallo
 - book_007 (★★★★★) — Parámetros de cultivo de Pleurotus King
+- paper_019 (★★★★★) — Bioconversión de residuos y balance de C:N
 
 ### Ganoderma lucidum
 - paper_005 (★★★☆☆) — Propiedades medicinales
 - paper_006 (★★★★★) — Parámetros de cultivo por etapa (HR escalonada, pH, CO₂), formulaciones de café (Cenicafé, Colombia)
 - book_007 (★★★★★) — Cap. 19, parámetros de cultivo dedicados
 
-### Pleurotus ostreatus
-- guide_001 (★★★☆☆) — Diseño de planta, IPM, planificación continua (fuente terciaria; no usar para parámetros biológicos)
+### Pleurotus ostreatus / pulmonarius
+- paper_018 (★★★★★) — Residuos agroindustriales colombianos (bagazo, café, maíz) y composición nutricional (UNAL Bogotá)
+- paper_022 (★★★★★) — Poscosecha, conservación a 4 °C en envase microperforado (MAP) por 8–11 días e inhibición de PPO
+- guide_001 (★★★☆☆) — Diseño de planta, IPM, planificación continua
 - guide_002 (★★★★★) — BE 70–150% var. florida vs. estándar, protocolo cuantificado
+- guide_005 (★★★★★) — Manual de laboratorio de spawn, medios PDA/MEA, grano con yeso/cal y esterilización
 - book_007 (★★★★★) — BE 80–120%, T° fructificación por variedad
-- paper_011, paper_012 (★★★★☆) — IoT y automatización de bajo costo; evidencia de plataforma, no setpoints universales
+- paper_011, paper_012 (★★★★☆) — IoT y automatización de bajo costo
 - paper_013 (★★★★☆) — Distribución espacial de aire/CO₂ por CFD
 - paper_014 (★★★★☆) — Dataset visual y ambiental para visión artificial
 - paper_016 (★★★★☆) — Peligro ocupacional por esporas
 
 ### Genética y mejoramiento de cepas (transversal — Fase 3)
-- book_006 (★★★★★ académico / ★★☆☆☆ operacional) — Mating types, hibridación interespecífica de Pleurotus, mejoramiento de Lentinula edodes, protoplastos. Explica variabilidad de BE entre cepas de una misma especie.
+- book_006 (★★★★★ académico / ★★☆☆☆ operacional) — Mating types, hibridación interespecífica de Pleurotus, mejoramiento de Lentinula edodes, protoplastos.
 
 ### General / Multi-especie
+- paper_019 — Cinéticas de degradación y tablas de EB en residuos agroindustriales
+- ref_alt_001 — Ajustes de esterilización y dinámica ambiental para 2.600 msnm (Tenjo)
 - book_001, book_002, book_003, book_007 — Referencia completa
-- guide_003 — Spawn de grano, sala limpia, growing houses, plagas
-- guide_004 — Plantilla pedagógica para entrenamiento
+- guide_003, guide_005 — Spawn de grano, sala limpia, formulaciones minerales, growing houses, plagas
 - web_001, web_002 — Dew point y HR
 
 ## Clasificación por Tema
 
 | Tema | Fuentes Principales |
 |---|---|
-| BE y sustratos | guide_002, paper_001, book_001, book_003 |
-| FAE y ventilación | guide_003, book_001, book_007 |
-| Propiedades medicinales H. erinaceus | paper_002, paper_003, paper_007 |
-| Dew point / HR real | web_001, web_002 |
+| BE y sustratos | paper_018, paper_019, paper_020, paper_023, paper_025, guide_002, paper_001, book_001, book_003 |
+| Sustratos colombianos (bagazo, café, tamaza, cascarilla, aliso) | paper_006, paper_018, paper_019, paper_025 |
+| Pasteurización química en frío ($Ca(OH)_2$ / cal) | paper_023, `deep_research_synthesis_2026.md` |
+| Extracción ultrasónica / fitoquímica Hericium | paper_003, paper_024, `deep_research_synthesis_2026.md` |
+| Maderas andinas (Aliso, Acacia, Eucalipto) | paper_025, `deep_research_synthesis_2026.md` |
+| Termodinámica y esterilización a altitud (2.600 m) | ref_alt_001, paper_006 |
+| FAE y ventilación | guide_003, book_001, book_007, ref_alt_001 |
+| Propiedades medicinales y cultivo H. erinaceus | paper_002, paper_003, paper_007, paper_010, paper_020, paper_024 |
+| Poscosecha y empaque en atmósfera modificada (MAP) | paper_022, guide_003, `deep_research_synthesis_2026.md` |
+| Laboratorio de spawn en grano y medios agar | guide_005, guide_003, book_007 |
+| Dew point / HR real y VPD andino | web_001, web_002, ref_alt_001, `deep_research_synthesis_2026.md` |
 | Producción orgánica | book_002 |
-| Mercado medicinal | paper_003, paper_005 |
-| Diseño de planta / zonificación sanitaria | guide_001 |
-| IPM de insectos (sciáridos) | guide_001 |
-| Planificación de producción continua | guide_001 |
-| Sustratos de café (borra/pulpa/aserrín tallo) — C/N, BE, formulaciones | paper_006 |
-| Esterilización artesanal a presión atmosférica (altitud) | paper_006 |
-| Contaminantes fúngicos (Trichoderma/Penicillium/Neurospora/Aspergillus) | paper_006 |
-| Producción de spawn de grano artesanal (sala limpia casera) | guide_003 |
-| Diseño de growing houses por clima / casos de estudio África | guide_003 |
-| Mating types, hibridación interespecífica Pleurotus, mejoramiento Lentinula | book_006 |
-| BE comparada por especie/variedad de Pleurotus (umbral CO₂ micelio vs. fructificación) | book_007 |
+| Mercado medicinal | paper_003, paper_005, paper_024 |
+| Diseño de planta / zonificación sanitaria | guide_001, guide_003, guide_005 |
+| IPM de insectos (sciáridos) y biocontrol | guide_001, guide_003, `deep_research_synthesis_2026.md` |
+| Planificación de producción continua | guide_001, paper_021 |
 | IoT y automatización modular | paper_011, paper_012 |
 | CFD, mezcla de aire y zonas muertas | paper_013 |
 | Visión artificial, madurez y datasets | paper_014 |
 | Control predictivo, PINN y energía | paper_015 |
 | Esporas, bioaerosoles y salud ocupacional | paper_016, paper_017 |
 | Revisión integral de cámaras 2026 | `incubation_fruiting_chambers_2026.md` |
+| Síntesis de investigación profunda 2026 | `deep_research_synthesis_2026.md` |
 
 ## Literatura Pendiente de Incorporar
 
 | Tema | Por Buscar |
 |---|---|
-| Cultivo a altitud >2000m | Paper o estudio específico — no encontrado aún |
-| P. djamor en Colombia o sustratos tropicales locales | Sin datos publicados identificados |
-| Normativa INVIMA para hongos | Documentación regulatoria, no científica |
-| Spawn production from agar | Técnicas de expansión de cultivos — parcialmente cubierto por guide_003 (sala limpia), falta técnica de expansión desde agar específica |
+| Normativa INVIMA / ICA actualizada para hongos y nutracéuticos | Documentación regulatoria oficial |
+| Ensayos de rendimiento de P. djamor en Cundinamarca | Datos empíricos directos en primeros lotes de campo |
 
 # References
 - Ver `literature_database.md` para entradas completas.
