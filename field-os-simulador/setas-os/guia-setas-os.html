@@ -1023,6 +1023,215 @@
           <span>1440×900 RETINA</span>
         </figcaption>
       </figure>
+
+      <!-- ── ETIQUETAS TÉRMICAS ─────────────────────────────────── -->
+      <h3 class="section-h3">Etiquetas Térmicas de Trazabilidad (FOS-03)</h3>
+
+      <p>Cada bloque de sustrato inoculado sale de sala con una etiqueta térmica adherida que vincula físicamente el objeto con su registro digital en Setas OS. El diseño prioriza legibilidad a 40 cm en condiciones de baja iluminación y resistencia a humedad relativa &gt;85 %.</p>
+
+      <!-- Hardware + Formatos -->
+      <div style="display:flex; flex-wrap:wrap; gap:var(--space-5); align-items:stretch; margin: var(--space-4) 0;">
+
+        <!-- Especificaciones hardware -->
+        <div style="flex:1; min-width:240px; background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4);">
+          <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-metadata); margin-bottom:10px;">Hardware · Impresora Primaria</div>
+          <table style="width:100%; border-collapse:collapse; font-size:var(--text-sm); color:var(--text-secondary);">
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-hairline);">
+                <td style="padding:5px 0; font-family:var(--font-mono); color:var(--text-metadata); white-space:nowrap; padding-right:12px;">Modelo</td>
+                <td style="padding:5px 0; color:var(--ink-0); font-weight:500;">Phomemo M110</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-hairline);">
+                <td style="padding:5px 0; font-family:var(--font-mono); color:var(--text-metadata); padding-right:12px;">Conexión</td>
+                <td style="padding:5px 0;">Bluetooth (iOS / Android)</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-hairline);">
+                <td style="padding:5px 0; font-family:var(--font-mono); color:var(--text-metadata); padding-right:12px;">Resolución</td>
+                <td style="padding:5px 0; font-family:var(--font-mono);">203 dpi</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-hairline);">
+                <td style="padding:5px 0; font-family:var(--font-mono); color:var(--text-metadata); padding-right:12px;">Formato primario</td>
+                <td style="padding:5px 0; font-family:var(--font-mono);">40 × 30 mm</td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0; font-family:var(--font-mono); color:var(--text-metadata); padding-right:12px;">Formato extendido</td>
+                <td style="padding:5px 0; font-family:var(--font-mono);">60 × 40 mm</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px; font-size:11px; color:var(--text-metadata); border-top:1px dashed var(--border-hairline); padding-top:8px; line-height:1.6;">
+            El formato 60×40 mm se usa para <strong style="color:var(--ink-1);">bloques de +2 kg</strong> o cuando la ficha requiere campo de anotación manuscrita adicional.
+          </div>
+        </div>
+
+        <!-- Simulación visual del label 40×30 -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-metadata);">Vista real escala 1:1 · 40×30 mm</div>
+          <!-- Label container — proporción real 4:3 simulada a 200×150px -->
+          <div style="width:200px; height:150px; background:#FFFFFF; border:2px solid #1E1D19; box-shadow:2px 2px 0 #96907C; padding:6px 7px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+            <!-- Top row: species + lot code -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px;">
+              <div>
+                <div style="font-family:monospace; font-size:6px; letter-spacing:.12em; text-transform:uppercase; color:#6B6759;">SETAS DE LA PEÑA</div>
+                <div style="font-family:monospace; font-size:11px; font-weight:700; line-height:1.15; color:#1E1D19; margin-top:1px;">P. ostreatus</div>
+              </div>
+              <!-- QR placeholder -->
+              <div style="width:34px; height:34px; background:#1E1D19; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="26" height="26" viewBox="0 0 7 7" fill="#fff">
+                  <rect x="0" y="0" width="3" height="3"/><rect x="4" y="0" width="3" height="3"/>
+                  <rect x="0" y="4" width="3" height="3"/><rect x="1" y="1" width="1" height="1" fill="#1E1D19"/>
+                  <rect x="5" y="1" width="1" height="1" fill="#1E1D19"/><rect x="1" y="5" width="1" height="1" fill="#1E1D19"/>
+                  <rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/>
+                  <rect x="3" y="5" width="2" height="1"/>
+                </svg>
+              </div>
+            </div>
+            <!-- Lot ID — hero element -->
+            <div style="font-family:monospace; font-size:16px; font-weight:700; letter-spacing:.06em; color:#1E1D19; text-align:center; border-top:1px solid #DCD5C2; border-bottom:1px solid #DCD5C2; padding:2px 0; margin:2px 0;">LP-0418-26</div>
+            <!-- Bottom fields -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px 6px;">
+              <div>
+                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Inoculación</div>
+                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">2026-08-25</div>
+              </div>
+              <div>
+                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Sustrato</div>
+                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">SP-118-26</div>
+              </div>
+              <div>
+                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Ubicación</div>
+                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">T03·B·4</div>
+              </div>
+              <div>
+                <div style="font-family:monospace; font-size:5.5px; text-transform:uppercase; color:#96907C;">Operario</div>
+                <div style="font-family:monospace; font-size:7px; font-weight:600; color:#1E1D19;">M. Ramírez</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:10px; color:var(--text-metadata); text-align:center; max-width:200px; line-height:1.5;">
+            Fondo blanco · Tinta negra directa térmica<br>
+            Adhesivo permanente PP resistente a humedad
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Anatomía de campos -->
+      <h3 class="section-h3" style="margin-top:var(--space-6);">Anatomía del Label — Campos y Prioridades</h3>
+      <div style="overflow-x:auto; margin: var(--space-3) 0;">
+        <table style="width:100%; border-collapse:collapse; font-size:var(--text-sm); color:var(--text-secondary);">
+          <thead>
+            <tr style="background:var(--paper-2);">
+              <th style="text-align:left; padding:8px 12px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-metadata); font-weight:500; border-bottom:2px solid var(--border-strong);">Campo</th>
+              <th style="text-align:left; padding:8px 12px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-metadata); font-weight:500; border-bottom:2px solid var(--border-strong);">Ejemplo</th>
+              <th style="text-align:left; padding:8px 12px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-metadata); font-weight:500; border-bottom:2px solid var(--border-strong);">Prioridad visual</th>
+              <th style="text-align:left; padding:8px 12px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-metadata); font-weight:500; border-bottom:2px solid var(--border-strong);">Propósito operativo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border-hairline);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Código LP</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--ink-0);">LP-0418-26</td>
+              <td style="padding:7px 12px;"><span class="fos-status fos-status--active">HÉROE</span></td>
+              <td style="padding:7px 12px;">Lectura a distancia · ingreso manual en campo</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-hairline); background:var(--paper-1);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">QR code</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">URL sdlp.local/LP-0418-26</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--accent-olive-dim); color:var(--accent-olive); padding:2px 6px;">ALTO</span></td>
+              <td style="padding:7px 12px;">Apertura instantánea de la bitácora del lote con cámara</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-hairline);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Especie</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">P. ostreatus</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--paper-2); color:var(--ink-2); padding:2px 6px;">MEDIO</span></td>
+              <td style="padding:7px 12px;">Diferenciación rápida en sala · evita mezcla de especies</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-hairline); background:var(--paper-1);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Fecha inoculación</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">2026-08-25</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--paper-2); color:var(--ink-2); padding:2px 6px;">MEDIO</span></td>
+              <td style="padding:7px 12px;">Cálculo mental de días de incubación transcurridos</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-hairline);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Lote sustrato</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">SP-118-26</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--paper-2); color:var(--ink-2); padding:2px 6px;">MEDIO</span></td>
+              <td style="padding:7px 12px;">Trazabilidad de materia prima ante desviación de EB%</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-hairline); background:var(--paper-1);">
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Ubicación</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">T03·B·4</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--paper-2); color:var(--ink-2); padding:2px 6px;">MEDIO</span></td>
+              <td style="padding:7px 12px;">Localización física sin depender del sistema digital</td>
+            </tr>
+            <tr>
+              <td style="padding:7px 12px; font-family:var(--font-mono); color:var(--ink-0); font-weight:600;">Operario</td>
+              <td style="padding:7px 12px; font-family:var(--font-mono);">M. Ramírez</td>
+              <td style="padding:7px 12px;"><span style="font-family:var(--font-mono); font-size:11px; background:var(--paper-2); color:var(--ink-2); padding:2px 6px;">BAJO</span></td>
+              <td style="padding:7px 12px;">Responsabilidad y control de calidad del turno</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Flujo de impresión -->
+      <h3 class="section-h3" style="margin-top:var(--space-6);">Flujo de Impresión — Del Sistema al Bloque</h3>
+      <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4); margin: var(--space-3) 0;">
+        <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-metadata); margin-bottom:16px;">Secuencia operativa · sin papel intermedio</div>
+        <div style="display:flex; flex-wrap:wrap; gap:0; align-items:stretch;">
+
+          <!-- Paso 1 -->
+          <div style="flex:1; min-width:140px; border-right:1px dashed var(--border-hairline); padding:0 var(--space-3) 0 0; margin-right:var(--space-3);">
+            <div style="font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--ink-3); line-height:1;">01</div>
+            <div style="font-size:var(--text-sm); font-weight:600; color:var(--ink-0); margin:4px 0 4px;">Ejecutar mezcla</div>
+            <div style="font-size:11px; color:var(--text-secondary); line-height:1.6;">El módulo Formular genera el lote y asigna el código <span style="font-family:var(--font-mono);">LP-XXXX-AA</span> de forma automática e irreversible.</div>
+          </div>
+
+          <!-- Paso 2 -->
+          <div style="flex:1; min-width:140px; border-right:1px dashed var(--border-hairline); padding:0 var(--space-3) 0 0; margin-right:var(--space-3);">
+            <div style="font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--ink-3); line-height:1;">02</div>
+            <div style="font-size:var(--text-sm); font-weight:600; color:var(--ink-0); margin:4px 0 4px;">Imprimir label</div>
+            <div style="font-size:11px; color:var(--text-secondary); line-height:1.6;">Botón <strong>⬡ Imprimir Label</strong> en la ficha del lote. Setas OS envía el PDF de 40×30mm directamente a la Phomemo vía Bluetooth.</div>
+          </div>
+
+          <!-- Paso 3 -->
+          <div style="flex:1; min-width:140px; border-right:1px dashed var(--border-hairline); padding:0 var(--space-3) 0 0; margin-right:var(--space-3);">
+            <div style="font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--ink-3); line-height:1;">03</div>
+            <div style="font-size:var(--text-sm); font-weight:600; color:var(--ink-0); margin:4px 0 4px;">Adherir al bloque</div>
+            <div style="font-size:11px; color:var(--text-secondary); line-height:1.6;">Label se adhiere en el extremo superior de la bolsa, visible desde el pasillo. Código LP queda enfrentado hacia afuera.</div>
+          </div>
+
+          <!-- Paso 4 -->
+          <div style="flex:1; min-width:140px;">
+            <div style="font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--ink-3); line-height:1;">04</div>
+            <div style="font-size:var(--text-sm); font-weight:600; color:var(--ink-0); margin:4px 0 4px;">Escanear en campo</div>
+            <div style="font-size:11px; color:var(--text-secondary); line-height:1.6;">Cualquier cosecha, anotación o cambio de estado se registra escaneando el QR. Abre la bitácora digital del lote directamente.</div>
+          </div>
+
+        </div>
+
+        <!-- Regla crítica -->
+        <div style="margin-top:16px; padding:10px 14px; background:var(--accent-rust-dim); border-left:3px solid var(--accent-rust); font-size:12px; color:var(--ink-1); line-height:1.6;">
+          <strong style="color:var(--accent-rust); font-family:var(--font-mono); font-size:11px; letter-spacing:.1em;">REGLA CRÍTICA</strong><br>
+          Ningún bloque entra a sala de incubación sin label adherido. Si la impresora no está disponible, se anota el código LP en cinta de marcado directamente sobre la bolsa — nunca se omite la identificación.
+        </div>
+      </div>
+
+      <!-- Nota sobre Ficha FOS-02 -->
+      <div style="background:var(--paper-1); border:var(--rule-strong); padding:var(--space-4); margin: var(--space-3) 0; display:flex; gap:var(--space-4); align-items:flex-start; flex-wrap:wrap;">
+        <div style="flex:0 0 auto;">
+          <div style="font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--ink-3); line-height:1;">FOS</div>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--ink-2); margin-top:2px;">02 · 03</div>
+        </div>
+        <div style="flex:1; min-width:200px;">
+          <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-metadata); margin-bottom:6px;">Complementariedad FOS-02 ↔ FOS-03</div>
+          <p style="font-size:var(--text-sm); color:var(--text-secondary); line-height:1.7; margin:0;">
+            El <strong style="color:var(--ink-0);">label térmico FOS-03</strong> (adherido al bloque) y la <strong style="color:var(--ink-0);">Ficha de Lote FOS-02</strong> (colgada en la cabecera de estantería) forman un par. El label sigue al bloque en cualquier reubicación; la ficha queda fija en la posición física y se actualiza si el contenido de ese estante cambia. Juntos garantizan identificación bidireccional: <em>del estante al bloque</em> y <em>del bloque al estante</em>.
+          </p>
+        </div>
+      </div>
+
     </section>
 
     <!-- SECCIÓN 6: BITÁCORA -->

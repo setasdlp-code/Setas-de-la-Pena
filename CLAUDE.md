@@ -56,10 +56,10 @@ Trabaja dentro del alcance declarado. Si algo fuera de alcance parece necesario,
 - Rama por tarea, commits pequeños, PR — no commitear directo a `main`.
 - Antes de editar, `git status`/`git diff` para ver si Codex u otra herramienta dejó cambios sin commitear (riesgo de pisado silencioso documentado en `AGENTS.md`).
 
-## Límites
-
+## Límites y Alcance
+ 
 - No autenticar, no ejecutar transacciones, no tocar credenciales (`gmail_credentials.json`, `gmail_token.json`, `firebase/` bajo `setas-os/`) más allá de lo estrictamente necesario para una tarea aprobada explícitamente.
-- No reescribir archivos completos cuando un fix quirúrgico basta — ver división de trabajo arriba.
+- Las modificaciones amplias, refactorizaciones y rediseños están habilitados para toda la suite de Setas OS (`field-os-simulador/setas-os/`), manteniendo siempre la integridad de la base científica, cálculos C:N/EB y fuentes canónicas.
 - No modificar `setasdlp-code/Field-OS` ni `setasdlp-code/simulador`.
 
 ## Agent skills

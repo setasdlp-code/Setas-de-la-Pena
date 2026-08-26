@@ -1,7 +1,527 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 49ae5871bba285418d96303777edf636ee83a3f0be543afffa9829f2f838097d
+// source-hash: 5d00610e2387155fdc6588651dacb61105a212f8717c0a4353e1fb1d5d31c2fe
 const { useState, useMemo, useEffect, useRef } = React;
+const BIO_CHECK_KEY = "setas_os_bio_check";
+const BATCHES_KEY = "setas_os_extraction_batches";
+function loadBioCheck() {
+  try {
+    const raw = localStorage.getItem(BIO_CHECK_KEY);
+    return raw ? JSON.parse(raw) : { items: [] };
+  } catch (e) {
+    console.warn("Failed to load bio‑check from localStorage", e);
+    return { items: [] };
+  }
+}
+function saveBioCheck(state) {
+  try {
+    localStorage.setItem(BIO_CHECK_KEY, JSON.stringify(state));
+    return true;
+  } catch (e) {
+    console.warn("Failed to save bio‑check to localStorage", e);
+    return false;
+  }
+}
+function loadBatches() {
+  try {
+    const raw = localStorage.getItem(BATCHES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn("Failed to load batches from localStorage", e);
+    return [];
+  }
+}
+function saveBatches(batches) {
+  try {
+    localStorage.setItem(BATCHES_KEY, JSON.stringify(batches));
+    return true;
+  } catch (e) {
+    console.warn("Failed to save batches to localStorage", e);
+    return false;
+  }
+}
+const DEFAULT_BIO_ITEMS = [
+  { id: "desinfectar", label: "Desinfectar superficies", comment: "" },
+  { id: "ppe", label: "Usar PPE", comment: "" },
+  { id: "temperatura", label: "Medir temperatura", comment: "" }
+];
+function BioCheck() {
+  const [items, setItems] = useState([]);
+  const [allChecked, setAllChecked] = useState(false);
+  useEffect(() => {
+    const saved = loadBioCheck();
+    if (saved && saved.items && saved.items.length) {
+      setItems(saved.items);
+    } else {
+      setItems(DEFAULT_BIO_ITEMS.map((i) => ({ ...i, checked: false })));
+    }
+  }, []);
+  useEffect(() => {
+    const ok = items.every((i) => i.checked);
+    setAllChecked(ok);
+    saveBioCheck({ items });
+  }, [items]);
+  const toggleItem = (id) => {
+    setItems(
+      (prev) => prev.map((i) => i.id === id ? { ...i, checked: !i.checked } : i)
+    );
+  };
+  const setComment = (id, comment) => {
+    setItems(
+      (prev) => prev.map((i) => i.id === id ? { ...i, comment } : i)
+    );
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "bio-check", style: { padding: "24px", maxWidth: 800, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif, serif)", fontSize: "1.5rem", marginBottom: 8, color: "var(--ink-900)" } }, "Checklist Digital de Bioseguridad"), allChecked && /* @__PURE__ */ React.createElement("div", { className: "badge", style: { display: "inline-block", padding: "4px 10px", background: "var(--moss-100, #e8f0e4)", color: "var(--moss-800, #2e5a36)", borderRadius: 4, fontWeight: 700, marginBottom: 16 } }, "✅ Bio‑Check OK"), /* @__PURE__ */ React.createElement("ul", { style: { listStyle: "none", padding: 0 } }, items.map((item) => /* @__PURE__ */ React.createElement("li", { key: item.id, style: { marginBottom: "1rem", background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", padding: "14px", borderRadius: 6 } }, /* @__PURE__ */ React.createElement("label", { style: { fontWeight: 600, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "checkbox",
+      checked: !!item.checked,
+      onChange: () => toggleItem(item.id)
+    }
+  ), item.label), /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      placeholder: "Comentario opcional...",
+      value: item.comment || "",
+      onChange: (e) => setComment(item.id, e.target.value),
+      rows: 2,
+      style: { width: "100%", marginTop: 8, padding: "6px 8px", borderRadius: 4, border: "1px solid var(--border-strong, #ccc)", boxSizing: "border-box", fontSize: "0.85rem" }
+    }
+  )))));
+}
+const DEFAULT_EXTRACTION_FACTORS = {
+  p_ostreatus_gris: {
+    name: "Orellana Gris",
+    methods: {
+      hidroalcoholica: {
+        name: "Extracción Hidroalcohólica (Doble)",
+        yield_factor: 0.12,
+        cost_per_liter_solvent: 18e3,
+        optimal_alcohol_pct: 70,
+        optimal_time_hrs: 48,
+        optimal_temp_c: 25,
+        notes: "Extracción clásica para polisacáridos y compuestos fenólicos."
+      },
+      acuosa: {
+        name: "Decocción Acuosa Caliente",
+        yield_factor: 0.15,
+        cost_per_liter_solvent: 2e3,
+        optimal_alcohol_pct: 0,
+        optimal_time_hrs: 3,
+        optimal_temp_c: 85,
+        notes: "Máxima extracción de beta-glucanos solubles en agua."
+      },
+      ultrasonido: {
+        name: "Extracción Asistida por Ultrasonido (UAE)",
+        yield_factor: 0.18,
+        cost_per_liter_solvent: 22e3,
+        optimal_alcohol_pct: 60,
+        optimal_time_hrs: 0.75,
+        optimal_temp_c: 45,
+        notes: "Rendimiento acelerado por cavitación acústica."
+      }
+    }
+  },
+  shiitake: {
+    name: "Shiitake",
+    methods: {
+      hidroalcoholica: {
+        name: "Extracción Hidroalcohólica (Lentinano + Eritadenina)",
+        yield_factor: 0.14,
+        cost_per_liter_solvent: 18e3,
+        optimal_alcohol_pct: 65,
+        optimal_time_hrs: 72,
+        optimal_temp_c: 25,
+        notes: "Equilibrio entre lentinano soluble y lípidos bioactivos."
+      },
+      acuosa: {
+        name: "Decocción Acuosa Fraccionada",
+        yield_factor: 0.16,
+        cost_per_liter_solvent: 2e3,
+        optimal_alcohol_pct: 0,
+        optimal_time_hrs: 4,
+        optimal_temp_c: 90,
+        notes: "Extracción térmica prolongada para polisacáridos estructurales."
+      },
+      ultrasonido: {
+        name: "Extracción Asistida por Ultrasonido (UAE)",
+        yield_factor: 0.2,
+        cost_per_liter_solvent: 22e3,
+        optimal_alcohol_pct: 55,
+        optimal_time_hrs: 1,
+        optimal_temp_c: 50,
+        notes: "Mayor rendimiento con menor degradación térmica de compuestos activos."
+      }
+    }
+  },
+  lions_mane: {
+    name: "Melena de León",
+    methods: {
+      hidroalcoholica: {
+        name: "Doble Extracción (Hericenonas + Erinacinas)",
+        yield_factor: 0.11,
+        cost_per_liter_solvent: 2e4,
+        optimal_alcohol_pct: 75,
+        optimal_time_hrs: 96,
+        optimal_temp_c: 25,
+        notes: "Doble extracción obligatoria para capturar hericenonas (alcohol) y erinacinas (agua)."
+      },
+      acuosa: {
+        name: "Decocción Acuosa (Beta-glucanos)",
+        yield_factor: 0.13,
+        cost_per_liter_solvent: 2e3,
+        optimal_alcohol_pct: 0,
+        optimal_time_hrs: 3.5,
+        optimal_temp_c: 88,
+        notes: "Enfoque inmunomodulador rico en beta-glucanos."
+      },
+      ultrasonido: {
+        name: "Extracción Asistida por Ultrasonido (UAE)",
+        yield_factor: 0.16,
+        cost_per_liter_solvent: 24e3,
+        optimal_alcohol_pct: 70,
+        optimal_time_hrs: 1.2,
+        optimal_temp_c: 45,
+        notes: "Preserva diterpenos termosensibles de Hericium."
+      }
+    }
+  },
+  reishi: {
+    name: "Reishi Rojo",
+    methods: {
+      hidroalcoholica: {
+        name: "Extracción Hidroalcohólica Prolongada (Ácidos Ganodéricos)",
+        yield_factor: 0.09,
+        cost_per_liter_solvent: 22e3,
+        optimal_alcohol_pct: 80,
+        optimal_time_hrs: 120,
+        optimal_temp_c: 28,
+        notes: "Maceración intensa para triterpenos amargos y ácidos ganodéricos."
+      },
+      acuosa: {
+        name: "Decocción Tradicional 2h",
+        yield_factor: 0.1,
+        cost_per_liter_solvent: 2e3,
+        optimal_alcohol_pct: 0,
+        optimal_time_hrs: 2.5,
+        optimal_temp_c: 95,
+        notes: "Tónico amargo adaptogénico rico en polisacáridos."
+      },
+      ultrasonido: {
+        name: "Extracción Asistida por Ultrasonido (UAE)",
+        yield_factor: 0.13,
+        cost_per_liter_solvent: 25e3,
+        optimal_alcohol_pct: 75,
+        optimal_time_hrs: 1.5,
+        optimal_temp_c: 50,
+        notes: "Ruptura de paredes leñosas para máxima biodisponibilidad."
+      }
+    }
+  }
+};
+function calculateYield(biomassGrams, speciesKey, methodKey, factors = DEFAULT_EXTRACTION_FACTORS) {
+  const spp = factors[speciesKey];
+  if (!spp || !spp.methods[methodKey]) return { yieldGrams: 0, yieldPct: 0 };
+  const factor = spp.methods[methodKey].yield_factor;
+  const yieldGrams = Number((biomassGrams * factor).toFixed(2));
+  const yieldPct = Number((factor * 100).toFixed(1));
+  return { yieldGrams, yieldPct };
+}
+function calculateCost(biomassGrams, solventLiters, speciesKey, methodKey, rawBiomassCostPerKg = 45e3, factors = DEFAULT_EXTRACTION_FACTORS) {
+  const spp = factors[speciesKey];
+  const method = spp && spp.methods[methodKey];
+  const solventCostPerLiter = method ? method.cost_per_liter_solvent : 15e3;
+  const biomassCost = biomassGrams / 1e3 * rawBiomassCostPerKg;
+  const solventCost = (solventLiters || 0) * solventCostPerLiter;
+  const totalCost = Math.round(biomassCost + solventCost);
+  const { yieldGrams } = calculateYield(biomassGrams, speciesKey, methodKey, factors);
+  const costPerGramExtract = yieldGrams > 0 ? Math.round(totalCost / yieldGrams) : 0;
+  return { biomassCost, solventCost, totalCost, costPerGramExtract };
+}
+function generateBatchQrDataUrl(batch) {
+  if (!batch) return "";
+  const payload = JSON.stringify({
+    id: batch.id,
+    spp: batch.speciesKey,
+    mth: batch.methodKey,
+    bio: batch.biomassGrams,
+    yld: batch.yieldGrams,
+    cost: batch.totalCost,
+    date: batch.timestamp
+  });
+  if (typeof window !== "undefined" && window.QRMini && typeof window.QRMini.matrix === "function") {
+    try {
+      const m = window.QRMini.matrix(payload);
+      const n = m.length;
+      const q = 4;
+      const dim = n + q * 2;
+      let rects = "";
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (m[r][c]) rects += '<rect x="' + (c + q) + '" y="' + (r + q) + '" width="1" height="1"/>';
+        }
+      }
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + dim + " " + dim + '" shape-rendering="crispEdges"><rect width="' + dim + '" height="' + dim + '" fill="#fff"/><g fill="#1f2421">' + rects + "</g></svg>";
+      return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+    } catch (e) {
+      console.warn("QR generation error:", e);
+    }
+  }
+  return "";
+}
+function exportBatchPdfStub(batch) {
+  if (!batch) return;
+  const content = [
+    "==================================================",
+    "SETAS DE LA PEÑA · CERTIFICADO DE EXTRACCIÓN",
+    "==================================================",
+    "Lote ID: " + batch.id,
+    "Fecha: " + new Date(batch.timestamp).toLocaleString("es-CO"),
+    "Especie: " + (batch.speciesName || batch.speciesKey),
+    "Método: " + (batch.methodName || batch.methodKey),
+    "--------------------------------------------------",
+    "Biomasa seca procesada: " + batch.biomassGrams + " g",
+    "Rendimiento calculado: " + batch.yieldGrams + " g (" + batch.yieldPct + "%)",
+    "Solvente utilizado: " + batch.solventLiters + " L",
+    "Costo total del lote: $" + (batch.totalCost || 0).toLocaleString("es-CO") + " COP",
+    "Costo por gramo extracto: $" + (batch.costPerGramExtract || 0).toLocaleString("es-CO") + " COP/g",
+    "Parámetros: " + batch.alcoholPct + "% Alc · " + batch.timeHrs + "h · " + batch.tempC + "°C",
+    "Operador / Notas: " + (batch.notes || "Conforme a protocolo"),
+    "=================================================="
+  ].join("\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Certificado_Extraccion_" + batch.id + ".txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function LabExtraction() {
+  const [factors, setFactors] = useState(DEFAULT_EXTRACTION_FACTORS);
+  const [speciesKey, setSpeciesKey] = useState("shiitake");
+  const [methodKey, setMethodKey] = useState("hidroalcoholica");
+  const [biomassGrams, setBiomassGrams] = useState(500);
+  const [solventLiters, setSolventLiters] = useState(2.5);
+  const [alcoholPct, setAlcoholPct] = useState(65);
+  const [timeHrs, setTimeHrs] = useState(72);
+  const [tempC, setTempC] = useState(25);
+  const [notes, setNotes] = useState("");
+  const [batches, setBatches] = useState([]);
+  const [selectedQrBatch, setSelectedQrBatch] = useState(null);
+  useEffect(() => {
+    const saved = loadBatches();
+    if (Array.isArray(saved)) setBatches(saved);
+  }, []);
+  useEffect(() => {
+    const spp = factors[speciesKey];
+    if (spp && spp.methods[methodKey]) {
+      const m = spp.methods[methodKey];
+      setAlcoholPct(m.optimal_alcohol_pct);
+      setTimeHrs(m.optimal_time_hrs);
+      setTempC(m.optimal_temp_c);
+    }
+  }, [speciesKey, methodKey, factors]);
+  const { yieldGrams, yieldPct } = calculateYield(Number(biomassGrams) || 0, speciesKey, methodKey, factors);
+  const { totalCost, costPerGramExtract, biomassCost, solventCost } = calculateCost(
+    Number(biomassGrams) || 0,
+    Number(solventLiters) || 0,
+    speciesKey,
+    methodKey,
+    45e3,
+    factors
+  );
+  const handleCreateBatch = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const spp = factors[speciesKey] || { name: speciesKey };
+    const method = spp.methods && spp.methods[methodKey] || { name: methodKey };
+    const newBatch = {
+      id: "EXT-" + Date.now().toString(36).toUpperCase(),
+      timestamp: Date.now(),
+      speciesKey,
+      speciesName: spp.name,
+      methodKey,
+      methodName: method.name,
+      biomassGrams: Number(biomassGrams),
+      solventLiters: Number(solventLiters),
+      alcoholPct: Number(alcoholPct),
+      timeHrs: Number(timeHrs),
+      tempC: Number(tempC),
+      yieldGrams,
+      yieldPct,
+      biomassCost,
+      solventCost,
+      totalCost,
+      costPerGramExtract,
+      notes: notes.trim()
+    };
+    const nextBatches = [newBatch, ...batches];
+    setBatches(nextBatches);
+    saveBatches(nextBatches);
+    setNotes("");
+  };
+  const handleDeleteBatch = (id) => {
+    const nextBatches = batches.filter((b) => b.id !== id);
+    setBatches(nextBatches);
+    saveBatches(nextBatches);
+    if (selectedQrBatch && selectedQrBatch.id === id) {
+      setSelectedQrBatch(null);
+    }
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "lab-extraction-container", style: { padding: "20px 0", maxWidth: 1080, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif, serif)", fontSize: "1.75rem", margin: "0 0 8px 0", color: "var(--ink-900)" } }, "Laboratorio de Extracciones & Tinturas"), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, color: "var(--ink-600)", fontSize: "0.95rem" } }, "Formulación, rendimiento y costeo estandarizado de extractos hidroalcohólicos, decocciones y ultrasonido.")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 } }, "Configurar Lote de Extracción"), /* @__PURE__ */ React.createElement("form", { onSubmit: handleCreateBatch }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Especie Fúngica"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: speciesKey,
+      onChange: (e) => setSpeciesKey(e.target.value),
+      style: { width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", background: "#fff", fontSize: "0.9rem" }
+    },
+    Object.entries(factors).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name))
+  )), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Método de Extracción"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, factors[speciesKey] && Object.entries(factors[speciesKey].methods).map(([mk, m]) => /* @__PURE__ */ React.createElement("label", { key: mk, style: { display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", cursor: "pointer" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "radio",
+      name: "extractMethod",
+      checked: methodKey === mk,
+      onChange: () => setMethodKey(mk)
+    }
+  ), /* @__PURE__ */ React.createElement("span", null, m.name))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Biomasa Seca (g)"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      min: "1",
+      step: "1",
+      value: biomassGrams,
+      onChange: (e) => setBiomassGrams(e.target.value),
+      style: { width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Solvente (L)"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      min: "0.1",
+      step: "0.1",
+      value: solventLiters,
+      onChange: (e) => setSolventLiters(e.target.value),
+      style: { width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Alcohol %"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      min: "0",
+      max: "100",
+      value: alcoholPct,
+      onChange: (e) => setAlcoholPct(e.target.value),
+      style: { width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Tiempo (h)"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      min: "0.1",
+      step: "0.1",
+      value: timeHrs,
+      onChange: (e) => setTimeHrs(e.target.value),
+      style: { width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Temp (°C)"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      min: "0",
+      max: "120",
+      value: tempC,
+      onChange: (e) => setTempC(e.target.value),
+      style: { width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, color: "var(--ink-800)" } }, "Notas de Protocolo / Bitácora"), /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      value: notes,
+      onChange: (e) => setNotes(e.target.value),
+      placeholder: "Observaciones de molienda, reactivos o filtrado...",
+      rows: 2,
+      style: { width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }
+    }
+  )), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "submit",
+      style: {
+        width: "100%",
+        padding: "10px 16px",
+        background: "var(--accent-terracotta, #c05a3e)",
+        color: "#fff",
+        border: "none",
+        borderRadius: 6,
+        fontWeight: 700,
+        fontSize: "0.9rem",
+        cursor: "pointer",
+        transition: "opacity 0.2s"
+      }
+    },
+    "+ Registrar Lote de Laboratorio"
+  ))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100, #f8f9f6)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 } }, "Proyección de Rendimiento & Costos"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Extracto Seco Estimado"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-800, #2e5a36)", fontFamily: "var(--font-mono, monospace)" } }, yieldGrams, " g"), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "Tasa: ", yieldPct, "% s/biomasa")), /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 } }, "Costo por Gramo"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "1.5rem", fontWeight: 800, color: "var(--ink-900)", fontFamily: "var(--font-mono, monospace)" } }, "$", costPerGramExtract.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", color: "var(--ink-600)" } }, "COP / g extracto puro"))), /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" } }, "Desglose de Costo Operativo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Biomasa fúngica (", biomassGrams, " g):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(biomassCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-600)" } }, "Solvente & Insumos (", solventLiters, " L):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, fontFamily: "var(--font-mono, monospace)" } }, "$", Math.round(solventCost).toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong, #ccc)", paddingTop: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Costo Total Lote:"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent-terracotta, #c05a3e)", fontFamily: "var(--font-mono, monospace)" } }, "$", totalCost.toLocaleString("es-CO"), " COP"))), factors[speciesKey]?.methods[methodKey]?.notes && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 } }, "ℹ ", factors[speciesKey].methods[methodKey].notes)))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" } }, "Lotes de Extracción Registrados (", batches.length, ")")), batches.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" } }, "No hay lotes de extracción registrados en almacenamiento local. Configura los parámetros arriba para generar el primero.") : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "2px solid var(--border-strong, #333)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "ID Lote"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px" } }, "Método"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Biomasa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Extracto"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "right" } }, "Costo Total"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 6px", textAlign: "center" } }, "Acciones"))), /* @__PURE__ */ React.createElement("tbody", null, batches.map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, style: { borderBottom: "1px solid var(--border-soft, #e2e4dd)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" } }, b.id, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 } }, new Date(b.timestamp).toLocaleDateString("es-CO"))), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, b.speciesName || b.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", background: "var(--paper-200, #eee)", padding: "2px 6px", borderRadius: 4 } }, b.methodName || b.methodKey)), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, b.biomassGrams, " g"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-800, #2e5a36)" } }, b.yieldGrams, " g (", b.yieldPct, "%)"), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" } }, "$", (b.totalCost || 0).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setSelectedQrBatch(b),
+      title: "Generar QR de Trazabilidad",
+      style: { padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }
+    },
+    "📱 QR"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => exportBatchPdfStub(b),
+      title: "Exportar Certificado",
+      style: { padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }
+    },
+    "📄 Cert"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => handleDeleteBatch(b.id),
+      title: "Eliminar registro",
+      style: { padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }
+    },
+    "✕"
+  ))))))))), selectedQrBatch && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: 16
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    background: "#fff",
+    borderRadius: 8,
+    padding: 24,
+    maxWidth: 380,
+    width: "100%",
+    textAlign: "center",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+  } }, /* @__PURE__ */ React.createElement("h4", { style: { margin: "0 0 12px 0", fontSize: "1.1rem" } }, "Trazabilidad QR · ", selectedQrBatch.id), /* @__PURE__ */ React.createElement("div", { style: { margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8", borderRadius: 6, border: "1px solid #ddd" } }, generateBatchQrDataUrl(selectedQrBatch) ? /* @__PURE__ */ React.createElement("img", { src: generateBatchQrDataUrl(selectedQrBatch), alt: "QR Lote", style: { width: 160, height: 160 } }) : /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", color: "#888" } }, "Generando código QR...")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Especie:"), " ", selectedQrBatch.speciesName), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Método:"), " ", selectedQrBatch.methodName), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Extracto:"), " ", selectedQrBatch.yieldGrams, " g (", selectedQrBatch.yieldPct, "%)")), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setSelectedQrBatch(null),
+      style: {
+        width: "100%",
+        padding: "8px 14px",
+        background: "var(--ink-900, #222)",
+        color: "#fff",
+        border: "none",
+        borderRadius: 4,
+        cursor: "pointer",
+        fontWeight: 600
+      }
+    },
+    "Cerrar"
+  ))));
+}
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
   p_ostreatus_blanco: window.__resources && window.__resources.img_p_ostreatus_blanco || "_standalone_imgs/orellana-blanca.png",
@@ -2115,18 +2635,19 @@ function App(props) {
       return "home";
     }
   });
-  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", dashboard: "Recetario", clima: "Cámaras & IoT", bitacora: "Bitácora" };
+  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", dashboard: "Recetario", clima: "Cámaras & IoT", bitacora: "Bitácora", bioCheck: "Bio-Check", labExtraction: "Laboratorio" };
   const NAV_GROUPS = [
     { key: "inicio", label: "Inicio", tabs: ["home", "inicio"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 11l9-7 9 7M5 10v10h14V10" })) },
     { key: "recetas", label: "Formular", tabs: ["catalogo", "formular", "dashboard"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9" })) },
     { key: "produccion", label: "Producción", tabs: ["produccion", "inventario", "schedule"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6" })) },
     { key: "clima", label: "Cámaras & IoT", tabs: ["clima"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "6", width: "14", height: "12", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "m17 10 4-2v8l-4-2M7 10h6M7 14h4" })) },
-    { key: "registro", label: "Bitácora", tabs: ["bitacora"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5" })) }
+    { key: "registro", label: "Bitácora", tabs: ["bitacora"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5" })) },
+    { key: "lab", label: "Laboratorio", tabs: ["labExtraction", "bioCheck"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6" })) }
   ];
-  const TAB_PAGE_TITLES = { home: "Centro de Mando · Hoy", inicio: "Inicio", catalogo: "Catálogo de especies", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", dashboard: "Recetario", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas" };
+  const TAB_PAGE_TITLES = { home: "Centro de Mando · Hoy", inicio: "Inicio", catalogo: "Catálogo de especies", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", dashboard: "Recetario", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas", bioCheck: "Checklist Digital de Bioseguridad", labExtraction: "Laboratorio de Extracciones & Tinturas" };
   const [mode, setMode] = useState("receta");
   const RECETA_TABS = ["catalogo", "formular", "dashboard"];
-  const CULTIVO_TABS = ["inventario", "produccion", "schedule", "clima", "bitacora"];
+  const CULTIVO_TABS = ["inventario", "produccion", "schedule", "clima", "bitacora", "labExtraction", "bioCheck"];
   const TAB_ALIASES = { optimizar: "formular" };
   const applyTab = (t) => {
     t = TAB_ALIASES[t] || t;
@@ -2186,6 +2707,30 @@ function App(props) {
   const [invTargetCN, setInvTargetCN] = useState(35);
   const [invResult, setInvResult] = useState(null);
   const [dashFilter, setDashFilter] = useState("all");
+  const schTab = "schedule";
+  const flush1 = 0.6;
+  const flush2 = 0.3;
+  const flush3 = 0.1;
+  function calculateLotFlushProjection(lot) {
+    const totalKg = (lot.bags || 0) * (lot.kgPerBag || 1.5) * ((lot.eb || 90) / 100);
+    return {
+      totalKg,
+      flush1: { pct: 0.6, kg: totalKg * 0.6 },
+      flush2: { pct: 0.3, kg: totalKg * 0.3 },
+      flush3: { pct: 0.1, kg: totalKg * 0.1 }
+    };
+  }
+  const b2bCommitments = [];
+  function matchWeeklyCoverage(projection, commitments) {
+    return { superavit: 0, deficit: 0, cobertura: 0 };
+  }
+  const superavit = "🟢";
+  const deficit = "🔴";
+  const cobertura = "🟡";
+  function sowingRecommendation(deficitKg) {
+    const bagsNeeded = Math.ceil(deficitKg / 1.5);
+    return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
+  }
   const [lockedIds, setLockedIds] = useState(() => initialFormDraft?.lockedIds || []);
   const [balanceMode, setBalanceMode] = useState("proportional");
   const [pantryIds, setPantryIds] = useState([]);
@@ -4723,7 +5268,7 @@ BATCH (${numBags}×${kgBag} kg):
     const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
     const pendingTaskCount = operationalQueue.filter((item) => !["later", "context"].includes(item.bucket)).length;
     const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount2;
-    const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)" } : { label: "Operación estable", color: "var(--moss-700)" };
+    const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)", bg: "color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)", bg: "color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))" } : { label: "Operación estable", color: "var(--moss-700)", bg: "color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))" };
     let camaras = [];
     try {
       camaras = JSON.parse(props.hoyCamarasJson || "[]");
@@ -4742,14 +5287,7 @@ BATCH (${numBags}×${kgBag} kg):
       recentActivity = [];
     }
     const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
-    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit", style: { display: "flex", flexDirection: "column", gap: 24, marginBottom: 48 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      background: "var(--paper-0)",
-      border: "1px solid var(--border-soft)",
-      borderRadius: "var(--r-md)",
-      padding: "18px 22px",
-      position: "relative",
-      overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", margin: 0 } }, "Tablero de Control")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
+    return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit" }, /* @__PURE__ */ React.createElement("div", { className: "home-header-cockpit" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 800, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)" } }, "· Tenjo · 2.592 msnm")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.02em", color: "var(--ink-900)", margin: 0 } }, "Tablero de Control")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
       { value: activeLotes.length, label: "Lotes activos", icon: IconMicroscope, tone: "neutral" },
       { value: pendingTaskCount, label: "Tareas pendientes", icon: IconClipboard, tone: pendingTaskCount > 0 ? "attention" : "neutral" },
       { value: incidentCount, label: "Incidencias", icon: IconAlert, tone: incidentCount > 0 ? "critical" : "neutral" }
@@ -4929,8 +5467,8 @@ BATCH (${numBags}×${kgBag} kg):
             (contaminated || stats?.totalFresco > 0) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, contaminated && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, padding: "1px 5px", borderRadius: 2, color: critical ? "var(--coral-700)" : "var(--ochre-700)", background: critical ? "color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))" : "color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))" } }, stats.contPct.toFixed(0), "% contam."), stats?.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--moss-700)", fontWeight: 700 } }, stats.totalFresco.toFixed(2), " kg"))
           );
         })));
-      })), descartados > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", color: "var(--ink-400)" } }, descartados, " lote", descartados === 1 ? "" : "s", " descartado", descartados === 1 ? "" : "s", " (oculto", descartados === 1 ? "" : "s", " del tablero)"));
-    })() : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora."), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(true), style: { padding: "5px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "+ Iniciar Primer Lote")))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Cámaras de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● ", camaras.length, " ", camaras.length === 1 ? "cámara monitoreada" : "cámaras monitoreadas")), camaras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { border: "1px dashed var(--paper-300)", borderRadius: "var(--r-md)", padding: "20px", textAlign: "center", fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Sin datos de cámaras disponibles.") : /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, camaras.map((c) => {
+      })));
+    })() : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora."), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(true), style: { padding: "6px 14px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "+ Iniciar Primer Lote")))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)" } }, "SECCIÓN C · AMBIENTES & SENSORES"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-lg)", letterSpacing: "-0.01em", color: "var(--ink-900)", marginTop: 2, marginBottom: 0 } }, "Cámaras de Cultivo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)" } }, "● ", camaras.length, " ", camaras.length === 1 ? "cámara monitoreada" : "cámaras monitoreadas")), camaras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { border: "1px dashed var(--paper-300)", borderRadius: "var(--r-md)", padding: "20px", textAlign: "center", fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Sin datos de cámaras disponibles.") : /* @__PURE__ */ React.createElement("div", { className: "home-salas-grid" }, camaras.map((c) => {
       const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
       return /* @__PURE__ */ React.createElement(
         "div",
@@ -5857,7 +6395,7 @@ Click para ver análisis completo`
         loadR(e);
       } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sdel", onClick: () => requireAdmin(delR)(e.id), "aria-label": `Eliminar receta ${e.name}` }, "✕")));
     }));
-  })())), tab === "clima" && ClimateDashboardSection(), tab === "bitacora" && BitacoraSection(), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Ejecutar lote", dialogStyle: { width: 520, maxWidth: "calc(100vw - 32px)" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "⚡ Ejecutar lote — confirmar descuento de inventario"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo)."), /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido kg", "Stock kg", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido kg" || h === "Stock kg" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums" } }, row.krKg.toFixed(3)), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums" } }, row.stockActual.toFixed(3)), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? "✓" : "⚠"))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12 } }, "⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", paddingTop: 4 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, className: "inv-btn inv-btn-pri" }, "Confirmar y descontar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas || 6, onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: parseInt(e.target.value) || 1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", name: "wetKgPerBag", type: "number", className: "inv-input", min: 0.1, step: 0.1, value: bitNuevoForm.pesoHumedo || 1.5, onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: parseFloat(e.target.value) || 0.1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", name: "spawnPercent", type: "number", className: "inv-input", min: 1, max: 30, value: bitNuevoForm.spawnPct || 8, onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: parseFloat(e.target.value) || 8 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad %"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", name: "moisturePercent", type: "number", className: "inv-input", min: 55, max: 80, value: bitNuevoForm.humedad || 67, onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: parseInt(e.target.value) || 67 })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco (kg)"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco || "", placeholder: "Calculado automáticamente…", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: parseFloat(e.target.value) || 0 })) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  })())), tab === "clima" && ClimateDashboardSection(), tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Ejecutar lote", dialogStyle: { width: 520, maxWidth: "calc(100vw - 32px)" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "⚡ Ejecutar lote — confirmar descuento de inventario"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo)."), /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido kg", "Stock kg", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido kg" || h === "Stock kg" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums" } }, row.krKg.toFixed(3)), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums" } }, row.stockActual.toFixed(3)), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? "✓" : "⚠"))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12 } }, "⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", paddingTop: 4 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, className: "inv-btn inv-btn-pri" }, "Confirmar y descontar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas || 6, onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: parseInt(e.target.value) || 1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", name: "wetKgPerBag", type: "number", className: "inv-input", min: 0.1, step: 0.1, value: bitNuevoForm.pesoHumedo || 1.5, onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: parseFloat(e.target.value) || 0.1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", name: "spawnPercent", type: "number", className: "inv-input", min: 1, max: 30, value: bitNuevoForm.spawnPct || 8, onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: parseFloat(e.target.value) || 8 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad %"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", name: "moisturePercent", type: "number", className: "inv-input", min: 55, max: 80, value: bitNuevoForm.humedad || 67, onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: parseInt(e.target.value) || 67 })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco (kg)"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco || "", placeholder: "Calculado automáticamente…", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: parseFloat(e.target.value) || 0 })) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     if (!bitNuevoForm.codigo?.trim() || !bitNuevoForm.especie?.trim()) {
       setNoticeDlg({ msg: "Completa código y especie." });
       return;

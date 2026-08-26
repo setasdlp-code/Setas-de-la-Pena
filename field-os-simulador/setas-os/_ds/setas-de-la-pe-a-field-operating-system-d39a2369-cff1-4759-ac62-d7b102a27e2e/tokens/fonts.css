@@ -1,14 +1,10 @@
-/* Gaya — primary identity face, packaged with Setas OS. */
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+/* Gaya — primary identity face, packaged with Setas OS.
+   Consolidated for fast cold-start in field operations (offline / rural 3G). */
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+
 
 /* The packaged DS does not yet carry the canonical IBM Plex binaries.
    Keep the canonical faces through one shared web-font request until those files
