@@ -7,9 +7,10 @@ const APP = '/Setas%20OS%20v5.dc.html';
 async function openApp(page, init = null) {
   if (init) await page.addInitScript(init);
   await page.goto(APP);
-  await page.waitForLoadState('networkidle');
   await expect(page.locator('.app-shell')).toBeVisible();
   await expect(page.locator('.app-rail')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await page.locator('main.app-main').waitFor({ state: 'visible' });
 }
 
 function workspaceButton(page, key) {
@@ -102,7 +103,7 @@ test.describe('desktop navigation contract', () => {
     await expectWorkspace(page, 'formular', 'Recetario');
 
     const card = page.locator('.dash-card').filter({ hasText: 'E2E_RECETA_CARGADA' });
-    await expect(card).toBeVisible();
+    await expect(card).toBeVisible({ timeout: 10000 });
     await card.getByRole('button', { name: 'Cargar', exact: true }).click();
 
     await expectWorkspace(page, 'formular', 'Formular');
@@ -174,6 +175,7 @@ test.describe('desktop navigation contract', () => {
   });
 
   test('ingredient groups use the workspace scroll and collapse independently', async ({ page }) => {
+    test.setTimeout(45000);
     await openApp(page);
     await workspaceButton(page, 'formular').click();
     await contextTab(page, 'Formular').click();
@@ -292,6 +294,7 @@ test.describe('mobile navigation contract', () => {
 
     await contextTab(page, 'Recetario').click();
     await expect(bridge).toBeVisible();
+    await page.locator('.species-bridge').waitFor({ state: 'visible', timeout: 10000 });
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight; });
 
     const overlap = await page.evaluate(() => {

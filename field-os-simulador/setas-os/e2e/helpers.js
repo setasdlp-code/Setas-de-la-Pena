@@ -7,6 +7,7 @@ async function openApp(page) {
   await page.goto(APP_PATH);
   await page.waitForLoadState('networkidle');
   await page.locator('.rail-btn[data-workspace]').first().waitFor();
+  await page.locator('main.app-main').waitFor({ state: 'visible' });
 }
 
 /**
