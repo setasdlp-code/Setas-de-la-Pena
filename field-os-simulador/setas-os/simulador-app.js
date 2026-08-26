@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: bdbe657efbb613035e2afafb88912499c6e76911fc87c2cd7bd3a939fb392e5a
+// source-hash: 2538986d8c10c843a8d8183ec2c0e1851a624fcb03d5e4411f67c4099d330902
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1478,8 +1478,11 @@ const runHybridRecipeSearch = ({
   if (!engine?.searchScenarios) throw new Error("SetasPeritoScenarios no disponible");
   const target = SPP[targetKey];
   if (!target) return { ranked: [], pareto: [], recommended: [], noStock: false, diagnostics: { error: "Especie no encontrada" } };
-  const stockIds = new Set((invLotes || []).filter((l) => l?.activo && Number(l.cantidadKgDisponible) > 0).map((l) => l.ingredienteId));
-  const compatible = (ingredients || []).filter((g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+  const stockIds = /* @__PURE__ */ new Set([
+    ...Object.keys(stockMap || {}).filter((k) => Number(stockMap[k]) > 0),
+    ...(invLotes || []).filter((l) => l?.activo !== false && Number(l?.cantidadKgDisponible) > 0).map((l) => l.ingredienteId)
+  ]);
+  const compatible = useStock ? (ingredients || []).filter((g) => stockIds.has(g.id)) : (ingredients || []).filter((g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
   const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients);
   const scoreAdapter = (analysis, ctx) => {
     const treatment = calcTreatment(analysis, targetKey, SPP);
@@ -2440,7 +2443,29 @@ function App(props) {
         ingredients: INGS,
         profileKey: optProfile || "produccion"
       });
-      const cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0];
+      let cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0] || r.pareto && r.pareto[0] || (r.best?.recipe?.length ? r.best : null);
+      if (!cand || !cand.recipe || !cand.recipe.length) {
+        const availableBases = availableStockIds.filter((id) => INGS.find((g) => g.id === id)?.role === "base_carbono");
+        const availableSupps = availableStockIds.filter((id) => {
+          const role = INGS.find((g) => g.id === id)?.role;
+          return role === "suplemento_n" || role === "suplemento_medio";
+        });
+        if (availableBases.length) {
+          const baseId = availableBases[0];
+          const suppId = availableSupps.length ? availableSupps[0] : null;
+          const hasCal = availableStockIds.includes("carbonato_calcio");
+          const hasYeso = availableStockIds.includes("yeso");
+          const calPct = hasCal ? 3 : 0;
+          const yesoPct = hasYeso ? 2 : 0;
+          const suppPct = suppId ? 15 : 0;
+          const basePct = 100 - calPct - yesoPct - suppPct;
+          const fallbackRec = [{ id: baseId, pct: basePct }];
+          if (suppId) fallbackRec.push({ id: suppId, pct: suppPct });
+          if (hasCal) fallbackRec.push({ id: "carbonato_calcio", pct: calPct });
+          if (hasYeso) fallbackRec.push({ id: "yeso", pct: yesoPct });
+          cand = { recipe: fallbackRec };
+        }
+      }
       if (!cand || !cand.recipe || !cand.recipe.length) {
         setNoticeDlg({
           title: "Sin combinación viable con stock actual",
