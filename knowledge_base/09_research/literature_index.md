@@ -50,6 +50,8 @@ related_documents:
 | paper_023 | Hernández, Sánchez & Yamasaki | 2003 | Pasteurización química en frío con cal ($Ca(OH)_2$) para Pleurotus | Pleurotus spp. | ★★★★★ |
 | paper_024 | Roda et al. | 2021 | Extracción ultrasónica (UAE) y fraccionamiento de bioactivos de H. erinaceus | H. erinaceus | ★★★★★ |
 | paper_025 | Morales & Bermúdez (UNAL/Cenicafé) | 2010 | Maderas andinas (Aliso y Eucalipto) para Pleurotus y Lentinula | Multi-especie | ★★★★★ |
+| paper_026 | Lu et al. | 2022 | Visión artificial y YOLO para madurez y conteo de primordios | Multi-especie | ★★★★★ |
+| paper_027 | Bantle, Tolstorebrov & Eikevik | 2020 | Recuperación de calor (HRV) y balance térmico en cultivo de hongos | Multi-especie | ★★★★★ |
 
 ## Libros Técnicos
 
@@ -164,13 +166,14 @@ related_documents:
 | Diseño de planta / zonificación sanitaria | guide_001, guide_003, guide_005 |
 | IPM de insectos (sciáridos) y biocontrol | guide_001, guide_003, `deep_research_synthesis_2026.md` |
 | Planificación de producción continua | guide_001, paper_021 |
-| IoT y automatización modular | paper_011, paper_012 |
+| IoT y automatización modular | paper_011, paper_012, `block1_energy_edge_ai_2026.md` |
 | CFD, mezcla de aire y zonas muertas | paper_013 |
-| Visión artificial, madurez y datasets | paper_014 |
-| Control predictivo, PINN y energía | paper_015 |
-| Esporas, bioaerosoles y salud ocupacional | paper_016, paper_017 |
+| Visión artificial, madurez y datasets | paper_014, paper_026, `block1_energy_edge_ai_2026.md` |
+| Control predictivo, PINN, HRV y energía | paper_015, paper_027, `block1_energy_edge_ai_2026.md` |
+| Esporas, bioaerosoles y salud ocupacional | paper_016, paper_017, `block1_energy_edge_ai_2026.md` |
 | Revisión integral de cámaras 2026 | `incubation_fruiting_chambers_2026.md` |
 | Síntesis de investigación profunda 2026 | `deep_research_synthesis_2026.md` |
+| Climatización andina, HRV y Edge AI 2026 | `block1_energy_edge_ai_2026.md` |
 
 ## Literatura Pendiente de Incorporar
 

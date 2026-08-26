@@ -62,6 +62,10 @@ Roda, E., Priori, E. C., Ratto, D., De Luca, F., Di Iorio, C., Cavaletti, F., ..
 
 Morales, R. O., & Bermúdez, R. C. (2010). Evaluación de maderas andinas (*Alnus acuminata* y *Eucalyptus globulus*) en la producción de hongos comestibles y medicinales. *Biotecnología en el Sector Agropecuario y Agroindustrial*, 8(2), 45–53. [paper_025]
 
+Lu, C. P., Liaw, J. J., Wu, T. C., & Hung, T. F. (2022). Development of a mushroom growth measurement and maturity detection system using deep learning. *Computers and Electronics in Agriculture*, 196, 106859. https://doi.org/10.1016/j.compag.2022.106859 [paper_026]
+
+Bantle, M., Tolstorebrov, I., & Eikevik, T. M. (2020). Energy efficiency and heat recovery in indoor vertical farming and mushroom production: Ventilation and thermal balance analysis. *Energy and Buildings*, 224, 110273. https://doi.org/10.1016/j.enbuild.2020.110273 [paper_027]
+
 ICAR-Directorate of Mushroom Research. (2020). *Growing oyster mushroom* (Technical Bulletin). ICAR-DMR, Chambaghat, Solan (HP), India. [guide_002]
 
 Rodríguez Valencia, N., & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Centro Nacional de Investigaciones de Café (Cenicafé), Federación Nacional de Cafeteros de Colombia. Chinchiná, Caldas, Colombia. [paper_006]
