@@ -193,10 +193,9 @@
     );
     const aers = pool.filter(g => g.role === 'aireador');
 
-    // Intentionally mirrors legacy structural enumeration. Stock enforcement is
-    // applied by the unified constraint pass after generation.
-    const calAvail = ingredients.some(g => g.id === 'carbonato_calcio');
-    const yesoAvail = ingredients.some(g => g.id === 'yeso');
+    // Stock-aware mineral and aeration availability
+    const calAvail = useStock ? stock.has('carbonato_calcio') : ingredients.some(g => g.id === 'carbonato_calcio');
+    const yesoAvail = useStock ? stock.has('yeso') : ingredients.some(g => g.id === 'yeso');
     const profile = resolveProfile({ profileKey, species: sp, maxSupp });
     const suppLimit = profile.maxSupp;
     const aerOpts = [null, ...aers.slice(0, 2)];
@@ -204,9 +203,25 @@
     const yesoOpts = yesoAvail ? [0, 2] : [0];
     const tried = new Set();
     const seeds = [];
-    const T = Number(sp.cn_optimal?.ideal);
+    const T_ideal = Number(sp.cn_optimal?.ideal);
+    const T_max = Number(sp.cn_optimal?.max || T_ideal);
+    const T_min = Number(sp.cn_optimal?.min || T_ideal);
 
-    if (!Number.isFinite(T)) return [];
+    if (!Number.isFinite(T_ideal)) return [];
+
+    const targetPoints = useStock
+      ? [...new Set([
+          T_ideal,
+          T_max,
+          Math.round((T_ideal + T_max) / 2),
+          T_min,
+          Math.round((T_ideal + T_min) / 2)
+        ])].filter(t => Number.isFinite(t) && t > 0)
+      : [T_ideal];
+
+    const suppStepLevels = useStock
+      ? [...new Set([5, 8, 12, 15, 20, suppLimit])].filter(v => v > 0 && v <= suppLimit)
+      : [];
 
     // MODO 1: 1 base + 1 suplemento.
     bases.forEach(base => {
@@ -218,33 +233,63 @@
               const aerP = aer ? 10 : 0;
               const fixedPct = calP + yesoP + aerP;
               const remaining = 100 - fixedPct;
-              if (remaining < 40) return;
-              const enumKey = `1b1s|${base.id}|${supp.id}|${aer?.id || ''}|${calP}|${yesoP}`;
-              if (tried.has(enumKey)) return;
-              tried.add(enumKey);
+              if (remaining < (useStock ? 30 : 40)) return;
 
               const b = dryTerms(base);
               const s = dryTerms(supp);
-              const denom = (b.c - s.c) - T * (b.n - s.n);
-              if (Math.abs(denom) < 0.001) return;
-              const ps = remaining * (b.c - T * b.n) / denom;
-              const pb = remaining - ps;
-              if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
-              const rec = [
-                { id: base.id, p: round1(pb) },
-                { id: supp.id, p: round1(ps) },
-              ];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
+              // 1a. Closed-form targets across optimal C:N window
+              targetPoints.forEach(T => {
+                const enumKey = `1b1s|${base.id}|${supp.id}|${aer?.id || ''}|${calP}|${yesoP}${useStock ? `|T${T}` : ''}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
 
-              seeds.push(makeStructuralSeed(
-                rec,
-                '1b1s',
-                `Semilla 1b1s · ${base.id} + ${supp.id}`,
-                { enumKey, split: null, aeratorId: aer?.id || null, calP, yesoP }
-              ));
+                const denom = (b.c - s.c) - T * (b.n - s.n);
+                if (Math.abs(denom) < 0.001) return;
+                const ps = remaining * (b.c - T * b.n) / denom;
+                const pb = remaining - ps;
+                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+
+                const rec = [
+                  { id: base.id, p: round1(pb) },
+                  { id: supp.id, p: round1(ps) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '1b1s',
+                  `Semilla 1b1s · ${base.id} + ${supp.id}${useStock ? ` (C:N ~${T})` : ''}`,
+                  { enumKey, split: null, aeratorId: aer?.id || null, calP, yesoP, targetCN: T }
+                ));
+              });
+
+              // 1b. Direct stepped supplementation (guarantees finding formula when exact ideal exceeds max supp)
+              suppStepLevels.forEach(ps => {
+                const enumKey = `1b1s_step|${base.id}|${supp.id}|${aer?.id || ''}|${calP}|${yesoP}|ps${ps}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
+
+                const pb = remaining - ps;
+                if (pb < 15 || pb > 95) return;
+
+                const rec = [
+                  { id: base.id, p: round1(pb) },
+                  { id: supp.id, p: round1(ps) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '1b1s_step',
+                  `Semilla 1b1s · ${base.id} + ${supp.id} (${ps}% supp)`,
+                  { enumKey, split: null, aeratorId: aer?.id || null, calP, yesoP, suppPct: ps }
+                ));
+              });
             });
           });
         });
@@ -267,36 +312,64 @@
             if (remaining < 40) return;
 
             [[0.5, 0.5], [0.6, 0.4], [0.4, 0.6]].forEach(([f1, f2]) => {
-              const enumKey = `2b1s|${b1.id}|${b2.id}|${supp.id}|${aer?.id || ''}|${f1}`;
-              if (tried.has(enumKey)) return;
-              tried.add(enumKey);
-
               const d1 = dryTerms(b1);
               const d2 = dryTerms(b2);
               const ds = dryTerms(supp);
               const cBlend = d1.c * f1 + d2.c * f2;
               const nBlend = d1.n * f1 + d2.n * f2;
-              const denom = (cBlend - ds.c) - T * (nBlend - ds.n);
-              if (Math.abs(denom) < 0.001) return;
-              const ps = remaining * (cBlend - T * nBlend) / denom;
-              const pb = remaining - ps;
-              if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
-              const rec = [
-                { id: b1.id, p: round1(pb * f1) },
-                { id: b2.id, p: round1(pb * f2) },
-                { id: supp.id, p: round1(ps) },
-              ];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
+              targetPoints.forEach(T => {
+                const enumKey = `2b1s|${b1.id}|${b2.id}|${supp.id}|${aer?.id || ''}|${f1}${useStock ? `|T${T}` : ''}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
 
-              seeds.push(makeStructuralSeed(
-                rec,
-                '2b1s',
-                `Semilla 2b1s · ${b1.id}/${b2.id} + ${supp.id}`,
-                { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
-              ));
+                const denom = (cBlend - ds.c) - T * (nBlend - ds.n);
+                if (Math.abs(denom) < 0.001) return;
+                const ps = remaining * (cBlend - T * nBlend) / denom;
+                const pb = remaining - ps;
+                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+
+                const rec = [
+                  { id: b1.id, p: round1(pb * f1) },
+                  { id: b2.id, p: round1(pb * f2) },
+                  { id: supp.id, p: round1(ps) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '2b1s',
+                  `Semilla 2b1s · ${b1.id}/${b2.id} + ${supp.id}`,
+                  { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
+                ));
+              });
+
+              suppStepLevels.forEach(ps => {
+                const enumKey = `2b1s_step|${b1.id}|${b2.id}|${supp.id}|${aer?.id || ''}|${f1}|ps${ps}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
+
+                const pb = remaining - ps;
+                if (pb < 15 || pb > 95) return;
+
+                const rec = [
+                  { id: b1.id, p: round1(pb * f1) },
+                  { id: b2.id, p: round1(pb * f2) },
+                  { id: supp.id, p: round1(ps) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '2b1s_step',
+                  `Semilla 2b1s · ${b1.id}/${b2.id} + ${supp.id} (${ps}% supp)`,
+                  { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
+                ));
+              });
             });
           });
         });
@@ -321,41 +394,93 @@
             if (remaining < 35) return;
 
             suppSplits.forEach(([f1, f2]) => {
-              const enumKey = `1b2s|${base.id}|${s1.id}|${s2.id}|${aer?.id || ''}|${f1}`;
-              if (tried.has(enumKey)) return;
-              tried.add(enumKey);
-
               const db = dryTerms(base);
               const d1 = dryTerms(s1);
               const d2 = dryTerms(s2);
               const cBlend = d1.c * f1 + d2.c * f2;
               const nBlend = d1.n * f1 + d2.n * f2;
-              const denom = (db.c - cBlend) - T * (db.n - nBlend);
-              if (Math.abs(denom) < 0.001) return;
-              const psTotal = remaining * (db.c - T * db.n) / denom;
-              const pb = remaining - psTotal;
-              if (psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
 
-              const rec = [
-                { id: base.id, p: round1(pb) },
-                { id: s1.id, p: round1(psTotal * f1) },
-                { id: s2.id, p: round1(psTotal * f2) },
-              ];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
+              targetPoints.forEach(T => {
+                const enumKey = `1b2s|${base.id}|${s1.id}|${s2.id}|${aer?.id || ''}|${f1}${useStock ? `|T${T}` : ''}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
 
-              seeds.push(makeStructuralSeed(
-                rec,
-                '1b2s',
-                `Semilla 1b2s · ${base.id} + ${s1.id}/${s2.id}`,
-                { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
-              ));
+                const denom = (db.c - cBlend) - T * (db.n - nBlend);
+                if (Math.abs(denom) < 0.001) return;
+                const psTotal = remaining * (db.c - T * db.n) / denom;
+                const pb = remaining - psTotal;
+                if (psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
+
+                const rec = [
+                  { id: base.id, p: round1(pb) },
+                  { id: s1.id, p: round1(psTotal * f1) },
+                  { id: s2.id, p: round1(psTotal * f2) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '1b2s',
+                  `Semilla 1b2s · ${base.id} + ${s1.id}/${s2.id}`,
+                  { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
+                ));
+              });
+
+              suppStepLevels.forEach(psTotal => {
+                const enumKey = `1b2s_step|${base.id}|${s1.id}|${s2.id}|${aer?.id || ''}|${f1}|ps${psTotal}`;
+                if (tried.has(enumKey)) return;
+                tried.add(enumKey);
+
+                const pb = remaining - psTotal;
+                if (pb < 20 || pb > 85) return;
+
+                const rec = [
+                  { id: base.id, p: round1(pb) },
+                  { id: s1.id, p: round1(psTotal * f1) },
+                  { id: s2.id, p: round1(psTotal * f2) },
+                ];
+                if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+                if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+                if (aer) rec.push({ id: aer.id, p: aerP });
+
+                seeds.push(makeStructuralSeed(
+                  rec,
+                  '1b2s_step',
+                  `Semilla 1b2s · ${base.id} + ${s1.id}/${s2.id} (${psTotal}% supp)`,
+                  { enumKey, split: [f1, f2], aeratorId: aer?.id || null, calP, yesoP }
+                ));
+              });
             });
           });
         }
       }
     });
+
+    // MODO 4: Base sola (para especies con C:N alto o cuando no hay suplementos en bodega)
+    if (useStock) {
+      bases.forEach(base => {
+        aerOpts.forEach(aer => {
+          calOpts.forEach(calP => {
+            yesoOpts.forEach(yesoP => {
+              const aerP = aer ? 10 : 0;
+              const fixedPct = calP + yesoP + aerP;
+              const pb = 100 - fixedPct;
+              if (pb < 50) return;
+              const enumKey = `1b_only|${base.id}|${aer?.id || ''}|${calP}|${yesoP}`;
+              if (tried.has(enumKey)) return;
+              tried.add(enumKey);
+              const rec = [{ id: base.id, p: round1(pb) }];
+              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
+              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
+              if (aer) rec.push({ id: aer.id, p: aerP });
+              seeds.push(makeStructuralSeed(rec, '1b_only', `Semilla base pura · ${base.id}`, { enumKey, aeratorId: aer?.id || null, calP, yesoP }));
+            });
+          });
+        });
+      });
+    }
 
     return seeds;
   };
