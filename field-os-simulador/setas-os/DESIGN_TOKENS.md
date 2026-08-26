@@ -26,8 +26,8 @@ Each category has four states: default (border), hover (tinted background), hove
 | `--cat-sup` | Premium/supplement layers | #C68F2C | 12% tint | #8B6014 | **#8B641F** ⚠️ |
 | `--cat-est` | Stabilizers, structural amendments | #6B4E31 | 12% tint | #6B4E31 | #6B4E31 |
 | `--cat-local` | Locally-sourced materials | #7A5A3F | 12% tint | #7A5A3F | #7A5A3F |
-| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | **#9C5940** ⚠️ | **#9C5940** ⚠️ |
-| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | **#607056** ⚠️ | **#607056** ⚠️ |
+| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | **#8C5039** ⚠️ | **#8C5039** ⚠️ |
+| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | **#56634C** ⚠️ | **#56634C** ⚠️ |
 | `--cat-adit` | Additives, amendments, biotech | `--accent-blue-grey` | 12% tint | `--accent-blue-grey` | same as default |
 
 ⚠️ = the value is **darkened from the base hue** to pass WCAG AA. See Accessibility Audit below — do not "fix" these back to the base color, that reintroduces the contrast failure.
@@ -67,15 +67,17 @@ Chip/badge text in this UI runs 9.5–13px, below the WCAG "large text" exemptio
 | **circ** | **4.44:1** (first-pass fix) | ❌ **Fail** | **4.09:1** (unfixed base hue) | ❌ **Fail** |
 | adit | design-system token, assumed pre-validated | — | — | — |
 
-**v2 fix** — darkened further against the correct foreground/background pair. `trop` and `circ` now reuse one corrected value for *both* `-text` and `-on`, since both states failed for the same reason (base hue too light against this palette's cream/paper tones):
+**v2 fix (superseded — see v3)** — darkened `trop`/`circ` against untinted `--paper-0` as a stand-in for the hover background: sup #8B641F (4.85:1 vs `#F7F4EC`), trop #9C5940, circ #607056.
 
-| Category | Base hex | Darkened by | New hex | vs. `#F7F4EC` | vs. `--paper-0` |
-|----------|----------|-------------|---------|----------------|-------------------|
-| sup (`-on` only) | #C68F2C | 30% | #8B641F | 4.85:1 | — |
-| trop (`-text` + `-on`) | #B8694B | 15% | #9C5940 | 4.88:1 | 4.88:1 |
-| circ (`-text` + `-on`) | #6B7C5F | 10% | #607056 | 4.84:1 | 4.84:1 |
+**v3 — corrected background.** `--cat-trop-hover`/`--cat-circ-hover` are computed with `color-mix(in oklab, <hue> 12%, var(--paper-0))`. OKLab mixing is perceptually non-linear — the actual rendered backgrounds (`~#F1E3D8` for trop, `~#E5E5DA` for circ) turned out *lighter* than plain `--paper-0`, not simply "a light tint of it." The v2 fix, tuned against untinted `--paper-0`, only reached 4.27:1 (trop) / 4.19:1 (circ) against the real `color-mix()` output — both still failing. Recomputed the actual OKLab-mixed hex and darkened further:
 
-**When adding a new ingredient category**: compute contrast against the *actual resolved* foreground/background — trace `var()` chains all the way down (`--text-on-dark` is not white here) — for every pairing the color is used in, not just the one that seems most obviously at risk. Darken by the minimum percentage needed (5% increments), aiming a point or two past 4.5:1 for rounding margin, rather than stopping exactly at the threshold.
+| Category | Base hex | Darkened by | New hex | vs. actual `color-mix()` bg | vs. `#F7F4EC` (`.on`) |
+|----------|----------|-------------|---------|-------------------------------|---------------------------|
+| sup (`-on` only) | #C68F2C | 30% | #8B641F | — | 4.85:1 |
+| trop (`-text` + `-on`) | #B8694B | 24% | #8C5039 | 5.03:1 (bg ≈ #F1E3D8) | 5.75:1 |
+| circ (`-text` + `-on`) | #6B7C5F | 20% | #56634C | 5.04:1 (bg ≈ #E5E5DA) | 5.82:1 |
+
+**When adding a new ingredient category**: compute contrast against the *actual resolved* foreground/background — trace `var()` chains all the way down (`--text-on-dark` is not white here), and if a background comes from `color-mix(in oklab, ...)`, resolve the real mixed hex rather than assuming it lands between the two input colors' luminances. Darken by the minimum percentage needed (5% increments), aiming a point or two past 4.5:1 for rounding margin, rather than stopping exactly at the threshold — this audit failed twice at exactly that margin.
 
 #### Button State Tokens
 

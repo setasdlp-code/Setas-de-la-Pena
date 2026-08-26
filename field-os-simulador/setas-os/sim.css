@@ -170,29 +170,32 @@
 
   --cat-trop: #B8694B;
   --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
-  --cat-trop-text: #9C5940;            /* WCAG FIX v2: hover-text pairs this color as
-                                           foreground on --cat-trop-hover (a light tint
-                                           of the same hue over --paper-0). Even against
-                                           the untinted --paper-0 worst case, the base
-                                           hue only reaches 3.70:1. Darkened 15% to
-                                           4.88:1 against --paper-0 — passes both the
-                                           tinted hover bg (higher contrast) and the
-                                           untinted worst case. */
-  --cat-trop-on: #9C5940;              /* WCAG FIX v2: same darkening reused — .on
-                                           renders on #F7F4EC (not white, see --cat-sup
-                                           note above). Original fix (4.07:1 vs white)
-                                           and its "corrected" value (4.44:1 vs the real
-                                           cream foreground) both still failed. This
-                                           value clears 4.88:1 against #F7F4EC too. */
+  --cat-trop-text: #8C5039;            /* WCAG FIX v3: --cat-trop-hover is computed via
+                                           color-mix(in oklab, ...) — its actual rendered
+                                           value is ~#F1E3D8, NOT plain --paper-0 (OKLab
+                                           mixing is non-linear; the tint is lighter than
+                                           the untinted base in this case). The v2 fix
+                                           (#9C5940, tuned against untinted --paper-0)
+                                           only reached 4.27:1 against the real tinted
+                                           background — still failing. Darkened 24% from
+                                           the base hue to 5.03:1 against the actual
+                                           color-mix() output and 5.75:1 against untinted
+                                           --paper-0 — passes both. */
+  --cat-trop-on: #8C5039;              /* WCAG FIX v3: reused — .on renders on #F7F4EC
+                                           (not white; see --cat-sup note above). This
+                                           value clears 5.75:1 there, well past 4.5:1. */
 
   --cat-circ: #6B7C5F;
   --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
-  --cat-circ-text: #607056;            /* WCAG FIX v2: same issue as --cat-trop-text —
-                                           base hue reaches only 4.09:1 against untinted
-                                           --paper-0. Darkened 10% to 4.84:1. */
-  --cat-circ-on: #607056;              /* WCAG FIX v2: reused — base 4.49:1 and first
-                                           "fix" 4.44:1 both failed against the real
-                                           #F7F4EC foreground. This clears 4.84:1. */
+  --cat-circ-text: #56634C;            /* WCAG FIX v3: same issue as --cat-trop-text —
+                                           the actual color-mix(in oklab, ...) output for
+                                           --cat-circ-hover is ~#E5E5DA, and the v2 fix
+                                           (#607056) only reached 4.19:1 against it.
+                                           Darkened 20% from base to 5.04:1 against the
+                                           real tinted background and 5.82:1 against
+                                           untinted --paper-0. */
+  --cat-circ-on: #56634C;              /* WCAG FIX v3: reused — clears 5.82:1 against
+                                           the actual #F7F4EC .on foreground. */
 
   --cat-adit: var(--accent-blue-grey);
   --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
@@ -645,7 +648,7 @@
 /* ── ACTIONS ────────────────────────────────────────────────────── */
 .sim-root .act-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
 .sim-root .btn{
-  flex:1; min-width:120px; padding:12px 18px;
+  flex:1; min-width:120px; min-height:44px; padding:12px 18px;
   font-family:var(--font-body); font-weight:800; font-size:9.5px;
   letter-spacing:.14em; text-transform:uppercase;
   border:1px solid var(--btn-border); border-radius:0; background:var(--btn-bg);
@@ -951,7 +954,7 @@
 .sim-root .tog{
   font-family:var(--font-body); font-weight:800; font-size:9.5px;
   letter-spacing:.14em; text-transform:uppercase;
-  padding:10px 16px; border:1px solid var(--btn-border);
+  padding:10px 16px; min-height:44px; border:1px solid var(--btn-border);
   border-radius:0; background:var(--btn-bg);
   color:var(--btn-text); cursor:pointer;
   transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
