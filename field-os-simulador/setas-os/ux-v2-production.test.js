@@ -121,3 +121,22 @@ test('thermal label generator supports 50x30mm and 60x40mm formats with print pa
   assert.match(styles, /\.thermal-card-print/);
   assert.match(shell, /\.thermal-print-roll/);
 });
+
+test('thermal print buttons are embedded across Hoy, Bitacora bags, Field QR and Harvest workflows', () => {
+  // 1. Hoy & BatchDetail
+  assert.match(source, /openThermalForLote/);
+  assert.match(source, /Imprimir etiquetas térmicas del lote/);
+  assert.match(source, /🏷 Imprimir Etiquetas Térmicas/);
+
+  // 2. Bitacora individual bags
+  assert.match(source, /Imprimir etiqueta de la bolsa/);
+
+  // 3. Field QR Action Sheet
+  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 60×40\)/);
+
+  // 6. Harvest modal & table
+  assert.match(source, /openThermalForCosecha/);
+  assert.match(source, /Guardar y 🖨 Canastilla/);
+  assert.match(source, /Imprimir etiqueta de canastilla/);
+});
+
