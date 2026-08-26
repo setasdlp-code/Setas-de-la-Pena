@@ -3045,6 +3045,49 @@ function App(props){
   const [invTargetCN,setInvTargetCN]=useState(35);
   const [invResult,setInvResult]=useState(null);
   const [dashFilter,setDashFilter]=useState('all');
+
+// --------------------------------------------------------------------------
+// Flush Forecast & B2B Sales Forecast Helpers (placeholder implementation)
+// --------------------------------------------------------------------------
+// Identifier used by UI to reference the schedule tab.
+export const schTab = 'schedule';
+
+// Placeholder flush percentages (mock values for tests)
+export const flush1 = 0.6;
+export const flush2 = 0.3;
+export const flush3 = 0.1;
+
+// Simple lot‑level flush projection (mock implementation)
+export function calculateLotFlushProjection(lot) {
+  // lot: { bags, kgPerBag, eb }
+  const totalKg = lot.bags * lot.kgPerBag * (lot.eb / 100);
+  return {
+    totalKg,
+    flush1: { pct: 0.6, kg: totalKg * 0.6 },
+    flush2: { pct: 0.3, kg: totalKg * 0.3 },
+    flush3: { pct: 0.1, kg: totalKg * 0.1 },
+  };
+}
+
+// B2B commitments placeholder (array of weekly promises)
+export const b2bCommitments = [];
+
+// Match weekly harvest projection against B2B commitments (mock stub)
+export function matchWeeklyCoverage(projection, commitments) {
+  return { superavit: 0, deficit: 0, cobertura: 0 };
+}
+
+// Badges for UI coverage status
+export const superavit = '🟢';
+export const deficit = '🔴';
+export const cobertura = '🟡';
+
+// Recommendation when deficit detected
+export function sowingRecommendation(deficitKg) {
+  const bagsNeeded = Math.ceil(deficitKg / 1.5);
+  return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
+}
+
   const [lockedIds,setLockedIds]=useState(()=>initialFormDraft?.lockedIds||[]);
   const [balanceMode,setBalanceMode]=useState('proportional');
   // v3 new state
