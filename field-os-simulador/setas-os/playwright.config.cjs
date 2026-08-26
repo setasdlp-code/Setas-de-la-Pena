@@ -24,6 +24,8 @@ module.exports = defineConfig({
   globalSetup: require.resolve('./e2e/global-setup.js'),
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    navigationTimeout: 30000,
+    actionTimeout: 10000,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
