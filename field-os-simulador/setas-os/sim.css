@@ -3897,19 +3897,27 @@
   margin-top: 2px;
 }
 
+.sim-root .thermal-print-roll,
+.thermal-print-roll {
+  display: none;
+}
+
 @media print {
   .thermal-print-roll, .thermal-print-roll * {
     visibility: visible !important;
   }
   .thermal-print-roll {
+    display: block !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    background: var(--paper-0) !important;
+    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    z-index: 9999999 !important;
   }
+
   .thermal-card-print {
     display: flex !important;
     align-items: center !important;

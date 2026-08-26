@@ -8229,8 +8229,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </button>
                 </div>
 
-                {/* CONTENEDOR OCULTO PARA IMPRESIÓN DIRECTA (@media print) */}
-                <div className="thermal-print-roll" style={{ display: 'none' }}>
+                {/* CONTENEDOR PARA IMPRESIÓN DIRECTA (oculto en pantalla por CSS, visible en @media print) */}
+                <div className="thermal-print-roll">
+
                   {items.map(item => {
                     const qrSrc = generateQrSvgDataUrl(item.qrUrl);
                     return (
