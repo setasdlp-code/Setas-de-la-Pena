@@ -3567,6 +3567,12 @@
   margin: 0 auto;
 }
 
+.sim-root .thermal-card-40x30 {
+  width: 40mm;
+  min-height: 30mm;
+  padding: 1.8mm 2mm;
+}
+
 .sim-root .thermal-card-50x30 {
   width: 50mm;
   min-height: 30mm;
@@ -3578,6 +3584,7 @@
   min-height: 40mm;
   padding: 2.5mm 3mm;
 }
+
 
 .sim-root .thermal-card-gourmet-wood {
   width: 100%;
@@ -3609,6 +3616,11 @@
 .sim-root .thermal-qr-img {
   flex-shrink: 0;
   image-rendering: pixelated;
+}
+
+.sim-root .thermal-card-40x30 .thermal-qr-img {
+  width: 18mm;
+  height: 18mm;
 }
 
 .sim-root .thermal-card-50x30 .thermal-qr-img {
@@ -3651,6 +3663,10 @@
   color: var(--ink-900);
 }
 
+.sim-root .thermal-card-40x30 .thermal-code {
+  font-size: 8.5px;
+}
+
 .sim-root .thermal-card-50x30 .thermal-code {
   font-size: 10px;
 }
@@ -3670,6 +3686,10 @@
   margin-top: 1px;
 }
 
+.sim-root .thermal-card-40x30 .thermal-species {
+  font-size: 7.5px;
+}
+
 .sim-root .thermal-card-50x30 .thermal-species {
   font-size: 8px;
 }
@@ -3687,6 +3707,10 @@
   font-family: var(--font-mono, monospace);
   color: #333333;
   margin-top: 2px;
+}
+
+.sim-root .thermal-card-40x30 .thermal-meta {
+  font-size: 6.5px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-meta {
@@ -3736,12 +3760,19 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  .thermal-card-print.thermal-card-40x30 {
+    width: 40mm !important;
+    height: 30mm !important;
+    padding: 1.8mm 2mm !important;
+    page-break-inside: avoid !important;
+  }
   .thermal-card-print.thermal-card-50x30 {
     width: 50mm !important;
     height: 30mm !important;
     padding: 2mm 2.5mm !important;
     page-break-inside: avoid !important;
   }
+
   .thermal-card-print.thermal-card-60x40 {
     width: 60mm !important;
     height: 40mm !important;

@@ -8066,7 +8066,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span id="thermal-format-label" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
                       Formato de Impresión / Empaque
                     </span>
-                    <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6 }}>
+                    <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 6 }}>
+
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('40x30')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '40x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '40x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '40x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        40 × 30 mm
+                      </button>
                       <button
                         type="button"
                         onClick={() => setThermalSize('50x30')}
@@ -8102,9 +8110,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         Apotecario (50 ml)
                       </button>
+
                     </div>
                   </div>
-
 
                   <div>
                     <label htmlFor="thermal-scope" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
@@ -8142,9 +8150,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
                     </span>
                   </div>
+
                   <div className="thermal-preview-container">
                     {items.map(item => {
                       const qrSrc = generateQrSvgDataUrl(item.qrUrl);

@@ -109,13 +109,15 @@ test('perito bridge renders structured co-formulation cards with DS tokens and 4
   assert.match(styles, /\.sim-root \.coform-card/);
 });
 
-test('thermal label generator supports 50x30mm and 60x40mm formats with print pagination', () => {
+test('thermal label generator supports 40x30mm, 50x30mm and 60x40mm formats with print pagination', () => {
   assert.match(source, /showThermalModal/);
+  assert.match(source, /40 × 30 mm/);
   assert.match(source, /50 × 30 mm/);
   assert.match(source, /60 × 40 mm/);
   assert.match(source, /generateQrSvgDataUrl/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Generador de etiquetas térmicas"/);
   assert.match(styles, /\.sim-root \.thermal-preview-container/);
+  assert.match(styles, /\.sim-root \.thermal-card-40x30/);
   assert.match(styles, /\.sim-root \.thermal-card-50x30/);
   assert.match(styles, /\.sim-root \.thermal-card-60x40/);
   assert.match(styles, /\.thermal-card-print/);
