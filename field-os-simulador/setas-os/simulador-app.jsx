@@ -8048,6 +8048,43 @@ body{margin:0;padding:20px 24px;background:#fff;}
               label="Generador de etiquetas térmicas"
               dialogStyle={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
             >
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    @page {
+                      size: ${
+                        thermalSize === '40x30' ? '40mm 30mm' :
+                        thermalSize === '50x30' ? '50mm 30mm' :
+                        thermalSize === '60x40' ? '60mm 40mm' :
+                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
+                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
+                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
+                      };
+                      margin: 0 !important;
+                    }
+                    body {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      background: #ffffff !important;
+                    }
+                    .thermal-print-roll {
+                      background: #ffffff !important;
+                    }
+                    .thermal-card-print {
+                      background: #ffffff !important;
+                      color: #000000 !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      filter: contrast(300%) grayscale(100%) !important;
+                    }
+                    .thermal-card-print * {
+                      background: transparent !important;
+                      color: #000000 !important;
+                    }
+                    .thermal-qr-img {
+                      image-rendering: pixelated !important;
+                    }
+                  }
+                `}} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>

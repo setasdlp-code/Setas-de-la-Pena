@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d2ae729a3c0f7d7470bdc145656a4734b26d41639a396e0c8700c45a7ede4753
+// source-hash: dcb051e62fd137918c34739a01b972c52ffe439b6e8ffbc0463f5c8996b52c28
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -5085,6 +5085,36 @@ Click para ver análisis completo`
         label: "Generador de etiquetas térmicas",
         dialogStyle: { width: "min(580px, 95vw)", padding: "20px 18px", background: "var(--paper-1, #EFEBE0)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
       },
+      /* @__PURE__ */ React.createElement("style", { dangerouslySetInnerHTML: { __html: `
+                  @media print {
+                    @page {
+                      size: ${thermalSize === "40x30" ? "40mm 30mm" : thermalSize === "50x30" ? "50mm 30mm" : thermalSize === "60x40" ? "60mm 40mm" : thermalSize === "gourmet-wood" ? "180mm 60mm" : thermalSize === "kraft-tray" ? "80mm 120mm" : thermalSize === "apothecary-50" ? "85mm 42mm" : "auto"};
+                      margin: 0 !important;
+                    }
+                    body {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      background: #ffffff !important;
+                    }
+                    .thermal-print-roll {
+                      background: #ffffff !important;
+                    }
+                    .thermal-card-print {
+                      background: #ffffff !important;
+                      color: #000000 !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      filter: contrast(300%) grayscale(100%) !important;
+                    }
+                    .thermal-card-print * {
+                      background: transparent !important;
+                      color: #000000 !important;
+                    }
+                    .thermal-qr-img {
+                      image-rendering: pixelated !important;
+                    }
+                  }
+                ` } }),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid var(--border-hairline, #8C7F5B)", paddingBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)" } }, "🏷 Impresión Térmica · Rollo Adhesivo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, "Lote ", lote.codigo, " · ", lote.especie, " ", thermalScope === "cosecha" ? "· Etiqueta Canastilla Cosecha" : "")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar generador de etiquetas", onClick: () => setShowThermalModal(false) }, "✕")),
       /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { id: "thermal-format-label", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Formato de Impresión / Empaque"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-labelledby": "thermal-format-label", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 6 } }, /* @__PURE__ */ React.createElement(
         "button",
