@@ -19,12 +19,6 @@
   --line-2: #1E1D19;    /* heaviest rule — section dividers, print borders */
 
   /* ---- Accents: classification & status only, never decoration ----
-     NOTE (Peritaje Técnico 2026):
-     Los tokens de pantalla (--accent-olive #5B6B44, --accent-terracotta #A85C32)
-     presentan una calibración lumínica intencional respecto a la paleta editorial/print
-     (#4C5B3A y #8C4026) para garantizar ratio de contraste WCAG 2.1 AA (≥ 4.5:1)
-     sobre sustratos digitales (--paper-0 #F7F4EC y --paper-1 #EFEBE0) en pantallas OLED/LCD de campo.
-     
      FOS-07 (audited 2026): on a solid accent fill, text/logo must use
      --paper-0, never --ink-0 (ink-0 on accent-olive = 2.92:1, fails WCAG
      even at large-text threshold; paper-0 on accent-olive = 5.26:1, passes). ---- */

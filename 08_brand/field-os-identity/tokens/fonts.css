@@ -1,11 +1,14 @@
-/* Gaya — primary identity typeface.
-   Consolidated for optimal bundle footprint in field environments (3G / offline).
-   Loads essential weights (300, 500, 700, 900) with swap strategy; fallback handles intermediate weights. */
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
-
+/* Gaya — primary typeface, provided by Setas de la Peña. */
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; }
 
 /* IBM Plex Sans — secondary typeface for accent and display use. */
 @font-face { font-family: 'IBM Plex Sans Display'; src: url('../fonts/IBMPlexSans-Light.ttf') format('truetype'); font-weight: 300; font-style: normal; }
