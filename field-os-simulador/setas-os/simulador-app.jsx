@@ -1966,6 +1966,7 @@ function App(props){
   const [thermalScope,setThermalScope]=useState('all');
   const [thermalBagStart,setThermalBagStart]=useState(1);
   const [thermalBagEnd,setThermalBagEnd]=useState(20);
+  const [thermalCosechaItem,setThermalCosechaItem]=useState(null);
   const [showDiagModal,setShowDiagModal]=useState(false);
   const [diagLoteId,setDiagLoteId]=useState('');
   const [diagBolsaId,setDiagBolsaId]=useState('');
@@ -1997,6 +1998,9 @@ function App(props){
   const [climateTimeRange,setClimateTimeRange]=useState('24h');
   const [faePulseActive,setFaePulseActive]=useState(false);
   const [humidifierOverride,setHumidifierOverride]=useState(null);
+  const [showProdLaunchModal,setShowProdLaunchModal]=useState(false);
+  const [prodLaunchForm,setProdLaunchForm]=useState(null);
+
 
 
 
@@ -2178,12 +2182,12 @@ function App(props){
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen||showProdLaunchModal);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen,showProdLaunchModal]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -2771,6 +2775,226 @@ body{margin:0;padding:20px 24px;background:#fff;}
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
   };
+
+  const openThermalForLote = (loteId, options = {}) => {
+    const lote = bitLotes.find(l => l.id === loteId) || bitLotes[0];
+    if (!lote) return;
+    setThermalLote(lote);
+    setThermalScope(options.scope || (options.bagNum ? 'custom' : 'all'));
+    if (options.bagNum) {
+      setThermalBagStart(options.bagNum);
+      setThermalBagEnd(options.bagNum);
+    } else {
+      setThermalBagStart(1);
+      setThermalBagEnd(lote.numBolsas || 12);
+    }
+    setThermalCosechaItem(null);
+    setShowThermalModal(true);
+  };
+
+  const openThermalForCosecha = (loteId, cosechaData = {}) => {
+    const lote = bitLotes.find(l => l.id === loteId) || bitLotes[0];
+    if (!lote) return;
+    setThermalLote(lote);
+    setThermalScope('cosecha');
+    setThermalCosechaItem({
+      ...cosechaData,
+      loteCodigo: lote.codigo
+    });
+    setShowThermalModal(true);
+  };
+
+  const openProdLauncher = () => {
+    if (!readyForProduction || !recipe.length || !an) {
+      setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const sp = SPP[sKey];
+    const SC = { p_ostreatus_gris:'OST', p_ostreatus_blanco:'OBL', p_djamor_rosa:'ROS', p_eryngii:'ERY', shiitake:'SHI', lions_mane:'MEL', reishi:'REI', enoki:'ENO', nameko:'NAM' };
+    const sppCode = SC[sKey] || 'EXP';
+    const dc = today.replace(/-/g,'').slice(2);
+    const cnt = bitLotes.length + 1;
+    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+
+    // Desglose de insumos a descontar
+    const insumos = (bd?.items || []).map(it => {
+      const g = INGS.find(i => i.name === it.name || i.id === it.id);
+      const id = g ? g.id : it.name;
+      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
+      const stockActual = invLotes.filter(l => l.activo && l.ingredienteId === id).reduce((s,l) => s + l.cantidadKgDisponible, 0);
+      return {
+        id,
+        name: it.name,
+        krKg,
+        stockActual,
+        ok: stockActual >= krKg * 0.999
+      };
+    });
+
+    if (bd?.spawn && bd.spawn > 0) {
+      const spawnStock = invLotes.filter(l => l.activo && l.ingredienteId === 'spawn_grano').reduce((s,l) => s + l.cantidadKgDisponible, 0);
+      insumos.push({
+        id: 'spawn_grano',
+        name: `Spawn / Micelio (${sp?.name || sKey})`,
+        krKg: bd.spawn,
+        stockActual: spawnStock,
+        ok: spawnStock >= bd.spawn * 0.999
+      });
+    }
+
+    setProdLaunchForm({
+      codigo,
+      especie: sp?.name || '',
+      especieCientifico: sp?.scientific || '',
+      cepa: '',
+      fechaMezcla: today,
+      fechaInoculacion: today,
+      numBolsas: numBags || 10,
+      pesoHumedo: kgBag || 1.5,
+      humedad: hObj || 67,
+      sala: selectedClimateRoom || 'martha_01',
+      operador: 'Operario Granja Tenjo',
+      notas: '',
+      printQr: true,
+      insumos
+    });
+    setShowProdLaunchModal(true);
+  };
+
+  const ejecutarLanzamientoProduccion = () => {
+    if (!prodLaunchForm) return;
+    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
+    const nb = parseInt(numBolsas) || 1;
+    const kb = parseFloat(pesoHumedo) || 1.5;
+    const hm = parseFloat(humedad) || 67;
+    const now = new Date().toISOString();
+    const ts = Date.now();
+
+    // 1. Descontar Inventario en Bodega (FIFO)
+    const insumosADescontar = (insumos || []).filter(i => i.krKg > 0);
+    if (insumosADescontar.length > 0) {
+      setInvLotes(prev => {
+        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
+        try { localStorage.setItem('sdp_lotes', JSON.stringify(updated)); } catch(e) {}
+        return updated;
+      });
+      const newMovs = insumosADescontar.map((row, i) => ({
+        id: 'mov_lote_' + ts + '_' + i,
+        tipo: 'consumo_lote',
+        ingredienteId: row.id,
+        kgMovidos: row.krKg,
+        loteNum: codigo,
+        fecha: fechaInoculacion,
+        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
+        timestamp: now
+      }));
+      saveMovimientos([...invMovimientos, ...newMovs]);
+
+      if (window.SetasDB) {
+        (async () => {
+          try {
+            for (const row of insumosADescontar) {
+              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+            }
+          } catch (e) {
+            console.warn('Error sincronizando descuento FIFO a Firestore:', e);
+          }
+        })();
+      }
+    }
+
+    // 2. Crear Lote y Bolsas en Bitácora
+    const lote = {
+      id: 'BIT_' + ts,
+      codigo,
+      especie,
+      especieCientifico,
+      cepa,
+      fechaMezcla,
+      fechaInoculacion,
+      numBolsas: nb,
+      pesoHumedo: kb,
+      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+      spawnPct: an?.dynSpawn || 8,
+      humedad: hm,
+      tratamiento: tr?.name || 'Pasteurización Térmica',
+      costoIngKg: an ? Math.round(an.cost) : 0,
+      operador,
+      objetivo: 'Lanzamiento directo desde Formulador',
+      notas,
+      estado: 'incubacion',
+      veredicto: '',
+      sala,
+      ubicacion: sala,
+      recipeRef: {
+        id: ts,
+        name: saveName || `Receta ${especie} (${codigo})`,
+        sKey,
+        recipe: [...recipe],
+        cn: an ? an.cn.toFixed(1) : '—',
+        eb: an ? an.eb.toFixed(0) : '—',
+        score: opt ? opt.score : 0,
+        cost: an ? Math.round(an.cost) : 0
+      },
+      createdAt: now
+    };
+
+    const bolsas = Array.from({ length: nb }, (_, i) => ({
+      id: 'BOLSA_' + ts + '_' + i,
+      loteId: lote.id,
+      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, '0')}`,
+      num: i + 1,
+      estado: 'sana',
+      col25: null,
+      col50: null,
+      col100: null,
+      pesoInicial: kb,
+      fechaDescarte: null,
+      motivoDescarte: '',
+      observaciones: '',
+      foto: null
+    }));
+
+    setBitLotes(prev => {
+      const upd = [lote, ...prev];
+      try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+      return upd;
+    });
+    setBitBolsas(prev => {
+      const upd = [...prev, ...bolsas];
+      try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+      return upd;
+    });
+
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.guardarLote(lote);
+          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        } catch (e) {
+          console.warn('Error respaldando lote en Firestore:', e);
+        }
+      })();
+    }
+
+    // 3. Cerrar modal y proceder
+    setShowProdLaunchModal(false);
+
+    if (printQr) {
+      setThermalLoteId(lote.id);
+      setShowThermalModal(true);
+    } else {
+      setBitActiveLoteId(lote.id);
+      goTab('bitacora');
+    }
+
+    setNoticeDlg({
+      title: '🚀 Producción de Lote Lanzada',
+      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
+    });
+  };
+
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
@@ -3735,7 +3959,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
         {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
           <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
-          <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>🖨</button>
+          </div>
         </div>)}
       </section>;})}
     </section>;
@@ -3747,7 +3974,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
     const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
     return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
-      <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+        <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}>🏷 Imprimir Etiquetas Térmicas</button>
+      </div>
       <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
         <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
@@ -4221,6 +4451,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
+                {bitActiveLoteId&&(
+                  <button
+                    className="inv-btn inv-btn-sec inv-btn-sm"
+                    onClick={()=>openThermalForLote(bitActiveLoteId)}
+                    title="Imprimir etiquetas térmicas para este lote"
+                    style={{display:'flex',alignItems:'center',gap:4}}
+                  >
+                    🖨 Etiquetas
+                  </button>
+                )}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
                 {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
               </div>
@@ -4263,9 +4503,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
                             {[['Sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['BE',stats?.be!=null?stats.be.toFixed(0)+'%':'—'],['Cosecha',stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'8px 4px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:2}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{v}</div></div>))}
                           </div>
-                          <div style={{padding:'6px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)'}}>
+                          <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)',gap:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.fechaInoculacion}</span>
-                            {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>sin veredicto</span>}
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>sin veredicto</span>}
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                onClick={(e)=>{ e.stopPropagation(); openThermalForLote(lote.id); }}
+                                title="Imprimir etiquetas térmicas del lote"
+                                style={{padding:'3px 8px',fontSize:12}}
+                              >
+                                🖨
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -4275,8 +4526,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {bitLotes.length>0&&bitDashView==='tabla'&&(
                   <div className="inv-section">
                     <table className="inv-table">
-                      <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th></th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></td></tr>);})}</tbody>
+                      <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th style={{textAlign:'right'}}>Acciones</th></tr></thead>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas">🖨</button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -4296,7 +4547,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:17,color:'var(--ink-900)'}}>{lote.especie}</div>
                       {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{lote.especieCientifico}</div>}
                     </div>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+                      <button
+                        type="button"
+                        className="inv-btn inv-btn-sec"
+                        onClick={()=>openThermalForLote(lote.id)}
+                        style={{display:'flex',alignItems:'center',gap:6,fontSize:"var(--text-sm)",padding:'6px 12px'}}
+                        title="Imprimir rollo completo de etiquetas térmicas con QR"
+                      >
+                        🏷 Imprimir Rollo QR ({lote.numBolsas||12} bolsas)
+                      </button>
                       <select name={`loteVerdict-${lote.id}`} aria-label={`Veredicto del lote ${lote.codigo}`} value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
@@ -4309,7 +4569,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {stats&&(<div className="inv-stat-row" style={{marginBottom:14}}><div className="inv-stat"><div className="inv-stat-val">{stats.bolsasSanas}/{stats.numBolsas}</div><div className="inv-stat-lbl">Sanas</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:stats.contPct>20?'var(--coral-700)':'inherit'}}>{stats.contPct.toFixed(0)}%</div><div className="inv-stat-lbl">Contam.</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.totalFresco.toFixed(3)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>)}
                   <div className="inv-section">
                     <table className="inv-table bolsas-table">
-                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th></tr></thead>
+                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th><th scope="col" style={{textAlign:'center'}}>Etiqueta</th></tr></thead>
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
@@ -4340,6 +4600,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
                                 <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
                               </div>
+                            </td>
+                            <td data-label="Etiqueta" style={{textAlign:'center'}}>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                aria-label={`Imprimir etiqueta térmica para la bolsa ${bolsa.codigo}`}
+                                title={`Imprimir etiqueta de la bolsa ${bolsa.codigo}`}
+                                onClick={()=>openThermalForLote(bitActiveLoteId, { bagNum: bolsa.num })}
+                              >
+                                🖨
+                              </button>
                             </td>
                           </tr>
                         );
@@ -4376,7 +4647,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td>
                               <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td>
                               <td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td>
-                              <td><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button></td>
+                              <td>
+                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}>🖨</button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                           <tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)",fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr>
@@ -6427,6 +6703,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         );
                       })()}
+                      <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid var(--border-soft)',display:'flex',justifyContent:'flex-end'}}>
+                        <button
+                          type="button"
+                          className="btn-launch-prod"
+                          onClick={openProdLauncher}
+                          disabled={!readyForProduction}
+                          title={readyForProduction ? `Lanzar producción de ${numBags} bolsas de ${kgBag} kg con descuento automático de inventario` : productionBlockMsg}
+                        >
+                          🚀 Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -6476,7 +6763,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sbar">
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!readyForProduction} title={readyForProduction?'Crear lote experimental en la Bitácora con esta receta':productionBlockMsg} style={{background:readyForProduction?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:readyForProduction?'pointer':'not-allowed'}}>Prueba →</button>}
+                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px'}}>🚀 Lanzar Lote</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
@@ -7559,9 +7846,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
-                <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+                <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
+                <button
+                  type="button"
+                  onClick={()=>{
+                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
+                    const cData = {...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId};
+                    addBitCosecha(cData);
+                    setShowBitCosecha(false);
+                    openThermalForCosecha(cData.loteId, cData);
+                  }}
+                  className="inv-btn inv-btn-sec"
+                  title="Guardar cosecha e imprimir inmediatamente la etiqueta de canastilla térmica"
+                >
+                  Guardar y 🖨 Canastilla
+                </button>
+                <button
+                  type="button"
+                  onClick={()=>{
+                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
+                    addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});
+                    setShowBitCosecha(false);
+                  }}
+                  className="inv-btn inv-btn-pri"
+                >
+                  Guardar cosecha
+                </button>
               </div>
           </AccessibleModal>
         )}
@@ -7692,7 +8003,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalBags = Math.max(1, lote.numBolsas || 12);
           const items = [];
 
-          if (thermalScope === 'lote') {
+          if (thermalScope === 'cosecha' && thermalCosechaItem) {
+            const c = thermalCosechaItem;
+            items.push({
+              id: `CAN-${lote.codigo}-F${c.flush || 1}`,
+              bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
+              species: lote.especie || 'Seta Fresca',
+              date: c.fecha || new Date().toISOString().split('T')[0],
+              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${'★'.repeat(c.calidad || 4)}`,
+              bagsText: `Lote ${lote.codigo} · Bolsa ${c.codigo || 'General'}`,
+              qrUrl: `https://setasdelapena.co/trace/${lote.codigo}?flush=${c.flush || 1}`
+            });
+          } else if (thermalScope === 'lote') {
             items.push({
               id: lote.codigo,
               bagCode: 'LOTE MAESTRO',
@@ -7732,7 +8054,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       🏷 Impresión Térmica · Rollo Adhesivo
                     </div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
-                      Lote {lote.codigo} · {lote.especie}
+                      Lote {lote.codigo} · {lote.especie} {thermalScope === 'cosecha' ? '· Etiqueta Canastilla Cosecha' : ''}
                     </div>
                   </div>
                   <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}>✕</button>
@@ -7777,6 +8099,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <option value="all">Todas las bolsas (1 a {totalBags})</option>
                       <option value="lote">Solo etiqueta maestra de lote</option>
                       <option value="custom">Rango personalizado</option>
+                      <option value="cosecha">Etiqueta de Canastilla / Cosecha</option>
                     </select>
                   </div>
                 </div>
@@ -7859,6 +8182,144 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   })}
                 </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {showProdLaunchModal && prodLaunchForm && (() => {
+          const f = prodLaunchForm;
+          const allInsumosOk = f.insumos.every(i => i.ok);
+          const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+
+          return (
+            <AccessibleModal
+              id="prod-launch-modal"
+              isOpen={showProdLaunchModal}
+              onClose={() => setShowProdLaunchModal(false)}
+              title="🚀 Lanzador de Producción de Lote"
+              ariaLabel="Lanzador de Producción de Lote"
+              maxWidth="680px"
+            >
+              <div className="prod-launch-modal" data-testid="prod-launch-modal">
+                {/* Resumen Superior */}
+                <div className="prod-launch-summary">
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Lote</span>
+                    <span className="prod-launch-stat-val" style={{fontFamily:'var(--font-mono)',fontSize:14}}>{f.codigo}</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Especie</span>
+                    <span className="prod-launch-stat-val" style={{fontSize:14}}>{f.especie}</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Tamaño</span>
+                    <span className="prod-launch-stat-val">{f.numBolsas} bolsas ({ (f.numBolsas * f.pesoHumedo).toFixed(1) } kg)</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Humedad</span>
+                    <span className="prod-launch-stat-val">{f.humedad}%</span>
+                  </div>
+                </div>
+
+                {/* Desglose de Insumos y Descuento en Bodega */}
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
+                      📦 Insumos a Descontar de Bodega
+                    </span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
+                      {allInsumosOk ? '● Stock suficiente para todo el batch' : '⚠ Algunos insumos requieren compra'}
+                    </span>
+                  </div>
+
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
+                    <table className="prod-launch-table">
+                      <thead>
+                        <tr>
+                          <th>Insumo</th>
+                          <th style={{textAlign:'right'}}>Requerido</th>
+                          <th style={{textAlign:'right'}}>Stock Actual</th>
+                          <th style={{textAlign:'center'}}>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {f.insumos.map((ins, i) => (
+                          <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
+                            <td style={{fontWeight:600}}>{ins.name}</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} kg</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
+                              {ins.stockActual.toFixed(1)} kg
+                            </td>
+                            <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
+                              {ins.ok ? '✓ OK' : '⚠ Escaso'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Asignación de Sala Ambiental */}
+                <div>
+                  <label htmlFor="prod-launch-sala" style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)',display:'block',marginBottom:6}}>
+                    🌱 Sala / Carpa de Destino
+                  </label>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    {Object.values(ROOMS_CONFIG).map(r => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setProdLaunchForm(prev => ({ ...prev, sala: r.id }))}
+                        style={{
+                          padding:'10px 12px',
+                          border:`1.5px solid ${f.sala === r.id ? 'var(--moss-700)' : 'var(--border-hairline)'}`,
+                          background: f.sala === r.id ? 'var(--paper-0)' : '#ffffff',
+                          borderRadius:'var(--radius-sm)',
+                          textAlign:'left',
+                          cursor:'pointer'
+                        }}
+                      >
+                        <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>{r.name}</div>
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>{r.spec}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Opciones Adicionales */}
+                <div style={{display:'flex',flexDirection:'column',gap:8,padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)'}}>
+                  <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-0)'}}>
+                    <input
+                      type="checkbox"
+                      checked={f.printQr}
+                      onChange={e => setProdLaunchForm(prev => ({ ...prev, printQr: e.target.checked }))}
+                      style={{width:16,height:16,accentColor:'var(--moss-700)'}}
+                    />
+                    <span>🖨 <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
+                  </label>
+                </div>
+
+                {/* Botones de Cierre */}
+                <div style={{display:'flex',justifyContent:'flex-end',gap:8,borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
+                  <button
+                    type="button"
+                    onClick={() => setShowProdLaunchModal(false)}
+                    className="inv-btn inv-btn-sec"
+                    style={{minHeight:44,padding:'8px 16px'}}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={ejecutarLanzamientoProduccion}
+                    className="btn-launch-prod"
+                    style={{minHeight:44,padding:'8px 20px'}}
+                  >
+                    🚀 Confirmar y Lanzar Producción
+                  </button>
+                </div>
+              </div>
             </AccessibleModal>
           );
         })()}

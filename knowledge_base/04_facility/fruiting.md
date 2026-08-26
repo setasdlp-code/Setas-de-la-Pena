@@ -92,6 +92,23 @@ Antes de declarar operativa una configuración de carga:
 | Ciclo fijo | No establecido | No establecido | No establecido |
 | Luz | 750–1,500 lux, 3–5h | 750+ lux, 3–5h | 750–1,500 lux |
 
+## Incompatibilidad de Co-Cultivo en Misma Cámara (Validado 2026-08-25)
+
+> [!WARNING]
+> **No es viable ni recomendable co-cultivar *P. djamor*, *P. ostreatus* y *H. erinaceus* en la misma cámara.** 
+
+**Razones biológicas y físicas:**
+1. **Incompatibilidad Térmica en Tenjo (2.600m):** *P. djamor* es tropical (20–30°C; <18°C aborta o muere). *P. ostreatus* (14–22°C) y *H. erinaceus* (16–22°C) aprovechan el clima natural frío de Tenjo (8–18°C). Calentar la carpa para djamor estresa y deforma a ostreatus y hericium.
+2. **Esporulación Masiva de Pleurotus:** Las orellanas liberan cargas pesadas de esporas que se depositan sobre las delicadas espinas de *H. erinaceus*, asfixiándolo y propiciando manchas bacterianas (*bacterial blotch*).
+3. **Dinámica de Flujo de Aire (FAE):** Pleurotus exige ventilación turbulenta y agresiva; Hericium requiere flujo de aire indirecto y suave para no deshidratar sus formaciones espinosas.
+
+### Reglas de Zonificación Arquitectónica:
+- **Mínimo 2 Cámaras de Fructificación Separadas:**
+  - **Cámara 1 (Tropical / Calefaccionada):** Dedicada exclusivamente a *Pleurotus djamor* (20–28°C).
+  - **Cámara 2 (Templada-Fría / Natural Tenjo):** Dedicada a *Pleurotus ostreatus* y *Hericium erinaceus* (14–20°C).
+- **Si *P. ostreatus* y *H. erinaceus* comparten cámara 2:** Ubicar *Hericium* en la zona de inyección de aire fresco (aguas arriba) y *Pleurotus* hacia los extractores (aguas abajo) para alejar la nube de esporas de la Melena de León.
+- **Extracción de aire:** Descargar hacia el exterior desde nivel bajo (CO₂ y esporas son densos) con filtros lavables para proteger motores.
+
 ## Checklist Diario de Fructificación
 
 ```
