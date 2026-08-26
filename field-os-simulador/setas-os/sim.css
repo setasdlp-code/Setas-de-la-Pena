@@ -4594,6 +4594,42 @@
   }
 }
 
+/* ── HIGH-END SVG ICON & FIELD AUDIT STYLES ────────────────────── */
+.sim-root .app-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.sim-root .col-scale-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  background: var(--paper-0);
+  padding: var(--sp-6);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+.sim-root .col-step-chip {
+  padding: 6px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-align: center;
+  transition: all var(--duration-fast) var(--ease);
+}
+.sim-root .public-trace-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 /* ── TASTING DOSSIER & RESTAURANT PAIRING (FOS-11 / FOS-16) ──────── */
 .sim-root .tasting-dossier-sheet {
   background: var(--paper-0, #F7F4EC);
