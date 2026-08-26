@@ -603,6 +603,31 @@
   }
   .ratio-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; vertical-align: middle; }
 
+  /* Screenshot Figures FOS */
+  .fos-screenshot-card {
+    border: 1.5px solid var(--line-0);
+    background: var(--paper-1);
+    padding: 12px;
+    margin: 24px 0;
+  }
+  .fos-screenshot-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid var(--line-1);
+  }
+  .fos-screenshot-caption {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-2);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   /* Print Optimization */
   @media print {
     body { background: #fff; color: #000; font-size: 12pt; }
@@ -763,6 +788,15 @@
           <p class="workspace-card__desc">Tablero maestro, RoomCycles, Banco Climático con sensores de precisión (SCD30 con compensación de altitud a 2.600 m s. n. m., SHT31/45 y DS18B20).</p>
         </div>
       </div>
+
+      <!-- CAPTURA ESPACIO CONTROL -->
+      <figure class="fos-screenshot-card">
+        <img src="assets/screenshots/screenshot_control.png" alt="Tablero de Control Setas OS" />
+        <figcaption class="fos-screenshot-caption">
+          <span>FIGURA 01 · TABLERO DE CONTROL Y NAVEGACIÓN PRINCIPAL FOS</span>
+          <span>1440×900 RETINA</span>
+        </figcaption>
+      </figure>
     </section>
 
     <!-- SECCIÓN 3: FORMULAR -->
@@ -772,6 +806,15 @@
       <p>
         La versión actual consolida la <strong>Receta Activa</strong> en la barra superior persistente (*sticky bar*), permitiendo edición directa de ingredientes en la bandeja y eliminando duplicidades en paneles inferiores.
       </p>
+
+      <!-- CAPTURA FORMULADOR -->
+      <figure class="fos-screenshot-card">
+        <img src="assets/screenshots/screenshot_formular.png" alt="Formulador de Sustratos Setas OS" />
+        <figcaption class="fos-screenshot-caption">
+          <span>FIGURA 02 · MESA DE MEZCLA Y BARRA STICKY DE RECETA ACTIVA</span>
+          <span>1440×900 RETINA</span>
+        </figcaption>
+      </figure>
 
       <h3 class="section-h3">Matriz de Parámetros Fisiológicos por Especie</h3>
       <div class="table-container">
@@ -971,6 +1014,15 @@
           <div class="fos-field"><span class="fos-field__k">Estado Actual</span><span class="fos-field__v"><span class="fos-status fos-status--active">Incubación</span></span></div>
         </div>
       </div>
+
+      <!-- CAPTURA PRODUCCIÓN -->
+      <figure class="fos-screenshot-card">
+        <img src="assets/screenshots/screenshot_produccion.png" alt="Preparación de Mezcla y Producción Setas OS" />
+        <figcaption class="fos-screenshot-caption">
+          <span>FIGURA 03 · MÓDULO DE PREPARACIÓN DE MEZCLA Y PRODUCCIÓN DE LOTES</span>
+          <span>1440×900 RETINA</span>
+        </figcaption>
+      </figure>
     </section>
 
     <!-- SECCIÓN 6: BITÁCORA -->
@@ -1001,6 +1053,15 @@
           Estados de Excepción: <span class="fos-status fos-status--attention">quarantine</span> &nbsp; <span class="fos-status fos-status--error">discarded</span> &nbsp; <span class="fos-status fos-status--error">failed</span>
         </div>
       </div>
+
+      <!-- CAPTURA BITÁCORA -->
+      <figure class="fos-screenshot-card">
+        <img src="assets/screenshots/screenshot_bitacora.png" alt="Bitácora de Pruebas y Lotes Setas OS" />
+        <figcaption class="fos-screenshot-caption">
+          <span>FIGURA 04 · CUADERNO DE CAMPO E INVENTARIO DE LOTES EXPERIMENTALES</span>
+          <span>1440×900 RETINA</span>
+        </figcaption>
+      </figure>
 
       <h3 class="section-h3">Registro de Cosechas & Eficiencia Biológica (EB%)</h3>
       <p>

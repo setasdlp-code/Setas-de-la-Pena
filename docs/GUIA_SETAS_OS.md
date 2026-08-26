@@ -56,6 +56,8 @@ El sistema organiza la operación diaria en cuatro espacios de trabajo accesible
 
 ### 2.1 Espacio 1: Formular (Bioquímica & Simulación de Sustratos)
 
+![Formulador de Sustratos Setas OS](assets/screenshots/screenshot_formular.png)
+
 El espacio **Formular** cuenta con una **Barra Sticky Superior Unificada** que mantiene siempre visible la *Receta Activa*, permitiendo editar proporciones, bloquear ingredientes y visualizar instantáneamente el impacto en $C:N$, $pH$, balance hídrico y costo por kilogramo.
 
 #### Catálogo de Especies Soportadas
@@ -90,6 +92,8 @@ Setas OS formaliza el paso de una receta de prueba a SOP canónico:
 
 ### 2.2 Espacio 2: Producción (Bodega, Planificación y Mezclado)
 
+![Preparación de Mezcla y Producción Setas OS](assets/screenshots/screenshot_produccion.png)
+
 #### Gestión de Bodega FIFO (First-In, First-Out)
 - Control de materias primas con proveedor, fecha de recepción y lote.
 - Descuento de stock en tiempo real al generar la orden de preparación de mezcla.
@@ -105,6 +109,8 @@ Setas OS formaliza el paso de una receta de prueba a SOP canónico:
 ---
 
 ### 2.3 Espacio 3: Bitácora (Cuaderno de Campo, Telemetría y Cosechas)
+
+![Bitácora de Pruebas y Lotes Setas OS](assets/screenshots/screenshot_bitacora.png)
 
 #### Máquina de Estados del Ciclo de Vida del Lote
 El lote avanza a través de 11 estados canónicos:
@@ -127,6 +133,8 @@ $$\text{Tasa de Retorno } (TR \%) = \frac{\text{Peso Fresco Total Cosechado (kg)
 ---
 
 ### 2.4 Espacio 4: Control (Cámaras, Telemetría V1 & Hardware Real Tenjo)
+
+![Tablero de Control Setas OS](assets/screenshots/screenshot_control.png)
 
 #### Hardware Real Desplegado en Tenjo (Agosto 2026)
 - **Cámara Principal:** AC Infinity CLOUDLAB 844 (Carpa 4×4 ft / 1.22 × 1.22 × 2.00 m) con 2 estanterías cromadas de 5 niveles (capacidad 20–32 bloques).
