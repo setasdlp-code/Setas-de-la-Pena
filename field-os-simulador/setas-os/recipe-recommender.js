@@ -227,10 +227,19 @@ function generatePDF(recipe, species, allIngredients, totalKg, bagSizeKg = 1.5) 
   return html;
 }
 
-// Export for use in main app
+// Export for use in main app & test runners
 if (typeof window !== 'undefined') {
   window.RecipeTools = {
     recommendRecipes,
     generatePDF
   };
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    recommendRecipes,
+    tryBuildRecipe,
+    generatePDF
+  };
+}
+
