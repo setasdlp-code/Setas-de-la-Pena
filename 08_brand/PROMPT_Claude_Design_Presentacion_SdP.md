@@ -25,9 +25,11 @@ Monocromía Terracota como primera opción; máximo dos colores por slide con je
 **Composición:**
 - Mínimo 30% de espacio negativo en cada slide
 - Eje central estricto o alineación de bloque
-- Ilustración: dibujo de línea precisa, referencia a manuales botánicos del siglo XIX y diseño japonés. Sin rellenos sólidos, sin tramas densas
-- Cero bordes decorativos, sellos vintage, texturas distress, iconos de relleno, emojis
-- Cada elemento visual debe cumplir una función informativa o de identidad
+- Ilustración obligatoria: grabados botánicos científicos del siglo XIX (xilografía/calcografía con hachurado fino, referencia a Mutis, Bresadola y tratados botánicos históricos). Sin rellenos planos de color, sin tramas densas sintéticas
+- Prohibido el uso de fotografías comerciales, imágenes de stock o renders 3D: la identidad visual es 100% ilustrada mediante dibujo de línea botánica científica y pictogramas de campo
+- Cero bordes decorativos superfluos, sellos vintage falsos, texturas distress, iconos de relleno, emojis
+- Cada elemento visual debe cumplir una función informativa, taxonómica o de identidad
+
 
 ## Voz (obligatorio)
 
