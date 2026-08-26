@@ -295,6 +295,293 @@ All three components work in dark mode via existing token definitions. No specia
 
 ---
 
+## Chip / Pill / Badge
+
+**Purpose**: Compact status/category markers. Setas OS uses three near-identical patterns under different names (`.p-chip`, `.fos-chip`, `.pantry-chip`, `.opt-pill`, `.econ-pill`, `.ing-badge`, `.climate-actuator-badge`) — this section is the canonical spec new chips should follow instead of inventing a fourth variant.
+
+### When to use which term
+
+| Name | Use | Example |
+|------|-----|---------|
+| **Chip** | Removable or interactive filter/tag (has an action) | Ingredient category filter, active recipe tag |
+| **Pill** | Small read-only status/value display | Optimizer score, economic delta |
+| **Badge** | Count or state indicator attached to another element | Stock quantity on ingredient row, actuator on/off |
+
+### Base spec (all three)
+
+| Property | Value | Notes |
+|----------|-------|-------|
+| Padding | `--space-2` to `--space-5` (varies by density) | Chips denser than pills |
+| Border radius | `var(--r-xs)` for chip/badge; pill-shaped (999px) only if named `.pill` | Squared = lab aesthetic; round = explicit exception |
+| Font | `var(--font-mono)`, 9–12px | Numeric/status clarity |
+| Font weight | 700 | Legible at small size |
+
+### States
+
+| State | Behavior |
+|-------|----------|
+| **Default** | Border + tinted background matching semantic color (e.g. `--cat-*`, `--surface-accent-soft`) |
+| **Interactive (chip)** | `:hover` lightens background; `:active` on click if removable |
+| **Selected** | Solid fill (same pattern as `.cat.on`) |
+| **Disabled/stale** | 40% opacity, no pointer events |
+
+### Code Example
+
+```html
+<!-- Chip: removable ingredient filter -->
+<button class="p-chip" data-cat="base">
+  Substrate base <span aria-hidden="true">×</span>
+</button>
+
+<!-- Pill: read-only score -->
+<span class="opt-pill">Score: 87</span>
+
+<!-- Badge: stock count -->
+<span class="ing-stock-kg" aria-label="12 kilograms in stock">12kg</span>
+```
+
+### Do's and Don'ts
+
+| ✅ Do | ❌ Don't |
+|------|---------|
+| Reuse this spec for new chip/pill/badge components | Invent a 4th visual pattern for the same job |
+| Use `--cat-*` tokens for category chips | Hardcode a new color per chip type |
+| Make removable chips real `<button>`s | Use a `<span onclick>` (breaks keyboard access) |
+
+---
+
+## Card
+
+**Purpose**: Bounded content container for dashboard summaries, species specimens, and thermal/climate readouts. Canonical pattern: `.dash-card` and `.spp-card`.
+
+### Anatomy
+
+| Part | Class | Purpose |
+|------|-------|---------|
+| Container | `.dash-card` | Outer bounds, border, shadow |
+| Header | `.dash-card-top` | Eyebrow + title |
+| Eyebrow | `.dash-card-spp` | Small uppercase metadata label |
+| Title | `.dash-card-name` | Primary heading (display font) |
+| Body | `.dash-card-body` | Key-value rows or content |
+| Footer | `.dash-card-foot` | Action buttons (load/delete) |
+
+### States
+
+| State | Behavior | CSS |
+|-------|----------|-----|
+| **Default** | Flat, resting shadow | `box-shadow: var(--shadow-card-rest)` |
+| **Hover** | Lifts, deeper shadow | `box-shadow: var(--shadow-card-hover); transform: translateY(-1px)` |
+| **Selected** (`.spp-card.on`) | Highlighted background + checkmark badge | `background: var(--surface-selected)` |
+| **Transition** | All state changes | `var(--duration-standard) var(--ease)` |
+
+### Sizing & Spacing
+
+| Property | Value |
+|----------|-------|
+| Border radius | `var(--radius-md)` (dash-card: 0, squared) |
+| Border | `1px solid rgba(26,20,16,0.11)` |
+| Grid gap (card grids) | `--space-9` (16px) |
+| Internal padding | `--space-9` to `--space-10` |
+
+### Code Example
+
+```html
+<div class="dash-card">
+  <div class="dash-card-top">
+    <p class="dash-card-spp">Pleurotus ostreatus · 2026-08-20</p>
+    <h3 class="dash-card-name">Sustrato Café + Paja</h3>
+  </div>
+  <div class="dash-card-body">
+    <div class="dash-kv"><span class="dk">C:N</span><span class="dv">28:1</span></div>
+  </div>
+  <div class="dash-card-foot">
+    <button class="dash-sload">Load</button>
+    <button class="dash-sdel">Delete</button>
+  </div>
+</div>
+```
+
+### Do's and Don'ts
+
+| ✅ Do | ❌ Don't |
+|------|---------|
+| Keep one primary action per card footer + one destructive | Stack 3+ footer buttons (crowds touch targets) |
+| Use `--shadow-card-rest`/`--shadow-card-hover` pair | Invent a new shadow value per card type |
+| Reserve `.on`/selected state for single-select contexts | Apply `.on` to multiple cards simultaneously in a single-select grid |
+
+---
+
+## Modal
+
+**Purpose**: Focused overlay for category selection, confirmations, and detail views. Two canonical patterns: `.inv-modal` (compact, form-style) and `.cat-modal` (large, content-heavy).
+
+### Anatomy
+
+| Part | Class | Purpose |
+|------|-------|---------|
+| Backdrop | `.inv-modal-bg` / `.cat-modal-bg` | Fixed overlay, click-outside-to-close target |
+| Box | `.inv-modal` / `.cat-modal-box` | The modal panel itself |
+| Title | `.inv-modal-title` | Heading with bottom border |
+| Close | `.cat-modal-close` | Circular ✕ button, top-right |
+
+### Sizing Variants
+
+| Variant | Width | Use |
+|---------|-------|-----|
+| `.inv-modal` | 440px, `calc(100vw - 32px)` on mobile | Confirmations, small forms |
+| `.cat-modal-box` | 900px max, `calc(100vh - 64px)` | Category browsers, detail panels |
+
+### Motion
+
+| Event | Animation | Duration |
+|-------|-----------|----------|
+| Backdrop appears | `catFadeIn` | `var(--duration-exit)` (.18s) — reused as entrance timing |
+| Box appears | `catSlideIn` | `var(--duration-entrance)` (.22s) |
+
+### Accessibility
+
+- **Role**: `role="dialog"` `aria-modal="true"` on the box
+- **Focus trap**: Focus moves into modal on open, returns to trigger on close
+- **Label**: `aria-labelledby` pointing to `.inv-modal-title` / modal heading
+- **Keyboard**: `Escape` closes; `Tab` cycles within modal only
+- **Close button**: `aria-label="Cerrar"` minimum — icon-only buttons must have a label
+
+### Code Example
+
+```html
+<div class="inv-modal-bg" data-close-on-backdrop="true">
+  <div class="inv-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 class="inv-modal-title" id="modal-title">Confirmar acción</h2>
+    <p>¿Eliminar esta receta guardada?</p>
+    <div class="act-row">
+      <button class="btn">Cancelar</button>
+      <button class="btn dark">Eliminar</button>
+    </div>
+  </div>
+</div>
+```
+
+### Do's and Don'ts
+
+| ✅ Do | ❌ Don't |
+|------|---------|
+| Use `.inv-modal` for anything ≤2 fields or a confirmation | Use `.cat-modal-box` for a simple yes/no |
+| Trap focus and restore it on close | Let focus escape to the page behind the backdrop |
+| Close on `Escape` and backdrop click | Require a click on the ✕ only (breaks expected UX) |
+
+---
+
+## Table
+
+**Purpose**: Tabular data display for inventory, batch records, and pricing. Canonical pattern: `.inv-table`.
+
+### States
+
+| State | Behavior | CSS |
+|-------|----------|-----|
+| **Header** | Uppercase, tracked, tinted background | `background: var(--paper-200)` |
+| **Row default** | Body text, bottom border | `border-bottom: 1px solid var(--paper-300)` |
+| **Row hover** | Subtle highlight | `background: var(--paper-100)` |
+| **Last row** | No bottom border | `tr:last-child td { border-bottom: none }` |
+| **Inline link** | Underlined, coral, moss on hover | `.inv-table-link` |
+
+### Sizing & Spacing
+
+| Property | Value |
+|----------|-------|
+| Cell padding | `--space-5` `--space-7` (8px 12px) |
+| Header font | 12px, weight 800, `--tracking-label` |
+| Body font | `var(--font-mono)`, 13px |
+
+### Accessibility
+
+- **Structure**: Real `<table>`, `<th scope="col">`, never a div-grid pretending to be a table
+- **Sortable columns**: If added, use `aria-sort` on the `<th>`
+- **Row actions**: Inline `.inv-table-link` buttons need distinct, descriptive text (not "click here")
+
+### Code Example
+
+```html
+<table class="inv-table">
+  <thead>
+    <tr><th scope="col">Insumo</th><th scope="col">Stock</th><th scope="col">Acción</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cascarilla de arroz</td>
+      <td>84kg</td>
+      <td><button class="inv-table-link">Editar</button></td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Do's and Don'ts
+
+| ✅ Do | ❌ Don't |
+|------|---------|
+| Use a real `<table>` for tabular data | Fake tables with flex/grid divs (breaks screen readers) |
+| Keep header labels short and scannable | Wrap header text across 3 lines |
+| Provide an empty state when data is absent | Render an empty `<table>` with no rows and no message |
+
+---
+
+## Toast / Notice
+
+**Purpose**: Transient confirmation feedback after an action (recipe loaded, save confirmed). Canonical pattern: `.loaded-toast`.
+
+### Behavior
+
+| Property | Value | Notes |
+|----------|-------|-------|
+| Entrance | `fadeInSlide var(--duration-notice) ease` | Slower than UI transitions — message needs to register |
+| Auto-dismiss | App-controlled (typically 2–4s) | Not defined in CSS; set via JS timeout |
+| Background | `var(--moss-500, --accent-olive)` | Success/positive semantic only — don't reuse for errors |
+
+### Accessibility
+
+- **Live region**: Wrap in `aria-live="polite"` so screen readers announce it without interrupting
+- **Not a modal**: No focus trap; must not block interaction
+- **Icon + text**: Always pair a checkmark/icon with text — never icon-only
+
+### Code Example
+
+```html
+<div class="loaded-toast" role="status" aria-live="polite">
+  <span aria-hidden="true">✓</span> Receta cargada
+</div>
+```
+
+### Do's and Don'ts
+
+| ✅ Do | ❌ Don't |
+|------|---------|
+| Use for confirmations only (loaded, saved) | Use for errors — build a distinct `.toast-error` with `--color-attention` instead |
+| Auto-dismiss after 2–4s | Leave toasts on screen indefinitely |
+| Use `aria-live="polite"` | Use `aria-live="assertive"` (interrupts screen reader mid-sentence) |
+
+---
+
+## Motion Tokens
+
+Five duration tokens replace 8+ scattered values (.1s–.4s) previously inlined throughout `sim.css`. All pair with the existing `--ease` cubic-bezier unless a component specifies otherwise.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--duration-quick` | .12s | Micro-interactions: hover color/bg swap, active press, icon feedback |
+| `--duration-standard` | .15s | Default for buttons, inputs, toggles — most transitions |
+| `--duration-entrance` | .22s | Element appearing: modal box slide-in, card entrance |
+| `--duration-exit` | .18s | Element leaving: modal backdrop fade, dismissal |
+| `--duration-notice` | .3s | Toasts, banners — slower so the message registers before it can be missed |
+
+**Pattern**: `transition: background-color var(--duration-standard) var(--ease);`
+
+**When adding a new transition**: pick the token matching the *role* of the motion (not the effect that "looks right"). A hover state is always `--duration-quick`, a modal is always paired `--duration-exit` (backdrop) + `--duration-entrance` (box), regardless of what property is animating.
+
+One-off animation durations (`spin 0.8s linear`, `qaPulse .5s ease-out`, `rowFlash .65s ease-out`) are intentionally excluded from the scale — they're single-purpose keyframe animations, not reusable interaction timing.
+
+---
+
 ## Testing Checklist
 
 - [ ] Default state renders correctly

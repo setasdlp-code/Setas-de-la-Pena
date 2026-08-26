@@ -93,6 +93,20 @@ Replaces 41 ad-hoc pixel values with a 14-step scale. Pick by **role**, not visu
 
 **Pattern**: Avoid direct px values in new CSS. Prefer `--space-*` tokens. If you need a value not in the scale, add it here rather than inlining a px value.
 
+### Motion Scale
+
+Replaces 8+ scattered transition durations (.1s–.4s) with 5 role-based tokens. Full usage guidance in `COMPONENT_API.md` → Motion Tokens.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--duration-quick` | .12s | Micro-interactions: hover, active press |
+| `--duration-standard` | .15s | Default: buttons, inputs, toggles |
+| `--duration-entrance` | .22s | Element appearing: modal box, card slide-in |
+| `--duration-exit` | .18s | Element leaving: modal backdrop, dismissal |
+| `--duration-notice` | .3s | Toasts, banners |
+
+All pair with the existing `--ease` cubic-bezier: `transition: background-color var(--duration-standard) var(--ease);`
+
 ---
 
 ## Component States

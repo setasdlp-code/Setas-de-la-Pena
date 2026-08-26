@@ -96,6 +96,14 @@
   --color-norm-bar: #6B8E5A;  /* moss-green for normalization/balance indicators */
   --color-investigacion: #f0b093;  /* peach for investigation/experimental mode */
 
+  /* ── MOTION SCALE — replaces 8 scattered durations (.1s–.4s) ──
+     Pick by role, not by feel. Pair with --ease (existing curve) unless noted. */
+  --duration-quick: .12s;    /* micro-interactions: hover color/bg swap, active press */
+  --duration-standard: var(--duration-standard); /* default: buttons, inputs, toggles, most transitions */
+  --duration-entrance: .22s; /* element appearing: modal open, card slide-in */
+  --duration-exit: .18s;     /* element leaving: modal close, fade-out */
+  --duration-notice: .3s;    /* toasts, banners — slower so the message registers */
+
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
      Remove after verifying no external script reads them. */
@@ -254,7 +262,7 @@
   color: inherit;
   cursor: pointer;
   position: relative;
-  transition: background 0.12s var(--ease);
+  transition: background 0var(--duration-quick) var(--ease);
   border: none;
   border-radius: 0;
   padding: 0;
@@ -304,7 +312,7 @@
   mix-blend-mode: multiply;
   position: relative;
   z-index: 1;
-  transition: filter 0.2s var(--ease);
+  transition: filter var(--duration-quick) var(--ease);
 }
 
 .sim-root .plate:hover .p-img img, .sim-root .spp-card:hover .p-img img{
@@ -378,7 +386,7 @@
 .sim-root .search{ 
   width:100%; padding:12px 14px; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
   background:var(--paper-0); font-family:var(--font-mono); font-size:13px;
-  color:var(--ink-1); margin-bottom:14px; transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
+  color:var(--ink-1); margin-bottom:14px; transition:border-color var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
   box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);
 }
 .sim-root .search:focus-visible{
@@ -399,7 +407,7 @@
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
   text-transform:uppercase; padding:8px 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300,#9BB5C4); border-radius:0;
-  background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease); white-space:nowrap;
+  background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease); white-space:nowrap;
 }
 .sim-root .cat:hover{ 
   border-color:var(--slate-600,var(--accent-blue-grey));
@@ -416,7 +424,7 @@
 }
 .sim-root .ing-item{ 
   padding:10px 0; border-bottom:1px solid rgba(26,20,16,.07); 
-  background:transparent; transition:background .12s var(--ease);
+  background:transparent; transition:background var(--duration-quick) var(--ease);
   min-height:56px;
   display:flex; align-items:center; gap:12px; position:relative;
 }
@@ -426,7 +434,7 @@
   display:block; width:3px; align-self:stretch; 
   border-radius:0; flex-shrink:0;
   font-size:0; color:transparent;
-  transition:width .15s var(--ease);
+  transition:width var(--duration-standard) var(--ease);
 }
 .sim-root .ing-item:hover .ing-badge{ width:4px; }
 .sim-root .ing-info{ flex:1; min-width:0; }
@@ -446,11 +454,11 @@
 
 
 
-.sim-root .bar-fill{ height:100%; border-radius:2px; transition:width .3s var(--ease); }
+.sim-root .bar-fill{ height:100%; border-radius:2px; transition:width var(--duration-notice) var(--ease); }
 
 /* ── PRESETS ────────────────────────────────────────────────────── */
 .sim-root .presets{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px; align-items:center; }
-.sim-root .pre{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.01em; padding:6px 11px; border:1px solid var(--border-soft); border-radius:var(--r-xs); background:var(--paper-50); color:var(--ink-700); cursor:pointer; transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease); }
+.sim-root .pre{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.01em; padding:6px 11px; border:1px solid var(--border-soft); border-radius:var(--r-xs); background:var(--paper-50); color:var(--ink-700); cursor:pointer; transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease); }
 .sim-root .pre:hover{ border-color:var(--coral-500); color:var(--coral-700); }
 
 /* ── ADD BUTTON ─────────────────────────────────────────────────── */
@@ -460,7 +468,7 @@
   background:var(--coral-500); color:var(--paper-50); 
   border:1px solid var(--coral-500); border-radius:0; 
   padding:10px 16px; cursor:pointer; flex-shrink:0; white-space:nowrap; 
-  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .add-btn:hover{ background:var(--coral-700); border-color:var(--coral-700); transform:translateY(-1px); }
 .sim-root .add-btn:active{ transform:translateY(0); }
@@ -482,7 +490,7 @@
   display:grid; grid-template-columns:1fr 110px 28px; 
   gap:12px; align-items:center; padding:14px 16px; 
   border-bottom:1px solid rgba(26,20,16,0.09); background:var(--paper-50);
-  transition:background .12s var(--ease);
+  transition:background var(--duration-quick) var(--ease);
 }
 .sim-root .rec-row:hover{ background:var(--paper-50); }
 .sim-root .rec-row input[type=number]{ 
@@ -499,7 +507,7 @@
 .sim-root .pct{ font-family:var(--font-mono); font-size:13px; color:var(--ink-2); }
 .sim-root .rem{ 
   background:none; border:none; color:var(--line-1); cursor:pointer; 
-  font-size:16px; line-height:1; transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  font-size:16px; line-height:1; transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
   padding:0;
 }
 .sim-root .rem:hover{ color:var(--accent-terracotta); transform:scale(1.2); }
@@ -528,7 +536,7 @@
   font-family:var(--font-body); font-weight:800; font-size:9.5px; 
   letter-spacing:.14em; text-transform:uppercase; 
   border:1px solid var(--ink-900); border-radius:0; background:var(--paper-50); 
-  cursor:pointer; color:var(--ink-900); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  cursor:pointer; color:var(--ink-900); transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .btn:hover{
   background:var(--paper-200);
@@ -546,7 +554,7 @@
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
 .sim-root .sbar input{ flex:1; padding:11px 13px; border:1px solid var(--border-soft); border-radius:var(--r-sm); background:var(--paper-50); font-family:var(--font-body); font-size:14px; color:var(--ink-900); }
 .sim-root .sbar input:focus-visible{ border-color:var(--coral-500);outline:2px solid var(--coral-500);outline-offset:2px; }
-.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:var(--text-on-dark); border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:background-color .15s var(--ease),transform .15s var(--ease); }
+.sim-root .sbtn{ font-family:var(--font-body); font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 20px; background:var(--moss-700); color:var(--text-on-dark); border:none; border-radius:var(--r-sm); cursor:pointer; white-space:nowrap; transition:background-color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease); }
 .sim-root .sbtn:hover{ background:var(--moss-900); transform:translateY(-1px); }
 .sim-root .sbtn:active{ transform:translateY(0); }
 .sim-root .sbtn:disabled{ background:var(--ink-300); cursor:default; }
@@ -608,7 +616,7 @@
   color: var(--ink-900);
   outline:2px solid transparent;
   outline-offset:2px;
-  transition: border-color .12s var(--ease);
+  transition: border-color var(--duration-quick) var(--ease);
 }
 .sim-root .bf input:focus{ border-bottom-color: var(--coral-500); }
 
@@ -722,7 +730,7 @@
 .sim-root .gauge-tgt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-700); font-weight:600; }
 .sim-root .gauge-tr{ height:6px; background:var(--line-1); border-radius:0; position:relative; }
 .sim-root .gauge-zn{ position:absolute; height:100%; background:linear-gradient(to right, rgba(107, 142, 90, 0.4), rgba(107, 142, 90, 0.6)); border-radius:0; }
-.sim-root .gauge-nd{ position:absolute; width:3px; height:20px; top:-7px; transform:translateX(-50%); transition:left .4s var(--ease); background:var(--ink-2); }
+.sim-root .gauge-nd{ position:absolute; width:3px; height:20px; top:-7px; transform:translateX(-50%); transition:left var(--duration-notice) var(--ease); background:var(--ink-2); }
 .sim-root .gauge-ft{ display:flex; justify-content:space-between; margin-top:8px; font-family:var(--font-mono); font-size:12px; color:var(--ink-600); font-weight:500; }
 
 /* ── DIAGNOSIS BOX (field notes) ────────────────────────────────── */
@@ -827,7 +835,7 @@
   padding:10px 16px; border:1px solid var(--ink-900); 
   border-radius:0; background:var(--paper-50); 
   color:var(--ink-900); cursor:pointer; 
-  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .tog:hover{ 
   background:var(--paper-200);
@@ -858,7 +866,7 @@
   letter-spacing:.1em; text-transform:uppercase; 
   padding:11px 22px; background:var(--moss-600); color:var(--text-on-dark); 
   border:none; border-radius:0; cursor:pointer; white-space:nowrap; 
-  transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .sbtn:hover{ background:var(--accent-olive); }
 .sim-root .sbtn:disabled{ background:var(--line-1); cursor:default; color:var(--ink-2); }
@@ -1340,7 +1348,7 @@
 .sim-root .rec-row.is-adjustable{ border-left:3px solid var(--coral-500); }
 .sim-root .lock-btn{
   background:none; border:none; cursor:pointer; font-size:11px; 
-  padding:0 3px; opacity:.5; transition:opacity .12s var(--ease);
+  padding:0 3px; opacity:.5; transition:opacity var(--duration-quick) var(--ease);
   line-height:1; flex-shrink:0; color:var(--ink-2); 
 }
 .sim-root .lock-btn:hover{ opacity:1; }
@@ -1414,7 +1422,7 @@
 
 
 .sim-root .fos-chips{display:none!important;}
-.sim-root .fos-chips button{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:8px 15px;border:1px solid var(--border-strong);border-radius:0;background:var(--paper-50);color:var(--ink-500);cursor:pointer;transition:color .15s,background-color .15s,border-color .15s;}
+.sim-root .fos-chips button{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:8px 15px;border:1px solid var(--border-strong);border-radius:0;background:var(--paper-50);color:var(--ink-500);cursor:pointer;transition:color var(--duration-standard),background-color var(--duration-standard),border-color var(--duration-standard);}
 .sim-root .fos-chips button:hover{color:var(--ink-900);border-color:var(--ink-900);}
 .sim-root .fos-chips button.on{background:var(--ink-0);color:var(--paper-0);border-color:var(--ink-0);}
 @media print{.sim-root{padding-left:0!important;}.sim-root .fos-rail, .sim-root .fos-chips{display:none!important;}}
@@ -1426,7 +1434,7 @@
 
 
 .sim-root .pantry-grid{display:flex;flex-wrap:wrap;gap:4px 6px;margin:10px 0;}
-.sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);font-weight:600;}
+.sim-root .pantry-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border:1px solid var(--border-strong);border-radius:2px;background:var(--paper-100);color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease);font-weight:600;}
 .sim-root .pantry-chip.on{border-color:var(--moss-600,var(--accent-olive));background:color-mix(in oklab,var(--accent-olive) 10%,var(--paper-50));color:var(--accent-olive);font-weight:700;}
 .sim-root .pantry-chip:hover{border-color:var(--coral-500);color:var(--coral-600);}
 
@@ -1446,7 +1454,7 @@
   background:none; border:none; padding:2px 0; cursor:pointer;
   font-family:var(--font-body); font-weight:400; font-size:var(--text-sm);
   letter-spacing:var(--tracking-label); color:var(--ink-500);
-  border-bottom:1.5px solid transparent; transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);
+  border-bottom:1.5px solid transparent; transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease);
 }
 .sim-root .chip:hover{ color:var(--ink-900); }
 .sim-root .chip.on{ font-weight:800; color:var(--ink-900); border-bottom-color:var(--coral-500); }
@@ -1456,7 +1464,7 @@
 .sim-root .seg{
   flex:1; padding:8px 12px; cursor:pointer; border:1px solid transparent; border-left:1px solid var(--border-soft);
   font-family:var(--font-body); font-weight:800; font-size:var(--text-xs); letter-spacing:var(--tracking-button); text-transform:uppercase;
-  background:transparent; color:var(--ink-500); transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);
+  background:transparent; color:var(--ink-500); transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .seg:first-child{ border-left:none; }
 .sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
@@ -1471,7 +1479,7 @@
 .sim-root .spr-row:last-child{border-bottom:none;}
 .sim-root .spr-rank{font-family:var(--font-mono);font-size:13px;color:var(--ink-700);width:18px;text-align:right;flex-shrink:0;font-weight:700;}
 .sim-root .spr-bar{width:90px;height:5px;background:var(--paper-300);border-radius:3px;overflow:hidden;flex-shrink:0;}
-.sim-root .spr-fill{height:100%;border-radius:3px;transition:width .4s var(--ease);}
+.sim-root .spr-fill{height:100%;border-radius:3px;transition:width var(--duration-notice) var(--ease);}
 .sim-root .spr-score{font-family:var(--font-num);font-size:16px;font-weight:400;min-width:32px;text-align:right;}
 
 .sim-root .ing-item{position:relative;}
@@ -1500,7 +1508,7 @@
 
 .sim-root .bst.on{color:var(--coral-500);border-bottom-color:var(--coral-500);background:color-mix(in oklab,var(--coral-500) 6%,var(--paper-50,#fff));}
 .sim-root .bst:hover:not(.on){color:var(--ink-900);background:rgba(0,0,0,.03);}
-.sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:var(--text-on-dark);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide .3s ease;}
+.sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:var(--text-on-dark);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide var(--duration-notice) ease;}
 @keyframes fadeInSlide{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
 /* Panel visibility by sub-tab — controlled via React inline styles */
 .sim-root .opt-panel{margin-top:0;}
@@ -1517,12 +1525,12 @@
 .sim-root .bg-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
 .sim-root .bg-label{font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);}
 .sim-root .bg-track{position:relative;height:7px;background:var(--paper-300);border-radius:4px;overflow:visible;}
-.sim-root .bg-band{position:absolute;top:0;bottom:0;border-radius:3px;transition:left .4s var(--ease),width .4s var(--ease);}
+.sim-root .bg-band{position:absolute;top:0;bottom:0;border-radius:3px;transition:left var(--duration-notice) var(--ease),width var(--duration-notice) var(--ease);}
 .sim-root .bg-ideal{position:absolute;top:-2px;bottom:-2px;width:1.5px;border-radius:1px;}
-.sim-root .bg-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid var(--paper-50);transition:left .4s var(--ease),background .3s var(--ease);z-index:2;}
+.sim-root .bg-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid var(--paper-50);transition:left var(--duration-notice) var(--ease),background var(--duration-notice) var(--ease);z-index:2;}
 .sim-root .bg-foot{display:flex;justify-content:space-between;margin-top:3px;}
 .sim-root .bg-foot span{font-family:var(--font-mono);font-size:11px;color:var(--ink-700);font-weight:700;}
-.sim-root .bg-val{font-family:var(--font-mono);font-size:14px;font-weight:700;transition:color .3s var(--ease);color:var(--ink-900);}
+.sim-root .bg-val{font-family:var(--font-mono);font-size:14px;font-weight:700;transition:color var(--duration-notice) var(--ease);color:var(--ink-900);}
 
 .sim-root .species-bridge{border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding-top:16px;}
 .sim-root .bridge-inner{max-width:1280px;margin:0 auto;padding:24px 32px!important;display:flex;align-items:center!important;gap:18px!important;flex-wrap:wrap;overflow-x:hidden;}
@@ -1581,9 +1589,9 @@
    class with the unrelated recipe-list-row button below — the bare
    .sload/.sdel rules here now unambiguously belong to that one (currently
    display:none) button at simulador-app.jsx:4057. */
-.sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:var(--text-on-dark);border:none;border-radius:var(--r-xs);cursor:pointer;transition:background .15s var(--ease);}
+.sim-root .sload{font-family:var(--font-body);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;background:var(--coral-500);color:var(--text-on-dark);border:none;border-radius:var(--r-xs);cursor:pointer;transition:background var(--duration-standard) var(--ease);}
 .sim-root .sload:hover{background:var(--coral-600,var(--accent-terracotta));}
-.sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);}
+.sim-root .sdel{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 10px;background:transparent;color:var(--ink-500);border:1px solid var(--border-soft);border-radius:var(--r-xs);cursor:pointer;transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);}
 .sim-root .sdel:hover{background:var(--paper-200);color:var(--coral-500);}
 @media(max-width:768px){
   .sim-root .dash-grid{grid-template-columns:1fr!important;}
@@ -1624,7 +1632,7 @@
 .sim-root .inv-photo-upload{position:relative;display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center;cursor:pointer;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--coral-500);text-decoration:underline;}
 .sim-root .inv-photo-upload input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .sim-root .inv-subtab-bar{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border-soft);padding-bottom:0;}
-.sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease),transform .12s var(--ease),box-shadow .12s var(--ease);margin-bottom:-1px;}
+.sim-root .inv-subtab{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:0;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--ink-500);cursor:pointer;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease);margin-bottom:-1px;}
 .sim-root .inv-subtab.on{background:transparent;color:var(--ink-900);border-bottom-color:var(--coral-500);}
 .sim-root .inv-subtab:hover:not(.on){color:var(--ink-700);border-bottom-color:var(--border-soft);}
 .sim-root .inv-label{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);display:block;margin-bottom:5px;}
@@ -1658,7 +1666,7 @@
 .sim-root .inv-row-2{grid-template-columns:1fr 1fr;}
 
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
-.sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease);white-space:nowrap;}
+.sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r-xs);border:none;cursor:pointer;transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);white-space:nowrap;}
 .sim-root .inv-btn:active{transform:translateY(0);}
 .sim-root .inv-btn-pri{background:var(--moss-700);color:var(--text-on-dark);}
 .sim-root .inv-btn-pri:hover{background:var(--moss-800,var(--moss-700));transform:translateY(-1px);}
@@ -1674,11 +1682,11 @@
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
 .sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--space-20);overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
-.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--space-16) var(--space-12);backdrop-filter:blur(3px);animation:catFadeIn .18s ease;}
+.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--space-16) var(--space-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
-.sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn .22s var(--ease);}
+.sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn var(--duration-entrance) var(--ease);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);font-size:16px;line-height:1;}
+.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:var(--text-on-dark);border-color:var(--coral-500);}
 .sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--space-10);width:440px;max-width:calc(100vw - 32px);}
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--space-10);padding-bottom:var(--space-7);border-bottom:1px solid var(--border-soft);}
@@ -1701,7 +1709,7 @@
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;transition:transform .22s var(--ease);}
+.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;transition:transform var(--duration-entrance) var(--ease);}
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
@@ -1746,7 +1754,7 @@
 .sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
 .sim-root .spp-grid > *:nth-child(n+7){background:var(--paper-100)!important;}
 @media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
-.sim-root .spp-card{transition:background .15s var(--ease),box-shadow .15s var(--ease),transform .15s var(--ease);border-radius:var(--r-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:var(--shadow-card-rest)!important;contain:paint;isolation:isolate;}
+.sim-root .spp-card{transition:background var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:var(--r-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:var(--shadow-card-rest)!important;contain:paint;isolation:isolate;}
 .sim-root .spp-card:hover{box-shadow:var(--shadow-card-hover)!important;transform:translateY(-1px);}
 .sim-root .spp-card.on{background:var(--surface-selected)!important;box-shadow:var(--shadow-ring-accent)!important;transform:translateY(-2px);position:relative;}
 .sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:var(--text-on-dark);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:var(--shadow-badge-accent);}
@@ -1803,7 +1811,7 @@
 /* Fila CTA */
 .sim-root .spp-cta-row{padding:14px 28px;border-top:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper-0);}
 .sim-root .spp-cta-note{font-family:var(--font-sci);font-style:italic;font-size:15px;color:var(--ink-1);line-height:1.4;font-weight:600;}
-.sim-root .spp-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;background:var(--ink-0);color:var(--paper-0);border:none;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease);white-space:nowrap;flex-shrink:0;border-radius:var(--r-xs);}
+.sim-root .spp-cta{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;background:var(--ink-0);color:var(--paper-0);border:none;cursor:pointer;transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);white-space:nowrap;flex-shrink:0;border-radius:var(--r-xs);}
 .sim-root .spp-cta:hover{background:var(--ink-1);transform:translateY(-1px);}
 .sim-root .spp-cta:active{transform:translateY(0);}
 
@@ -2112,7 +2120,7 @@
 .sim-root .pi-action{font-size:12px;color:var(--ink-900);margin-bottom:2px;line-height:1.5;}
 .sim-root .pi-effect{font-size:11px;color:var(--ink-700);font-family:var(--font-mono);line-height:1.5;}
 .sim-root .pi-actions{padding:10px 10px 10px 0;display:flex;align-items:center;}
-.sim-root .pi-apply{font-family:var(--font-body);font-size:10px;font-weight:700;padding:5px 10px;background:var(--pi-color);color:var(--text-on-dark);border:none;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;letter-spacing:.04em;transition:opacity .15s var(--ease),transform .15s var(--ease);}
+.sim-root .pi-apply{font-family:var(--font-body);font-size:10px;font-weight:700;padding:5px 10px;background:var(--pi-color);color:var(--text-on-dark);border:none;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;letter-spacing:.04em;transition:opacity var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);}
 .sim-root .pi-apply:hover{opacity:.85;transform:translateY(-1px);}
 .sim-root .pi-apply:active{transform:translateY(0);}
 .sim-root .pi-spacer{width:60px;}
@@ -2132,7 +2140,7 @@
   border:1px solid rgba(26,20,16,0.11)!important;
   box-shadow:var(--shadow-card-rest)!important;
   /* NO overflow:hidden here — absolute-positioned buttons live in this wrapper */
-  transition:box-shadow .15s var(--ease),transform .15s var(--ease)!important;
+  transition:box-shadow var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease)!important;
   background:var(--paper-50)!important;
 }
 .sim-root .ing-list > div:hover{
@@ -2346,7 +2354,7 @@
   border-top-width:3px!important;
   border-radius:0!important;
   box-shadow:var(--shadow-card-rest)!important;
-  transition:box-shadow .15s var(--ease),transform .15s var(--ease)!important;
+  transition:box-shadow var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease)!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
@@ -2442,7 +2450,7 @@
   border:none!important;
   border-radius:0!important;
   cursor:pointer!important;
-  transition:background .12s var(--ease)!important;
+  transition:background var(--duration-quick) var(--ease)!important;
   flex:1!important;
 }
 .sim-root .dash-sload:hover{background:var(--ink-1)!important;}
@@ -2457,7 +2465,7 @@
   border-left:1px solid rgba(26,20,16,0.08)!important;
   border-radius:0!important;
   cursor:pointer!important;
-  transition:color .12s var(--ease),background .12s var(--ease)!important;
+  transition:color var(--duration-quick) var(--ease),background var(--duration-quick) var(--ease)!important;
 }
 .sim-root .dash-sdel:hover{color:var(--coral-500)!important;background:var(--paper-100)!important;}
 
@@ -2622,29 +2630,29 @@
 .os-today-v2,.os-batch-detail-v2{max-width:1080px;margin:0 auto 48px}.os-page-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}.os-page-title{font-family:var(--font-sans);font-size:var(--text-2xl);margin:var(--space-2) 0 var(--space-5)}.os-today-group{margin-top:var(--space-6)}.os-section-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:var(--rule-heavy);padding-bottom:var(--space-2)}.os-section-head h2,.os-detail-panel h2{font-family:var(--font-sans);font-size:var(--text-lg);margin:0}.os-section-head span{font-family:var(--font-mono);color:var(--text-metadata)}.os-task-marker{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}.os-v2-empty{padding:var(--space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}.os-lifecycle-state{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid var(--status-active);padding-top:3px;color:var(--status-active)}.os-detail-back{margin-bottom:var(--space-3)}.os-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}.os-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--space-5);margin-top:var(--space-6);align-items:start}.os-detail-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--space-4)}.os-valid-actions{display:grid;gap:var(--tap-target-gap-min);margin:var(--space-3) 0 var(--space-4)}
 @media(max-width:700px){.os-today-v2,.os-batch-detail-v2{margin-bottom:24px}.os-page-title{font-size:var(--text-xl)}.os-metric-grid,.os-detail-grid{grid-template-columns:1fr}.os-task-row{grid-template-columns:auto minmax(0,1fr)}.os-task-row>.os-action{grid-column:2;width:100%}}
 /* os-action/os-scan-target ya definen :focus-visible en setas-os-components.css pero no :hover/transition — el botón se sentía inerte hasta el click. */
-.os-action,.os-icon-action,.os-scan-target{transition:background-color .15s ease,border-color .15s ease}
+.os-action,.os-icon-action,.os-scan-target{transition:background-color var(--duration-standard) ease,border-color var(--duration-standard) ease}
 .os-scan-target:hover{background:var(--surface-recessed);border-color:var(--ink-0)}
 
 /* ── HOME COCKPIT — hover/press states, previously mutated via onMouseEnter/Leave
    JS (didn't reach keyboard focus, never fired on touch, and there was no
    :active feedback anywhere). Moved to CSS so :hover, :active and
    :focus-visible (global rule above) all come for free. ── */
-.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow var(--duration-standard) ease,border-color var(--duration-standard) ease,transform var(--duration-quick) ease}
 .sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
 .sim-root .home-quick-action.is-jornada{border:1.5px solid var(--coral-500)}
 .sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
 .sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
 
-.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color var(--duration-standard) ease,border-color var(--duration-standard) ease,transform var(--duration-quick) ease}
 .sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
 .sim-root .home-stage-card:hover{border-color:var(--stage-accent,var(--coral-500))}
 .sim-root .home-stage-card:active{transform:scale(.98)}
 
-.sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color .15s ease,transform .1s ease}
+.sim-root .home-lote-row{background:var(--paper-50);border:1px solid var(--paper-300);transition:background-color var(--duration-standard) ease,transform var(--duration-quick) ease}
 .sim-root .home-lote-row:hover{background:var(--paper-100)}
 .sim-root .home-lote-row:active{background:var(--paper-200);transform:scale(.99)}
 
-.sim-root .home-panel-btn{transition:filter .15s ease,background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-panel-btn{transition:filter var(--duration-standard) ease,background-color var(--duration-standard) ease,border-color var(--duration-standard) ease,transform var(--duration-quick) ease}
 .sim-root .home-panel-btn.is-primary:hover{filter:brightness(1.08)}
 .sim-root .home-panel-btn.is-primary:active{filter:brightness(.94);transform:scale(.97)}
 .sim-root .home-panel-btn.is-secondary:hover{background:var(--paper-100);border-color:var(--ink-400)}
@@ -2655,17 +2663,17 @@
    se había resuelto para home-quick-action y home-panel-btn. Mismo
    enfoque: CSS, no JS, para que :focus-visible (regla global arriba) y
    prefers-reduced-motion (regla al final) apliquen gratis. */
-.sim-root .home-handoff-dismiss{transition:color .15s ease}
+.sim-root .home-handoff-dismiss{transition:color var(--duration-standard) ease}
 .sim-root .home-handoff-dismiss:hover{color:var(--ink-900)}
 .sim-root .home-handoff-dismiss:active{transform:scale(.96)}
 
 /* Registro de cultivo · vista previa (cabecera de Hoy) y Actividad reciente
    (Sección C) — mismo patrón: :hover/:active en CSS, no JS. */
-.sim-root .home-registro-chip{transition:background-color .15s ease,border-color .15s ease,transform .1s ease}
+.sim-root .home-registro-chip{transition:background-color var(--duration-standard) ease,border-color var(--duration-standard) ease,transform var(--duration-quick) ease}
 .sim-root .home-registro-chip:hover{background:var(--paper-200);border-color:var(--ink-400)}
 .sim-root .home-registro-chip:active{background:var(--paper-300);transform:scale(.97)}
 
-.sim-root .home-activity-row{transition:background-color .15s ease}
+.sim-root .home-activity-row{transition:background-color var(--duration-standard) ease}
 .sim-root .home-activity-row:hover{background:var(--paper-50)}
 .sim-root .home-activity-row:active{background:var(--paper-100)}
 
@@ -2995,7 +3003,7 @@
   font-weight:700;
   cursor:pointer;
   touch-action:manipulation;
-  transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);
+  transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);
 }
 .sim-root .form-step-options,
 .sim-root .form-step-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -3157,7 +3165,7 @@
 .sim-root .role-group-desc{margin-top:3px;color:var(--ink-600);font:400 var(--text-2xs)/1.3 var(--font-body)}
 .sim-root .role-group-summary{display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .sim-root .role-group-compatible{padding:4px 6px;background:color-mix(in oklab,var(--moss-600) 10%,var(--paper-0));color:var(--moss-700);font:700 var(--text-2xs)/1 var(--font-mono)}
-.sim-root .role-group-chevron{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;color:var(--ink-600);font:700 20px/1 var(--font-mono);transform:rotate(180deg);transition:transform .15s var(--ease)}
+.sim-root .role-group-chevron{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;color:var(--ink-600);font:700 20px/1 var(--font-mono);transform:rotate(180deg);transition:transform var(--duration-standard) var(--ease)}
 .sim-root .role-group-box.is-collapsed .role-group-chevron{transform:rotate(0deg)}
 .sim-root .role-group-content{display:grid;grid-template-columns:1fr;gap:8px;padding:8px}
 .sim-root .role-group-content[hidden]{display:none!important}
@@ -3201,7 +3209,7 @@
   font-weight:600;
   letter-spacing:var(--tracking-button);
   text-transform:uppercase;
-  transition:background-color .12s var(--ease),border-color .12s var(--ease),color .12s var(--ease);
+  transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);
 }
 
 .sim-root .builder-wrap .cat:hover,
@@ -3528,7 +3536,7 @@
 
 /* ── PERITO & CO-FORMULACIÓN CARDS ─────────────────────────────── */
 .sim-root .coform-card {
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform var(--duration-quick) ease, box-shadow var(--duration-quick) ease;
 }
 .sim-root .coform-card:hover {
   box-shadow: var(--shadow-card-hover, 0 4px 12px rgba(26,20,16,0.09));
@@ -3928,7 +3936,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background .15s, border-color .15s;
+  transition: background var(--duration-standard), border-color var(--duration-standard);
 }
 
 .sim-root .climate-room-btn.on {
@@ -4065,7 +4073,7 @@
   flex-direction: column;
   gap: 8px;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color var(--duration-standard), box-shadow var(--duration-standard);
 }
 
 .sim-root .today-climate-card:hover {
@@ -4151,7 +4159,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: background .15s, border-color .15s;
+  transition: background var(--duration-standard), border-color var(--duration-standard);
 }
 
 .sim-root .climate-actuator-btn:hover {
