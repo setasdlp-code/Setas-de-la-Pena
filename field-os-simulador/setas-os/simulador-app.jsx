@@ -8064,25 +8064,47 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 14 }}>
                   <div>
                     <span id="thermal-format-label" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
-                      Formato de Rollo
+                      Formato de Impresión / Empaque
                     </span>
-                    <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'flex', gap: 6 }}>
+                    <div role="group" aria-labelledby="thermal-format-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6 }}>
                       <button
                         type="button"
                         onClick={() => setThermalSize('50x30')}
-                        style={{ flex: 1, minHeight: 44, padding: '8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         50 × 30 mm
                       </button>
                       <button
                         type="button"
                         onClick={() => setThermalSize('60x40')}
-                        style={{ flex: 1, minHeight: 44, padding: '8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         60 × 40 mm
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('gourmet-wood')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        Faja Madera (180×60)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('kraft-tray')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        Bandeja Kraft (80×120)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('apothecary-50')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        Apotecario (50 ml)
+                      </button>
                     </div>
                   </div>
+
 
                   <div>
                     <label htmlFor="thermal-scope" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 4, textTransform: 'uppercase' }}>
@@ -8120,7 +8142,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Escala 1:1 ({thermalSize === '50x30' ? '50×30 mm' : '60×40 mm'})
+                      Formato: {thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
                     </span>
                   </div>
                   <div className="thermal-preview-container">
@@ -8137,7 +8159,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <div>Inoc: {item.date}</div>
                               <div>Fórmula: {item.recipe}</div>
                             </div>
-                            <div className="thermal-footer">Setas de la Peña · Tenjo</div>
+                            <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
                           </div>
                         </div>
                       );
@@ -8176,7 +8198,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div>Inoc: {item.date}</div>
                             <div>Fórmula: {item.recipe}</div>
                           </div>
-                          <div className="thermal-footer">Setas de la Peña · Tenjo</div>
+                          <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
                         </div>
                       </div>
                     );
@@ -8321,6 +8343,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
             </AccessibleModal>
+
           );
         })()}
 
