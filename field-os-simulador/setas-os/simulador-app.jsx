@@ -1966,6 +1966,7 @@ function App(props){
   const [thermalScope,setThermalScope]=useState('all');
   const [thermalBagStart,setThermalBagStart]=useState(1);
   const [thermalBagEnd,setThermalBagEnd]=useState(20);
+  const [thermalCosechaItem,setThermalCosechaItem]=useState(null);
   const [showDiagModal,setShowDiagModal]=useState(false);
   const [diagLoteId,setDiagLoteId]=useState('');
   const [diagBolsaId,setDiagBolsaId]=useState('');
@@ -2773,6 +2774,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
+  };
+
+  const openThermalForLote = (loteId, options = {}) => {
+    const lote = bitLotes.find(l => l.id === loteId) || bitLotes[0];
+    if (!lote) return;
+    setThermalLote(lote);
+    setThermalScope(options.scope || (options.bagNum ? 'custom' : 'all'));
+    if (options.bagNum) {
+      setThermalBagStart(options.bagNum);
+      setThermalBagEnd(options.bagNum);
+    } else {
+      setThermalBagStart(1);
+      setThermalBagEnd(lote.numBolsas || 12);
+    }
+    setThermalCosechaItem(null);
+    setShowThermalModal(true);
+  };
+
+  const openThermalForCosecha = (loteId, cosechaData = {}) => {
+    const lote = bitLotes.find(l => l.id === loteId) || bitLotes[0];
+    if (!lote) return;
+    setThermalLote(lote);
+    setThermalScope('cosecha');
+    setThermalCosechaItem({
+      ...cosechaData,
+      loteCodigo: lote.codigo
+    });
+    setShowThermalModal(true);
   };
 
   const openProdLauncher = () => {
@@ -3930,7 +3959,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
         {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
           <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
-          <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
+            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>🖨</button>
+          </div>
         </div>)}
       </section>;})}
     </section>;
@@ -3942,7 +3974,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
     const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
     return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
-      <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
+        <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}>🏷 Imprimir Etiquetas Térmicas</button>
+      </div>
       <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
         <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
@@ -4504,7 +4539,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {stats&&(<div className="inv-stat-row" style={{marginBottom:14}}><div className="inv-stat"><div className="inv-stat-val">{stats.bolsasSanas}/{stats.numBolsas}</div><div className="inv-stat-lbl">Sanas</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:stats.contPct>20?'var(--coral-700)':'inherit'}}>{stats.contPct.toFixed(0)}%</div><div className="inv-stat-lbl">Contam.</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.totalFresco.toFixed(3)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>)}
                   <div className="inv-section">
                     <table className="inv-table bolsas-table">
-                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th></tr></thead>
+                      <thead><tr><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Col 25%</th><th scope="col">Col 50%</th><th scope="col">Col 100%</th><th scope="col">Observaciones</th><th scope="col">Foto</th><th scope="col">Cosechas</th><th scope="col" style={{textAlign:'center'}}>Etiqueta</th></tr></thead>
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
@@ -4535,6 +4570,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
                                 <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
                               </div>
+                            </td>
+                            <td data-label="Etiqueta" style={{textAlign:'center'}}>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                aria-label={`Imprimir etiqueta térmica para la bolsa ${bolsa.codigo}`}
+                                title={`Imprimir etiqueta de la bolsa ${bolsa.codigo}`}
+                                onClick={()=>openThermalForLote(bitActiveLoteId, { bagNum: bolsa.num })}
+                              >
+                                🖨
+                              </button>
                             </td>
                           </tr>
                         );
@@ -4571,7 +4617,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td>
                               <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td>
                               <td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td>
-                              <td><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button></td>
+                              <td>
+                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}>🖨</button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                           <tr style={{borderTop:'2px solid var(--ink-900)'}}><td colSpan={3} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",padding:'7px 12px'}}>Total</td><td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)",fontWeight:700,padding:'7px 12px'}}>{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={3}></td></tr>
@@ -7765,9 +7816,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
-                <button onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});setShowBitCosecha(false);}} className="inv-btn inv-btn-pri">Guardar cosecha</button>
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+                <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
+                <button
+                  type="button"
+                  onClick={()=>{
+                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
+                    const cData = {...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId};
+                    addBitCosecha(cData);
+                    setShowBitCosecha(false);
+                    openThermalForCosecha(cData.loteId, cData);
+                  }}
+                  className="inv-btn inv-btn-sec"
+                  title="Guardar cosecha e imprimir inmediatamente la etiqueta de canastilla térmica"
+                >
+                  Guardar y 🖨 Canastilla
+                </button>
+                <button
+                  type="button"
+                  onClick={()=>{
+                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
+                    addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});
+                    setShowBitCosecha(false);
+                  }}
+                  className="inv-btn inv-btn-pri"
+                >
+                  Guardar cosecha
+                </button>
               </div>
           </AccessibleModal>
         )}
@@ -7898,7 +7973,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalBags = Math.max(1, lote.numBolsas || 12);
           const items = [];
 
-          if (thermalScope === 'lote') {
+          if (thermalScope === 'cosecha' && thermalCosechaItem) {
+            const c = thermalCosechaItem;
+            items.push({
+              id: `CAN-${lote.codigo}-F${c.flush || 1}`,
+              bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
+              species: lote.especie || 'Seta Fresca',
+              date: c.fecha || new Date().toISOString().split('T')[0],
+              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${'★'.repeat(c.calidad || 4)}`,
+              bagsText: `Lote ${lote.codigo} · Bolsa ${c.codigo || 'General'}`,
+              qrUrl: `https://setasdelapena.co/trace/${lote.codigo}?flush=${c.flush || 1}`
+            });
+          } else if (thermalScope === 'lote') {
             items.push({
               id: lote.codigo,
               bagCode: 'LOTE MAESTRO',
@@ -7938,7 +8024,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       🏷 Impresión Térmica · Rollo Adhesivo
                     </div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
-                      Lote {lote.codigo} · {lote.especie}
+                      Lote {lote.codigo} · {lote.especie} {thermalScope === 'cosecha' ? '· Etiqueta Canastilla Cosecha' : ''}
                     </div>
                   </div>
                   <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}>✕</button>
@@ -7983,6 +8069,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <option value="all">Todas las bolsas (1 a {totalBags})</option>
                       <option value="lote">Solo etiqueta maestra de lote</option>
                       <option value="custom">Rango personalizado</option>
+                      <option value="cosecha">Etiqueta de Canastilla / Cosecha</option>
                     </select>
                   </div>
                 </div>
