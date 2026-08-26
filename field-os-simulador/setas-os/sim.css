@@ -4516,7 +4516,7 @@
 
 .sim-root .climate-range-pill.on {
   background: var(--ink-0);
-  color: var(--text-on-dark)fff;
+  color: var(--text-on-dark);
   border-color: var(--ink-0);
 }
 
@@ -4599,12 +4599,12 @@
 
 .sim-root .climate-actuator-badge.on {
   background: var(--moss-700, var(--color-dark-secondary));
-  color: var(--text-on-dark)fff;
+  color: var(--text-on-dark);
 }
 
 .sim-root .climate-actuator-badge.pulse {
   background: #2563EB;
-  color: var(--text-on-dark)fff;
+  color: var(--text-on-dark);
 }
 
 .sim-root .climate-actuator-badge.off {
