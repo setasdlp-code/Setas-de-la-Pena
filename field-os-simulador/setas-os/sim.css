@@ -3731,7 +3731,10 @@
 .sim-root .thermal-card-40x30 {
   width: 40mm;
   min-height: 30mm;
-  padding: 1.8mm 2mm;
+  padding: 1.5mm 2mm;
+  gap: 6px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
 
 .sim-root .thermal-card-50x30 {
@@ -3780,8 +3783,8 @@
 }
 
 .sim-root .thermal-card-40x30 .thermal-qr-img {
-  width: 18mm;
-  height: 18mm;
+  width: 17mm;
+  height: 17mm;
 }
 
 .sim-root .thermal-card-50x30 .thermal-qr-img {
@@ -3820,16 +3823,21 @@
 
 .sim-root .thermal-code {
   font-family: var(--font-mono, monospace);
-  font-weight: 800;
-  color: var(--ink-900);
+  font-weight: 900;
+  color: #000000;
 }
 
 .sim-root .thermal-card-40x30 .thermal-code {
-  font-size: 8.5px;
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: #000000 !important;
 }
 
 .sim-root .thermal-card-50x30 .thermal-code {
-  font-size: 10px;
+  font-size: 10.5px;
+  font-weight: 800;
 }
 
 .sim-root .thermal-card-60x40 .thermal-code {
@@ -3842,17 +3850,22 @@
 
 .sim-root .thermal-species {
   font-family: var(--font-sans, sans-serif);
-  font-weight: 600;
-  color: #111111;
+  font-weight: 800;
+  color: #000000;
   margin-top: 1px;
 }
 
 .sim-root .thermal-card-40x30 .thermal-species {
-  font-size: 7.5px;
+  font-size: 9.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #000000 !important;
+  line-height: 1.1;
 }
 
 .sim-root .thermal-card-50x30 .thermal-species {
-  font-size: 8px;
+  font-size: 8.5px;
 }
 
 .sim-root .thermal-card-60x40 .thermal-species {
@@ -3866,16 +3879,20 @@
 
 .sim-root .thermal-meta {
   font-family: var(--font-mono, monospace);
-  color: #333333;
+  color: #000000;
   margin-top: 2px;
 }
 
 .sim-root .thermal-card-40x30 .thermal-meta {
-  font-size: 6.5px;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #000000 !important;
+  line-height: 1.25;
 }
 
 .sim-root .thermal-card-50x30 .thermal-meta {
-  font-size: 7px;
+  font-size: 7.5px;
+  font-weight: 700;
 }
 
 .sim-root .thermal-card-60x40 .thermal-meta {
@@ -3889,8 +3906,9 @@
 
 .sim-root .thermal-footer {
   font-family: var(--font-mono, monospace);
-  font-size: 6px;
-  color: #555555;
+  font-size: 6.5px;
+  font-weight: 700;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: .05em;
   margin-top: 2px;
@@ -3922,18 +3940,42 @@
     align-items: center !important;
     break-inside: avoid !important;
     page-break-after: always !important;
-    background: var(--paper-0) !important;
-    color: var(--ink-900) !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     border: none !important;
     box-sizing: border-box !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    filter: contrast(400%) grayscale(100%) !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: geometricPrecision !important;
   }
   .thermal-card-print.thermal-card-40x30 {
     width: 40mm !important;
     height: 30mm !important;
-    padding: 1.8mm 2mm !important;
+    padding: 1.5mm 2mm !important;
     page-break-inside: avoid !important;
+    gap: 6px !important;
+  }
+  .thermal-card-print.thermal-card-40x30 .thermal-code {
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.02em !important;
+    color: #000000 !important;
+  }
+  .thermal-card-print.thermal-card-40x30 .thermal-species {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    line-height: 1.1 !important;
+    color: #000000 !important;
+  }
+  .thermal-card-print.thermal-card-40x30 .thermal-meta {
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    color: #000000 !important;
   }
   .thermal-card-print.thermal-card-50x30 {
     width: 50mm !important;
