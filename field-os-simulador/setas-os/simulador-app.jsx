@@ -1997,6 +1997,9 @@ function App(props){
   const [climateTimeRange,setClimateTimeRange]=useState('24h');
   const [faePulseActive,setFaePulseActive]=useState(false);
   const [humidifierOverride,setHumidifierOverride]=useState(null);
+  const [showProdLaunchModal,setShowProdLaunchModal]=useState(false);
+  const [prodLaunchForm,setProdLaunchForm]=useState(null);
+
 
 
 
@@ -2178,12 +2181,12 @@ function App(props){
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen||showProdLaunchModal);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen,showProdLaunchModal]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -2771,6 +2774,198 @@ body{margin:0;padding:20px 24px;background:#fff;}
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
     };
   };
+
+  const openProdLauncher = () => {
+    if (!readyForProduction || !recipe.length || !an) {
+      setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const sp = SPP[sKey];
+    const SC = { p_ostreatus_gris:'OST', p_ostreatus_blanco:'OBL', p_djamor_rosa:'ROS', p_eryngii:'ERY', shiitake:'SHI', lions_mane:'MEL', reishi:'REI', enoki:'ENO', nameko:'NAM' };
+    const sppCode = SC[sKey] || 'EXP';
+    const dc = today.replace(/-/g,'').slice(2);
+    const cnt = bitLotes.length + 1;
+    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+
+    // Desglose de insumos a descontar
+    const insumos = (bd?.items || []).map(it => {
+      const g = INGS.find(i => i.name === it.name || i.id === it.id);
+      const id = g ? g.id : it.name;
+      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
+      const stockActual = invLotes.filter(l => l.activo && l.ingredienteId === id).reduce((s,l) => s + l.cantidadKgDisponible, 0);
+      return {
+        id,
+        name: it.name,
+        krKg,
+        stockActual,
+        ok: stockActual >= krKg * 0.999
+      };
+    });
+
+    if (bd?.spawn && bd.spawn > 0) {
+      const spawnStock = invLotes.filter(l => l.activo && l.ingredienteId === 'spawn_grano').reduce((s,l) => s + l.cantidadKgDisponible, 0);
+      insumos.push({
+        id: 'spawn_grano',
+        name: `Spawn / Micelio (${sp?.name || sKey})`,
+        krKg: bd.spawn,
+        stockActual: spawnStock,
+        ok: spawnStock >= bd.spawn * 0.999
+      });
+    }
+
+    setProdLaunchForm({
+      codigo,
+      especie: sp?.name || '',
+      especieCientifico: sp?.scientific || '',
+      cepa: '',
+      fechaMezcla: today,
+      fechaInoculacion: today,
+      numBolsas: numBags || 10,
+      pesoHumedo: kgBag || 1.5,
+      humedad: hObj || 67,
+      sala: selectedClimateRoom || 'martha_01',
+      operador: 'Operario Granja Tenjo',
+      notas: '',
+      printQr: true,
+      insumos
+    });
+    setShowProdLaunchModal(true);
+  };
+
+  const ejecutarLanzamientoProduccion = () => {
+    if (!prodLaunchForm) return;
+    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
+    const nb = parseInt(numBolsas) || 1;
+    const kb = parseFloat(pesoHumedo) || 1.5;
+    const hm = parseFloat(humedad) || 67;
+    const now = new Date().toISOString();
+    const ts = Date.now();
+
+    // 1. Descontar Inventario en Bodega (FIFO)
+    const insumosADescontar = (insumos || []).filter(i => i.krKg > 0);
+    if (insumosADescontar.length > 0) {
+      setInvLotes(prev => {
+        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
+        try { localStorage.setItem('sdp_lotes', JSON.stringify(updated)); } catch(e) {}
+        return updated;
+      });
+      const newMovs = insumosADescontar.map((row, i) => ({
+        id: 'mov_lote_' + ts + '_' + i,
+        tipo: 'consumo_lote',
+        ingredienteId: row.id,
+        kgMovidos: row.krKg,
+        loteNum: codigo,
+        fecha: fechaInoculacion,
+        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
+        timestamp: now
+      }));
+      saveMovimientos([...invMovimientos, ...newMovs]);
+
+      if (window.SetasDB) {
+        (async () => {
+          try {
+            for (const row of insumosADescontar) {
+              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+            }
+          } catch (e) {
+            console.warn('Error sincronizando descuento FIFO a Firestore:', e);
+          }
+        })();
+      }
+    }
+
+    // 2. Crear Lote y Bolsas en Bitácora
+    const lote = {
+      id: 'BIT_' + ts,
+      codigo,
+      especie,
+      especieCientifico,
+      cepa,
+      fechaMezcla,
+      fechaInoculacion,
+      numBolsas: nb,
+      pesoHumedo: kb,
+      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+      spawnPct: an?.dynSpawn || 8,
+      humedad: hm,
+      tratamiento: tr?.name || 'Pasteurización Térmica',
+      costoIngKg: an ? Math.round(an.cost) : 0,
+      operador,
+      objetivo: 'Lanzamiento directo desde Formulador',
+      notas,
+      estado: 'incubacion',
+      veredicto: '',
+      sala,
+      ubicacion: sala,
+      recipeRef: {
+        id: ts,
+        name: saveName || `Receta ${especie} (${codigo})`,
+        sKey,
+        recipe: [...recipe],
+        cn: an ? an.cn.toFixed(1) : '—',
+        eb: an ? an.eb.toFixed(0) : '—',
+        score: opt ? opt.score : 0,
+        cost: an ? Math.round(an.cost) : 0
+      },
+      createdAt: now
+    };
+
+    const bolsas = Array.from({ length: nb }, (_, i) => ({
+      id: 'BOLSA_' + ts + '_' + i,
+      loteId: lote.id,
+      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, '0')}`,
+      num: i + 1,
+      estado: 'sana',
+      col25: null,
+      col50: null,
+      col100: null,
+      pesoInicial: kb,
+      fechaDescarte: null,
+      motivoDescarte: '',
+      observaciones: '',
+      foto: null
+    }));
+
+    setBitLotes(prev => {
+      const upd = [lote, ...prev];
+      try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+      return upd;
+    });
+    setBitBolsas(prev => {
+      const upd = [...prev, ...bolsas];
+      try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+      return upd;
+    });
+
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.guardarLote(lote);
+          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        } catch (e) {
+          console.warn('Error respaldando lote en Firestore:', e);
+        }
+      })();
+    }
+
+    // 3. Cerrar modal y proceder
+    setShowProdLaunchModal(false);
+
+    if (printQr) {
+      setThermalLoteId(lote.id);
+      setShowThermalModal(true);
+    } else {
+      setBitActiveLoteId(lote.id);
+      goTab('bitacora');
+    }
+
+    setNoticeDlg({
+      title: '🚀 Producción de Lote Lanzada',
+      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
+    });
+  };
+
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
@@ -6427,6 +6622,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         );
                       })()}
+                      <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid var(--border-soft)',display:'flex',justifyContent:'flex-end'}}>
+                        <button
+                          type="button"
+                          className="btn-launch-prod"
+                          onClick={openProdLauncher}
+                          disabled={!readyForProduction}
+                          title={readyForProduction ? `Lanzar producción de ${numBags} bolsas de ${kgBag} kg con descuento automático de inventario` : productionBlockMsg}
+                        >
+                          🚀 Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -6476,7 +6682,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sbar">
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="sbtn" onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} disabled={!readyForProduction} title={readyForProduction?'Crear lote experimental en la Bitácora con esta receta':productionBlockMsg} style={{background:readyForProduction?'var(--moss-700,#2E3B2F)':'var(--paper-300)',color:readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',cursor:readyForProduction?'pointer':'not-allowed'}}>Prueba →</button>}
+                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px'}}>🚀 Lanzar Lote</button>}
                   {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
@@ -7859,6 +8065,144 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     );
                   })}
                 </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {showProdLaunchModal && prodLaunchForm && (() => {
+          const f = prodLaunchForm;
+          const allInsumosOk = f.insumos.every(i => i.ok);
+          const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+
+          return (
+            <AccessibleModal
+              id="prod-launch-modal"
+              isOpen={showProdLaunchModal}
+              onClose={() => setShowProdLaunchModal(false)}
+              title="🚀 Lanzador de Producción de Lote"
+              ariaLabel="Lanzador de Producción de Lote"
+              maxWidth="680px"
+            >
+              <div className="prod-launch-modal" data-testid="prod-launch-modal">
+                {/* Resumen Superior */}
+                <div className="prod-launch-summary">
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Lote</span>
+                    <span className="prod-launch-stat-val" style={{fontFamily:'var(--font-mono)',fontSize:14}}>{f.codigo}</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Especie</span>
+                    <span className="prod-launch-stat-val" style={{fontSize:14}}>{f.especie}</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Tamaño</span>
+                    <span className="prod-launch-stat-val">{f.numBolsas} bolsas ({ (f.numBolsas * f.pesoHumedo).toFixed(1) } kg)</span>
+                  </div>
+                  <div className="prod-launch-stat">
+                    <span className="prod-launch-stat-lbl">Humedad</span>
+                    <span className="prod-launch-stat-val">{f.humedad}%</span>
+                  </div>
+                </div>
+
+                {/* Desglose de Insumos y Descuento en Bodega */}
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
+                      📦 Insumos a Descontar de Bodega
+                    </span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
+                      {allInsumosOk ? '● Stock suficiente para todo el batch' : '⚠ Algunos insumos requieren compra'}
+                    </span>
+                  </div>
+
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
+                    <table className="prod-launch-table">
+                      <thead>
+                        <tr>
+                          <th>Insumo</th>
+                          <th style={{textAlign:'right'}}>Requerido</th>
+                          <th style={{textAlign:'right'}}>Stock Actual</th>
+                          <th style={{textAlign:'center'}}>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {f.insumos.map((ins, i) => (
+                          <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
+                            <td style={{fontWeight:600}}>{ins.name}</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} kg</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
+                              {ins.stockActual.toFixed(1)} kg
+                            </td>
+                            <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
+                              {ins.ok ? '✓ OK' : '⚠ Escaso'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Asignación de Sala Ambiental */}
+                <div>
+                  <label htmlFor="prod-launch-sala" style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)',display:'block',marginBottom:6}}>
+                    🌱 Sala / Carpa de Destino
+                  </label>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    {Object.values(ROOMS_CONFIG).map(r => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setProdLaunchForm(prev => ({ ...prev, sala: r.id }))}
+                        style={{
+                          padding:'10px 12px',
+                          border:`1.5px solid ${f.sala === r.id ? 'var(--moss-700)' : 'var(--border-hairline)'}`,
+                          background: f.sala === r.id ? 'var(--paper-0)' : '#ffffff',
+                          borderRadius:'var(--radius-sm)',
+                          textAlign:'left',
+                          cursor:'pointer'
+                        }}
+                      >
+                        <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>{r.name}</div>
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>{r.spec}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Opciones Adicionales */}
+                <div style={{display:'flex',flexDirection:'column',gap:8,padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)'}}>
+                  <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-0)'}}>
+                    <input
+                      type="checkbox"
+                      checked={f.printQr}
+                      onChange={e => setProdLaunchForm(prev => ({ ...prev, printQr: e.target.checked }))}
+                      style={{width:16,height:16,accentColor:'var(--moss-700)'}}
+                    />
+                    <span>🖨 <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
+                  </label>
+                </div>
+
+                {/* Botones de Cierre */}
+                <div style={{display:'flex',justifyContent:'flex-end',gap:8,borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
+                  <button
+                    type="button"
+                    onClick={() => setShowProdLaunchModal(false)}
+                    className="inv-btn inv-btn-sec"
+                    style={{minHeight:44,padding:'8px 16px'}}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={ejecutarLanzamientoProduccion}
+                    className="btn-launch-prod"
+                    style={{minHeight:44,padding:'8px 20px'}}
+                  >
+                    🚀 Confirmar y Lanzar Producción
+                  </button>
+                </div>
+              </div>
             </AccessibleModal>
           );
         })()}
