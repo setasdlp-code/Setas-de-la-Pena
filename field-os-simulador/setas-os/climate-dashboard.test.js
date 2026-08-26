@@ -62,20 +62,31 @@ test('climate-math flags severe condensation risk when RH is saturated', () => {
 
 test('simulador-app.jsx integrates live telemetry dashboard and Today widget', () => {
   assert.match(jsx, /data-testid="climate-dashboard"/);
+  assert.match(jsx, /climate-module-grid/);
+  assert.match(jsx, /props\.hoyCamarasJson/);
+  assert.match(jsx, /tempSeries/);
+  assert.match(jsx, /CAMERA_TO_ROOM=\{incub:'incubacion_01',martha:'martha_01',cloudlab:'cloudlab_844'\}/);
   assert.match(jsx, /data-testid="today-climate-strip"/);
   assert.match(jsx, /martha_01/);
   assert.match(jsx, /cloudlab_844/);
   assert.match(jsx, /tab==='clima'&&ClimateDashboardSection\(\)/);
-  assert.match(jsx, /clima:'Control Ambiental & Telemetría IoT'/);
+  assert.match(jsx, /clima:'Cámaras & Telemetría IoT'/);
 });
 
-test('Setas OS v5.dc.html loads climate-math.js and registers Telemetría IoT tab', () => {
+test('Setas OS v5.dc.html exposes one merged Cameras and IoT route', () => {
   assert.match(shell, /<script src="climate-math\.js"><\/script>/);
-  assert.match(shell, /contextTab\('Telemetría IoT',s\.module==='sim'&&s\.simTab==='clima',/);
+  assert.match(shell, /contextTab\('Cámaras & IoT',/);
+  assert.doesNotMatch(shell, /contextTab\('Telemetría IoT',/);
+  assert.doesNotMatch(shell, /contextTab\('Cámaras',/);
+  assert.match(shell, /closeCam:\(\)=>this\.goSimTab\('clima'\)/);
+  assert.match(shell, /tempSeries:c\.tempSeries/);
+  assert.match(shell, /viewAlias=\{camaras:'clima',iot:'clima',telemetria:'clima'\}/);
+  assert.match(shell, /url\.searchParams\.set\('view',tab\)/);
 });
 
 test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.climate-dashboard/);
+  assert.match(css, /\.climate-module-card/);
   assert.match(css, /\.climate-kpi-card/);
   assert.match(css, /\.today-climate-strip/);
   assert.match(css, /\.climate-svg-wrap/);
@@ -90,4 +101,3 @@ test('simulador-app.jsx renders relay actuator controls and interactive override
   assert.match(jsx, /Disparar Pulso FAE/);
   assert.match(jsx, /Forzar Humidificación/);
 });
-
