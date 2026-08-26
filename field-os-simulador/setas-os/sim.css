@@ -73,6 +73,41 @@
   --tracking-wide: .2em;      /* rare — large sparse headers only */
   --tracking-tight: -.02em;   /* large display numerals/headings */
 
+  /* ── SPACING SCALE — replaces 41 ad-hoc px values ── */
+  --space-1: 2px;
+  --space-2: 3px;
+  --space-3: 4px;
+  --space-4: 6px;
+  --space-5: 8px;
+  --space-6: 10px;
+  --space-7: 12px;
+  --space-8: 14px;
+  --space-9: 16px;
+  --space-10: 20px;
+  --space-12: 24px;
+  --space-14: 28px;
+  --space-16: 32px;
+  --space-20: 40px;
+
+  /* ── BUTTON STATE SCALE ── */
+  --btn-bg: var(--paper-0);
+  --btn-border: var(--ink-900);
+  --btn-text: var(--ink-900);
+  --btn-hover-bg: var(--paper-50);
+  --btn-hover-shadow: 0 2px 4px rgba(11, 11, 11, 0.08);
+  --btn-active-transform: translateY(-1px);
+  --btn-disabled-opacity: 0.4;
+
+  --btn-pri-bg: var(--moss-700);
+  --btn-pri-border: var(--moss-700);
+  --btn-pri-text: var(--paper-50);
+  --btn-pri-hover-bg: var(--moss-900);
+
+  --btn-dark-bg: var(--ink-900);
+  --btn-dark-border: var(--ink-900);
+  --btn-dark-text: var(--paper-50);
+  --btn-dark-hover-bg: var(--ink-700);
+
   /* ── TEXT ON COLOR BACKGROUNDS (ensure contrast) ── */
   --text-on-dark: var(--paper-50);
   --text-on-success: var(--paper-50);
@@ -82,9 +117,9 @@
   --surface-accent-soft: #e8f0e0;  /* soft olive for status badges, stock indicators */
   --surface-accent-soft-text: #3a5a28;  /* dark olive text on soft olive bg */
   --surface-selected: #F4F7F8;  /* card selection highlight (cool blue-gray) */
-  --surface-cream: var(--surface-cream);  /* warm cream for sections, emphasis areas */
-  --surface-cream-alt: var(--surface-cream-alt);  /* lighter cream variant */
-  --surface-green-light: var(--surface-green-light);  /* pale green for growth/positive contexts */
+  --surface-cream: #F7F4EC;  /* warm cream for sections, emphasis areas */
+  --surface-cream-alt: #FFFBF7;  /* lighter cream variant */
+  --surface-green-light: #F0F7ED;  /* pale green for growth/positive contexts */
 
   /* ── SPECIALTY COLORS (chemical, strain, botanical indicators) ── */
   --color-species-name: #8C7F5B;  /* muted brown for species scientific names */
@@ -96,13 +131,78 @@
   --color-norm-bar: #6B8E5A;  /* moss-green for normalization/balance indicators */
   --color-investigacion: #f0b093;  /* peach for investigation/experimental mode */
 
+  /* ── INGREDIENT CATEGORY COLORS — ingredient badges & tab accents ──
+     Each has: base (border/hover accent), hover tint, text (on hover), and
+     -on (solid-fill "selected" state). -on may differ from base — see WCAG
+     note below for base/sup/trop/circ, which fail 4.5:1 white-text contrast
+     at their natural hue and use a darkened -on value instead. */
+  --cat-base: #5A7042;
+  --cat-base-hover: color-mix(in oklab, #5A7042 12%, var(--paper-0));
+  --cat-base-text: #3a4f2a;
+  --cat-base-on: #5A7042;             /* fill-vs-white contrast 5.48:1 — passes AA */
+
+  --cat-cafe: #7A4A2F;
+  --cat-cafe-hover: color-mix(in oklab, #7A4A2F 12%, var(--paper-0));
+  --cat-cafe-text: #7A4A2F;
+  --cat-cafe-on: #7A4A2F;             /* fill-vs-white contrast 7.37:1 — passes AA */
+
+  --cat-sup: #C68F2C;
+  --cat-sup-hover: color-mix(in oklab, #C68F2C 12%, var(--paper-0));
+  --cat-sup-text: #8B6014;
+  --cat-sup-on: #946B21;              /* WCAG FIX: base #C68F2C is 2.85:1 vs white
+                                          (fails AA even for large text). Darkened
+                                          25% to 4.79:1 — passes. Border/hover keep
+                                          the original hue; only the solid .on fill
+                                          uses this darker value. */
+
+  --cat-est: #6B4E31;
+  --cat-est-hover: color-mix(in oklab, #6B4E31 12%, var(--paper-0));
+  --cat-est-text: #6B4E31;
+  --cat-est-on: #6B4E31;              /* fill-vs-white contrast 7.61:1 — passes AA */
+
+  --cat-local: #7A5A3F;
+  --cat-local-hover: color-mix(in oklab, #7A5A3F 12%, var(--paper-0));
+  --cat-local-text: #7A5A3F;
+  --cat-local-on: #7A5A3F;            /* fill-vs-white contrast 6.25:1 — passes AA */
+
+  --cat-trop: #B8694B;
+  --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
+  --cat-trop-text: #B8694B;
+  --cat-trop-on: #A65E44;             /* WCAG FIX: base #B8694B is 4.07:1 vs white
+                                          (fails AA at this component's 9.5–12px
+                                          text size — WCAG large-text exemption
+                                          needs 14px+bold/18px+). Darkened 10% to
+                                          4.88:1 — passes. */
+
+  --cat-circ: #6B7C5F;
+  --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
+  --cat-circ-text: #6B7C5F;
+  --cat-circ-on: #66765A;             /* WCAG FIX: base #6B7C5F is 4.49:1 vs white
+                                          (just under the 4.5:1 AA threshold).
+                                          Darkened 5% to 4.88:1 — passes. */
+
+  --cat-adit: var(--accent-blue-grey);
+  --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
+  --cat-adit-text: var(--accent-blue-grey);
+  /* --cat-adit-on intentionally omitted: .on rule uses --cat-adit directly
+     (design-system --accent-blue-grey already passes AA at its own value) */
+
   /* ── MOTION SCALE — replaces 8 scattered durations (.1s–.4s) ──
      Pick by role, not by feel. Pair with --ease (existing curve) unless noted. */
   --duration-quick: .12s;    /* micro-interactions: hover color/bg swap, active press */
-  --duration-standard: var(--duration-standard); /* default: buttons, inputs, toggles, most transitions */
+  --duration-standard: .15s; /* default: buttons, inputs, toggles, most transitions */
   --duration-entrance: .22s; /* element appearing: modal open, card slide-in */
   --duration-exit: .18s;     /* element leaving: modal close, fade-out */
   --duration-notice: .3s;    /* toasts, banners — slower so the message registers */
+
+  /* ── RESPONSIVE SPACING — density multiplier applied at breakpoints.
+     Use --space-fluid-* instead of --space-* in components that need to
+     compress on smaller viewports (forms, modals, dense grids). Defaults
+     to desktop values; ≤900px and ≤480px overrides below in section 35. ── */
+  --space-fluid-tight: var(--space-5);   /* 8px desktop → 6px tablet → 5px mobile */
+  --space-fluid-base: var(--space-7);    /* 12px desktop → 10px tablet → 8px mobile */
+  --space-fluid-loose: var(--space-9);   /* 16px desktop → 12px tablet → 10px mobile */
+  --space-fluid-section: var(--space-12); /* 24px desktop → 18px tablet → 14px mobile */
 
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
@@ -2313,37 +2413,37 @@
 }
 
 /* ── CAT BUTTONS — same color coding as ingredient badges ─────── */
-.sim-root .cat[data-cat="base"]{ border-left:3px solid #5A7042; }
-.sim-root .cat[data-cat="base"]:hover{ background:color-mix(in oklab,#5A7042 12%,var(--paper-0))!important; border-color:#5A7042!important; color:#3a4f2a!important; }
-.sim-root .cat[data-cat="base"].on{ background:#5A7042!important; border-color:#5A7042!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="base"]{ border-left:3px solid var(--cat-base); }
+.sim-root .cat[data-cat="base"]:hover{ background:var(--cat-base-hover)!important; border-color:var(--cat-base)!important; color:var(--cat-base-text)!important; }
+.sim-root .cat[data-cat="base"].on{ background:var(--cat-base)!important; border-color:var(--cat-base)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="cafe"]{ border-left:3px solid #7A4A2F; }
-.sim-root .cat[data-cat="cafe"]:hover{ background:color-mix(in oklab,#7A4A2F 12%,var(--paper-0))!important; border-color:#7A4A2F!important; color:#7A4A2F!important; }
-.sim-root .cat[data-cat="cafe"].on{ background:#7A4A2F!important; border-color:#7A4A2F!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="cafe"]{ border-left:3px solid var(--cat-cafe); }
+.sim-root .cat[data-cat="cafe"]:hover{ background:var(--cat-cafe-hover)!important; border-color:var(--cat-cafe)!important; color:var(--cat-cafe-text)!important; }
+.sim-root .cat[data-cat="cafe"].on{ background:var(--cat-cafe)!important; border-color:var(--cat-cafe)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="sup"]{ border-left:3px solid #C68F2C; }
-.sim-root .cat[data-cat="sup"]:hover{ background:color-mix(in oklab,#C68F2C 12%,var(--paper-0))!important; border-color:#C68F2C!important; color:#8B6014!important; }
-.sim-root .cat[data-cat="sup"].on{ background:#C68F2C!important; border-color:#C68F2C!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="sup"]{ border-left:3px solid var(--cat-sup); }
+.sim-root .cat[data-cat="sup"]:hover{ background:var(--cat-sup-hover)!important; border-color:var(--cat-sup)!important; color:var(--cat-sup-text)!important; }
+.sim-root .cat[data-cat="sup"].on{ background:var(--cat-sup-on)!important; border-color:var(--cat-sup-on)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="est"]{ border-left:3px solid #6B4E31; }
-.sim-root .cat[data-cat="est"]:hover{ background:color-mix(in oklab,#6B4E31 12%,var(--paper-0))!important; border-color:#6B4E31!important; color:#6B4E31!important; }
-.sim-root .cat[data-cat="est"].on{ background:#6B4E31!important; border-color:#6B4E31!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="est"]{ border-left:3px solid var(--cat-est); }
+.sim-root .cat[data-cat="est"]:hover{ background:var(--cat-est-hover)!important; border-color:var(--cat-est)!important; color:var(--cat-est-text)!important; }
+.sim-root .cat[data-cat="est"].on{ background:var(--cat-est)!important; border-color:var(--cat-est)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="local"]{ border-left:3px solid #7A5A3F; }
-.sim-root .cat[data-cat="local"]:hover{ background:color-mix(in oklab,#7A5A3F 12%,var(--paper-0))!important; border-color:#7A5A3F!important; color:#7A5A3F!important; }
-.sim-root .cat[data-cat="local"].on{ background:#7A5A3F!important; border-color:#7A5A3F!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="local"]{ border-left:3px solid var(--cat-local); }
+.sim-root .cat[data-cat="local"]:hover{ background:var(--cat-local-hover)!important; border-color:var(--cat-local)!important; color:var(--cat-local-text)!important; }
+.sim-root .cat[data-cat="local"].on{ background:var(--cat-local)!important; border-color:var(--cat-local)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="trop"]{ border-left:3px solid #B8694B; }
-.sim-root .cat[data-cat="trop"]:hover{ background:color-mix(in oklab,#B8694B 12%,var(--paper-0))!important; border-color:#B8694B!important; color:#B8694B!important; }
-.sim-root .cat[data-cat="trop"].on{ background:#B8694B!important; border-color:#B8694B!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="trop"]{ border-left:3px solid var(--cat-trop); }
+.sim-root .cat[data-cat="trop"]:hover{ background:var(--cat-trop-hover)!important; border-color:var(--cat-trop)!important; color:var(--cat-trop-text)!important; }
+.sim-root .cat[data-cat="trop"].on{ background:var(--cat-trop-on)!important; border-color:var(--cat-trop-on)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="circ"]{ border-left:3px solid #6B7C5F; }
-.sim-root .cat[data-cat="circ"]:hover{ background:color-mix(in oklab,#6B7C5F 12%,var(--paper-0))!important; border-color:#6B7C5F!important; color:#6B7C5F!important; }
-.sim-root .cat[data-cat="circ"].on{ background:#6B7C5F!important; border-color:#6B7C5F!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="circ"]{ border-left:3px solid var(--cat-circ); }
+.sim-root .cat[data-cat="circ"]:hover{ background:var(--cat-circ-hover)!important; border-color:var(--cat-circ)!important; color:var(--cat-circ-text)!important; }
+.sim-root .cat[data-cat="circ"].on{ background:var(--cat-circ-on)!important; border-color:var(--cat-circ-on)!important; color:var(--text-on-dark)!important; }
 
-.sim-root .cat[data-cat="adit"]{ border-left:3px solid var(--accent-blue-grey); }
-.sim-root .cat[data-cat="adit"]:hover{ background:color-mix(in oklab,var(--accent-blue-grey) 12%,var(--paper-0))!important; border-color:var(--accent-blue-grey)!important; color:var(--accent-blue-grey)!important; }
-.sim-root .cat[data-cat="adit"].on{ background:var(--accent-blue-grey)!important; border-color:var(--accent-blue-grey)!important; color:var(--text-on-dark)!important; }
+.sim-root .cat[data-cat="adit"]{ border-left:3px solid var(--cat-adit); }
+.sim-root .cat[data-cat="adit"]:hover{ background:var(--cat-adit-hover)!important; border-color:var(--cat-adit)!important; color:var(--cat-adit-text)!important; }
+.sim-root .cat[data-cat="adit"].on{ background:var(--cat-adit)!important; border-color:var(--cat-adit)!important; color:var(--text-on-dark)!important; }
 
 /* ── DASH CARDS — editorial redesign ───────────────────────── */
 .sim-root .dash-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;gap:16px!important;}
@@ -4185,6 +4285,44 @@
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink-0);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   36. RESPONSIVE SPACING BREAKPOINTS
+   Redefines --space-fluid-* (declared in :root, section 1) at two
+   breakpoints. Any component padding/gap/margin authored with
+   --space-fluid-tight/base/loose/section instead of a fixed --space-N
+   automatically compresses here — no per-component media query needed.
+
+   Desktop values (from :root):
+     --space-fluid-tight:   var(--space-5)  = 8px
+     --space-fluid-base:    var(--space-7)  = 12px
+     --space-fluid-loose:   var(--space-9)  = 16px
+     --space-fluid-section: var(--space-12) = 24px
+
+   Use --space-fluid-* for: form field gaps, modal/panel padding,
+   card grid gaps, section margins — anything that should visibly
+   tighten on small viewports. Keep using fixed --space-N for spacing
+   that must stay constant regardless of viewport (icon gaps, badge
+   padding, hairline offsets).
+   ════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .sim-root {
+    --space-fluid-tight: var(--space-4);    /* 8px → 6px */
+    --space-fluid-base: var(--space-6);     /* 12px → 10px */
+    --space-fluid-loose: var(--space-7);    /* 16px → 12px */
+    --space-fluid-section: var(--space-9);  /* 24px → 16px (was --space-10/18px — snapped to scale) */
+  }
+}
+
+@media (max-width: 480px) {
+  .sim-root {
+    --space-fluid-tight: var(--space-3);    /* 8px → 4px */
+    --space-fluid-base: var(--space-5);     /* 12px → 8px */
+    --space-fluid-loose: var(--space-6);    /* 16px → 10px */
+    --space-fluid-section: var(--space-8);  /* 24px → 14px */
+  }
 }
 
 

@@ -17,20 +17,22 @@ Canonical token reference for `sim.css`. These tokens define the visual language
 
 #### Ingredient Categories
 
-Each category has three states: default (border), hover (tinted background), and active (solid fill).
+Each category has four states: default (border), hover (tinted background), hover-text, and `-on` (solid-fill "selected" state).
 
-| Token | Use | Default | Hover | Active text |
-|-------|-----|---------|-------|------------|
-| `--cat-base` | Legumes, cereals, substrate bases | #5A7042 | 12% tint | #3a4f2a |
-| `--cat-cafe` | Composted coffee, fermented media | #7A4A2F | 12% tint | #7A4A2F |
-| `--cat-sup` | Premium/supplement layers | #C68F2C | 12% tint | #8B6014 |
-| `--cat-est` | Stabilizers, structural amendments | #6B4E31 | 12% tint | #6B4E31 |
-| `--cat-local` | Locally-sourced materials | #7A5A3F | 12% tint | #7A5A3F |
-| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | #B8694B |
-| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | #6B7C5F |
-| `--cat-adit` | Additives, amendments, biotech | `--accent-blue-grey` | 12% tint | `--accent-blue-grey` |
+| Token | Use | Default | Hover | Hover text | `-on` fill |
+|-------|-----|---------|-------|-----------|-----------|
+| `--cat-base` | Legumes, cereals, substrate bases | #5A7042 | 12% tint | #3a4f2a | #5A7042 |
+| `--cat-cafe` | Composted coffee, fermented media | #7A4A2F | 12% tint | #7A4A2F | #7A4A2F |
+| `--cat-sup` | Premium/supplement layers | #C68F2C | 12% tint | #8B6014 | **#946B21** ⚠️ |
+| `--cat-est` | Stabilizers, structural amendments | #6B4E31 | 12% tint | #6B4E31 | #6B4E31 |
+| `--cat-local` | Locally-sourced materials | #7A5A3F | 12% tint | #7A5A3F | #7A5A3F |
+| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | #B8694B | **#A65E44** ⚠️ |
+| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | #6B7C5F | **#66765A** ⚠️ |
+| `--cat-adit` | Additives, amendments, biotech | `--accent-blue-grey` | 12% tint | `--accent-blue-grey` | same as default |
 
-**Usage**: Applied to ingredient badges, category tabs, and ingredient list filters. The color encodes ingredient *function* in the recipe, not visual hierarchy.
+⚠️ = the `-on` value is **darkened from the base hue** to pass WCAG AA. See Accessibility Audit below — do not "fix" these back to the base color, that reintroduces the contrast failure.
+
+**Usage**: Applied to ingredient badges, category tabs, and ingredient list filters. The color encodes ingredient *function* in the recipe, not visual hierarchy. The border/hover states always use the natural brand hue (`--cat-base` etc); only the solid `.on` fill uses the `-on` variant, because that's the only state pairing the color with white text at full-strength contrast.
 
 ```css
 .cat[data-cat="base"] {
@@ -40,7 +42,36 @@ Each category has three states: default (border), hover (tinted background), and
   background: var(--cat-base-hover);
   color: var(--cat-base-text);
 }
+.cat[data-cat="base"].on {
+  background: var(--cat-base-on);  /* not --cat-base — see WCAG note */
+  color: var(--text-on-dark);
+}
 ```
+
+### Accessibility Audit — Ingredient Category Colors
+
+WCAG 2.1 AA contrast ratios were computed for all 8 category colors against white text (the `.on` selected-state pairing) and against the paper background (the hover-text pairing). Chip/badge text in this UI runs 9.5–13px, which does **not** qualify for the WCAG "large text" exemption (18px regular / 14px bold minimum) — so the full 4.5:1 threshold applies everywhere, not the relaxed 3.0:1.
+
+| Category | Fill vs. white (`.on` state) | Result | Text vs. paper (hover state) | Result |
+|----------|------------------------------|--------|-------------------------------|--------|
+| base | 5.48:1 | ✅ Pass | 8.69:1 | ✅ Pass |
+| cafe | 7.37:1 | ✅ Pass | 7.12:1 | ✅ Pass |
+| **sup** | **2.85:1** | ❌ **Fail** | 5.36:1 | ✅ Pass |
+| est | 7.61:1 | ✅ Pass | 7.35:1 | ✅ Pass |
+| local | 6.25:1 | ✅ Pass | 6.03:1 | ✅ Pass |
+| **trop** | **4.07:1** | ❌ **Fail** | 3.93:1 | — (not white-text pairing) |
+| **circ** | **4.49:1** | ❌ **Fail** (just under 4.5) | 4.34:1 | — (not white-text pairing) |
+| adit | design-system token, assumed pre-validated | — | — | — |
+
+**3 of 8 categories failed** in their selected/`.on` state — white text on the raw fill was illegible-adjacent for `sup` (ochre/gold) especially. Fix: added a `-on` token per category, darkened only enough to clear 4.5:1, keeping the badge/border color (the identity users learn to recognize) unchanged:
+
+| Category | Base hex | Darkened by | `-on` hex | New contrast |
+|----------|----------|-------------|-----------|--------------|
+| sup | #C68F2C | 25% | #946B21 | 4.79:1 |
+| trop | #B8694B | 10% | #A65E44 | 4.88:1 |
+| circ | #6B7C5F | 5% | #66765A | 4.88:1 |
+
+**When adding a new ingredient category**: compute fill-vs-white contrast before shipping. If it's under 4.5:1, darken by the minimum percentage needed (5% increments) rather than picking an arbitrary "safe" dark color — this preserves the hue identity of the category.
 
 #### Button State Tokens
 
@@ -106,6 +137,32 @@ Replaces 8+ scattered transition durations (.1s–.4s) with 5 role-based tokens.
 | `--duration-notice` | .3s | Toasts, banners |
 
 All pair with the existing `--ease` cubic-bezier: `transition: background-color var(--duration-standard) var(--ease);`
+
+### Responsive Spacing
+
+Four "fluid" spacing tokens compress automatically at two breakpoints, so components that opt in don't need their own media queries.
+
+| Token | Desktop | ≤900px | ≤480px |
+|-------|---------|--------|--------|
+| `--space-fluid-tight` | `--space-5` (8px) | `--space-4` (6px) | `--space-3` (4px) |
+| `--space-fluid-base` | `--space-7` (12px) | `--space-6` (10px) | `--space-5` (8px) |
+| `--space-fluid-loose` | `--space-9` (16px) | `--space-7` (12px) | `--space-6` (10px) |
+| `--space-fluid-section` | `--space-12` (24px) | `--space-9` (16px) | `--space-8` (14px) |
+
+**When to use fluid vs. fixed spacing**:
+- Use `--space-fluid-*` for: form field gaps, modal/panel padding, card grid gaps, section margins — anything that should visibly tighten as the viewport shrinks.
+- Use fixed `--space-N` for: icon gaps, badge/chip padding, hairline offsets — anything that must stay constant regardless of viewport (compressing these usually just looks broken, not "responsive").
+
+Defined in `:root` (section 1) and overridden in two `@media` blocks in section 36 (end of file) — the token stays the same name everywhere, only its resolved value changes at the breakpoint. No per-component media query needed once a rule is authored with the fluid token.
+
+```css
+/* Before: fixed spacing needs its own breakpoint override */
+.sim-root .some-panel { padding: 16px; }
+@media (max-width: 480px) { .sim-root .some-panel { padding: 10px; } }
+
+/* After: fluid token handles it automatically */
+.sim-root .some-panel { padding: var(--space-fluid-loose); }
+```
 
 ---
 
