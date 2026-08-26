@@ -140,3 +140,14 @@ test('thermal print buttons are embedded across Hoy, Bitacora bags, Field QR and
   assert.match(source, /Imprimir etiqueta de canastilla/);
 });
 
+test('disabled button states enforce --btn-disabled-opacity and prevent hover/active transforms', () => {
+  assert.match(styles, /--btn-disabled-opacity:\s*0\.4;/);
+  assert.match(styles, /\.sim-root \.btn:disabled/);
+  assert.match(styles, /\.sim-root \.btn\.pri:disabled/);
+  assert.match(styles, /\.sim-root \.btn\.dark:disabled/);
+  assert.match(styles, /\.sim-root \.inv-btn:disabled/);
+  assert.match(styles, /\.sim-root \.sbtn:disabled/);
+  assert.match(styles, /opacity:\s*var\(--btn-disabled-opacity,\s*0\.4\);/);
+});
+
+
