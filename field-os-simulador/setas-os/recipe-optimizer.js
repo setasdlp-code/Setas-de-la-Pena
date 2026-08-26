@@ -355,7 +355,7 @@
         priority: 'critical', icon: '⚠',
         label: 'Riesgo Trichoderma',
         action: 'Esterilizar en autoclave 121°C × 90 min, o reducir N total por debajo del umbral',
-        effect: `N crítico sin esterilización → EB cae ~85% · Trichoderma compite activamente con el micelio`,
+        effect: 'La composición activa una alerta heurística de competencia; confirmar tratamiento, higiene y contaminación observada antes de estimar rendimiento.',
         delta: 'Acción inmediata requerida', apply: null
       });
     }
@@ -393,8 +393,8 @@
         priority: 'warning', icon: subir ? '→N' : '→C',
         label: 'Afinar C:N al ideal',
         action: `${inRec ? 'Subir %' : 'Agregar'} <b>${ing.name}</b> en 3–5%`,
-        effect: `C:N ${an.cn.toFixed(1)}:1 · ideal ${sp.cn_optimal.ideal}:1 · acercarse al centro sube EB ~${Math.round(cnDist * 15)}%`,
-        delta: `+${Math.round(cnDist * 15)}% EB estimada`,
+        effect: `C:N ${an.cn.toFixed(1)}:1 frente al objetivo ${sp.cn_optimal.ideal}:1. Ajustar puede mejorar el balance del modelo, pero no predice un cambio de EB sin medición comparable.`,
+        delta: 'Reevaluar C:N y registrar el resultado del lote',
         apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: 4 }
       });
     }
@@ -423,8 +423,8 @@
           priority: 'warning', icon: '↑EB',
           label: 'Potencial de EB sin explotar',
           action: `${inRec ? 'Aumentar' : 'Agregar'} <b>${ing.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
-          effect: `EB actual ${an.eb.toFixed(0)}% · máximo especie ${sp.eb_optimal}% · suplementación dentro de límite seguro`,
-          delta: `EB ${an.eb.toFixed(0)}% → ~${Math.min(sp.eb_optimal, an.eb + Math.round(margen * 1.5)).toFixed(0)}%`,
+        effect: `La estimación heurística actual es ${an.eb.toFixed(0)}% y queda margen de suplementación. Ensayar en lote controlado antes de atribuir una mejora de EB.`,
+        delta: 'Hipótesis para ensayo; no es rendimiento garantizado',
           apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: d }
         });
       }
@@ -441,7 +441,7 @@
           priority: 'tip', icon: subir ? 'pH+' : 'pH-',
           label: 'Centrar pH',
           action: ajuste ? `Agregar <b>${ajuste.name}</b> 1–2% adicional` : (subir ? 'Agregar CaCO₃ 0.5–1%' : 'Agregar borra de café 5–8%'),
-          effect: `pH ${an.avgPh.toFixed(1)} · centro ideal ${phIdeal.toFixed(1)} · pH centrado mejora rendimiento enzimático ~5%`,
+        effect: `pH estimado ${an.avgPh.toFixed(1)} frente al centro ${phIdeal.toFixed(1)}. Medir pH del sustrato hidratado antes de concluir un efecto operativo.`,
           delta: `pH ${an.avgPh.toFixed(1)} → ${phIdeal.toFixed(1)}`,
           apply: ajuste ? { mode: 'add', id: ajuste.id, delta: 2 } : null
         });
@@ -453,8 +453,8 @@
         priority: 'tip', icon: '$↓',
         label: 'Oportunidad de costo',
         action: `<b>${alt.name}</b> ($${alt.cost}/kg, N=${alt.n}%) como suplemento parcial en bodega`,
-        effect: `Costo actual $${Math.round(an.cost)}/kg · sustitución parcial puede bajar 20–30%`,
-        delta: `$${Math.round(an.cost)} → ~$${Math.round(an.cost * 0.75)}/kg`,
+        effect: `Costo estimado actual $${Math.round(an.cost)}/kg. Una sustitución parcial requiere cotización, humedad y disponibilidad equivalentes antes de declarar ahorro.`,
+        delta: 'Comparar cotizaciones y costo seco antes de sustituir',
         apply: null
       });
     }
@@ -464,8 +464,8 @@
         priority: 'tip', icon: 'Ca',
         label: 'Sin mineral estabilizador',
         action: `Agregar <b>${m.name}</b> 1–2% · bajo costo, alto impacto`,
-        effect: `Sin minerales detectados · CaCO₃ estabiliza pH y aporta calcio para pared celular del micelio`,
-        delta: 'pH más estable · micelio más vigoroso',
+        effect: 'No se detecta mineral en la receta. La posible estabilización de pH es una hipótesis de formulación que debe verificarse con medición del sustrato.',
+        delta: 'Medir pH antes y después del tratamiento',
         apply: { mode: 'add', id: m.id, delta: 2 }
       });
     }
@@ -475,7 +475,7 @@
         priority: 'tip', icon: 'Dig',
         label: 'Baja digestibilidad',
         action: `Incorporar <b>${dig.name}</b> (dig. ${dig.dig}/10) reemplazando parte de la base`,
-        effect: `Digestibilidad ${an.avgDig.toFixed(1)}/10 · sustrato difícil para el micelio · pajas finas mejoran colonización`,
+        effect: `Digestibilidad modelada ${an.avgDig.toFixed(1)}/10. Es una señal comparativa del catálogo, no una medición de velocidad de colonización.`,
         delta: `Dig. ${an.avgDig.toFixed(1)} → ${dig.dig}/10`,
         apply: { mode: 'add', id: dig.id, delta: 10 }
       });
@@ -484,8 +484,8 @@
     items.push({
       priority: 'info', icon: '⛰',
       label: 'Tenjo 2.600 msnm',
-      action: 'Pasteurización: extender tiempo +25% (agua hierve ~92°C). CWLP: verificar pH≥12 antes de sumergir.',
-      effect: 'La altitud no afecta incubación ni fructificación — solo el tratamiento térmico.',
+      action: 'Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.',
+      effect: 'La altitud puede cambiar el comportamiento térmico del proceso; este aviso no sustituye una medición del núcleo ni valida incubación o fructificación.',
       delta: null, apply: null
     });
 
@@ -502,8 +502,8 @@
       });
     }
 
-    const WHY_MAP = { '↓C:N': 'La relación C:N determina velocidad de colonización y rendimiento. Alto C:N = carbono sin aprovechar.', '↑C:N': 'C:N bajo = exceso de nitrógeno, el nutriente que activa mohos competidores.', '↑N': 'El nitrógeno es el nutriente limitante para el crecimiento del micelio.', '↓N': 'Exceso de N activa bacterias y Trichoderma que colonizan más rápido que el micelio.', '⚠': 'Trichoderma colapsa el bloque — compite más rápido que cualquier micelio de seta.', '↑pH': 'pH ácido bloquea enzimas hidrolíticas del micelio que degradan la lignina.', '↓pH': 'pH alcalino inhibe el crecimiento y favorece bacterias contaminantes.', '↑EB': 'EB no explotada = dinero en el sustrato que el hongo no puede aprovechar.', 'Ca': 'Sin minerales, el pH cae durante la incubación y el micelio pierde vigor a mitad del ciclo.', '$↓': 'El costo de ingredientes es el mayor gasto variable de la producción.', 'Dig': 'Baja digestibilidad requiere más energía del micelio, aumentando el riesgo de contaminación.', '→N': 'N y C:N están relacionados: ajustar uno afecta el otro en la misma receta.', '→C': 'La base de carbono define la estructura física y el C:N base del sustrato.' };
-    const RISK_MAP = { '↓C:N': 'Colonización lenta, EB reducida, mayor ventana de contaminación.', '↑C:N': 'Exceso de N → bacterias → olor a amoniaco → contaminación del lote completo.', '↑N': 'EB reducida 30–50%. En casos extremos, colapso completo del bloque.', '↓N': 'Sin corrección: probabilidad alta de Trichoderma y pérdida del lote.', '⚠': 'Sin autoclave: pérdida del lote completo en 5–10 días de colonización.', '↑pH': 'Colonización parcial, EB reducida, mayor riesgo bacteriano.', '↓pH': 'Bloqueo enzimático completo en pH>8 para la mayoría de Pleurotus.', '↑EB': 'Receta subóptima — EB 20–40% menor a lo posible con los ingredientes disponibles.', 'Ca': 'pH variable lote-a-lote — resultados inconsistentes.', 'Dig': 'Colonización 50–100% más lenta; mayor riesgo de contaminación por exposición prolongada.', '→N': 'EB por debajo del potencial óptimo de la especie.', '→C': 'C:N alejado del ideal reduce la eficiencia biológica estimada.' };
+    const WHY_MAP = { '↓C:N': 'El modelo trata C:N como una variable de composición a revisar; la respuesta del cultivo debe confirmarse en lote comparable.', '↑C:N': 'El modelo detecta una relación C:N baja; revisar nitrógeno, tratamiento e higiene antes de inferir contaminación.', '↑N': 'El modelo identifica nitrógeno bajo frente al rango configurado; validar el dato y el desempeño del lote.', '↓N': 'El modelo identifica nitrógeno alto frente al rango configurado; no equivale a una contaminación observada.', '⚠': 'Alerta de riesgo inferida por reglas de composición y tratamiento; requiere inspección y registro de campo.', '↑pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↓pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↑EB': 'La EB mostrada es heurística; usarla para comparar recetas, no para prometer rendimiento.', 'Ca': 'La ausencia de mineral es una señal de formulación, no una medición de estabilidad de pH.', '$↓': 'El ahorro depende de cotización, humedad y rendimiento observados.', 'Dig': 'La digestibilidad es un indicador del catálogo, no una medición de colonización.', '→N': 'N y C:N cambian conjuntamente en esta receta; verificar las métricas después de cualquier ajuste.', '→C': 'La base de carbono cambia estructura y C:N; validar su efecto con el proceso real.' };
+    const RISK_MAP = { '↓C:N': 'Posible menor desempeño o mayor exposición a problemas de proceso; confirmar con observación y trazabilidad del lote.', '↑C:N': 'Posible exceso de nitrógeno; revisar olor, tratamiento e higiene, sin diagnosticar contaminación solo por la receta.', '↑N': 'Posible limitación de desempeño; la magnitud requiere datos de lote comparables.', '↓N': 'Posible incremento de riesgo; requiere verificación de proceso y contaminación observada.', '⚠': 'Riesgo inferido, no diagnóstico de Trichoderma ni pronóstico de pérdida.', '↑pH': 'La desviación estimada requiere medición de pH antes de atribuir efectos en colonización.', '↓pH': 'La desviación estimada requiere medición de pH antes de atribuir efectos en colonización.', '↑EB': 'La diferencia de EB es una hipótesis para ensayo, no una diferencia de rendimiento confirmada.', 'Ca': 'La estabilidad de pH debe medirse entre lotes antes de atribuir variabilidad.', 'Dig': 'La digestibilidad comparativa no permite predecir tiempos de colonización sin historial comparable.', '→N': 'La EB puede variar por múltiples factores además de la composición.', '→C': 'La EB puede variar por múltiples factores además de la composición.' };
     const OVERDIST_BY_ICON = { '↓C:N': flags.cnOverDist, '↑C:N': flags.cnOverDist, '↑N': flags.nOverDist, '↓N': flags.nOverDist, '↑pH': flags.phOverDist, '↓pH': flags.phOverDist };
 
     items.forEach(it => {
@@ -513,6 +513,11 @@
       if (od != null && od > 0 && it.riskIfIgnored) {
         it.riskIfIgnored += ` · desviación actual: ${Math.round(Math.min(150, od * 100))}% más allá del límite.`;
       }
+      it.evidence = it.evidence || {
+        type: 'heuristic-model',
+        confidence: 'low',
+        note: 'Regla de composición sin medición específica del lote; confirmar con proceso y resultados trazables.',
+      };
     });
 
     const tr13 = calcTreatment(an, sKey, effectiveSPP);

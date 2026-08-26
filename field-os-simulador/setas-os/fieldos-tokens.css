@@ -195,11 +195,12 @@
   /* ── OPACITY SCALE — semantic levels for disabled, muted, and strong text/UI.
      Communicate state intent (disabled vs. secondary vs. strong) instead of
      using arbitrary values. Used for text opacity, icon opacity, and state layers. ── */
-  --opacity-disabled: 0.4;   /* disabled form elements, inactive controls */
-  --opacity-subtle:   0.55;  /* secondary accent marks, decorative separators */
-  --opacity-muted:    0.7;   /* secondary text, metadata, hints */
-  --opacity-medium:   0.8;   /* slightly faded text, icon groups */
-  --opacity-strong:   0.85;  /* scientific names, supplementary text */
+  --opacity-disabled:   0.4;  /* disabled form elements, inactive controls */
+  --opacity-subtle:     0.55; /* secondary accent marks, decorative separators */
+  --opacity-muted:      0.7;  /* secondary text, metadata, hints */
+  --opacity-secondary:  0.75; /* labels, species names, intermediate text emphasis */
+  --opacity-medium:     0.8;  /* slightly faded text, icon groups */
+  --opacity-strong:     0.85; /* scientific names, supplementary text */
 
   /* ── Z-INDEX SCALE — named layers instead of guessed numbers.
      Every stacking value in sim.css / simulador-app.jsx should reference one

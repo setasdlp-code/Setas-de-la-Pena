@@ -8,6 +8,7 @@ const {
   recipeDistance,
   noveltyScore,
   applyMutation,
+  evaluateScenario,
   paretoFront,
   generateCoformulationSeeds,
   searchScenarios,
@@ -158,6 +159,55 @@ test('modo solo bodega no propone ingredientes fuera de stock', () => {
     stockIds: new Set(['sawdust', 'bran', 'husk']),
   });
   assert.equal(out.pareto.some(x => x.recipe.some(r => r.id === 'corncob')), false);
+});
+
+test('compatibilidad de especie y catálogo conocido son restricciones duras', () => {
+  const catalog = [
+    { id: 'base', role: 'base_carbono', cs: ['target'] },
+    { id: 'ajeno', role: 'aireador', cs: ['other_species'] },
+  ];
+  const result = evaluateScenario({
+    recipe: [{ id: 'base', p: 90 }, { id: 'ajeno', p: 10 }],
+    ingredients: catalog,
+    context: { sKey: 'target' },
+    profile: { maxSupp: 20, maxCafe: 30 },
+    analyze: recipe => ({ tot: recipe.reduce((sum, row) => sum + row.p, 0), cafeP: 0 }),
+    score: () => ({ score: 99, dimensions: { safety: { score: 99 }, agronomy: { score: 99 }, economy: { score: 99 } } }),
+  });
+  assert.equal(result.allowed, false);
+  assert.deepEqual(result.constraintFailures, ['species_incompatible:ajeno']);
+});
+
+test('stock-only search never recommends an ingredient incompatible with the target species', () => {
+  const catalog = [
+    { id: 'base', role: 'base_carbono', cs: ['target'], cost: 10 },
+    { id: 'supp', role: 'suplemento_n', cs: ['target'], cost: 20 },
+    { id: 'ajeno', role: 'aireador', cs: ['other_species'], cost: 1 },
+  ];
+  const spp = { target: { supplementation_max: 20 } };
+  const out = searchScenarios({
+    recipe: [{ id: 'base', p: 90 }, { id: 'supp', p: 10 }],
+    ingredients: catalog,
+    context: { sKey: 'target', spp },
+    targetKey: 'target',
+    spp,
+    analyze: recipe => ({
+      tot: recipe.reduce((sum, row) => sum + row.p, 0),
+      cafeP: 0,
+      foreign: recipe.some(row => row.id === 'ajeno'),
+    }),
+    score: analysis => ({
+      score: analysis.foreign ? 99 : 60,
+      dimensions: { safety: { score: 90 }, agronomy: { score: analysis.foreign ? 99 : 60 }, economy: { score: 90 } },
+      uncertainty: { eb: { confidence: 'low' }, risk: { confidence: 'low' } },
+    }),
+    useStock: true,
+    stockIds: new Set(['base', 'supp', 'ajeno']),
+    generations: 1,
+    roleCaps: { base_carbono: 100, suplemento_n: 20, aireador: 20 },
+  });
+  assert.equal(out.ranked.some(candidate => candidate.recipe.some(row => row.id === 'ajeno')), false);
+  assert.equal(out.recommended.some(candidate => candidate.recipe.some(row => row.id === 'ajeno')), false);
 });
 
 test('Perito consume SetasFormulatorAPI y no conoce controles internos del Formulador', () => {

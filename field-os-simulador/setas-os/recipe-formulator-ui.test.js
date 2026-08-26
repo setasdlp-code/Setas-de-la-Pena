@@ -28,6 +28,7 @@ test('Setas OS — Formulator UI/UX Elite Suite', async (t) => {
   await t.test('Perito Co-Formulator cards present 1-click surgical optimization recommendations', () => {
     assert.match(jsx, /perito|sugerencia|optimizar/i);
     assert.match(jsx, /formularConStockBodega|runHybridRecipeSearch/);
+    assert.match(jsx, /Evidencia:.*heurística de composición.*confianza/i);
   });
 
   await t.test('Formulator integrates batch launching calculator with moisture, bag count, and primary CTA', () => {

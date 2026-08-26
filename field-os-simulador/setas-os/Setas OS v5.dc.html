@@ -108,7 +108,7 @@
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { font-family:var(--font-sans); font-style:italic; font-weight:800; font-size:15px; color:var(--ink-0); text-align:center; line-height:1.05; padding:22px 8px 16px; display:block; border:0; background:none; cursor:pointer; }
   .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
-  .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:.6; }
+  .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:var(--opacity-subtle, .6); }
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
@@ -149,7 +149,7 @@
       background:linear-gradient(to right, var(--paper-2), transparent);
     }
     .app-shell.sim-collapsed .rail-peek::before {
-      content:''; width:3px; height:44px; border-radius:2px; background:var(--accent-terracotta); opacity:.55;
+      content:''; width:3px; height:44px; border-radius:2px; background:var(--accent-terracotta); opacity:var(--opacity-subtle);
     }
     .app-shell.sim-collapsed .rail-peek:hover::before { opacity:1; }
     .app-shell.sim-collapsed .rail-peek:hover ~ .app-rail,
@@ -430,7 +430,7 @@
             <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
               <button onClick="{{ c.pick }}" style="{{ c.pickStyle }}">
                 <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
-                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+                <span style="font:var(--t-caption);opacity:var(--opacity-secondary);">{{ c.species }}</span>
               </button>
             </sc-for>
           </div>
@@ -460,7 +460,7 @@
               <sc-for list="{{ causeOptions }}" as="cz" hint-placeholder-count="5">
                 <button onClick="{{ cz.pick }}" aria-pressed="{{ cz.sel }}" style="{{ cz.style }}">
                   <span>{{ cz.label }}</span>
-                  <span style="font:var(--t-caption);opacity:.7;font-weight:400;">{{ cz.hint }}</span>
+                  <span style="font:var(--t-caption);opacity:var(--opacity-muted);font-weight:400;">{{ cz.hint }}</span>
                 </button>
               </sc-for>
             </div>
@@ -494,7 +494,7 @@
             <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
               <button onClick="{{ c.pickH }}" style="{{ c.pickStyleH }}">
                 <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
-                <span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span>
+                <span style="font:var(--t-caption);opacity:var(--opacity-secondary);">{{ c.species }}</span>
               </button>
             </sc-for>
           </div>
@@ -537,7 +537,7 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
-              <button onClick="{{ c.pickQ }}" style="{{ c.pickStyleQ }}"><span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span><span style="font:var(--t-caption);opacity:.75;">{{ c.species }}</span></button>
+              <button onClick="{{ c.pickQ }}" style="{{ c.pickStyleQ }}"><span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span><span style="font:var(--t-caption);opacity:var(--opacity-secondary);">{{ c.species }}</span></button>
             </sc-for>
           </div>
           <sc-if value="{{ isContamQuick }}" hint-placeholder-val="{{ false }}">
@@ -548,7 +548,7 @@
               <sc-for list="{{ causeOptions }}" as="cz" hint-placeholder-count="5">
                 <button onClick="{{ cz.pick }}" aria-pressed="{{ cz.sel }}" style="{{ cz.style }}">
                   <span>{{ cz.label }}</span>
-                  <span style="font:var(--t-caption);opacity:.7;font-weight:400;">{{ cz.hint }}</span>
+                  <span style="font:var(--t-caption);opacity:var(--opacity-muted);font-weight:400;">{{ cz.hint }}</span>
                 </button>
               </sc-for>
             </div>
@@ -889,7 +889,7 @@
         </sc-if>
 
         <sc-if value="{{ hasCamDetail }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Todas las cámaras</button>
+          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Cámaras &amp; IoT</button>
           <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
             <span style="width:12px;height:12px;border-radius:50%;background:{{ camDetail.estadoAccent }};"></span>
             <span style="font-family:var(--font-sans);font-weight:900;font-size:30px;letter-spacing:-.01em;color:var(--ink-0);">{{ camDetail.name }}</span>
@@ -1668,6 +1668,18 @@
             </div>
           </sc-for>
         </div>
+
+        <div style="border:1px solid var(--border-strong);background:var(--paper-0);padding:20px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font:var(--t-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-olive);font-weight:700;">Documentación y Protocolos</div>
+            <div style="font-family:var(--font-sans);font-weight:800;font-size:18px;color:var(--ink-0);margin-top:2px;">Guía Operativa Canónica (SOP-SYS-001)</div>
+            <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:4px;">Manual de precisión, balance C:N, telemetría IoT, etiquetas FOS-03 y rutinas de 60 días.</div>
+          </div>
+          <a href="guia-setas-os.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--ink-0);color:var(--paper-0);padding:10px 18px;border-radius:var(--radius-sm);font:var(--t-label);font-weight:600;">
+            <span>Abrir Guía Canónica</span>
+            <span style="color:var(--accent-terracotta);">→</span>
+          </a>
+        </div>
       </div>
     </div>
     </sc-if>
@@ -1755,7 +1767,7 @@
       <div style="background:var(--ink-0);color:var(--paper-0);padding:22px 24px;">
         <div style="font-family:var(--font-sans);font-style:italic;font-weight:800;font-size:15px;">Setas de la Peña</div>
         <div style="font-family:var(--font-sans);font-weight:900;font-size:28px;letter-spacing:-.01em;margin-top:8px;">{{ pubSpecies }}</div>
-        <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:.75;">{{ pubSci }}</div>
+        <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:var(--opacity-secondary);">{{ pubSci }}</div>
       </div>
       <div style="padding:22px 24px;display:flex;gap:18px;align-items:flex-start;">
         <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" width="92" height="92" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
@@ -1830,7 +1842,7 @@
   <!-- SCAN OVERLAY -->
   <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
   <div role="dialog" aria-modal="true" aria-label="Escanear etiqueta QR" style="position:fixed;inset:0;z-index:88;background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
-    <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-0);opacity:.7;margin-bottom:18px;">Escanear etiqueta QR</div>
+    <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-0);opacity:var(--opacity-muted);margin-bottom:18px;">Escanear etiqueta QR</div>
     <div style="position:relative;width:min(72vw,280px);aspect-ratio:1;border-radius:22px;overflow:hidden;background:color-mix(in oklab,var(--ink-0) 60%, #000);">
       <sc-if value="{{ camActive }}" hint-placeholder-val="{{ false }}">
         <video ref="{{ scanVideoRef }}" autoPlay="{{ true }}" playsInline="{{ true }}" muted="{{ true }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
@@ -1841,15 +1853,15 @@
       <span style="position:absolute;right:14px;bottom:14px;width:34px;height:34px;border-right:3px solid var(--paper-0);border-bottom:3px solid var(--paper-0);border-radius:0 0 6px 0;"></span>
       <sc-if value="{{ scanSearching }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;left:8%;right:8%;height:2px;background:var(--accent-terracotta);box-shadow:0 0 12px 2px var(--accent-terracotta);animation:fos-scanline 1.6s ease-in-out infinite;"></span></sc-if>
     </div>
-    <sc-if value="{{ scanSearching }}" hint-placeholder-val="{{ true }}"><div style="margin-top:20px;font:var(--t-body-sm);color:var(--paper-0);opacity:.6;">{{ scanStatusText }}</div></sc-if>
+    <sc-if value="{{ scanSearching }}" hint-placeholder-val="{{ true }}"><div style="margin-top:20px;font:var(--t-body-sm);color:var(--paper-0);opacity:var(--opacity-subtle);">{{ scanStatusText }}</div></sc-if>
     <sc-if value="{{ hasScanFound }}" hint-placeholder-val="{{ false }}">
     <div style="margin-top:22px;text-align:center;animation:fos-screen .3s ease;">
       <div style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--paper-0);">{{ scanFoundId }}</div>
-      <div style="font:var(--t-body-sm);color:var(--paper-0);opacity:.7;margin-top:2px;">{{ scanFoundSpecies }} · añadir a {{ scanTargetLabel }}</div>
+      <div style="font:var(--t-body-sm);color:var(--paper-0);opacity:var(--opacity-muted);margin-top:2px;">{{ scanFoundSpecies }} · añadir a {{ scanTargetLabel }}</div>
       <button onClick="{{ applyScan }}" style="cursor:pointer;margin-top:16px;border:none;background:var(--accent-terracotta);color:#fff;border-radius:var(--radius-md);padding:14px 26px;font:var(--t-button);">Usar {{ scanFoundId }}</button>
     </div>
     </sc-if>
-    <button onClick="{{ closeScan }}" style="cursor:pointer;margin-top:22px;background:none;border:none;font:var(--t-label);color:var(--paper-0);opacity:.7;">Cancelar</button>
+    <button onClick="{{ closeScan }}" style="cursor:pointer;margin-top:22px;background:none;border:none;font:var(--t-label);color:var(--paper-0);opacity:var(--opacity-muted);">Cancelar</button>
   </div>
   </sc-if>
 
@@ -2232,6 +2244,13 @@ class Component extends DCLogic {
   componentDidMount(){
     this.loadPersisted();
     this.setState({ online: navigator.onLine!==false });
+    try{
+      const requested=new URLSearchParams(window.location.search).get('view');
+      const viewAlias={camaras:'clima',iot:'clima',telemetria:'clima'};
+      const initialTab=viewAlias[requested]||requested;
+      const allowedTabs=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
+      if(allowedTabs.includes(initialTab)) this.setState({module:'sim',simTab:initialTab});
+    }catch(e){}
     this._onKeyDown = (e)=>{
       if((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')){ e.preventDefault(); this.setState(s=>({cmdOpen:!s.cmdOpen, cmdQ:''})); return; }
       if(e.key==='Tab' && this.dialogIsOpen(this.state)){this.trapDialogFocus(e);return;}
@@ -2449,6 +2468,7 @@ class Component extends DCLogic {
       liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
       liveStatusLabel: outOfRange?'Fuera de rango':'Dentro de rango',
       hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
+      tempSeries:tPts.map(v=>Math.round(v*10)/10), humSeries:hPts.map(v=>Math.round(v)), co2Series:cPts.map(v=>Math.round(v)),
       tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
       tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
       sparkPoints,
@@ -2673,6 +2693,7 @@ class Component extends DCLogic {
     return (map[key]||cloud)();
   }
   goSimTab(tab){
+    try{const url=new URL(window.location.href);url.searchParams.set('view',tab);window.history.replaceState(null,'',url);}catch(e){}
     this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:tab, simTabNonce:s.simTabNonce+1 }));
   }
   goBitTab(bitSubtab){
@@ -3062,8 +3083,7 @@ class Component extends DCLogic {
     ];
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
-      contextTab('Telemetría IoT',s.module==='sim'&&s.simTab==='clima',()=>this.goSimTab('clima')),
-      contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
+      contextTab('Cámaras & IoT',(s.module==='sim'&&s.simTab==='clima')||(s.module==='camaras'&&!!s.camDetail),()=>this.goSimTab('clima')),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
     if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
@@ -3114,7 +3134,7 @@ class Component extends DCLogic {
       stockBadgeLabel:s.stockAlertCount+' ingredientes bajo el mínimo local',
       navProdCls: PROD_MODS.includes(s.module)?'on':'', navRegCls: REG_MODS.includes(s.module)?'on':'',
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
-      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goProduccion:()=>this.goSimTab('clima'),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
       // Abre la hoja de opciones de inmediato. Cambiar solo module dejaba
       // screen:'start' activo (sin plantilla visible), por lo que el botón
@@ -3138,7 +3158,7 @@ class Component extends DCLogic {
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
       goRevision:()=>this.setState({module:'revision',capture:false}),
-      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goCamaras:()=>this.goSimTab('clima'),
       goPlan:()=>this.setState({module:'plan',capture:false}),
       goInventario:()=>this.setState({module:'inventario',capture:false}),
       goCalidad:()=>this.setState({module:'calidad',capture:false}),
@@ -3169,7 +3189,7 @@ class Component extends DCLogic {
       commercialRows:commercialClients,
       zonas:ZONAS,
       camaras: camViewLive.map(c=>({ ...c, open:()=>this.setState({camDetail:c.id}) })),
-      hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
+      hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.goSimTab('clima'),
       // Cámaras reales (no las "salas" ilustrativas que Hoy usaba antes) para la
       // vista previa de Ambientes & Sensores en Hoy — mismos datos que alimentan
       // el módulo Cámaras, sin inventar una correspondencia con las 4 salas mock.
@@ -3178,6 +3198,7 @@ class Component extends DCLogic {
         count:c.count, capKg:c.capKg, occupancy:c.occupancy, note:c.note,
         liveTemp:c.liveTemp, liveHum:c.liveHum, liveCo2:c.liveCo2, liveStatusLabel:c.liveStatusLabel,
         hasLiveAlert:c.hasLiveAlert, liveAlertNote:c.liveAlertNote,
+        tempSeries:c.tempSeries, humSeries:c.humSeries, co2Series:c.co2Series,
         tempSpark:c.tempSpark, humSpark:c.humSpark, co2Spark:c.co2Spark,
         tempSparkEndY:c.tempSparkEndY, humSparkEndY:c.humSparkEndY, co2SparkEndY:c.co2SparkEndY,
       }))),
@@ -3186,7 +3207,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','bitacora'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3261,7 +3282,7 @@ class Component extends DCLogic {
       hasClimateAlerts: climateAlertList.length>0, climateAlertCount: climateAlertList.length, climateAlerts: climateAlertList,
       hasEscalatedClimate: escalatedList.length>0,
       escalatedClimateNote: escalatedList.length>1 ? escalatedList.length+' alertas sin resolver hace m\u00e1s de 2h: '+escalatedList.map(a=>a.chamber).join(', ')+'.' : (escalatedList[0] ? escalatedList[0].note+' \u2014 '+escalatedList[0].ageLabel+' sin resolver.' : ''),
-      goEscalatedClimate:()=>this.setState({module:'camaras',camarasTab:'clima',capture:false,climaBadge:0}),
+      goEscalatedClimate:()=>this.goSimTab('clima'),
       hasLowStock: lowStockRows.length>0, lowStockCount: lowStockRows.length,
       lowStockNote: lowStockRows.map(r=>r.lot.split(' \u00b7 ')[0]).join(', ')+' por debajo del m\u00ednimo de cobertura.',
       hasObsPhoto: !!s.obsPhoto, obsPhoto: s.obsPhoto||TRANSPARENT_PX, setObsPhoto:(e)=>this.setObsPhoto(e), clearObsPhoto:()=>this.clearObsPhoto(),
@@ -3450,7 +3471,7 @@ class Component extends DCLogic {
       const d=this.diasDesde(last.date);
       if(c.stage==='inoculación' && d>=3) add(c.id,'Revisar colonización','Día '+d+' tras la inoculación','media',()=>this.setState({module:'sesion',screen:'observe',capture:false,oContainers:[c.id]}));
       else if(c.stage==='incubación' && d>=14) add(c.id,'Valorar traslado a fructificación','Día '+d+' en incubación','alta',()=>this.setState({module:'sesion',screen:'quick',quickType:'traslado',capture:false,qContainers:[c.id]}));
-      else if(c.stage==='primordios') add(c.id,'Subir FAE y vigilar cosecha','Primordios formados hace '+d+' d','alta',()=>this.setState({module:'camaras',capture:false}));
+      else if(c.stage==='primordios') add(c.id,'Subir FAE y vigilar cosecha','Primordios formados hace '+d+' d','alta',()=>this.goSimTab('clima'));
       else if(c.stage==='fructificación') add(c.id,'Cosecha inminente','En fructificación','alta',()=>this.setState({module:'sesion',screen:'harvest',capture:false,hContainer:c.id}));
       else if(d>=7) add(c.id,'Sin registro reciente','Último evento hace '+d+' d','baja',()=>this.setState({module:'sesion',screen:'observe',capture:false,oContainers:[c.id]}));
     });
@@ -3458,7 +3479,7 @@ class Component extends DCLogic {
       add(c.id,'Asignar causa raíz','Contaminación sin causa registrada','alta',()=>this.setState({module:'sesion',screen:'quick',quickType:'contaminacion',capture:false,qContainers:[c.id]})));
     Object.values(s.chamberAlerts||{}).forEach(t=>{
       const escalated = (Date.now()-t.since) > 2*3600000;
-      add(t.camName,(escalated?'\u26a0\ufe0f Escalada \u00b7 ':'')+t.action+' '+t.camName,'Desvío de clima'+(escalated?' \u00b7 sin resolver +2h':''),'alta',()=>this.setState({module:'camaras',camarasTab:'clima',capture:false}));
+      add(t.camName,(escalated?'\u26a0\ufe0f Escalada \u00b7 ':'')+t.action+' '+t.camName,'Desvío de clima'+(escalated?' \u00b7 sin resolver +2h':''),'alta',()=>this.goSimTab('clima'));
     });
     const P={alta:0,media:1,baja:2};
     return out.sort((a,b)=>P[a.prio]-P[b.prio]).map(t=>({ ...t,
@@ -3567,9 +3588,12 @@ class Component extends DCLogic {
       out.push({ k:'Especie', label:sp.name, sub:sp.sci+' · formular', go:()=>{ this.setState({cmdOpen:false}); this.openSimForSpecies(sp.key); } }); });
     this.state.salidas.forEach(x=>{ if((x.lote+' '+destLabel(x.dest)).toLowerCase().includes(t))
       out.push({ k:'Lote', label:x.lote, sub:destLabel(x.dest)+' · '+(x.pesoG/1000).toFixed(2)+' kg', go:()=>this.setState({module:'calidad',cmdOpen:false}) }); });
-    [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','camaras'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
-      if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label, sub:'Ir al módulo', go:()=>this.setState({module:m,cmdOpen:false}) });
+    [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','clima'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
+      if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label:m==='clima'?'Cámaras & IoT':label, sub:'Ir al módulo', go:()=>m==='clima'?this.goSimTab('clima'):this.setState({module:m,cmdOpen:false}) });
     });
+    if(/^(gu[ií]a|manual|doc|sop|protocolo)/.test(t)){
+      out.push({ k:'Manual', label:'Guía Operativa Canónica', sub:'Abrir manual y protocolos FOS', go:()=>{ window.open('guia-setas-os.html','_blank'); this.setState({cmdOpen:false}); } });
+    }
     return out.slice(0,12);
   }
 
@@ -3691,7 +3715,8 @@ class Component extends DCLogic {
         if(!containerId) return;
         if(evType==='clima'){
           const cam=CAMARAS.find(c=>c.name===containerId||c.id===containerId);
-          this.setState({module:'camaras',capture:false,camDetail:cam?cam.id:null});
+          if(cam) this.setState({module:'camaras',capture:false,camDetail:cam.id});
+          else this.goSimTab('clima');
           return;
         }
         this.setState({module:'sesion', screen:'history', detail:containerId, capture:false});

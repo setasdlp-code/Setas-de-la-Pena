@@ -168,3 +168,25 @@ test('applyRecipe allows a target that keeps a locked ingredient within 0.15%', 
     unregister();
   }
 });
+
+test('applyRecipe rejects non-finite, non-positive, duplicate, or unbalanced recipes before the native adapter writes state', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const adapter = makeFakeAdapter([{ id: 'paja_trigo', p: 100 }]);
+  const unregister = api.registerNativeAdapter(adapter);
+  try {
+    const invalidRecipes = [
+      [{ id: 'paja_trigo', p: 110 }],
+      [{ id: 'paja_trigo', p: 50 }, { id: 'paja_trigo', p: 50 }],
+      [{ id: 'paja_trigo', p: Number.NaN }, { id: 'kikuyo', p: 100 }],
+      [{ id: 'paja_trigo', p: 100 }, { id: 'kikuyo', p: 0 }],
+    ];
+    for (const recipe of invalidRecipes) {
+      const result = await api.applyRecipe(recipe, { force: true });
+      assert.equal(result.ok, false, `debe rechazar ${JSON.stringify(recipe)}`);
+    }
+    assert.equal(adapter.applyCalls, 0, 'la validación debe ejecutar antes de escribir el estado nativo');
+    assert.deepEqual(adapter.getRecipe(), [{ id: 'paja_trigo', p: 100 }]);
+  } finally {
+    unregister();
+  }
+});

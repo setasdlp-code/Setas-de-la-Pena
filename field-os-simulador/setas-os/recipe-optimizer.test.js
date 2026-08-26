@@ -182,6 +182,11 @@ test('generateOptimizer genera veredictos y predicciones sin mutar estado', () =
   assert.ok(cnHighItem);
   assert.equal(cnHighItem.priority, 'critical');
   assert.ok(cnHighItem.predictedScore != null);
+  assert.deepEqual(cnHighItem.evidence, {
+    type: 'heuristic-model',
+    confidence: 'low',
+    note: 'Regla de composición sin medición específica del lote; confirmar con proceso y resultados trazables.',
+  });
 });
 
 // logic-lens: usageCounts existe para no recomendar siempre el mismo
