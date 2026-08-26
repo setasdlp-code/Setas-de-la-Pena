@@ -885,7 +885,7 @@
         </sc-if>
 
         <sc-if value="{{ hasCamDetail }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Todas las cámaras</button>
+          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Cámaras &amp; IoT</button>
           <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
             <span style="width:12px;height:12px;border-radius:50%;background:{{ camDetail.estadoAccent }};"></span>
             <span style="font-family:var(--font-sans);font-weight:900;font-size:30px;letter-spacing:-.01em;color:var(--ink-0);">{{ camDetail.name }}</span>
@@ -2228,6 +2228,13 @@ class Component extends DCLogic {
   componentDidMount(){
     this.loadPersisted();
     this.setState({ online: navigator.onLine!==false });
+    try{
+      const requested=new URLSearchParams(window.location.search).get('view');
+      const viewAlias={camaras:'clima',iot:'clima',telemetria:'clima'};
+      const initialTab=viewAlias[requested]||requested;
+      const allowedTabs=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
+      if(allowedTabs.includes(initialTab)) this.setState({module:'sim',simTab:initialTab});
+    }catch(e){}
     this._onKeyDown = (e)=>{
       if((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')){ e.preventDefault(); this.setState(s=>({cmdOpen:!s.cmdOpen, cmdQ:''})); return; }
       if(e.key==='Tab' && this.dialogIsOpen(this.state)){this.trapDialogFocus(e);return;}
@@ -2445,6 +2452,7 @@ class Component extends DCLogic {
       liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
       liveStatusLabel: outOfRange?'Fuera de rango':'Dentro de rango',
       hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
+      tempSeries:tPts.map(v=>Math.round(v*10)/10), humSeries:hPts.map(v=>Math.round(v)), co2Series:cPts.map(v=>Math.round(v)),
       tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
       tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
       sparkPoints,
@@ -2669,6 +2677,7 @@ class Component extends DCLogic {
     return (map[key]||cloud)();
   }
   goSimTab(tab){
+    try{const url=new URL(window.location.href);url.searchParams.set('view',tab);window.history.replaceState(null,'',url);}catch(e){}
     this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:tab, simTabNonce:s.simTabNonce+1 }));
   }
   goBitTab(bitSubtab){
@@ -3058,8 +3067,7 @@ class Component extends DCLogic {
     ];
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
-      contextTab('Telemetría IoT',s.module==='sim'&&s.simTab==='clima',()=>this.goSimTab('clima')),
-      contextTab('Cámaras',s.module==='camaras',()=>this.setState({module:'camaras',capture:false,camDetail:null,workspaceMoreOpen:false})),
+      contextTab('Cámaras & IoT',(s.module==='sim'&&s.simTab==='clima')||(s.module==='camaras'&&!!s.camDetail),()=>this.goSimTab('clima')),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
     if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
@@ -3110,7 +3118,7 @@ class Component extends DCLogic {
       stockBadgeLabel:s.stockAlertCount+' ingredientes bajo el mínimo local',
       navProdCls: PROD_MODS.includes(s.module)?'on':'', navRegCls: REG_MODS.includes(s.module)?'on':'',
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
-      goProduccion:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goProduccion:()=>this.goSimTab('clima'),
       goRegistro:()=>this.setState({module:'revision',capture:false}),
       // Abre la hoja de opciones de inmediato. Cambiar solo module dejaba
       // screen:'start' activo (sin plantilla visible), por lo que el botón
@@ -3134,7 +3142,7 @@ class Component extends DCLogic {
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
       goRevision:()=>this.setState({module:'revision',capture:false}),
-      goCamaras:()=>this.setState({module:'camaras',capture:false,camDetail:null}),
+      goCamaras:()=>this.goSimTab('clima'),
       goPlan:()=>this.setState({module:'plan',capture:false}),
       goInventario:()=>this.setState({module:'inventario',capture:false}),
       goCalidad:()=>this.setState({module:'calidad',capture:false}),
@@ -3165,7 +3173,7 @@ class Component extends DCLogic {
       commercialRows:commercialClients,
       zonas:ZONAS,
       camaras: camViewLive.map(c=>({ ...c, open:()=>this.setState({camDetail:c.id}) })),
-      hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.setState({camDetail:null}),
+      hasCamDetail:!!camD, camDetail:camD?{...camD, ...this.liveMonitor(camD)}:camD, camList:!camD, closeCam:()=>this.goSimTab('clima'),
       // Cámaras reales (no las "salas" ilustrativas que Hoy usaba antes) para la
       // vista previa de Ambientes & Sensores en Hoy — mismos datos que alimentan
       // el módulo Cámaras, sin inventar una correspondencia con las 4 salas mock.
@@ -3174,6 +3182,7 @@ class Component extends DCLogic {
         count:c.count, capKg:c.capKg, occupancy:c.occupancy, note:c.note,
         liveTemp:c.liveTemp, liveHum:c.liveHum, liveCo2:c.liveCo2, liveStatusLabel:c.liveStatusLabel,
         hasLiveAlert:c.hasLiveAlert, liveAlertNote:c.liveAlertNote,
+        tempSeries:c.tempSeries, humSeries:c.humSeries, co2Series:c.co2Series,
         tempSpark:c.tempSpark, humSpark:c.humSpark, co2Spark:c.co2Spark,
         tempSparkEndY:c.tempSparkEndY, humSparkEndY:c.humSparkEndY, co2SparkEndY:c.co2SparkEndY,
       }))),
@@ -3182,7 +3191,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','bitacora'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3257,7 +3266,7 @@ class Component extends DCLogic {
       hasClimateAlerts: climateAlertList.length>0, climateAlertCount: climateAlertList.length, climateAlerts: climateAlertList,
       hasEscalatedClimate: escalatedList.length>0,
       escalatedClimateNote: escalatedList.length>1 ? escalatedList.length+' alertas sin resolver hace m\u00e1s de 2h: '+escalatedList.map(a=>a.chamber).join(', ')+'.' : (escalatedList[0] ? escalatedList[0].note+' \u2014 '+escalatedList[0].ageLabel+' sin resolver.' : ''),
-      goEscalatedClimate:()=>this.setState({module:'camaras',camarasTab:'clima',capture:false,climaBadge:0}),
+      goEscalatedClimate:()=>this.goSimTab('clima'),
       hasLowStock: lowStockRows.length>0, lowStockCount: lowStockRows.length,
       lowStockNote: lowStockRows.map(r=>r.lot.split(' \u00b7 ')[0]).join(', ')+' por debajo del m\u00ednimo de cobertura.',
       hasObsPhoto: !!s.obsPhoto, obsPhoto: s.obsPhoto||TRANSPARENT_PX, setObsPhoto:(e)=>this.setObsPhoto(e), clearObsPhoto:()=>this.clearObsPhoto(),
@@ -3446,7 +3455,7 @@ class Component extends DCLogic {
       const d=this.diasDesde(last.date);
       if(c.stage==='inoculación' && d>=3) add(c.id,'Revisar colonización','Día '+d+' tras la inoculación','media',()=>this.setState({module:'sesion',screen:'observe',capture:false,oContainers:[c.id]}));
       else if(c.stage==='incubación' && d>=14) add(c.id,'Valorar traslado a fructificación','Día '+d+' en incubación','alta',()=>this.setState({module:'sesion',screen:'quick',quickType:'traslado',capture:false,qContainers:[c.id]}));
-      else if(c.stage==='primordios') add(c.id,'Subir FAE y vigilar cosecha','Primordios formados hace '+d+' d','alta',()=>this.setState({module:'camaras',capture:false}));
+      else if(c.stage==='primordios') add(c.id,'Subir FAE y vigilar cosecha','Primordios formados hace '+d+' d','alta',()=>this.goSimTab('clima'));
       else if(c.stage==='fructificación') add(c.id,'Cosecha inminente','En fructificación','alta',()=>this.setState({module:'sesion',screen:'harvest',capture:false,hContainer:c.id}));
       else if(d>=7) add(c.id,'Sin registro reciente','Último evento hace '+d+' d','baja',()=>this.setState({module:'sesion',screen:'observe',capture:false,oContainers:[c.id]}));
     });
@@ -3454,7 +3463,7 @@ class Component extends DCLogic {
       add(c.id,'Asignar causa raíz','Contaminación sin causa registrada','alta',()=>this.setState({module:'sesion',screen:'quick',quickType:'contaminacion',capture:false,qContainers:[c.id]})));
     Object.values(s.chamberAlerts||{}).forEach(t=>{
       const escalated = (Date.now()-t.since) > 2*3600000;
-      add(t.camName,(escalated?'\u26a0\ufe0f Escalada \u00b7 ':'')+t.action+' '+t.camName,'Desvío de clima'+(escalated?' \u00b7 sin resolver +2h':''),'alta',()=>this.setState({module:'camaras',camarasTab:'clima',capture:false}));
+      add(t.camName,(escalated?'\u26a0\ufe0f Escalada \u00b7 ':'')+t.action+' '+t.camName,'Desvío de clima'+(escalated?' \u00b7 sin resolver +2h':''),'alta',()=>this.goSimTab('clima'));
     });
     const P={alta:0,media:1,baja:2};
     return out.sort((a,b)=>P[a.prio]-P[b.prio]).map(t=>({ ...t,
@@ -3563,8 +3572,8 @@ class Component extends DCLogic {
       out.push({ k:'Especie', label:sp.name, sub:sp.sci+' · formular', go:()=>{ this.setState({cmdOpen:false}); this.openSimForSpecies(sp.key); } }); });
     this.state.salidas.forEach(x=>{ if((x.lote+' '+destLabel(x.dest)).toLowerCase().includes(t))
       out.push({ k:'Lote', label:x.lote, sub:destLabel(x.dest)+' · '+(x.pesoG/1000).toFixed(2)+' kg', go:()=>this.setState({module:'calidad',cmdOpen:false}) }); });
-    [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','camaras'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
-      if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label, sub:'Ir al módulo', go:()=>this.setState({module:m,cmdOpen:false}) });
+    [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','clima'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
+      if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label:m==='clima'?'Cámaras & IoT':label, sub:'Ir al módulo', go:()=>m==='clima'?this.goSimTab('clima'):this.setState({module:m,cmdOpen:false}) });
     });
     return out.slice(0,12);
   }
@@ -3687,7 +3696,8 @@ class Component extends DCLogic {
         if(!containerId) return;
         if(evType==='clima'){
           const cam=CAMARAS.find(c=>c.name===containerId||c.id===containerId);
-          this.setState({module:'camaras',capture:false,camDetail:cam?cam.id:null});
+          if(cam) this.setState({module:'camaras',capture:false,camDetail:cam.id});
+          else this.goSimTab('clima');
           return;
         }
         this.setState({module:'sesion', screen:'history', detail:containerId, capture:false});
