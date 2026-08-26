@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 49ae5871bba285418d96303777edf636ee83a3f0be543afffa9829f2f838097d
+// source-hash: 044778551bbeb07bdd7bbc1cf2a9a3257807960d505b155cb892d549975e8ac5
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -2186,6 +2186,30 @@ function App(props) {
   const [invTargetCN, setInvTargetCN] = useState(35);
   const [invResult, setInvResult] = useState(null);
   const [dashFilter, setDashFilter] = useState("all");
+  const schTab = "schedule";
+  const flush1 = 0.6;
+  const flush2 = 0.3;
+  const flush3 = 0.1;
+  function calculateLotFlushProjection(lot) {
+    const totalKg = lot.bags * lot.kgPerBag * (lot.eb / 100);
+    return {
+      totalKg,
+      flush1: { pct: 0.6, kg: totalKg * 0.6 },
+      flush2: { pct: 0.3, kg: totalKg * 0.3 },
+      flush3: { pct: 0.1, kg: totalKg * 0.1 }
+    };
+  }
+  const b2bCommitments = [];
+  function matchWeeklyCoverage(projection, commitments) {
+    return { superavit: 0, deficit: 0, cobertura: 0 };
+  }
+  const superavit = "🟢";
+  const deficit = "🔴";
+  const cobertura = "🟡";
+  function sowingRecommendation(deficitKg) {
+    const bagsNeeded = Math.ceil(deficitKg / 1.5);
+    return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
+  }
   const [lockedIds, setLockedIds] = useState(() => initialFormDraft?.lockedIds || []);
   const [balanceMode, setBalanceMode] = useState("proportional");
   const [pantryIds, setPantryIds] = useState([]);
