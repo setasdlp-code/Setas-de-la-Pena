@@ -106,6 +106,26 @@ Setas OS formaliza el paso de una receta de prueba a SOP canónico:
 4. Generación del código unívoco de lote (FOS-01): `LP-XXXX-AA` (ej. `LP-0418-26`).
 5. Impresión de la etiqueta térmica aislada o Ficha de Campo FOS-02 con código QR.
 
+#### Etiquetas Térmicas de Trazabilidad (FOS-03) e Integración al Proceso
+Para garantizar que la información digital en Setas OS coincida exactamente con la realidad física en las salas de cultivo, se utiliza un sistema de **identificación física dual** basado en impresión térmica directa sobre soportes de polipropileno (PP) resistentes a humedad relativa $>85\%$ y condensación:
+
+1. **Etiqueta de Bloque (FOS-03 - 40×30 mm o 60×40 mm):**
+   - **Hardware Utilizado:** Impresora térmica portátil (ej. *Phomemo M110* o *Brother QL* series) conectada por Bluetooth a la PWA móvil del operario.
+   - **Momento de Impresión:** En el **Día 0 (Inoculación)**, al presionar "Preparar Lote" en Setas OS, el sistema genera el código de lote irreversible y permite la impresión inalámbrica inmediata de las etiquetas necesarias (una por cada bolsa/bloque inoculado).
+   - **Información del Bloque:** Cada bloque recibe su etiqueta individual con: el código unívoco (`LP-XXXX-AA`), especie (*ej. Pleurotus ostreatus*), lote de sustrato (`SP-XXX-AA`), fecha de inoculación, operario a cargo y coordenada de estantería. Esto previene mezclas accidentales de variedades en el túnel de incubación.
+
+2. **Ficha de Cabecera de Estantería con QR (FOS-02):**
+   - Se imprime en formato extendido y se cuelga en el soporte frontal de cada nivel del estante en la carpa (ej: *CLOUDLAB 844*).
+   - Contiene un código **QR-First** que vincula la estantería física con la base de datos de Firestore.
+
+3. **Ciclo de Trazabilidad en Campo (Escaneo QR):**
+   - **Inspección diaria:** El operario escanea el QR con la cámara de su smartphone. Setas OS reconoce el lote al instante y abre la Bitácora de ese lote específico.
+   - **Control de estado:** Solo se muestran las acciones válidas para el estado del lote en ese momento (ej: registrar contaminación, transicionar a `induction`, o registrar cosecha), eliminando errores de entrada de datos.
+   - **Métricas automatizadas:** Al pesarse las cosechas, los datos ingresados se asocian directamente al lote escaneado, retroalimentando el *Production Learning Loop v1*.
+
+4. **Empaque y Despacho Comercial (FOS-PKG-001):**
+   - En la cosecha, se generan etiquetas de empaque personalizadas para bandejas Kraft (80×120 mm) o fajas para cajas de madera Gourmet (180×60 mm). Estas etiquetas omiten códigos internos de desarrollo de software pero mantienen la trazabilidad del lote (`LP-XXXX-AA`) y la fecha de cosecha de precisión, visible en el restaurante o punto de venta final.
+
 ---
 
 ### 2.3 Espacio 3: Bitácora (Cuaderno de Campo, Telemetría y Cosechas)

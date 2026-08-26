@@ -18,6 +18,8 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -2248,7 +2250,7 @@ class Component extends DCLogic {
       const requested=new URLSearchParams(window.location.search).get('view');
       const viewAlias={camaras:'clima',iot:'clima',telemetria:'clima'};
       const initialTab=viewAlias[requested]||requested;
-      const allowedTabs=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
+      const allowedTabs=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
       if(allowedTabs.includes(initialTab)) this.setState({module:'sim',simTab:initialTab});
     }catch(e){}
     this._onKeyDown = (e)=>{
@@ -3049,7 +3051,7 @@ class Component extends DCLogic {
     const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
     const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
     const activeWorkspace = s.module==='sim'
-      ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':(PRODUCCION_SIM_TABS.includes(s.simTab)?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
+      ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':((PRODUCCION_SIM_TABS.includes(s.simTab)||['labExtraction','bioCheck'].includes(s.simTab))?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
       : (['plan','inventario'].includes(s.module)?'produccion':(s.module==='sesion'?'bitacora':(CONTROL_MODULES.includes(s.module)?'control':'control')));
     // Banco Climático: sigue simulando siempre (así las alertas de cámara llegan aunque el
     // usuario esté en Formular), pero solo necesita RENDERIZAR su DOM mientras el workspace
@@ -3207,7 +3209,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3653,8 +3655,8 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Tablero de Control' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control'};
+    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
+    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
       revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
