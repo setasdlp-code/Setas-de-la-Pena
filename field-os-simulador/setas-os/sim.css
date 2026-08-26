@@ -4664,3 +4664,67 @@
   padding: 12px 14px;
 }
 
+/* ── LIVE CAMERA QR SCANNER (FIELD ACTION SHEET) ─────────────────── */
+.sim-root .qr-scanner-viewport {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #000000;
+  border-radius: var(--radius-sm, 2px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+}
+
+.sim-root .qr-scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sim-root .qr-scanner-reticle {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border: 2px solid var(--accent-olive, #5B6B44);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.sim-root .qr-scanner-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--coral-500, #E06D53);
+  box-shadow: 0 0 8px var(--coral-500, #E06D53);
+  animation: qrLaserScan 2s infinite ease-in-out;
+}
+
+@keyframes qrLaserScan {
+  0%, 100% { top: 0%; opacity: 0.8; }
+  50% { top: 100%; opacity: 1; }
+}
+
+/* ── ESPHOME YAML CONFIG MODAL ───────────────────────────────────── */
+.sim-root .esp32-code-preview {
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.45;
+  background: var(--ink-0, #1A1410);
+  color: var(--paper-0, #F7F4EC);
+  padding: 14px 16px;
+  border-radius: var(--radius-sm, 2px);
+  max-height: 340px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid var(--border-hairline, #8C7F5B);
+}
+
+

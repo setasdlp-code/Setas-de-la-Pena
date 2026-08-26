@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 152bb14735c994b303bef9cd50dbfb6b4909f226b6144fc695775168ad1638ac
+// source-hash: a1acae15e7a21172373dd9e2f8d208edeec1be92e34465fb4213b33757ad94c6
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1622,6 +1622,70 @@ function App(props) {
   const [optProfile, setOptProfile] = useState("produccion");
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [qrSelectedLoteId, setQrSelectedLoteId] = useState("");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [showEsp32ConfigModal, setShowEsp32ConfigModal] = useState(false);
+  const videoRef = React.useRef(null);
+  const scannerIntervalRef = React.useRef(null);
+  const stopCameraScanner = () => {
+    setIsCameraActive(false);
+    if (scannerIntervalRef.current) {
+      clearInterval(scannerIntervalRef.current);
+      scannerIntervalRef.current = null;
+    }
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject;
+      stream.getTracks().forEach((t) => t.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+  const startCameraScanner = async () => {
+    setCameraError("");
+    setIsCameraActive(true);
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Cámara no disponible o no compatible en este navegador");
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      if ("BarcodeDetector" in window) {
+        const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"] });
+        scannerIntervalRef.current = setInterval(async () => {
+          if (!videoRef.current || videoRef.current.readyState < 2) return;
+          try {
+            const barcodes = await detector.detect(videoRef.current);
+            if (barcodes && barcodes.length > 0) {
+              const rawVal = barcodes[0].rawValue;
+              handleScannedValue(rawVal);
+            }
+          } catch (e) {
+          }
+        }, 300);
+      }
+    } catch (err) {
+      setCameraError(err.message || "No se pudo acceder al hardware de cámara");
+      setIsCameraActive(false);
+    }
+  };
+  const handleScannedValue = (raw) => {
+    if (!raw) return;
+    const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
+    const code = match ? match[1] : raw;
+    const foundLote = bitLotes.find((l) => l.codigo === code || l.id === code || raw.includes(l.codigo) || code && code.startsWith(l.codigo));
+    if (foundLote) {
+      setQrSelectedLoteId(foundLote.id);
+      stopCameraScanner();
+      try {
+        if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+      } catch (e) {
+      }
+    }
+  };
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [thermalLote, setThermalLote] = useState(null);
   const [thermalSize, setThermalSize] = useState("50x30");
@@ -3641,7 +3705,17 @@ BATCH (${numBags}×${kgBag} kg):
       },
       /* @__PURE__ */ React.createElement("span", null, "🌱"),
       /* @__PURE__ */ React.createElement("span", null, r.name)
-    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", null, "ESP32 conectado · ", currentMetrics.timestamp))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--moss-500)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", null, "ESP32 conectado · ", currentMetrics.timestamp))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setShowEsp32ConfigModal(true),
+        className: "inv-btn inv-btn-sec",
+        style: { minHeight: 34, padding: "4px 12px", fontSize: 11, display: "flex", alignItems: "center", gap: 6, borderColor: "var(--accent-olive, #5B6B44)", color: "var(--accent-olive, #5B6B44)", fontWeight: 700 },
+        title: "Generar y descargar firmware ESPHome YAML para este cuarto de cultivo"
+      },
+      "⚡ Exportar ESPHome YAML"
+    ), /* @__PURE__ */ React.createElement("div", { style: {
       padding: "6px 12px",
       borderRadius: "var(--radius-sm)",
       background: climateHealth.severity === "critical" ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
@@ -5068,11 +5142,44 @@ Click para ver análisis completo`
     return /* @__PURE__ */ React.createElement(
       AccessibleModal,
       {
-        onClose: () => setShowQrSheet(false),
+        onClose: () => {
+          stopCameraScanner();
+          setShowQrSheet(false);
+        },
         label: "Captura rápida de campo",
         dialogStyle: { width: "min(440px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)" } }, "📷 Captura Rápida · Registro en Sala"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => setShowQrSheet(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)" } }, "📷 Captura Rápida · Registro en Sala"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => {
+        stopCameraScanner();
+        setShowQrSheet(false);
+      } }, "✕")),
+      isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
+        "video",
+        {
+          ref: videoRef,
+          className: "qr-scanner-video",
+          autoPlay: true,
+          playsInline: true,
+          muted: true
+        }
+      ), /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-reticle" }, /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-laser" })), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: stopCameraScanner,
+          style: { position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", color: "#fff", border: "1px solid rgba(255,255,255,0.5)", borderRadius: 2, fontSize: 10, padding: "4px 8px", cursor: "pointer", fontFamily: "var(--font-mono)" }
+        },
+        "⏹ Detener Cámara"
+      )) : /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: startCameraScanner,
+          style: { minHeight: 42, width: "100%", cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--accent-olive,#5B6B44)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 }
+        },
+        "📷 Iniciar Escaneo con Cámara Móvil"
+      ),
+      cameraError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, "⚠️ ", cameraError),
       currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, "Estado: ", currentLote.estado, " · ", currentLote.numBolsas || 0, " bolsas"), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
         "select",
         {
@@ -5419,6 +5526,170 @@ Click para ver análisis completo`
         },
         "🖨 Imprimir Ficha de Cata"
       )))
+    );
+  })(), showEsp32ConfigModal && (() => {
+    const roomKey = selectedClimateRoom || "martha_01";
+    const room = ROOMS_CONFIG[roomKey] || ROOMS_CONFIG.martha_01;
+    const defaultTargets = roomKey === "martha_01" ? {
+      temperature_c: { min: 14, max: 20, target: 17 },
+      rh_pct: { min: 85, max: 95, target: 90 },
+      co2_ppm: { min: 400, max: 900, target: 600 }
+    } : {
+      temperature_c: { min: 16, max: 22, target: 18.5 },
+      rh_pct: { min: 80, max: 92, target: 86 },
+      co2_ppm: { min: 450, max: 1e3, target: 700 }
+    };
+    const isMartha = roomKey === "martha_01";
+    const yamlCode = `# ==============================================================================
+# Setas de la Peña — Tenjo, Cundinamarca (2.600 msnm)
+# Firmware ESPHome: ${room.name} (${room.device})
+# Generado automáticamente por Setas OS para control microclimático
+# ==============================================================================
+
+substitutions:
+  device_name: "${isMartha ? "setas-martha-01" : "setas-cloudlab-01"}"
+  friendly_name: "${room.name} (Tenjo)"
+  room_id: "${roomKey}"
+  adapter_host: "192.168.1.100" # IP del servidor Node.js de Setas OS
+  adapter_port: "8080"
+  target_temp_min: "${defaultTargets.temperature_c.min}"
+  target_temp_max: "${defaultTargets.temperature_c.max}"
+  target_rh_min: "${defaultTargets.rh_pct.min}"
+  target_rh_max: "${defaultTargets.rh_pct.max}"
+  target_co2_max: "${defaultTargets.co2_ppm.max}"
+
+esphome:
+  name: \${device_name}
+  friendly_name: \${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Setas-Fallback-AP"
+    password: !secret fallback_password
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  password: !secret ota_password
+
+# ── I2C Bus para Sensores Ambientales ─────────────────────────────────────────
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  id: bus_a
+
+# ── Sensores Físicos en Sala ──────────────────────────────────────────────────
+sensor:
+  # AC Infinity SHT3x / Sensirion SHT45 (Temperatura y Humedad)
+  - platform: sht3xd
+    i2c_id: bus_a
+    address: 0x44
+    temperature:
+      name: "Temperatura Sala"
+      id: room_temp
+      accuracy_decimals: 1
+    humidity:
+      name: "Humedad Relativa Sala"
+      id: room_humidity
+      accuracy_decimals: 1
+    update_interval: 15s
+
+  # Sensirion SCD30 (Dióxido de Carbono NDIR)
+  # Compensación barométrica fija para altitud de Tenjo (2.600 msnm)
+  - platform: scd30
+    i2c_id: bus_a
+    address: 0x61
+    co2:
+      name: "CO2 Sala"
+      id: room_co2
+      accuracy_decimals: 0
+    altitude_compensation: 2600m
+    automatic_self_calibration: false
+    update_interval: 30s
+
+# ── Relés de Potencia Hosyond (Actuadores de Sala) ────────────────────────────
+switch:
+  # Canal 1: Humidificador AC Infinity CloudForge T7 (Control HR)
+  - platform: gpio
+    pin: GPIO18
+    name: "Humidificador Sala"
+    id: relay_ch1_humidifier
+    restore_mode: ALWAYS_OFF
+
+  # Canal 2: Extractor FAE AC Infinity Cloudline H4 (Pulsos renovación)
+  - platform: gpio
+    pin: GPIO19
+    name: "Extractor FAE Sala"
+    id: relay_ch2_fae
+    restore_mode: ALWAYS_OFF
+
+http_request:
+  id: http_client
+  timeout: 5s
+
+# ── Enlace Periódico de Telemetría con Setas OS ──────────────────────────────
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - http_request.post:
+                url: !lambda |-
+                  return "http://" + std::string("\${adapter_host}") + ":" + std::string("\${adapter_port}") + "/api/telemetry";
+                headers:
+                  Content-Type: application/json
+                json:
+                  room_id: \${room_id}
+                  device_id: \${device_name}
+                  temperature: !lambda 'return id(room_temp).state;'
+                  humidity: !lambda 'return id(room_humidity).state;'
+                  co2: !lambda 'return id(room_co2).state;'
+                  source: "esp32_esphome"
+`;
+    const downloadYaml = () => {
+      const blob = new Blob([yamlCode], { type: "text/yaml;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${room.device ? room.device.replace(/[^a-zA-Z0-9_-]/g, "_") : "setas_node"}_esphome.yaml`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+    const copyYaml = () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(yamlCode);
+        setNoticeDlg({ msg: "Configuración ESPHome YAML copiada al portapapeles." });
+      }
+    };
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowEsp32ConfigModal(false),
+        label: `Configuración ESPHome YAML: ${room.name}`,
+        dialogStyle: { width: "min(720px, 95vw)", padding: "22px 20px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-hairline)", paddingBottom: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent-olive, #5B6B44)" } }, "Firmware de Microcontrolador · ESPHome / ESP32"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-0)", margin: "4px 0 2px 0" } }, room.name, " · ", room.device), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Compensación barométrica a 2.600 msnm (Tenjo) · SHT3x (0x44) + SCD30 (0x61)")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar modal de configuración ESP32", onClick: () => setShowEsp32ConfigModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { className: "esp32-code-preview", style: { marginBottom: 16 } }, yamlCode),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--ink-2)" } }, "Listo para flashear con ESPHome Dashboard o CLI"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowEsp32ConfigModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 40, padding: "6px 14px" } }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: copyYaml, className: "inv-btn inv-btn-sec", style: { minHeight: 40, padding: "6px 14px" } }, "📋 Copiar YAML"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: downloadYaml, className: "inv-btn inv-btn-pri", style: { minHeight: 40, padding: "6px 16px", background: "var(--accent-olive, #5B6B44)", borderColor: "var(--accent-olive, #5B6B44)" } }, "📥 Descargar .yaml")))
     );
   })(), showDiagModal && (() => {
     const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];

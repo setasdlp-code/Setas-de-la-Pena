@@ -173,5 +173,26 @@ test('home cockpit computes FIFO stock aggregations and displays critical substr
   assert.match(styles, /\.sim-root \.stock-critical-card/);
 });
 
+test('mobile field action sheet integrates live camera QR scanner with viewport and target reticle', () => {
+  assert.match(source, /isCameraActive/);
+  assert.match(source, /startCameraScanner/);
+  assert.match(source, /stopCameraScanner/);
+  assert.match(source, /Iniciar Escaneo con Cámara Móvil/);
+  assert.match(styles, /\.sim-root \.qr-scanner-viewport/);
+  assert.match(styles, /\.sim-root \.qr-scanner-video/);
+  assert.match(styles, /\.sim-root \.qr-scanner-reticle/);
+  assert.match(styles, /\.sim-root \.qr-scanner-laser/);
+});
+
+test('climate dashboard generates and exports customizable ESPHome firmware YAML for microcontrollers', () => {
+  assert.match(source, /showEsp32ConfigModal/);
+  assert.match(source, /⚡ Exportar ESPHome YAML/);
+  assert.match(source, /altitude_compensation: 2600m/);
+  assert.match(source, /relay_ch1_humidifier/);
+  assert.match(source, /relay_ch2_fae/);
+  assert.match(styles, /\.sim-root \.esp32-code-preview/);
+});
+
+
 
 
