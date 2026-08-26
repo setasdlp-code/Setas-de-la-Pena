@@ -29,10 +29,11 @@ function buildGate() {
     position: "fixed", inset: "0", zIndex: "var(--z-overlay, 1000)", display: "flex",
     alignItems: "center", justifyContent: "center",
     padding: "16px", background: "var(--paper-1, #efebe0)",
+    contain: "strict",
   });
 
   gate.innerHTML = `
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
         <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
         <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
