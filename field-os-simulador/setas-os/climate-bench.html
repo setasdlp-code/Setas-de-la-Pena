@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
   <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
+  <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/components.css">
   <style>
     :root {
       /* Map to Field OS design-system tokens so this panel stays in sync with the shell */
@@ -26,6 +28,7 @@
       --warn: var(--accent-terracotta);
       --critical: var(--accent-rust);
     }
+
 
     * { box-sizing: border-box; }
 
@@ -148,11 +151,13 @@
       background: var(--paper-1);
       text-align: left;
       cursor: pointer;
-      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      transition: transform var(--duration-fast, .18s) var(--ease-spring, ease), border-color var(--duration-fast, .18s) var(--ease-spring, ease), background var(--duration-fast, .18s) var(--ease-spring, ease);
     }
 
     .chamber:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--olive) 50%, transparent); }
+    .chamber:active { transform: scale(0.98); }
     .chamber.active { border-color: var(--olive); background: var(--accent-olive-dim); }
+
 
     .chamber-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
     .chamber-name { font-weight: 780; font-size: 13px; }
