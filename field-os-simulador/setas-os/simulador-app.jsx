@@ -1154,6 +1154,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
+      {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
@@ -2805,9 +2806,10 @@ const runHybridRecipeSearch=({
     ...Object.keys(stockMap || {}).filter(k => Number(stockMap[k]) > 0),
     ...(invLotes || []).filter(l => l?.activo !== false && Number(l?.cantidadKgDisponible) > 0).map(l => l.ingredienteId)
   ]);
-  const compatible = useStock
-    ? (ingredients || []).filter(g => stockIds.has(g.id))
-    : (ingredients || []).filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+  const compatible = (ingredients || []).filter(g =>
+    (!useStock || stockIds.has(g.id)) &&
+    (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
+  );
   const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
   const scoreAdapter=(analysis,ctx)=>{
     const treatment=calcTreatment(analysis,targetKey,SPP);

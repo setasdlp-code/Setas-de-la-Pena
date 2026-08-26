@@ -61,3 +61,52 @@ test('Formulador registra el adaptador nativo del Perito al montar', async ({ pa
   const adapterType = await page.evaluate(() => window.SetasFormulatorAPI?.adapterType?.());
   expect(adapterType).toBe('native');
 });
+
+test('browser: stock-only excludes incompatible ingredients and Formulador rejects a non-100% external proposal', async ({ page }) => {
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+
+  const result = await page.evaluate(async () => {
+    const catalog = [
+      { id: 'base', role: 'base_carbono', cs: ['target'], cost: 10 },
+      { id: 'supp', role: 'suplemento_n', cs: ['target'], cost: 20 },
+      { id: 'foreign', role: 'aireador', cs: ['other_species'], cost: 1 },
+    ];
+    const spp = { target: { supplementation_max: 20 } };
+    const scenarios = window.SetasPeritoScenarios.searchScenarios({
+      recipe: [{ id: 'base', p: 90 }, { id: 'supp', p: 10 }],
+      ingredients: catalog,
+      context: { sKey: 'target', spp },
+      targetKey: 'target',
+      spp,
+      analyze: recipe => ({
+        tot: recipe.reduce((sum, row) => sum + row.p, 0),
+        cafeP: 0,
+        foreign: recipe.some(row => row.id === 'foreign'),
+      }),
+      score: analysis => ({
+        score: analysis.foreign ? 99 : 60,
+        dimensions: { safety: { score: 90 }, agronomy: { score: analysis.foreign ? 99 : 60 }, economy: { score: 90 } },
+        uncertainty: { eb: { confidence: 'low' }, risk: { confidence: 'low' } },
+      }),
+      useStock: true,
+      stockIds: new Set(['base', 'supp', 'foreign']),
+      generations: 1,
+      roleCaps: { base_carbono: 100, suplemento_n: 20, aireador: 20 },
+    });
+    const before = window.SetasFormulatorAPI.getRecipe();
+    const invalidApply = await window.SetasFormulatorAPI.applyRecipe([{ id: 'base', p: 110 }], { force: true });
+    return {
+      foreignRanked: scenarios.ranked.some(candidate => candidate.recipe.some(row => row.id === 'foreign')),
+      foreignRecommended: scenarios.recommended.some(candidate => candidate.recipe.some(row => row.id === 'foreign')),
+      invalidApply,
+      before,
+      after: window.SetasFormulatorAPI.getRecipe(),
+    };
+  });
+
+  expect(result.foreignRanked).toBe(false);
+  expect(result.foreignRecommended).toBe(false);
+  expect(result.invalidApply.ok).toBe(false);
+  expect(result.after).toEqual(result.before);
+});

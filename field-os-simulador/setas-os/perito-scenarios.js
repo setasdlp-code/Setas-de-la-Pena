@@ -977,6 +977,7 @@
     recipe,
     analysis,
     ingredients,
+    targetKey = null,
     profile,
     maxCost,
     useStock,
@@ -990,8 +991,20 @@
     const failures = [];
     const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
     const map = recipeMap(recipe);
+    const ingredientById = new Map((ingredients || []).map(g => [g?.id, g]));
 
     if (useStock && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
+
+    // Compatibility is a hard feasibility rule. A stale recipe, stock-only
+    // caller, or future integration must not rank unknown or incompatible
+    // ingredients as viable merely because they were passed into the engine.
+    Object.keys(map).forEach(id => {
+      const ingredient = ingredientById.get(id);
+      if (!ingredient) failures.push(`ingredient_unknown:${id}`);
+      else if (targetKey && Array.isArray(ingredient.cs) && ingredient.cs.length && !ingredient.cs.includes(targetKey)) {
+        failures.push(`species_incompatible:${id}`);
+      }
+    });
 
     Object.entries(ingredientCaps || {}).forEach(([id, cap]) => {
       if (Number.isFinite(cap) && (map[id] || 0) > cap + 0.011) failures.push(`ingredient:${id}`);
@@ -1061,6 +1074,7 @@
       recipe: normalized,
       analysis,
       ingredients,
+      targetKey: context.sKey || null,
       profile,
       maxCost,
       useStock,
