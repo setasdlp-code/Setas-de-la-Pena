@@ -109,13 +109,15 @@ test('perito bridge renders structured co-formulation cards with DS tokens and 4
   assert.match(styles, /\.sim-root \.coform-card/);
 });
 
-test('thermal label generator supports 50x30mm and 60x40mm formats with print pagination', () => {
+test('thermal label generator supports 40x30mm, 50x30mm and 60x40mm formats with print pagination', () => {
   assert.match(source, /showThermalModal/);
+  assert.match(source, /40 × 30 mm/);
   assert.match(source, /50 × 30 mm/);
   assert.match(source, /60 × 40 mm/);
   assert.match(source, /generateQrSvgDataUrl/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Generador de etiquetas térmicas"/);
   assert.match(styles, /\.sim-root \.thermal-preview-container/);
+  assert.match(styles, /\.sim-root \.thermal-card-40x30/);
   assert.match(styles, /\.sim-root \.thermal-card-50x30/);
   assert.match(styles, /\.sim-root \.thermal-card-60x40/);
   assert.match(styles, /\.thermal-card-print/);
@@ -149,5 +151,27 @@ test('disabled button states enforce --btn-disabled-opacity and prevent hover/ac
   assert.match(styles, /\.sim-root \.sbtn:disabled/);
   assert.match(styles, /opacity:\s*var\(--btn-disabled-opacity,\s*0\.4\);/);
 });
+
+test('restaurant tasting dossier modal provides organoleptic notes and chef pairings across Catalog and Recetario', () => {
+  assert.match(source, /SPECIES_GASTRONOMY/);
+  assert.match(source, /showTastingModal/);
+  assert.match(source, /tastingSpeciesKey/);
+  assert.match(source, /Notas de Cata & Organolépticas/);
+  assert.match(source, /Técnicas Sugeridas por el Chef/);
+  assert.match(source, /Armonía & Maridajes Recomendados/);
+  assert.match(source, /🍷 Ficha de Cata/);
+  assert.match(styles, /\.sim-root \.tasting-dossier-sheet/);
+  assert.match(styles, /\.sim-root \.tasting-radar-bar/);
+  assert.match(styles, /\.sim-root \.pairing-tag/);
+});
+
+test('home cockpit computes FIFO stock aggregations and displays critical substrate alerts with direct purchase CTA', () => {
+  assert.match(source, /criticalStockItems/);
+  assert.match(source, /lowStockThresholds/);
+  assert.match(source, /Alerta de Stock Crítico/);
+  assert.match(source, /Registrar Compra \+/);
+  assert.match(styles, /\.sim-root \.stock-critical-card/);
+});
+
 
 

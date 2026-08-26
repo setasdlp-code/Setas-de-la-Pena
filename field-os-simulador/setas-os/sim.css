@@ -3729,6 +3729,12 @@
   margin: 0 auto;
 }
 
+.sim-root .thermal-card-40x30 {
+  width: 40mm;
+  min-height: 30mm;
+  padding: 1.8mm 2mm;
+}
+
 .sim-root .thermal-card-50x30 {
   width: 50mm;
   min-height: 30mm;
@@ -3740,6 +3746,7 @@
   min-height: 40mm;
   padding: 2.5mm 3mm;
 }
+
 
 .sim-root .thermal-card-gourmet-wood {
   width: 100%;
@@ -3771,6 +3778,11 @@
 .sim-root .thermal-qr-img {
   flex-shrink: 0;
   image-rendering: pixelated;
+}
+
+.sim-root .thermal-card-40x30 .thermal-qr-img {
+  width: 18mm;
+  height: 18mm;
 }
 
 .sim-root .thermal-card-50x30 .thermal-qr-img {
@@ -3813,6 +3825,10 @@
   color: var(--ink-900);
 }
 
+.sim-root .thermal-card-40x30 .thermal-code {
+  font-size: 8.5px;
+}
+
 .sim-root .thermal-card-50x30 .thermal-code {
   font-size: 10px;
 }
@@ -3832,6 +3848,10 @@
   margin-top: 1px;
 }
 
+.sim-root .thermal-card-40x30 .thermal-species {
+  font-size: 7.5px;
+}
+
 .sim-root .thermal-card-50x30 .thermal-species {
   font-size: 8px;
 }
@@ -3849,6 +3869,10 @@
   font-family: var(--font-mono, monospace);
   color: #333333;
   margin-top: 2px;
+}
+
+.sim-root .thermal-card-40x30 .thermal-meta {
+  font-size: 6.5px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-meta {
@@ -3873,19 +3897,27 @@
   margin-top: 2px;
 }
 
+.sim-root .thermal-print-roll,
+.thermal-print-roll {
+  display: none;
+}
+
 @media print {
   .thermal-print-roll, .thermal-print-roll * {
     visibility: visible !important;
   }
   .thermal-print-roll {
+    display: block !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    background: var(--paper-0) !important;
+    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    z-index: 9999999 !important;
   }
+
   .thermal-card-print {
     display: flex !important;
     align-items: center !important;
@@ -3898,12 +3930,19 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  .thermal-card-print.thermal-card-40x30 {
+    width: 40mm !important;
+    height: 30mm !important;
+    padding: 1.8mm 2mm !important;
+    page-break-inside: avoid !important;
+  }
   .thermal-card-print.thermal-card-50x30 {
     width: 50mm !important;
     height: 30mm !important;
     padding: 2mm 2.5mm !important;
     page-break-inside: avoid !important;
   }
+
   .thermal-card-print.thermal-card-60x40 {
     width: 60mm !important;
     height: 40mm !important;
@@ -4591,8 +4630,74 @@
   text-transform: uppercase;
 }
 
+/* ── TASTING DOSSIER & RESTAURANT PAIRING (FOS-11 / FOS-16) ──────── */
+.sim-root .tasting-dossier-sheet {
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  padding: 24px 20px;
+  color: var(--ink-0, #1A1410);
+  box-shadow: 0 4px 20px rgba(26,20,16,0.06);
+}
 
+.sim-root .tasting-dossier-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--accent-olive, #5B6B44);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
 
+.sim-root .tasting-dossier-title {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-0, #1A1410);
+  margin: 0 0 4px 0;
+}
 
+.sim-root .tasting-dossier-subtitle {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--ink-2, #6E6246);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
 
+.sim-root .tasting-radar-bar {
+  height: 6px;
+  background: var(--paper-200, #E0D9C8);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.sim-root .tasting-radar-fill {
+  height: 100%;
+  background: var(--accent-olive, #5B6B44);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.sim-root .pairing-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  background: var(--paper-100, #ECE7DB);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--ink-0, #1A1410);
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+
+.sim-root .stock-critical-card {
+  background: color-mix(in oklab, var(--coral-500) 8%, var(--paper-0));
+  border: 1px solid var(--coral-500);
+  border-left: 4px solid var(--coral-700);
+  border-radius: var(--radius-sm, 2px);
+  padding: 12px 14px;
+}
 
