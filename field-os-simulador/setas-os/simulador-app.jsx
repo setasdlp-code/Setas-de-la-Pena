@@ -1,6 +1,9 @@
 
 
 
+import BioCheck from './bio-check.jsx';
+import LabExtraction from './lab-extraction.jsx';
+
 const {useState,useMemo,useEffect,useRef}=React;
 
 const IMG={
@@ -3006,18 +3009,19 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Clima & IoT',bitacora:'Bitácora'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Clima & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Clima & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>}
+    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Control Ambiental & Telemetría IoT',bitacora:'Bitácora de pruebas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Control Ambiental & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular','dashboard'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora'];
+  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
   const TAB_ALIASES={optimizar:'formular'};
   const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
   const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
@@ -3048,17 +3052,17 @@ function App(props){
 // Flush Forecast & B2B Sales Forecast Helpers (placeholder implementation)
 // --------------------------------------------------------------------------
 // Identifier used by UI to reference the schedule tab.
-export const schTab = 'schedule';
+const schTab = 'schedule';
 
 // Placeholder flush percentages (mock values for tests)
-export const flush1 = 0.6;
-export const flush2 = 0.3;
-export const flush3 = 0.1;
+const flush1 = 0.6;
+const flush2 = 0.3;
+const flush3 = 0.1;
 
 // Simple lot‑level flush projection (mock implementation)
-export function calculateLotFlushProjection(lot) {
+function calculateLotFlushProjection(lot) {
   // lot: { bags, kgPerBag, eb }
-  const totalKg = lot.bags * lot.kgPerBag * (lot.eb / 100);
+  const totalKg = (lot.bags || 0) * (lot.kgPerBag || 1.5) * ((lot.eb || 90) / 100);
   return {
     totalKg,
     flush1: { pct: 0.6, kg: totalKg * 0.6 },
@@ -3068,20 +3072,20 @@ export function calculateLotFlushProjection(lot) {
 }
 
 // B2B commitments placeholder (array of weekly promises)
-export const b2bCommitments = [];
+const b2bCommitments = [];
 
 // Match weekly harvest projection against B2B commitments (mock stub)
-export function matchWeeklyCoverage(projection, commitments) {
+function matchWeeklyCoverage(projection, commitments) {
   return { superavit: 0, deficit: 0, cobertura: 0 };
 }
 
 // Badges for UI coverage status
-export const superavit = '🟢';
-export const deficit = '🔴';
-export const cobertura = '🟡';
+const superavit = '🟢';
+const deficit = '🔴';
+const cobertura = '🟡';
 
 // Recommendation when deficit detected
-export function sowingRecommendation(deficitKg) {
+function sowingRecommendation(deficitKg) {
   const bagsNeeded = Math.ceil(deficitKg / 1.5);
   return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
 }
@@ -9179,6 +9183,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='clima'&&ClimateDashboardSection()}
 
         {tab==='bitacora'&&BitacoraSection()}
+
+        {tab==='bioCheck'&&<BioCheck/>}
+
+        {tab==='labExtraction'&&<LabExtraction/>}
 
         {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
         {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
