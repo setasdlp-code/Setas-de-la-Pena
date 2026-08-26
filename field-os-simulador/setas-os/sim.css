@@ -74,26 +74,26 @@
   --tracking-tight: -.02em;   /* large display numerals/headings */
 
   /* ── SPACING SCALE — replaces 41 ad-hoc px values ── */
-  --space-1: 2px;
-  --space-2: 3px;
-  --space-3: 4px;
-  --space-4: 6px;
-  --space-5: 8px;
-  --space-6: 10px;
-  --space-7: 12px;
-  --space-8: 14px;
-  --space-9: 16px;
-  --space-10: 20px;
-  --space-12: 24px;
-  --space-14: 28px;
-  --space-16: 32px;
-  --space-20: 40px;
+  --sp-1: 2px;
+  --sp-2: 3px;
+  --sp-3: 4px;
+  --sp-4: 6px;
+  --sp-5: 8px;
+  --sp-6: 10px;
+  --sp-7: 12px;
+  --sp-8: 14px;
+  --sp-9: 16px;
+  --sp-10: 20px;
+  --sp-12: 24px;
+  --sp-14: 28px;
+  --sp-16: 32px;
+  --sp-20: 40px;
 
   /* ── BUTTON STATE SCALE ── */
   --btn-bg: var(--paper-0);
   --btn-border: var(--ink-900);
   --btn-text: var(--ink-900);
-  --btn-hover-bg: var(--paper-50);
+  --btn-hover-bg: var(--paper-200);
   --btn-hover-shadow: 0 2px 4px rgba(11, 11, 11, 0.08);
   --btn-active-transform: translateY(-1px);
   --btn-disabled-opacity: 0.4;
@@ -199,10 +199,10 @@
      Use --space-fluid-* instead of --space-* in components that need to
      compress on smaller viewports (forms, modals, dense grids). Defaults
      to desktop values; ≤900px and ≤480px overrides below in section 35. ── */
-  --space-fluid-tight: var(--space-5);   /* 8px desktop → 6px tablet → 5px mobile */
-  --space-fluid-base: var(--space-7);    /* 12px desktop → 10px tablet → 8px mobile */
-  --space-fluid-loose: var(--space-9);   /* 16px desktop → 12px tablet → 10px mobile */
-  --space-fluid-section: var(--space-12); /* 24px desktop → 18px tablet → 14px mobile */
+  --space-fluid-tight: var(--sp-5);   /* 8px desktop → 6px tablet → 5px mobile */
+  --space-fluid-base: var(--sp-7);    /* 12px desktop → 10px tablet → 8px mobile */
+  --space-fluid-loose: var(--sp-9);   /* 16px desktop → 12px tablet → 10px mobile */
+  --space-fluid-section: var(--sp-12); /* 24px desktop → 18px tablet → 14px mobile */
 
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
@@ -631,24 +631,30 @@
 
 /* ── ACTIONS ────────────────────────────────────────────────────── */
 .sim-root .act-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
-.sim-root .btn{ 
-  flex:1; min-width:120px; padding:12px 18px; 
-  font-family:var(--font-body); font-weight:800; font-size:9.5px; 
-  letter-spacing:.14em; text-transform:uppercase; 
-  border:1px solid var(--ink-900); border-radius:0; background:var(--paper-50); 
-  cursor:pointer; color:var(--ink-900); transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
+.sim-root .btn{
+  flex:1; min-width:120px; padding:12px 18px;
+  font-family:var(--font-body); font-weight:800; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase;
+  border:1px solid var(--btn-border); border-radius:0; background:var(--btn-bg);
+  cursor:pointer; color:var(--btn-text); transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .btn:hover{
-  background:var(--paper-200);
-  transform:translateY(-1px);
+  background:var(--btn-hover-bg);
+  box-shadow:var(--btn-hover-shadow);
+  transform:var(--btn-active-transform);
 }
 .sim-root .btn:active{ transform:translateY(0px); box-shadow:none; }
-.sim-root .btn.pri{ 
-  background:var(--moss-700); color:var(--paper-50); border-color:var(--moss-700);
+.sim-root .btn:disabled{
+  opacity:var(--btn-disabled-opacity);
+  cursor:not-allowed;
+  pointer-events:none;
 }
-.sim-root .btn.pri:hover{ background:var(--moss-900); border-color:var(--moss-900); color:var(--paper-50); }
-.sim-root .btn.dark{ background:var(--ink-900); color:var(--paper-50); border-color:var(--ink-900); }
-.sim-root .btn.dark:hover{ background:var(--ink-700); border-color:var(--ink-700); }
+.sim-root .btn.pri{
+  background:var(--btn-pri-bg); color:var(--btn-pri-text); border-color:var(--btn-pri-border);
+}
+.sim-root .btn.pri:hover{ background:var(--btn-pri-hover-bg); border-color:var(--btn-pri-hover-bg); color:var(--btn-pri-text); }
+.sim-root .btn.dark{ background:var(--btn-dark-bg); color:var(--btn-dark-text); border-color:var(--btn-dark-border); }
+.sim-root .btn.dark:hover{ background:var(--btn-dark-hover-bg); border-color:var(--btn-dark-hover-bg); }
 
 /* ── SAVE BAR ───────────────────────────────────────────────────── */
 .sim-root .sbar{ display:flex; gap:8px; margin-top:12px; }
@@ -825,7 +831,7 @@
 
 /* ── C:N GAUGE (field measurement) ──────────────────────────────── */
 .sim-root .gauge-wrap{ margin:0 0 24px; }
-.sim-root .gauge-hdr{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--space-7); }
+.sim-root .gauge-hdr{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--sp-7); }
 .sim-root .gauge-cur{ font-family:var(--font-display); font-size:26px; color:var(--ink-1); font-weight:400; }
 .sim-root .gauge-tgt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-700); font-weight:600; }
 .sim-root .gauge-tr{ height:6px; background:var(--line-1); border-radius:0; position:relative; }
@@ -869,8 +875,8 @@
 .sim-root .tcard.autoclave{ border-top-color:var(--coral-500); }
 .sim-root .tcard.thermal{ border-top-color:var(--ochre-500); }
 .sim-root .tcard.cwlp{ border-top-color:var(--moss-500); }
-.sim-root .tttl{ font-family:var(--font-display); font-size:24px; margin-bottom:var(--space-7); color:var(--ink-1); font-weight:400; }
-.sim-root .tparams{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:var(--space-7); }
+.sim-root .tttl{ font-family:var(--font-display); font-size:24px; margin-bottom:var(--sp-7); color:var(--ink-1); font-weight:400; }
+.sim-root .tparams{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:var(--sp-7); }
 .sim-root .tp{ 
   font-family:var(--font-mono); font-size:12px; padding:4px 12px; 
   border:1px solid var(--line-1); border-radius:0; color:var(--ink-2);
@@ -929,20 +935,26 @@
 .sim-root .tle-d{ font-size:13px; color:var(--ink-500); margin-top:3px; font-style:italic; }
 
 /* ── TOGGLE BUTTONS (field notebook controls) ────────────────────── */
-.sim-root .tog{ 
-  font-family:var(--font-body); font-weight:800; font-size:9.5px; 
-  letter-spacing:.14em; text-transform:uppercase; 
-  padding:10px 16px; border:1px solid var(--ink-900); 
-  border-radius:0; background:var(--paper-50); 
-  color:var(--ink-900); cursor:pointer; 
+.sim-root .tog{
+  font-family:var(--font-body); font-weight:800; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase;
+  padding:10px 16px; border:1px solid var(--btn-border);
+  border-radius:0; background:var(--btn-bg);
+  color:var(--btn-text); cursor:pointer;
   transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
-.sim-root .tog:hover{ 
-  background:var(--paper-200);
+.sim-root .tog:hover{
+  background:var(--btn-hover-bg);
+  box-shadow:var(--btn-hover-shadow);
 }
-.sim-root .tog.on{ 
-  background:var(--ink-900); color:var(--paper-50);
-  border-color:var(--ink-900);
+.sim-root .tog.on{
+  background:var(--btn-dark-bg); color:var(--btn-dark-text);
+  border-color:var(--btn-dark-border);
+}
+.sim-root .tog:disabled{
+  opacity:var(--btn-disabled-opacity);
+  cursor:not-allowed;
+  pointer-events:none;
 }
 
 .sim-root .lnote{ 
@@ -1165,7 +1177,7 @@
   .sim-root .mlbl{ font-size:10px; }
   
   /* ── Batch ── */
-  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:var(--space-7); }
+  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:var(--sp-7); }
   .sim-root .bf{ padding:0 0 10px 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); }
   .sim-root .bf label{ font-size:7px; }
   .sim-root .bf input{ font-size:13px; }
@@ -1195,7 +1207,7 @@
   .sim-root .presets{ gap:3px; margin-bottom:10px; }
   
   /* ── Treatment cards ── */
-  .sim-root .tcard{ padding:12px 12px; margin-bottom:var(--space-7); }
+  .sim-root .tcard{ padding:12px 12px; margin-bottom:var(--sp-7); }
   .sim-root .tttl{ font-size:17px; margin-bottom:8px; }
   .sim-root .tparams{ gap:4px; margin-bottom:8px; }
   .sim-root .tp{ font-size:9px; padding:3px 8px; }
@@ -1250,7 +1262,7 @@
   
   
   /* ── Species cards ── */
-  .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:var(--space-7); }
+  .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:var(--sp-7); }
   
   .sim-root .p-family{ font-size:7px; letter-spacing:.08em; }
   
@@ -1341,7 +1353,7 @@
   .sim-root .tproc{ margin-top:8px; padding-top:8px; font-size:11px; }
   
   /* ── Diagnosis ── */
-  .sim-root .dbox{ padding:8px 0; margin-bottom:var(--space-7); }
+  .sim-root .dbox{ padding:8px 0; margin-bottom:var(--sp-7); }
   .sim-root .dttl{ font-size:8px; margin-bottom:6px; }
   .sim-root .dtxt{ font-size:13px; line-height:1.5; }
   .sim-root .sug{ font-size:10px; padding:6px 0; gap:8px; }
@@ -1762,7 +1774,7 @@
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
-.sim-root .inv-row{display:grid;gap:12px;margin-bottom:var(--space-7);}
+.sim-root .inv-row{display:grid;gap:12px;margin-bottom:var(--sp-7);}
 .sim-root .inv-row-2{grid-template-columns:1fr 1fr;}
 
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
@@ -1780,16 +1792,16 @@
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 14px;background:var(--paper-200);color:inherit;border:0;font:inherit;text-align:left;cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
-.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--space-20);overscroll-behavior:contain;}
+.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--sp-20);overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
-.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--space-16) var(--space-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
+.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--sp-16) var(--sp-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
 .sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn var(--duration-entrance) var(--ease);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:var(--text-on-dark);border-color:var(--coral-500);}
-.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--space-10);width:440px;max-width:calc(100vw - 32px);}
-.sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--space-10);padding-bottom:var(--space-7);border-bottom:1px solid var(--border-soft);}
+.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--sp-10);width:440px;max-width:calc(100vw - 32px);}
+.sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--sp-10);padding-bottom:var(--sp-7);border-bottom:1px solid var(--border-soft);}
 .sim-root .prov-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
 .sim-root .prov-row:last-child{border-bottom:none;}
 .sim-root .prov-tipo-chip{font-family:var(--font-mono);font-size:12px;padding:3px 8px;border-radius:20px;background:var(--paper-200);color:var(--ink-700);flex-shrink:0;font-weight:600;}
@@ -2071,7 +2083,7 @@
   .sim-root .prod-batch-grid{ grid-template-columns:1fr 1fr!important; }
 
   /* 23. Modal: full ancho + alto seguro con scroll interno (aplica a todos los modales, no solo los que traen override inline) */
-  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:var(--space-9)!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
+  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:var(--sp-9)!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
   .sim-root .inv-modal-bg{ padding-top:50px; }
 
   /* 24. Botones de acción: ancho completo */
@@ -2823,7 +2835,7 @@
 /* Flujo guiado del Formulador. Mantiene las cuatro decisiones principales
    visibles sin convertirlas en un asistente que esconda información técnica. */
 .sim-root .form-flow{
-  margin-bottom:var(--space-7);
+  margin-bottom:var(--sp-7);
   border:1px solid var(--border-strong);
   border-top:3px solid var(--accent-olive);
   border-radius:var(--radius-sm);
@@ -2889,7 +2901,7 @@
   color:var(--paper-0);
   box-shadow:0 5px 18px rgba(18,22,17,.14);
 }
-.sim-root .form-species-identity{display:flex;align-items:center;gap:var(--space-6);min-width:0}
+.sim-root .form-species-identity{display:flex;align-items:center;gap:var(--sp-6);min-width:0}
 .sim-root .form-species-kicker,
 .sim-root .form-species-picker > span{
   display:block;
@@ -2901,7 +2913,7 @@
 .sim-root .form-species-identity > div{display:flex;flex-direction:column;min-width:0}
 .sim-root .form-species-identity strong{overflow:hidden;color:var(--paper-0);font:800 var(--text-base)/1.15 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-identity em{overflow:hidden;color:rgba(255,255,255,.68);font:italic var(--text-xs)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
-.sim-root .form-species-picker{display:grid;gap:var(--space-3);min-width:0}
+.sim-root .form-species-picker{display:grid;gap:var(--sp-3);min-width:0}
 .sim-root .form-species-picker select{
   width:100%;
   min-height:38px;
@@ -2940,7 +2952,7 @@
 .sim-root .live-dash-pill{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-800);font:700 var(--text-xs)/1 var(--font-mono)}
 .sim-root .live-dash-pill-label{color:var(--ink-500);font-size:var(--text-2xs)}
 .sim-root .live-dash-actions{display:flex;align-items:center;gap:5px}
-.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-3);min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer}
+.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-3);min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer}
 .sim-root .live-dash-secondary-nav,
 .sim-root .live-dash-limiter{display:none!important}
 .sim-root .live-dash-tray{padding:7px 10px;background:var(--paper-50);max-height:min(60vh,520px);overflow-y:auto}
@@ -3107,7 +3119,7 @@
 }
 .sim-root .form-step-options,
 .sim-root .form-step-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.sim-root .form-step-species-state{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-4);min-height:44px;padding:5px 5px 5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0)}
+.sim-root .form-step-species-state{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--sp-4);min-height:44px;padding:5px 5px 5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0)}
 .sim-root .form-step-species-state strong{overflow:hidden;color:var(--ink-900);font:700 var(--text-xs)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-step-species-state button{min-height:32px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-700);font:700 var(--text-2xs)/1 var(--font-mono);cursor:pointer}
 .sim-root .form-step-species-state button:hover{border-color:var(--accent-olive);color:var(--accent-olive)}
@@ -3258,7 +3270,7 @@
   user-select:none;
 }
 .sim-root .builder-wrap .role-group-box.is-collapsed > .role-group-hdr{border-bottom-color:transparent}
-.sim-root .role-group-heading{display:flex;align-items:center;gap:var(--space-6);min-width:0}
+.sim-root .role-group-heading{display:flex;align-items:center;gap:var(--sp-6);min-width:0}
 .sim-root .role-group-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border:1px solid var(--border-soft);color:var(--accent-olive)}
 .sim-root .role-group-title{color:var(--ink-900);font:800 var(--text-xs)/1.2 var(--font-body);letter-spacing:var(--tracking-button);text-transform:uppercase}
 .sim-root .role-group-title span{color:var(--ink-600);font:600 var(--text-2xs)/1 var(--font-mono)}
@@ -4392,10 +4404,10 @@
    automatically compresses here — no per-component media query needed.
 
    Desktop values (from :root):
-     --space-fluid-tight:   var(--space-5)  = 8px
-     --space-fluid-base:    var(--space-7)  = 12px
-     --space-fluid-loose:   var(--space-9)  = 16px
-     --space-fluid-section: var(--space-12) = 24px
+     --space-fluid-tight:   var(--sp-5)  = 8px
+     --space-fluid-base:    var(--sp-7)  = 12px
+     --space-fluid-loose:   var(--sp-9)  = 16px
+     --space-fluid-section: var(--sp-12) = 24px
 
    Use --space-fluid-* for: form field gaps, modal/panel padding,
    card grid gaps, section margins — anything that should visibly
@@ -4406,19 +4418,19 @@
 
 @media (max-width: 900px) {
   .sim-root {
-    --space-fluid-tight: var(--space-4);    /* 8px → 6px */
-    --space-fluid-base: var(--space-6);     /* 12px → 10px */
-    --space-fluid-loose: var(--space-7);    /* 16px → 12px */
-    --space-fluid-section: var(--space-9);  /* 24px → 16px (was --space-10/18px — snapped to scale) */
+    --space-fluid-tight: var(--sp-4);    /* 8px → 6px */
+    --space-fluid-base: var(--sp-6);     /* 12px → 10px */
+    --space-fluid-loose: var(--sp-7);    /* 16px → 12px */
+    --space-fluid-section: var(--sp-9);  /* 24px → 16px (was --sp-10/18px — snapped to scale) */
   }
 }
 
 @media (max-width: 480px) {
   .sim-root {
-    --space-fluid-tight: var(--space-3);    /* 8px → 4px */
-    --space-fluid-base: var(--space-5);     /* 12px → 8px */
-    --space-fluid-loose: var(--space-6);    /* 16px → 10px */
-    --space-fluid-section: var(--space-8);  /* 24px → 14px */
+    --space-fluid-tight: var(--sp-3);    /* 8px → 4px */
+    --space-fluid-base: var(--sp-5);     /* 12px → 8px */
+    --space-fluid-loose: var(--sp-6);    /* 16px → 10px */
+    --space-fluid-section: var(--sp-8);  /* 24px → 14px */
   }
 }
 

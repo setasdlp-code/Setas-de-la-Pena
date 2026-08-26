@@ -105,24 +105,26 @@ WCAG 2.1 AA contrast ratios were computed for all 8 category colors against whit
 
 Replaces 41 ad-hoc pixel values with a 14-step scale. Pick by **role**, not visual impression.
 
+**Naming note**: this scale is namespaced `--sp-*`, not `--space-*`. The global design system (loaded via `_ds/…/tokens/spacing.css`) already defines `--space-1` through `--space-9` on `:root` as a 4–96px baseline grid (`--space-1: 4px` … `--space-9: 96px`) — a completely different scale used by pre-existing components (`.os-today-v2`, `.os-batch-detail-v2`, etc). An earlier version of this scale reused the `--space-*` names scoped to `.sim-root`, which silently shadowed the global tokens for everything inside `.sim-root` and collapsed those pre-existing components' spacing (e.g. `--space-7` dropping from 48px to 12px). Renamed to `--sp-*` to eliminate the collision — **never reintroduce a `--space-N` definition inside `.sim-root`**, and if you need a value from the *global* 4–96px scale, reference `var(--space-N)` directly (it resolves correctly since nothing shadows it anymore).
+
 | Token | Value | Use |
 |-------|-------|-----|
-| `--space-1` | 2px | Hairline gaps, micro-spacing |
-| `--space-2` | 3px | Tight spacing on dense grids |
-| `--space-3` | 4px | Button/input padding, badge margins |
-| `--space-4` | 6px | Preset chip gaps, icon spacing |
-| `--space-5` | 8px | List item padding, section gaps, form field spacing |
-| `--space-6` | 10px | Card internal spacing, category buttons |
-| `--space-7` | 12px | Recipe row padding, panel margins |
-| `--space-8` | 14px | Medium component margins |
-| `--space-9` | 16px | Standard padding, section margins, grid gaps |
-| `--space-10` | 20px | Large component spacing, batch calculator |
-| `--space-12` | 24px | Dashboard card gaps, heading margins |
-| `--space-14` | 28px | Large section breaks |
-| `--space-16` | 32px | Major layout spacing |
-| `--space-20` | 40px | Hero section gaps |
+| `--sp-1` | 2px | Hairline gaps, micro-spacing |
+| `--sp-2` | 3px | Tight spacing on dense grids |
+| `--sp-3` | 4px | Button/input padding, badge margins |
+| `--sp-4` | 6px | Preset chip gaps, icon spacing |
+| `--sp-5` | 8px | List item padding, section gaps, form field spacing |
+| `--sp-6` | 10px | Card internal spacing, category buttons |
+| `--sp-7` | 12px | Recipe row padding, panel margins |
+| `--sp-8` | 14px | Medium component margins |
+| `--sp-9` | 16px | Standard padding, section margins, grid gaps |
+| `--sp-10` | 20px | Large component spacing, batch calculator |
+| `--sp-12` | 24px | Dashboard card gaps, heading margins |
+| `--sp-14` | 28px | Large section breaks |
+| `--sp-16` | 32px | Major layout spacing |
+| `--sp-20` | 40px | Hero section gaps |
 
-**Pattern**: Avoid direct px values in new CSS. Prefer `--space-*` tokens. If you need a value not in the scale, add it here rather than inlining a px value.
+**Pattern**: Avoid direct px values in new CSS. Prefer `--sp-*` tokens. If you need a value not in the scale, add it here rather than inlining a px value.
 
 ### Motion Scale
 
@@ -144,14 +146,14 @@ Four "fluid" spacing tokens compress automatically at two breakpoints, so compon
 
 | Token | Desktop | ≤900px | ≤480px |
 |-------|---------|--------|--------|
-| `--space-fluid-tight` | `--space-5` (8px) | `--space-4` (6px) | `--space-3` (4px) |
-| `--space-fluid-base` | `--space-7` (12px) | `--space-6` (10px) | `--space-5` (8px) |
-| `--space-fluid-loose` | `--space-9` (16px) | `--space-7` (12px) | `--space-6` (10px) |
-| `--space-fluid-section` | `--space-12` (24px) | `--space-9` (16px) | `--space-8` (14px) |
+| `--sp-fluid-tight` | `--sp-5` (8px) | `--sp-4` (6px) | `--sp-3` (4px) |
+| `--sp-fluid-base` | `--sp-7` (12px) | `--sp-6` (10px) | `--sp-5` (8px) |
+| `--sp-fluid-loose` | `--sp-9` (16px) | `--sp-7` (12px) | `--sp-6` (10px) |
+| `--sp-fluid-section` | `--sp-12` (24px) | `--sp-9` (16px) | `--sp-8` (14px) |
 
 **When to use fluid vs. fixed spacing**:
-- Use `--space-fluid-*` for: form field gaps, modal/panel padding, card grid gaps, section margins — anything that should visibly tighten as the viewport shrinks.
-- Use fixed `--space-N` for: icon gaps, badge/chip padding, hairline offsets — anything that must stay constant regardless of viewport (compressing these usually just looks broken, not "responsive").
+- Use `--sp-fluid-*` for: form field gaps, modal/panel padding, card grid gaps, section margins — anything that should visibly tighten as the viewport shrinks.
+- Use fixed `--sp-N` for: icon gaps, badge/chip padding, hairline offsets — anything that must stay constant regardless of viewport (compressing these usually just looks broken, not "responsive").
 
 Defined in `:root` (section 1) and overridden in two `@media` blocks in section 36 (end of file) — the token stays the same name everywhere, only its resolved value changes at the breakpoint. No per-component media query needed once a rule is authored with the fluid token.
 
@@ -161,7 +163,7 @@ Defined in `:root` (section 1) and overridden in two `@media` blocks in section 
 @media (max-width: 480px) { .sim-root .some-panel { padding: 10px; } }
 
 /* After: fluid token handles it automatically */
-.sim-root .some-panel { padding: var(--space-fluid-loose); }
+.sim-root .some-panel { padding: var(--sp-fluid-loose); }
 ```
 
 ---
@@ -268,4 +270,4 @@ These colors are applied to specific features (perito analysis, form modes) and 
 
 - **Small multiples**: If new ingredient categories appear, extend `--cat-*` following the same pattern (3 tokens per category: default, hover, text).
 - **Dark mode**: Current tokens use `color-mix()` which works in both light and dark contexts. Test in production dark mode and adjust opacity/lightness ratios if needed.
-- **Mobile**: Spacing scale is already dense; responsive overrides in mobile media query may need +1 step (e.g., `--space-6` → `--space-7`) for touch-friendly spacing.
+- **Mobile**: Spacing scale is already dense; responsive overrides in mobile media query may need +1 step (e.g., `--sp-6` → `--sp-7`) for touch-friendly spacing.

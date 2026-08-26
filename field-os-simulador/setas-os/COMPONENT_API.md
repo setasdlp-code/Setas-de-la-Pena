@@ -280,9 +280,9 @@ All components use the design system tokens for consistency:
 
 ### Spacing Used
 
-- **Buttons**: `--space-6` (padding), `--space-9` (gap in button groups)
-- **Inputs**: `--space-4` (padding), `--space-5` (margin-bottom in forms)
-- **Toggles**: `--space-6` (padding), `--space-4` (gap between toggles in groups)
+- **Buttons**: `--sp-6` (padding), `--sp-9` (gap in button groups)
+- **Inputs**: `--sp-4` (padding), `--sp-5` (margin-bottom in forms)
+- **Toggles**: `--sp-6` (padding), `--sp-4` (gap between toggles in groups)
 
 ---
 
@@ -311,7 +311,7 @@ All three components work in dark mode via existing token definitions. No specia
 
 | Property | Value | Notes |
 |----------|-------|-------|
-| Padding | `--space-2` to `--space-5` (varies by density) | Chips denser than pills |
+| Padding | `--sp-2` to `--sp-5` (varies by density) | Chips denser than pills |
 | Border radius | `var(--r-xs)` for chip/badge; pill-shaped (999px) only if named `.pill` | Squared = lab aesthetic; round = explicit exception |
 | Font | `var(--font-mono)`, 9–12px | Numeric/status clarity |
 | Font weight | 700 | Legible at small size |
@@ -380,8 +380,8 @@ All three components work in dark mode via existing token definitions. No specia
 |----------|-------|
 | Border radius | `var(--radius-md)` (dash-card: 0, squared) |
 | Border | `1px solid rgba(26,20,16,0.11)` |
-| Grid gap (card grids) | `--space-9` (16px) |
-| Internal padding | `--space-9` to `--space-10` |
+| Grid gap (card grids) | `--sp-9` (16px) |
+| Internal padding | `--sp-9` to `--sp-10` |
 
 ### Code Example
 
@@ -489,7 +489,7 @@ All three components work in dark mode via existing token definitions. No specia
 
 | Property | Value |
 |----------|-------|
-| Cell padding | `--space-5` `--space-7` (8px 12px) |
+| Cell padding | `--sp-5` `--sp-7` (8px 12px) |
 | Header font | 12px, weight 800, `--tracking-label` |
 | Body font | `var(--font-mono)`, 13px |
 
