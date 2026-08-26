@@ -122,6 +122,7 @@
   --surface-cream: #F7F4EC;  /* warm cream for sections, emphasis areas */
   --surface-cream-alt: #FFFBF7;  /* lighter cream variant */
   --surface-green-light: #F0F7ED;  /* pale green for growth/positive contexts */
+  --surface-hover-overlay: #EFECE1;  /* soft beige for hover state backgrounds, subtle emphasis */
 
   /* ── SPECIALTY COLORS (chemical, strain, botanical indicators) ── */
   --color-species-name: #8C7F5B;  /* muted brown for species scientific names */
