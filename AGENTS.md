@@ -22,32 +22,14 @@ Protocolo de sincronización:
 
 Google AI Studio lanzó importación de repos GitHub en julio 2026, pero **todavía no soporta push de vuelta al mismo repo importado** — al exportar, fuerza crear un repositorio nuevo, no sincroniza con el original. Google anunció sync bidireccional automático como fase futura, aún no disponible. Conectar GitHub hoy generaría historiales divergentes en vez de resolver el problema — **no conviene todavía**. Reevaluar cuando el sync bidireccional esté disponible.
 
-## División de trabajo: Codex / Studio vs. Claude Code
+## División de trabajo y modificaciones en Setas OS
 
-La asignación sigue la fortaleza real de cada herramienta:
+Se habilita el desarrollo integral, refactorización y creación de pantallas/componentes completos a lo largo de **toda la suite de Setas OS** (`field-os-simulador/setas-os/`), flexibilizando la limitación restrictiva de fixes únicamente quirúrgicos, bajo los siguientes lineamientos:
 
-**Le toca a Codex / Studio** — volumen y autonomía:
-- Generar pantallas/componentes nuevos desde cero.
-- Rediseños visuales que tocan muchos archivos o componentes a la vez.
-- Aplicar tokens de diseño de forma masiva en todo el sistema (colores, spacing, tipografía).
-- Copy, contenido, imágenes.
-- Tareas largas y bien especificadas que puede correr de forma autónoma sin supervisión constante (scaffolding, boilerplate, explorar varias opciones en paralelo).
-
-**Le toca a Claude Code** — precisión, contexto y revisión:
-- Auditorías (UX, performance, seguridad, accesibilidad).
-- Fixes puntuales identificados en una auditoría — cambios de pocas líneas donde regenerar el archivo completo arriesga romper algo.
-- Lógica de negocio (scoring, recetario, Firebase, telemetría, cálculos) — cualquier cosa donde el contexto histórico del repo importa más que la velocidad.
-- Tests, verificación, debugging.
-- **Revisar el output de Codex/Studio antes de merge**: chequear que no reescribió de más, que no rompió `knowledge_base/` o `SETAS_OS_CANONICAL.md`, y que el paquete de trabajo cumple sus propios criterios de aceptación.
-- Coordinación de git y checkpoints entre sesiones.
-
-**Regla rápida:** "generar mucho, rápido, desde cero" → Codex / Studio. "Razonar con cuidado sobre lo que ya existe, o revisar lo que se generó" → Claude Code.
-
-## Handoff Codex / Studio → Claude Code
-
-Cuando Codex o Studio terminan un paquete de trabajo, antes de mergear Claude Code debe:
-
-1. Leer el paquete de trabajo completo (objetivo, alcance, criterios de aceptación).
-2. Correr `git diff` contra la rama base y revisar archivo por archivo — no solo el resumen reportado.
-3. Señalar en el PR (no corregir en silencio) cualquier cosa fuera de alcance, sobre-generación, o inconsistencia con la base de conocimiento.
-4. Aplicar fixes quirúrgicos si son de pocas líneas; si el fix requiere reescribir de nuevo una porción grande, devolver el trabajo con instrucciones puntuales en vez de reescribirlo él mismo.
+1. **Capacidad de modificación amplia:** Es válido generar nuevos módulos, rediseñar pantallas, refactorizar componentes y optimizar flujos completos en cualquier vista (`Home/Tablero de Control`, `Formulador`, `Bodega/Inventario`, `Producción`, `Bitácora`, `Telemetría/IoT`).
+2. **Salvaguardas canónicas y científicas obligatorias:**
+   - No alterar la lógica de balance estequiométrico, relaciones C:N, cálculo predictivo de Eficiencia Biológica (EB), scoring ni fórmulas de masa sin verificación y pruebas previas.
+   - Respetar estrictamente la fuente canónica definida en [`SETAS_OS_CANONICAL.md`](./SETAS_OS_CANONICAL.md) y el conocimiento de negocio en `knowledge_base/`.
+3. **Coordinación y prevención de colisiones:**
+   - Mantener el protocolo de sincronización: un solo editor activo a la vez por archivo, checkpoints de git y revisión del diff real antes de empezar nuevas tareas.
+   - Preservar la modularidad y limpieza del código sin introducir dependencias incompatibles con el runtime de Setas OS.
