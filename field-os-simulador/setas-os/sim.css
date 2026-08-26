@@ -149,37 +149,50 @@
   --cat-sup: #C68F2C;
   --cat-sup-hover: color-mix(in oklab, #C68F2C 12%, var(--paper-0));
   --cat-sup-text: #8B6014;
-  --cat-sup-on: #946B21;              /* WCAG FIX: base #C68F2C is 2.85:1 vs white
-                                          (fails AA even for large text). Darkened
-                                          25% to 4.79:1 — passes. Border/hover keep
-                                          the original hue; only the solid .on fill
-                                          uses this darker value. */
+  --cat-sup-on: #8B641F;              /* WCAG FIX v2: .on renders --text-on-dark, which
+                                          resolves --paper-50 → --paper-0 → #F7F4EC (a
+                                          warm cream, NOT white). Original fix computed
+                                          against white and still failed vs the real
+                                          foreground (2.85:1 base, 4.36:1 first darken —
+                                          both fail). Darkened 30% from base to 4.85:1
+                                          against #F7F4EC. Border/hover keep the
+                                          original hue; only .on uses this value. */
 
   --cat-est: #6B4E31;
   --cat-est-hover: color-mix(in oklab, #6B4E31 12%, var(--paper-0));
   --cat-est-text: #6B4E31;
-  --cat-est-on: #6B4E31;              /* fill-vs-white contrast 7.61:1 — passes AA */
+  --cat-est-on: #6B4E31;              /* fill-vs-#F7F4EC contrast ~6.9:1 — passes AA */
 
   --cat-local: #7A5A3F;
   --cat-local-hover: color-mix(in oklab, #7A5A3F 12%, var(--paper-0));
   --cat-local-text: #7A5A3F;
-  --cat-local-on: #7A5A3F;            /* fill-vs-white contrast 6.25:1 — passes AA */
+  --cat-local-on: #7A5A3F;            /* fill-vs-#F7F4EC contrast ~5.7:1 — passes AA */
 
   --cat-trop: #B8694B;
   --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
-  --cat-trop-text: #B8694B;
-  --cat-trop-on: #A65E44;             /* WCAG FIX: base #B8694B is 4.07:1 vs white
-                                          (fails AA at this component's 9.5–12px
-                                          text size — WCAG large-text exemption
-                                          needs 14px+bold/18px+). Darkened 10% to
-                                          4.88:1 — passes. */
+  --cat-trop-text: #9C5940;            /* WCAG FIX v2: hover-text pairs this color as
+                                           foreground on --cat-trop-hover (a light tint
+                                           of the same hue over --paper-0). Even against
+                                           the untinted --paper-0 worst case, the base
+                                           hue only reaches 3.70:1. Darkened 15% to
+                                           4.88:1 against --paper-0 — passes both the
+                                           tinted hover bg (higher contrast) and the
+                                           untinted worst case. */
+  --cat-trop-on: #9C5940;              /* WCAG FIX v2: same darkening reused — .on
+                                           renders on #F7F4EC (not white, see --cat-sup
+                                           note above). Original fix (4.07:1 vs white)
+                                           and its "corrected" value (4.44:1 vs the real
+                                           cream foreground) both still failed. This
+                                           value clears 4.88:1 against #F7F4EC too. */
 
   --cat-circ: #6B7C5F;
   --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
-  --cat-circ-text: #6B7C5F;
-  --cat-circ-on: #66765A;             /* WCAG FIX: base #6B7C5F is 4.49:1 vs white
-                                          (just under the 4.5:1 AA threshold).
-                                          Darkened 5% to 4.88:1 — passes. */
+  --cat-circ-text: #607056;            /* WCAG FIX v2: same issue as --cat-trop-text —
+                                           base hue reaches only 4.09:1 against untinted
+                                           --paper-0. Darkened 10% to 4.84:1. */
+  --cat-circ-on: #607056;              /* WCAG FIX v2: reused — base 4.49:1 and first
+                                           "fix" 4.44:1 both failed against the real
+                                           #F7F4EC foreground. This clears 4.84:1. */
 
   --cat-adit: var(--accent-blue-grey);
   --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
@@ -196,13 +209,13 @@
   --duration-notice: .3s;    /* toasts, banners — slower so the message registers */
 
   /* ── RESPONSIVE SPACING — density multiplier applied at breakpoints.
-     Use --space-fluid-* instead of --space-* in components that need to
+     Use --sp-fluid-* instead of --space-* in components that need to
      compress on smaller viewports (forms, modals, dense grids). Defaults
      to desktop values; ≤900px and ≤480px overrides below in section 35. ── */
-  --space-fluid-tight: var(--sp-5);   /* 8px desktop → 6px tablet → 5px mobile */
-  --space-fluid-base: var(--sp-7);    /* 12px desktop → 10px tablet → 8px mobile */
-  --space-fluid-loose: var(--sp-9);   /* 16px desktop → 12px tablet → 10px mobile */
-  --space-fluid-section: var(--sp-12); /* 24px desktop → 18px tablet → 14px mobile */
+  --sp-fluid-tight: var(--sp-5);   /* 8px desktop → 6px tablet → 5px mobile */
+  --sp-fluid-base: var(--sp-7);    /* 12px desktop → 10px tablet → 8px mobile */
+  --sp-fluid-loose: var(--sp-9);   /* 16px desktop → 12px tablet → 10px mobile */
+  --sp-fluid-section: var(--sp-12); /* 24px desktop → 18px tablet → 14px mobile */
 
   /* ── DEPRECATED ALIASES (kept for backward-compat with external scripts) ──
      These are no longer referenced in this file or the main HTML.
@@ -362,7 +375,7 @@
   color: inherit;
   cursor: pointer;
   position: relative;
-  transition: background 0var(--duration-quick) var(--ease);
+  transition: background var(--duration-quick) var(--ease);
   border: none;
   border-radius: 0;
   padding: 0;
@@ -4476,18 +4489,18 @@
 
 /* ════════════════════════════════════════════════════════════════
    36. RESPONSIVE SPACING BREAKPOINTS
-   Redefines --space-fluid-* (declared in :root, section 1) at two
+   Redefines --sp-fluid-* (declared in :root, section 1) at two
    breakpoints. Any component padding/gap/margin authored with
-   --space-fluid-tight/base/loose/section instead of a fixed --space-N
+   --sp-fluid-tight/base/loose/section instead of a fixed --space-N
    automatically compresses here — no per-component media query needed.
 
    Desktop values (from :root):
-     --space-fluid-tight:   var(--sp-5)  = 8px
-     --space-fluid-base:    var(--sp-7)  = 12px
-     --space-fluid-loose:   var(--sp-9)  = 16px
-     --space-fluid-section: var(--sp-12) = 24px
+     --sp-fluid-tight:   var(--sp-5)  = 8px
+     --sp-fluid-base:    var(--sp-7)  = 12px
+     --sp-fluid-loose:   var(--sp-9)  = 16px
+     --sp-fluid-section: var(--sp-12) = 24px
 
-   Use --space-fluid-* for: form field gaps, modal/panel padding,
+   Use --sp-fluid-* for: form field gaps, modal/panel padding,
    card grid gaps, section margins — anything that should visibly
    tighten on small viewports. Keep using fixed --space-N for spacing
    that must stay constant regardless of viewport (icon gaps, badge
@@ -4496,19 +4509,19 @@
 
 @media (max-width: 900px) {
   .sim-root {
-    --space-fluid-tight: var(--sp-4);    /* 8px → 6px */
-    --space-fluid-base: var(--sp-6);     /* 12px → 10px */
-    --space-fluid-loose: var(--sp-7);    /* 16px → 12px */
-    --space-fluid-section: var(--sp-9);  /* 24px → 16px (was --sp-10/18px — snapped to scale) */
+    --sp-fluid-tight: var(--sp-4);    /* 8px → 6px */
+    --sp-fluid-base: var(--sp-6);     /* 12px → 10px */
+    --sp-fluid-loose: var(--sp-7);    /* 16px → 12px */
+    --sp-fluid-section: var(--sp-9);  /* 24px → 16px (was --sp-10/18px — snapped to scale) */
   }
 }
 
 @media (max-width: 480px) {
   .sim-root {
-    --space-fluid-tight: var(--sp-3);    /* 8px → 4px */
-    --space-fluid-base: var(--sp-5);     /* 12px → 8px */
-    --space-fluid-loose: var(--sp-6);    /* 16px → 10px */
-    --space-fluid-section: var(--sp-8);  /* 24px → 14px */
+    --sp-fluid-tight: var(--sp-3);    /* 8px → 4px */
+    --sp-fluid-base: var(--sp-5);     /* 12px → 8px */
+    --sp-fluid-loose: var(--sp-6);    /* 16px → 10px */
+    --sp-fluid-section: var(--sp-8);  /* 24px → 14px */
   }
 }
 

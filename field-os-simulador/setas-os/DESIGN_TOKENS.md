@@ -23,16 +23,16 @@ Each category has four states: default (border), hover (tinted background), hove
 |-------|-----|---------|-------|-----------|-----------|
 | `--cat-base` | Legumes, cereals, substrate bases | #5A7042 | 12% tint | #3a4f2a | #5A7042 |
 | `--cat-cafe` | Composted coffee, fermented media | #7A4A2F | 12% tint | #7A4A2F | #7A4A2F |
-| `--cat-sup` | Premium/supplement layers | #C68F2C | 12% tint | #8B6014 | **#946B21** ⚠️ |
+| `--cat-sup` | Premium/supplement layers | #C68F2C | 12% tint | #8B6014 | **#8B641F** ⚠️ |
 | `--cat-est` | Stabilizers, structural amendments | #6B4E31 | 12% tint | #6B4E31 | #6B4E31 |
 | `--cat-local` | Locally-sourced materials | #7A5A3F | 12% tint | #7A5A3F | #7A5A3F |
-| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | #B8694B | **#A65E44** ⚠️ |
-| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | #6B7C5F | **#66765A** ⚠️ |
+| `--cat-trop` | Tropical specialty materials | #B8694B | 12% tint | **#9C5940** ⚠️ | **#9C5940** ⚠️ |
+| `--cat-circ` | Circular/waste materials, by-products | #6B7C5F | 12% tint | **#607056** ⚠️ | **#607056** ⚠️ |
 | `--cat-adit` | Additives, amendments, biotech | `--accent-blue-grey` | 12% tint | `--accent-blue-grey` | same as default |
 
-⚠️ = the `-on` value is **darkened from the base hue** to pass WCAG AA. See Accessibility Audit below — do not "fix" these back to the base color, that reintroduces the contrast failure.
+⚠️ = the value is **darkened from the base hue** to pass WCAG AA. See Accessibility Audit below — do not "fix" these back to the base color, that reintroduces the contrast failure.
 
-**Usage**: Applied to ingredient badges, category tabs, and ingredient list filters. The color encodes ingredient *function* in the recipe, not visual hierarchy. The border/hover states always use the natural brand hue (`--cat-base` etc); only the solid `.on` fill uses the `-on` variant, because that's the only state pairing the color with white text at full-strength contrast.
+**Usage**: Applied to ingredient badges, category tabs, and ingredient list filters. The color encodes ingredient *function* in the recipe, not visual hierarchy. The border/hover states always use the natural brand hue (`--cat-base` etc); the `.on` fill uses the `-on` variant and the `:hover` text uses the `-text` variant, both computed against their *actual* rendered foreground/background (see below — not white).
 
 ```css
 .cat[data-cat="base"] {
@@ -50,28 +50,32 @@ Each category has four states: default (border), hover (tinted background), hove
 
 ### Accessibility Audit — Ingredient Category Colors
 
-WCAG 2.1 AA contrast ratios were computed for all 8 category colors against white text (the `.on` selected-state pairing) and against the paper background (the hover-text pairing). Chip/badge text in this UI runs 9.5–13px, which does **not** qualify for the WCAG "large text" exemption (18px regular / 14px bold minimum) — so the full 4.5:1 threshold applies everywhere, not the relaxed 3.0:1.
+**v2 — corrected foreground.** The first pass of this audit computed `.on`-state contrast against pure white (`#FFFFFF`). That was wrong: `.on` renders `color: var(--text-on-dark)`, which resolves `--text-on-dark → --paper-50 → --paper-0 → #F7F4EC` — a warm cream, not white. Cream has *lower* luminance than white, so every ratio computed against white overstated the real contrast; the first-pass `-on` fixes for `sup`/`trop`/`circ` still failed 4.5:1 against the color that's actually behind the text (4.36:1, 4.44:1, 4.44:1). Re-run below against `#F7F4EC`, the true resolved value.
 
-| Category | Fill vs. white (`.on` state) | Result | Text vs. paper (hover state) | Result |
-|----------|------------------------------|--------|-------------------------------|--------|
-| base | 5.48:1 | ✅ Pass | 8.69:1 | ✅ Pass |
-| cafe | 7.37:1 | ✅ Pass | 7.12:1 | ✅ Pass |
-| **sup** | **2.85:1** | ❌ **Fail** | 5.36:1 | ✅ Pass |
-| est | 7.61:1 | ✅ Pass | 7.35:1 | ✅ Pass |
-| local | 6.25:1 | ✅ Pass | 6.03:1 | ✅ Pass |
-| **trop** | **4.07:1** | ❌ **Fail** | 3.93:1 | — (not white-text pairing) |
-| **circ** | **4.49:1** | ❌ **Fail** (just under 4.5) | 4.34:1 | — (not white-text pairing) |
+The first pass also never checked the `:hover` text pairing (`--cat-*-text` as foreground on `--cat-*-hover`, a light tint over `--paper-0`) against its own worst case — the untinted `--paper-0` background. Two categories fail there too.
+
+Chip/badge text in this UI runs 9.5–13px, below the WCAG "large text" exemption (18px regular / 14px bold minimum), so the full 4.5:1 threshold applies to both pairings.
+
+| Category | Fill vs. `#F7F4EC` (`.on` state) | Result | Text vs. `--paper-0` (hover, untinted worst case) | Result |
+|----------|-----------------------------------|--------|------------------------------------------------------|--------|
+| base | 4.99:1 | ✅ Pass | 8.69:1 | ✅ Pass |
+| cafe | 6.71:1 | ✅ Pass | 7.12:1 | ✅ Pass |
+| **sup** | **4.36:1** (first-pass fix) | ❌ **Fail** | 5.05:1 | ✅ Pass |
+| est | 6.92:1 | ✅ Pass | 7.35:1 | ✅ Pass |
+| local | 5.68:1 | ✅ Pass | 6.03:1 | ✅ Pass |
+| **trop** | **4.44:1** (first-pass fix) | ❌ **Fail** | **3.70:1** (unfixed base hue) | ❌ **Fail** |
+| **circ** | **4.44:1** (first-pass fix) | ❌ **Fail** | **4.09:1** (unfixed base hue) | ❌ **Fail** |
 | adit | design-system token, assumed pre-validated | — | — | — |
 
-**3 of 8 categories failed** in their selected/`.on` state — white text on the raw fill was illegible-adjacent for `sup` (ochre/gold) especially. Fix: added a `-on` token per category, darkened only enough to clear 4.5:1, keeping the badge/border color (the identity users learn to recognize) unchanged:
+**v2 fix** — darkened further against the correct foreground/background pair. `trop` and `circ` now reuse one corrected value for *both* `-text` and `-on`, since both states failed for the same reason (base hue too light against this palette's cream/paper tones):
 
-| Category | Base hex | Darkened by | `-on` hex | New contrast |
-|----------|----------|-------------|-----------|--------------|
-| sup | #C68F2C | 25% | #946B21 | 4.79:1 |
-| trop | #B8694B | 10% | #A65E44 | 4.88:1 |
-| circ | #6B7C5F | 5% | #66765A | 4.88:1 |
+| Category | Base hex | Darkened by | New hex | vs. `#F7F4EC` | vs. `--paper-0` |
+|----------|----------|-------------|---------|----------------|-------------------|
+| sup (`-on` only) | #C68F2C | 30% | #8B641F | 4.85:1 | — |
+| trop (`-text` + `-on`) | #B8694B | 15% | #9C5940 | 4.88:1 | 4.88:1 |
+| circ (`-text` + `-on`) | #6B7C5F | 10% | #607056 | 4.84:1 | 4.84:1 |
 
-**When adding a new ingredient category**: compute fill-vs-white contrast before shipping. If it's under 4.5:1, darken by the minimum percentage needed (5% increments) rather than picking an arbitrary "safe" dark color — this preserves the hue identity of the category.
+**When adding a new ingredient category**: compute contrast against the *actual resolved* foreground/background — trace `var()` chains all the way down (`--text-on-dark` is not white here) — for every pairing the color is used in, not just the one that seems most obviously at risk. Darken by the minimum percentage needed (5% increments), aiming a point or two past 4.5:1 for rounding margin, rather than stopping exactly at the threshold.
 
 #### Button State Tokens
 
