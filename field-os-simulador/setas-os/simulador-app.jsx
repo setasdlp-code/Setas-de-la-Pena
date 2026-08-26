@@ -64,6 +64,109 @@ const SPP_DETAILS={
   ]},
 };
 
+const SPECIES_GASTRONOMY = {
+  p_ostreatus_gris: {
+    title: 'Orellana Gris · Pleurotus ostreatus',
+    botanical: 'Lámina I · Basidiomycota · Pleurotaceae',
+    organoleptic: {
+      aroma: 'Terroso suave, bosque andino tras la lluvia, sutil aroma a avellana fresca.',
+      flavor: 'Umami equilibrado, dulce vegetal ligero con final almendrado.',
+      texture: 'Carnosa, aterciopelada y elástica; gran retención de jugos en cocción.'
+    },
+    metrics: { umami: 4, meatiness: 5, aromatics: 3, sweetness: 2 },
+    cooking: [
+      { method: 'Salteado a fuego vivo', tip: 'En sartén de hierro con mantequilla clarificada y sal marina; no tapar para lograr bordes dorados crujientes.' },
+      { method: 'Pasta fresca & Risottos', tip: 'Incorporar al final del salteado con salvia fresca y reducción de vino blanco.' }
+    ],
+    pairings: [
+      { category: 'Vinos', item: 'Chardonnay con crianza en roble o Sauvignon Blanc de altura.' },
+      { category: 'Quesos', item: 'Parmesano Reggiano, queso Paipa añejo o gruyère.' },
+      { category: 'Hierbas', item: 'Salvia, tomillo limonero, ajo negro y estragón.' }
+    ],
+    presentation: 'Bandeja kraft de 250 g con papel sulfurizado o faja de madera artesanal.'
+  },
+  p_djamor: {
+    title: 'Orellana Rosada · Pleurotus djamor',
+    botanical: 'Lámina II · Basidiomycota · Pleurotaceae',
+    organoleptic: {
+      aroma: 'Fresco, ligeramente marino con notas florales y cítricas suaves.',
+      flavor: 'Umami brillante, toque mineral que evoca mariscos tiernos (camarón/langostilla).',
+      texture: 'Firme, crujiente en láminas finas; tierna y elástica al diente.'
+    },
+    metrics: { umami: 3, meatiness: 4, aromatics: 4, sweetness: 3 },
+    cooking: [
+      { method: 'Ceviches templados & Carpaccios', tip: 'Sellado relámpago de 90 segundos con aceite de oliva y jugo de mandarina o limón mandarino.' },
+      { method: 'Tacos gourmet & Woks', tip: 'Cocción rápida con jengibre fresco, cebolla morada y cilantro cimarrón.' }
+    ],
+    pairings: [
+      { category: 'Vinos', item: 'Vino rosado seco (Garnacha/Pinot Noir) o espumoso Brut.' },
+      { category: 'Aromáticos', item: 'Cilantro cimarrón, ají dulce, ralladura de lima y jengibre.' },
+      { category: 'Aceites', item: 'Aceite de oliva virgen extra monovarietal (Picual/Arbequina).' }
+    ],
+    presentation: 'Bandeja kraft de 250 g ventilada; consumo preferente dentro de los 4 días.'
+  },
+  shiitake: {
+    title: 'Shiitake Roble · Lentinula edodes',
+    botanical: 'Lámina III · Basidiomycota · Omphalotaceae',
+    organoleptic: {
+      aroma: 'Intenso, sotobosque húmedo, notas de humo noble y corteza de roble.',
+      flavor: 'Máxima concentración de ácido glutámico natural y guanilato; umami profundo y persistente.',
+      texture: 'Densa, coriácea en pie (ideal para caldos), sombrero suculento y esponjoso.'
+    },
+    metrics: { umami: 5, meatiness: 5, aromatics: 5, sweetness: 1 },
+    cooking: [
+      { method: 'Glaseado & Confitado', tip: 'Cocción lenta en salsa de soya artesanal, mirin y miel de Tenjo hasta reducir a textura laca.' },
+      { method: 'Fondo Dashi & Reducciones', tip: 'Extracción en agua a 65 °C durante 45 minutos para maximizar liberación de ribonucleótidos.' }
+    ],
+    pairings: [
+      { category: 'Vinos', item: 'Tintos de cuerpo medio: Pinot Noir, Nebbiolo o Carmenere.' },
+      { category: 'Proteínas', item: 'Cortes de res madurada, magret de pato o cerdo confitado.' },
+      { category: 'Caldos', item: 'Dashi, caldos concentrados de hueso y ramen de autor.' }
+    ],
+    presentation: 'Caja de madera noble con puente QR de trazabilidad de sustrato de roble.'
+  },
+  lions_mane: {
+    title: 'Melena de León · Hericium erinaceus',
+    botanical: 'Lámina IV · Basidiomycota · Hericiaceae',
+    organoleptic: {
+      aroma: 'Dulce, notas de mantequilla tibia, frutos secos y rocío matutino.',
+      flavor: 'Extraordinaria semejanza gustativa con bogavante, langosta o carne de cangrejo real.',
+      texture: 'Mullida, tierna, filamentosa que se deshace delicadamente en boca.'
+    },
+    metrics: { umami: 4, meatiness: 4, aromatics: 4, sweetness: 4 },
+    cooking: [
+      { method: 'Medallones a la plancha', tip: 'Cortar en filetes gruesos de 2 cm, prensar suavemente para dorar en mantequilla marrón y ajo confitado.' },
+      { method: 'Rolls & Guisos marineros', tip: 'Deshilachar a mano en hebras e incorporar en brioche tostado con mayonesa de estragón.' }
+    ],
+    pairings: [
+      { category: 'Vinos', item: 'Chardonnay fermentado en barrica, Viognier o Champagne Brut Nature.' },
+      { category: 'Salsas', item: 'Holandesa, bearnesa, mantequilla café de París.' },
+      { category: 'Botánicos', item: 'Flor de sal marina, eneldo fresco y pimienta rosa.' }
+    ],
+    presentation: 'Caja protectora de madera con lecho de viruta de roble orgánico.'
+  },
+  reishi: {
+    title: 'Reishi Rojo · Ganoderma lucidum',
+    botanical: 'Lámina V · Basidiomycota · Ganodermataceae',
+    organoleptic: {
+      aroma: 'Amaderado noble, resina de pino, cuero curtido y tierra profunda.',
+      flavor: 'Amargor tónico medicinal elegante con regusto terroso complejo.',
+      texture: 'Leñosa no masticable; destinada exclusivamente a extracción hidroalcohólica o decocción.'
+    },
+    metrics: { umami: 2, meatiness: 1, aromatics: 5, sweetness: 0 },
+    cooking: [
+      { method: 'Doble extracción tónica', tip: 'Decocción acuosa de 2 horas seguida de maceración en alcohol neutro de caña al 70%.' },
+      { method: 'Caldos adaptogénicos', tip: 'Infusionar 5 g de láminas secas en caldos de cocción larga con jengibre y cardamomo.' }
+    ],
+    pairings: [
+      { category: 'Bebidas', item: 'Café de especialidad de altura, té negro fermentado (Pu-erh) o mezcal artesanal.' },
+      { category: 'Chocolates', item: 'Cacao colombiano al 75% o 85% de origen Tumaco o Arauca.' },
+      { category: 'Mieles', item: 'Miel cruda de bosque andino y polen de páramo.' }
+    ],
+    presentation: 'Frasco boticario ámbar de 50 ml con gotero o láminas selladas al vacío.'
+  }
+};
+
 // ── GUÍA DE FORMULACIÓN — criterios de selección de ingredientes por especie ──
 const SPP_SUBSTRATE_GUIDE={
   p_ostreatus_gris:[
@@ -1967,6 +2070,8 @@ function App(props){
   const [thermalBagStart,setThermalBagStart]=useState(1);
   const [thermalBagEnd,setThermalBagEnd]=useState(20);
   const [thermalCosechaItem,setThermalCosechaItem]=useState(null);
+  const [showTastingModal,setShowTastingModal]=useState(false);
+  const [tastingSpeciesKey,setTastingSpeciesKey]=useState('p_ostreatus_gris');
   const [showDiagModal,setShowDiagModal]=useState(false);
   const [diagLoteId,setDiagLoteId]=useState('');
   const [diagBolsaId,setDiagBolsaId]=useState('');
@@ -4775,6 +4880,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {(tab==='home'||tab==='inicio')&&(()=>{
           // Cálculos y Métricas en vivo para el Centro de Mando
           const totalStockKg = invLotes.filter(l=>l.activo).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
+          const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
+          const aggregatedStock = {};
+          invLotes.filter(l=>l.activo).forEach(l=>{
+            aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
+          });
+          const criticalStockItems = INGS.map(ing=>{
+            const stockKg = aggregatedStock[ing.id]||0;
+            const threshold = lowStockThresholds[ing.type]||5;
+            return { ing, stockKg, threshold, isLow: stockKg < threshold };
+          }).filter(item=>item.isLow);
+          const lowStockCount = criticalStockItems.length;
           const totalBolsasCount = bitBolsas.length;
           const bolsasIncubacion = bitBolsas.filter(b=>b.estado==='sana'&&!b.col100).length;
           const bolsasFructificacion = bitBolsas.filter(b=>b.estado==='sana'&&b.col100).length;
@@ -5114,6 +5230,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         </div>
                       </div>
+
+                      {criticalStockItems.length > 0 ? (
+                        <div style={{ background: 'color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))', border: '1px solid var(--coral-500)', borderLeft: '4px solid var(--coral-700)', borderRadius: 'var(--r-xs)', padding: '10px 12px', marginBottom: 16 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                              ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                            </span>
+                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'var(--coral-700)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                              Registrar Compra +
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'var(--coral-700)' }}>
+                                {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                              </span>
+                            ))}
+                            {criticalStockItems.length > 3 && (
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-400)', padding: '2px 4px' }}>
+                                +{criticalStockItems.length - 3} más
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-xs)', padding: '6px 10px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ color: 'var(--moss-700)', fontSize: 12 }}>✓</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-600)' }}>Todos los insumos con stock operativo adecuado</span>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
@@ -5729,8 +5875,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="spp-img-wrap" style={{flex:1,position:'relative',minHeight:320}}>
                     {IMG[sKey]&&<img src={IMG[sKey]} alt={sp.name} width="520" height="390" className="spp-info-img" style={{objectPosition:'center 65%'}} loading="lazy" decoding="async"/>}
                   </div>
-                  <div className="spp-cta-row">
+                  <div className="spp-cta-row" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
+                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}>🍷 Ficha de Cata</button>
                     <button onClick={()=>{setCatalogModalOpen(false);openBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
@@ -7749,7 +7896,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
-                            <div className="dash-card-foot">
+                            <div className="dash-card-foot" style={{display:'flex',gap:6}}>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
                               <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
                             </div>
@@ -8391,6 +8539,127 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </AccessibleModal>
 
+          );
+        })()}
+
+        {showTastingModal && (() => {
+          const sKey = tastingSpeciesKey || 'p_ostreatus_gris';
+          const gastro = SPECIES_GASTRONOMY[sKey] || SPECIES_GASTRONOMY.p_ostreatus_gris;
+          const spInfo = SPP[sKey] || SPP.p_ostreatus_gris;
+
+          return (
+            <AccessibleModal
+              onClose={() => setShowTastingModal(false)}
+              label={`Dossier Gastronómico: ${gastro.title}`}
+              dialogStyle={{ width: 'min(720px, 95vw)', padding: '24px 22px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                    Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
+                    {gastro.title}
+                  </h2>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
+                    {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
+                  </div>
+                </div>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}>✕</button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 18 }}>
+                {/* COLUMNA 1: PERFIL SENSORIAL & RADAR */}
+                <div style={{ background: 'var(--paper-1, #EFEBE0)', padding: '16px 14px', borderRadius: 2, border: '1px solid var(--border-hairline, #8C7F5B)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 10 }}>
+                    Notas de Cata & Organolépticas
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👃 Aroma:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.aroma}</div>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👅 Sabor & Umami:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.flavor}</div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>🥩 Textura en Boca:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.texture}</div>
+                  </div>
+
+                  {/* BARRAS DE INTENSIDAD */}
+                  <div style={{ borderTop: '1px dashed var(--border-hairline, #8C7F5B)', paddingTop: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Umami</span>
+                      <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.umami/5)*100}%` }} /></div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.umami}/5</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Carnosidad</span>
+                      <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.meatiness/5)*100}%` }} /></div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.meatiness}/5</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Aromáticos</span>
+                      <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.aromatics/5)*100}%` }} /></div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textAlign: 'right' }}>{gastro.metrics.aromatics}/5</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* COLUMNA 2: TÉCNICAS DE COCCIÓN Y MARIDAJE */}
+                <div>
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
+                      🍳 Técnicas Sugeridas por el Chef
+                    </div>
+                    {gastro.cooking.map((c, i) => (
+                      <div key={i} style={{ marginBottom: 8, background: 'var(--paper-50, #F3EFE6)', padding: '8px 10px', borderRadius: 2, borderLeft: '3px solid var(--accent-olive, #5B6B44)' }}>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>{c.method}</div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-1)', marginTop: 2 }}>{c.tip}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
+                      🍷 Armonía & Maridajes Recomendados
+                    </div>
+                    {gastro.pairings.map((p, i) => (
+                      <div key={i} style={{ marginBottom: 6, display: 'flex', gap: 6, alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)', minWidth: 70 }}>{p.category}:</span>
+                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-0)' }}>{p.item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', borderRadius: 2, border: '1px dashed var(--border-hairline, #8C7F5B)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>📦 Presentación Óptima: </span>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)' }}>{gastro.presentation}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* BOTONES */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 14 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                  Setas de la Peña · Sabana Centro · info@setasdelapena.co
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={() => setShowTastingModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 44, padding: '8px 14px' }}>
+                    Cerrar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { try { window.print(); } catch(e) { console.error(e); } }}
+                    className="inv-btn inv-btn-pri"
+                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
+                  >
+                    🖨 Imprimir Ficha de Cata
+                  </button>
+                </div>
+              </div>
+            </AccessibleModal>
           );
         })()}
 

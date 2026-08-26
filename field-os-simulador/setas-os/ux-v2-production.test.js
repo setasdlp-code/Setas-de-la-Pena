@@ -152,4 +152,26 @@ test('disabled button states enforce --btn-disabled-opacity and prevent hover/ac
   assert.match(styles, /opacity:\s*var\(--btn-disabled-opacity,\s*0\.4\);/);
 });
 
+test('restaurant tasting dossier modal provides organoleptic notes and chef pairings across Catalog and Recetario', () => {
+  assert.match(source, /SPECIES_GASTRONOMY/);
+  assert.match(source, /showTastingModal/);
+  assert.match(source, /tastingSpeciesKey/);
+  assert.match(source, /Notas de Cata & Organolépticas/);
+  assert.match(source, /Técnicas Sugeridas por el Chef/);
+  assert.match(source, /Armonía & Maridajes Recomendados/);
+  assert.match(source, /🍷 Ficha de Cata/);
+  assert.match(styles, /\.sim-root \.tasting-dossier-sheet/);
+  assert.match(styles, /\.sim-root \.tasting-radar-bar/);
+  assert.match(styles, /\.sim-root \.pairing-tag/);
+});
+
+test('home cockpit computes FIFO stock aggregations and displays critical substrate alerts with direct purchase CTA', () => {
+  assert.match(source, /criticalStockItems/);
+  assert.match(source, /lowStockThresholds/);
+  assert.match(source, /Alerta de Stock Crítico/);
+  assert.match(source, /Registrar Compra \+/);
+  assert.match(styles, /\.sim-root \.stock-critical-card/);
+});
+
+
 

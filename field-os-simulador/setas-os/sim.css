@@ -4594,7 +4594,74 @@
   }
 }
 
+/* ── TASTING DOSSIER & RESTAURANT PAIRING (FOS-11 / FOS-16) ──────── */
+.sim-root .tasting-dossier-sheet {
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 2px);
+  padding: 24px 20px;
+  color: var(--ink-0, #1A1410);
+  box-shadow: 0 4px 20px rgba(26,20,16,0.06);
+}
 
+.sim-root .tasting-dossier-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--accent-olive, #5B6B44);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
 
+.sim-root .tasting-dossier-title {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-0, #1A1410);
+  margin: 0 0 4px 0;
+}
 
+.sim-root .tasting-dossier-subtitle {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--ink-2, #6E6246);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sim-root .tasting-radar-bar {
+  height: 6px;
+  background: var(--paper-200, #E0D9C8);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.sim-root .tasting-radar-fill {
+  height: 100%;
+  background: var(--accent-olive, #5B6B44);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.sim-root .pairing-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  background: var(--paper-100, #ECE7DB);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--ink-0, #1A1410);
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+
+.sim-root .stock-critical-card {
+  background: color-mix(in oklab, var(--coral-500) 8%, var(--paper-0));
+  border: 1px solid var(--coral-500);
+  border-left: 4px solid var(--coral-700);
+  border-radius: var(--radius-sm, 2px);
+  padding: 12px 14px;
+}
 
