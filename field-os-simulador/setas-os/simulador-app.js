@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: db0598f20164eef86182da7620d3f9d017ad48e608a3618dab8e4ba39ea37c26
+// source-hash: bdbe657efbb613035e2afafb88912499c6e76911fc87c2cd7bd3a939fb392e5a
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -60,6 +60,108 @@ const SPP_DETAILS = {
     "Requiere la mayor humedad relativa del catálogo durante fructificación (90–95%). Por debajo del 88%, las primordias se secan antes de crecer. Un higrometro preciso es equipamiento no-negociable para esta especie.",
     "Produce consistentemente dos cosechas de calidad similar — inusual. La mayoría de especies caen 30–50% en segunda cosecha. Nameko mantiene el 80–85% del primer rendimiento si el bloque se sumerge en agua fría 12 horas entre flush."
   ] }
+};
+const SPECIES_GASTRONOMY = {
+  p_ostreatus_gris: {
+    title: "Orellana Gris · Pleurotus ostreatus",
+    botanical: "Lámina I · Basidiomycota · Pleurotaceae",
+    organoleptic: {
+      aroma: "Terroso suave, bosque andino tras la lluvia, sutil aroma a avellana fresca.",
+      flavor: "Umami equilibrado, dulce vegetal ligero con final almendrado.",
+      texture: "Carnosa, aterciopelada y elástica; gran retención de jugos en cocción."
+    },
+    metrics: { umami: 4, meatiness: 5, aromatics: 3, sweetness: 2 },
+    cooking: [
+      { method: "Salteado a fuego vivo", tip: "En sartén de hierro con mantequilla clarificada y sal marina; no tapar para lograr bordes dorados crujientes." },
+      { method: "Pasta fresca & Risottos", tip: "Incorporar al final del salteado con salvia fresca y reducción de vino blanco." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Chardonnay con crianza en roble o Sauvignon Blanc de altura." },
+      { category: "Quesos", item: "Parmesano Reggiano, queso Paipa añejo o gruyère." },
+      { category: "Hierbas", item: "Salvia, tomillo limonero, ajo negro y estragón." }
+    ],
+    presentation: "Bandeja kraft de 250 g con papel sulfurizado o faja de madera artesanal."
+  },
+  p_djamor: {
+    title: "Orellana Rosada · Pleurotus djamor",
+    botanical: "Lámina II · Basidiomycota · Pleurotaceae",
+    organoleptic: {
+      aroma: "Fresco, ligeramente marino con notas florales y cítricas suaves.",
+      flavor: "Umami brillante, toque mineral que evoca mariscos tiernos (camarón/langostilla).",
+      texture: "Firme, crujiente en láminas finas; tierna y elástica al diente."
+    },
+    metrics: { umami: 3, meatiness: 4, aromatics: 4, sweetness: 3 },
+    cooking: [
+      { method: "Ceviches templados & Carpaccios", tip: "Sellado relámpago de 90 segundos con aceite de oliva y jugo de mandarina o limón mandarino." },
+      { method: "Tacos gourmet & Woks", tip: "Cocción rápida con jengibre fresco, cebolla morada y cilantro cimarrón." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Vino rosado seco (Garnacha/Pinot Noir) o espumoso Brut." },
+      { category: "Aromáticos", item: "Cilantro cimarrón, ají dulce, ralladura de lima y jengibre." },
+      { category: "Aceites", item: "Aceite de oliva virgen extra monovarietal (Picual/Arbequina)." }
+    ],
+    presentation: "Bandeja kraft de 250 g ventilada; consumo preferente dentro de los 4 días."
+  },
+  shiitake: {
+    title: "Shiitake Roble · Lentinula edodes",
+    botanical: "Lámina III · Basidiomycota · Omphalotaceae",
+    organoleptic: {
+      aroma: "Intenso, sotobosque húmedo, notas de humo noble y corteza de roble.",
+      flavor: "Máxima concentración de ácido glutámico natural y guanilato; umami profundo y persistente.",
+      texture: "Densa, coriácea en pie (ideal para caldos), sombrero suculento y esponjoso."
+    },
+    metrics: { umami: 5, meatiness: 5, aromatics: 5, sweetness: 1 },
+    cooking: [
+      { method: "Glaseado & Confitado", tip: "Cocción lenta en salsa de soya artesanal, mirin y miel de Tenjo hasta reducir a textura laca." },
+      { method: "Fondo Dashi & Reducciones", tip: "Extracción en agua a 65 °C durante 45 minutos para maximizar liberación de ribonucleótidos." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Tintos de cuerpo medio: Pinot Noir, Nebbiolo o Carmenere." },
+      { category: "Proteínas", item: "Cortes de res madurada, magret de pato o cerdo confitado." },
+      { category: "Caldos", item: "Dashi, caldos concentrados de hueso y ramen de autor." }
+    ],
+    presentation: "Caja de madera noble con puente QR de trazabilidad de sustrato de roble."
+  },
+  lions_mane: {
+    title: "Melena de León · Hericium erinaceus",
+    botanical: "Lámina IV · Basidiomycota · Hericiaceae",
+    organoleptic: {
+      aroma: "Dulce, notas de mantequilla tibia, frutos secos y rocío matutino.",
+      flavor: "Extraordinaria semejanza gustativa con bogavante, langosta o carne de cangrejo real.",
+      texture: "Mullida, tierna, filamentosa que se deshace delicadamente en boca."
+    },
+    metrics: { umami: 4, meatiness: 4, aromatics: 4, sweetness: 4 },
+    cooking: [
+      { method: "Medallones a la plancha", tip: "Cortar en filetes gruesos de 2 cm, prensar suavemente para dorar en mantequilla marrón y ajo confitado." },
+      { method: "Rolls & Guisos marineros", tip: "Deshilachar a mano en hebras e incorporar en brioche tostado con mayonesa de estragón." }
+    ],
+    pairings: [
+      { category: "Vinos", item: "Chardonnay fermentado en barrica, Viognier o Champagne Brut Nature." },
+      { category: "Salsas", item: "Holandesa, bearnesa, mantequilla café de París." },
+      { category: "Botánicos", item: "Flor de sal marina, eneldo fresco y pimienta rosa." }
+    ],
+    presentation: "Caja protectora de madera con lecho de viruta de roble orgánico."
+  },
+  reishi: {
+    title: "Reishi Rojo · Ganoderma lucidum",
+    botanical: "Lámina V · Basidiomycota · Ganodermataceae",
+    organoleptic: {
+      aroma: "Amaderado noble, resina de pino, cuero curtido y tierra profunda.",
+      flavor: "Amargor tónico medicinal elegante con regusto terroso complejo.",
+      texture: "Leñosa no masticable; destinada exclusivamente a extracción hidroalcohólica o decocción."
+    },
+    metrics: { umami: 2, meatiness: 1, aromatics: 5, sweetness: 0 },
+    cooking: [
+      { method: "Doble extracción tónica", tip: "Decocción acuosa de 2 horas seguida de maceración en alcohol neutro de caña al 70%." },
+      { method: "Caldos adaptogénicos", tip: "Infusionar 5 g de láminas secas en caldos de cocción larga con jengibre y cardamomo." }
+    ],
+    pairings: [
+      { category: "Bebidas", item: "Café de especialidad de altura, té negro fermentado (Pu-erh) o mezcal artesanal." },
+      { category: "Chocolates", item: "Cacao colombiano al 75% o 85% de origen Tumaco o Arauca." },
+      { category: "Mieles", item: "Miel cruda de bosque andino y polen de páramo." }
+    ],
+    presentation: "Frasco boticario ámbar de 50 ml con gotero o láminas selladas al vacío."
+  }
 };
 const SPP_SUBSTRATE_GUIDE = {
   p_ostreatus_gris: [
@@ -889,6 +991,163 @@ const useDialogA11y = (onClose) => {
   }, []);
   return dialogRef;
 };
+const AppIcon = ({ name, size = 14, className = "", style = {}, color = "currentColor" }) => {
+  const s = { display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...style };
+  switch (name) {
+    case "print":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("polyline", { points: "6 9 6 2 18 2 18 9" }), /* @__PURE__ */ React.createElement("path", { d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" }), /* @__PURE__ */ React.createElement("rect", { x: "6", y: "14", width: "12", height: "8" }));
+    case "tag":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" }), /* @__PURE__ */ React.createElement("path", { d: "M7 7h.01" }));
+    case "qr":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "3", width: "7", height: "7" }), /* @__PURE__ */ React.createElement("rect", { x: "14", y: "3", width: "7", height: "7" }), /* @__PURE__ */ React.createElement("rect", { x: "14", y: "14", width: "7", height: "7" }), /* @__PURE__ */ React.createElement("rect", { x: "3", y: "14", width: "7", height: "7" }), /* @__PURE__ */ React.createElement("path", { d: "M7 7h.01M17 7h.01M7 17h.01M17 17h.01" }));
+    case "rocket":
+    case "launch":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" }), /* @__PURE__ */ React.createElement("path", { d: "m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" }), /* @__PURE__ */ React.createElement("path", { d: "M9 12H4s.55-3.03 2-4.5c1.45-1.47 4.5-2 4.5-2" }), /* @__PURE__ */ React.createElement("path", { d: "M12 15v5s3.03-.55 4.5-2c1.47-1.45 2-4.5 2-4.5" }));
+    case "sprout":
+    case "harvest":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M7 20h10" }), /* @__PURE__ */ React.createElement("path", { d: "M10 20c5.5-2.5.8-6.4 3-10" }), /* @__PURE__ */ React.createElement("path", { d: "M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" }), /* @__PURE__ */ React.createElement("path", { d: "M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.4 1.7-4.6-2.7.2-4.1 1.1-4.9 2z" }));
+    case "pantry":
+    case "warehouse":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" }), /* @__PURE__ */ React.createElement("path", { d: "M6 18h12" }), /* @__PURE__ */ React.createElement("path", { d: "M6 14h12" }), /* @__PURE__ */ React.createElement("path", { d: "M6 10h12" }));
+    case "temp":
+    case "thermometer":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" }), /* @__PURE__ */ React.createElement("path", { d: "M12 9v5" }));
+    case "camera":
+    case "scan":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" }), /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "13", r: "3" }));
+    case "alert":
+    case "warning":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" }), /* @__PURE__ */ React.createElement("line", { x1: "12", y1: "9", x2: "12", y2: "13" }), /* @__PURE__ */ React.createElement("line", { x1: "12", y1: "17", x2: "12.01", y2: "17" }));
+    case "globe":
+    case "trace":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /* @__PURE__ */ React.createElement("line", { x1: "2", y1: "12", x2: "22", y2: "12" }), /* @__PURE__ */ React.createElement("path", { d: "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" }));
+    case "sparkles":
+    case "wand":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z" }));
+    case "check":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("polyline", { points: "20 6 9 17 4 12" }));
+    case "close":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), /* @__PURE__ */ React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" }));
+    case "droplet":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" }));
+    case "wind":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" }), /* @__PURE__ */ React.createElement("path", { d: "M9.6 4.6A2 2 0 1 1 11 8H2" }), /* @__PURE__ */ React.createElement("path", { d: "M12.6 19.4A2 2 0 1 0 14 16H2" }));
+    case "clock":
+    case "history":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /* @__PURE__ */ React.createElement("polyline", { points: "12 6 12 12 16 14" }));
+    case "chevron-left":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("polyline", { points: "15 18 9 12 15 6" }));
+    case "chevron-right":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("polyline", { points: "9 18 15 12 9 6" }));
+    default:
+      return null;
+  }
+};
+const ColonizationScaleSelector = ({ value = 0, onChange, onQuickAction }) => {
+  const steps = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  return /* @__PURE__ */ React.createElement("div", { className: "col-scale-container", "data-testid": "colonization-scale-selector" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-700)" } }, "Avance de Micelio: ", /* @__PURE__ */ React.createElement("strong", { style: { color: value >= 80 ? "var(--moss-700)" : "var(--ink-900)", fontSize: 13 } }, value, "%")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-sec inv-btn-sm",
+      style: { padding: "2px 8px", fontSize: 11, minHeight: 32 },
+      onClick: () => onChange(Math.max(10, (Number(value) || 0) - 10)),
+      disabled: (Number(value) || 0) <= 10,
+      title: "Restar 10%"
+    },
+    "-10%"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-sec inv-btn-sm",
+      style: { padding: "2px 8px", fontSize: 11, minHeight: 32 },
+      onClick: () => onChange(Math.min(100, (Number(value) || 0) + 10)),
+      disabled: (Number(value) || 0) >= 100,
+      title: "Sumar 10%"
+    },
+    "+10%"
+  ))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(10,1fr)", gap: 3 } }, steps.map((step) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: step,
+      type: "button",
+      className: "col-step-chip",
+      onClick: () => onChange(step),
+      style: {
+        fontWeight: value === step ? 800 : 500,
+        background: value >= step ? "var(--moss-600)" : "var(--paper-200)",
+        color: value >= step ? "var(--paper-0)" : "var(--ink-600)",
+        border: value === step ? "1px solid var(--ink-900)" : "1px solid transparent"
+      },
+      title: `Marcar ${step}% de colonización`
+    },
+    step
+  ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-sec inv-btn-sm",
+      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      onClick: () => onQuickAction("primordios"),
+      title: "Detectados primordios visibles (inicio de fructificación)"
+    },
+    /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 12, color: "var(--moss-600)" }),
+    " Primordios"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-sec inv-btn-sm",
+      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      onClick: () => onQuickAction("riego"),
+      title: "Verificación de humedad y niebla"
+    },
+    /* @__PURE__ */ React.createElement(AppIcon, { name: "droplet", size: 12, color: "var(--accent-blue-grey)" }),
+    " Riego OK"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-sec inv-btn-sm",
+      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      onClick: () => onQuickAction("ventilacion"),
+      title: "Extracción y recambio de aire"
+    },
+    /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 12, color: "var(--ink-500)" }),
+    " Ventilación"
+  )));
+};
+const PublicTraceabilityModal = ({ loteId, loteCode, lotes = [], cosechas = [], onClose }) => {
+  const lote = lotes.find((l) => l.id === loteId || l.codigo === loteCode || l.id === loteCode) || lotes[0];
+  const harvests = lote ? cosechas.filter((c) => c.loteId === lote.id) : [];
+  const totalKg = harvests.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
+  const spImg = lote?.especieKey ? IMG[lote.especieKey] || IMG.p_ostreatus_gris : IMG.p_ostreatus_gris;
+  return /* @__PURE__ */ React.createElement(
+    AccessibleModal,
+    {
+      onClose,
+      label: "Ficha Pública de Trazabilidad · Setas de la Peña",
+      dialogStyle: { width: "min(520px,94vw)", padding: 0, background: "var(--paper-50,#FDFCF7)", border: "1px solid var(--border-soft,#D8D3C5)", borderRadius: "var(--r-md,6px)", overflow: "hidden", boxShadow: "var(--shadow-lift)" }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { background: "var(--ink-900,#1B1A17)", color: "var(--paper-50,#FDFCF7)", padding: "24px 22px 20px", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--paper-300,#C8C3B5)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-400,#8BA870)" }), " Trazabilidad de Origen · Tenjo, Colombia"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontSize: 22, fontWeight: 900, color: "var(--paper-50,#FDFCF7)", margin: "6px 0 2px", letterSpacing: "-.01em" } }, lote?.especie || "Seta Cultivada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: 13, color: "var(--paper-200,#E5E0D3)" } }, lote?.especieCientifico || "Pleurotus ostreatus")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", style: { color: "var(--paper-200)", background: "rgba(255,255,255,.08)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }, onClick: onClose, "aria-label": "Cerrar ficha" }, "✕"))),
+    /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "center", background: "var(--paper-100,#F5F2E9)", padding: "12px 14px", borderRadius: "var(--r-sm,4px)", border: "1px solid var(--border-soft,#D8D3C5)" } }, /* @__PURE__ */ React.createElement("img", { src: spImg, alt: lote?.especie || "Seta", style: { width: 54, height: 54, objectFit: "contain", borderRadius: 4, background: "#fff", border: "1px solid var(--border-soft)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: "var(--ink-900)" } }, "Lote #", lote?.codigo || "SDP-LOTE"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-600)", marginTop: 2 } }, "Finca El Peñón · Altitud 2.587 msnm · Clima frío de montaña"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Inoculación"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, lote?.fechaInoculacion || "—")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Cosecha Registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 15, fontWeight: 700, color: "var(--moss-700)", marginTop: 2 } }, totalKg > 0 ? `${totalKg.toFixed(2)} kg` : "En proceso"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--surface-accent-soft,#E8F0E0)", border: "1px solid var(--moss-300,#A8C090)", borderRadius: 4, padding: "12px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, color: "var(--moss-900)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: 12 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 14, color: "var(--moss-700)" }), " Sustrato 100% Botánico Limpio"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--moss-900)", margin: "4px 0 0", lineHeight: 1.45 } }, "Cultivado sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua de montaña y monitoreado bajo control ambiental continuo.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-sec",
+        style: { fontSize: 11, display: "flex", alignItems: "center", gap: 6 },
+        onClick: () => {
+          const url = `${window.location.origin}${window.location.pathname}?trace=${lote?.codigo || ""}`;
+          navigator.clipboard?.writeText?.(url);
+          alert("Enlace público de trazabilidad copiado al portapapeles: " + url);
+        }
+      },
+      /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13 }),
+      " Copiar Enlace QR"
+    ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar")))
+  );
+};
 const AccessibleModal = ({ onClose, label, children, backdropClassName = "inv-modal-bg", dialogClassName = "inv-modal", dialogStyle }) => {
   const dialogRef = useDialogA11y(onClose);
   return /* @__PURE__ */ React.createElement("div", { className: backdropClassName, onClick: (e) => {
@@ -1527,6 +1786,8 @@ function App(props) {
   const [thermalBagStart, setThermalBagStart] = useState(1);
   const [thermalBagEnd, setThermalBagEnd] = useState(20);
   const [thermalCosechaItem, setThermalCosechaItem] = useState(null);
+  const [showTastingModal, setShowTastingModal] = useState(false);
+  const [tastingSpeciesKey, setTastingSpeciesKey] = useState("p_ostreatus_gris");
   const [showDiagModal, setShowDiagModal] = useState(false);
   const [diagLoteId, setDiagLoteId] = useState("");
   const [diagBolsaId, setDiagBolsaId] = useState("");
@@ -1746,15 +2007,23 @@ function App(props) {
   const cmpFileRef = useRef(null);
   const [showProvModal, setShowProvModal] = useState(false);
   const [newProv, setNewProv] = useState({ nombre: "", tipo: "plaza", municipio: "" });
+  const [publicTraceModalLoteId, setPublicTraceModalLoteId] = useState(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      return p.get("trace") || p.get("c") || null;
+    } catch (e) {
+      return null;
+    }
+  });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen || showProdLaunchModal);
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen, showProdLaunchModal]);
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -2152,6 +2421,47 @@ function App(props) {
   useEffect(() => {
     if (typeof props.onStockAlertChange === "function") props.onStockAlertChange(lowStockCount);
   }, [lowStockCount]);
+  const formularConStockBodega = () => {
+    const availableStockIds = Object.keys(stockMap).filter((id) => Number(stockMap[id]) > 0);
+    if (!availableStockIds.length) {
+      setNoticeDlg({
+        title: "Bodega sin existencias",
+        msg: "No hay ingredientes con stock disponible en bodega. Registra compras o inventario en la pestaña Bodega antes de formular."
+      });
+      return;
+    }
+    try {
+      const r = runHybridRecipeSearch({
+        targetKey: sKey,
+        recipe: [],
+        invLotes,
+        useStock: true,
+        stockMap,
+        ingredients: INGS,
+        profileKey: optProfile || "produccion"
+      });
+      const cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0];
+      if (!cand || !cand.recipe || !cand.recipe.length) {
+        setNoticeDlg({
+          title: "Sin combinación viable con stock actual",
+          msg: `Los ingredientes disponibles en bodega no alcanzan para balancear la relación C:N y humedad de ${sp?.name || "la especie"}. Intenta agregar una base de carbono o suplemento nitrogenado en Bodega.`
+        });
+        return;
+      }
+      const formatted = cand.recipe.map((item) => ({ id: item.id, pct: Number(item.p || item.pct || 0) }));
+      setRecipe(formatted);
+      const maxBatch = calcMaxBatchFromStock(cand.recipe, stockMap, 10, sp?.moisture?.ideal || 65, INGS);
+      setNoticeDlg({
+        title: "Receta formulada con stock de bodega",
+        msg: `Se cargó la fórmula óptima para ${sp?.name || "la especie"} usando exclusivamente insumos en existencia. Capacidad estimada: ${maxBatch?.maxBolsas || 10} bolsas (${(maxBatch?.maxKgWet || 15).toFixed(1)} kg sustrato húmedo).`
+      });
+    } catch (err) {
+      setNoticeDlg({
+        title: "Error al formular con stock",
+        msg: err?.message || "No se pudo generar la receta con el stock actual."
+      });
+    }
+  };
   const blendedEB = an ? blendEBWithHistory(an, histStats) : null;
   const [appliedIcons, setAppliedIcons] = React.useState({});
   React.useEffect(() => {
@@ -3472,7 +3782,7 @@ BATCH (${numBags}×${kgBag} kg):
     const bolsas = bitBolsas.filter((b) => b.loteId === lote.id);
     const cosechas = bitCosechas.filter((c) => c.loteId === lote.id);
     const events = [...cosechas.map((c) => ({ id: c.id, title: `Cosecha · flush ${c.flush}`, meta: `${c.fecha} · ${c.pesoFresco} g`, kind: "measured" })), ...bolsas.filter((b) => b.col100).map((b) => ({ id: b.id, title: `Colonización completa · ${b.codigo}`, meta: b.col100, kind: "manual" }))];
-    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, "🏷 Imprimir Etiquetas Térmicas")), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie)), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, /* @__PURE__ */ React.createElement("span", null, lote.numBolsas, " bolsas"), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, lote.recipeRef?.name || "Receta sin vincular")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, actionLabel[actions[0]] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.filter((a) => actionLabel[a]).map((action) => /* @__PURE__ */ React.createElement("button", { key: action, className: "os-action", type: "button", onClick: () => runBatchAction(action, lote) }, actionLabel[action])), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
+    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " 🏷 Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie)), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, /* @__PURE__ */ React.createElement("span", null, lote.numBolsas, " bolsas"), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, lote.recipeRef?.name || "Receta sin vincular")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, actionLabel[actions[0]] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.filter((a) => actionLabel[a]).map((action) => /* @__PURE__ */ React.createElement("button", { key: action, className: "os-action", type: "button", onClick: () => runBatchAction(action, lote) }, actionLabel[action])), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
       setThermalLote(lote);
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
@@ -3678,6 +3988,17 @@ BATCH (${numBags}×${kgBag} kg):
       {
         type: "button",
         className: "inv-btn inv-btn-sec",
+        onClick: () => setPublicTraceModalLoteId(lote.id),
+        style: { display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-sm)", padding: "6px 12px" },
+        title: "Ver ficha pública de trazabilidad de cara al cliente"
+      },
+      /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }),
+      " Ficha Pública QR"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-sec",
         onClick: () => openThermalForLote(lote.id),
         style: { display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-sm)", padding: "6px 12px" },
         title: "Imprimir rollo completo de etiquetas térmicas con QR"
@@ -3685,7 +4006,48 @@ BATCH (${numBags}×${kgBag} kg):
       "🏷 Imprimir Rollo QR (",
       lote.numBolsas || 12,
       " bolsas)"
-    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("select", { name: `loteStatus-${lote.id}`, "aria-label": `Estado del lote ${lote.codigo}`, value: lote.estado, onChange: (e) => updateBitLote(lote.id, { estado: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, ["incubacion", "fructificacion", "completado", "descartado"].map((st) => /* @__PURE__ */ React.createElement("option", { key: st, value: st }, st))))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table bolsas-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Código"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Estado"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 25%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 50%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 100%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Observaciones"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Foto"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Cosechas"), /* @__PURE__ */ React.createElement("th", { scope: "col", style: { textAlign: "center" } }, "Etiqueta"))), /* @__PURE__ */ React.createElement("tbody", null, bolsas.map((bolsa) => {
+    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("select", { name: `loteStatus-${lote.id}`, "aria-label": `Estado del lote ${lote.codigo}`, value: lote.estado, onChange: (e) => updateBitLote(lote.id, { estado: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, ["incubacion", "fructificacion", "completado", "descartado"].map((st) => /* @__PURE__ */ React.createElement("option", { key: st, value: st }, st))))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
+      ColonizationScaleSelector,
+      {
+        value: (() => {
+          if (!bolsas.length) return 0;
+          const avgPct = bolsas.reduce((acc, cur) => acc + (cur.colonizationPct || (cur.col100 ? 100 : cur.col50 ? 50 : cur.col25 ? 25 : 0)), 0) / bolsas.length;
+          return Math.round(avgPct / 10) * 10 || (bolsas.some((x) => x.col100) ? 100 : bolsas.some((x) => x.col50) ? 50 : bolsas.some((x) => x.col25) ? 25 : 10);
+        })(),
+        onChange: (pct) => {
+          const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+          bolsas.forEach((b) => {
+            const up = {};
+            if (pct >= 25 && !b.col25) up.col25 = today;
+            if (pct >= 50 && !b.col50) up.col50 = today;
+            if (pct >= 100 && !b.col100) up.col100 = today;
+            up.colonizationPct = pct;
+            updateBitBolsa(b.id, up);
+          });
+          if (pct >= 100 && lote.estado === "incubacion") {
+            updateBitLote(lote.id, { estado: "fructificacion" });
+          }
+          setNoticeDlg({
+            title: "Avance registrado",
+            msg: `Se actualizó el avance de micelio al ${pct}% en las bolsas de ${lote.codigo}.`
+          });
+        },
+        onQuickAction: (act) => {
+          const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+          if (act === "primordios") {
+            updateBitLote(lote.id, { estado: "fructificacion" });
+            bolsas.forEach((b) => {
+              updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
+            });
+            setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${lote.codigo} actualizado a fructificación.` });
+          } else if (act === "riego") {
+            setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad registrada para ${lote.codigo}.` });
+          } else if (act === "ventilacion") {
+            setNoticeDlg({ title: "Ventilación activada", msg: `Ciclo de recambio de aire verificado para ${lote.codigo}.` });
+          }
+        }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table bolsas-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Código"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Estado"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 25%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 50%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Col 100%"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Observaciones"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Foto"), /* @__PURE__ */ React.createElement("th", { scope: "col" }, "Cosechas"), /* @__PURE__ */ React.createElement("th", { scope: "col", style: { textAlign: "center" } }, "Etiqueta"))), /* @__PURE__ */ React.createElement("tbody", null, bolsas.map((bolsa) => {
       const cosBolsa = bitCosechas.filter((c) => c.bolsaId === bolsa.id);
       const totalBolsa = cosBolsa.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const est = EB[bolsa.estado] || EB.sana;
@@ -3752,6 +4114,17 @@ BATCH (${numBags}×${kgBag} kg):
     return /* @__PURE__ */ React.createElement("div", { className: "fos-chips" }, activeGroup.tabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, className: t === tab ? "on" : "", onClick: () => goTab(t) }, TAB_LABELS[t])));
   })(), (tab === "home" || tab === "inicio") && (() => {
     const totalStockKg = invLotes.filter((l) => l.activo).reduce((s, l) => s + (Number(l.cantidadKgDisponible) || 0), 0);
+    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
+    const aggregatedStock = {};
+    invLotes.filter((l) => l.activo).forEach((l) => {
+      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
+    });
+    const criticalStockItems = INGS.map((ing) => {
+      const stockKg = aggregatedStock[ing.id] || 0;
+      const threshold = lowStockThresholds[ing.type] || 5;
+      return { ing, stockKg, threshold, isLow: stockKg < threshold };
+    }).filter((item) => item.isLow);
+    const lowStockCount2 = criticalStockItems.length;
     const totalBolsasCount = bitBolsas.length;
     const bolsasIncubacion = bitBolsas.filter((b) => b.estado === "sana" && !b.col100).length;
     const bolsasFructificacion = bitBolsas.filter((b) => b.estado === "sana" && b.col100).length;
@@ -3780,7 +4153,7 @@ BATCH (${numBags}×${kgBag} kg):
     const overdueTaskCount = operationalQueue.filter((item) => item.bucket === "overdue").length;
     const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
     const pendingTaskCount = operationalQueue.filter((item) => !["later", "context"].includes(item.bucket)).length;
-    const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount;
+    const incidentCount = criticalTaskCount + blockedTaskCount + lowStockCount2;
     const operationStatus = criticalTaskCount > 0 ? { label: `${criticalTaskCount} crítica${criticalTaskCount === 1 ? "" : "s"}`, color: "var(--coral-700)" } : overdueTaskCount > 0 || incidentCount > 0 ? { label: `${overdueTaskCount + incidentCount} pendiente${overdueTaskCount + incidentCount === 1 ? "" : "s"}`, color: "var(--ochre-700)" } : { label: "Operación estable", color: "var(--moss-700)" };
     let camaras = [];
     try {
@@ -3892,7 +4265,10 @@ BATCH (${numBags}×${kgBag} kg):
         justifyContent: "space-between",
         gap: 18,
         boxShadow: "var(--shadow-card-rest)"
-      } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, /* @__PURE__ */ React.createElement(IconBox, { size: 11 }), " PLANTA & INSUMOS"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, stockIds.size, " variedades")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Producción & Bodega"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Stock Disponible"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, totalStockKg.toFixed(1), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Lotes de Insumos"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, invLotes.filter((l) => l.activo).length)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Proveedores"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invProveedores.length, " activos")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Compras Reg."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invCompras.length, " facturas")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("produccion"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Ficha de Mezclado"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("inventario"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Bodega"))), /* @__PURE__ */ React.createElement("div", { className: "home-workspace-card", style: {
+      } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--moss-700)" } }, /* @__PURE__ */ React.createElement(IconBox, { size: 11 }), " PLANTA & INSUMOS"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, stockIds.size, " variedades")), /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-md)", color: "var(--ink-900)", marginBottom: 8 } }, "Producción & Bodega"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-600)", lineHeight: 1.45, marginBottom: 16 } }, "Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Stock Disponible"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, totalStockKg.toFixed(1), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Lotes de Insumos"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, invLotes.filter((l) => l.activo).length)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Proveedores"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invProveedores.length, " activos")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Compras Reg."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--ink-900)" } }, invCompras.length, " facturas"))), criticalStockItems.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { background: "color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))", border: "1px solid var(--coral-500)", borderLeft: "4px solid var(--coral-700)", borderRadius: "var(--r-xs)", padding: "10px 12px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--coral-700)" } }, "⚠ Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+        setInvTab("compra");
+        goTab("inventario");
+      }, style: { background: "none", border: "none", color: "var(--coral-700)", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: 9.5, padding: "2px 5px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "var(--coral-700)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-400)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))) : /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", padding: "6px 10px", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--moss-700)", fontSize: 12 } }, "✓"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-600)" } }, "Todos los insumos con stock operativo adecuado"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("produccion"), className: "home-panel-btn is-primary", style: { flex: 1, padding: "8px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", cursor: "pointer" } }, "Ficha de Mezclado"), /* @__PURE__ */ React.createElement("button", { onClick: () => goTab("inventario"), className: "home-panel-btn is-secondary", style: { padding: "8px 12px", background: "transparent", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", cursor: "pointer" } }, "Bodega"))), /* @__PURE__ */ React.createElement("div", { className: "home-workspace-card", style: {
         background: "var(--paper-0)",
         border: "1px solid var(--border-soft)",
         borderTop: "3px solid var(--slate-500)",
@@ -4037,7 +4413,10 @@ BATCH (${numBags}×${kgBag} kg):
         const w = Math.max(hi - lo, 4);
         return /* @__PURE__ */ React.createElement("div", { key: b.lbl, style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", width: 90, flexShrink: 0 } }, b.lbl), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 5, background: "var(--paper-300)", borderRadius: 3, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${lo}%`, width: `${w}%`, height: "100%", background: b.color, borderRadius: 3, transition: "width .5s cubic-bezier(.32,.72,.36,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", width: 54, textAlign: "right", flexShrink: 0 } }, b.min === b.max ? `${b.min}${b.unit}` : `${b.min}–${b.max}${b.unit}`));
       }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-800)", width: 90, flexShrink: 0 } }, "Dificultad"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", gap: 3 } }, [1, 2, 3, 4].map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: { flex: 1, height: 5, borderRadius: 3, background: d <= diff ? "var(--coral-500)" : "var(--paper-300)", transition: "background .3s" } }))), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", width: 54, textAlign: "right", flexShrink: 0 } }, SPP_DIFFICULTY[sKey] || "Media"))));
-    })())), /* @__PURE__ */ React.createElement("div", { className: "spp-info-center", style: { display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { className: "spp-img-wrap", style: { flex: 1, position: "relative", minHeight: 320 } }, IMG[sKey] && /* @__PURE__ */ React.createElement("img", { src: IMG[sKey], alt: sp.name, width: "520", height: "390", className: "spp-info-img", style: { objectPosition: "center 65%" }, loading: "lazy", decoding: "async" })), /* @__PURE__ */ React.createElement("div", { className: "spp-cta-row" }, /* @__PURE__ */ React.createElement("span", { className: "spp-cta-note" }, "Dificultad: ", SPP_DIFFICULTY[sKey] || "Media"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    })())), /* @__PURE__ */ React.createElement("div", { className: "spp-info-center", style: { display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { className: "spp-img-wrap", style: { flex: 1, position: "relative", minHeight: 320 } }, IMG[sKey] && /* @__PURE__ */ React.createElement("img", { src: IMG[sKey], alt: sp.name, width: "520", height: "390", className: "spp-info-img", style: { objectPosition: "center 65%" }, loading: "lazy", decoding: "async" })), /* @__PURE__ */ React.createElement("div", { className: "spp-cta-row", style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "spp-cta-note" }, "Dificultad: ", SPP_DIFFICULTY[sKey] || "Media"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setTastingSpeciesKey(sKey);
+      setShowTastingModal(true);
+    }, className: "spp-cta", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)" } }, "🍷 Ficha de Cata"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setCatalogModalOpen(false);
       openBuilderSubTab("formular");
       goTab("formular");
@@ -4277,7 +4656,21 @@ Click para ver análisis completo`
     },
     /* @__PURE__ */ React.createElement("span", { className: "bodega-bar-icon", "aria-hidden": "true", style: { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)", display: "flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(IcoBox, { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)" })),
     /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-title" }, pantryIds.length > 0 ? pantryIds.length + " ingredientes en bodega" : "Bodega vacía — sin stock registrado"), pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-sub" }, Object.values(stockMap).reduce((a, b) => a + b, 0).toFixed(1), " kg disponibles"))
-  ), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-right" }, /* @__PURE__ */ React.createElement("button", { className: "bodega-bar-refresh", onClick: (e) => {
+  ), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-right", style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-pri inv-btn-sm",
+      style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" },
+      onClick: (e) => {
+        e.stopPropagation();
+        formularConStockBodega();
+      },
+      title: "Formular automáticamente la mejor receta usando exclusivamente el stock disponible en bodega"
+    },
+    /* @__PURE__ */ React.createElement(AppIcon, { name: "pantry", size: 13, color: "var(--paper-50)" }),
+    " Formular con Stock"
+  ), /* @__PURE__ */ React.createElement("button", { className: "bodega-bar-refresh", onClick: (e) => {
     e.stopPropagation();
     goTab("inventario");
   }, title: "Actualizar stock", "aria-label": "Actualizar stock" }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", viewBox: "0 0 24 24", width: "14", height: "14", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" }))))), usePantry && pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "pantry-grid", style: { marginBottom: 8 } }, pantryIds.slice(0, 12).map((id) => {
@@ -4888,7 +5281,10 @@ Click para ver análisis completo`
       return /* @__PURE__ */ React.createElement("div", { key: e.id, "data-recipe-id": e.id, className: "dash-card", style: { borderTopColor: band } }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-top" }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-name" }, e.name), /* @__PURE__ */ React.createElement("div", { className: "dash-card-spp" }, s2?.name, " · ", e.date)), /* @__PURE__ */ React.createElement("div", { className: "dash-card-body" }, /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "EB estimada"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: eb >= 100 ? "var(--moss-500)" : eb >= 80 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, e.eb, "%")), sc > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Score"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, sc, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "/100"))), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.cn, ":1")), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Ingredientes"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.recipe.length)), costKg > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Costo total/kg"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: "var(--ink-900)", fontFamily: "var(--font-num)", fontSize: "var(--text-base)" }, title: `Ingredientes: $${costIngKg.toLocaleString("es-CO")} + Energía proceso: $${eDash.toLocaleString("es-CO")}` }, "$", costKg.toLocaleString("es-CO"), " COP", eDash > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: 4 } }, "⚡+$", eDash.toLocaleString())))), costKg > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--paper-300)" } }, [{ nom: "20×50", kgH: 1.8 }, { nom: "18×35", kgH: 1 }, { nom: "Punch", kgH: 3.5 }].map((b) => /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "4px 6px", borderRight: "1px solid var(--paper-300)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", marginBottom: 1 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-sm)", color: "var(--ink-900)", fontWeight: 700 } }, "$", Math.round(costKg * b.kgH * hFactor).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)" } }, "COP/bolsa")))), /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 16px 10px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, e.recipe.slice(0, 4).map((r) => {
         const g = INGS.find((i) => i.id === r.id);
         return g ? /* @__PURE__ */ React.createElement("span", { key: r.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)" } }, g.name.length > 15 ? g.name.slice(0, 15) + "…" : g.name, " ", r.p, "%") : null;
-      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot" }, /* @__PURE__ */ React.createElement("button", { className: "dash-sload", style: { flex: 1 }, onClick: () => {
+      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot", style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sload", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)", padding: "4px 10px" }, onClick: () => {
+        setTastingSpeciesKey(e.sKey);
+        setShowTastingModal(true);
+      }, title: "Abrir dossier gastronómico y maridaje" }, "🍷 Cata"), /* @__PURE__ */ React.createElement("button", { className: "dash-sload", style: { flex: 1 }, onClick: () => {
         loadR(e);
       } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sdel", onClick: () => requireAdmin(delR)(e.id), "aria-label": `Eliminar receta ${e.name}` }, "✕")));
     }));
@@ -4946,19 +5342,95 @@ Click para ver análisis completo`
       {
         onClose: () => setShowQrSheet(false),
         label: "Captura rápida de campo",
-        dialogStyle: { width: "min(440px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
+        dialogStyle: { width: "min(460px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)" } }, "📷 Captura Rápida · Registro en Sala"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => setShowQrSheet(false) }, "✕")),
-      currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, "Estado: ", currentLote.estado, " · ", currentLote.numBolsas || 0, " bolsas"), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "camera", size: 14, color: "var(--ink-0)" }), " Ronda de Campo · Registro Rápido"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => setShowQrSheet(false) }, "✕")),
+      currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { padding: "4px 8px", display: "flex", alignItems: "center", gap: 4, fontSize: 11 },
+          disabled: activeBatches.length <= 1,
+          onClick: () => {
+            const idx = activeBatches.findIndex((l) => l.id === currentLote.id);
+            const prevIdx = (idx - 1 + activeBatches.length) % activeBatches.length;
+            setQrSelectedLoteId(activeBatches[prevIdx]?.id);
+          },
+          "aria-label": "Lote anterior"
+        },
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "chevron-left", size: 12 }),
+        " Anterior"
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-600)", fontWeight: 600 } }, "Lote ", activeBatches.findIndex((l) => l.id === currentLote.id) + 1 || 1, " de ", activeBatches.length || 1), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { padding: "4px 8px", display: "flex", alignItems: "center", gap: 4, fontSize: 11 },
+          disabled: activeBatches.length <= 1,
+          onClick: () => {
+            const idx = activeBatches.findIndex((l) => l.id === currentLote.id);
+            const nextIdx = (idx + 1) % activeBatches.length;
+            setQrSelectedLoteId(activeBatches[nextIdx]?.id);
+          },
+          "aria-label": "Siguiente lote"
+        },
+        "Siguiente ",
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "chevron-right", size: 12 })
+      )), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, "Estado: ", currentLote.estado, " · ", currentLote.numBolsas || 0, " bolsas"), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
         "select",
         {
           className: "inv-input",
-          style: { marginTop: 8, fontSize: 11, minHeight: 44 },
+          style: { marginTop: 8, fontSize: 11, minHeight: 38 },
           value: currentLote.id,
           onChange: (e) => setQrSelectedLoteId(e.target.value),
           "aria-label": "Cambiar lote activo"
         },
         activeBatches.map((l) => /* @__PURE__ */ React.createElement("option", { key: l.id, value: l.id }, l.codigo, " — ", l.especie, " (", l.estado, ")"))
+      )), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(
+        ColonizationScaleSelector,
+        {
+          value: (() => {
+            const b = bitBolsas.filter((x) => x.loteId === currentLote.id);
+            if (!b.length) return 0;
+            const avgPct = b.reduce((acc, cur) => acc + (cur.colonizationPct || (cur.col100 ? 100 : cur.col50 ? 50 : cur.col25 ? 25 : 0)), 0) / b.length;
+            return Math.round(avgPct / 10) * 10 || (b.some((x) => x.col100) ? 100 : b.some((x) => x.col50) ? 50 : b.some((x) => x.col25) ? 25 : 10);
+          })(),
+          onChange: (pct) => {
+            const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+            const loteBolsas = bitBolsas.filter((b) => b.loteId === currentLote.id);
+            loteBolsas.forEach((b) => {
+              const up = {};
+              if (pct >= 25 && !b.col25) up.col25 = today;
+              if (pct >= 50 && !b.col50) up.col50 = today;
+              if (pct >= 100 && !b.col100) up.col100 = today;
+              up.colonizationPct = pct;
+              updateBitBolsa(b.id, up);
+            });
+            if (pct >= 100 && currentLote.estado === "incubacion") {
+              updateBitLote(currentLote.id, { estado: "fructificacion" });
+            }
+            setNoticeDlg({
+              title: "Avance registrado",
+              msg: `Se registró ${pct}% de colonización en las bolsas del lote ${currentLote.codigo}.`
+            });
+          },
+          onQuickAction: (act) => {
+            const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+            if (act === "primordios") {
+              updateBitLote(currentLote.id, { estado: "fructificacion" });
+              const loteBolsas = bitBolsas.filter((b) => b.loteId === currentLote.id);
+              loteBolsas.forEach((b) => {
+                updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
+              });
+              setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${currentLote.codigo} pasado a etapa de fructificación.` });
+            } else if (act === "riego") {
+              setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad y niebla registrada para ${currentLote.codigo}.` });
+            } else if (act === "ventilacion") {
+              setNoticeDlg({ title: "Ventilación activada", msg: `Ciclo de extracción y renovación de aire verificado para ${currentLote.codigo}.` });
+            }
+          }
+        }
       )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -4979,7 +5451,8 @@ Click para ver análisis completo`
             setShowBitCosecha(true);
           }
         },
-        "🌾 Registrar Cosecha (g)"
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "harvest", size: 15, color: "var(--paper-0)" }),
+        " Registrar Cosecha (g)"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -4990,7 +5463,8 @@ Click para ver análisis completo`
             goTab("control");
           }
         },
-        "🌡 Registrar Clima / Sala"
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 14, color: "var(--ink-0)" }),
+        " Registrar Clima / Sala"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -5008,7 +5482,8 @@ Click para ver análisis completo`
             setShowDiagModal(true);
           }
         },
-        "⚠ Reportar Contaminación / Merma"
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
+        " Reportar Contaminación / Merma"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -5022,7 +5497,8 @@ Click para ver análisis completo`
             setShowThermalModal(true);
           }
         },
-        "🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)"
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 14, color: "var(--ink-0)" }),
+        " 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -5030,10 +5506,11 @@ Click para ver análisis completo`
           style: { minHeight: 44, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-1)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
           onClick: () => {
             setShowQrSheet(false);
-            openBatchDetail(currentLote.id);
+            setPublicTraceModalLoteId(currentLote.id);
           }
         },
-        "📋 Ver Ficha y Ciclo de Vida →"
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, color: "var(--moss-700)" }),
+        " Ver Ficha Pública QR (Trazabilidad)"
       ))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px 0", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "No hay lotes activos registrados para escanear.")
     );
   })(), showThermalModal && thermalLote && (() => {
@@ -5266,6 +5743,36 @@ Click para ver análisis completo`
         "🚀 Confirmar y Lanzar Producción"
       )))
     );
+  })(), showTastingModal && (() => {
+    const sKey2 = tastingSpeciesKey || "p_ostreatus_gris";
+    const gastro = SPECIES_GASTRONOMY[sKey2] || SPECIES_GASTRONOMY.p_ostreatus_gris;
+    const spInfo = SPP[sKey2] || SPP.p_ostreatus_gris;
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowTastingModal(false),
+        label: `Dossier Gastronómico: ${gastro.title}`,
+        dialogStyle: { width: "min(720px, 95vw)", padding: "24px 22px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid var(--accent-olive, #5B6B44)", paddingBottom: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--accent-olive, #5B6B44)" } }, "Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display, Georgia, serif)", fontSize: 22, fontWeight: 700, color: "var(--ink-0, #1A1410)", margin: "4px 0 2px 0" } }, gastro.title), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2, #6E6246)" } }, gastro.botanical, " · Cultivo Agroecológico en Tenjo (2.592 m)")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar dossier de cata", onClick: () => setShowTastingModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-1, #EFEBE0)", padding: "16px 14px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 10 } }, "Notas de Cata & Organolépticas"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "👃 Aroma:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.aroma)), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "👅 Sabor & Umami:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.flavor)), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, "🥩 Textura en Boca:"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #382E2B)", lineHeight: 1.35 } }, gastro.organoleptic.texture)), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px dashed var(--border-hairline, #8C7F5B)", paddingTop: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Umami"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.umami / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.umami, "/5")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Carnosidad"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.meatiness / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.meatiness, "/5")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "80px 1fr 24px", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Aromáticos"), /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-bar" }, /* @__PURE__ */ React.createElement("div", { className: "tasting-radar-fill", style: { width: `${gastro.metrics.aromatics / 5 * 100}%` } })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textAlign: "right" } }, gastro.metrics.aromatics, "/5")))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "🍳 Técnicas Sugeridas por el Chef"), gastro.cooking.map((c, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { marginBottom: 8, background: "var(--paper-50, #F3EFE6)", padding: "8px 10px", borderRadius: 2, borderLeft: "3px solid var(--accent-olive, #5B6B44)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--ink-0)" } }, c.method), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-1)", marginTop: 2 } }, c.tip)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "🍷 Armonía & Maridajes Recomendados"), gastro.pairings.map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { marginBottom: 6, display: "flex", gap: 6, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, color: "var(--accent-olive, #5B6B44)", minWidth: 70 } }, p.category, ":"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-0)" } }, p.item)))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, padding: "8px 10px", background: "var(--paper-1, #EFEBE0)", borderRadius: 2, border: "1px dashed var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)" } }, "📦 Presentación Óptima: "), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-0)" } }, gastro.presentation)))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Setas de la Peña · Sabana Centro · info@setasdelapena.co"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowTastingModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cerrar"), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            try {
+              window.print();
+            } catch (e) {
+              console.error(e);
+            }
+          },
+          className: "inv-btn inv-btn-pri",
+          style: { minHeight: 44, padding: "8px 18px", background: "var(--accent-olive, #5B6B44)", borderColor: "var(--accent-olive, #5B6B44)" }
+        },
+        "🖨 Imprimir Ficha de Cata"
+      )))
+    );
   })(), showDiagModal && (() => {
     const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];
     const bolsasDelLote = currentLote ? bitBolsas.filter((b) => b.loteId === currentLote.id) : [];
@@ -5475,7 +5982,16 @@ Click para ver análisis completo`
       },
       "Cerrar"
     )))));
-  })(), /* @__PURE__ */ React.createElement("div", { style: { height: 40 } })), (RECETA_TABS.includes(tab) && tab !== "formular" || tab === "produccion" || tab === "schedule") && /* @__PURE__ */ React.createElement("section", { "data-testid": "species-bridge", className: "species-bridge" + (bridgeHidden ? " bridge-hidden" : ""), "aria-label": "Especie activa" }, /* @__PURE__ */ React.createElement("div", { className: "bridge-inner" }, !hasPickedSpecies ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "bridge-activo" }, /* @__PURE__ */ React.createElement("span", { className: "bridge-dot" }, "●"), "Sin especie"), /* @__PURE__ */ React.createElement("span", { className: "bridge-name" }, "Elige una especie para empezar"), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("select", { className: "bridge-select", value: "", onClick: (e) => e.stopPropagation(), onChange: (e) => {
+  })(), publicTraceModalLoteId && /* @__PURE__ */ React.createElement(
+    PublicTraceabilityModal,
+    {
+      loteId: publicTraceModalLoteId,
+      loteCode: publicTraceModalLoteId,
+      lotes: bitLotes,
+      cosechas: bitCosechas,
+      onClose: () => setPublicTraceModalLoteId(null)
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { height: 40 } })), (RECETA_TABS.includes(tab) && tab !== "formular" || tab === "produccion" || tab === "schedule") && /* @__PURE__ */ React.createElement("section", { "data-testid": "species-bridge", className: "species-bridge" + (bridgeHidden ? " bridge-hidden" : ""), "aria-label": "Especie activa" }, /* @__PURE__ */ React.createElement("div", { className: "bridge-inner" }, !hasPickedSpecies ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "bridge-activo" }, /* @__PURE__ */ React.createElement("span", { className: "bridge-dot" }, "●"), "Sin especie"), /* @__PURE__ */ React.createElement("span", { className: "bridge-name" }, "Elige una especie para empezar"), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("select", { className: "bridge-select", value: "", onClick: (e) => e.stopPropagation(), onChange: (e) => {
     if (e.target.value) setSKey(e.target.value);
   }, "aria-label": "Elegir especie" }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name))), /* @__PURE__ */ React.createElement("button", { className: "bridge-cambiar", onClick: (e) => {
     e.stopPropagation();
