@@ -1818,6 +1818,7 @@
 .sim-root .inv-row-4{grid-template-columns:2fr 1fr 1fr 32px;}
 .sim-root .inv-btn{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);white-space:nowrap;}
 .sim-root .inv-btn:active{transform:translateY(0);}
+.sim-root .inv-btn:disabled{opacity:var(--btn-disabled-opacity, 0.4);cursor:not-allowed;pointer-events:none;transform:none;}
 .sim-root .inv-btn-pri{background:var(--moss-700);color:var(--text-on-dark);}
 .sim-root .inv-btn-pri:hover:not(:disabled){background:var(--moss-800,var(--moss-700));transform:translateY(-1px);}
 .sim-root .inv-btn-pri:disabled{background:var(--ink-300);color:var(--ink-600);opacity:var(--btn-disabled-opacity, 0.4);cursor:not-allowed;}
