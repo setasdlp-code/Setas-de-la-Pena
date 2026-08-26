@@ -1,24 +1,13 @@
-# Orquestación multi-agente
-
-Cómo se coordinan las distintas herramientas de IA que trabajan sobre este repositorio. GitHub es el registro canónico: cada agente entrega un artefacto verificable (brief, diff, test, revisión) y el merge a `main` lo aprueba el humano (Sebastián).
-
-## Matriz de roles
-
-| Sistema | Rol | Entregable |
-|---|---|---|
-| ChatGPT Work / Codex | dirección de tarea, investigación, arquitectura, QA final | paquete de trabajo, checklist de merge |
-| Claude Code | implementador principal del repositorio | rama, commits pequeños, tests, PR |
-| Gemini | segunda opinión crítica y multimodal | revisión adversarial del brief/diff/capturas — no toca el repo |
-| Google AI Studio | generación amplia (pantallas, rediseños, contenido) | ver `AGENTS.md` para la división de trabajo con Claude Code |
-
-`main` está protegido. Ningún agente hace merge directo.
-
+# Orquestación de desarrollo
+ 
+Cómo se coordina el desarrollo y las herramientas de IA en este repositorio. GitHub es el registro canónico: cada agente entrega código limpio, verificable y con tests, y el merge a `main` lo aprueba el humano (Sebastián).
+ 
 ## Flujo operativo
-
-1. **ChatGPT/Codex** convierte una necesidad en un paquete de trabajo (ver plantilla de Issue `work-packet.md`), citando fuentes canónicas (`knowledge_base/`, `field_os/`, `SETAS_OS_CANONICAL.md`) y delimitando qué no debe tocarse.
-2. **Claude Code** lee el repositorio, propone plan si algo es ambiguo, crea una rama de tarea, implementa y prueba dentro del alcance declarado.
-3. **Gemini** revisa el paquete, el diff, resultados de tests y capturas — no modifica el repositorio. Sus observaciones se reconcilian contra evidencia (ver `CLAUDE.md`: ni se aplican ciegamente ni se ignoran).
-4. **Sebastián** aprueba el PR. `main` queda protegido.
+ 
+1. **Planificación y Requisitos:** Se definen los requisitos citando fuentes canónicas (`knowledge_base/`, `field_os/`, `SETAS_OS_CANONICAL.md`).
+2. **Implementación:** Se crea una rama de tarea, se implementan los cambios con tests automáticos dentro del alcance acordado.
+3. **Validación:** Se ejecutan los quality gates locales y de CI (`npm test`, Lighthouse, Playwright E2E).
+4. **Aprobación:** Sebastián aprueba y fusiona el PR. `main` queda protegido.
 
 ## Notas
 

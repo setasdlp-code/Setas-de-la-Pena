@@ -6,21 +6,16 @@ Crear una empresa en Tenjo, Colombia dedicada al cultivo y venta de productos de
 
 Antes de escribir código, haz hasta tres preguntas de aclaración si algo sobre los requisitos, la ubicación de archivos o las convenciones existentes es ambiguo.
 
-## Coordinación entre Entornos (Codex / Google AI Studio / Claude Code)
-
-Codex, Google AI Studio y Claude Code escriben sobre el mismo repositorio y working directory. Ninguno de los dos versiona automáticamente antes de escribir, así que si trabajan en simultáneo sobre el mismo archivo, el que guarda al último pisa silenciosamente al otro (sin conflicto visible en git).
-
+## Coordinación entre Entornos
+ 
+Si se trabaja desde múltiples herramientas o editores sobre el mismo repositorio y working directory:
+ 
 Protocolo de sincronización:
-
-1. **Nunca simultáneo sobre los mismos archivos.** Un solo "editor activo" a la vez.
-2. **Checkpoint de git entre sesiones.** Antes de pasar el turno a la otra herramienta, hacer commit de lo pendiente (aunque sea `wip: cambios de Studio/Codex` o similar) — nunca dejar cambios sin commitear al cambiar de herramienta.
-3. **Al retomar, revisar el diff real.** Antes de escribir nada nuevo, correr `git status` y `git diff` para ver exactamente qué cambió la otra herramienta, en vez de asumir.
-4. **Integrar, no revertir.** Si una herramienta rompe algo de la otra, tratar el cambio ajeno como código nuevo a integrar, no como un error a deshacer sin mirar — puede ser intencional.
-5. **Cuidado con reescrituras de archivo completo.** Si una herramienta reescribe archivos enteros en vez de editar puntualmente, el diff se vuelve difícil de leer y el merge mental es más costoso. Si eso pasa seguido, separar por ramas (`studio/work`, `codex/work` vs. rama de Claude Code) y hacer merge manual.
-
-### Nota: integración GitHub nativa de AI Studio
-
-Google AI Studio lanzó importación de repos GitHub en julio 2026, pero **todavía no soporta push de vuelta al mismo repo importado** — al exportar, fuerza crear un repositorio nuevo, no sincroniza con el original. Google anunció sync bidireccional automático como fase futura, aún no disponible. Conectar GitHub hoy generaría historiales divergentes en vez de resolver el problema — **no conviene todavía**. Reevaluar cuando el sync bidireccional esté disponible.
+ 
+1. **Nunca simultáneo sobre los mismos archivos.** Un solo editor activo a la vez.
+2. **Checkpoint de git entre sesiones.** Antes de cambiar de entorno, hacer commit o stash de lo pendiente — nunca dejar cambios sin commitear.
+3. **Al retomar, revisar el diff real.** Antes de escribir nada nuevo, correr `git status` y `git diff` para ver exactamente qué cambió, en vez de asumir.
+4. **Integrar, no revertir.** Si hay cambios externos, integrarlos de forma limpia respetando la base científica y canónica.
 
 ## División de trabajo y modificaciones en Setas OS
 
