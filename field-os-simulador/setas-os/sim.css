@@ -2828,26 +2828,119 @@
 .sim-root .home-registro-chip:hover{background:var(--paper-200);border-color:var(--ink-400)}
 .sim-root .home-registro-chip:active{background:var(--paper-300);transform:scale(.97)}
 
-.sim-root .home-activity-row{transition:background-color var(--duration-standard) ease}
-.sim-root .home-activity-row:hover{background:var(--paper-50)}
-.sim-root .home-activity-row:active{background:var(--paper-100)}
+.sim-root .home-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.sim-root .home-header-cockpit {
+  background: var(--paper-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card-rest);
+}
+
+.sim-root .home-quick-action {
+  transition: transform var(--duration-quick) cubic-bezier(.32,.72,.36,1),
+              box-shadow var(--duration-quick) ease,
+              border-color var(--duration-standard) ease,
+              background-color var(--duration-standard) ease;
+  border: 1px solid var(--border-hairline);
+  background: var(--paper-0);
+}
+.sim-root .home-quick-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 29, 25, 0.08);
+  border-color: var(--border-strong);
+  background: var(--paper-50);
+}
+.sim-root .home-quick-action:active {
+  transform: scale(0.98);
+}
+.sim-root .home-quick-action.is-jornada {
+  border-left: 3px solid var(--coral-600);
+  background: color-mix(in oklab, var(--coral-500) 4%, var(--paper-0));
+}
+.sim-root .home-quick-action.is-primary {
+  border-left: 3px solid var(--moss-700);
+}
+
+.sim-root .home-workspace-card {
+  transition: transform var(--duration-quick) cubic-bezier(.32,.72,.36,1),
+              box-shadow var(--duration-quick) ease,
+              border-color var(--duration-standard) ease;
+}
+.sim-root .home-workspace-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(30, 29, 25, 0.09);
+  border-color: var(--border-strong);
+}
+
+.sim-root .home-lote-card {
+  transition: transform var(--duration-quick) ease,
+              box-shadow var(--duration-quick) ease,
+              border-color var(--duration-standard) ease,
+              background-color var(--duration-standard) ease;
+}
+.sim-root .home-lote-card:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 3px 8px rgba(30, 29, 25, 0.07);
+  border-color: var(--border-strong);
+  background: var(--paper-50);
+}
+.sim-root .home-lote-card:active {
+  transform: scale(0.98);
+}
+
+.sim-root .home-activity-row {
+  transition: background-color var(--duration-standard) ease,
+              transform var(--duration-quick) ease;
+}
+.sim-root .home-activity-row:hover {
+  background: var(--paper-50);
+  transform: translateX(2px);
+}
+.sim-root .home-activity-row:active {
+  background: var(--paper-100);
+}
 
 /* "Hoy" · Ambientes & Sensores: 3 columnas fijas (hay 3 cámaras reales) —
    pasa a 2 por debajo de 960px y a 1 por debajo de 640px. */
-.sim-root .home-salas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sim-root .home-salas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
 @media(max-width:960px){ .sim-root .home-salas-grid{ grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:640px){ .sim-root .home-salas-grid{ grid-template-columns:1fr!important; } }
 
-/* "Hoy" · Sección A: Acciones Rápidas (3/5) y Registro de cultivo · vista
-   previa (2/5) lado a lado — colapsa a una columna <900px. */
-.sim-root .home-acciones-espacios-row{display:grid;grid-template-columns:1fr 4fr;gap:20px;align-items:start}
+/* "Hoy" · Sección A: Acciones Rápidas (1fr) y Espacios de Trabajo (3fr) lado a lado */
+.sim-root .home-acciones-espacios-row {
+  display: grid;
+  grid-template-columns: 1.1fr 2.9fr;
+  gap: 20px;
+  align-items: start;
+}
 .sim-root .home-acciones-espacios-row > *,
-.sim-root .home-workspaces-grid > *{min-width:0;overflow-wrap:anywhere}
-.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-@media(max-width:1200px){.sim-root .home-workspaces-grid{grid-template-columns:1fr!important}}
+.sim-root .home-workspaces-grid > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sim-root .home-workspaces-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:1200px){ .sim-root .home-workspaces-grid{ grid-template-columns:1fr!important; } }
 @media(max-width:900px){ .sim-root .home-acciones-espacios-row{ grid-template-columns:minmax(0,1fr)!important; } }
 
-.sim-root .home-tareas-lotes-row{display:grid;grid-template-columns:1fr 3fr;gap:20px;align-items:stretch}
+.sim-root .home-tareas-lotes-row {
+  display: grid;
+  grid-template-columns: 1fr 2.6fr;
+  gap: 20px;
+  align-items: stretch;
+}
 @media(max-width:900px){ .sim-root .home-tareas-lotes-row{ grid-template-columns:1fr!important; } }
 
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
