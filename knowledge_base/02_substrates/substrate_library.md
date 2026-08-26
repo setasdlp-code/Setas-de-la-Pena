@@ -69,9 +69,11 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 |---|---|---|---|---|---|
 | Paja de trigo | ★★★★★ | ★★★★★ | ★★ | ★ | ★ |
 | Master's Mix (50/50) | ★★★★ | ★★★★ | ★★★★★ | ★★★★★ | ★★★★ |
+| **Master's Mix Local (serrín + cascarilla arroz)** | ★★★ | ★★★ | ★★★★ | ★★★★ | ★★★★ |
 | Serrín madera dura | ★★★ | ★★★ | ★★★★ | ★★★★★ | ★★★★★ |
 | Bagazo de caña | ★★★★ | ★★★★ | ★★ | ★ | ★★ |
 | Paja de arroz | ★★★★ | ★★★★ | ★★ | ★ | ★ |
+| **Cascarilla de arroz (suplemento/sustrato)** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ |
 | Troncos madera dura | ★ | ★★ | ★★★★ | ★★ | ★★★★★ |
 | Cartón / papel | ★★ | ★★ | ★ | ★ | ★ |
 | Borra de café (en mezcla) | ? | ? | ★★★ | ★★★ | ★★★ |
@@ -88,8 +90,8 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 
 ### Paja de Trigo
 - **Composición:** Lignocelulosa ~70% (celulosa 35%, hemicelulosa 23%, lignina 12%)
-- **Disponibilidad Colombia:** Alta — subproducto agrícola abundante
-- **Precio estimado:** 2,000–5,000 COP/kg
+- **Disponibilidad Colombia:** Media — Colombia importa la mayor parte del trigo. En Sabana de Bogotá buscar en Boyacá/Nariño en temporada de cosecha o contactar molinos locales (Molino San Rafael)
+- **Precio estimado:** Variable por temporada y ubicación
 - **Tratamiento:** Pasteurización (75–82°C, 1–2h) suficiente para Pleurotus
 - **Humedad objetivo:** 65–70% (FC)
 - **BE potencial (P. djamor):** 80–100% como referencia de guide_002; objetivo local pendiente de tres lotes comparables
@@ -97,12 +99,25 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 
 ### Master's Mix (50/50 Serrín + Husks)
 - **Composición:** 50% serrín madera dura + 50% cascarilla de avena (oat hulls)
-- **Disponibilidad Colombia:** Media — serrín disponible; husks puede requerir importar o sustituir
-- **Alternativa local:** 50% serrín + 50% salvado de trigo (más económico; aumenta riesgo contaminación)
+- **Disponibilidad Colombia:** Baja — serrín disponible; **cascarilla de avena es rara en Colombia**
+- **Alternativa local verificada (agosto 2026):** 50% serrín + 50% **cascarilla de arroz** (ver perfil abajo). BE esperada ligeramente menor pero con disponibilidad garantizada. Otra opción: 50% serrín + 50% salvado de trigo (más económico pero mayor riesgo contaminación)
 - **Tratamiento:** **Esterilización obligatoria** (121°C, 2–4h)
 - **Humedad objetivo:** 60–65% (FC estricto)
 - **BE esperada (H. erinaceus, L. edodes):** 100–150%
 - **Riesgos:** Contaminación bacteriana si no se esteriliza; muy sensible a temperatura de proceso
+
+### Cascarilla de Arroz (Rice Hulls) — Alternativa Local Verificada
+*Agregado agosto 2026 tras investigación de disponibilidad local*
+- **Composición:** Lignocelulosa ~75% (celulosa 35%, hemicelulosa 25%, lignina 20%, sílice ~15%)
+- **Disponibilidad Colombia:** **Muy alta** — subproducto hiperabundante de la industria arrocera nacional
+- **Precio:** $18,000–$20,000 COP por bulto de 10 kg en almacenes agropecuarios de la Sabana de Bogotá
+- **Uso principal:** Sustituto directo de cascarilla de avena (oat hulls) en Master's Mix y otras mezclas suplementadas. Proporciona estructura, aireación y drenaje al sustrato
+- **Tratamiento:** Esterilización obligatoria cuando se usa en mezclas suplementadas (igual que Master's Mix original)
+- **Humedad objetivo:** 60–65% (FC). Absorbe menos agua que la cascarilla de avena — ajustar hidratación
+- **BE esperada:** ~80–120% en mezcla 50/50 con serrín (estimación conservadora; la cascarilla de avena da ~100–150%). La diferencia se debe al mayor contenido de sílice, menos digestible por el micelio
+- **Ventajas operativas:** Costo muy bajo, disponibilidad garantizada, sin necesidad de importar
+- **Riesgos:** Contenido de sílice alto puede reducir BE vs. avena pura. Requiere validación de campo para confirmar BE real. Partícula más rígida — triturar si es necesario para mejorar contacto con micelio
+- **Recomendación:** Usar como sustituto estándar de oat hulls para todas las fórmulas de Setas de la Peña hasta confirmar fuente viable de avena
 
 ### Serrín de Madera Dura (Sin Suplementar)
 - **Composición:** Lignocelulosa >80% (alta lignina)
@@ -171,12 +186,13 @@ Mayor proporción de spawn = colonización más rápida = menor riesgo contamina
 | Sustrato se seca rápido en carpa | Humedad FC inicial insuficiente | Agregar agua antes de inocular |
 
 # Open Questions
-- ¿Disponibilidad y precio de cascarilla de avena (oat husks) en Cundinamarca?
-- ¿Sustrato alternativo regional a Master's Mix para H. erinaceus?
+- ~~¿Disponibilidad y precio de cascarilla de avena (oat husks) en Cundinamarca?~~ **RESUELTA (ago 2026):** Rara en Colombia. Sustituir por cascarilla de arroz ($18–20K COP/bulto 10kg).
+- ¿BE real de Master's Mix Local (serrín + cascarilla arroz) vs. Master's Mix original (serrín + avena)? (validación de campo pendiente)
+- ¿Sustrato alternativo regional a Master's Mix para H. erinaceus? → **Parcialmente resuelta:** Master's Mix Local con cascarilla de arroz es la mejor opción disponible
 - ¿BE real de bagazo de caña local con P. djamor? (dato de campo pendiente)
-- ¿Acceso real a borra/pulpa/aserrín de café en Tenjo/Cundinamarca, y a qué costo/volumen? (define si las formulaciones de café son operacionales o solo referencia)
+- ¿Acceso real a borra/pulpa/aserrín de café en Tenjo/Cundinamarca, y a qué costo/volumen? → **Parcialmente resuelta (ago 2026):** Borra de café gratuita vía cafeterías en Bogotá/Tenjo. Requiere pasteurización inmediata (<24h). Pulpa requiere cercanía a beneficio — por confirmar en Tenjo
 - ¿BE de las formulaciones de café (T2 shiitake, T12 ganoderma) bajo el régimen térmico frío de Tenjo? (revalidación de campo pendiente)
-- ¿Cepas L54/L4055 de shiitake disponibles comercialmente en Colombia? (las de Cenicafé eran donaciones de investigación)
+- ~~¿Cepas L54/L4055 de shiitake disponibles comercialmente en Colombia?~~ **RESUELTA (ago 2026):** No disponibles comercialmente. Cenicafé no vende al público. Usar cepas de laboratorios privados (Los Fungis, Setas de Siecha, Miceliolab)
 
 # References
 - ICAR-Directorate of Mushroom Research. (2020). *Growing Oyster Mushroom* (Technical Bulletin). [guide_002]

@@ -249,12 +249,22 @@
     };
   };
 
+  const actuatorController = isNode
+    ? require('./actuator-controller.js')
+    : (typeof globalThis !== 'undefined' ? globalThis.SetasActuators : null);
+
+  const climateMath = isNode
+    ? require('./climate-math.js')
+    : (typeof globalThis !== 'undefined' ? globalThis.SetasClimate : null);
+
   /**
-   * Crea un servidor HTTP ligero en Node.js para recibir peticiones POST del ESP32.
+   * Crea un servidor HTTP ligero en Node.js para recibir peticiones POST del ESP32 y gobernar actuadores.
    */
   const createTelemetryServer = ({ port = 8080, onReadings, getActiveCycles } = {}) => {
     if (!isNode) throw new Error('createTelemetryServer solo está disponible en entorno Node.js.');
     const http = require('node:http');
+
+    const roomActuatorStates = {};
 
     const server = http.createServer((req, res) => {
       // CORS headers para pruebas locales
@@ -281,6 +291,37 @@
         return;
       }
 
+      if (req.method === 'GET' && (req.url === '/api/actuators/status' || req.url === '/actuators/status')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', actuatorStates: roomActuatorStates }));
+        return;
+      }
+
+      if (req.method === 'POST' && (req.url === '/api/actuators/override' || req.url === '/actuators/override')) {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+          try {
+            const parsed = JSON.parse(body);
+            const roomId = parsed.room_id || 'martha_01';
+            roomActuatorStates[roomId] = Object.assign(roomActuatorStates[roomId] || {}, {
+              override: true,
+              manualCommands: {
+                relay_ch1_humidifier: parsed.relay_ch1 || 'AUTO',
+                relay_ch2_fae: parsed.relay_ch2 || 'AUTO'
+              },
+              overrideAt: new Date().toISOString()
+            });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, room_id: roomId, state: roomActuatorStates[roomId] }));
+          } catch (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'JSON inválido', detail: err.message }));
+          }
+        });
+        return;
+      }
+
       if (req.method === 'POST' && (req.url === '/api/telemetry' || req.url === '/telemetry')) {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -290,12 +331,43 @@
             const cycles = typeof getActiveCycles === 'function' ? (getActiveCycles() || []) : [];
             const adapted = adaptESP32Payload(parsed, { cycles });
 
+            const roomId = parsed.room_id || (adapted[0] && adapted[0].roomId) || 'martha_01';
+            const activeCycle = findActiveCycle(roomId, new Date().toISOString(), cycles);
+
+            // Extraer métricas para el controlador de actuadores
+            let tVal = null, rhVal = null, co2Val = null;
+            adapted.forEach(r => {
+              if (r.metric === 'temperature_c') tVal = r.value;
+              if (r.metric === 'rh_pct') rhVal = r.value;
+              if (r.metric === 'co2_ppm') co2Val = r.value;
+            });
+
+            const vpd = climateMath && tVal != null && rhVal != null ? climateMath.calcVPD(tVal, rhVal) : null;
+            const dewPoint = climateMath && tVal != null && rhVal != null ? climateMath.calcDewPoint(tVal, rhVal) : null;
+
+            let actuatorDecision = null;
+            if (actuatorController) {
+              actuatorDecision = actuatorController.evaluateActuators({
+                metrics: { temp: tVal, rh: rhVal, co2: co2Val, vpd, dewPoint },
+                targets: activeCycle?.targets || {},
+                currentState: roomActuatorStates[roomId] || {},
+                now: Date.now()
+              });
+              roomActuatorStates[roomId] = actuatorDecision;
+            }
+
             if (typeof onReadings === 'function') {
-              onReadings(adapted);
+              onReadings(adapted, actuatorDecision);
             }
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: true, count: adapted.length, readings: adapted }));
+            res.end(JSON.stringify({
+              success: true,
+              count: adapted.length,
+              readings: adapted,
+              commands: actuatorDecision ? actuatorDecision.commands : {},
+              actuator_state: actuatorDecision
+            }));
           } catch (err) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'JSON inválido', detail: err.message }));
@@ -310,6 +382,7 @@
 
     return {
       server,
+      getActuatorStates: () => roomActuatorStates,
       listen: (cb) => server.listen(port, cb),
       close: (cb) => server.close(cb)
     };

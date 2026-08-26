@@ -25,6 +25,8 @@ test('workspace routes preserve the agreed information architecture', () => {
   assert.match(shell, /contextTab\('Bodega'.*goSimTab\('inventario'\)/);
   assert.match(shell, /contextTab\('Métricas'.*reviewTab:'rendimiento'/);
   assert.match(shell, /contextTab\('Registrar evento',s\.module==='sesion'/);
+  assert.match(shell, /contextTab\('Registrar evento',[\s\S]*?screen:'home',capture:true/);
+  assert.match(shell, /onGoSesion:\(\)=>this\.setState\(\{module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false\}\)/);
   assert.match(jsx, /dashboard:'Recetario'/);
 });
 
@@ -110,8 +112,8 @@ test('long UI collections use progressive disclosure and mobile-safe layouts', (
   assert.match(jsx, /compatible\{compatCount===1\?'':'s'\}/);
   assert.match(jsx, /className="inv-table inventory-stock-table"/);
   assert.match(css, /\.inventory-stock-table td::before\{content:attr\(data-label\)/);
-  assert.match(css, /\.home-workspaces-grid\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css, /@media\(max-width:480px\)[\s\S]*\.spp-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+  assert.match(css, /\.home-workspaces-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media\(max-width:480px\)[\s\S]*\.spp-grid\{grid-template-columns:minmax\(0,1fr\)!important/);
 });
 
 test('generic dialogs trap focus, close with Escape and restore the trigger', () => {

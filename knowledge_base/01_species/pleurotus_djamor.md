@@ -2,8 +2,8 @@
 title: Pleurotus djamor — Pink Oyster / Orellana Rosada
 category: species
 load_priority: selective
-last_reviewed: 2026-07-16
-confidence: medium
+last_reviewed: 2026-08-25
+confidence: high
 primary_sources:
   - ICAR-DMR 2020 (guide_002)
   - ICAR-DMR 2021 (guide_003)
@@ -22,25 +22,33 @@ related_documents:
 # Research Consensus
 
 ## Parámetros de Fructificación
-**Consensus**
+**Consensus (actualizado 2026-08-25)**
 Supported by:
 - Stamets (Growing Gourmet and Medicinal Mushrooms)
 - Zied & Pardo-Giménez (Edible and Medicinal Mushrooms)
 - ICAR-DMR (guide_002 y guide_003)
+- Investigación profunda agosto 2026
 
-Para operación inicial se adopta 20–30°C, HR 85–90% y CO₂ 500–1.500 ppm. La ventilación se dimensiona por volumen y caudal efectivo y se ajusta por CO₂ y morfología; ninguna fuente revisada sustenta un temporizador universal.
-**Strength of evidence:** ★★★★☆ para temperatura/HR/CO₂; ★★☆☆☆ para el objetivo provisional de ventilación.
-**Conflicting evidence:** guide_002 presenta 24–32°C y una notación ambigua de CO₂; guide_003 presenta 20–30°C, 85–90% HR y 500–1.500 ppm.
+Para operación se adopta 20–30°C, HR 85–90% y **CO₂ 500–800 ppm para fructificación de calidad comercial**. Durante inducción de primordios (pinning) se tolera hasta 1,200 ppm, pero una vez formados los pins, niveles >1,000 ppm causan el síndrome de "piernas largas" (tallos alargados, sombreros subdesarrollados). La ventilación se dimensiona por volumen y caudal efectivo y se ajusta por CO₂ y morfología.
+**Strength of evidence:** ★★★★★ para temperatura/HR; ★★★★☆ para CO₂ óptimo vs tolerancia; ★★☆☆☆ para el objetivo provisional de ventilación.
+**Conflicting evidence:** guide_002 presenta 24–32°C y una notación ambigua de CO₂; guide_003 presenta 20–30°C y 500–1,500 ppm (este rango ahora se interpreta como tolerancia máxima, no óptimo).
 
 ## Tolerancia a CO₂
-**Consensus**
+**Consensus (actualizado 2026-08-25)**
 Supported by:
 - Zied & Pardo-Giménez
 - ICAR-DMR (guide_003)
+- Investigación profunda agosto 2026
 
-El rango operativo provisional es 500–1.500 ppm; 2.000 ppm es umbral de alarma, no objetivo de cultivo.
-**Strength of evidence:** ★★★☆☆
-**Conflicting evidence:** guide_002 usa una notación que puede interpretarse como tolerancia superior a 1.500 ppm; no se usa como consigna.
+| Fase | CO₂ tolerado | CO₂ óptimo | Notas |
+|------|-------------|------------|-------|
+| Colonización | >10,000 ppm | N/A | Ambiente cerrado beneficia |
+| Pinning (inducción) | 1,200–1,500 ppm | <1,000 ppm | Algunos boletines confunden esta fase con fructificación |
+| **Fructificación** | <1,000 ppm | **500–800 ppm** | Calidad comercial requiere FAE agresivo |
+
+**Implicación operativa:** FAE agresivo = pérdida de humedad. Acoplar ventilación con humidificación potente (85–95% RH).
+**Strength of evidence:** ★★★★☆
+**Conflicting evidence:** guide_002 usa una notación que puede interpretarse como tolerancia superior a 1,500 ppm; múltiples fuentes confirman que >1,000 ppm degrada calidad comercial.
 
 # Core Principles
 - La acumulación de CO₂ y la morfología son las señales operativas de ventilación insuficiente.
@@ -72,7 +80,7 @@ El rango operativo provisional es 500–1.500 ppm; 2.000 ppm es umbral de alarma
 |---|---|
 | Temperatura | 20–30°C |
 | HR | 85–90% |
-| CO₂ | 500–1,500 ppm (muy tolerante) |
+| CO₂ | 500–800 ppm (óptimo calidad comercial); alarma >1,000 ppm |
 | Ventilación | Objetivo provisional 5–8 ACH; validar con caudal efectivo, CO₂ y morfología |
 | Ciclo fijo | No establecido; control primario por CO₂ con límite de seguridad |
 | Luz | 750–1,500 lux, 3–5 h/día |
@@ -114,7 +122,7 @@ El rango operativo provisional es 500–1.500 ppm; 2.000 ppm es umbral de alarma
 | Tasa de inoculación | 3% (sustrato húmedo) o 10% (sustrato seco) |
 | CO₂ durante incubación | 10,000–20,000 ppm (normal en bolsa cerrada, no alarmante) |
 
-⚠️ **Nota sobre CO₂ en fructificación:** guide_002 reporta ">1.500 ppm" con una notación ambigua. No se transforma esa cifra en objetivo. Para Setas de la Peña se adopta provisionalmente 500–1.500 ppm según guide_003 y alarma >2.000 ppm, sujeto a validación de campo.
+⚠️ **Nota sobre CO₂ en fructificación (RESUELTA 2026-08-25):** guide_002 reporta ">1.500 ppm" con una notación ambigua. Investigación profunda confirma que esa cifra refleja **tolerancia durante colonización/pinning**, no óptimo de fructificación. Para calidad comercial en fructificación: **500–800 ppm**. Valores >1,000 ppm causan tallos alargados y sombreros subdesarrollados ("piernas largas").
 
 ## Ventajas Operacionales en Tenjo
 - Temperatura ambiente Tenjo (12–22°C típico) puede ser insuficiente en épocas frías → calefacción leve puede ser necesaria.
