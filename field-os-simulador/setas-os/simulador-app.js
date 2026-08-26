@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 09303c04b1f53de7656fc7531675ef580e071dce4e167f52ba8da9db3390f99e
+// source-hash: 1bc5fab7de76b9fd435e047ac0da95f47f20727e92d1ab82288019e0734c36ac
 const { useState, useMemo, useEffect, useRef } = React;
 const IMG = {
   p_ostreatus_gris: window.__resources && window.__resources.img_p_ostreatus_gris || "_standalone_imgs/grey-mushroom.png",
@@ -1557,6 +1557,8 @@ function App(props) {
   const [climateTimeRange, setClimateTimeRange] = useState("24h");
   const [faePulseActive, setFaePulseActive] = useState(false);
   const [humidifierOverride, setHumidifierOverride] = useState(null);
+  const [showProdLaunchModal, setShowProdLaunchModal] = useState(false);
+  const [prodLaunchForm, setProdLaunchForm] = useState(null);
   const [globalMode, setGlobalMode] = useState(() => {
     try {
       const v = localStorage.getItem("setas_global_workmode");
@@ -1744,14 +1746,14 @@ function App(props) {
   const [showProvModal, setShowProvModal] = useState(false);
   const [newProv, setNewProv] = useState({ nombre: "", tipo: "plaza", municipio: "" });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen);
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen || showProdLaunchModal);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen]);
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen, showProdLaunchModal]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -2402,6 +2404,190 @@ body{margin:0;padding:20px 24px;background:#fff;}
       veredicto: "",
       recipeRef: recipe.length && balanced ? { id: Date.now(), name: saveName || "Receta activa", sKey, recipe: [...recipe], cn: an.cn.toFixed(1), eb: an.eb.toFixed(0), score: opt.score, cost: Math.round(an.cost) } : null
     };
+  };
+  const openProdLauncher = () => {
+    if (!readyForProduction || !recipe.length || !an) {
+      setNoticeDlg({ title: "Receta no lista", msg: productionBlockMsg || "Balancea la receta al 100% antes de lanzar producción." });
+      return;
+    }
+    const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+    const sp2 = SPP[sKey];
+    const SC = { p_ostreatus_gris: "OST", p_ostreatus_blanco: "OBL", p_djamor_rosa: "ROS", p_eryngii: "ERY", shiitake: "SHI", lions_mane: "MEL", reishi: "REI", enoki: "ENO", nameko: "NAM" };
+    const sppCode = SC[sKey] || "EXP";
+    const dc = today.replace(/-/g, "").slice(2);
+    const cnt = bitLotes.length + 1;
+    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2, "0")}`;
+    const insumos = (bd?.items || []).map((it) => {
+      const g = INGS.find((i) => i.name === it.name || i.id === it.id);
+      const id = g ? g.id : it.name;
+      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
+      const stockActual2 = invLotes.filter((l) => l.activo && l.ingredienteId === id).reduce((s, l) => s + l.cantidadKgDisponible, 0);
+      return {
+        id,
+        name: it.name,
+        krKg,
+        stockActual: stockActual2,
+        ok: stockActual2 >= krKg * 0.999
+      };
+    });
+    if (bd?.spawn && bd.spawn > 0) {
+      const spawnStock = invLotes.filter((l) => l.activo && l.ingredienteId === "spawn_grano").reduce((s, l) => s + l.cantidadKgDisponible, 0);
+      insumos.push({
+        id: "spawn_grano",
+        name: `Spawn / Micelio (${sp2?.name || sKey})`,
+        krKg: bd.spawn,
+        stockActual: spawnStock,
+        ok: spawnStock >= bd.spawn * 0.999
+      });
+    }
+    setProdLaunchForm({
+      codigo,
+      especie: sp2?.name || "",
+      especieCientifico: sp2?.scientific || "",
+      cepa: "",
+      fechaMezcla: today,
+      fechaInoculacion: today,
+      numBolsas: numBags || 10,
+      pesoHumedo: kgBag || 1.5,
+      humedad: hObj || 67,
+      sala: selectedClimateRoom || "martha_01",
+      operador: "Operario Granja Tenjo",
+      notas: "",
+      printQr: true,
+      insumos
+    });
+    setShowProdLaunchModal(true);
+  };
+  const ejecutarLanzamientoProduccion = () => {
+    if (!prodLaunchForm) return;
+    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
+    const nb = parseInt(numBolsas) || 1;
+    const kb = parseFloat(pesoHumedo) || 1.5;
+    const hm = parseFloat(humedad) || 67;
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const ts = Date.now();
+    const insumosADescontar = (insumos || []).filter((i) => i.krKg > 0);
+    if (insumosADescontar.length > 0) {
+      setInvLotes((prev) => {
+        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
+        try {
+          localStorage.setItem("sdp_lotes", JSON.stringify(updated));
+        } catch (e) {
+        }
+        return updated;
+      });
+      const newMovs = insumosADescontar.map((row, i) => ({
+        id: "mov_lote_" + ts + "_" + i,
+        tipo: "consumo_lote",
+        ingredienteId: row.id,
+        kgMovidos: row.krKg,
+        loteNum: codigo,
+        fecha: fechaInoculacion,
+        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
+        timestamp: now
+      }));
+      saveMovimientos([...invMovimientos, ...newMovs]);
+      if (window.SetasDB) {
+        (async () => {
+          try {
+            for (const row of insumosADescontar) {
+              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+            }
+          } catch (e) {
+            console.warn("Error sincronizando descuento FIFO a Firestore:", e);
+          }
+        })();
+      }
+    }
+    const lote = {
+      id: "BIT_" + ts,
+      codigo,
+      especie,
+      especieCientifico,
+      cepa,
+      fechaMezcla,
+      fechaInoculacion,
+      numBolsas: nb,
+      pesoHumedo: kb,
+      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+      spawnPct: an?.dynSpawn || 8,
+      humedad: hm,
+      tratamiento: tr?.name || "Pasteurización Térmica",
+      costoIngKg: an ? Math.round(an.cost) : 0,
+      operador,
+      objetivo: "Lanzamiento directo desde Formulador",
+      notas,
+      estado: "incubacion",
+      veredicto: "",
+      sala,
+      ubicacion: sala,
+      recipeRef: {
+        id: ts,
+        name: saveName || `Receta ${especie} (${codigo})`,
+        sKey,
+        recipe: [...recipe],
+        cn: an ? an.cn.toFixed(1) : "—",
+        eb: an ? an.eb.toFixed(0) : "—",
+        score: opt ? opt.score : 0,
+        cost: an ? Math.round(an.cost) : 0
+      },
+      createdAt: now
+    };
+    const bolsas = Array.from({ length: nb }, (_, i) => ({
+      id: "BOLSA_" + ts + "_" + i,
+      loteId: lote.id,
+      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, "0")}`,
+      num: i + 1,
+      estado: "sana",
+      col25: null,
+      col50: null,
+      col100: null,
+      pesoInicial: kb,
+      fechaDescarte: null,
+      motivoDescarte: "",
+      observaciones: "",
+      foto: null
+    }));
+    setBitLotes((prev) => {
+      const upd = [lote, ...prev];
+      try {
+        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+    setBitBolsas((prev) => {
+      const upd = [...prev, ...bolsas];
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+    if (window.SetasBitacoraDB) {
+      (async () => {
+        try {
+          await window.SetasBitacoraDB.guardarLote(lote);
+          await window.SetasBitacoraDB.guardarBolsas(bolsas);
+        } catch (e) {
+          console.warn("Error respaldando lote en Firestore:", e);
+        }
+      })();
+    }
+    setShowProdLaunchModal(false);
+    if (printQr) {
+      setThermalLoteId(lote.id);
+      setShowThermalModal(true);
+    } else {
+      setBitActiveLoteId(lote.id);
+      goTab("bitacora");
+    }
+    setNoticeDlg({
+      title: "🚀 Producción de Lote Lanzada",
+      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
+    });
   };
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
   const crearBitLote = (form) => {
@@ -4229,7 +4415,21 @@ Click para ver análisis completo`
       { l: "Ingresos brutos", v: `$${Math.round(revenue).toLocaleString()}` },
       { l: `Margen ${marginPct}%`, v: `$${Math.round(margin).toLocaleString()}`, bold: true, good: positive }
     ].map((cell, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, cell.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: cell.bold ? cell.good ? "var(--moss-500)" : "var(--coral-500)" : "var(--ink-900)" } }, cell.v)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, "Precio venta $", vegPrice.toLocaleString(), "/kg · Costo total $", Math.round(bd.totalCost).toLocaleString(), " COP · Sin contar labor ni servicios · EB sobre materia seca ($", bd.dry.toFixed(1), " kg de $", bd.wet.toFixed(1), " kg húmedos)."));
-  })())), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "act-row no-print" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => window.print() }, "Imprimir ficha"), /* @__PURE__ */ React.createElement("button", { className: "btn pri", onClick: exportR }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↓"), " Exportar .txt"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
+  })(), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border-soft)", display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "btn-launch-prod",
+      onClick: openProdLauncher,
+      disabled: !readyForProduction,
+      title: readyForProduction ? `Lanzar producción de ${numBags} bolsas de ${kgBag} kg con descuento automático de inventario` : productionBlockMsg
+    },
+    "🚀 Lanzar Producción de Lote (",
+    numBags,
+    " bolsas · ",
+    (numBags * kgBag).toFixed(1),
+    " kg)"
+  )))), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "act-row no-print" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => window.print() }, "Imprimir ficha"), /* @__PURE__ */ React.createElement("button", { className: "btn pri", onClick: exportR }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↓"), " Exportar .txt"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
     if (typeof html2pdf === "undefined") {
       setNoticeDlg({ msg: "html2pdf no disponible." });
       return;
@@ -4282,10 +4482,7 @@ Click para ver análisis completo`
       reader.readAsText(file);
     };
     input.click();
-  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { name: "recipeName", "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !readyForProduction, title: readyForProduction ? "" : productionBlockMsg }, flash ? "✓ Guardada" : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "sbtn", onClick: () => {
-    setBitNuevoForm(buildBitNuevoForm());
-    setShowBitNuevo(true);
-  }, disabled: !readyForProduction, title: readyForProduction ? "Crear lote experimental en la Bitácora con esta receta" : productionBlockMsg, style: { background: readyForProduction ? "var(--moss-700,#2E3B2F)" : "var(--paper-300)", color: readyForProduction ? "var(--paper-0)" : "var(--ink-500)", border: "none", cursor: readyForProduction ? "pointer" : "not-allowed" } }, "Prueba →"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" }, title: saveSyncErr }, "⚠ sin sincronizar")), !readyForProduction && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { marginTop: 6, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" } }, /* @__PURE__ */ React.createElement("span", null, "⚠ ", productionBlockMsg), !balanced && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", padding: "5px 10px", background: "var(--coral-500)", color: "#fff", border: "none", cursor: "pointer" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar")))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-md)" } }, "⚡"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
+  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { name: "recipeName", "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !readyForProduction, title: readyForProduction ? "" : productionBlockMsg }, flash ? "✓ Guardada" : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "btn-launch-prod", type: "button", onClick: openProdLauncher, disabled: !readyForProduction, title: readyForProduction ? "Lanzar producción de lote con descuento en bodega y asignación de sala" : productionBlockMsg, style: { padding: "7px 14px", fontSize: "12px" } }, "🚀 Lanzar Lote"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" }, title: saveSyncErr }, "⚠ sin sincronizar")), !readyForProduction && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { marginTop: 6, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" } }, /* @__PURE__ */ React.createElement("span", null, "⚠ ", productionBlockMsg), !balanced && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", padding: "5px 10px", background: "var(--coral-500)", color: "#fff", border: "none", cursor: "pointer" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar")))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-md)" } }, "⚡"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
     const s2 = SPP[e.sKey];
     const isEven = idx % 2 === 0;
     return /* @__PURE__ */ React.createElement("div", { key: e.id, style: { display: "flex", alignItems: "flex-start", marginBottom: 20, paddingLeft: 40 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 8, top: 6, width: 14, height: 14, background: "var(--coral-500)", border: "2px solid var(--paper-50)", borderRadius: "50%", zIndex: "var(--z-sticky)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-900)", marginBottom: 2 } }, e.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", background: "var(--paper-200)", padding: "2px 7px", borderRadius: 3, fontWeight: 600 } }, s2?.name), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 600 } }, "C:N ", e.cn, ":1"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: e.eb >= 100 ? "var(--accent-olive)" : e.eb >= 70 ? "var(--ochre-500,#A07828)" : "#C53030" } }, "EB estimada ", e.eb, "%"), e.ebReal != null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: Math.abs(e.ebReal - parseFloat(e.eb)) <= 10 ? "var(--accent-olive)" : "#C53030" } }, "EB real ", e.ebReal, "% (", e.ebReal >= parseFloat(e.eb) ? "+" : "", Math.round((e.ebReal - parseFloat(e.eb)) * 10) / 10, ")"), liveScoreFor(e) > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", fontWeight: 600 } }, "Score ", liveScoreFor(e), "/100"), e.cost && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, "$", e.cost, "/kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, e.date), /* @__PURE__ */ React.createElement("button", { className: "sload", onClick: () => loadR(e), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { className: "sebreal", onClick: () => setEbRealFor(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--ink-700)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, e.ebReal != null ? "Editar EB real" : "+ EB real"), /* @__PURE__ */ React.createElement("button", { className: "sdel", onClick: () => delR(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--coral-500)", border: "1px solid var(--coral-200)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Eliminar"))));
@@ -4838,6 +5035,65 @@ Click para ver análisis completo`
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
         return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, "Inoc: ", item.date), /* @__PURE__ */ React.createElement("div", null, "Fórmula: ", item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, "Setas de la Peña · Tenjo")));
       }))
+    );
+  })(), showProdLaunchModal && prodLaunchForm && (() => {
+    const f = prodLaunchForm;
+    const allInsumosOk = f.insumos.every((i) => i.ok);
+    const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        id: "prod-launch-modal",
+        isOpen: showProdLaunchModal,
+        onClose: () => setShowProdLaunchModal(false),
+        title: "🚀 Lanzador de Producción de Lote",
+        ariaLabel: "Lanzador de Producción de Lote",
+        maxWidth: "680px"
+      },
+      /* @__PURE__ */ React.createElement("div", { className: "prod-launch-modal", "data-testid": "prod-launch-modal" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-summary" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Lote"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontFamily: "var(--font-mono)", fontSize: 14 } }, f.codigo)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontSize: 14 } }, f.especie)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Tamaño"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.numBolsas, " bolsas (", (f.numBolsas * f.pesoHumedo).toFixed(1), " kg)")), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.humedad, "%"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)" } }, "📦 Insumos a Descontar de Bodega"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: allInsumosOk ? "var(--moss-700)" : "var(--coral-500)" } }, allInsumosOk ? "● Stock suficiente para todo el batch" : "⚠ Algunos insumos requieren compra")), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("table", { className: "prod-launch-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Requerido"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Stock Actual"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center" } }, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, f.insumos.map((ins, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { background: ins.ok ? "transparent" : "#FFF5F5" } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 600 } }, ins.name), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)" } }, ins.krKg.toFixed(2), " kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)", color: ins.ok ? "var(--ink-1)" : "var(--coral-500)" } }, ins.stockActual.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: ins.ok ? "var(--moss-700)" : "var(--coral-500)" } }, ins.ok ? "✓ OK" : "⚠ Escaso"))))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-launch-sala", style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)", display: "block", marginBottom: 6 } }, "🌱 Sala / Carpa de Destino"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: r.id,
+          type: "button",
+          onClick: () => setProdLaunchForm((prev) => ({ ...prev, sala: r.id })),
+          style: {
+            padding: "10px 12px",
+            border: `1.5px solid ${f.sala === r.id ? "var(--moss-700)" : "var(--border-hairline)"}`,
+            background: f.sala === r.id ? "var(--paper-0)" : "#ffffff",
+            borderRadius: "var(--radius-sm)",
+            textAlign: "left",
+            cursor: "pointer"
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--ink-0)" } }, r.name),
+        /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, r.spec)
+      )))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "10px 12px", background: "var(--paper-1)", borderRadius: "var(--radius-sm)" } }, /* @__PURE__ */ React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "checkbox",
+          checked: f.printQr,
+          onChange: (e) => setProdLaunchForm((prev) => ({ ...prev, printQr: e.target.checked })),
+          style: { width: 16, height: 16, accentColor: "var(--moss-700)" }
+        }
+      ), /* @__PURE__ */ React.createElement("span", null, "🖨 ", /* @__PURE__ */ React.createElement("b", null, "Imprimir etiquetas térmicas con códigos QR"), " para las ", f.numBolsas, " bolsas inmediatamente tras crear."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => setShowProdLaunchModal(false),
+          className: "inv-btn inv-btn-sec",
+          style: { minHeight: 44, padding: "8px 16px" }
+        },
+        "Cancelar"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: ejecutarLanzamientoProduccion,
+          className: "btn-launch-prod",
+          style: { minHeight: 44, padding: "8px 20px" }
+        },
+        "🚀 Confirmar y Lanzar Producción"
+      )))
     );
   })(), showDiagModal && (() => {
     const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];
