@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setas Formulation Engine"
+  short_description: "Audit and improve Formulador and Perito logic"
+  default_prompt: "Use $setas-formulation-engine to audit and improve Formulador scoring or Perito recommendations with evidence-backed tests."

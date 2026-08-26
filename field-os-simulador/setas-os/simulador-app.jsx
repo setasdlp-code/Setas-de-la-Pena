@@ -1157,6 +1157,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
+      {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
@@ -2808,9 +2809,10 @@ const runHybridRecipeSearch=({
     ...Object.keys(stockMap || {}).filter(k => Number(stockMap[k]) > 0),
     ...(invLotes || []).filter(l => l?.activo !== false && Number(l?.cantidadKgDisponible) > 0).map(l => l.ingredienteId)
   ]);
-  const compatible = useStock
-    ? (ingredients || []).filter(g => stockIds.has(g.id))
-    : (ingredients || []).filter(g => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
+  const compatible = (ingredients || []).filter(g =>
+    (!useStock || stockIds.has(g.id)) &&
+    (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
+  );
   const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
   const scoreAdapter=(analysis,ctx)=>{
     const treatment=calcTreatment(analysis,targetKey,SPP);
@@ -3009,16 +3011,16 @@ function App(props){
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Clima & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
-    {key:'clima',label:'Clima & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>},
+    {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Control Ambiental & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular','dashboard'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
@@ -3193,6 +3195,7 @@ function sowingRecommendation(deficitKg) {
   const ROOMS_CONFIG = {
     martha_01: {
       id: 'martha_01',
+      cameraId: 'martha',
       name: 'Martha Tent 01',
       spec: 'Terra Fungus 63" (165 × 70 × 51 cm)',
       device: 'ESP32-WROOM-32 (setas-martha-01)',
@@ -3201,10 +3204,20 @@ function sowingRecommendation(deficitKg) {
     },
     cloudlab_844: {
       id: 'cloudlab_844',
+      cameraId: 'cloudlab',
       name: 'Cloudlab 844',
       spec: 'AC Infinity 48×48×80" (122 × 122 × 203 cm · 3.02 m³)',
       device: 'ESP32-WROOM-32 (setas-cloudlab-01)',
       sensors: 'Sensirion SHT45 + Sensirion SCD30 (NDIR)',
+      altitude: '2.600 msnm (Tenjo)'
+    },
+    incubacion_01: {
+      id: 'incubacion_01',
+      cameraId: 'incub',
+      name: 'Cuarto de Incubación',
+      spec: 'Zona 3 · estantería de incubación',
+      device: 'Inkbird + nodo ambiental (setas-incubacion-01)',
+      sensors: 'Temperatura y humedad · CO₂ estimado por nodo',
       altitude: '2.600 msnm (Tenjo)'
     }
   };
@@ -5345,7 +5358,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+    let cameras=[];
+    try{ cameras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ cameras=[]; }
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
+    const selectedCamera=cameras.find(c=>c.id===room.cameraId)||cameras[0]||null;
+    const CAMERA_TO_ROOM={incub:'incubacion_01',martha:'martha_01',cloudlab:'cloudlab_844'};
 
     // Obtener lotes activos alojados en esta sala
     const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
@@ -5358,7 +5375,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
           rh_pct: { min: 85.0, max: 95.0, target: 90.0 },
           co2_ppm: { min: 400, max: 900, target: 600 }
         }
-      : {
+      : selectedClimateRoom === 'incubacion_01' ? {
+          temperature_c: { min: 20.0, max: 24.0, target: 22.0 },
+          rh_pct: { min: 65.0, max: 80.0, target: 72.0 },
+          co2_ppm: { min: 400, max: 1500, target: 800 }
+        } : {
           temperature_c: { min: 16.0, max: 22.0, target: 18.5 },
           rh_pct: { min: 80.0, max: 92.0, target: 86.0 },
           co2_ppm: { min: 450, max: 1000, target: 700 }
@@ -5370,8 +5391,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       : selectedClimateRoom === 'martha_02'
       ? { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' }
       : { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8, timestamp: 'hace 35s' };
+    const physicalMetrics=selectedCamera?{
+      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'actualizado ahora'
+    }:{};
     const injected = injectedClimateReadings[selectedClimateRoom];
-    const currentMetrics = injected ? { ...baseMetrics, ...injected } : baseMetrics;
+    // Prioridad: webhook real > monitor físico compartido > fallback de demo.
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}) };
 
     // Cálculos psicrométricos
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
@@ -5389,20 +5414,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const baseRh = currentMetrics.rh;
     const baseCo2 = currentMetrics.co2;
 
-    const tempSeries = Array.from({ length: numPoints }, (_, i) => {
+    const generatedTempSeries = Array.from({ length: numPoints }, (_, i) => {
       const noise = Math.sin(i * 0.4) * 0.6 + (Math.cos(i * 0.7) * 0.3);
       return Math.round((baseTemp + noise) * 10) / 10;
     });
 
-    const rhSeries = Array.from({ length: numPoints }, (_, i) => {
+    const generatedRhSeries = Array.from({ length: numPoints }, (_, i) => {
       const noise = Math.cos(i * 0.3) * 2.5 + (Math.sin(i * 0.8) * 1.2);
       return Math.round(Math.min(99, Math.max(70, baseRh + noise)) * 10) / 10;
     });
 
-    const co2Series = Array.from({ length: numPoints }, (_, i) => {
+    const generatedCo2Series = Array.from({ length: numPoints }, (_, i) => {
       const noise = Math.sin(i * 0.5) * 80 + (Math.cos(i * 0.3) * 45);
       return Math.round(baseCo2 + noise);
     });
+
+    const take=climateTimeRange==='1h'?6:(climateTimeRange==='6h'?12:24);
+    const cameraSeries=(key,fallback)=>{
+      const values=!injected&&Array.isArray(selectedCamera?.[key])?selectedCamera[key].slice(-take):[];
+      return values.length>1?values:fallback;
+    };
+    const tempSeries=cameraSeries('tempSeries',generatedTempSeries);
+    const rhSeries=cameraSeries('humSeries',generatedRhSeries);
+    const co2Series=cameraSeries('co2Series',generatedCo2Series);
 
     const tempMin = Math.min(...tempSeries);
     const tempMax = Math.max(...tempSeries);
@@ -5417,23 +5451,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     return (
       <div className="climate-dashboard" data-testid="climate-dashboard">
-        {/* Selector de Sala / Carpa */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10}}>
-          <div className="climate-room-nav">
-            {Object.values(ROOMS_CONFIG).map(r => (
-              <button
-                key={r.id}
-                type="button"
-                className={`climate-room-btn ${selectedClimateRoom === r.id ? 'on' : ''}`}
-                onClick={() => setSelectedClimateRoom(r.id)}
-              >
-                <span>🌱</span>
-                <span>{r.name}</span>
-              </button>
-            ))}
-          </div>
-
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <section className="climate-overview" aria-labelledby="climate-overview-title">
+          <div className="climate-section-head">
+            <div><span className="climate-eyebrow">Planta de Tenjo · en vivo</span><h2 id="climate-overview-title">Módulos ambientales</h2></div>
+            <div className="climate-overview-actions">
             <button
               type="button"
               className="btn btn--sm btn--secondary"
@@ -5443,12 +5464,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <AppIcon name="temp" size={13} />
               <span>Hub IoT & Firmware</span>
             </button>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-2)'}}>
-              <span style={{width:8,height:8,borderRadius:'50%',background:'var(--moss-500)',display:'inline-block'}}/>
-              <span>ESP32 conectado · {currentMetrics.timestamp}</span>
+              <span className="climate-live-label"><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
             </div>
           </div>
-        </div>
+          {cameras.length>0?<div className="climate-module-grid">
+            {cameras.map(c=>{
+              const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
+              return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
+                <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
+                <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
+                <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
+                <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
+                {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
+              </button>;
+            })}
+          </div>:<div className="climate-empty">Sin cámaras configuradas para telemetría.</div>}
+        </section>
 
         {/* Ficha del Ciclo y Sala */}
         <div className="climate-cycle-banner">
@@ -5465,6 +5496,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
 
           <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+            {selectedCamera&&<button type="button" className="climate-detail-btn" onClick={()=>props.onOpenCamara&&props.onOpenCamara(selectedCamera.id)}>Abrir ficha del módulo →</button>}
             <button
               type="button"
               onClick={() => setShowEsp32ConfigModal(true)}
@@ -5525,7 +5557,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
             </div>
             <div className="climate-kpi-sub">
-              <span>24h: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
+              <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
             </div>
           </div>
 
@@ -5540,7 +5572,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
             </div>
             <div className="climate-kpi-sub">
-              <span>24h: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
+              <span>{climateTimeRange}: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
             </div>
           </div>
 
@@ -5555,7 +5587,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span style={{fontSize:13,color:'var(--ink-2)'}}>ppm</span>
             </div>
             <div className="climate-kpi-sub">
-              <span>SCD30 NDIR · Comp. 2.600m · 24h: {co2Min} – {co2Max} ppm</span>
+              <span>SCD30 NDIR · Comp. 2.600m · {climateTimeRange}: {co2Min} – {co2Max} ppm</span>
             </div>
           </div>
 
@@ -9737,27 +9769,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       return (
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          {thermalSize === '40x30' ? (
-                            <div className="thermal-body">
-                              <div className="thermal-code">{item.id}</div>
-                              <div className="thermal-species">{item.species}</div>
-                              <div className="thermal-meta">
-                                <div>{item.bagCode ? `${item.bagCode} · ${item.date}` : item.date}</div>
-                                <div>SALA: {lote?.sala || 'M01'} · TENJO</div>
-                              </div>
+                          <div className="thermal-body">
+                            <div className="thermal-code">{item.id}</div>
+                            <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-meta">
+                              <div>{item.bagCode}</div>
+                              <div>Inoc: {item.date}</div>
+                              <div>Fórmula: {item.recipe}</div>
                             </div>
-                          ) : (
-                            <div className="thermal-body">
-                              <div className="thermal-code">{item.id}</div>
-                              <div className="thermal-species">{item.species}</div>
-                              <div className="thermal-meta">
-                                <div>{item.bagCode}</div>
-                                <div>Inoc: {item.date}</div>
-                                <div>Fórmula: {item.recipe}</div>
-                              </div>
-                              <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
-                            </div>
-                          )}
+                            <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
+                          </div>
                         </div>
                       );
                     })}
@@ -9787,16 +9808,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     return (
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                        {thermalSize === '40x30' ? (
-                          <div className="thermal-body">
-                            <div className="thermal-code">{item.id}</div>
-                            <div className="thermal-species">{item.species}</div>
-                            <div className="thermal-meta">
-                              <div>{item.bagCode ? `${item.bagCode} · ${item.date}` : item.date}</div>
-                              <div>SALA: {lote?.sala || 'M01'} · TENJO</div>
-                            </div>
-                          </div>
-                        ) : (
                           <div className="thermal-body">
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-species">{item.species}</div>
@@ -9807,7 +9818,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="thermal-footer">Setas de la Peña · Tenjo · 2.592 m</div>
                           </div>
-                        )}
                       </div>
                     );
                   })}

@@ -9,6 +9,7 @@
 
   let nativeAdapter = null;
   let lastTransaction = null;
+  const RECIPE_TOTAL_TOLERANCE = 0.15;
 
   const engine = () => globalThis.SetasPeritoScenarios;
   const waitFrame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -183,8 +184,31 @@
     adapter: nativeAdapter ? 'native' : 'dom',
   });
 
+  const validateRecipe = targetRecipe => {
+    if (!Array.isArray(targetRecipe) || targetRecipe.length === 0) {
+      return 'La receta propuesta debe incluir al menos un ingrediente.';
+    }
+    const ids = new Set();
+    let total = 0;
+    for (const row of targetRecipe) {
+      const id = typeof row?.id === 'string' ? row.id.trim() : '';
+      const pct = Number(row?.p ?? row?.pct);
+      if (!id) return 'La receta propuesta contiene un ingrediente sin identificador válido.';
+      if (ids.has(id)) return `La receta propuesta repite el ingrediente ${id}.`;
+      if (!Number.isFinite(pct) || pct <= 0) return `El porcentaje de ${id} debe ser un número positivo y finito.`;
+      ids.add(id);
+      total += pct;
+    }
+    if (Math.abs(total - 100) > RECIPE_TOTAL_TOLERANCE) {
+      return `La receta propuesta suma ${total.toFixed(2)}%; debe sumar 100% (±${RECIPE_TOTAL_TOLERANCE}%).`;
+    }
+    return null;
+  };
+
   const applyRecipe = async (targetRecipe, options = {}) => {
     const names = options.names || {};
+    const validationError = validateRecipe(targetRecipe);
+    if (validationError) return { ok: false, message: validationError, adapter: nativeAdapter ? 'native' : 'dom' };
     const before = getRecipe(names);
 
     const distanceFn = engine()?.recipeDistance;
@@ -258,6 +282,7 @@
     applyRecipe,
     undoRecipe,
     canUndo: () => !!lastTransaction,
+    validateRecipe,
     registerNativeAdapter,
     adapterType: () => nativeAdapter ? 'native' : 'dom',
   };
