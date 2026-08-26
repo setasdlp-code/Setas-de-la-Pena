@@ -63,4 +63,31 @@ test('Setas OS Features Trio & SVG Icons Suite', async (t) => {
     assert.match(jsx, /ColonizationScaleSelector/);
     assert.match(jsx, /Ver Ficha Pública QR/);
   });
+
+  await t.test('Stock-aware auto-recipe generates viable formulas with bodega inventory', async () => {
+    const peritoMod = await import('./perito-scenarios.js');
+    const perito = peritoMod.default || peritoMod;
+
+    const SPP = {
+      p_ostreatus_gris: { name: 'Orellana gris', cn_optimal: { min: 22, max: 40, ideal: 30 }, n_optimal: { min: 1.0, max: 2.2, ideal: 1.5 }, moisture: { min: 65, max: 75, ideal: 68 }, eb_baseline: 90, supplementation_max: 25 },
+    };
+    const INGS = [
+      { id: 'paja_trigo', name: 'Paja de trigo', role: 'base_carbono', cn: 90, n: 0.5, c: 45, moisture: 12, cost: 2500, cs: ['p_ostreatus_gris'] },
+      { id: 'salvado_trigo', name: 'Salvado de trigo', role: 'suplemento_n', cn: 16, n: 2.8, c: 45, moisture: 12, cost: 5000, cs: ['p_ostreatus_gris'] },
+    ];
+    const stockIds = new Set(['paja_trigo', 'salvado_trigo']);
+
+    const seeds = perito.generateStructuralSeeds({
+      targetKey: 'p_ostreatus_gris',
+      ingredients: INGS,
+      spp: SPP,
+      useStock: true,
+      stockIds,
+      profileKey: 'produccion'
+    });
+
+    assert.ok(seeds.length > 0, 'Must generate structural seeds when bodega has base and supplement in stock');
+    const hasPajaAndSalvado = seeds.some(s => s.recipe.some(r => r.id === 'paja_trigo') && s.recipe.some(r => r.id === 'salvado_trigo'));
+    assert.ok(hasPajaAndSalvado, 'Must generate balanced combinations of in-stock base and supplement');
+  });
 });
