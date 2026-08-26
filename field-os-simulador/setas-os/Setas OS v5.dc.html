@@ -1664,6 +1664,18 @@
             </div>
           </sc-for>
         </div>
+
+        <div style="border:1px solid var(--border-strong);background:var(--paper-0);padding:20px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font:var(--t-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-olive);font-weight:700;">Documentación y Protocolos</div>
+            <div style="font-family:var(--font-sans);font-weight:800;font-size:18px;color:var(--ink-0);margin-top:2px;">Guía Operativa Canónica (SOP-SYS-001)</div>
+            <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:4px;">Manual de precisión, balance C:N, telemetría IoT, etiquetas FOS-03 y rutinas de 60 días.</div>
+          </div>
+          <a href="guia-setas-os.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--ink-0);color:var(--paper-0);padding:10px 18px;border-radius:var(--radius-sm);font:var(--t-label);font-weight:600;">
+            <span>Abrir Guía Canónica</span>
+            <span style="color:var(--accent-terracotta);">→</span>
+          </a>
+        </div>
       </div>
     </div>
     </sc-if>
@@ -3566,6 +3578,9 @@ class Component extends DCLogic {
     [['Costes','costes'],['Plan','plan'],['Inventario','inventario'],['Calidad','calidad'],['Cámaras','camaras'],['Comercial','comercial'],['Aprender','aprender']].forEach(([label,m])=>{
       if(label.toLowerCase().includes(t)) out.push({ k:'Módulo', label, sub:'Ir al módulo', go:()=>this.setState({module:m,cmdOpen:false}) });
     });
+    if(/^(gu[ií]a|manual|doc|sop|protocolo)/.test(t)){
+      out.push({ k:'Manual', label:'Guía Operativa Canónica', sub:'Abrir manual y protocolos FOS', go:()=>{ window.open('guia-setas-os.html','_blank'); this.setState({cmdOpen:false}); } });
+    }
     return out.slice(0,12);
   }
 
