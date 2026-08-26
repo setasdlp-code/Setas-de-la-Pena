@@ -7,9 +7,10 @@ const APP = '/Setas%20OS%20v5.dc.html';
 async function openApp(page, init = null) {
   if (init) await page.addInitScript(init);
   await page.goto(APP);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('#setas-auth-gate')).toBeHidden({ timeout: 20000 });
   await expect(page.locator('.app-shell')).toBeVisible();
   await expect(page.locator('.app-rail')).toBeVisible();
-  await page.waitForLoadState('networkidle');
   await page.locator('main.app-main').waitFor({ state: 'visible' });
 }
 
