@@ -6969,38 +6969,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
           const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
           const operationStatus=criticalTaskCount>0
-            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)'}
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
             :(overdueTaskCount>0||incidentCount>0)
-              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)'}
-              :{label:'Operación estable',color:'var(--moss-700)'};
+              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
+              :{label:'Operación estable',color:'var(--moss-700)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
 
-          // Ambientes & Sensores: cámaras físicas REALES (mismos datos que el
-          // módulo Cámaras — id, temp/hum/CO₂ en vivo, sparkline). Antes esta
-          // sección mostraba 4 "salas" ilustrativas sin relación con las cámaras
-          // reales (incub/martha/cloudlab); ahora son los mismos 3 registros,
-          // así que un clic en "Ver en Cámaras" siempre abre la cámara correcta.
+          // Ambientes & Sensores: cámaras físicas REALES
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // tasksHoy/recentActivity se parsean una sola vez acá: Tareas de hoy ahora
-          // vive en Sección A (junto a Acciones Rápidas) y Actividad reciente en
-          // Sección C, así que ambas secciones necesitan estos datos.
+          // Tareas de hoy y Actividad reciente
           let tasksHoy=[], recentActivity=[];
           try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
           return (
-            <div className="home-cockpit" style={{display:'flex',flexDirection:'column',gap:24,marginBottom:48}}>
+            <div className="home-cockpit">
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
-              <div style={{
-                background:'var(--paper-0)',
-                border:'1px solid var(--border-soft)',
-                borderRadius:'var(--r-md)',
-                padding:'18px 22px',
-                position:'relative',
-                overflow:'hidden'
-              }}>
+              <div className="home-header-cockpit">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
                   <div style={{minWidth:240}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
@@ -7628,19 +7615,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           );
                         })}
                       </div>
-                      {descartados>0 && (
-                        <div style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)'}}>
-                          {descartados} lote{descartados===1?'':'s'} descartado{descartados===1?'':'s'} (oculto{descartados===1?'':'s'} del tablero)
-                        </div>
-                      )}
                     </div>
                   );
                 })() : (
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
                     <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
-                      No hay lotes registrados aún. Puedes iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
+                      No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'5px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
