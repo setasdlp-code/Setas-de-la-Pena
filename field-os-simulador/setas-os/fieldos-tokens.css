@@ -137,12 +137,8 @@
   /* ── SPACING — DS tops out at space-9 (96px); old space-10 folds into it ── */
   --space-10: var(--space-9);
 
-  /* ── RADII — DS keeps radii near-flat (0/2/3px); no pill/lg glass shapes ── */
-  --r-xs:   var(--radius-sm);
-  --r-sm:   var(--radius-sm);
-  --r-md:   var(--radius-md);
-  --r-lg:   var(--radius-md);
-  --r-pill: var(--radius-md);
+  /* ── RADII — migrated to DS naming (--radius-sm, --radius-md, --radius-none).
+     Old aliases (--r-xs/sm/md/lg/pill) removed 2026-08. ── */
 
   /* ── SHADOWS — DS explicitly uses none for decoration ── */
   --shadow-soft:  var(--shadow-none);
@@ -195,6 +191,15 @@
   /* Apéndice — a slightly cooler, denser surface than the main body */
   --paper-appendix: color-mix(in oklab, var(--paper-0) 91%, var(--accent-blue-grey) 9%);
   --border-appendix: color-mix(in oklab, var(--line-1) 80%, var(--accent-blue-grey) 20%);
+
+  /* ── OPACITY SCALE — semantic levels for disabled, muted, and strong text/UI.
+     Communicate state intent (disabled vs. secondary vs. strong) instead of
+     using arbitrary values. Used for text opacity, icon opacity, and state layers. ── */
+  --opacity-disabled: 0.4;   /* disabled form elements, inactive controls */
+  --opacity-subtle:   0.55;  /* secondary accent marks, decorative separators */
+  --opacity-muted:    0.7;   /* secondary text, metadata, hints */
+  --opacity-medium:   0.8;   /* slightly faded text, icon groups */
+  --opacity-strong:   0.85;  /* scientific names, supplementary text */
 
   /* ── Z-INDEX SCALE — named layers instead of guessed numbers.
      Every stacking value in sim.css / simulador-app.jsx should reference one
