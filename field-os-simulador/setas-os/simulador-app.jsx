@@ -184,13 +184,13 @@ const DEFAULT_EXTRACTION_FACTORS = {
     name: "Melena de León",
     methods: {
       hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas + Erinacinas)",
+        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
         yield_factor: 0.11,
         cost_per_liter_solvent: 20000,
         optimal_alcohol_pct: 75,
         optimal_time_hrs: 96,
         optimal_temp_c: 25,
-        notes: "Doble extracción obligatoria para capturar hericenonas (alcohol) y erinacinas (agua)."
+        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
       acuosa: {
         name: "Decocción Acuosa (Beta-glucanos)",

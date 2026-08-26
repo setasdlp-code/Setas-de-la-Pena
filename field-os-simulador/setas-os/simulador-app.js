@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5d00610e2387155fdc6588651dacb61105a212f8717c0a4353e1fb1d5d31c2fe
+// source-hash: 7c175950365cde7527ff9d183bdbf78eae8f3dc5d5bc5f00a5fb26096280b18e
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -158,13 +158,13 @@ const DEFAULT_EXTRACTION_FACTORS = {
     name: "Melena de León",
     methods: {
       hidroalcoholica: {
-        name: "Doble Extracción (Hericenonas + Erinacinas)",
+        name: "Doble Extracción (Hericenonas/Terpenos + Beta-glucanos)",
         yield_factor: 0.11,
         cost_per_liter_solvent: 2e4,
         optimal_alcohol_pct: 75,
         optimal_time_hrs: 96,
         optimal_temp_c: 25,
-        notes: "Doble extracción obligatoria para capturar hericenonas (alcohol) y erinacinas (agua)."
+        notes: "Doble extracción secuencial para capturar fracción liposoluble (hericenonas/erinacinas en alcohol 75–95%) y fracción hidrosoluble (beta-glucanos en agua caliente)."
       },
       acuosa: {
         name: "Decocción Acuosa (Beta-glucanos)",
