@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 3bb1b5e120d21a1d55ea5f80a0f3ec57f591d0ad0729304ca1b2ead86c9284ce
+// source-hash: 67436799d3ee5b9cf6ac995a01593d9f164f992e543cf496b775430c5db2f398
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4875,6 +4875,28 @@ BATCH (${numBags}×${kgBag} kg):
     const CAMERA_TO_ROOM = { incub: "incubacion_01", martha: "martha_01", cloudlab: "cloudlab_844" };
     const lotesEnSala = bitLotes.filter((l) => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || !l.sala && selectedClimateRoom === "martha_01") && !["completado", "descartado"].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
+    const defaultTargets = selectedClimateRoom === "martha_01" ? {
+      temperature_c: { min: 14, max: 20, target: 17 },
+      rh_pct: { min: 85, max: 95, target: 90 },
+      co2_ppm: { min: 400, max: 900, target: 600 }
+    } : selectedClimateRoom === "incubacion_01" ? {
+      temperature_c: { min: 20, max: 24, target: 22 },
+      rh_pct: { min: 65, max: 80, target: 72 },
+      co2_ppm: { min: 400, max: 1500, target: 800 }
+    } : {
+      temperature_c: { min: 16, max: 22, target: 18.5 },
+      rh_pct: { min: 80, max: 92, target: 86 },
+      co2_ppm: { min: 450, max: 1e3, target: 700 }
+    };
+    const baseMetrics = selectedClimateRoom === "martha_01" ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: "hace 45s" } : selectedClimateRoom === "martha_02" ? { temp: 18.4, rh: 88, co2: 750, subTemp: 18.9, timestamp: "hace 1m" } : { temp: 23.4, rh: 72, co2: 2400, subTemp: 24.8, timestamp: "hace 35s" };
+    const physicalMetrics = selectedCamera ? {
+      temp: Number(selectedCamera.liveTemp),
+      rh: Number(selectedCamera.liveHum),
+      co2: Number(selectedCamera.liveCo2),
+      timestamp: "actualizado ahora"
+    } : {};
+    const injected = injectedClimateReadings[selectedClimateRoom];
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...injected || {} };
     const CULINARY_PROFILES = {
       firme: {
         name: "Textura Firme / Carne Densa",
@@ -5176,28 +5198,6 @@ BATCH (${numBags}×${kgBag} kg):
         ctx.fill();
       });
     }, [tempProj, rhProj, co2Proj, currentMetrics.temp, currentMetrics.rh, currentMetrics.co2, activeCulinaryKey]);
-    const defaultTargets = selectedClimateRoom === "martha_01" ? {
-      temperature_c: { min: 14, max: 20, target: 17 },
-      rh_pct: { min: 85, max: 95, target: 90 },
-      co2_ppm: { min: 400, max: 900, target: 600 }
-    } : selectedClimateRoom === "incubacion_01" ? {
-      temperature_c: { min: 20, max: 24, target: 22 },
-      rh_pct: { min: 65, max: 80, target: 72 },
-      co2_ppm: { min: 400, max: 1500, target: 800 }
-    } : {
-      temperature_c: { min: 16, max: 22, target: 18.5 },
-      rh_pct: { min: 80, max: 92, target: 86 },
-      co2_ppm: { min: 450, max: 1e3, target: 700 }
-    };
-    const baseMetrics = selectedClimateRoom === "martha_01" ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: "hace 45s" } : selectedClimateRoom === "martha_02" ? { temp: 18.4, rh: 88, co2: 750, subTemp: 18.9, timestamp: "hace 1m" } : { temp: 23.4, rh: 72, co2: 2400, subTemp: 24.8, timestamp: "hace 35s" };
-    const physicalMetrics = selectedCamera ? {
-      temp: Number(selectedCamera.liveTemp),
-      rh: Number(selectedCamera.liveHum),
-      co2: Number(selectedCamera.liveCo2),
-      timestamp: "actualizado ahora"
-    } : {};
-    const injected = injectedClimateReadings[selectedClimateRoom];
-    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...injected || {} };
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
     const dewPoint = climateMath ? climateMath.calcDewPoint(currentMetrics.temp, currentMetrics.rh) : 15.7;
     const climateHealth = climateMath ? climateMath.evalClimateHealth({

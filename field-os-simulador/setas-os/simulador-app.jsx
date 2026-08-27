@@ -6130,6 +6130,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
 
+    // Targets por defecto según sala
+    const defaultTargets = selectedClimateRoom === 'martha_01'
+      ? {
+          temperature_c: { min: 14.0, max: 20.0, target: 17.0 },
+          rh_pct: { min: 85.0, max: 95.0, target: 90.0 },
+          co2_ppm: { min: 400, max: 900, target: 600 }
+        }
+      : selectedClimateRoom === 'incubacion_01' ? {
+          temperature_c: { min: 20.0, max: 24.0, target: 22.0 },
+          rh_pct: { min: 65.0, max: 80.0, target: 72.0 },
+          co2_ppm: { min: 400, max: 1500, target: 800 }
+        } : {
+          temperature_c: { min: 16.0, max: 22.0, target: 18.5 },
+          rh_pct: { min: 80.0, max: 92.0, target: 86.0 },
+          co2_ppm: { min: 450, max: 1000, target: 700 }
+        };
+
+    // Datos de telemetría actuales (con soporte para inyección de telemetría en vivo vía Hub IoT / Webhooks)
+    const baseMetrics = selectedClimateRoom === 'martha_01'
+      ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: 'hace 45s' }
+      : selectedClimateRoom === 'martha_02'
+      ? { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' }
+      : { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8, timestamp: 'hace 35s' };
+    const physicalMetrics=selectedCamera?{
+      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'actualizado ahora'
+    }:{};
+    const injected = injectedClimateReadings[selectedClimateRoom];
+    // Prioridad: webhook real > monitor físico compartido > fallback de demo.
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}) };
+
     const CULINARY_PROFILES = {
       firme: {
         name: "Textura Firme / Carne Densa",
@@ -6475,35 +6505,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }, [tempProj, rhProj, co2Proj, currentMetrics.temp, currentMetrics.rh, currentMetrics.co2, activeCulinaryKey]);
 
-    // Targets por defecto según sala
-    const defaultTargets = selectedClimateRoom === 'martha_01'
-      ? {
-          temperature_c: { min: 14.0, max: 20.0, target: 17.0 },
-          rh_pct: { min: 85.0, max: 95.0, target: 90.0 },
-          co2_ppm: { min: 400, max: 900, target: 600 }
-        }
-      : selectedClimateRoom === 'incubacion_01' ? {
-          temperature_c: { min: 20.0, max: 24.0, target: 22.0 },
-          rh_pct: { min: 65.0, max: 80.0, target: 72.0 },
-          co2_ppm: { min: 400, max: 1500, target: 800 }
-        } : {
-          temperature_c: { min: 16.0, max: 22.0, target: 18.5 },
-          rh_pct: { min: 80.0, max: 92.0, target: 86.0 },
-          co2_ppm: { min: 450, max: 1000, target: 700 }
-        };
 
-    // Datos de telemetría actuales (con soporte para inyección de telemetría en vivo vía Hub IoT / Webhooks)
-    const baseMetrics = selectedClimateRoom === 'martha_01'
-      ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: 'hace 45s' }
-      : selectedClimateRoom === 'martha_02'
-      ? { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' }
-      : { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8, timestamp: 'hace 35s' };
-    const physicalMetrics=selectedCamera?{
-      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'actualizado ahora'
-    }:{};
-    const injected = injectedClimateReadings[selectedClimateRoom];
-    // Prioridad: webhook real > monitor físico compartido > fallback de demo.
-    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}) };
 
     // Cálculos psicrométricos
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
