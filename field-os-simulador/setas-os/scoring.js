@@ -47,8 +47,15 @@ const COST_BREAKPOINTS = [
   { below: 3500, score: 45 },
   { below: 5500, score: 25 },
 ];
-const scoreCost = (an) => {
-  const cost = an.cost || 0;
+const resolveCost = (an, ctx = {}) => {
+  if (Number.isFinite(ctx.realCost) && ctx.realCost >= 0) {
+    return { value: ctx.realCost, source: 'inventory' };
+  }
+  const catalogCost = Number.isFinite(an.cost) && an.cost >= 0 ? an.cost : 0;
+  return { value: catalogCost, source: 'catalog' };
+};
+const scoreCost = (costDetail) => {
+  const cost = costDetail.value;
   const hit = COST_BREAKPOINTS.find((b) => cost < b.below);
   return hit ? hit.score : 10;
 };
@@ -281,10 +288,11 @@ const buildProvenance = (ctx, uncertainty, calibration, stockDetail) => ({
 const scoreRecipe = (an, ctx = {}) => {
   const stockDetail = getStockDetail(ctx);
   const calibration = resolveCalibration(an, ctx);
+  const costDetail = resolveCost(an, ctx);
   const breakdown = {
     nutrition: scoreNutrition(an),
     yield: scoreYield(an, ctx),
-    cost: scoreCost(an),
+    cost: scoreCost(costDetail),
     risk: scoreRisk(an, ctx.treatment),
     treatment: scoreTreatment(an, ctx.treatment),
     massBalance: scoreMassBalance(an),
@@ -320,6 +328,7 @@ const scoreRecipe = (an, ctx = {}) => {
     uncertainty,
     provenance,
     stockDetail,
+    costDetail,
     calibration,
   };
 };
