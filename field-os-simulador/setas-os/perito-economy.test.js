@@ -55,7 +55,8 @@ test('la UI carga economía y separa costos excluidos', () => {
   assert.match(economySource, /precioPorKgCOP/);
   assert.match(bridge, /Costo de sustrato \/ kg hongo/);
   assert.match(bridge, /Excluye spawn, energía, mano de obra, empaque y depreciación/);
-  assert.match(bridge, /SetasScoring\.scoreRecipe\(anReal/);
+  assert.match(bridge, /ctx\.realCost = recipeCost\.copPerKg/);
+  assert.match(bridge, /SetasScoring\.scoreRecipe\(detail\.an, ctx\)/);
 });
 
 test('Recetario conserva economía en el snapshot versionado', () => {

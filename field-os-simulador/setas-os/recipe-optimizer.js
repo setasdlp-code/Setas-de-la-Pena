@@ -272,6 +272,13 @@
     if (!an || !an.sp) return { score: 0, status: 'sin_receta', items: [] };
     const sp = an.sp; const items = [];
     const flags = SetasScoring.detectSeverity ? SetasScoring.detectSeverity(an) : {};
+    // Mínimo funcional documentado para sustratos no estériles: solo cuentan
+    // los compuestos de calcio, no otros aditivos que también suman a addP.
+    const calciumPct = (recipe || []).reduce((sum, r) => (
+      r.id === 'yeso' || r.id === 'carbonato_calcio'
+        ? sum + Math.max(0, Number(r.p) || 0)
+        : sum
+    ), 0);
     const scaledDelta = (base, overDist) => Math.round(base * (1 + Math.min(1.5, Math.max(0, overDist || 0))));
     const recommendedIds = new Set();
     // bestStock: el criterio (sortFn) decide el candidato "ideal" en teoría,
@@ -458,7 +465,24 @@
         apply: null
       });
     }
-    if (an.addP < 2) {
+    const recommendedTreatment = calcTreatment(an, sKey, effectiveSPP);
+    if (calciumPct < 0.6 && recommendedTreatment?.col !== 'autoclave') {
+      const yeso = bestStock(g => g.id === 'yeso') || effectiveINGS.find(g => g.id === 'yeso' && g.cs && g.cs.includes(sKey));
+      items.push({
+        priority: 'warning', icon: 'Ca',
+        label: 'Calcio mineral bajo el mínimo funcional',
+        action: yeso ? `Agregar <b>${yeso.name}</b> hasta 1–1,5%` : 'Agregar yeso agrícola hasta 1–1,5%',
+        effect: `CaCO₃/CaSO₄ actual ${calciumPct.toFixed(1)}% < 0,6%. En sustrato no estéril, confirmar la estabilidad con medición de pH y trazabilidad del lote.`,
+        delta: 'Objetivo de formulación: ≥0,6% de CaCO₃ o CaSO₄',
+        apply: null,
+        evidence: {
+          type: 'literature',
+          confidence: 'medium',
+          note: 'Base de conocimiento: supplementation.md, Cenicafé / Royse & Sánchez. Es un mínimo funcional de formulación, no una garantía de rendimiento.',
+        },
+      });
+    }
+    if (an.addP < 2 && calciumPct >= 0.6) {
       const m = bestStock(g => g.role === 'aditivo_ph') || effectiveINGS.find(g => g.role === 'aditivo_ph' && g.cs && g.cs.includes(sKey));
       if (m) items.push({
         priority: 'tip', icon: 'Ca',
@@ -520,7 +544,7 @@
       };
     });
 
-    const tr13 = calcTreatment(an, sKey, effectiveSPP);
+    const tr13 = recommendedTreatment;
     const { score, status: statusFromScore } = scoreAn(an, { treatment: tr13, recipe, stockIds, blendedEB });
 
     const SIDE_EFFECT_FLAGS = ['cnHigh', 'cnLow', 'nLow', 'nHigh', 'phLow', 'phHigh'];
