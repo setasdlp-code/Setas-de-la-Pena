@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 48e9dba83e18d4f5066240d4b398e226b60b598641ac82f697782bace8d75bca
+// source-hash: 3bb1b5e120d21a1d55ea5f80a0f3ec57f591d0ad0729304ca1b2ead86c9284ce
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4875,6 +4875,307 @@ BATCH (${numBags}×${kgBag} kg):
     const CAMERA_TO_ROOM = { incub: "incubacion_01", martha: "martha_01", cloudlab: "cloudlab_844" };
     const lotesEnSala = bitLotes.filter((l) => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || !l.sala && selectedClimateRoom === "martha_01") && !["completado", "descartado"].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
+    const CULINARY_PROFILES = {
+      firme: {
+        name: "Textura Firme / Carne Densa",
+        gastronomy: "Evita que la seta quede babosa al saltear. Menos agua libre.",
+        tempIdeal: 14,
+        tempRange: [13, 15],
+        rhIdeal: 82,
+        rhRange: [80, 84],
+        co2Ideal: 700,
+        co2Max: 850,
+        directives: "Reduce la temperatura para ralentizar la división celular y mantén la HR a 82% para evitar la absorción pasiva de agua.",
+        morphology: "Sombrero de carne gruesa y compacta, cutícula resistente al calor. Ideal para sellar o asar a la parrilla."
+      },
+      gigante: {
+        name: "Sombrero Gigante / Tipo Bistec",
+        gastronomy: "Sombrero ultra expandido, ideal para rellenar o asar entero.",
+        tempIdeal: 18,
+        tempRange: [16, 20],
+        rhIdeal: 91,
+        rhRange: [88, 93],
+        co2Ideal: 450,
+        co2Max: 600,
+        directives: "Activa FAE continuo para bajar el CO₂ al mínimo (< 500 ppm), estimulando la expansión del diámetro de los sombreros.",
+        morphology: "Sombreros carnosos de gran diámetro (>12 cm), tallos cortos y delgados. Estructura celular delgada y expandida."
+      },
+      crujiente: {
+        name: "Tallo Carnoso y Crujiente",
+        gastronomy: "Fibras densas y crujientes al morder. Excelente para brochetas Yakitori.",
+        tempIdeal: 17,
+        tempRange: [15, 19],
+        rhIdeal: 85,
+        rhRange: [82, 88],
+        co2Ideal: 1050,
+        co2Max: 1200,
+        directives: "Reduce ligeramente la extracción para acumular CO₂ (alrededor de 1000 ppm), induciendo al pie a estirarse en busca de oxígeno.",
+        morphology: "Pie elongado y cilíndrico muy grueso, sombreros moderados. Textura al dente (crujiente)."
+      },
+      umami: {
+        name: "Sabor Umami Concentrado",
+        gastronomy: "Mayor concentración de glutamato natural. Sabor profundo a bosque.",
+        tempIdeal: 11.5,
+        tempRange: [10, 13],
+        rhIdeal: 87,
+        rhRange: [85, 90],
+        co2Ideal: 600,
+        co2Max: 750,
+        directives: "Climatiza la carpa a temperaturas frías (10–13°C). El estrés por frío induce la producción de aminoácidos libres.",
+        morphology: "Seta de coloración gris oscura intensa, sombreros pequeños y robustos. Perfil de sabor fuertemente umami."
+      },
+      conservacion: {
+        name: "Máxima Vida Útil / Cap Seco",
+        gastronomy: "Se conserva fresco por más días en nevera. No acumula mucílago.",
+        tempIdeal: 15,
+        tempRange: [14, 16],
+        rhIdeal: 75,
+        rhRange: [70, 78],
+        co2Ideal: 650,
+        co2Max: 800,
+        directives: "Baja la humedad al 75% en las últimas 48 horas antes de cosechar para endurecer y secar la superficie exterior del sombrero.",
+        morphology: "Superficie del sombrero deshidratada y sellada contra la oxidación. Resistente a la manipulación en cocina."
+      }
+    };
+    const [activeCulinaryKey, setActiveCulinaryKey] = useState("firme");
+    const [tempProj, setTempProj] = useState(14);
+    const [rhProj, setRhProj] = useState(82);
+    const [co2Proj, setCo2Proj] = useState(700);
+    const [dragNode, setDragNode] = useState(null);
+    const canvasRef = useRef(null);
+    const ptCO2Proj = useRef({ x: 0, y: 0 });
+    const ptTempProj = useRef({ x: 0, y: 0 });
+    const ptHumProj = useRef({ x: 0, y: 0 });
+    const handleCulinarySelect = (key) => {
+      setActiveCulinaryKey(key);
+      const p2 = CULINARY_PROFILES[key];
+      setTempProj(p2.tempIdeal);
+      setRhProj(p2.rhIdeal);
+      setCo2Proj(p2.co2Ideal);
+    };
+    const getMousePos = (canvas, e) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+    const checkHit = (pos, pt) => {
+      const dx = pos.x - pt.x;
+      const dy = pos.y - pt.y;
+      return Math.sqrt(dx * dx + dy * dy) < 14;
+    };
+    const handleMouseDown = (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const pos = getMousePos(canvas, e);
+      if (checkHit(pos, ptCO2Proj.current)) {
+        setDragNode("co2");
+      } else if (checkHit(pos, ptTempProj.current)) {
+        setDragNode("temp");
+      } else if (checkHit(pos, ptHumProj.current)) {
+        setDragNode("rh");
+      }
+    };
+    const handleMouseMove = (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const pos = getMousePos(canvas, e);
+      if (dragNode) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const rMax = 80;
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        let angle = 0;
+        if (dragNode === "co2") angle = -Math.PI / 2;
+        else if (dragNode === "temp") angle = Math.PI / 6;
+        else if (dragNode === "rh") angle = 5 * Math.PI / 6;
+        const ux = Math.cos(angle);
+        const uy = Math.sin(angle);
+        const proj = dx * ux + dy * uy;
+        const v = Math.max(0, Math.min(1, proj / rMax));
+        if (dragNode === "co2") {
+          const val = Math.round(300 + v * 1900);
+          setCo2Proj(val);
+        } else if (dragNode === "temp") {
+          const val = 8 + v * 24;
+          setTempProj(Number((Math.round(val * 2) / 2).toFixed(1)));
+        } else if (dragNode === "rh") {
+          const val = Math.round(40 + v * 59);
+          setRhProj(val);
+        }
+      } else {
+        if (checkHit(pos, ptCO2Proj.current) || checkHit(pos, ptTempProj.current) || checkHit(pos, ptHumProj.current)) {
+          canvas.style.cursor = "pointer";
+        } else {
+          canvas.style.cursor = "default";
+        }
+      }
+    };
+    const handleTouchStart = (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const touches = e.touches;
+      if (!touches || touches.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const pos = {
+        x: touches[0].clientX - rect.left,
+        y: touches[0].clientY - rect.top
+      };
+      if (checkHit(pos, ptCO2Proj.current) || checkHit(pos, ptTempProj.current) || checkHit(pos, ptHumProj.current)) {
+        e.preventDefault();
+        if (checkHit(pos, ptCO2Proj.current)) setDragNode("co2");
+        else if (checkHit(pos, ptTempProj.current)) setDragNode("temp");
+        else if (checkHit(pos, ptHumProj.current)) setDragNode("rh");
+      }
+    };
+    const handleTouchMove = (e) => {
+      if (!dragNode) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const touches = e.touches;
+      if (!touches || touches.length === 0) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const pos = {
+        x: touches[0].clientX - rect.left,
+        y: touches[0].clientY - rect.top
+      };
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const rMax = 80;
+      const dx = pos.x - cx;
+      const dy = pos.y - cy;
+      let angle = 0;
+      if (dragNode === "co2") angle = -Math.PI / 2;
+      else if (dragNode === "temp") angle = Math.PI / 6;
+      else if (dragNode === "rh") angle = 5 * Math.PI / 6;
+      const ux = Math.cos(angle);
+      const uy = Math.sin(angle);
+      const proj = dx * ux + dy * uy;
+      const v = Math.max(0, Math.min(1, proj / rMax));
+      if (dragNode === "co2") {
+        const val = Math.round(300 + v * 1900);
+        setCo2Proj(val);
+      } else if (dragNode === "temp") {
+        const val = 8 + v * 24;
+        setTempProj(Number((Math.round(val * 2) / 2).toFixed(1)));
+      } else if (dragNode === "rh") {
+        const val = Math.round(40 + v * 59);
+        setRhProj(val);
+      }
+    };
+    useEffect(() => {
+      const handleMouseUpGlobal = () => {
+        setDragNode(null);
+      };
+      window.addEventListener("mouseup", handleMouseUpGlobal);
+      return () => {
+        window.removeEventListener("mouseup", handleMouseUpGlobal);
+      };
+    }, []);
+    const p = CULINARY_PROFILES[activeCulinaryKey];
+    const errTemp = Math.abs(tempProj - p.tempIdeal) / 5;
+    const errRH = Math.abs(rhProj - p.rhIdeal) / 15;
+    const errCO2 = Math.abs(co2Proj - p.co2Ideal) / 500;
+    const avgError = (errTemp + errRH + errCO2) / 3;
+    const matchScore = Math.max(0, Math.min(100, Math.round((1 - avgError) * 100)));
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(30, 29, 25, 0.12)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 75, 0, 2 * Math.PI);
+      ctx.stroke();
+      const angles = [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6];
+      ctx.strokeStyle = "rgba(30, 29, 25, 0.08)";
+      ctx.lineWidth = 1;
+      angles.forEach((ang) => {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(ang) * 90, cy + Math.sin(ang) * 90);
+        ctx.stroke();
+      });
+      ctx.fillStyle = "#6B6759";
+      ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.textAlign = "center";
+      ctx.fillText("CO₂ (FAE)", cx, cy - 83);
+      ctx.fillText("TEMP", cx + Math.cos(angles[1]) * 105, cy + Math.sin(angles[1]) * 105 - 2);
+      ctx.fillText("HUM (VPD)", cx + Math.cos(angles[2]) * 105, cy + Math.sin(angles[2]) * 105 - 2);
+      const rMax = 80;
+      const vCO2Id = (p.co2Ideal - 300) / 1900;
+      const vTempId = (p.tempIdeal - 8) / 24;
+      const vHumId = (p.rhIdeal - 40) / 59;
+      const ptCO2Id = { x: cx + Math.cos(angles[0]) * vCO2Id * rMax, y: cy + Math.sin(angles[0]) * vCO2Id * rMax };
+      const ptTempId = { x: cx + Math.cos(angles[1]) * vTempId * rMax, y: cy + Math.sin(angles[1]) * vTempId * rMax };
+      const ptHumId = { x: cx + Math.cos(angles[2]) * vHumId * rMax, y: cy + Math.sin(angles[2]) * vHumId * rMax };
+      ctx.strokeStyle = "rgba(30, 29, 25, 0.25)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(ptCO2Id.x, ptCO2Id.y);
+      ctx.lineTo(ptTempId.x, ptTempId.y);
+      ctx.lineTo(ptHumId.x, ptHumId.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const vCO2Act = ((currentMetrics.co2 || 600) - 300) / 1900;
+      const vTempAct = ((currentMetrics.temp || 16) - 8) / 24;
+      const vHumAct = ((currentMetrics.rh || 80) - 40) / 59;
+      const ptCO2Act = { x: cx + Math.cos(angles[0]) * vCO2Act * rMax, y: cy + Math.sin(angles[0]) * vCO2Act * rMax };
+      const ptTempAct = { x: cx + Math.cos(angles[1]) * vTempAct * rMax, y: cy + Math.sin(angles[1]) * vTempAct * rMax };
+      const ptHumAct = { x: cx + Math.cos(angles[2]) * vHumAct * rMax, y: cy + Math.sin(angles[2]) * vHumAct * rMax };
+      ctx.fillStyle = "rgba(91, 107, 68, 0.18)";
+      ctx.strokeStyle = "#5B6B44";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ptCO2Act.x, ptCO2Act.y);
+      ctx.lineTo(ptTempAct.x, ptTempAct.y);
+      ctx.lineTo(ptHumAct.x, ptHumAct.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#5B6B44";
+      [ptCO2Act, ptTempAct, ptHumAct].forEach((pt) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+      const vCO2Proj = (co2Proj - 300) / 1900;
+      const vTempProj = (tempProj - 8) / 24;
+      const vHumProj = (rhProj - 40) / 59;
+      ptCO2Proj.current = { x: cx + Math.cos(angles[0]) * vCO2Proj * rMax, y: cy + Math.sin(angles[0]) * vCO2Proj * rMax };
+      ptTempProj.current = { x: cx + Math.cos(angles[1]) * vTempProj * rMax, y: cy + Math.sin(angles[1]) * vTempProj * rMax };
+      ptHumProj.current = { x: cx + Math.cos(angles[2]) * vHumProj * rMax, y: cy + Math.sin(angles[2]) * vHumProj * rMax };
+      ctx.strokeStyle = "#A85C32";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(ptCO2Proj.current.x, ptCO2Proj.current.y);
+      ctx.lineTo(ptTempProj.current.x, ptTempProj.current.y);
+      ctx.lineTo(ptHumProj.current.x, ptHumProj.current.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#A85C32";
+      [ptCO2Proj.current, ptTempProj.current, ptHumProj.current].forEach((pt) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4.5, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }, [tempProj, rhProj, co2Proj, currentMetrics.temp, currentMetrics.rh, currentMetrics.co2, activeCulinaryKey]);
     const defaultTargets = selectedClimateRoom === "martha_01" ? {
       temperature_c: { min: 14, max: 20, target: 17 },
       rh_pct: { min: 85, max: 95, target: 90 },
@@ -4981,7 +5282,102 @@ BATCH (${numBags}×${kgBag} kg):
       display: "flex",
       alignItems: "center",
       gap: 8
-    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? "🚨" : "⚠️"), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono"), /* @__PURE__ */ React.createElement("span", null, "Max: ", defaultTargets.co2_ppm.max, " ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.co2), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "SCD30 NDIR · Comp. 2.600m · ", climateTimeRange, ": ", co2Min, " – ", co2Max, " ppm"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "📈 Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Lecturas recibidas del ESP32 comparadas con las bandas óptimas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? "🚨" : "⚠️"), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono"), /* @__PURE__ */ React.createElement("span", null, "Max: ", defaultTargets.co2_ppm.max, " ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.co2), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "SCD30 NDIR · Comp. 2.600m · ", climateTimeRange, ": ", co2Min, " – ", co2Max, " ppm"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "🎯 Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-2)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: activeCulinaryKey,
+        onChange: (e) => handleCulinarySelect(e.target.value),
+        style: {
+          width: "100%",
+          padding: "8px 12px",
+          borderRadius: "var(--radius-sm)",
+          border: "1px solid var(--line-0)",
+          background: "var(--paper-0)",
+          color: "var(--ink-0)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13
+        }
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "firme" }, "Textura Firme / Carne Densa (Salteados)"),
+      /* @__PURE__ */ React.createElement("option", { value: "gigante" }, "Sombrero Gigante / Tipo Bistec (Relleno)"),
+      /* @__PURE__ */ React.createElement("option", { value: "crujiente" }, "Tallo Carnoso y Crujiente (Yakitori)"),
+      /* @__PURE__ */ React.createElement("option", { value: "umami" }, "Sabor Umami Concentrado (Choque Frío)"),
+      /* @__PURE__ */ React.createElement("option", { value: "conservacion" }, "Máxima Vida Útil (Cap Seco)")
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-sans)", color: "var(--ink-2)", fontStyle: "italic" } }, CULINARY_PROFILES[activeCulinaryKey].gastronomy)), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-2)", border: "1px solid var(--line-0)", borderRadius: "var(--radius-sm)", padding: 10, fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", null, "Target Fructificación:"), " T: ", CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1), "°C | HR: ", CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0), "% | CO₂: ", CULINARY_PROFILES[activeCulinaryKey].co2Ideal, " ppm"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--ink-2)" } }, CULINARY_PROFILES[activeCulinaryKey].directives)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-2)", textTransform: "uppercase" } }, /* @__PURE__ */ React.createElement("span", null, "Sintonía Culinaria (Match):"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, color: matchScore >= 80 ? "var(--accent-olive)" : matchScore >= 50 ? "var(--accent-terracotta)" : "var(--accent-rust)" } }, matchScore, "%")), /* @__PURE__ */ React.createElement("div", { style: { width: "100%", height: 8, background: "var(--paper-2)", borderRadius: 999, overflow: "hidden", border: "1px solid var(--line-0)" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: `${matchScore}%`,
+      height: "100%",
+      background: matchScore >= 80 ? "var(--accent-olive)" : matchScore >= 50 ? "var(--accent-terracotta)" : "var(--accent-rust)",
+      transition: "width 0.3s ease"
+    } }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "TEMP: ", tempProj.toFixed(1), " °C"), /* @__PURE__ */ React.createElement("span", null, "Meta: ", CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1), "°C")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "range",
+        min: "8",
+        max: "32",
+        step: "0.5",
+        value: tempProj,
+        onChange: (e) => setTempProj(parseFloat(e.target.value)),
+        style: { width: "100%" }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "HUMEDAD: ", rhProj.toFixed(0), " %"), /* @__PURE__ */ React.createElement("span", null, "Meta: ", CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0), "%")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "range",
+        min: "40",
+        max: "99",
+        step: "1",
+        value: rhProj,
+        onChange: (e) => setRhProj(parseInt(e.target.value)),
+        style: { width: "100%" }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "CO₂: ", co2Proj, " ppm"), /* @__PURE__ */ React.createElement("span", null, "Meta: ", CULINARY_PROFILES[activeCulinaryKey].co2Ideal, " ppm")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "range",
+        min: "300",
+        max: "2200",
+        step: "25",
+        value: co2Proj,
+        onChange: (e) => setCo2Proj(parseInt(e.target.value)),
+        style: { width: "100%" }
+      }
+    ))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-sans)", color: "var(--ink-1)", borderTop: "1px dashed var(--line-0)", paddingTop: 8 } }, /* @__PURE__ */ React.createElement("strong", null, "Predicción de Morfología:"), " ", CULINARY_PROFILES[activeCulinaryKey].morphology), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, borderTop: "1px dashed var(--line-0)", paddingTop: 10 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setRhProj(CULINARY_PROFILES[activeCulinaryKey].rhIdeal),
+        style: { cursor: "pointer", padding: "6px 4px", fontSize: 10, fontFamily: "var(--font-mono)", border: "1px solid var(--line-0)", background: "var(--paper-0)", borderRadius: 4 }
+      },
+      "Nivelar Neb."
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setCo2Proj(CULINARY_PROFILES[activeCulinaryKey].co2Ideal),
+        style: { cursor: "pointer", padding: "6px 4px", fontSize: 10, fontFamily: "var(--font-mono)", border: "1px solid var(--line-0)", background: "var(--paper-0)", borderRadius: 4 }
+      },
+      "Nivelar FAE"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setTempProj(CULINARY_PROFILES[activeCulinaryKey].tempIdeal),
+        style: { cursor: "pointer", padding: "6px 4px", fontSize: 10, fontFamily: "var(--font-mono)", border: "1px solid var(--line-0)", background: "var(--paper-0)", borderRadius: 4 }
+      },
+      "Equilibrar T°"
+    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid var(--line-0)", background: "var(--paper-0)", padding: 12, borderRadius: "var(--radius-sm)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", textTransform: "uppercase", marginBottom: 8 } }, "Interactivo (Arrastra los puntos)"), /* @__PURE__ */ React.createElement(
+      "canvas",
+      {
+        ref: canvasRef,
+        width: "220",
+        height: "220",
+        style: { background: "var(--paper-1)", border: "1px solid var(--line-0)", borderRadius: 4 },
+        onMouseDown: handleMouseDown,
+        onMouseMove: handleMouseMove,
+        onTouchStart: handleTouchStart,
+        onTouchMove: handleTouchMove
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 9, fontFamily: "var(--font-sans)", color: "var(--ink-2)", textAlign: "center", maxWidth: 240 } }, "Triángulo sólido: Sensores en vivo (Compensados).", /* @__PURE__ */ React.createElement("br", null), "Línea discontinua: Proyección del simulador.")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "📈 Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Lecturas recibidas del ESP32 comparadas con las bandas óptimas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: rng,
