@@ -189,6 +189,25 @@ test('generateOptimizer genera veredictos y predicciones sin mutar estado', () =
   });
 });
 
+test('generateOptimizer advierte el mínimo funcional de calcio solo en tratamientos no estériles', () => {
+  const an = {
+    sp: SPP.p_ostreatus_gris, cn: 35, avgN: 1.2, avgPh: 6.8, eb: 100, cost: 450, tot: 100,
+    suppP: 5, addP: 2, avgDig: 7, avgCra: 3, airP: 15, densaP: 0, trichoderma: false, incompat: [],
+  };
+  const noCalcium = [{ id: 'paja_trigo', p: 93 }, { id: 'salvado_trigo', p: 5 }, { id: 'sulfato_magnesio', p: 2 }];
+  const withCalcium = [{ id: 'paja_trigo', p: 92 }, { id: 'salvado_trigo', p: 5 }, { id: 'yeso', p: 1 }, { id: 'sulfato_magnesio', p: 2 }];
+  const stockIds = new Set(INGS.map(g => g.id));
+
+  const warning = generateOptimizer(an, 'p_ostreatus_gris', stockIds, noCalcium, INGS, [], null, true, {}, SPP)
+    .items.find(i => i.label === 'Calcio mineral bajo el mínimo funcional');
+  const sufficient = generateOptimizer(an, 'p_ostreatus_gris', stockIds, withCalcium, INGS, [], null, true, {}, SPP)
+    .items.find(i => i.label === 'Calcio mineral bajo el mínimo funcional');
+
+  assert.equal(warning?.priority, 'warning');
+  assert.equal(warning?.evidence?.type, 'literature');
+  assert.equal(sufficient, undefined);
+});
+
 // logic-lens: usageCounts existe para no recomendar siempre el mismo
 // ingrediente cuando hay alternativas igual de viables — verificado aquí
 // como mecanismo puro, aislado del hecho de que ningún call site en
