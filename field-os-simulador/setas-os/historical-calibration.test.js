@@ -1,7 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { bitacoraEBRows, historicalEB } = require('./historical-calibration.js');
+const { bitacoraEBRows, historicalEB, recipeOverlap } = require('./historical-calibration.js');
 
 test('el módulo puede evaluarse de nuevo en navegador sin redeclarar globals léxicos', () => {
   const source = fs.readFileSync(path.join(__dirname, 'historical-calibration.js'), 'utf8');
@@ -120,6 +120,23 @@ test('una receta que comparte ingredientes marca matched y restringe a esos lote
   assert.equal(h.n, 1);
   assert.equal(h.avg, 90);
   assert.equal(h.similarity, 1);
+});
+
+test('la similitud histórica distingue proporciones aunque los IDs sean iguales', () => {
+  const activa = [{ id: 'paja_trigo', pct: 95 }, { id: 'salvado_trigo', pct: 5 }];
+  const distinta = [{ id: 'paja_trigo', p: 50 }, { id: 'salvado_trigo', p: 50 }];
+
+  assert.ok(Math.abs(recipeOverlap(activa, distinta) - 0.55) < 1e-9);
+
+  const h = historicalEB('p_ostreatus_gris', [row('p_ostreatus_gris', 80, distinta)], activa);
+  assert.ok(Math.abs(h.similarity - 0.55) < 1e-9);
+  assert.ok(Math.abs(h.weight - 0.55 / 6) < 1e-9);
+});
+
+test('la similitud normaliza recetas equivalentes expresadas con p o pct', () => {
+  const a = [{ id: 'paja_trigo', pct: 8 }, { id: 'salvado_trigo', pct: 2 }];
+  const b = [{ id: 'paja_trigo', p: 80 }, { id: 'salvado_trigo', p: 20 }];
+  assert.equal(recipeOverlap(a, b), 1);
 });
 
 test('la curva suave nunca supera 0.65 y no decrece al sumar lotes', () => {

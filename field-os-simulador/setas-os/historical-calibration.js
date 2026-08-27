@@ -32,19 +32,38 @@ const bitacoraEBRows = (bitLotes, bitCosechas) => {
   return rows;
 };
 
-const idsOf = (recipe) => new Set(
-  (Array.isArray(recipe) ? recipe : []).map((r) => r && r.id).filter(Boolean),
-);
+const recipePctMap = (recipe) => {
+  const rows = (Array.isArray(recipe) ? recipe : []).filter((r) => r && r.id);
+  if (!rows.length) return new Map();
+  const map = new Map();
+  rows.forEach((r) => {
+    const raw = r.p ?? r.pct;
+    const pct = Number.isFinite(Number(raw)) ? Math.max(0, Number(raw)) : 0;
+    map.set(r.id, (map.get(r.id) || 0) + pct);
+  });
+  const total = [...map.values()].reduce((sum, pct) => sum + pct, 0);
+  if (total > 0) {
+    map.forEach((pct, id) => map.set(id, pct / total * 100));
+  } else {
+    // Compatibilidad con registros antiguos que guardaban IDs sin porcentajes:
+    // no inventa una composición dominante y reparte el peso por igual.
+    const equalPct = 100 / map.size;
+    map.forEach((_, id) => map.set(id, equalPct));
+  }
+  return map;
+};
 
-// Solapamiento de Jaccard entre la receta activa y la de un lote histórico.
-// Reemplaza al mapa HIST_SUB_TO_ING, que solo conocía un sustrato (wheat_straw).
+// Similitud de Manhattan sobre proporciones normalizadas. A diferencia de
+// Jaccard, distingue recetas con los mismos IDs pero porcentajes biológicamente
+// distintos. Equivale a 1 - recipeDistance() del motor de escenarios.
 const recipeOverlap = (recipeA, recipeB) => {
-  const a = idsOf(recipeA);
-  const b = idsOf(recipeB);
+  const a = recipePctMap(recipeA);
+  const b = recipePctMap(recipeB);
   if (!a.size || !b.size) return 0;
-  let inter = 0;
-  for (const id of a) if (b.has(id)) inter += 1;
-  return inter / (a.size + b.size - inter);
+  const ids = new Set([...a.keys(), ...b.keys()]);
+  let l1 = 0;
+  ids.forEach((id) => { l1 += Math.abs((a.get(id) || 0) - (b.get(id) || 0)); });
+  return Math.max(0, Math.min(1, 1 - l1 / 200));
 };
 
 const NEUTRAL_SIMILARITY = 0.5; // sin receta activa no hay evidencia de parecido

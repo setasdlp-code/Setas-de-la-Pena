@@ -82,6 +82,26 @@ test('cost es monótono no-creciente al subir el costo — una sola escala, sin 
   }
 });
 
+test('cost usa el costo real inyectado de Bodega y conserva el catálogo como fallback', () => {
+  const an = baseAn({ cost: 700 });
+  const catalog = scoreRecipe(an, baseCtx());
+  const inventory = scoreRecipe(an, baseCtx({ realCost: 4200 }));
+
+  assert.equal(catalog.breakdown.cost, 100);
+  assert.equal(inventory.breakdown.cost, 25);
+  assert.equal(inventory.costDetail.source, 'inventory');
+  assert.equal(inventory.costDetail.value, 4200);
+  assert.equal(catalog.costDetail.source, 'catalog');
+  assert.equal(catalog.costDetail.value, 700);
+});
+
+test('cost ignora un costo real inválido en vez de convertirlo silenciosamente en costo cero', () => {
+  const an = baseAn({ cost: 1700 });
+  const result = scoreRecipe(an, baseCtx({ realCost: Number.NaN }));
+  assert.equal(result.breakdown.cost, 65);
+  assert.deepEqual(result.costDetail, { value: 1700, source: 'catalog' });
+});
+
 test('risk cae fuertemente cuando la receta dispara Trichoderma', () => {
   // calcRiskScore original recibía (recipe, an, sKey, treatment, ings) pero
   // solo leía an y treatment — los otros tres eran parámetros muertos que
