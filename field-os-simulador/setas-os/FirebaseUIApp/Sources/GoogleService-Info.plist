@@ -3,22 +3,18 @@
 <plist version="1.0">
 <dict>
 	<!--
-	Values below (API_KEY, PROJECT_ID, STORAGE_BUCKET, GCM_SENDER_ID) are the
-	same "sdlp-os" Firebase project used by the web app — see
-	../../firebase/firebase-config.js. Those fields are project-wide and safe
-	to copy.
-
-	GOOGLE_APP_ID is NOT copyable from the web config: it's platform+bundle-id
-	specific and only exists once an iOS app is registered for this project.
-	This file was scaffolded without that registration (requires Firebase
-	Console access / `firebase apps:create` under an authenticated session,
-	which this task did not perform). To finish:
-	  1. Firebase Console → sdlp-os → Project settings → Add app → iOS
-	  2. Bundle ID: com.sebastianpinzon.FirebaseUIApp
-	  3. Download the real GoogleService-Info.plist and replace this file.
+	Real config for the "FirebaseUIApp" iOS app registered under the "sdlp-os"
+	Firebase project (App ID 1:416230541912:ios:137dccced0cd36dc65d82d),
+	downloaded via `firebase apps:sdkconfig IOS <app-id> --project sdlp-os`.
+	Same project as the web app (../../firebase/firebase-config.js) — API_KEY
+	differs because Firebase issues a distinct key per platform app.
 	-->
+	<key>CLIENT_ID</key>
+	<string>416230541912-5rpvdaqmo3tag5go1utg4kcoes7l0vfi.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.416230541912-5rpvdaqmo3tag5go1utg4kcoes7l0vfi</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAulvM9pauq-eqCOmN6a29dVXQg33DKP1g</string>
+	<string>AIzaSyBdBUTY_Pda2TaPD9yPdveJlkJ-vn8k9_o</string>
 	<key>GCM_SENDER_ID</key>
 	<string>416230541912</string>
 	<key>PLIST_VERSION</key>
@@ -34,12 +30,12 @@
 	<key>IS_ANALYTICS_ENABLED</key>
 	<false/>
 	<key>IS_APPINVITE_ENABLED</key>
-	<false/>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
 	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
 	<true/>
 	<key>GOOGLE_APP_ID</key>
-	<string>REPLACE_WITH_REAL_IOS_APP_ID</string>
+	<string>1:416230541912:ios:137dccced0cd36dc65d82d</string>
 </dict>
 </plist>
