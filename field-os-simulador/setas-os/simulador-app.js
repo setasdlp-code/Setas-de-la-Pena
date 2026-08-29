@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 65aed4446fdc3712d1658f792bb1c1bbeab67bcaa523428000c950861819702d
+// source-hash: 8c039f325b60c23537893139b2d53bfc2d6fcc0555aa30877a15feb89bb28008
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2696,6 +2696,12 @@ function App(props) {
   })());
   const [schKey, setSchKey] = useState("p_ostreatus_gris");
   const [normMode, setNormMode] = useState(false);
+  const [coFormMode, setCoFormMode] = useState(false);
+  const [coSpecConfig, setCoSpecConfig] = useState({ p_ostreatus_gris: 60, p_djamor_rosada: 40 });
+  const coAnalysis = useMemo(() => {
+    if (!coFormMode || !recipe.length || !window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe, coSpecConfig, INGS, SPP);
+  }, [coFormMode, recipe, coSpecConfig]);
   const [vegPrice, setVegPrice] = useState(12e3);
   const [priceOverrides, setPriceOverrides] = useState({});
   const [showPrices, setShowPrices] = useState(false);
@@ -5931,7 +5937,7 @@ BATCH (${numBags}×${kgBag} kg):
       openBuilderSubTab("formular");
       goTab("formular");
     }, className: "spp-cta" }, "Formular con ", sp.name, " →")))));
-  })()), tab === "formular" && /* @__PURE__ */ React.createElement("nav", { className: "formular-mode-nav", role: "tablist", "aria-label": "Modo de formulación" }, /* @__PURE__ */ React.createElement(
+  })()), tab === "formular" && /* @__PURE__ */ React.createElement("div", { className: "formular-mode-wrapper" }, /* @__PURE__ */ React.createElement("nav", { className: "formular-mode-nav", role: "tablist", "aria-label": "Modo de formulación" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",
@@ -5962,7 +5968,33 @@ BATCH (${numBags}×${kgBag} kg):
     },
     /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "⚡"),
     /* @__PURE__ */ React.createElement("span", null, "Generador de Recetas")
-  )), tab === "formular" && builderSubTab === "formular" && recipe.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "form-mobile-start", "data-testid": "form-mobile-start", "aria-labelledby": "form-mobile-start-title" }, /* @__PURE__ */ React.createElement("header", null, /* @__PURE__ */ React.createElement("span", null, "Inicio rápido"), /* @__PURE__ */ React.createElement("strong", { id: "form-mobile-start-title" }, "Configura y empieza la receta")), /* @__PURE__ */ React.createElement("label", { className: "form-mobile-start-field", htmlFor: "form-mobile-species-select" }, /* @__PURE__ */ React.createElement("span", null, "1 · Especie"), /* @__PURE__ */ React.createElement("select", { id: "form-mobile-species-select", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-field" }, /* @__PURE__ */ React.createElement("span", null, "2 · Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-origin-options", role: "group", "aria-label": "Origen de ingredientes para inicio rápido" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo"))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-actions", "aria-label": "Método para comenzar" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "is-primary", onClick: focusIngredientCatalog }, "Elegir insumos"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Usar generador"))), tab === "formular" && builderSubTab === "formular" && recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: `form-production-command is-${formNextState}`, "aria-label": "Siguiente paso de producción" }, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: `formular-mode-btn${coFormMode ? " is-active" : ""}`,
+      "data-testid": "co-form-toggle",
+      onClick: () => setCoFormMode(!coFormMode)
+    },
+    /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "🧬"),
+    /* @__PURE__ */ React.createElement("span", null, coFormMode ? "Co-Formulación Activa" : "Modo Co-Formulación")
+  )), coFormMode && /* @__PURE__ */ React.createElement("div", { className: "co-form-panel", "data-testid": "co-form-panel", style: { margin: "10px 0", padding: "12px", background: "var(--surface-card,#fbf9f4)", borderRadius: "8px", border: "1px solid var(--border-subtle,#e2dacd)" } }, /* @__PURE__ */ React.createElement("header", { style: { display: "flex", justify: "space-between", alignItems: "center", marginBottom: "8px" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontSize: "0.9rem" } }, "🧬 Co-Formulación Multi-Especie (Ponderación de Lote)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", color: "var(--ink-600,#666)" } }, "Proporción de producción por especie")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" } }, Object.entries(SPP).map(([k, d]) => {
+    const weight = coSpecConfig[k] || 0;
+    return /* @__PURE__ */ React.createElement("div", { key: k, style: { display: "flex", flexDirection: "column", gap: "4px", padding: "6px 10px", background: "var(--bg-main,#fff)", borderRadius: "6px", border: weight > 0 ? "1px solid var(--primary,#5A7042)" : "1px solid #ddd" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justify: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", fontWeight: 600 } }, d.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.8rem", fontWeight: 700, color: weight > 0 ? "var(--primary,#5A7042)" : "#999" } }, weight, "%")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "range",
+        min: "0",
+        max: "100",
+        step: "5",
+        value: weight,
+        onChange: (e) => {
+          const val = Number(e.target.value) || 0;
+          setCoSpecConfig((prev) => ({ ...prev, [k]: val }));
+        }
+      }
+    ));
+  })), coAnalysis && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "12px", padding: "10px", background: "#f0f4ec", borderRadius: "6px", fontSize: "0.85rem", display: "flex", flexDirection: "column", gap: "6px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justify: "space-between", fontWeight: 600 } }, /* @__PURE__ */ React.createElement("span", null, "Target C:N Ponderado: ", coAnalysis.weightedTargets.cn.ideal, ":1 (", coAnalysis.weightedTargets.cn.min, " - ", coAnalysis.weightedTargets.cn.max, ")"), /* @__PURE__ */ React.createElement("span", null, "EB Conjunta Estimada: ", coAnalysis.jointEB, "%")), coAnalysis.allIncompatibilities.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--color-critical,#c53030)", fontWeight: 600 } }, "⚠️ Incompatibilidades de co-formulación: ", coAnalysis.allIncompatibilities.join(", ")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "4px" } }, coAnalysis.speciesResults.map((r) => /* @__PURE__ */ React.createElement("div", { key: r.speciesKey, style: { fontSize: "0.8rem", padding: "4px 8px", background: "#fff", borderRadius: "4px", border: "1px solid #c8d6be" } }, /* @__PURE__ */ React.createElement("strong", null, r.speciesName, " (", r.weightPct, "%)"), ": EB est. ", r.an?.eb ? Math.round(r.an.eb) : "—", "%")))))), tab === "formular" && builderSubTab === "formular" && recipe.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "form-mobile-start", "data-testid": "form-mobile-start", "aria-labelledby": "form-mobile-start-title" }, /* @__PURE__ */ React.createElement("header", null, /* @__PURE__ */ React.createElement("span", null, "Inicio rápido"), /* @__PURE__ */ React.createElement("strong", { id: "form-mobile-start-title" }, "Configura y empieza la receta")), /* @__PURE__ */ React.createElement("label", { className: "form-mobile-start-field", htmlFor: "form-mobile-species-select" }, /* @__PURE__ */ React.createElement("span", null, "1 · Especie"), /* @__PURE__ */ React.createElement("select", { id: "form-mobile-species-select", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-field" }, /* @__PURE__ */ React.createElement("span", null, "2 · Origen"), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-origin-options", role: "group", "aria-label": "Origen de ingredientes para inicio rápido" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo"))), /* @__PURE__ */ React.createElement("div", { className: "form-mobile-start-actions", "aria-label": "Método para comenzar" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "is-primary", onClick: focusIngredientCatalog }, "Elegir insumos"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Usar generador"))), tab === "formular" && builderSubTab === "formular" && recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: `form-production-command is-${formNextState}`, "aria-label": "Siguiente paso de producción" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",

@@ -3800,6 +3800,12 @@ function App(props){
   const [schDate,setSchDate]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [schKey,setSchKey]=useState('p_ostreatus_gris');
   const [normMode,setNormMode]=useState(false);
+  const [coFormMode,setCoFormMode]=useState(false);
+  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
+  const coAnalysis=useMemo(()=>{
+    if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,INGS,SPP);
+  },[coFormMode,recipe,coSpecConfig]);
   const [vegPrice,setVegPrice]=useState(12000);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
@@ -8456,35 +8462,97 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-          <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
-            <button
-              type="button"
-              role="tab"
-              id="formular-tab-mesa"
-              aria-controls="formular-panel-mesa"
-              aria-selected={builderSubTab==='formular'}
-              tabIndex={builderSubTab==='formular'?0:-1}
-              className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
-              onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>openBuilderSubTab('formular')}>
-              <span aria-hidden="true">🥣</span>
-              <span>Mesa de Mezcla</span>
-              {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="formular-tab-generador"
-              aria-controls="formular-panel-generador"
-              aria-selected={builderSubTab==='generador'}
-              tabIndex={builderSubTab==='generador'?0:-1}
-              className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
-              onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>openBuilderSubTab('generador')}>
-              <span aria-hidden="true">⚡</span>
-              <span>Generador de Recetas</span>
-            </button>
-          </nav>
+          <div className="formular-mode-wrapper">
+            <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
+              <button
+                type="button"
+                role="tab"
+                id="formular-tab-mesa"
+                aria-controls="formular-panel-mesa"
+                aria-selected={builderSubTab==='formular'}
+                tabIndex={builderSubTab==='formular'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
+                onKeyDown={onBuilderTabKeyDown}
+                onClick={()=>openBuilderSubTab('formular')}>
+                <span aria-hidden="true">🥣</span>
+                <span>Mesa de Mezcla</span>
+                {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="formular-tab-generador"
+                aria-controls="formular-panel-generador"
+                aria-selected={builderSubTab==='generador'}
+                tabIndex={builderSubTab==='generador'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
+                onKeyDown={onBuilderTabKeyDown}
+                onClick={()=>openBuilderSubTab('generador')}>
+                <span aria-hidden="true">⚡</span>
+                <span>Generador de Recetas</span>
+              </button>
+              <button
+                type="button"
+                className={`formular-mode-btn${coFormMode?' is-active':''}`}
+                data-testid="co-form-toggle"
+                onClick={()=>setCoFormMode(!coFormMode)}>
+                <span aria-hidden="true">🧬</span>
+                <span>{coFormMode?'Co-Formulación Activa':'Modo Co-Formulación'}</span>
+              </button>
+            </nav>
+            {coFormMode&&(
+              <div className="co-form-panel" data-testid="co-form-panel" style={{margin:'10px 0',padding:'12px',background:'var(--surface-card,#fbf9f4)',borderRadius:'8px',border:'1px solid var(--border-subtle,#e2dacd)'}}>
+                <header style={{display:'flex',justify:'space-between',alignItems:'center',marginBottom:'8px'}}>
+                  <strong style={{fontSize:'0.9rem'}}>🧬 Co-Formulación Multi-Especie (Ponderación de Lote)</strong>
+                  <span style={{fontSize:'0.8rem',color:'var(--ink-600,#666)'}}>Proporción de producción por especie</span>
+                </header>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:'10px'}}>
+                  {Object.entries(SPP).map(([k,d])=>{
+                    const weight = coSpecConfig[k] || 0;
+                    return (
+                      <div key={k} style={{display:'flex',flexDirection:'column',gap:'4px',padding:'6px 10px',background:'var(--bg-main,#fff)',borderRadius:'6px',border:weight>0?'1px solid var(--primary,#5A7042)':'1px solid #ddd'}}>
+                        <div style={{display:'flex',justify:'space-between',alignItems:'center'}}>
+                          <span style={{fontSize:'0.8rem',fontWeight:600}}>{d.name}</span>
+                          <span style={{fontSize:'0.8rem',fontWeight:700,color:weight>0?'var(--primary,#5A7042)':'#999'}}>{weight}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={weight}
+                          onChange={e=>{
+                            const val = Number(e.target.value)||0;
+                            setCoSpecConfig(prev=>({...prev, [k]: val}));
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {coAnalysis&&(
+                  <div style={{marginTop:'12px',padding:'10px',background:'#f0f4ec',borderRadius:'6px',fontSize:'0.85rem',display:'flex',flexDirection:'column',gap:'6px'}}>
+                    <div style={{display:'flex',justify:'space-between',fontWeight:600}}>
+                      <span>Target C:N Ponderado: {coAnalysis.weightedTargets.cn.ideal}:1 ({coAnalysis.weightedTargets.cn.min} - {coAnalysis.weightedTargets.cn.max})</span>
+                      <span>EB Conjunta Estimada: {coAnalysis.jointEB}%</span>
+                    </div>
+                    {coAnalysis.allIncompatibilities.length>0&&(
+                      <div style={{color:'var(--color-critical,#c53030)',fontWeight:600}}>
+                        ⚠️ Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
+                      </div>
+                    )}
+                    <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginTop:'4px'}}>
+                      {coAnalysis.speciesResults.map(r=>(
+                        <div key={r.speciesKey} style={{fontSize:'0.8rem',padding:'4px 8px',background:'#fff',borderRadius:'4px',border:'1px solid #c8d6be'}}>
+                          <strong>{r.speciesName} ({r.weightPct}%)</strong>: EB est. {r.an?.eb?Math.round(r.an.eb):'—'}%
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {tab==='formular'&&builderSubTab==='formular'&&recipe.length===0&&(
