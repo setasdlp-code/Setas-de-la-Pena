@@ -2285,7 +2285,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
               </span>
             </div>
             <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:3}}>
-              Finca El Peñón · Tenjo, Cundinamarca · 2.587 msnm
+              Finca Santa Isabel · Tenjo, Cundinamarca · 2.587 msnm
             </div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-500)',marginTop:2}}>
               {traceUrl}
@@ -7502,9 +7502,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </header>
 
       <div className="wrap">
-        <div className="print-header">
-          <h1>Setas de la Peña</h1>
-          <p>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
+        <div className="print-header" style={{display:'flex',alignItems:'center',gap:14}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="56" height="56" style={{width:56,height:56,objectFit:'contain'}} />
+          <div>
+            <h1 style={{margin:0,fontSize:22}}>Setas de la Peña</h1>
+            <p style={{margin:'2px 0 0',fontSize:12,color:'var(--ink-2)'}}>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
+          </div>
         </div>
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
@@ -8551,6 +8554,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </button>
               <button
                 type="button"
+                role="tab"
+                id="formular-tab-coform"
+                aria-selected={coFormMode}
+                tabIndex={0}
                 className={`formular-mode-btn${coFormMode?' is-active':''}`}
                 data-testid="co-form-toggle"
                 onClick={()=>setCoFormMode(!coFormMode)}>
