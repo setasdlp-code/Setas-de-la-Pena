@@ -7475,14 +7475,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
   return(
     <div>
       <div className="topbar">
-        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="28" height="28" style={{width:28,height:'auto',objectFit:'contain'}} />
-          <span>Setas de la Peña</span>
+        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="36" height="36" style={{width:36,height:'auto',maxHeight:36,objectFit:'contain'}} />
+          <span style={{fontSize:15,fontWeight:700}}>Setas de la Peña</span>
         </button>
       </div>
       <nav className="fos-rail">
-        <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 6px 8px'}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="76" height="76" style={{width:76,height:'auto',maxHeight:76,objectFit:'contain',display:'block'}} />
+        <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 4px 8px'}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="88" height="88" style={{width:88,height:'auto',maxHeight:88,objectFit:'contain',display:'block'}} />
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
           <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>

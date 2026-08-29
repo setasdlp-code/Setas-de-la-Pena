@@ -108,13 +108,13 @@
   .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
-  .rail-mark { display:flex; align-items:center; justify-content:center; padding:14px 4px 10px; border:0; background:none; cursor:pointer; width:100%; }
+  .rail-mark { display:flex; align-items:center; justify-content:center; padding:12px 2px 8px; border:0; background:none; cursor:pointer; width:100%; }
   .rail-mark:focus-visible, .rail-btn:focus-visible, .workspace-tab:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   .rail-sep { flex:none; width:1px; align-self:stretch; margin:4px 4px; background:var(--border-strong); opacity:var(--opacity-subtle, .6); }
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
-  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; z-index:61; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:104px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:70; animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
+  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; z-index:61; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:70; animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
   .rail-flyout-title { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
   .rail-flyout-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; background:none; border:none; cursor:pointer; padding:9px 4px; border-radius:var(--radius-sm); color:var(--ink-2); position:relative; }
   .rail-flyout-item svg { width:22px; height:22px; flex-shrink:0; }
@@ -138,11 +138,11 @@
     .rail-flyout-item.on { background:var(--paper-2); border-bottom:2px solid var(--accent-terracotta); }
   }
   @media (min-width:860px){
-    .app-rail { left:0; top:0; bottom:0; width:104px; flex-direction:column; align-items:stretch; gap:2px; border-right:1px solid var(--border-strong); padding:0 8px; overflow:visible; }
-    .rail-btn.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
+    .app-rail { left:0; top:0; bottom:0; width:118px; flex-direction:column; align-items:stretch; gap:3px; border-right:1px solid var(--border-strong); padding:0 6px; overflow:visible; }
+    .rail-btn.on::before { content:''; position:absolute; left:-6px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
     .rail-btn.on { background:var(--paper-2); }
-    .app-main { margin-left:104px; }
-    .rail-sep { width:auto; height:1px; align-self:auto; margin:8px 10px; }
+    .app-main { margin-left:118px; }
+    .rail-sep { width:auto; height:1px; align-self:auto; margin:8px 8px; }
     .app-shell.sim-collapsed .app-rail { transform:translateX(-112%); }
     .app-shell.sim-collapsed .app-main { margin-left:0; }
     .app-shell.sim-collapsed .rail-peek {
@@ -203,8 +203,8 @@
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
   <nav class="app-rail" aria-label="Espacios de trabajo">
-    <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Setas de la Peña — Ir a Control">
-      <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="76" height="76" style="width:76px;height:auto;max-height:76px;object-fit:contain;display:block;margin:0 auto;filter:contrast(1.05);" />
+    <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Ir a Control, Hoy">
+      <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="104" height="104" style="width:104px;height:auto;max-height:104px;object-fit:contain;display:block;margin:0 auto;filter:contrast(1.05);" />
     </button>
     <button class="rail-btn {{ navWorkspaceFormularCls }}" data-workspace="formular" onClick="{{ goWorkspaceFormular }}" aria-current="{{ curWorkspaceFormular }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
