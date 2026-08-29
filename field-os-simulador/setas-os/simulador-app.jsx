@@ -3047,7 +3047,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
     <div className={'ing-item '+(expanded?'expanded':'')}>
-      <div className="ing-badge" style={{background:cat}} title={ing.cat}>{ing.cat.substring(0,2).toUpperCase()}</div>
+      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'#ffffff')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
@@ -5525,7 +5525,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <th>Proveedor</th>
                               <th>Alerta mín. (kg)</th>
                               <th>Estado</th>
-                              <th style={{width:80}}></th>
+                              <th style={{width:80}}><span className="sr-only">Acciones</span></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -5649,7 +5649,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setShowAddStockForm(false);setAddStockId('');setAddStockKg('');}}>Cancelar</button>
                       </div>
                     )}
-                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>
                       ≥5 kg · 2–5 kg · &lt;2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar.
                     </span>
                   </div>
@@ -6505,7 +6505,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }, [tempProj, rhProj, co2Proj, currentMetrics.temp, currentMetrics.rh, currentMetrics.co2, activeCulinaryKey]);
 
-
+    if (tab !== 'clima') return null;
 
     // Cálculos psicrométricos
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
@@ -6593,7 +6593,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* Ficha del Ciclo y Sala */}
         <div className="climate-cycle-banner">
           <div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta)'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta-dark)'}}>
               {room.name} · {room.spec}
             </div>
             <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:'var(--ink-0)',marginTop:2}}>
@@ -6619,8 +6619,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               padding:'6px 12px',
               borderRadius:'var(--radius-sm)',
               background: climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-              color: climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)',
-              border: `1px solid ${climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-600)'}`,
+              color: climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-800)',
+              border: `1px solid ${climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-600)'}`,
               fontFamily:'var(--font-mono)',
               fontSize:11,
               fontWeight:700
@@ -6736,10 +6736,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{display:'flex',flexDirection:'column',gap:16}}>
               {/* Selector Culinario */}
               <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-2)',textTransform:'uppercase'}}>
+                <label htmlFor="active-culinary-profile" style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   Efecto Gastronómico Deseado:
                 </label>
                 <select 
+                  id="active-culinary-profile"
+                  name="active-culinary-profile"
                   value={activeCulinaryKey} 
                   onChange={(e) => handleCulinarySelect(e.target.value)}
                   style={{
@@ -6759,7 +6761,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <option value="umami">Sabor Umami Concentrado (Choque Frío)</option>
                   <option value="conservacion">Máxima Vida Útil (Cap Seco)</option>
                 </select>
-                <span style={{fontSize:11,fontFamily:'var(--font-sans)',color:'var(--ink-2)',fontStyle:'italic'}}>
+                <span style={{fontSize:11,fontFamily:'var(--font-sans)',color:'var(--ink-1)',fontStyle:'italic'}}>
                   {CULINARY_PROFILES[activeCulinaryKey].gastronomy}
                 </span>
               </div>
@@ -6767,12 +6769,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {/* Targets details */}
               <div style={{background:'var(--paper-2)',border:'1px solid var(--line-0)',borderRadius:'var(--radius-sm)',padding:10,fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-1)'}}>
                 <div><strong>Target Fructificación:</strong> T: {CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1)}°C | HR: {CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0)}% | CO₂: {CULINARY_PROFILES[activeCulinaryKey].co2Ideal} ppm</div>
-                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-2)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
+                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-1)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
               </div>
 
               {/* Match Score */}
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-2)',textTransform:'uppercase'}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   <span>Sintonía Culinaria (Match):</span>
                   <span style={{fontWeight:700,color:matchScore >= 80 ? 'var(--accent-olive)' : matchScore >= 50 ? 'var(--accent-terracotta)' : 'var(--accent-rust)'}}>
                     {matchScore}%
@@ -6803,6 +6805,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="0.5" 
                     value={tempProj} 
                     onChange={(e) => setTempProj(parseFloat(e.target.value))}
+                    aria-label="Proyección de temperatura (°C)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -6820,6 +6823,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="1" 
                     value={rhProj} 
                     onChange={(e) => setRhProj(parseInt(e.target.value))}
+                    aria-label="Proyección de humedad relativa (%)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -6837,6 +6841,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="25" 
                     value={co2Proj} 
                     onChange={(e) => setCo2Proj(parseInt(e.target.value))}
+                    aria-label="Proyección de nivel de CO₂ (ppm)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -7402,6 +7407,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
+  const climateDashboardContent = ClimateDashboardSection();
 
   return(
     <div>
@@ -7494,10 +7500,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
           const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
           const operationStatus=criticalTaskCount>0
-            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'color-mix(in oklab, var(--coral-700) 70%, black)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
             :(overdueTaskCount>0||incidentCount>0)
-              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
-              :{label:'Operación estable',color:'var(--moss-700)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
+              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'color-mix(in oklab, var(--ochre-700) 70%, black)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
+              :{label:'Operación estable',color:'color-mix(in oklab, var(--moss-700) 75%, black)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
 
           // Ambientes & Sensores: cámaras físicas REALES
           let camaras=[];
@@ -7534,8 +7540,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ].map(kpi=>{
                       const tones={
                         neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
-                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'var(--ochre-700)',weight:800},
-                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'var(--coral-700)',weight:800}
+                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'color-mix(in oklab,var(--ochre-700) 70%,black)',weight:800},
+                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'color-mix(in oklab,var(--coral-700) 70%,black)',weight:800}
                       };
                       const t=tones[kpi.tone];
                       return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
@@ -7622,7 +7628,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                           {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                         ].map(btn=>{
-                          const accent=btn.jornada?'var(--coral-600)':(btn.pri?'var(--moss-700)':null);
+                          const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
                           return (
                           <button
                             key={btn.label}
@@ -7800,16 +7806,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {criticalStockItems.length > 0 ? (
                         <div style={{ background: 'color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))', border: '1px solid var(--coral-500)', borderLeft: '4px solid var(--coral-700)', borderRadius: 'var(--r-xs)', padding: '10px 12px', marginBottom: 16 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                               ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
                             </span>
-                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'var(--coral-700)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                               Registrar Compra +
                             </button>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'var(--coral-700)' }}>
+                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                 {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                               </span>
                             ))}
@@ -7895,7 +7901,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'color-mix(in oklab, var(--sand-500) 55%, black)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         + Registrar Cosecha
                       </button>
                       <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
@@ -8202,7 +8208,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {c.name}
                             </div>
                           </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
                             {c.estadoLabel}
                           </span>
                         </div>
@@ -8314,7 +8320,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="catalog-hdr">
               <div>
                 <span className="catalog-eyebrow">Receta</span>
-                <h2 className="catalog-title">Catálogo de especies</h2>
+                <h1 className="catalog-title">Catálogo de especies</h1>
               </div>
 
             </div>
@@ -8636,7 +8642,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="live-dash-species" title="Aún no hay ingredientes en la receta">
                       Receta activa
                     </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                       sin ingredientes
                     </span>
                   </div>
@@ -8674,7 +8680,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
                         Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                         evaluación en vivo
                       </span>
                     </div>
@@ -10054,7 +10060,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel no-print" style={{marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'color-mix(in oklab, var(--status-attention) 80%, black)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
                   <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
                   <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
@@ -10482,7 +10488,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='clima'&&ClimateDashboardSection()}
+        {tab==='clima'&&climateDashboardContent}
 
         {tab==='bitacora'&&BitacoraSection()}
 

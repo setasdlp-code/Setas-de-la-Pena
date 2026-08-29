@@ -126,7 +126,7 @@
   .workspace-subnav::-webkit-scrollbar { display:none; }
   .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
-  .workspace-tab.secondary { color:var(--accent-blue-grey); }
+  .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
   @media (max-width:859px){
     .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:65; }
@@ -225,6 +225,7 @@
   </nav>
 
   <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
+    <h1 class="sr-only">Setas OS</h1>
     <span data-testid="breadcrumb" class="sr-only" aria-live="polite">{{ crumb }}</span>
 
     <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
@@ -281,10 +282,10 @@
         <div class="col" style="width:100%;padding:14px 26px 0;">
           <div style="border:1px solid var(--accent-terracotta);border-radius:var(--radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
             <div style="display:flex;justify-content:space-between;gap:10px;">
-              <span style="font:var(--t-label);color:var(--accent-terracotta);">Stock bajo mínimo · {{ lowStockCount }}</span>
+              <span style="font:var(--t-label);color:var(--accent-terracotta-dark);">Stock bajo mínimo · {{ lowStockCount }}</span>
             </div>
             <div style="font:var(--t-body-sm);color:var(--ink-1);">{{ lowStockNote }}</div>
-            <button onClick="{{ goInventario }}" style="cursor:pointer;align-self:flex-start;border:1px solid var(--accent-terracotta);background:var(--paper-0);color:var(--accent-terracotta);border-radius:var(--radius-sm);padding:9px 14px;font:var(--t-caption);font-weight:700;">Ver inventario</button>
+            <button onClick="{{ goInventario }}" style="cursor:pointer;align-self:flex-start;border:1px solid var(--accent-terracotta-dark);background:var(--paper-0);color:var(--accent-terracotta-dark);border-radius:var(--radius-sm);padding:9px 14px;font:var(--t-caption);font-weight:700;">Ver inventario</button>
           </div>
         </div>
         </sc-if>
@@ -309,9 +310,9 @@
             <div style="font-family:var(--font-sans);font-weight:900;font-size:15px;color:var(--ink-0);margin-top:2px;"><span style="font-size:38px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;">{{ ledgerCount }}</span> <span style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--text-metadata);">eventos</span></div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-            <button onClick="{{ openSyncQueue }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:2px;">Ver cola de sincronización</button>
+            <button onClick="{{ openSyncQueue }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);text-decoration:underline;text-underline-offset:2px;">Ver cola de sincronización</button>
             <sc-if value="{{ hasLedgerForUndo }}" hint-placeholder-val="{{ false }}">
-              <button onClick="{{ undoLast }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta);text-decoration:underline;text-underline-offset:2px;">{{ undoLabel }}</button>
+              <button onClick="{{ undoLast }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-terracotta-dark);text-decoration:underline;text-underline-offset:2px;">{{ undoLabel }}</button>
             </sc-if>
           </div>
         </div>
@@ -322,12 +323,12 @@
             <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-soft);transition:background-color .15s ease;">
               <div style="flex:none;display:flex;flex-direction:column;align-items:center;padding-top:3px;">
                 <span style="width:10px;height:10px;border-radius:50%;background:{{ ev.accent }};"></span>
-                <span style="font-family:var(--font-mono);color:var(--text-disabled);margin-top:8px;font-size:11px;font-variant-numeric:tabular-nums;">{{ ev.time }}</span>
+                <span style="font-family:var(--font-mono);color:var(--ink-500);margin-top:8px;font-size:11px;font-variant-numeric:tabular-nums;">{{ ev.time }}</span>
               </div>
               <div style="flex:1;min-width:0;">
                 <div style="display:flex;justify-content:space-between;gap:8px;">
                   <span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span>
-                  <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span>
+                  <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ ev.container }}</span>
                 </div>
                 <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
               </div>
@@ -363,7 +364,7 @@
       <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
             <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
@@ -419,7 +420,7 @@
       <sc-if value="{{ isObserve }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
             <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
@@ -483,7 +484,7 @@
       <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
             <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
@@ -527,7 +528,7 @@
       <sc-if value="{{ isQuick }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
             <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
@@ -583,7 +584,7 @@
       <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 40px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Sesión</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
 
           <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:8px;">
@@ -605,7 +606,7 @@
 
           <sc-if value="{{ historyDetail }}" hint-placeholder-val="{{ false }}">
           <div style="margin-top:8px;">
-            <button onClick="{{ backToList }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:2px 0 10px;">← Todos los contenedores</button>
+            <button onClick="{{ backToList }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:2px 0 10px;">← Todos los contenedores</button>
             <div style="display:flex;align-items:center;gap:10px;">
               <span style="width:12px;height:12px;border-radius:50%;background:{{ detailAccent }};"></span>
               <span style="font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--ink-0);">{{ detailId }}</span>
@@ -668,14 +669,14 @@
                     <span style="flex:1;width:1px;background:var(--border-strong);"></span>
                   </div>
                   <div style="flex:1;padding:14px 0;border-bottom:1px solid var(--border-soft);">
-                    <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.date }}</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ ev.date }}</span></div>
                     <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ ev.note }}</div>
                     <sc-if value="{{ ev.hasPhoto }}" hint-placeholder-val="{{ false }}">
                       <img ref="{{ ev.photoRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de campo" width="84" height="84" style="width:84px;height:84px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border-soft);margin-top:8px;">
                     </sc-if>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;">
                       <span style="font:var(--t-caption);color:var(--text-disabled);">{{ ev.by }}</span>
-                      <sc-if value="{{ ev.canCorrect }}" hint-placeholder-val="{{ true }}"><button onClick="{{ ev.correct }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);text-decoration:underline;text-underline-offset:2px;">Corregir</button></sc-if>
+                      <sc-if value="{{ ev.canCorrect }}" hint-placeholder-val="{{ true }}"><button onClick="{{ ev.correct }}" style="cursor:pointer;background:none;border:none;padding:0;font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);text-decoration:underline;text-underline-offset:2px;">Corregir</button></sc-if>
                     </div>
                   </div>
                 </div>
@@ -691,7 +692,7 @@
       <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
         <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Volver</button>
+          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Volver</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
             <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
@@ -891,7 +892,7 @@
         </sc-if>
 
         <sc-if value="{{ hasCamDetail }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);padding:6px 0;">← Cámaras &amp; IoT</button>
+          <button onClick="{{ closeCam }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Cámaras &amp; IoT</button>
           <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
             <span style="width:12px;height:12px;border-radius:50%;background:{{ camDetail.estadoAccent }};"></span>
             <span style="font-family:var(--font-sans);font-weight:900;font-size:30px;letter-spacing:-.01em;color:var(--ink-0);">{{ camDetail.name }}</span>
@@ -1054,7 +1055,7 @@
         <div style="display:flex;flex-direction:column;gap:10px;">
           <sc-for list="{{ reviewSessions }}" as="s" hint-placeholder-count="2">
             <button onClick="{{ s.go }}" disabled="{{ s.noGo }}" style="cursor:pointer;text-align:left;width:100%;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:var(--t-label);color:var(--ink-0);">{{ s.label }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ s.time }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:var(--t-label);color:var(--ink-0);">{{ s.label }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ s.time }}</span></div>
               <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:3px;">{{ s.summary }}</div>
             </button>
           </sc-for>
@@ -1066,7 +1067,7 @@
             <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
               <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ ev.time }}</span>
               <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
-              <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ ev.container }}</span></div><div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div></div>
+              <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ ev.container }}</span></div><div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div></div>
             </div>
           </sc-for>
         </div>
@@ -1141,7 +1142,7 @@
               <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
                 <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ x.fecha }}</span>
                 <div style="flex:1;min-width:0;">
-                  <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ x.sppName }} · {{ x.kg }} kg</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey);">{{ x.destLabel }}</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ x.sppName }} · {{ x.kg }} kg</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ x.destLabel }}</span></div>
                   <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:1px;">Lote {{ x.lote }} · Grade {{ x.grade }}</div>
                 </div>
               </div>
@@ -1795,7 +1796,7 @@
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:18px;max-width:520px;width:100%;padding:22px 24px;animation:fos-screen .24s cubic-bezier(.32,.72,.36,1);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
         <span style="font:var(--t-label);color:var(--status-error);">Retirada · lote {{ recallLote }}</span>
-        <button onClick="{{ closeRecall }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);">Cerrar</button>
+        <button onClick="{{ closeRecall }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);">Cerrar</button>
       </div>
       <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:8px;">{{ recallCount }} despacho(s) afectados · {{ recallKg }} en circulación.</div>
       <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
@@ -1816,7 +1817,7 @@
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:22px;padding:22px;max-width:430px;width:100%;animation:fos-screen .28s cubic-bezier(.32,.72,.36,1);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <span style="font:var(--t-label);color:var(--ink-0);">Etiqueta de contenedor<sc-if value="{{ multiLabel }}" hint-placeholder-val="{{ false }}">s · {{ labelCount }}</sc-if></span>
-        <button onClick="{{ closeLabel }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey);">Cerrar</button>
+        <button onClick="{{ closeLabel }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);">Cerrar</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;max-height:56vh;overflow-y:auto;">
       <sc-for list="{{ labelItems }}" as="li" hint-placeholder-count="1">
@@ -2882,7 +2883,12 @@ class Component extends DCLogic {
     this.setState({ role });
   }
   tagStyle(color){
-    return 'display:inline-flex;align-items:center;border:1px solid '+color+';color:'+color+';padding:2px 9px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;';
+    let c = color;
+    if (color === 'var(--accent-blue-grey)') c = 'var(--accent-blue-grey-dark)';
+    else if (color === 'var(--accent-terracotta)') c = 'var(--accent-terracotta-dark)';
+    else if (color === 'var(--accent-mushroom)') c = 'color-mix(in oklab, var(--accent-mushroom) 85%, black)';
+    else if (color === 'var(--accent-olive)') c = 'color-mix(in oklab, var(--accent-olive) 80%, black)';
+    return 'display:inline-flex;align-items:center;border:1px solid '+color+';color:'+c+';padding:2px 9px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;';
   }
   tabStyle(sel){
     const base='cursor:pointer;flex:none;border:none;background:none;padding:10px 2px;font:var(--t-label);position:relative;';

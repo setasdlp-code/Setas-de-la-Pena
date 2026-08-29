@@ -69,7 +69,7 @@ test('simulador-app.jsx integrates live telemetry dashboard and Today widget', (
   assert.match(jsx, /data-testid="today-climate-strip"/);
   assert.match(jsx, /martha_01/);
   assert.match(jsx, /cloudlab_844/);
-  assert.match(jsx, /tab==='clima'&&ClimateDashboardSection\(\)/);
+  assert.match(jsx, /tab==='clima'&&climateDashboardContent/);
   assert.match(jsx, /clima:'Cámaras & Telemetría IoT'/);
 });
 

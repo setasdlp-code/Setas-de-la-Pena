@@ -31,13 +31,13 @@ service cloud.firestore {
     // `tot` autoreportado por el cliente — si solo se validara `tot`, cualquier
     // escritura manual (fuera del cliente) podría declarar tot:100 con una mezcla
     // que en realidad no suma 100%, saltándose por completo esta defensa.
-    function sumPctFrom(ingredientes, i, acc) {
-      return i >= ingredientes.size()
-        ? acc
-        : sumPctFrom(ingredientes, i + 1, acc + (ingredientes[i].pct is number ? ingredientes[i].pct : 0.0));
+    function getPct(ingredientes, i) {
+      return i < ingredientes.size() && ingredientes[i].pct is number ? ingredientes[i].pct : 0.0;
     }
     function masaBalanceada(ingredientes) {
-      let tot = sumPctFrom(ingredientes, 0, 0.0);
+      let tot = getPct(ingredientes, 0) + getPct(ingredientes, 1) + getPct(ingredientes, 2)
+              + getPct(ingredientes, 3) + getPct(ingredientes, 4) + getPct(ingredientes, 5)
+              + getPct(ingredientes, 6) + getPct(ingredientes, 7);
       return tot >= 99.5 && tot <= 100.5;
     }
 
