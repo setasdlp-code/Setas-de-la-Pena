@@ -20,9 +20,10 @@ const ERRORES = {
   "auth/too-many-requests": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
   "auth/network-request-failed": "Sin conexión — revisa tu internet.",
 };
-const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesión. Inténtalo de nuevo.";
 
-function buildGate() {
+export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesión. Inténtalo de nuevo.";
+
+export function buildGate() {
   const gate = document.createElement("div");
   gate.id = "setas-auth-gate";
   Object.assign(gate.style, {
