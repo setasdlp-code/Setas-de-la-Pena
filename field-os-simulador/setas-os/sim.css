@@ -2919,6 +2919,13 @@
 @media(max-width:960px){ .sim-root .home-salas-grid{ grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:640px){ .sim-root .home-salas-grid{ grid-template-columns:1fr!important; } }
 
+/* "Registro de cultivo · vista previa": en desktop la etiqueta y los 5 chips
+   comparten una sola fila (flex-wrap). Por debajo de 640px flex-wrap ya no
+   alcanza a bajar los chips a su propia línea — la etiqueta queda sola a la
+   izquierda con los chips apilados a la derecha, dejando ~40% del ancho
+   vacío. Forzar columna resuelve el hueco sin tocar el layout de escritorio. */
+@media(max-width:640px){ .sim-root .home-registro-row{ flex-direction:column; align-items:flex-start!important; } }
+
 /* "Hoy" · Sección A: Acciones Rápidas (1fr) y Espacios de Trabajo (3fr) lado a lado */
 .sim-root .home-acciones-espacios-row {
   display: grid;

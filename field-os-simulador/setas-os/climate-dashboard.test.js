@@ -69,7 +69,13 @@ test('simulador-app.jsx integrates live telemetry dashboard and Today widget', (
   assert.match(jsx, /data-testid="today-climate-strip"/);
   assert.match(jsx, /martha_01/);
   assert.match(jsx, /cloudlab_844/);
-  assert.match(jsx, /tab==='clima'&&ClimateDashboardSection\(\)/);
+  // Debe renderizarse como elemento JSX (<ClimateDashboardSection/>), no como
+  // llamada de función directa (ClimateDashboardSection()): el componente usa
+  // useState/useRef/useEffect internamente, y llamarlo como función plana
+  // dentro de un `tab==='clima'&&` hace que esos hooks se ejecuten solo en
+  // algunos renders del componente padre — viola las Reglas de los Hooks y
+  // provoca un crash real (React error #310) al entrar a la pestaña Clima.
+  assert.match(jsx, /tab==='clima'&&<ClimateDashboardSection\/>/);
   assert.match(jsx, /clima:'Cámaras & Telemetría IoT'/);
 });
 

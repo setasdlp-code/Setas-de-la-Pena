@@ -7496,7 +7496,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const operationStatus=criticalTaskCount>0
             ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
             :(overdueTaskCount>0||incidentCount>0)
-              ?{label:`${overdueTaskCount+incidentCount} pendiente${overdueTaskCount+incidentCount===1?'':'s'}`,color:'var(--ochre-700)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
+              ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'var(--ochre-700)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
               :{label:'Operación estable',color:'var(--moss-700)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
 
           // Ambientes & Sensores: cámaras físicas REALES
@@ -7549,7 +7549,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
-                <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
                   <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',flexShrink:0}}>
                     Registro de cultivo · vista previa
                   </span>
@@ -10482,7 +10482,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='clima'&&ClimateDashboardSection()}
+        {tab==='clima'&&<ClimateDashboardSection/>}
 
         {tab==='bitacora'&&BitacoraSection()}
 
