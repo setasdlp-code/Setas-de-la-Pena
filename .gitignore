@@ -52,6 +52,7 @@ knowledge_base/09_research/source_pdfs/
 node_modules/
 .netlify/
 .lighthouseci/
+.firebase/
 
 # Playwright (field-os-simulador/setas-os) — sesión de auth guardada y
 # artefactos de corridas locales, no versionables.
