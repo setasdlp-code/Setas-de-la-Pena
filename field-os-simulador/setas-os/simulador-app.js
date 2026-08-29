@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 8c039f325b60c23537893139b2d53bfc2d6fcc0555aa30877a15feb89bb28008
+// source-hash: 542f5001ec01edd4963fd6e8db396d58db9ac0ef0d88608fc8c12302c62f8e9f
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2698,10 +2698,6 @@ function App(props) {
   const [normMode, setNormMode] = useState(false);
   const [coFormMode, setCoFormMode] = useState(false);
   const [coSpecConfig, setCoSpecConfig] = useState({ p_ostreatus_gris: 60, p_djamor_rosada: 40 });
-  const coAnalysis = useMemo(() => {
-    if (!coFormMode || !recipe.length || !window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe, coSpecConfig, INGS, SPP);
-  }, [coFormMode, recipe, coSpecConfig]);
   const [vegPrice, setVegPrice] = useState(12e3);
   const [priceOverrides, setPriceOverrides] = useState({});
   const [showPrices, setShowPrices] = useState(false);
@@ -3422,6 +3418,10 @@ function App(props) {
   const histRows = useMemo(() => bitacoraEBRows(bitLotes, bitCosechas), [bitLotes, bitCosechas]);
   const histStats = useMemo(() => historicalEB(sKey, histRows, recipe), [sKey, histRows, recipe]);
   const an = useMemo(() => analyze(recipe, sKey, effectiveINGS), [recipe, sKey, effectiveINGS]);
+  const coAnalysis = useMemo(() => {
+    if (!coFormMode || !recipe.length || !window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe, coSpecConfig, effectiveINGS, SPP);
+  }, [coFormMode, recipe, coSpecConfig, effectiveINGS]);
   const balanced = isMassBalanced(an);
   const balMsg = balanced ? "" : massBalanceMsg(an);
   const readyForProduction = balanced && hasPickedSpecies;

@@ -3802,10 +3802,6 @@ function App(props){
   const [normMode,setNormMode]=useState(false);
   const [coFormMode,setCoFormMode]=useState(false);
   const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
-  const coAnalysis=useMemo(()=>{
-    if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,INGS,SPP);
-  },[coFormMode,recipe,coSpecConfig]);
   const [vegPrice,setVegPrice]=useState(12000);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
@@ -4470,6 +4466,10 @@ function sowingRecommendation(deficitKg) {
   const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const coAnalysis=useMemo(()=>{
+    if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,SPP);
+  },[coFormMode,recipe,coSpecConfig,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const readyForProduction=balanced&&hasPickedSpecies;
