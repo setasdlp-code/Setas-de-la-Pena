@@ -2203,29 +2203,68 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
   );
 };
 
+const generateQrSvgDataUrl = (text) => {
+  try {
+    const qrMini = typeof window !== 'undefined' ? window.QRMini : (typeof globalThis !== 'undefined' ? globalThis.QRMini : null);
+    if (!qrMini || typeof qrMini.matrix !== 'function') {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23000"/></svg>';
+    }
+    const m = qrMini.matrix(text || 'SETAS-OS');
+    const n = m.length;
+    const q = 4;
+    const dim = n + q * 2;
+    let rects = '';
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) rects += `<rect x="${c + q}" y="${r + q}" width="1" height="1"/>`;
+      }
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" shape-rendering="crispEdges"><rect width="${dim}" height="${dim}" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
+    return 'data:image/svg+xml;base64,' + (typeof btoa === 'function' ? btoa(svg) : Buffer.from(svg).toString('base64'));
+  } catch (e) {
+    return '';
+  }
+};
+
 const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>{
   const lote=lotes.find(l=>l.id===loteId||l.codigo===loteCode||l.id===loteCode)||lotes[0];
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
   const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
+  const [copied,setCopied]=useState(false);
+  const traceUrl=lote?.codigo?`https://setasdelapena.co/trace/${lote.codigo}`:(typeof window!=='undefined'?window.location.href:'https://setasdelapena.co');
+  const qrDataUrl=generateQrSvgDataUrl(traceUrl);
+
+  const diasIncubacion=(()=>{
+    if(!lote?.fechaInoculacion) return null;
+    const start=new Date(lote.fechaInoculacion);
+    const now=new Date();
+    const diff=Math.max(0,Math.floor((now-start)/(1000*60*60*24)));
+    return diff;
+  })();
+
+  const recetaItems=lote?.recetaSnapshot?.ingredientes||lote?.receta||[];
 
   return(
     <AccessibleModal
       onClose={onClose}
-      label="Ficha Pública de Trazabilidad · Setas de la Peña"
-      dialogStyle={{width:'min(520px,94vw)',padding:0,background:'var(--paper-50,#FDFCF7)',border:'1px solid var(--border-soft,#D8D3C5)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
+      label="Pasaporte Digital de Trazabilidad · Setas de la Peña"
+      dialogStyle={{width:'min(560px,94vw)',padding:0,background:'var(--paper-50,#FDFCF7)',border:'1px solid var(--border-soft,#D8D3C5)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
     >
-      <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'24px 22px 20px',position:'relative'}}>
+      <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'22px 22px 18px',position:'relative'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-          <div>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
-              <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
-            </div>
-            <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50,#FDFCF7)',margin:'6px 0 2px',letterSpacing:'-.01em'}}>
-              {lote?.especie||'Seta Cultivada'}
-            </h2>
-            <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200,#E5E0D3)'}}>
-              {lote?.especieCientifico||'Pleurotus ostreatus'}
+          <div style={{display:'flex',gap:14,alignItems:'center'}}>
+            <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="56" height="56" style={{width:56,height:56,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
+                <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
+              </div>
+              <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50,#FDFCF7)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
+                {lote?.especie||'Seta Cultivada'}
+              </h2>
+              <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200,#E5E0D3)'}}>
+                {lote?.especieCientifico||'Pleurotus ostreatus'}
+              </div>
             </div>
           </div>
           <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha">✕</button>
@@ -2233,58 +2272,99 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
       </div>
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
+        {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
-          <img src={spImg} alt={lote?.especie||'Seta'} style={{width:54,height:54,objectFit:'contain',borderRadius:4,background:'#fff',border:'1px solid var(--border-soft)'}} />
+          <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <img src={qrDataUrl} alt={`QR Lote ${lote?.codigo||''}`} width="76" height="76" style={{display:'block'}} />
+          </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:12,fontWeight:700,color:'var(--ink-900)'}}>
-              Lote #{lote?.codigo||'SDP-LOTE'}
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-900)'}}>Lote #{lote?.codigo||'SDP-LOTE'}</strong>
+              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-100,#E8F0E0)',color:'var(--moss-800,#3B5A24)',borderRadius:3,textTransform:'uppercase'}}>
+                {lote?.estado||'Activo'}
+              </span>
             </div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:2}}>
-              Finca El Peñón · Altitud 2.587 msnm · Clima frío de montaña
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:3}}>
+              Finca El Peñón · Tenjo, Cundinamarca · 2.587 msnm
+            </div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-500)',marginTop:2}}>
+              {traceUrl}
             </div>
           </div>
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+        {/* TIMELINE BIOLÓGICO Y RENDIMIENTO */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
           <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Inoculación</div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12.5,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {lote?.fechaInoculacion||'—'}
             </div>
           </div>
           <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Registrada</div>
-            <div style={{fontFamily:'var(--font-num)',fontSize:15,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
-              {totalKg>0?`${totalKg.toFixed(2)} kg`:'En proceso'}
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Días en Proceso</div>
+            <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
+              {diasIncubacion!=null?`${diasIncubacion} días`:'—'}
+            </div>
+          </div>
+          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Total</div>
+            <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
+              {totalKg>0?`${totalKg.toFixed(2)} kg`:'En sala'}
             </div>
           </div>
         </div>
+
+        {/* COMPOSICIÓN DE SUSTRATO & CERTIFICACIÓN LIMPIA */}
+        {recetaItems.length>0&&(
+          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:6}}>
+              Fórmula de Sustrato Lignocelulósico
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              {recetaItems.map((item,idx)=>{
+                const g=typeof INGS!=='undefined'?INGS.find(i=>i.id===item.id):null;
+                return (
+                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100,#F5F2E9)',borderRadius:3,border:'1px solid var(--border-subtle,#E2DACD)',color:'var(--ink-800)'}}>
+                    <strong>{item.p||item.pct}%</strong> {g?.name||item.id}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{background:'var(--surface-accent-soft,#E8F0E0)',border:'1px solid var(--moss-300,#A8C090)',borderRadius:4,padding:'12px 14px'}}>
           <div style={{display:'flex',alignItems:'center',gap:6,color:'var(--moss-900)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:12}}>
             <AppIcon name="check" size={14} color="var(--moss-700)" /> Sustrato 100% Botánico Limpio
           </div>
           <p style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--moss-900)',margin:'4px 0 0',lineHeight:1.45}}>
-            Cultivado sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua de montaña y monitoreado bajo control ambiental continuo.
+            Cultivado a 2.587 msnm sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua pura de montaña y pasteurizado térmicamente.
           </p>
         </div>
 
-        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:4}}>
-          <button
-            type="button"
-            className="inv-btn inv-btn-sec"
-            style={{fontSize:11,display:'flex',alignItems:'center',gap:6}}
-            onClick={()=>{
-              const url=`${window.location.origin}${window.location.pathname}?trace=${lote?.codigo||''}`;
-              navigator.clipboard?.writeText?.(url);
-              alert('Enlace público de trazabilidad copiado al portapapeles: '+url);
-            }}
-          >
-            <AppIcon name="globe" size={13} /> Copiar Enlace QR
-          </button>
-          <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{fontSize:11}}>
-            Cerrar
-          </button>
+        {/* ACCIONES DEL MODAL */}
+        <div style={{display:'flex',gap:8,justifyContent:'space-between',alignItems:'center',marginTop:4}}>
+          <span style={{fontSize:11,color:copied?'var(--moss-700)':'var(--ink-500)',fontWeight:copied?700:400}}>
+            {copied?'✓ Enlace QR copiado al portapapeles':'Enlace público para clientes y auditorías'}
+          </span>
+          <div style={{display:'flex',gap:8}}>
+            <button
+              type="button"
+              className="inv-btn inv-btn-sec"
+              style={{fontSize:11,display:'flex',alignItems:'center',gap:6}}
+              onClick={()=>{
+                navigator.clipboard?.writeText?.(traceUrl);
+                setCopied(true);
+                setTimeout(()=>setCopied(false),2500);
+              }}
+            >
+              <AppIcon name="globe" size={13} /> {copied?'Copiado':'Copiar Enlace'}
+            </button>
+            <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{fontSize:11}}>
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </AccessibleModal>
@@ -3653,29 +3733,6 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     baseNames:bases.map(g=>g.name),
     suppNames:supps.map(g=>g.name),
   };
-};
-
-const generateQrSvgDataUrl = (text) => {
-  try {
-    const qrMini = typeof window !== 'undefined' ? window.QRMini : (typeof globalThis !== 'undefined' ? globalThis.QRMini : null);
-    if (!qrMini || typeof qrMini.matrix !== 'function') {
-      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23000"/></svg>';
-    }
-    const m = qrMini.matrix(text || 'SETAS-OS');
-    const n = m.length;
-    const q = 4;
-    const dim = n + q * 2;
-    let rects = '';
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (m[r][c]) rects += `<rect x="${c + q}" y="${r + q}" width="1" height="1"/>`;
-      }
-    }
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" shape-rendering="crispEdges"><rect width="${dim}" height="${dim}" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
-    return 'data:image/svg+xml;base64,' + (typeof btoa === 'function' ? btoa(svg) : Buffer.from(svg).toString('base64'));
-  } catch (e) {
-    return '';
-  }
 };
 
 const FORM_DRAFT_KEY='setas_formulator_draft_v1';
@@ -7418,13 +7475,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
   return(
     <div>
       <div className="topbar">
-        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</button>
+        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="28" height="28" style={{width:28,height:'auto',objectFit:'contain'}} />
+          <span>Setas de la Peña</span>
+        </button>
       </div>
       <nav className="fos-rail">
-        <span className="fos-rail-mark" style={{position:'relative',width:91,height:106,display:'block'}}>
-          <span style={{textAlign:'center',fontStyle:'normal',fontSize:17,display:'block'}}>Setas</span>
-          <div style={{fontSize:"var(--text-md)",lineHeight:0.95,position:'absolute',left:30,top:49,fontStyle:'italic',letterSpacing:'-0.1px'}}>de la</div>
-          <div style={{fontSize:18,lineHeight:1,position:'absolute',left:27,top:65}}>Peña</div>
+        <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 6px 8px'}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="76" height="76" style={{width:76,height:'auto',maxHeight:76,objectFit:'contain',display:'block'}} />
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
           <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>
@@ -11123,7 +11181,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <div>Inoc: {item.date}</div>
                               <div>Fórmula: {item.recipe}</div>
                             </div>
-                            <div className="thermal-footer">Setas de la Peña</div>
+                            <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
+                              <img src="_standalone_imgs/logo-sdlp.png" alt="" width="14" height="14" style={{width:14,height:14,objectFit:'contain',display:'inline-block'}} />
+                              <span>Setas de la Peña</span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -11164,7 +11225,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div>Inoc: {item.date}</div>
                             <div>Fórmula: {item.recipe}</div>
                           </div>
-                          <div className="thermal-footer">Setas de la Peña</div>
+                          <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
+                            <img src="_standalone_imgs/logo-sdlp.png" alt="" width="14" height="14" style={{width:14,height:14,objectFit:'contain',display:'inline-block'}} />
+                            <span>Setas de la Peña</span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -11325,15 +11389,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
               dialogStyle={{ width: 'min(720px, 95vw)', padding: '24px 22px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
-                    Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
-                  </div>
-                  <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
-                    {gastro.title}
-                  </h2>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
-                    {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                  <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="52" height="52" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                      Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
+                    </div>
+                    <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
+                      {gastro.title}
+                    </h2>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
+                      {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
+                    </div>
                   </div>
                 </div>
                 <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}>✕</button>

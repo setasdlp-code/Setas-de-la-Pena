@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 542f5001ec01edd4963fd6e8db396d58db9ac0ef0d88608fc8c12302c62f8e9f
+// source-hash: d84e616ef7de06510b25f968f1e4c650710d8603caf2f4e8ae43c614106f5df2
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1638,34 +1638,71 @@ const ColonizationScaleSelector = ({ value = 0, onChange, onQuickAction }) => {
     " Ventilación"
   )));
 };
+const generateQrSvgDataUrl = (text) => {
+  try {
+    const qrMini = typeof window !== "undefined" ? window.QRMini : typeof globalThis !== "undefined" ? globalThis.QRMini : null;
+    if (!qrMini || typeof qrMini.matrix !== "function") {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23000"/></svg>';
+    }
+    const m = qrMini.matrix(text || "SETAS-OS");
+    const n = m.length;
+    const q = 4;
+    const dim = n + q * 2;
+    let rects = "";
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) rects += `<rect x="${c + q}" y="${r + q}" width="1" height="1"/>`;
+      }
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" shape-rendering="crispEdges"><rect width="${dim}" height="${dim}" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
+    return "data:image/svg+xml;base64," + (typeof btoa === "function" ? btoa(svg) : Buffer.from(svg).toString("base64"));
+  } catch (e) {
+    return "";
+  }
+};
 const PublicTraceabilityModal = ({ loteId, loteCode, lotes = [], cosechas = [], onClose }) => {
   const lote = lotes.find((l) => l.id === loteId || l.codigo === loteCode || l.id === loteCode) || lotes[0];
   const harvests = lote ? cosechas.filter((c) => c.loteId === lote.id) : [];
   const totalKg = harvests.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
   const spImg = lote?.especieKey ? IMG[lote.especieKey] || IMG.p_ostreatus_gris : IMG.p_ostreatus_gris;
+  const [copied, setCopied] = useState(false);
+  const traceUrl = lote?.codigo ? `https://setasdelapena.co/trace/${lote.codigo}` : typeof window !== "undefined" ? window.location.href : "https://setasdelapena.co";
+  const qrDataUrl = generateQrSvgDataUrl(traceUrl);
+  const diasIncubacion = (() => {
+    if (!lote?.fechaInoculacion) return null;
+    const start = new Date(lote.fechaInoculacion);
+    const now = /* @__PURE__ */ new Date();
+    const diff = Math.max(0, Math.floor((now - start) / (1e3 * 60 * 60 * 24)));
+    return diff;
+  })();
+  const recetaItems = lote?.recetaSnapshot?.ingredientes || lote?.receta || [];
   return /* @__PURE__ */ React.createElement(
     AccessibleModal,
     {
       onClose,
-      label: "Ficha Pública de Trazabilidad · Setas de la Peña",
-      dialogStyle: { width: "min(520px,94vw)", padding: 0, background: "var(--paper-50,#FDFCF7)", border: "1px solid var(--border-soft,#D8D3C5)", borderRadius: "var(--r-md,6px)", overflow: "hidden", boxShadow: "var(--shadow-lift)" }
+      label: "Pasaporte Digital de Trazabilidad · Setas de la Peña",
+      dialogStyle: { width: "min(560px,94vw)", padding: 0, background: "var(--paper-50,#FDFCF7)", border: "1px solid var(--border-soft,#D8D3C5)", borderRadius: "var(--r-md,6px)", overflow: "hidden", boxShadow: "var(--shadow-lift)" }
     },
-    /* @__PURE__ */ React.createElement("div", { style: { background: "var(--ink-900,#1B1A17)", color: "var(--paper-50,#FDFCF7)", padding: "24px 22px 20px", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--paper-300,#C8C3B5)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-400,#8BA870)" }), " Trazabilidad de Origen · Tenjo, Colombia"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontSize: 22, fontWeight: 900, color: "var(--paper-50,#FDFCF7)", margin: "6px 0 2px", letterSpacing: "-.01em" } }, lote?.especie || "Seta Cultivada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: 13, color: "var(--paper-200,#E5E0D3)" } }, lote?.especieCientifico || "Pleurotus ostreatus")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", style: { color: "var(--paper-200)", background: "rgba(255,255,255,.08)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }, onClick: onClose, "aria-label": "Cerrar ficha" }, "✕"))),
-    /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "center", background: "var(--paper-100,#F5F2E9)", padding: "12px 14px", borderRadius: "var(--r-sm,4px)", border: "1px solid var(--border-soft,#D8D3C5)" } }, /* @__PURE__ */ React.createElement("img", { src: spImg, alt: lote?.especie || "Seta", style: { width: 54, height: 54, objectFit: "contain", borderRadius: 4, background: "#fff", border: "1px solid var(--border-soft)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: "var(--ink-900)" } }, "Lote #", lote?.codigo || "SDP-LOTE"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-600)", marginTop: 2 } }, "Finca El Peñón · Altitud 2.587 msnm · Clima frío de montaña"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Inoculación"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, lote?.fechaInoculacion || "—")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Cosecha Registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 15, fontWeight: 700, color: "var(--moss-700)", marginTop: 2 } }, totalKg > 0 ? `${totalKg.toFixed(2)} kg` : "En proceso"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--surface-accent-soft,#E8F0E0)", border: "1px solid var(--moss-300,#A8C090)", borderRadius: 4, padding: "12px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, color: "var(--moss-900)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: 12 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 14, color: "var(--moss-700)" }), " Sustrato 100% Botánico Limpio"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--moss-900)", margin: "4px 0 0", lineHeight: 1.45 } }, "Cultivado sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua de montaña y monitoreado bajo control ambiental continuo.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
+    /* @__PURE__ */ React.createElement("div", { style: { background: "var(--ink-900,#1B1A17)", color: "var(--paper-50,#FDFCF7)", padding: "22px 22px 18px", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--paper-300,#C8C3B5)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-400,#8BA870)" }), " Trazabilidad de Origen · Tenjo, Colombia"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-body)", fontSize: 22, fontWeight: 900, color: "var(--paper-50,#FDFCF7)", margin: "6px 0 2px", letterSpacing: "-.01em" } }, lote?.especie || "Seta Cultivada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: 13, color: "var(--paper-200,#E5E0D3)" } }, lote?.especieCientifico || "Pleurotus ostreatus")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", style: { color: "var(--paper-200)", background: "rgba(255,255,255,.08)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }, onClick: onClose, "aria-label": "Cerrar ficha" }, "✕"))),
+    /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, alignItems: "center", background: "var(--paper-100,#F5F2E9)", padding: "12px 14px", borderRadius: "var(--r-sm,4px)", border: "1px solid var(--border-soft,#D8D3C5)" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", padding: 4, borderRadius: 4, border: "1px solid var(--border-soft)", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("img", { src: qrDataUrl, alt: `QR Lote ${lote?.codigo || ""}`, width: "76", height: "76", style: { display: "block" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-900)" } }, "Lote #", lote?.codigo || "SDP-LOTE"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontWeight: 700, padding: "2px 6px", background: "var(--moss-100,#E8F0E0)", color: "var(--moss-800,#3B5A24)", borderRadius: 3, textTransform: "uppercase" } }, lote?.estado || "Activo")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--ink-600)", marginTop: 3 } }, "Finca El Peñón · Tenjo, Cundinamarca · 2.587 msnm"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--ink-500)", marginTop: 2 } }, traceUrl))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Inoculación"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 12.5, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, lote?.fechaInoculacion || "—")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Días en Proceso"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 14, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, diasIncubacion != null ? `${diasIncubacion} días` : "—")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)" } }, "Cosecha Total"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 14, fontWeight: 700, color: "var(--moss-700)", marginTop: 2 } }, totalKg > 0 ? `${totalKg.toFixed(2)} kg` : "En sala"))), recetaItems.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0,#FFFFFF)", border: "1px solid var(--border-soft)", borderRadius: 4, padding: "10px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 6 } }, "Fórmula de Sustrato Lignocelulósico"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, recetaItems.map((item, idx) => {
+      const g = typeof INGS !== "undefined" ? INGS.find((i) => i.id === item.id) : null;
+      return /* @__PURE__ */ React.createElement("span", { key: idx, style: { fontSize: 11, padding: "2px 8px", background: "var(--paper-100,#F5F2E9)", borderRadius: 3, border: "1px solid var(--border-subtle,#E2DACD)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("strong", null, item.p || item.pct, "%"), " ", g?.name || item.id);
+    }))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--surface-accent-soft,#E8F0E0)", border: "1px solid var(--moss-300,#A8C090)", borderRadius: 4, padding: "12px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, color: "var(--moss-900)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: 12 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 14, color: "var(--moss-700)" }), " Sustrato 100% Botánico Limpio"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--moss-900)", margin: "4px 0 0", lineHeight: 1.45 } }, "Cultivado a 2.587 msnm sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua pura de montaña y pasteurizado térmicamente.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: copied ? "var(--moss-700)" : "var(--ink-500)", fontWeight: copied ? 700 : 400 } }, copied ? "✓ Enlace QR copiado al portapapeles" : "Enlace público para clientes y auditorías"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
         className: "inv-btn inv-btn-sec",
         style: { fontSize: 11, display: "flex", alignItems: "center", gap: 6 },
         onClick: () => {
-          const url = `${window.location.origin}${window.location.pathname}?trace=${lote?.codigo || ""}`;
-          navigator.clipboard?.writeText?.(url);
-          alert("Enlace público de trazabilidad copiado al portapapeles: " + url);
+          navigator.clipboard?.writeText?.(traceUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
         }
       },
       /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13 }),
-      " Copiar Enlace QR"
-    ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar")))
+      " ",
+      copied ? "Copiado" : "Copiar Enlace"
+    ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar"))))
   );
 };
 const DEFAULT_IOT_NODES = [
@@ -2503,28 +2540,6 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     baseNames: bases.map((g) => g.name),
     suppNames: supps.map((g) => g.name)
   };
-};
-const generateQrSvgDataUrl = (text) => {
-  try {
-    const qrMini = typeof window !== "undefined" ? window.QRMini : typeof globalThis !== "undefined" ? globalThis.QRMini : null;
-    if (!qrMini || typeof qrMini.matrix !== "function") {
-      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23000"/></svg>';
-    }
-    const m = qrMini.matrix(text || "SETAS-OS");
-    const n = m.length;
-    const q = 4;
-    const dim = n + q * 2;
-    let rects = "";
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (m[r][c]) rects += `<rect x="${c + q}" y="${r + q}" width="1" height="1"/>`;
-      }
-    }
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" shape-rendering="crispEdges"><rect width="${dim}" height="${dim}" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
-    return "data:image/svg+xml;base64," + (typeof btoa === "function" ? btoa(svg) : Buffer.from(svg).toString("base64"));
-  } catch (e) {
-    return "";
-  }
 };
 const FORM_DRAFT_KEY = "setas_formulator_draft_v1";
 const readFormDraft = () => {
