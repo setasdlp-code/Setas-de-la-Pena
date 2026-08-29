@@ -62,7 +62,8 @@ service cloud.firestore {
         // recetaSnapshot se escribe una sola vez, al crear el lote — nunca se edita.
         ;
       allow update: if signedIn()
-        && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot;
+        && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot
+        && (!('status' in request.resource.data) || request.resource.data.status is string);
       allow delete: if isAdmin();
     }
 
@@ -82,7 +83,9 @@ service cloud.firestore {
     }
     match /bitacora_bolsas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      // foto (data URL base64) debe eliminarse antes de guardar (ver bitacora-sync.js)
+      // para no inflar la base de datos de Firestore.
+      allow write: if signedIn() && !('foto' in request.resource.data);
     }
     match /bitacora_cosechas/{id} {
       allow read: if signedIn();
