@@ -3,7 +3,9 @@
   "private": true,
   "description": "Setas OS v5 — Cuaderno de Campo / Formulador de sustratos. HTML/JS/CSS con un único paso de build (esbuild) para simulador-app.jsx — ver ARCHITECTURE.md.",
   "scripts": {
+    "build": "node build.js",
     "test": "node --test *.test.js",
+    "preview": "python3 -m http.server 4173",
     "lhci": "lhci autorun --config=./lighthouserc.cjs"
   },
   "devDependencies": {

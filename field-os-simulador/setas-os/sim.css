@@ -601,8 +601,8 @@
   display:flex; flex-direction:column; align-items:center; gap:0;
   border:1.5px dashed var(--border-soft); border-radius:0;
 }
-.sim-root .rec-empty-hed{ font-family:var(--font-display); font-style:italic; font-size:22px; color:var(--ink-200); line-height:1.2; margin-bottom:8px; }
-.sim-root .rec-empty-sub{ font-family:var(--font-mono); font-size:13px; color:var(--ink-300); line-height:1.6; margin-bottom:20px; max-width:220px; }
+.sim-root .rec-empty-hed{ font-family:var(--font-display); font-style:italic; font-size:22px; color:var(--ink-500); line-height:1.2; margin-bottom:8px; }
+.sim-root .rec-empty-sub{ font-family:var(--font-mono); font-size:13px; color:var(--ink-500); line-height:1.6; margin-bottom:20px; max-width:220px; }
 
 
 .sim-root .rec-row{ 
@@ -2252,7 +2252,7 @@
 
 .sim-root .bodega-bar-refresh{display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:none;color:var(--ink-600);cursor:pointer;}
 .sim-root .bodega-bar-refresh:hover{color:var(--coral-500);border-color:var(--coral-500);}
-.sim-root .pantry-chip-kg{font-family:var(--font-mono);font-size:9px;color:var(--accent-olive);opacity:var(--opacity-medium);font-weight:400;margin-left:1px;}
+.sim-root .pantry-chip-kg{font-family:var(--font-mono);font-size:9px;color:color-mix(in oklab, var(--accent-olive) 75%, black);opacity:0.9;font-weight:400;margin-left:1px;}
 /* ── v6.0: STOCK DOTS ─────────────────────────────────────── */
 .sim-root .ing-stock-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0;}
 .sim-root .ing-stock-kg{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:8px;background:var(--surface-accent-soft);color:var(--surface-accent-soft-text);margin-left:3px;}
@@ -2331,7 +2331,7 @@
   font-weight:800!important;
   font-size:7.5px!important;
   letter-spacing:.22em!important;
-  color:rgba(255,255,255,0.8)!important;
+  color:rgba(255,255,255,0.8);
   text-transform:uppercase!important;
   transform:rotate(180deg)!important;
 }
@@ -2673,7 +2673,7 @@
   font-family:var(--font-display)!important;
   font-style:italic!important;
   font-size:30px!important;
-  color:var(--ink-300)!important;
+  color:var(--ink-500)!important;
   font-weight:400!important;
   letter-spacing:-.01em!important;
   margin-bottom:10px!important;
@@ -2684,7 +2684,7 @@
   font-weight:800!important;
   letter-spacing:.1em!important;
   text-transform:uppercase!important;
-  color:var(--ink-300)!important;
+  color:var(--ink-500)!important;
   line-height:1.7!important;
   max-width:200px!important;
 }

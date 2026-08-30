@@ -31,13 +31,13 @@ service cloud.firestore {
     // `tot` autoreportado por el cliente — si solo se validara `tot`, cualquier
     // escritura manual (fuera del cliente) podría declarar tot:100 con una mezcla
     // que en realidad no suma 100%, saltándose por completo esta defensa.
-    function sumPctFrom(ingredientes, i, acc) {
-      return i >= ingredientes.size()
-        ? acc
-        : sumPctFrom(ingredientes, i + 1, acc + (ingredientes[i].pct is number ? ingredientes[i].pct : 0.0));
+    function getPct(ingredientes, i) {
+      return i < ingredientes.size() && ingredientes[i].pct is number ? ingredientes[i].pct : 0.0;
     }
     function masaBalanceada(ingredientes) {
-      let tot = sumPctFrom(ingredientes, 0, 0.0);
+      let tot = getPct(ingredientes, 0) + getPct(ingredientes, 1) + getPct(ingredientes, 2)
+              + getPct(ingredientes, 3) + getPct(ingredientes, 4) + getPct(ingredientes, 5)
+              + getPct(ingredientes, 6) + getPct(ingredientes, 7);
       return tot >= 99.5 && tot <= 100.5;
     }
 
@@ -62,7 +62,8 @@ service cloud.firestore {
         // recetaSnapshot se escribe una sola vez, al crear el lote — nunca se edita.
         ;
       allow update: if signedIn()
-        && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot;
+        && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot
+        && (!('status' in request.resource.data) || request.resource.data.status is string);
       allow delete: if isAdmin();
     }
 
@@ -76,13 +77,26 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    match /telemetria_lecturas/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      allow update, delete: if isAdmin();
+    }
+
+    match /telemetria_salas/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn() || request.resource.data.source == 'esp32_hardware';
+    }
+
     match /bitacora_lotes/{id} {
       allow read: if signedIn();
       allow write: if signedIn();
     }
     match /bitacora_bolsas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      // foto (data URL base64) debe eliminarse antes de guardar (ver bitacora-sync.js)
+      // para no inflar la base de datos de Firestore.
+      allow write: if signedIn() && !('foto' in request.resource.data);
     }
     match /bitacora_cosechas/{id} {
       allow read: if signedIn();

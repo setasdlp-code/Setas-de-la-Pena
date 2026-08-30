@@ -20,6 +20,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Este job tambien corre la suite node:test, que incluye el guard
+          # ADR-0004 de perito-evidence-display.test.js: diffea contra main y
+          # necesita el ref. Con checkout superficial no existe en un
+          # pull_request. Ver field-os-simulador-quality.yml.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:

@@ -20,8 +20,11 @@
   --ink-700: var(--ink-1);
   --ink-600: var(--ink-2);
   --ink-500: var(--ink-2);
-  --ink-400: var(--ink-3);
+  --ink-400: var(--ink-2);
   --ink-300: var(--ink-3);
+
+  --accent-terracotta-dark: color-mix(in oklab, var(--accent-terracotta) 80%, black);
+  --accent-blue-grey-dark: color-mix(in oklab, var(--accent-blue-grey) 85%, black);
 
   /* ── EARTH PIGMENTS — consolidated onto the DS's 5 real accents ──
      moss (brand green) -> olive · coral (rust/mushroom) -> terracotta

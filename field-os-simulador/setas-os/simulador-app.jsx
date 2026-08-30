@@ -2208,24 +2208,40 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
   const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
+  const [copied,setCopied]=useState(false);
+  const traceUrl=lote?.codigo?`https://setasdelapena.co/trace/${lote.codigo}`:(typeof window!=='undefined'?window.location.href:'https://setasdelapena.co');
+  const qrDataUrl=generateQrSvgDataUrl(traceUrl);
+
+  const diasIncubacion=(()=>{
+    if(!lote?.fechaInoculacion) return null;
+    const start=new Date(lote.fechaInoculacion);
+    const now=new Date();
+    const diff=Math.max(0,Math.floor((now-start)/(1000*60*60*24)));
+    return diff;
+  })();
+
+  const recetaItems=lote?.recetaSnapshot?.ingredientes||lote?.receta||[];
 
   return(
     <AccessibleModal
       onClose={onClose}
-      label="Ficha Pública de Trazabilidad · Setas de la Peña"
-      dialogStyle={{width:'min(520px,94vw)',padding:0,background:'var(--paper-50,#FDFCF7)',border:'1px solid var(--border-soft,#D8D3C5)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
+      label="Pasaporte Digital de Trazabilidad · Setas de la Peña"
+      dialogStyle={{width:'min(560px,94vw)',padding:0,background:'var(--paper-50,#FDFCF7)',border:'1px solid var(--border-soft,#D8D3C5)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
     >
-      <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'24px 22px 20px',position:'relative'}}>
+      <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'22px 22px 18px',position:'relative'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-          <div>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
-              <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
-            </div>
-            <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50,#FDFCF7)',margin:'6px 0 2px',letterSpacing:'-.01em'}}>
-              {lote?.especie||'Seta Cultivada'}
-            </h2>
-            <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200,#E5E0D3)'}}>
-              {lote?.especieCientifico||'Pleurotus ostreatus'}
+          <div style={{display:'flex',gap:14,alignItems:'center'}}>
+            <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="56" height="56" style={{width:56,height:56,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
+                <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
+              </div>
+              <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50,#FDFCF7)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
+                {lote?.especie||'Seta Cultivada'}
+              </h2>
+              <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200,#E5E0D3)'}}>
+                {lote?.especieCientifico||'Pleurotus ostreatus'}
+              </div>
             </div>
           </div>
           <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha">✕</button>
@@ -2233,58 +2249,99 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
       </div>
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
+        {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
-          <img src={spImg} alt={lote?.especie||'Seta'} style={{width:54,height:54,objectFit:'contain',borderRadius:4,background:'#fff',border:'1px solid var(--border-soft)'}} />
+          <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <img src={qrDataUrl} alt={`QR Lote ${lote?.codigo||''}`} width="76" height="76" style={{display:'block'}} />
+          </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:12,fontWeight:700,color:'var(--ink-900)'}}>
-              Lote #{lote?.codigo||'SDP-LOTE'}
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-900)'}}>Lote #{lote?.codigo||'SDP-LOTE'}</strong>
+              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-100,#E8F0E0)',color:'var(--moss-800,#3B5A24)',borderRadius:3,textTransform:'uppercase'}}>
+                {lote?.estado||'Activo'}
+              </span>
             </div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:2}}>
-              Finca El Peñón · Altitud 2.587 msnm · Clima frío de montaña
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--ink-600)',marginTop:3}}>
+              Finca Santa Isabel · Tenjo, Cundinamarca · 2.587 msnm
+            </div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--ink-500)',marginTop:2}}>
+              {traceUrl}
             </div>
           </div>
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+        {/* TIMELINE BIOLÓGICO Y RENDIMIENTO */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
           <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Inoculación</div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12.5,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {lote?.fechaInoculacion||'—'}
             </div>
           </div>
           <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Registrada</div>
-            <div style={{fontFamily:'var(--font-num)',fontSize:15,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
-              {totalKg>0?`${totalKg.toFixed(2)} kg`:'En proceso'}
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Días en Proceso</div>
+            <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
+              {diasIncubacion!=null?`${diasIncubacion} días`:'—'}
+            </div>
+          </div>
+          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Total</div>
+            <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
+              {totalKg>0?`${totalKg.toFixed(2)} kg`:'En sala'}
             </div>
           </div>
         </div>
+
+        {/* COMPOSICIÓN DE SUSTRATO & CERTIFICACIÓN LIMPIA */}
+        {recetaItems.length>0&&(
+          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:6}}>
+              Fórmula de Sustrato Lignocelulósico
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              {recetaItems.map((item,idx)=>{
+                const g=typeof INGS!=='undefined'?INGS.find(i=>i.id===item.id):null;
+                return (
+                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100,#F5F2E9)',borderRadius:3,border:'1px solid var(--border-subtle,#E2DACD)',color:'var(--ink-800)'}}>
+                    <strong>{item.p||item.pct}%</strong> {g?.name||item.id}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{background:'var(--surface-accent-soft,#E8F0E0)',border:'1px solid var(--moss-300,#A8C090)',borderRadius:4,padding:'12px 14px'}}>
           <div style={{display:'flex',alignItems:'center',gap:6,color:'var(--moss-900)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:12}}>
             <AppIcon name="check" size={14} color="var(--moss-700)" /> Sustrato 100% Botánico Limpio
           </div>
           <p style={{fontFamily:'var(--font-sans)',fontSize:11.5,color:'var(--moss-900)',margin:'4px 0 0',lineHeight:1.45}}>
-            Cultivado sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua de montaña y monitoreado bajo control ambiental continuo.
+            Cultivado a 2.587 msnm sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua pura de montaña y pasteurizado térmicamente.
           </p>
         </div>
 
-        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:4}}>
-          <button
-            type="button"
-            className="inv-btn inv-btn-sec"
-            style={{fontSize:11,display:'flex',alignItems:'center',gap:6}}
-            onClick={()=>{
-              const url=`${window.location.origin}${window.location.pathname}?trace=${lote?.codigo||''}`;
-              navigator.clipboard?.writeText?.(url);
-              alert('Enlace público de trazabilidad copiado al portapapeles: '+url);
-            }}
-          >
-            <AppIcon name="globe" size={13} /> Copiar Enlace QR
-          </button>
-          <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{fontSize:11}}>
-            Cerrar
-          </button>
+        {/* ACCIONES DEL MODAL */}
+        <div style={{display:'flex',gap:8,justifyContent:'space-between',alignItems:'center',marginTop:4}}>
+          <span style={{fontSize:11,color:copied?'var(--moss-700)':'var(--ink-500)',fontWeight:copied?700:400}}>
+            {copied?'✓ Enlace QR copiado al portapapeles':'Enlace público para clientes y auditorías'}
+          </span>
+          <div style={{display:'flex',gap:8}}>
+            <button
+              type="button"
+              className="inv-btn inv-btn-sec"
+              style={{fontSize:11,display:'flex',alignItems:'center',gap:6}}
+              onClick={()=>{
+                navigator.clipboard?.writeText?.(traceUrl);
+                setCopied(true);
+                setTimeout(()=>setCopied(false),2500);
+              }}
+            >
+              <AppIcon name="globe" size={13} /> {copied?'Copiado':'Copiar Enlace'}
+            </button>
+            <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{fontSize:11}}>
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </AccessibleModal>
@@ -2551,6 +2608,17 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     }
     if (typeof setSelectedClimateRoom === 'function') {
       setSelectedClimateRoom(roomId);
+    }
+    // Sincronización en la nube hacia Firestore
+    if (typeof window !== 'undefined' && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === 'function') {
+      window.SetasFirebase.pushClimateReading({
+        roomId,
+        temperature_c: temp,
+        rh_pct: rh,
+        co2_ppm: co2,
+        substrate_temperature_c: subTemp,
+        source: 'iot_hub_webhook'
+      }).catch(e => console.warn('[IoT Hub] Error sincronizando a Firestore:', e));
     }
     return {
       success: true,
@@ -3047,7 +3115,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
     <div className={'ing-item '+(expanded?'expanded':'')}>
-      <div className="ing-badge" style={{background:cat}} title={ing.cat}>{ing.cat.substring(0,2).toUpperCase()}</div>
+      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'#ffffff')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
@@ -3818,6 +3886,8 @@ function App(props){
   const [schDate,setSchDate]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [schKey,setSchKey]=useState('p_ostreatus_gris');
   const [normMode,setNormMode]=useState(false);
+  const [coFormMode,setCoFormMode]=useState(false);
+  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
   const [vegPrice,setVegPrice]=useState(12000);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
@@ -4482,6 +4552,10 @@ function sowingRecommendation(deficitKg) {
   const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
   const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const coAnalysis=useMemo(()=>{
+    if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,SPP);
+  },[coFormMode,recipe,coSpecConfig,effectiveINGS]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const readyForProduction=balanced&&hasPickedSpecies;
@@ -5543,7 +5617,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <th>Proveedor</th>
                               <th>Alerta mín. (kg)</th>
                               <th>Estado</th>
-                              <th style={{width:80}}></th>
+                              <th style={{width:80}}><span className="sr-only">Acciones</span></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -5667,7 +5741,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{setShowAddStockForm(false);setAddStockId('');setAddStockKg('');}}>Cancelar</button>
                       </div>
                     )}
-                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>
                       ≥5 kg · 2–5 kg · &lt;2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar.
                     </span>
                   </div>
@@ -6523,7 +6597,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }, [tempProj, rhProj, co2Proj, currentMetrics.temp, currentMetrics.rh, currentMetrics.co2, activeCulinaryKey]);
 
-
+    if (tab !== 'clima') return null;
 
     // Cálculos psicrométricos
     const vpd = climateMath ? climateMath.calcVPD(currentMetrics.temp, currentMetrics.rh) : 0.21;
@@ -6611,7 +6685,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* Ficha del Ciclo y Sala */}
         <div className="climate-cycle-banner">
           <div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta)'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.06em',color:'var(--accent-terracotta-dark)'}}>
               {room.name} · {room.spec}
             </div>
             <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:'var(--ink-0)',marginTop:2}}>
@@ -6637,8 +6711,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               padding:'6px 12px',
               borderRadius:'var(--radius-sm)',
               background: climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-              color: climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)',
-              border: `1px solid ${climateHealth.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-600)'}`,
+              color: climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-800)',
+              border: `1px solid ${climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-600)'}`,
               fontFamily:'var(--font-mono)',
               fontSize:11,
               fontWeight:700
@@ -6754,10 +6828,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{display:'flex',flexDirection:'column',gap:16}}>
               {/* Selector Culinario */}
               <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-2)',textTransform:'uppercase'}}>
+                <label htmlFor="active-culinary-profile" style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   Efecto Gastronómico Deseado:
                 </label>
                 <select 
+                  id="active-culinary-profile"
+                  name="active-culinary-profile"
                   value={activeCulinaryKey} 
                   onChange={(e) => handleCulinarySelect(e.target.value)}
                   style={{
@@ -6777,7 +6853,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <option value="umami">Sabor Umami Concentrado (Choque Frío)</option>
                   <option value="conservacion">Máxima Vida Útil (Cap Seco)</option>
                 </select>
-                <span style={{fontSize:11,fontFamily:'var(--font-sans)',color:'var(--ink-2)',fontStyle:'italic'}}>
+                <span style={{fontSize:11,fontFamily:'var(--font-sans)',color:'var(--ink-1)',fontStyle:'italic'}}>
                   {CULINARY_PROFILES[activeCulinaryKey].gastronomy}
                 </span>
               </div>
@@ -6785,12 +6861,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {/* Targets details */}
               <div style={{background:'var(--paper-2)',border:'1px solid var(--line-0)',borderRadius:'var(--radius-sm)',padding:10,fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-1)'}}>
                 <div><strong>Target Fructificación:</strong> T: {CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1)}°C | HR: {CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0)}% | CO₂: {CULINARY_PROFILES[activeCulinaryKey].co2Ideal} ppm</div>
-                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-2)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
+                <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-1)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
               </div>
 
               {/* Match Score */}
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-2)',textTransform:'uppercase'}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,fontWeight:800,color:'var(--ink-1)',textTransform:'uppercase'}}>
                   <span>Sintonía Culinaria (Match):</span>
                   <span style={{fontWeight:700,color:matchScore >= 80 ? 'var(--accent-olive)' : matchScore >= 50 ? 'var(--accent-terracotta)' : 'var(--accent-rust)'}}>
                     {matchScore}%
@@ -6821,6 +6897,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="0.5" 
                     value={tempProj} 
                     onChange={(e) => setTempProj(parseFloat(e.target.value))}
+                    aria-label="Proyección de temperatura (°C)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -6838,6 +6915,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="1" 
                     value={rhProj} 
                     onChange={(e) => setRhProj(parseInt(e.target.value))}
+                    aria-label="Proyección de humedad relativa (%)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -6855,6 +6933,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     step="25" 
                     value={co2Proj} 
                     onChange={(e) => setCo2Proj(parseInt(e.target.value))}
+                    aria-label="Proyección de nivel de CO₂ (ppm)"
                     style={{width:'100%'}}
                   />
                 </div>
@@ -7420,17 +7499,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
+  const climateDashboardContent = ClimateDashboardSection();
 
   return(
     <div>
       <div className="topbar">
-        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer'}}>Setas de la Peña</button>
+        <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="36" height="36" style={{width:36,height:'auto',maxHeight:36,objectFit:'contain'}} />
+          <span style={{fontSize:15,fontWeight:700}}>Setas de la Peña</span>
+        </button>
       </div>
       <nav className="fos-rail">
-        <span className="fos-rail-mark" style={{position:'relative',width:91,height:106,display:'block'}}>
-          <span style={{textAlign:'center',fontStyle:'normal',fontSize:17,display:'block'}}>Setas</span>
-          <div style={{fontSize:"var(--text-md)",lineHeight:0.95,position:'absolute',left:30,top:49,fontStyle:'italic',letterSpacing:'-0.1px'}}>de la</div>
-          <div style={{fontSize:18,lineHeight:1,position:'absolute',left:27,top:65}}>Peña</div>
+        <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 4px 8px'}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="88" height="88" style={{width:88,height:'auto',maxHeight:88,objectFit:'contain',display:'block'}} />
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
           <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>
@@ -7450,9 +7531,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </header>
 
       <div className="wrap">
-        <div className="print-header">
-          <h1>Setas de la Peña</h1>
-          <p>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
+        <div className="print-header" style={{display:'flex',alignItems:'center',gap:14}}>
+          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="56" height="56" style={{width:56,height:56,objectFit:'contain'}} />
+          <div>
+            <h1 style={{margin:0,fontSize:22}}>Setas de la Peña</h1>
+            <p style={{margin:'2px 0 0',fontSize:12,color:'var(--ink-2)'}}>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
+          </div>
         </div>
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
@@ -7512,10 +7596,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const pendingTaskCount=operationalQueue.filter(item=>!['later','context'].includes(item.bucket)).length;
           const incidentCount=criticalTaskCount+blockedTaskCount+lowStockCount;
           const operationStatus=criticalTaskCount>0
-            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'var(--coral-700)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
+            ?{label:`${criticalTaskCount} crítica${criticalTaskCount===1?'':'s'}`,color:'color-mix(in oklab, var(--coral-700) 70%, black)',bg:'color-mix(in oklab, var(--coral-500) 12%, var(--paper-0))'}
             :(overdueTaskCount>0||incidentCount>0)
-              ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'var(--ochre-700)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
-              :{label:'Operación estable',color:'var(--moss-700)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
+              ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'color-mix(in oklab, var(--ochre-700) 70%, black)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
+              :{label:'Operación estable',color:'color-mix(in oklab, var(--moss-700) 75%, black)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
 
           // Ambientes & Sensores: cámaras físicas REALES
           let camaras=[];
@@ -7552,8 +7636,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ].map(kpi=>{
                       const tones={
                         neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
-                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'var(--ochre-700)',weight:800},
-                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'var(--coral-700)',weight:800}
+                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'color-mix(in oklab,var(--ochre-700) 70%,black)',weight:800},
+                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'color-mix(in oklab,var(--coral-700) 70%,black)',weight:800}
                       };
                       const t=tones[kpi.tone];
                       return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
@@ -7640,7 +7724,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                           {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                         ].map(btn=>{
-                          const accent=btn.jornada?'var(--coral-600)':(btn.pri?'var(--moss-700)':null);
+                          const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
                           return (
                           <button
                             key={btn.label}
@@ -7818,16 +7902,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {criticalStockItems.length > 0 ? (
                         <div style={{ background: 'color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))', border: '1px solid var(--coral-500)', borderLeft: '4px solid var(--coral-700)', borderRadius: 'var(--r-xs)', padding: '10px 12px', marginBottom: 16 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                               ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
                             </span>
-                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'var(--coral-700)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                               Registrar Compra +
                             </button>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'var(--coral-700)' }}>
+                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                 {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                               </span>
                             ))}
@@ -7913,7 +7997,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--sand-500)',color:'var(--ink-900)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'color-mix(in oklab, var(--sand-500) 55%, black)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                         + Registrar Cosecha
                       </button>
                       <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
@@ -8220,7 +8304,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {c.name}
                             </div>
                           </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
                             {c.estadoLabel}
                           </span>
                         </div>
@@ -8332,7 +8416,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="catalog-hdr">
               <div>
                 <span className="catalog-eyebrow">Receta</span>
-                <h2 className="catalog-title">Catálogo de especies</h2>
+                <h1 className="catalog-title">Catálogo de especies</h1>
               </div>
 
             </div>
@@ -8468,35 +8552,101 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='formular'&&(
-          <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
-            <button
-              type="button"
-              role="tab"
-              id="formular-tab-mesa"
-              aria-controls="formular-panel-mesa"
-              aria-selected={builderSubTab==='formular'}
-              tabIndex={builderSubTab==='formular'?0:-1}
-              className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
-              onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>openBuilderSubTab('formular')}>
-              <span aria-hidden="true">🥣</span>
-              <span>Mesa de Mezcla</span>
-              {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="formular-tab-generador"
-              aria-controls="formular-panel-generador"
-              aria-selected={builderSubTab==='generador'}
-              tabIndex={builderSubTab==='generador'?0:-1}
-              className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
-              onKeyDown={onBuilderTabKeyDown}
-              onClick={()=>openBuilderSubTab('generador')}>
-              <span aria-hidden="true">⚡</span>
-              <span>Generador de Recetas</span>
-            </button>
-          </nav>
+          <div className="formular-mode-wrapper">
+            <nav className="formular-mode-nav" role="tablist" aria-label="Modo de formulación">
+              <button
+                type="button"
+                role="tab"
+                id="formular-tab-mesa"
+                aria-controls="formular-panel-mesa"
+                aria-selected={builderSubTab==='formular'}
+                tabIndex={builderSubTab==='formular'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
+                onKeyDown={onBuilderTabKeyDown}
+                onClick={()=>openBuilderSubTab('formular')}>
+                <span aria-hidden="true">🥣</span>
+                <span>Mesa de Mezcla</span>
+                {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="formular-tab-generador"
+                aria-controls="formular-panel-generador"
+                aria-selected={builderSubTab==='generador'}
+                tabIndex={builderSubTab==='generador'?0:-1}
+                className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
+                onKeyDown={onBuilderTabKeyDown}
+                onClick={()=>openBuilderSubTab('generador')}>
+                <span aria-hidden="true">⚡</span>
+                <span>Generador de Recetas</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="formular-tab-coform"
+                aria-selected={coFormMode}
+                tabIndex={0}
+                className={`formular-mode-btn${coFormMode?' is-active':''}`}
+                data-testid="co-form-toggle"
+                onClick={()=>setCoFormMode(!coFormMode)}>
+                <span aria-hidden="true">🧬</span>
+                <span>{coFormMode?'Co-Formulación Activa':'Modo Co-Formulación'}</span>
+              </button>
+            </nav>
+            {coFormMode&&(
+              <div className="co-form-panel" data-testid="co-form-panel" style={{margin:'10px 0',padding:'12px',background:'var(--surface-card,#fbf9f4)',borderRadius:'8px',border:'1px solid var(--border-subtle,#e2dacd)'}}>
+                <header style={{display:'flex',justify:'space-between',alignItems:'center',marginBottom:'8px'}}>
+                  <strong style={{fontSize:'0.9rem'}}>🧬 Co-Formulación Multi-Especie (Ponderación de Lote)</strong>
+                  <span style={{fontSize:'0.8rem',color:'var(--ink-600,#666)'}}>Proporción de producción por especie</span>
+                </header>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:'10px'}}>
+                  {Object.entries(SPP).map(([k,d])=>{
+                    const weight = coSpecConfig[k] || 0;
+                    return (
+                      <div key={k} style={{display:'flex',flexDirection:'column',gap:'4px',padding:'6px 10px',background:'var(--bg-main,#fff)',borderRadius:'6px',border:weight>0?'1px solid var(--primary,#5A7042)':'1px solid #ddd'}}>
+                        <div style={{display:'flex',justify:'space-between',alignItems:'center'}}>
+                          <span style={{fontSize:'0.8rem',fontWeight:600}}>{d.name}</span>
+                          <span style={{fontSize:'0.8rem',fontWeight:700,color:weight>0?'var(--primary,#5A7042)':'#999'}}>{weight}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={weight}
+                          onChange={e=>{
+                            const val = Number(e.target.value)||0;
+                            setCoSpecConfig(prev=>({...prev, [k]: val}));
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {coAnalysis&&(
+                  <div style={{marginTop:'12px',padding:'10px',background:'#f0f4ec',borderRadius:'6px',fontSize:'0.85rem',display:'flex',flexDirection:'column',gap:'6px'}}>
+                    <div style={{display:'flex',justify:'space-between',fontWeight:600}}>
+                      <span>Target C:N Ponderado: {coAnalysis.weightedTargets.cn.ideal}:1 ({coAnalysis.weightedTargets.cn.min} - {coAnalysis.weightedTargets.cn.max})</span>
+                      <span>EB Conjunta Estimada: {coAnalysis.jointEB}%</span>
+                    </div>
+                    {coAnalysis.allIncompatibilities.length>0&&(
+                      <div style={{color:'var(--color-critical,#c53030)',fontWeight:600}}>
+                        ⚠️ Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
+                      </div>
+                    )}
+                    <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginTop:'4px'}}>
+                      {coAnalysis.speciesResults.map(r=>(
+                        <div key={r.speciesKey} style={{fontSize:'0.8rem',padding:'4px 8px',background:'#fff',borderRadius:'4px',border:'1px solid #c8d6be'}}>
+                          <strong>{r.speciesName} ({r.weightPct}%)</strong>: EB est. {r.an?.eb?Math.round(r.an.eb):'—'}%
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {tab==='formular'&&builderSubTab==='formular'&&recipe.length===0&&(
@@ -8654,7 +8804,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="live-dash-species" title="Aún no hay ingredientes en la receta">
                       Receta activa
                     </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                       sin ingredientes
                     </span>
                   </div>
@@ -8692,7 +8842,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
                         Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'var(--moss-700)',fontWeight:700,textTransform:'uppercase'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                         evaluación en vivo
                       </span>
                     </div>
@@ -10086,7 +10236,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel no-print" style={{marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-attention)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'color-mix(in oklab, var(--status-attention) 80%, black)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
                   <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
                   <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
@@ -11081,7 +11231,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <div>Inoc: {item.date}</div>
                               <div>Fórmula: {item.recipe}</div>
                             </div>
-                            <div className="thermal-footer">Setas de la Peña</div>
+                            <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
+                              <img src="_standalone_imgs/logo-sdlp.png" alt="" width="14" height="14" style={{width:14,height:14,objectFit:'contain',display:'inline-block'}} />
+                              <span>Setas de la Peña</span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -11122,7 +11275,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div>Inoc: {item.date}</div>
                             <div>Fórmula: {item.recipe}</div>
                           </div>
-                          <div className="thermal-footer">Setas de la Peña</div>
+                          <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
+                            <img src="_standalone_imgs/logo-sdlp.png" alt="" width="14" height="14" style={{width:14,height:14,objectFit:'contain',display:'inline-block'}} />
+                            <span>Setas de la Peña</span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -11283,15 +11439,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
               dialogStyle={{ width: 'min(720px, 95vw)', padding: '24px 22px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
-                    Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
-                  </div>
-                  <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
-                    {gastro.title}
-                  </h2>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
-                    {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                  <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="52" height="52" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                      Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
+                    </div>
+                    <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
+                      {gastro.title}
+                    </h2>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
+                      {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
+                    </div>
                   </div>
                 </div>
                 <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}>✕</button>

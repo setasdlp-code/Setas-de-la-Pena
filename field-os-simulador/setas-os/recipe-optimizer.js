@@ -96,6 +96,226 @@
     };
   };
 
+  // ── analyzeCoFormulation — evaluación multi-especie ponderada ──
+  const analyzeCoFormulation = (recipe, coSpecConfig, ings, spp) => {
+    if (!recipe || !recipe.length || !coSpecConfig) return null;
+    const effectiveINGS = getEffectiveINGS(ings);
+    const effectiveSPP = getEffectiveSPP(spp);
+
+    let list = Array.isArray(coSpecConfig)
+      ? coSpecConfig.map(c => ({ key: c.speciesKey || c.key, w: parseFloat(c.weight || c.w) || 0 }))
+      : Object.entries(coSpecConfig).map(([k, v]) => ({ key: k, w: parseFloat(v) || 0 }));
+
+    list = list.filter(item => item.w > 0 && effectiveSPP[item.key]);
+    const totalW = list.reduce((s, item) => s + item.w, 0);
+    if (!totalW || !list.length) return null;
+
+    list = list.map(item => ({ ...item, normW: item.w / totalW }));
+
+    const speciesResults = list.map(item => {
+      const an = analyze(recipe, item.key, effectiveINGS, effectiveSPP);
+      return {
+        speciesKey: item.key,
+        speciesName: effectiveSPP[item.key]?.name || item.key,
+        weight: item.normW,
+        weightPct: Math.round(item.normW * 100),
+        an
+      };
+    });
+
+    let weightedIdealCN = 0, weightedMinCN = 0, weightedMaxCN = 0;
+    let weightedIdealN = 0, weightedMinN = 0, weightedMaxN = 0;
+    let weightedBaselineEB = 0, weightedOptimalEB = 0;
+    let jointEB = 0, jointEBIndex = 0;
+    const allIncompatibilities = [];
+
+    speciesResults.forEach(r => {
+      const sp = effectiveSPP[r.speciesKey];
+      if (sp) {
+        weightedIdealCN += (sp.cn_optimal?.ideal || 30) * r.weight;
+        weightedMinCN += (sp.cn_optimal?.min || 20) * r.weight;
+        weightedMaxCN += (sp.cn_optimal?.max || 45) * r.weight;
+
+        weightedIdealN += (sp.n_optimal?.ideal || 1.4) * r.weight;
+        weightedMinN += (sp.n_optimal?.min || 1.0) * r.weight;
+        weightedMaxN += (sp.n_optimal?.max || 2.2) * r.weight;
+
+        weightedBaselineEB += (sp.eb_baseline || 60) * r.weight;
+        weightedOptimalEB += (sp.eb_optimal || 90) * r.weight;
+      }
+      if (r.an) {
+        jointEB += (r.an.eb || 0) * r.weight;
+        jointEBIndex += (r.an.ebIndex || 0) * r.weight;
+        if (r.an.incompat && r.an.incompat.length) {
+          r.an.incompat.forEach(inc => {
+            if (!allIncompatibilities.includes(`${inc} (${r.speciesName})`)) {
+              allIncompatibilities.push(`${inc} (${r.speciesName})`);
+            }
+          });
+        }
+      }
+    });
+
+    const baseAnalysis = speciesResults[0]?.an || analyze(recipe, list[0].key, effectiveINGS, effectiveSPP);
+
+    return {
+      recipe,
+      coSpecConfig: list,
+      speciesResults,
+      weightedTargets: {
+        cn: { ideal: Math.round(weightedIdealCN * 10) / 10, min: Math.round(weightedMinCN * 10) / 10, max: Math.round(weightedMaxCN * 10) / 10 },
+        n: { ideal: Math.round(weightedIdealN * 100) / 100, min: Math.round(weightedMinN * 100) / 100, max: Math.round(weightedMaxN * 100) / 100 },
+        eb: { baseline: Math.round(weightedBaselineEB * 10) / 10, optimal: Math.round(weightedOptimalEB * 10) / 10 }
+      },
+      jointEB: Math.round(jointEB * 10) / 10,
+      jointEBIndex: Math.round(jointEBIndex),
+      allIncompatibilities,
+      baseAnalysis
+    };
+  };
+
+  // ── computeParetoFrontier — frontera óptima entre coste ($/kg) y rendimiento (EB%) ──
+  const computeParetoFrontier = (sKey, ings, spp, options = {}) => {
+    const effectiveINGS = getEffectiveINGS(ings);
+    const effectiveSPP = getEffectiveSPP(spp);
+    const sp = effectiveSPP[sKey] || effectiveSPP.p_ostreatus_gris;
+    if (!sp) return { points: [], milestones: {} };
+
+    const freshPricePerKg = options.freshPricePerKg || 12000;
+    const kgBag = options.kgBag || 1.5;
+    const moistureSubstrate = options.moistureSubstrate || 0.67;
+    const dryKgPerBag = kgBag * (1 - moistureSubstrate);
+
+    const compatible = effectiveINGS.filter(g => {
+      if (!g || g.cost == null || isNaN(g.cost)) return false;
+      if (g.cs && !g.cs.includes(sKey)) return false;
+      if (sp.incompat_ings && sp.incompat_ings.includes(g.id)) return false;
+      return true;
+    });
+
+    const isBase = g => g.role === 'base_carbono' || g.cat === 'base' || g.cat === 'paja' || g.cat === 'maderas' || g.cat === 'bagazo';
+    const isSupp = g => g.role === 'suplemento_n' || g.role === 'suplemento_medio' || g.cat === 'suplemento' || g.cat === 'salvados' || g.cat === 'harinas' || g.cat === 'tortas';
+    const isMin = g => g.role === 'aditivo_ph' || g.role === 'aditivo_estructura' || g.role === 'aditivo_micronutriente' || g.cat === 'adit' || g.cat === 'mineral';
+
+    const bases = compatible.filter(isBase);
+    const supps = compatible.filter(isSupp);
+    const mins = compatible.filter(isMin);
+
+    const candidates = [];
+    const defaultMineral = mins.find(m => m.id === 'yeso_agricola' || m.id === 'yeso') || mins[0] || { id: 'yeso_agricola', cost: 700 };
+    const minPct = 3;
+    const maxSupp = sp.supplementation_max || sp.max_supp || 20;
+    const suppSteps = [0, 5, 10, 15, 20, maxSupp].filter(s => s <= maxSupp);
+
+    bases.forEach(base => {
+      const pureRecipe = [
+        { id: base.id, p: 100 - minPct },
+        { id: defaultMineral.id, p: minPct }
+      ];
+      const an = analyze(pureRecipe, sKey, effectiveINGS, effectiveSPP);
+      if (an && an.eb && !an.crit?.length) {
+        candidates.push({ recipe: pureRecipe, an, baseName: base.name, suppName: 'Sin suplemento' });
+      }
+
+      supps.forEach(supp => {
+        suppSteps.forEach(sPct => {
+          if (sPct === 0) return;
+          const rec = [
+            { id: base.id, p: 100 - minPct - sPct },
+            { id: supp.id, p: sPct },
+            { id: defaultMineral.id, p: minPct }
+          ];
+          const a = analyze(rec, sKey, effectiveINGS, effectiveSPP);
+          if (a && a.eb && !a.crit?.length && a.cn >= (sp.cn_optimal?.min || 15) && a.cn <= (sp.cn_optimal?.max || 60)) {
+            candidates.push({ recipe: rec, an: a, baseName: base.name, suppName: `${supp.name} (${sPct}%)` });
+          }
+        });
+      });
+    });
+
+    if (bases.length >= 2 && supps.length > 0) {
+      const topSupp = supps.find(s => s.id === 'salvado_trigo') || supps[0];
+      for (let i = 0; i < Math.min(bases.length, 6); i++) {
+        for (let j = i + 1; j < Math.min(bases.length, 6); j++) {
+          const b1 = bases[i], b2 = bases[j];
+          [10, 15].filter(s => s <= maxSupp).forEach(sPct => {
+            const rem = 100 - minPct - sPct;
+            const rec = [
+              { id: b1.id, p: rem * 0.5 },
+              { id: b2.id, p: rem * 0.5 },
+              { id: topSupp.id, p: sPct },
+              { id: defaultMineral.id, p: minPct }
+            ];
+            const a = analyze(rec, sKey, effectiveINGS, effectiveSPP);
+            if (a && a.eb && !a.crit?.length && a.cn >= (sp.cn_optimal?.min || 15) && a.cn <= (sp.cn_optimal?.max || 60)) {
+              candidates.push({ recipe: rec, an: a, baseName: `${b1.name} + ${b2.name}`, suppName: `${topSupp.name} (${sPct}%)` });
+            }
+          });
+        }
+      }
+    }
+
+    const evaluated = candidates.map(c => {
+      const costPerKgDry = c.an.cost || 0;
+      const eb = c.an.eb || 0;
+      const yieldKgPerBag = dryKgPerBag * (eb / 100);
+      const subCostPerBag = dryKgPerBag * costPerKgDry;
+      const revPerBag = yieldKgPerBag * freshPricePerKg;
+      const grossMarginPerBag = revPerBag - subCostPerBag;
+      const costPerKgFresh = yieldKgPerBag > 0 ? (subCostPerBag / yieldKgPerBag) : 0;
+      const roiPct = subCostPerBag > 0 ? ((grossMarginPerBag / subCostPerBag) * 100) : 0;
+
+      return {
+        recipe: c.recipe,
+        baseName: c.baseName,
+        suppName: c.suppName,
+        costPerKgDry: Math.round(costPerKgDry),
+        eb: Math.round(eb * 10) / 10,
+        cn: Math.round((c.an.cn || 0) * 10) / 10,
+        n: Math.round((c.an.n || 0) * 100) / 100,
+        yieldKgPerBag: Math.round(yieldKgPerBag * 1000) / 1000,
+        subCostPerBag: Math.round(subCostPerBag),
+        grossMarginPerBag: Math.round(grossMarginPerBag),
+        costPerKgFresh: Math.round(costPerKgFresh),
+        roiPct: Math.round(roiPct),
+        score: c.an.score || 0
+      };
+    });
+
+    evaluated.sort((a, b) => a.costPerKgDry - b.costPerKgDry || b.eb - a.eb);
+
+    const paretoPoints = [];
+    let maxEbSoFar = -1;
+
+    for (const item of evaluated) {
+      if (item.eb > maxEbSoFar) {
+        paretoPoints.push(item);
+        maxEbSoFar = item.eb;
+      }
+    }
+
+    const minCostPoint = paretoPoints[0] || evaluated[0] || null;
+    const maxEbPoint = paretoPoints[paretoPoints.length - 1] || evaluated[evaluated.length - 1] || null;
+    let maxMarginPoint = paretoPoints[0] || null;
+    paretoPoints.forEach(p => {
+      if (!maxMarginPoint || p.grossMarginPerBag > maxMarginPoint.grossMarginPerBag) {
+        maxMarginPoint = p;
+      }
+    });
+
+    return {
+      speciesKey: sKey,
+      speciesName: sp.name,
+      points: paretoPoints,
+      allEvaluatedCount: evaluated.length,
+      milestones: {
+        minCost: minCostPoint,
+        maxMargin: maxMarginPoint,
+        maxEB: maxEbPoint
+      }
+    };
+  };
+
   // ── setPctProportional — fija un ingrediente y reescala los libres a 100% ──
   const setPctProportional = (recipe, id, v, lockedIds = []) => {
     v = Math.max(0, Math.min(80, v));
@@ -909,6 +1129,8 @@
     OPT_PROFILES,
     precioPonderado,
     runAutoOptimizer,
+    analyzeCoFormulation,
+    computeParetoFrontier,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
