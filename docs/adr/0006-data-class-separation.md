@@ -37,12 +37,19 @@ impossible telemetry is quarantined rather than silently averaged.
 
 The four classes above separate *kinds of number*. ADR-0007 found the same failure
 mode one level up, in the words attached to those numbers: `low`/`medium`/`high`
-names **two different scales**, and they are not interchangeable.
+names **three different scales**, and they are not interchangeable.
 
-| Scale | Rates | May reach `high` from observation |
+| Scale | Rates | Reaches `high` when |
 |---|---|---|
-| A — evidence confidence (`cycle-evidence.js`) | How much a body of evidence is worth | **No** — capped at `medium` by construction |
-| B — `ebConfidence` (`scoring.js` `buildUncertainty()`) | How tight an EB prediction band should be | **Yes** — ratified by ADR-0007, under promotion criteria |
+| A — evidence confidence (`cycle-evidence.js`) | How much a body of evidence is worth | **Never** from observation — capped at `medium` by construction |
+| B — `ebConfidence` (`scoring.js` `buildUncertainty()`) | How tight an EB prediction band should be | Under ADR-0007's promotion criteria |
+| C — provenance confidence (`scoring.js` provenance block) | How a claim was derived — method, not evidence | The input had the better shape; no replication required |
+
+Scale C is the sharpest illustration of this ADR's point: `provenance.eb.confidence`
+and `provenance.stock.confidence` are the same field name in the same object on
+different scales. It also currently reports `high` when no stock data exists at all
+(`mode: 'unconstrained'`) — absence of data presenting as maximum confidence, which
+is precisely the substitution this ADR forbids. ADR-0007 records it as open.
 
 This belongs with this ADR because it is the same defect class: two distinct things
 that serialize to identical-looking values, where collapsing them destroys the

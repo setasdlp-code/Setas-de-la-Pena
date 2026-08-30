@@ -1,13 +1,17 @@
-# ADR-0007: `low`/`medium`/`high` names two different confidence scales
+# ADR-0007: `low`/`medium`/`high` names three different confidence scales
 
 Status: **Decided (Scale B promotion criteria) — partially implemented (2 of 5)**
+· **Amended 2026-08-30: a third scale (C) identified and ratified as distinct.**
 Date: recorded 2026-08-30; decision recorded 2026-08-30; gap table re-derived from
-code 2026-08-30, after criterion 2 and the recency half of criterion 3 landed.
+code 2026-08-30, after criterion 2 and the recency half of criterion 3 landed;
+Scale C added 2026-08-30 by decision of Sebastián.
 
 ## Context
 
 While verifying claims for the `agronomic-claims` skill, a conflict surfaced between
-two subsystems that use the same three words for different quantities.
+subsystems that use the same three words for different quantities. Two were
+identified initially; a third (Scale C) was found while reconciling this ADR against
+the code and ratified as distinct on 2026-08-30.
 
 **Scale A — evidence confidence.** `cycle-evidence.js` caps confidence at `medium` by
 construction:
@@ -46,6 +50,35 @@ So farm-observational history **already** produces a `high` confidence label and
 tighter predicted range, on a scale that shares its vocabulary with one that forbids
 exactly that.
 
+**Scale C — provenance confidence, how a claim was produced.** The provenance block
+in `scoring.js` carries a `confidence` field per claim type:
+
+```js
+eb:    { ..., confidence: uncertainty.eb.confidence },        // ← forwards Scale B
+ph:    { type: 'directional-estimate', confidence: 'low',    requiresMeasurement: true },
+risk:  { type: 'rule-inference',       confidence: 'medium', observed: false },
+stock: { type: ..., confidence: stockDetail.mode === 'presence' ? 'low' : 'high' },
+```
+
+`ph` and `risk` are hardcoded constants describing a *method*. `stock` is computed,
+but from the **shape of the caller's input**, not from evidence: `getStockDetail()`
+returns `mode: 'coverage'` or `'quantity'` when quantities were supplied and
+`'presence'` when only a set of in-stock IDs was. Any mode other than `'presence'`
+reports `high`.
+
+This scale rates *how a number was arrived at*, not how much evidence backs it. It
+reaches `high` with a single reading, no replication, and no validation — which is
+correct for what it measures and would be indefensible on either other scale.
+
+Two consequences of the current expression are worth recording as observed facts:
+
+- `provenance.eb.confidence` (Scale B) and `provenance.stock.confidence` (Scale C)
+  are the same field name, in the same object, on different scales.
+- `getStockDetail()` also returns `mode: 'unconstrained'` when no stock data exists
+  at all, and `mode: 'none'` for an empty recipe. Neither is `'presence'`, so both
+  currently report `confidence: 'high'` — absence of data reads as maximum
+  confidence. Flagged here as observed behavior; **not decided by this ADR.**
+
 ## Why this is not simply a bug
 
 Scale B predates the production learning vertical. That vertical explicitly listed
@@ -54,7 +87,7 @@ Scale B predates the production learning vertical. That vertical explicitly list
 introduced — and no record shows it was evaluated against the evidence-confidence
 rule when that rule was written.
 
-The two scales also measure genuinely different things. Scale A rates *how much a
+Scale A and Scale B also measure genuinely different things. Scale A rates *how much a
 body of evidence is worth*. Scale B rates *how tight a prediction interval should be
 given similar past recipes*. A defensible position exists in which both are correct
 as they stand and only the shared vocabulary is wrong.
@@ -96,6 +129,28 @@ here: **"this local band has repeatedly predicted comparable lots well"** — ne
 strain, or operating regime."** Scale A's semantics (never `high` from observation
 alone) are unaffected and unchanged by this decision.
 
+### Amendment 2026-08-30 — Scale C is a third scale, not a loose label
+
+**Decided by Sebastián**: `provenance.*.confidence` is a **third scale**, to be named
+and treated as distinct from A and B rather than folded into either.
+
+What this decision settles:
+
+- There are **three** scales sharing `low`/`medium`/`high`, not two. The naming rule
+  below applies to all three.
+- Scale C is legitimate on its own terms. Rating a *method* is a real thing to do,
+  and `high` for "the caller gave us real quantities" is not the same claim as
+  `high` on Scale A or B. It is not a bug to be capped.
+- `provenance.eb.confidence` is **Scale B, not Scale C**, despite sitting in the
+  provenance block. The block mixes scales; the field name does not disambiguate.
+
+What this decision deliberately does **not** settle:
+
+- No promotion criteria are defined for Scale C. Scale B got five (above); Scale C
+  gets none here, because none have been decided. Do not infer them by analogy.
+- The `unconstrained`/`none` → `high` behavior noted in the Context is **not**
+  ratified by this amendment. It is recorded as observed, and left open.
+
 ## Gap Between This Decision and the Current Implementation
 
 Recorded so implementation work has a concrete starting point, not vague intent.
@@ -123,9 +178,16 @@ what the ADR recorded and what the code did.
 
 ## Consequences
 
-- Scale A and Scale B remain **distinct scales** measuring different things — that
-  part of the original context is unchanged. Never quote a confidence level without
-  naming which scale it came from.
+- Scales A, B and C are **distinct scales** measuring different things — evidence
+  weight, prediction-band width, and derivation method respectively. Never quote a
+  confidence level without naming which scale it came from. With three scales
+  sharing one vocabulary and one field name (`confidence`), an unqualified level is
+  now ambiguous three ways.
+- Scale C has no promotion criteria. A `high` there certifies input shape only, and
+  must never be read as evidentiary strength.
+- The `unconstrained`/`none` → `high` case in `getStockDetail()` is an open question,
+  not a ratified behavior. It is the kind of defect ADR-0006 exists to catch:
+  absence of data currently presents as maximum confidence.
 - Scale B's `high` now has a concrete, checkable definition instead of "enough rows,
   enough similarity." The code enforces two of its five criteria (see gap table
   above) — until the rest land, a live-shown `high` label still does not certify
@@ -142,7 +204,8 @@ what the ADR recorded and what the code did.
 
 ## Source
 
-`field-os-simulador/setas-os/scoring.js:208-232`;
+`field-os-simulador/setas-os/scoring.js:208-232` (Scale B) and `scoring.js:286-297`
+(Scale C provenance block, `getStockDetail` at `scoring.js:113-160`);
 `field-os-simulador/setas-os/cycle-evidence.js`;
 `field-os-simulador/setas-os/recetario-model-bridge.js:45-84`;
 `field-os-simulador/setas-os/historical-calibration.js:100-152`;

@@ -33,7 +33,8 @@ count integrity load-bearing for a user-visible claim: an inflated count now buy
 narrower interval, not just a wrong-looking number.
 
 It also exposes a scope limit in this ADR that was harmless until 0007 existed. The
-two confidence scales count **different pools**, and only one of them is covered here:
+two *sample-counting* scales — A and B; Scale C counts nothing — draw from
+**different pools**, and only one of them is covered here:
 
 | Scale | Counting pool | Covered by this ADR |
 |---|---|---|

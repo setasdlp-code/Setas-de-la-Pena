@@ -46,16 +46,26 @@ stated *before* execution. `classify()` there returns `'comparative'` only when
 `randomization && minReplicates >= 3 && treatments.length >= 1`; anything less
 stays `'exploratory'`. A one-replicate trial stays exploratory. Always.
 
-### Two confidence scales share the same three words
+### Three confidence scales share the same three words
 
-This is the live trap in this codebase. `low` / `medium` / `high` name **two
+This is the live trap in this codebase. `low` / `medium` / `high` name **three
 different things**, and conflating them is exactly the substitution this skill
 exists to prevent:
 
 | Scale | Where | Can reach `high`? |
 |---|---|---|
-| Evidence confidence (`setas.cycle-evidence.v1`, `setas.historical-evidence.v1`) | `cycle-evidence.js` | **No** — capped at `medium` by construction |
-| `ebConfidence`, the EB prediction band | `scoring.js` `buildUncertainty()` | **Yes** — `recentN >= 20 && sim >= 0.8` sets `'high'` (raised from `h.n >= 8` per ADR-0007, merged) |
+| **A** — Evidence confidence (`setas.cycle-evidence.v1`, `setas.historical-evidence.v1`) | `cycle-evidence.js` | **No** — capped at `medium` by construction |
+| **B** — `ebConfidence`, the EB prediction band | `scoring.js` `buildUncertainty()` | **Yes** — `recentN >= 20 && sim >= 0.8` sets `'high'` (raised from `h.n >= 8` per ADR-0007, merged) |
+| **C** — Provenance confidence (`provenance.{ph,risk,stock}.confidence`) | `scoring.js` provenance block | **Yes, trivially** — rates derivation *method*, not evidence. `stock` is `high` whenever `getStockDetail()` mode is not `'presence'`; `ph`/`risk` are hardcoded `'low'`/`'medium'` |
+
+Two traps specific to Scale C (ADR-0007, amended 2026-08-30):
+
+- `provenance.eb.confidence` is **Scale B**, not Scale C, despite sitting in the
+  provenance block. Same field name, same object, different scale.
+- `stock` reports `high` for mode `'unconstrained'` (no stock data at all) and
+  `'none'` (empty recipe) — absence of data currently reads as maximum confidence.
+  Recorded as **open** in ADR-0007, not ratified. Don't cite it as intended
+  behavior, and don't "fix" it as a side effect of another task.
 
 `ebConfidence` is fed by `ctx.historyCalibration` (via
 `recetario-model-bridge.js`), so farm-observational history **already** reaches
@@ -63,9 +73,10 @@ exists to prevent:
 0.08 at high vs 0.20 at low).
 
 When you read "observational history never receives high confidence" in
-`PRODUCTION_LEARNING_LOOP_V1.md`, it is describing the evidence scale, not
-`ebConfidence`. Never quote a confidence level without naming which scale it came
-from.
+`PRODUCTION_LEARNING_LOOP_V1.md`, it is describing the evidence scale (A), not
+`ebConfidence` (B). Never quote a confidence level without naming which scale it
+came from — with three scales sharing one vocabulary and one field name, an
+unqualified level is ambiguous three ways.
 
 ### What Scale B `high` is allowed to mean (ADR-0007, decided)
 
@@ -160,7 +171,7 @@ the implementation split, not the concept.
 
 - About to change a threshold in `scoring.js` because recent batches suggest it
 - About to return or hardcode `'high'` confidence on the evidence scale, or to
-  quote a confidence level without saying which of the two scales it is on
+  quote a confidence level without saying which of the three scales it is on
 - About to merge a literature value and a measured value into one field
 - About to drop a `provenance` or tier field to simplify a shape
 - About to write "optimal" about a substrate parameter
