@@ -7,7 +7,11 @@ const APP = '/Setas%20OS%20v5.dc.html';
 async function openApp(page, init = null) {
   if (init) await page.addInitScript(init);
   await page.goto(APP);
-  await page.waitForLoadState('networkidle');
+  // No usar waitForLoadState('networkidle') aquí: Firebase Auth/Firestore
+  // mantienen conexiones long-lived (listeners/long-polling) que impiden que
+  // la red llegue a estar "idle", así que ese wait cuelga de forma
+  // intermitente hasta el timeout en CI. La señal real de "app lista" es la
+  // que ya comprobamos a continuación (auth-gate oculto, shell visible).
   await expect(page.locator('#setas-auth-gate')).toBeHidden({ timeout: 20000 });
   await expect(page.locator('.app-shell')).toBeVisible();
   await expect(page.locator('.app-rail')).toBeVisible();
