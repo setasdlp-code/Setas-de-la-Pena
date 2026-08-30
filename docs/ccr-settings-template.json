@@ -1,0 +1,143 @@
+{
+  "comment": "Claude Code Router Integration Settings for Setas de la Peña",
+  "comment2": "Copy relevant sections to .claude/settings.json after customizing",
+
+  "modelRouting": {
+    "enabled": true,
+    "gateway": "http://127.0.0.1:3456",
+    "fallbackToLocalModels": false,
+    "description": "Route all Claude Code requests through CCR for cost optimization and provider switching"
+  },
+
+  "tracking": {
+    "enableCostTracking": true,
+    "enableTokenTracking": true,
+    "trackingInterval": "per-request",
+    "costWarningThreshold": "$5.00",
+    "description": "Monitor token usage and estimated costs across all sessions"
+  },
+
+  "modelDefaults": {
+    "reasoningTasks": "claude-sonnet-5",
+    "simpleTasks": "claude-haiku-4-5-20251001",
+    "description": "Default models for task types; CCR routing rules can override"
+  },
+
+  "routingRules": [
+    {
+      "name": "Simple queries use Haiku",
+      "condition": "prompt_tokens < 1500 AND NOT contains_keywords(['reasoning', 'planning', 'debug', 'architecture'])",
+      "route": "claude-haiku-4-5-20251001",
+      "priority": 1
+    },
+    {
+      "name": "Complex reasoning uses Sonnet",
+      "condition": "contains_keywords(['reasoning', 'planning', 'architecture', 'design', 'debug', 'refactor'])",
+      "route": "claude-sonnet-5",
+      "priority": 2
+    },
+    {
+      "name": "Long-context synthesis uses Opus",
+      "condition": "prompt_tokens > 100000",
+      "route": "claude-opus-5",
+      "priority": 3
+    },
+    {
+      "name": "Fallback to OpenAI on Anthropic failure",
+      "condition": "provider_error OR rate_limited",
+      "fallback_provider": "openai",
+      "fallback_model": "gpt-4o-mini",
+      "retry_attempts": 3,
+      "retry_backoff_ms": 2000,
+      "priority": 10
+    }
+  ],
+
+  "providers": {
+    "anthropic": {
+      "enabled": true,
+      "models": ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5-20251001"],
+      "priority": 1,
+      "estimated_cost_per_mtok_input": 0.003,
+      "estimated_cost_per_mtok_output": 0.015,
+      "description": "Primary provider for all models"
+    },
+    "openai": {
+      "enabled": true,
+      "models": ["gpt-4o", "gpt-4-turbo", "gpt-4o-mini"],
+      "priority": 2,
+      "estimated_cost_per_mtok_input": 0.005,
+      "estimated_cost_per_mtok_output": 0.015,
+      "description": "Cost-optimized fallback"
+    },
+    "gemini": {
+      "enabled": false,
+      "models": ["gemini-2.0-flash", "gemini-1.5-pro"],
+      "priority": 3,
+      "description": "Optional expansion provider"
+    }
+  },
+
+  "agents": {
+    "claude-code": {
+      "enabled": true,
+      "endpoint": "http://127.0.0.1:3456",
+      "defaultModel": "claude-sonnet-5",
+      "useRouting": true,
+      "description": "Main implementation agent"
+    },
+    "codex": {
+      "enabled": true,
+      "endpoint": "http://127.0.0.1:3456",
+      "defaultModel": "claude-sonnet-5",
+      "useRouting": true,
+      "description": "Repository forensics and test/CI agent"
+    },
+    "antigravity": {
+      "enabled": false,
+      "endpoint": "http://127.0.0.1:3456",
+      "defaultModel": "claude-haiku-4-5-20251001",
+      "useRouting": true,
+      "description": "Parallel read-only exploration (cheaper model)"
+    }
+  },
+
+  "analytics": {
+    "trackByAgent": true,
+    "trackByModel": true,
+    "trackByProvider": true,
+    "exportFormat": "json",
+    "retentionDays": 30,
+    "description": "Cost and usage analytics in CCR UI"
+  },
+
+  "environment": {
+    "ANTHROPIC_API_ENDPOINT": "http://127.0.0.1:3456",
+    "description": "Automatically route Anthropic SDK calls through CCR"
+  },
+
+  "notes": {
+    "setup_checklist": [
+      "Install CCR desktop app or CLI",
+      "Add Anthropic API key in CCR Providers",
+      "Add OpenAI API key (optional fallback)",
+      "Start CCR Server",
+      "Test with: export ANTHROPIC_API_ENDPOINT=http://127.0.0.1:3456; claude",
+      "Check CCR Logs to verify routing",
+      "Monitor costs in CCR Analytics"
+    ],
+    "cost_optimization_tips": [
+      "Use Haiku for simple queries (<1500 tokens) to save 90% vs Opus",
+      "Use Sonnet for complex reasoning where Haiku struggles",
+      "Batch related queries to reduce overhead",
+      "Review CCR Analytics monthly to find overused models",
+      "Set costWarningThreshold to catch unexpected spikes"
+    ],
+    "troubleshooting": {
+      "no_provider_response": "Check CCR Server tab is Running, and Providers tab has valid API keys",
+      "higher_than_expected_cost": "Review Analytics; check if Opus is being used for simple tasks",
+      "slow_responses": "Check CCR Logs latency; consider closer provider or model",
+      "routing_not_working": "Verify ANTHROPIC_API_ENDPOINT env var is set; restart Claude Code session"
+    }
+  }
+}
