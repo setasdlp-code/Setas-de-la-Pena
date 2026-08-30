@@ -62,15 +62,49 @@ exists to prevent:
 `'high'` on that scale and already narrows the displayed interval (`halfWidth`
 0.08 at high vs 0.20 at low).
 
-That predates the production-learning vertical, which deliberately did not touch
-`scoring.js` or `historyCalibration`. Treat it as **pre-existing behavior that was
-left alone, not as an endorsed pattern.** When you read "observational history
-never receives high confidence" in `PRODUCTION_LEARNING_LOOP_V1.md`, it is
-describing the evidence scale, not `ebConfidence`.
+When you read "observational history never receives high confidence" in
+`PRODUCTION_LEARNING_LOOP_V1.md`, it is describing the evidence scale, not
+`ebConfidence`. Never quote a confidence level without naming which scale it came
+from.
 
-Never quote a confidence level without naming which scale it came from. If a task
-would make these two scales interact, stop — that is a human decision, not a
-refactor.
+### What Scale B `high` is allowed to mean (ADR-0007, decided)
+
+ADR-0007 ratified that `ebConfidence` **may** reach `high` from observational
+history — Scale A may not, and that is unchanged. But `high` on Scale B now requires
+all five of:
+
+1. Categorical match on species/strain, substrate family, process, and operating
+   envelope — not merely a close recipe-composition distance.
+2. `n >= 20` independent completed lots.
+3. A recent data window with no known material or process shift in it.
+4. Interval width calibrated against **held-out** outcomes, not in-sample fit.
+5. Coverage and error thresholds met **and displayed** beside the label.
+
+Failing any one, `ebConfidence` caps at `medium` no matter how much history exists.
+
+`high` here means *"this local band has repeatedly predicted comparable lots well."*
+It never means *"the mechanism is proven"* or *"this transfers to another substrate,
+strain, or regime."*
+
+### The code does not enforce this yet
+
+**A `high` label produced by the current build does not necessarily meet the bar
+above.** The gaps, per ADR-0007's table:
+
+| Criterion | Current code |
+|---|---|
+| Categorical match | Approximated by recipe-distance `similarity`, not a categorical match |
+| `n >= 20` | Gates at `h.n >= 8` (`scoring.js:217`) |
+| Recency / shift check | Not implemented anywhere |
+| Held-out calibration | `halfWidth` uses `h.sd` from the same in-sample pool that produced `meanEB` (`historical-calibration.js` `weightedCalibration`); `ground-truth-regression.js` is an offline harness, not wired into the live path |
+| Coverage/error displayed | Only a label and a static `note` string are shown |
+
+So: treat a live `high` as unverified against ADR-0007 until those land. Do not cite
+it as evidence that a prediction is trustworthy, and do not widen its use.
+
+Closing any of these gaps is scoped work — confidence semantics and promotion
+gating, not a new EB calculator and not a scoring redesign. ADR-0004's boundary
+still holds: nothing here may change ranking or Escenario selection.
 
 ## Evidence is context for Perito, never an input to ranking
 
@@ -108,6 +142,8 @@ the implementation split, not the concept.
 | "The literature value and our measurement are close, I'll use one field" | Then provenance is gone forever. Later readers cannot tell which farm the number came from. Keep both. |
 | "Confidence 'medium' looks weak in the UI, 'high' reads better" | The cap is the product's honesty guarantee. Change the UI copy, never the cap. |
 | "I'll let evidence nudge the ranking just slightly" | A slight nudge is still causal inference from observational data. This is the boundary ADR-0004 exists to hold. |
+| "The band says `high`, so the prediction is solid" | Not yet. ADR-0007 ratified criteria the code does not enforce — current `high` fires at `n >= 8` with no recency check and no held-out calibration. |
+| "ADR-0007 is decided, so I can raise the threshold now" | Decided ≠ scoped. Changing `buildUncertainty` gating is follow-up work with its own review, not a side effect of another task. |
 | "The fixtures file is missing so the regression passed" | A vacuous pass is the failure mode the harness exists to catch. Missing corpus = blocked. |
 | "The sensor bound and the setpoint are the same number anyway" | Today. They drift independently, and the day they diverge, conflating them silently quarantines valid readings or accepts impossible ones. |
 | "This is just a UI change, the science rules don't apply" | If the UI renders a confidence level or a parameter, it is making a claim. It applies. |
