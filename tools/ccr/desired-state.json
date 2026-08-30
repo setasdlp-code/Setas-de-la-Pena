@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-08-30",
+  "scope": "Credential-free reference for the local Claude Code Router deployment.",
+  "profiles": {
+    "claudeCode": {
+      "defaultModel": "Claude Code API 2/claude-sonnet-5"
+    },
+    "codex": {
+      "defaultModel": "Codex API/gpt-5.6-terra"
+    }
+  },
+  "globalFailurePolicy": {
+    "mode": "fallback-targets",
+    "models": [
+      "Codex API/gpt-5.6-terra",
+      "Codex API/gpt-5.6-sol"
+    ]
+  },
+  "ruleOrder": [
+    {
+      "name": "Opus",
+      "rewriteModel": "Claude Code API 2/claude-opus-5",
+      "onFailure": [
+        "Codex API/gpt-5.6-sol",
+        "Claude Code API 2/claude-sonnet-5"
+      ]
+    },
+    {
+      "name": "Budget work by agent",
+      "script": "tools/ccr/routing/budget-by-agent.js",
+      "rewriteModel": "Codex API/gpt-5.6-luna",
+      "onFailure": [],
+      "note": "The script, not the rule wrapper, supplies Terra then Sol fallback."
+    },
+    {
+      "name": "Codex",
+      "rewriteModel": "Codex API/gpt-5.6-terra",
+      "onFailure": [
+        "Codex API/gpt-5.6-sol",
+        "Codex API/gpt-5.6-luna"
+      ]
+    },
+    {
+      "name": "Opus - research",
+      "rewriteModel": "Claude Code API 2/claude-opus-5",
+      "onFailure": [
+        "Codex API/gpt-5.6-sol",
+        "Claude Code API 2/claude-sonnet-5"
+      ]
+    },
+    {
+      "name": "Opus - cross-module",
+      "rewriteModel": "Claude Code API 2/claude-opus-5",
+      "onFailure": [
+        "Codex API/gpt-5.6-sol",
+        "Claude Code API 2/claude-sonnet-5"
+      ]
+    },
+    {
+      "name": "Opus - impl plan",
+      "rewriteModel": "Claude Code API 2/claude-opus-5",
+      "onFailure": [
+        "Codex API/gpt-5.6-sol",
+        "Claude Code API 2/claude-sonnet-5"
+      ]
+    }
+  ],
+  "observability": {
+    "requestLogsEnabled": true,
+    "capturedResponseBodies": "errors",
+    "responseBodyLimitBytes": 1048576,
+    "successSampleRate": 1
+  },
+  "excludedFromGit": [
+    "config.sqlite",
+    "service.json",
+    "provider API keys",
+    "OAuth credentials",
+    "runtime request and response logs"
+  ]
+}
