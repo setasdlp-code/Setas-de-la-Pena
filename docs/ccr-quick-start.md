@@ -34,7 +34,12 @@ The UI opens at `http://localhost:3456`.
 1. **Add Provider** again
 2. Select preset: `OpenAI`  
 3. Paste your key from https://platform.openai.com/api-keys
-4. Models: `gpt-4o`, `gpt-4-turbo`, `gpt-4o-mini`
+4. Models: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`
+   - Sol = flagship, Terra = mid-tier (and Codex's routed default), Luna = budget.
+   - The older `gpt-4o` / `gpt-4o-mini` IDs are superseded and will not match the live
+     routing rules. See [`ccr-routing-strategy.md`](./ccr-routing-strategy.md) for the
+     rules themselves and [`ccr-model-settings.md`](./ccr-model-settings.md) for the
+     per-model pricing fields.
 5. Click **Save**
 
 ## 3. Start the Gateway (1 min)
