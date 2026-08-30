@@ -77,11 +77,15 @@ Any future calibration change must be separately validated against ground-truth 
 
 ## Next vertical
 
-1. Trigger `CycleEvidence` automatically at defined harvest/close milestones.
-2. Add an ESP32 payload adapter that maps hardware messages into `setas.telemetry.v1` before persistence.
-3. Add `Hoy` exceptions for stale sensors, quarantined readings, environmental deviations and batches deviating materially from historical cycle duration.
-4. Surface contextual evidence in Perito explanations without changing recommendation scores.
-5. After sufficient comparable cycles exist, evaluate a separately gated calibration model against held-out production data.
+Status verified against the code on 2026-08-30.
+
+| # | Item | Status |
+| --- | --- | --- |
+| 1 | Trigger `CycleEvidence` automatically at defined harvest/close milestones. | **Done.** `production-learning-bridge.js` exposes `onHarvestRecorded`/`onCycleClosed`; `upsertRoomCycle` fires the close milestone when `state === 'closed'`, and a runtime wrap of `SetasBitacoraDB.guardarCosecha` fires the harvest milestone. Both reuse `materializeCycleEvidence()`'s `cycleId+batchId` identity, so re-firing never duplicates a record. |
+| 2 | Add an ESP32 payload adapter that maps hardware messages into `setas.telemetry.v1` before persistence. | **Done.** `esp32-telemetry-adapter.js` + `esp32-telemetry-adapter.test.js`. |
+| 3 | Add `Hoy` exceptions for stale sensors, quarantined readings, environmental deviations and batches deviating materially from historical cycle duration. | **Data layer only.** Quarantine logic lives in `telemetry-contract.js`; nothing surfaces it in `Hoy`. |
+| 4 | Surface contextual evidence in Perito explanations without changing recommendation scores. | **Wired, not displayed.** The bridge attaches `historicalEvidence` and `productionLearning` to scenario results; no view consumes them yet. |
+| 5 | After sufficient comparable cycles exist, evaluate a separately gated calibration model against held-out production data. | **Blocked, correctly.** Only `ground-truth-fixtures.example.json` exists — no real corpus, so the gate cannot be satisfied. See ADR-0007 for the ratified promotion criteria this must meet. |
 
 ## Safety/quality rule
 

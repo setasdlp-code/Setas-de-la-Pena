@@ -93,7 +93,6 @@ import './perito-economy.js';
     const targetMoisturePct = detail.an.sp?.moisture?.ideal ?? 65;
     const stock = stockMap(lots);
     const sev = globalThis.SetasScoring.assessSeverity(detail.an);
-    const anReal = recipeCost.copPerKg == null ? detail.an : { ...detail.an, cost: recipeCost.copPerKg };
     const ctx = {
       treatment: detail.treatment || null,
       recipe: detail.recipe,
@@ -107,11 +106,12 @@ import './perito-economy.js';
       severity: sev.severity,
       __bridgeRecompute: true,
     };
+    if (recipeCost.copPerKg != null) ctx.realCost = recipeCost.copPerKg;
     // Preserve the calibrated EB band already computed by the Perito when available.
     const ebBand = detail.baseline?.uncertainty?.eb || {};
     if (detail.baseline?.calibration?.history) ctx.historyCalibration = detail.baseline.calibration.history;
     if (detail.baseline?.calibration?.source === 'preblended' && detail.baseline.calibration.eb != null) ctx.blendedEB = detail.baseline.calibration.eb;
-    const model = globalThis.SetasScoring.scoreRecipe(anReal, ctx);
+    const model = globalThis.SetasScoring.scoreRecipe(detail.an, ctx);
     const eb = model.uncertainty?.eb || ebBand;
     const lot = globalThis.SetasEconomy.calculateLotEconomics({
       recipe: detail.recipe,

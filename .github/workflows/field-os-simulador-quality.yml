@@ -28,8 +28,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      # No build step and no package-lock.json here (static HTML/JS/CSS, no
-      # bundler) — the test suite is pure Node built-ins, so it runs directly
-      # with no npm install needed.
+      # No npm install needed: the test suite is pure Node built-ins.
+      # simulador-app.jsx DOES have a build step (node build.js -> esbuild), but
+      # CI never runs it — build.test.js verifies the committed bundle's
+      # source-hash matches the source, so a stale bundle fails here instead.
       - name: Run quality gate
         run: npm run test

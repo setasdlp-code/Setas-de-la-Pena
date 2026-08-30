@@ -69,6 +69,25 @@
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner.png" data-resource-id="img_banner">
 <meta name="ext-resource-dependency" content="_standalone_imgs/banner-botanico-sketch.jpg" data-resource-id="imgBannerBotanico">
 <style>
+  /* Escala de z-index del shell — nombrada para que un elemento nuevo se
+     ubique por capa (contenido sticky < navegación < overlays modales <
+     toast) en vez de por un número arbitrario copiado de otro lado. */
+  :root {
+    --z-sticky-header: 3;
+    --z-sticky-subnav: 19;
+    --z-loading: 50;
+    --z-edge-gesture: 59;
+    --z-rail: 60;
+    --z-rail-flyout: 65;
+    --z-capture-sheet: 80;
+    --z-qr-label: 85;
+    --z-sheet-secondary: 86;
+    --z-qr-scan: 88;
+    --z-info-modal: 90;
+    --z-command-palette: 95;
+    --z-toast: 96;
+    --z-skip-link: 1000;
+  }
   html, body { margin:0; background: var(--paper-1); }
   * { box-sizing: border-box; }
   h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
@@ -77,7 +96,7 @@
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   [role="dialog"] { overscroll-behavior:contain; }
   .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
-  .skip-link { position:fixed;left:12px;top:10px;z-index:1000;transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
+  .skip-link { position:fixed;left:12px;top:10px;z-index:var(--z-skip-link);transform:translateY(-160%);background:var(--ink-0);color:var(--paper-0);padding:10px 14px;border-radius:var(--radius-sm);font:var(--t-label); }
   .skip-link:focus-visible { transform:translateY(0); }
   /* Tactile press feedback — inline styles (used on ~all buttons here) can't express
      :active, so this is the only place a physical "push" confirmation can live.
@@ -98,7 +117,7 @@
   @keyframes fos-toast-undo { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 92%{opacity:1;transform:translateY(0);} 100%{opacity:0;} }
 
   .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
-  .app-rail { position:fixed; z-index:60; background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
+  .app-rail { position:fixed; z-index:var(--z-rail); background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
   .rail-peek { display:none; }
   .rail-btn { display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:9px 4px; transition:color .15s, background-color .15s; border-radius:var(--radius-sm); }
   .rail-btn:hover { color:var(--ink-1); }
@@ -114,7 +133,7 @@
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
-  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; z-index:61; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:70; animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
+  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
   .rail-flyout-title { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
   .rail-flyout-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; background:none; border:none; cursor:pointer; padding:9px 4px; border-radius:var(--radius-sm); color:var(--ink-2); position:relative; }
   .rail-flyout-item svg { width:22px; height:22px; flex-shrink:0; }
@@ -122,14 +141,14 @@
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
-  .workspace-subnav { position:sticky; top:0; z-index:19; display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .workspace-subnav { position:sticky; top:0; z-index:var(--z-sticky-subnav); display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .workspace-subnav::-webkit-scrollbar { display:none; }
   .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
   .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
   @media (max-width:859px){
-    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:65; }
+    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
     .rail-flyout-title { display:none; }
     .rail-flyout-item { flex:0 0 auto; min-width:54px; padding:8px 6px; gap:3px; }
     .rail-flyout-item svg { width:20px; height:20px; }
@@ -147,7 +166,7 @@
     .app-shell.sim-collapsed .app-main { margin-left:0; }
     .app-shell.sim-collapsed .rail-peek {
       display:flex; align-items:center; justify-content:center;
-      position:fixed; left:0; top:0; bottom:0; width:14px; z-index:59; cursor:pointer;
+      position:fixed; left:0; top:0; bottom:0; width:14px; z-index:var(--z-edge-gesture); cursor:pointer;
       background:linear-gradient(to right, var(--paper-2), transparent);
     }
     .app-shell.sim-collapsed .rail-peek::before {
@@ -251,7 +270,7 @@
       <!-- SESSION HOME (ledger) -->
       <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
       <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);min-height:100vh;display:flex;flex-direction:column;">
-        <div style="position:sticky;top:0;z-index:3;background:color-mix(in oklab, var(--paper-1) 84%, transparent);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1);padding:16px 26px 12px;border-bottom:1px solid var(--border-soft);">
+        <div style="position:sticky;top:0;z-index:var(--z-sticky-header);background:color-mix(in oklab, var(--paper-1) 84%, transparent);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1);padding:16px 26px 12px;border-bottom:1px solid var(--border-soft);">
           <div class="col" style="display:flex;align-items:center;justify-content:space-between;">
             <div style="display:flex;align-items:center;gap:9px;">
               <span style="width:9px;height:9px;border-radius:50%;background:var(--accent-olive);"></span>
@@ -725,7 +744,7 @@
 
       <!-- CAPTURE SHEET OVERLAY -->
       <sc-if value="{{ isCapture }}" hint-placeholder-val="{{ false }}">
-      <div onClick="{{ closeCapture }}" role="dialog" aria-modal="true" aria-label="Registrar evento" style="position:fixed;inset:0;z-index:80;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;justify-content:flex-end;">
+      <div onClick="{{ closeCapture }}" role="dialog" aria-modal="true" aria-label="Registrar evento" style="position:fixed;inset:0;z-index:var(--z-capture-sheet);background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;justify-content:flex-end;">
         <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:10px 20px 34px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
           <div class="col">
             <div style="width:38px;height:4px;border-radius:2px;background:var(--border-strong);margin:6px auto 14px;"></div>
@@ -959,7 +978,7 @@
 
     <!-- =================== TRANSICIÓN DE JORNADA (global, no depende de qué pantalla la abrió) =================== -->
     <sc-if value="{{ sessionLoading }}" hint-placeholder-val="{{ false }}">
-    <div style="position:fixed;inset:0;z-index:50;background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
+    <div style="position:fixed;inset:0;z-index:var(--z-loading);background:var(--paper-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fos-fade .2s ease;">
       <div style="width:32px;height:32px;border-radius:50%;border:3px solid var(--border-soft);border-top-color:var(--accent-olive);animation:fos-spin .7s linear infinite;"></div>
       <span style="font:var(--t-label);color:var(--text-metadata);">Abriendo sesión de {{ loadingLabel }}…</span>
     </div>
@@ -1742,7 +1761,7 @@
 
   <!-- BUSCADOR GLOBAL -->
   <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closeCmd }}" role="dialog" aria-modal="true" aria-label="Buscar" style="position:fixed;inset:0;z-index:95;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .16s ease;display:flex;align-items:flex-start;justify-content:center;padding:12vh 20px 20px;">
+  <div onClick="{{ closeCmd }}" role="dialog" aria-modal="true" aria-label="Buscar" style="position:fixed;inset:0;z-index:var(--z-command-palette);background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .16s ease;display:flex;align-items:flex-start;justify-content:center;padding:12vh 20px 20px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border:1px solid var(--border-strong);border-radius:16px;width:100%;max-width:540px;overflow:hidden;animation:fos-screen .2s cubic-bezier(.32,.72,.36,1);">
       <input value="{{ cmdQ }}" onInput="{{ setCmdQ }}" placeholder="Buscar lote, contenedor, cámara, especie, módulo…" aria-label="Buscar" name="setas-search" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border-soft);background:var(--paper-0);padding:17px 20px;font-family:var(--font-sans);font-size:16px;color:var(--ink-0);">
       <sc-if value="{{ hasCmdResults }}" hint-placeholder-val="{{ false }}">
@@ -1767,7 +1786,7 @@
 
   <!-- PÁGINA PÚBLICA DEL LOTE -->
   <sc-if value="{{ publicOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closePublic }}" role="dialog" aria-modal="true" aria-label="Página pública del lote" style="position:fixed;inset:0;z-index:90;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .18s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div onClick="{{ closePublic }}" role="dialog" aria-modal="true" aria-label="Página pública del lote" style="position:fixed;inset:0;z-index:var(--z-info-modal);background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .18s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
     <div onClick="{{ stop }}" style="background:var(--paper-0);border-radius:20px;max-width:400px;width:100%;overflow:hidden;animation:fos-screen .24s cubic-bezier(.32,.72,.36,1);">
       <div style="background:var(--ink-0);color:var(--paper-0);padding:22px 24px;">
         <div style="font-family:var(--font-sans);font-style:italic;font-weight:800;font-size:15px;">Setas de la Peña</div>
@@ -1794,7 +1813,7 @@
 
   <!-- AVISO DE RETIRADA -->
   <sc-if value="{{ recallOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closeRecall }}" role="dialog" aria-modal="true" aria-label="Aviso de retirada" style="position:fixed;inset:0;z-index:90;background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .18s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div onClick="{{ closeRecall }}" role="dialog" aria-modal="true" aria-label="Aviso de retirada" style="position:fixed;inset:0;z-index:var(--z-info-modal);background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .18s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:18px;max-width:520px;width:100%;padding:22px 24px;animation:fos-screen .24s cubic-bezier(.32,.72,.36,1);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
         <span style="font:var(--t-label);color:var(--status-error);">Retirada · lote {{ recallLote }}</span>
@@ -1815,7 +1834,7 @@
 
   <!-- QR LABEL OVERLAY -->
   <sc-if value="{{ showLabel }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closeLabel }}" role="dialog" aria-modal="true" aria-label="Etiqueta QR" style="position:fixed;inset:0;z-index:85;background:color-mix(in oklab,var(--ink-0) 42%, transparent);animation:fos-fade .2s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div onClick="{{ closeLabel }}" role="dialog" aria-modal="true" aria-label="Etiqueta QR" style="position:fixed;inset:0;z-index:var(--z-qr-label);background:color-mix(in oklab,var(--ink-0) 42%, transparent);animation:fos-fade .2s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:22px;padding:22px;max-width:430px;width:100%;animation:fos-screen .28s cubic-bezier(.32,.72,.36,1);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <span style="font:var(--t-label);color:var(--ink-0);">Etiqueta de contenedor<sc-if value="{{ multiLabel }}" hint-placeholder-val="{{ false }}">s · {{ labelCount }}</sc-if></span>
@@ -1846,7 +1865,7 @@
 
   <!-- SCAN OVERLAY -->
   <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
-  <div role="dialog" aria-modal="true" aria-label="Escanear etiqueta QR" style="position:fixed;inset:0;z-index:88;background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div role="dialog" aria-modal="true" aria-label="Escanear etiqueta QR" style="position:fixed;inset:0;z-index:var(--z-qr-scan);background:color-mix(in oklab,var(--ink-0) 88%, transparent);animation:fos-fade .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
     <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-0);opacity:var(--opacity-muted);margin-bottom:18px;">Escanear etiqueta QR</div>
     <div style="position:relative;width:min(72vw,280px);aspect-ratio:1;border-radius:22px;overflow:hidden;background:color-mix(in oklab,var(--ink-0) 60%, #000);">
       <sc-if value="{{ camActive }}" hint-placeholder-val="{{ false }}">
@@ -1872,7 +1891,7 @@
 
   <!-- CORRECTION SHEET -->
   <sc-if value="{{ correctionOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closeCorrection }}" role="dialog" aria-modal="true" aria-label="Registrar una enmienda" style="position:fixed;inset:0;z-index:86;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
+  <div onClick="{{ closeCorrection }}" role="dialog" aria-modal="true" aria-label="Registrar una enmienda" style="position:fixed;inset:0;z-index:var(--z-sheet-secondary);background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:22px 24px 34px;width:100%;max-width:560px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
       <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Corregir evento</div>
       <h3 style="font-family:var(--font-sans);font-weight:800;font-size:22px;color:var(--ink-0);margin:4px 0 6px;">Registrar una enmienda</h3>
@@ -1888,7 +1907,7 @@
 
   <!-- SYNC QUEUE SHEET -->
   <sc-if value="{{ syncQueueOpen }}" hint-placeholder-val="{{ false }}">
-  <div onClick="{{ closeSyncQueue }}" role="dialog" aria-modal="true" aria-label="Cola de sincronización" style="position:fixed;inset:0;z-index:86;background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
+  <div onClick="{{ closeSyncQueue }}" role="dialog" aria-modal="true" aria-label="Cola de sincronización" style="position:fixed;inset:0;z-index:var(--z-sheet-secondary);background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:22px 24px 34px;width:100%;max-width:560px;max-height:78vh;overflow-y:auto;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;">
         <div>
@@ -1933,7 +1952,7 @@
 
   <!-- TOAST -->
   <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
-  <div role="status" aria-live="polite" style="position:fixed;left:0;right:0;bottom:34px;z-index:90;pointer-events:{{ toastPointerEvents }};display:flex;justify-content:center;padding:0 22px;">
+  <div role="status" aria-live="polite" style="position:fixed;left:0;right:0;bottom:34px;z-index:var(--z-toast);pointer-events:{{ toastPointerEvents }};display:flex;justify-content:center;padding:0 22px;">
     <div style="background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:14px 20px;display:flex;align-items:center;gap:12px;max-width:520px;{{ toastAnimStyle }}">
       <span style="flex:none;width:9px;height:9px;border-radius:50%;background:var(--accent-olive-dim);"></span>
       <span style="flex:1;font:var(--t-body-sm);font-weight:400;">{{ toastText }}</span>

@@ -1,0 +1,17 @@
+name: FirebaseUIApp
+options:
+  bundleIdPrefix: com.sebastianpinzon
+targets:
+  FirebaseUIApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - Sources
+    info:
+      path: Sources/Info.plist
+      properties:
+        UILaunchScreen: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sebastianpinzon.FirebaseUIApp
