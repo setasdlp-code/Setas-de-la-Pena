@@ -27,9 +27,37 @@ const bitacoraEBRows = (bitLotes, bitCosechas) => {
       sKey: ref.sKey,
       recipe: Array.isArray(ref.recipe) ? ref.recipe : [],
       be: (totalFresco / peseSeco) * 100,
+      fecha: lote.fechaInoculacion || null,
     });
   }
   return rows;
+};
+
+// Date.UTC() no valida rangos: mes 13 o día 32 se normalizan hacia adelante
+// en vez de fallar, así que una fecha con dígitos fuera de rango produciría
+// silenciosamente OTRA fecha válida en vez de null. Se valida por ida y
+// vuelta: si la fecha reconstruida no coincide con los componentes de
+// entrada, se descarta.
+const utcFromParts = (year, month1to12, day) => {
+  const ms = Date.UTC(year, month1to12 - 1, day);
+  const d = new Date(ms);
+  if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month1to12 - 1 || d.getUTCDate() !== day) return null;
+  return ms;
+};
+
+// Analiza fechas en los dos formatos que produce esta app: ISO (fechaInoculacion
+// de Bitácora, "AAAA-MM-DD") y es-CO (date de setas_v6, "D/M/AAAA" via
+// toLocaleDateString). Devuelve null ante cualquier formato no reconocido o
+// componente fuera de rango — una fecha ambigua nunca debe contarse como
+// "reciente" por accidente; se excluye del recentN en vez de arriesgar una
+// fecha mal interpretada.
+const parseRowDate = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (iso) return utcFromParts(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  const esCo = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+  if (esCo) return utcFromParts(Number(esCo[3]), Number(esCo[2]), Number(esCo[1]));
+  return null;
 };
 
 const recipePctMap = (recipe) => {
@@ -118,10 +146,15 @@ const historicalEB = (sKey, rows, recipe = null) => {
 const bitacoraAsTrialRows = (sKey, bitLotes, bitCosechas) =>
   bitacoraEBRows(bitLotes, bitCosechas)
     .filter((r) => r.sKey === sKey)
-    .map((r) => ({ recipe: r.recipe, ebReal: r.be, source: 'bitacora', loteId: r.loteId }));
+    .map((r) => ({ recipe: r.recipe, ebReal: r.be, source: 'bitacora', loteId: r.loteId, fecha: r.fecha }));
 
 const CALIBRATION_SIMILARITY_THRESHOLD = 0.55;
 const CALIBRATION_WEIGHT_FLOOR = 0.08;
+// ADR-0007: ventana de "reciente" para promover ebConfidence a 'high'. Valor
+// provisional (1 año) — no validado con Sebastián; ajustar si el ciclo real
+// de deriva de sustrato/proceso es más corto o más largo que esto.
+const RECENCY_WINDOW_DAYS = 365;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Fórmula única de calibración por similitud para los bridges de presentación
 // (perito-scenarios-bridge.js, recetario-model-bridge.js, perito-ui-bridge.js),
@@ -132,8 +165,16 @@ const CALIBRATION_WEIGHT_FLOOR = 0.08;
 // que ya usa el motor de búsqueda para novelty — porque dos recetas con los
 // mismos ingredientes en proporciones muy distintas no son evidencia fuerte
 // entre sí para EB, que depende de esas proporciones.
-const weightedCalibration = (recipe, rows, recipeDistanceFn) => {
+//
+// recentN (ADR-0007): cuenta filas del pool con fecha reconocible dentro de
+// RECENCY_WINDOW_DAYS desde `now`. Una fila sin fecha parseable NUNCA cuenta
+// como reciente — la ausencia de dato no se trata como "sí es reciente".
+// No implementa detección de cambio de material/proceso (ADR-0007 lo deja
+// como brecha abierta, fuera de alcance de este cambio).
+const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   if (!Array.isArray(rows) || !rows.length || typeof recipeDistanceFn !== 'function') return null;
+  const now = Number.isFinite(options.now) ? options.now : Date.now();
+  const recencyWindowDays = Number.isFinite(options.recencyWindowDays) ? options.recencyWindowDays : RECENCY_WINDOW_DAYS;
   const comparable = rows.map((r) => ({ ...r, similarity: Math.max(0, 1 - recipeDistanceFn(recipe, r.recipe)) }));
   const selected = comparable.filter((r) => r.similarity >= CALIBRATION_SIMILARITY_THRESHOLD);
   const pool = selected.length ? selected : comparable;
@@ -142,8 +183,15 @@ const weightedCalibration = (recipe, rows, recipeDistanceFn) => {
   const meanEB = pool.reduce((sum, r, i) => sum + Number(r.ebReal) * weights[i], 0) / weightSum;
   const variance = pool.reduce((sum, r, i) => sum + (Number(r.ebReal) - meanEB) ** 2 * weights[i], 0) / weightSum;
   const similarity = pool.reduce((sum, r, i) => sum + r.similarity * weights[i], 0) / weightSum;
+  const recentN = pool.reduce((count, r) => {
+    const ms = parseRowDate(r.fecha);
+    if (ms == null) return count;
+    const daysAgo = (now - ms) / MS_PER_DAY;
+    return daysAgo >= 0 && daysAgo <= recencyWindowDays ? count + 1 : count;
+  }, 0);
   return {
     n: pool.length,
+    recentN,
     meanEB,
     sd: Math.sqrt(Math.max(0, variance)),
     similarity: Math.max(0, Math.min(1, similarity)),
@@ -151,7 +199,7 @@ const weightedCalibration = (recipe, rows, recipeDistanceFn) => {
   };
 };
 
-const api = { bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration };
+const api = { bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration, parseRowDate, RECENCY_WINDOW_DAYS };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

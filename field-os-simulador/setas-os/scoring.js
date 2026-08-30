@@ -207,6 +207,17 @@ const SEVERITY_CAPS = { critical: 55, warning: 88 };
 const confidenceRank = { low: 0, medium: 1, high: 2 };
 const minConfidence = (...levels) => levels.reduce((a, b) => confidenceRank[b] < confidenceRank[a] ? b : a, 'high');
 
+// ADR-0007: high requiere n>=20 filas RECIENTES (recentN), no meramente 20
+// filas alguna vez registradas — h.n sigue siendo el tamaño total del pool
+// (usado para 'medium' y para el ancho de banda), h.recentN es el subconjunto
+// dentro de la ventana de recencia (historical-calibration.js). Si el
+// llamador no provee recentN (dato no disponible), se trata como 0 — la
+// ausencia de evidencia de recencia nunca promueve a 'high' por omisión.
+// No implementa el criterio "sin cambio de material/proceso conocido" del
+// ADR: no existe ninguna fuente de datos para eso todavía; queda como brecha
+// documentada, no como chequeo simulado.
+const EB_HIGH_MIN_RECENT_N = 20;
+
 const buildUncertainty = (an, ctx, calibration) => {
   const sp = an.sp;
   const h = calibration.history;
@@ -214,7 +225,8 @@ const buildUncertainty = (an, ctx, calibration) => {
   let halfWidth = Math.max(15, Math.abs(calibration.eb) * 0.20);
   if (h && Number.isFinite(h.n)) {
     const sim = clamp01(Number.isFinite(h.similarity) ? h.similarity : 0.5);
-    if (h.n >= 8 && sim >= 0.8) ebConfidence = 'high';
+    const recentN = Number.isFinite(h.recentN) ? h.recentN : 0;
+    if (recentN >= EB_HIGH_MIN_RECENT_N && sim >= 0.8) ebConfidence = 'high';
     else if (h.n >= 3 && sim >= 0.6) ebConfidence = 'medium';
     if (Number.isFinite(h.sd) && h.sd > 0) halfWidth = Math.max(h.sd * 1.5, Math.abs(calibration.eb) * (ebConfidence === 'high' ? 0.08 : 0.12));
     else halfWidth = Math.abs(calibration.eb) * (ebConfidence === 'high' ? 0.10 : ebConfidence === 'medium' ? 0.15 : 0.20);
