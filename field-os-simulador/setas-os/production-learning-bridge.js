@@ -45,6 +45,7 @@ import './cycle-evidence.js';
     writeJson(KEYS.cycles, upsertBy(readJson(KEYS.cycles), cycle, x => x.id));
     fireAndForget(globalThis.SetasDB?.guardarRoomCycle, cycle);
     window.dispatchEvent(new CustomEvent('setas-room-cycle-updated', { detail: cycle }));
+    if (cycle.state === 'closed') onCycleClosed({ cycleId: cycle.id });
     return cycle;
   };
 
@@ -91,6 +92,42 @@ import './cycle-evidence.js';
     return evidence;
   };
 
+  const cyclesForBatch = batchId => readJson(KEYS.cycles).filter(x => (x.batchIds || []).includes(batchId));
+
+  // Milestone triggers: reutilizan materializeCycleEvidence, cuya identidad
+  // cycleId+batchId ya hace el upsert idempotente. Un lote sin ciclo asociado
+  // simplemente no produce evidencia (cyclesForBatch devuelve []).
+  const onHarvestRecorded = ({ batchId } = {}) => {
+    if (!batchId) return;
+    cyclesForBatch(batchId).forEach(cycle => {
+      fireAndForget(() => materializeCycleEvidence({ cycleId: cycle.id, batchId }));
+    });
+  };
+
+  const onCycleClosed = ({ cycleId } = {}) => {
+    const cycle = readJson(KEYS.cycles).find(x => x.id === cycleId);
+    if (!cycle) return;
+    cycle.batchIds.forEach(batchId => {
+      fireAndForget(() => materializeCycleEvidence({ cycleId: cycle.id, batchId }));
+    });
+  };
+
+  // La escritura de una cosecha vive en Bitácora (fuera de este bridge), así
+  // que el gancho de harvest envuelve SetasBitacoraDB.guardarCosecha en vez de
+  // exigir que Bitácora importe este bridge — mismo patrón que
+  // attachPeritoEvidenceContext usa para SetasPeritoScenarios abajo.
+  const attachBitacoraHarvestHook = () => {
+    const api = globalThis.SetasBitacoraDB;
+    if (!api?.guardarCosecha || api.__productionLearningWrapped) return false;
+    const original = api.guardarCosecha.bind(api);
+    api.guardarCosecha = cosecha => {
+      if (cosecha?.loteId) onHarvestRecorded({ batchId: cosecha.loteId });
+      return original(cosecha);
+    };
+    api.__productionLearningWrapped = true;
+    return true;
+  };
+
   const historicalEvidenceFor = ({ speciesId = null, recipeVersionId = null } = {}) => {
     const api = globalThis.SetasCycleEvidence;
     if (!api) throw new Error('SetasCycleEvidence unavailable');
@@ -111,6 +148,8 @@ import './cycle-evidence.js';
     upsertRoomCycle,
     ingestTelemetry,
     materializeCycleEvidence,
+    onHarvestRecorded,
+    onCycleClosed,
     historicalEvidenceFor,
     contextForPerito,
   };
@@ -141,5 +180,7 @@ import './cycle-evidence.js';
 
   attachPeritoEvidenceContext();
   window.addEventListener('setas-perito-model', attachPeritoEvidenceContext, { capture: true });
+  attachBitacoraHarvestHook();
+  window.addEventListener('setas-bitacora-db-ready', attachBitacoraHarvestHook, { capture: true });
   window.dispatchEvent(new CustomEvent('setas-production-learning-ready'));
 })();
