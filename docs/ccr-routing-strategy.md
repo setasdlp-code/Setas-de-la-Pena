@@ -644,6 +644,35 @@ Flagged during review, worth periodic checking in Logs rather than assuming solv
 - **No degraded-execution marker**: if a request bottoms out at Haiku or Luna (the weakest link in each chain), nothing in CCR flags that the response came from a downgraded model. If this matters, it would need external log-parsing built separately — not a CCR feature.
 - **Idempotency of side-effecting actions on retry**: not a CCR concern — this is governed by AGENTS.md's human-approval requirements for destructive/external actions at the agent level, independent of routing.
 
+## Known Issues
+
+### CCR bug: Codex API rejects injected `metadata` field (patched locally, Aug 30 2026)
+
+**Symptom**: any request carrying `metadata.user_id` (Claude Code sends this on every request) that gets routed — directly or via fallback — to a Codex-API-backed `openai_responses` model (`gpt-5.6-sol`/`terra`/`luna`) fails with:
+```json
+{"error":{"message":"All target providers failed.","attempts":[{"status":400,"details":{"detail":"Unsupported parameter: metadata"}}]}}
+```
+
+**Root cause**: CCR 3.0.22's `ccr-responses-session-affinity` hook (`dist/main/upstream-header-sanitizer.js`, function `c(e)`) unconditionally injects `metadata: {user_id: ...}` into every `openai_responses`-type request whenever the original request carried that field — regardless of whether the target backend supports it. The Codex API backend (`https://chatgpt.com/backend-api/codex`) rejects it outright.
+
+**Confirmed via**: direct source inspection of the installed package, plus reproduction — a request with `metadata.user_id` present fails (400); the identical request without it succeeds (200). Cross-checked against CCR's own request logs (`request-logs.sqlite`, `request_logs` table — the `request_route_hops`/`request_route_traces` tables only persist a bare status code for non-final fallback attempts, not the response body, so this required querying `request_logs.response_body_text` directly for the *final* attempt, and reproducing a request that landed on Terra as the final target to capture its body).
+
+**Fix applied — local patch, not durable**:
+```
+File: /Users/sebastianpinzon/.nvm/versions/node/v24.14.1/lib/node_modules/@musistudio/claude-code-router/dist/main/upstream-header-sanitizer.js
+```
+Added a guard so the injection is skipped specifically when `targetProviderConfig.baseurl` includes `chatgpt.com/backend-api/codex`, leaving the injection intact for any other `openai_responses`-type provider (scoped fix, not a blanket disable). Verified independently: reading the patched file, checking CCR's own log of the verification request, and an independent fresh test request (all three landed on `gpt-5.6-terra` with `metadata.user_id` present, all 200).
+
+**This will be silently overwritten by any `npm update`/reinstall of `@musistudio/claude-code-router`.** No backup of the original file was made before patching (should have been, per the instructions given — wasn't followed). If this exact 400 (`Unsupported parameter: metadata`) resurfaces after a CCR update, re-apply the same patch rather than re-diagnosing from scratch.
+
+Reported upstream: [musistudio/claude-code-router#1740](https://github.com/musistudio/claude-code-router/issues/1740).
+
+### Related, separately fixed: Haiku doesn't support the `context-1m` beta under OAuth
+
+Discovered during the same investigation. Claude Code's OAuth session sends a beta header bundle (including `context-1m-2025-08-07`) on *every* request. Opus/Sonnet handle it fine; `claude-haiku-4-5-20251001` does not, and rejects it with `"This authentication style is incompatible with the long context beta header"` — deterministically, every time, unrelated to actual request size. This isn't a CCR bug — it's a genuine model-capability gap on Anthropic's side for this OAuth-authenticated model.
+
+**Fix**: removed `claude-haiku-4-5-20251001` from the **global default** fallback chain (was `Terra → Haiku`, now `Terra → Sonnet`). The Opus rule's own fallback (`Sol → Sonnet`) was never affected — it already avoided Haiku.
+
 ## References
 
 - **CCR Quick Start**: [`ccr-quick-start.md`](./ccr-quick-start.md)
