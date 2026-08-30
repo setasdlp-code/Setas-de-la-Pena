@@ -55,7 +55,7 @@ exists to prevent:
 | Scale | Where | Can reach `high`? |
 |---|---|---|
 | Evidence confidence (`setas.cycle-evidence.v1`, `setas.historical-evidence.v1`) | `cycle-evidence.js` | **No** — capped at `medium` by construction |
-| `ebConfidence`, the EB prediction band | `scoring.js` `buildUncertainty()` | **Yes** — `h.n >= 8 && sim >= 0.8` sets `'high'` |
+| `ebConfidence`, the EB prediction band | `scoring.js` `buildUncertainty()` | **Yes** — `recentN >= 20 && sim >= 0.8` sets `'high'` (raised from `h.n >= 8` per ADR-0007, merged) |
 
 `ebConfidence` is fed by `ctx.historyCalibration` (via
 `recetario-model-bridge.js`), so farm-observational history **already** reaches
@@ -95,11 +95,12 @@ current state:
 
 | Criterion | Current code |
 |---|---|
-| Categorical match | Approximated by recipe-distance `similarity`, not a categorical match |
-| `n >= 20` | Was `h.n >= 8`; being replaced by a recency-aware `recentN` gate — check `scoring.js` and `historical-calibration.js` directly |
-| Recency / shift check | Not implemented anywhere |
-| Held-out calibration | `halfWidth` uses `h.sd` from the same in-sample pool that produced `meanEB` (`historical-calibration.js` `weightedCalibration`); `ground-truth-regression.js` is an offline harness, not wired into the live path |
-| Coverage/error displayed | Only a label and a static `note` string are shown |
+| Categorical match | Still approximated by recipe-distance `similarity`, not a categorical match — open |
+| `n >= 20` recent lots | **Closed.** `scoring.js` gates `high` on `recentN >= EB_HIGH_MIN_RECENT_N` (20), not raw `h.n`. `historical-calibration.js`'s `weightedCalibration` computes `recentN` from `parseRowDate` against a `recencyWindowDays` window (default 365, flagged as a provisional value — not validated with Sebastián, worth revisiting). Absence of a parseable date on a row never counts it as recent. |
+| Recency window | **Closed** as the 365-day count above. |
+| "No known material/process shift" | Still open — no data source anywhere in the app for detecting a shift; this is the half of the ADR-0007 criterion #3 that `recentN` alone does not satisfy. Was left as an explicit gap, not silently assumed solved by the recency window. |
+| Held-out calibration | Still open. `halfWidth` uses `h.sd` from the same in-sample pool that produced `meanEB` (`historical-calibration.js` `weightedCalibration`); `ground-truth-regression.js` is an offline harness, not wired into the live path. |
+| Coverage/error displayed | Still open. Only a label and a static `note` string are shown. |
 
 So: treat a live `high` as unverified against ADR-0007 until every row is closed —
 a partially-closed table is still not the ratified bar. Do not cite it as evidence
@@ -149,7 +150,7 @@ the implementation split, not the concept.
 | "The literature value and our measurement are close, I'll use one field" | Then provenance is gone forever. Later readers cannot tell which farm the number came from. Keep both. |
 | "Confidence 'medium' looks weak in the UI, 'high' reads better" | The cap is the product's honesty guarantee. Change the UI copy, never the cap. |
 | "I'll let evidence nudge the ranking just slightly" | A slight nudge is still causal inference from observational data. This is the boundary ADR-0004 exists to hold. |
-| "The band says `high`, so the prediction is solid" | Not yet. ADR-0007 ratified criteria the code does not enforce — current `high` fires at `n >= 8` with no recency check and no held-out calibration. |
+| "The band says `high`, so the prediction is solid" | Closer, but not fully. `high` now requires `recentN >= 20` within a 365-day window — better than the old `n >= 8` on any-age data — but categorical match, material/process-shift awareness, and held-out calibration are all still open. A `high` label still isn't the full ADR-0007 bar. |
 | "ADR-0007 is decided, so I can raise the threshold now" | Decided ≠ scoped. Changing `buildUncertainty` gating is follow-up work with its own review, not a side effect of another task. |
 | "The fixtures file is missing so the regression passed" | A vacuous pass is the failure mode the harness exists to catch. Missing corpus = blocked. |
 | "The sensor bound and the setpoint are the same number anyway" | Today. They drift independently, and the day they diverge, conflating them silently quarantines valid readings or accepts impossible ones. |
