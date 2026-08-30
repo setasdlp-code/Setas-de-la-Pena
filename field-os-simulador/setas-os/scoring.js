@@ -283,6 +283,29 @@ const buildDimensions = (breakdown, ctx, an) => {
   };
 };
 
+// ADR-0007 (Escala C): la confianza de `stock` califica CÓMO se derivó el puntaje
+// —el método— no cuánta evidencia lo respalda. Por eso 'high' aquí es legítimo con
+// una sola lectura: dice "el llamador dio cantidades reales", no "esto está probado".
+//
+// Mapa explícito en vez del ternario anterior (`mode === 'presence' ? 'low' : 'high'`),
+// que trataba todo lo que no fuera 'presence' como máxima confianza — de modo que
+// 'unconstrained' (no hay ningún dato de stock) y 'none' (receta vacía) reportaban
+// 'high'. La ausencia de datos se leía como certeza máxima, justo la sustitución que
+// el ADR-0006 prohíbe. Modo desconocido cae a no-stock-data/low: falla cerrado.
+//
+// El `score: 100` que getStockDetail() devuelve para 'unconstrained' NO se toca aquí:
+// ese puntaje sí alimenta el ranking, y cambiarlo cruzaría el límite del ADR-0004.
+// Esto corrige lo que el sistema DICE sobre su propia derivación, no lo que calcula.
+const STOCK_PROVENANCE = {
+  coverage: { type: 'quantity-aware', confidence: 'high' },
+  quantity: { type: 'quantity-aware', confidence: 'high' },
+  presence: { type: 'presence-only', confidence: 'low' },
+  unconstrained: { type: 'no-stock-data', confidence: 'low' },
+  none: { type: 'no-stock-data', confidence: 'low' },
+};
+
+const stockProvenance = (mode) => STOCK_PROVENANCE[mode] || STOCK_PROVENANCE.none;
+
 const buildProvenance = (ctx, uncertainty, calibration, stockDetail) => ({
   score: { type: 'heuristic-model', confidence: 'medium', source: 'SetasScoring rules + species/ingredient catalog' },
   eb: {
@@ -293,7 +316,7 @@ const buildProvenance = (ctx, uncertainty, calibration, stockDetail) => ({
   },
   ph: { type: 'directional-estimate', confidence: 'low', requiresMeasurement: true },
   risk: { type: 'rule-inference', confidence: 'medium', observed: false },
-  stock: { type: stockDetail.mode === 'quantity' || stockDetail.mode === 'coverage' ? 'quantity-aware' : 'presence-only', confidence: stockDetail.mode === 'presence' ? 'low' : 'high' },
+  stock: stockProvenance(stockDetail.mode),
   catalog: ctx.provenance || null,
 });
 

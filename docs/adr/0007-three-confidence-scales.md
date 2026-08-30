@@ -76,8 +76,8 @@ Two consequences of the current expression are worth recording as observed facts
   are the same field name, in the same object, on different scales.
 - `getStockDetail()` also returns `mode: 'unconstrained'` when no stock data exists
   at all, and `mode: 'none'` for an empty recipe. Neither is `'presence'`, so both
-  currently report `confidence: 'high'` — absence of data reads as maximum
-  confidence. Flagged here as observed behavior; **not decided by this ADR.**
+  reported `confidence: 'high'` — absence of data read as maximum confidence.
+  **Resolved 2026-08-30; see the second amendment below.**
 
 ## Why this is not simply a bug
 
@@ -150,6 +150,45 @@ What this decision deliberately does **not** settle:
   gets none here, because none have been decided. Do not infer them by analogy.
 - The `unconstrained`/`none` → `high` behavior noted in the Context is **not**
   ratified by this amendment. It is recorded as observed, and left open.
+  *(Superseded — closed by the amendment below.)*
+
+### Amendment 2026-08-30 (second) — absence of stock data now reports `low`
+
+**Decided by Sebastián**: the `unconstrained`/`none` → `high` case is a defect, and
+is fixed rather than ratified.
+
+The original expression distinguished only `'presence'` from everything else:
+
+```js
+confidence: stockDetail.mode === 'presence' ? 'low' : 'high'
+```
+
+so every mode that was not `'presence'` — including `'unconstrained'` (no stock data
+supplied at all) and `'none'` (empty recipe) — reported maximum confidence. That is
+the substitution ADR-0006 forbids: absence of data presenting as certainty.
+
+Replaced with an explicit mode → provenance map in `scoring.js`:
+
+| `getStockDetail()` mode | `type` | `confidence` |
+|---|---|---|
+| `coverage`, `quantity` | `quantity-aware` | `high` |
+| `presence` | `presence-only` | `low` |
+| `unconstrained`, `none` | `no-stock-data` | `low` |
+
+An unknown mode falls through to `no-stock-data` / `low` — it fails closed.
+
+`type: 'no-stock-data'` is new. Previously these modes reported `'presence-only'`,
+which was also untrue: no presence check had been performed either. The new value
+preserves the distinction rather than flattening it into the nearest existing label.
+
+**Deliberately not changed:** `getStockDetail()` still returns `score: 100` for
+`'unconstrained'`. That score feeds the ranking, and altering it would cross
+ADR-0004's boundary. This amendment corrects what the system *says about how it
+derived a number*, not what it computes. Whether "no stock constraint" should score
+100 is a separate question, still open.
+
+Scale C keeps its lack of promotion criteria: `high` still means only "the caller
+supplied real quantities."
 
 ## Gap Between This Decision and the Current Implementation
 
@@ -185,9 +224,10 @@ what the ADR recorded and what the code did.
   now ambiguous three ways.
 - Scale C has no promotion criteria. A `high` there certifies input shape only, and
   must never be read as evidentiary strength.
-- The `unconstrained`/`none` → `high` case in `getStockDetail()` is an open question,
-  not a ratified behavior. It is the kind of defect ADR-0006 exists to catch:
-  absence of data currently presents as maximum confidence.
+- The `unconstrained`/`none` → `high` case is **closed**: absence of stock data now
+  reports `no-stock-data` / `low`, and unknown modes fail closed. The stock *score*
+  of 100 for `'unconstrained'` is untouched and remains an open question — changing
+  it would affect ranking, which ADR-0004 governs.
 - Scale B's `high` now has a concrete, checkable definition instead of "enough rows,
   enough similarity." The code enforces two of its five criteria (see gap table
   above) — until the rest land, a live-shown `high` label still does not certify

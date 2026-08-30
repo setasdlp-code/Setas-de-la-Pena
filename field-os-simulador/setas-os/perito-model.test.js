@@ -95,3 +95,34 @@ test('riesgo inferido no se presenta como contaminación observada', () => {
   assert.equal(r.provenance.risk.type, 'rule-inference');
   assert.equal(r.dimensions.safety.status, 'hold');
 });
+
+// ADR-0007 (Escala C — provenance/derivación): la confianza de `stock` califica
+// CÓMO se derivó el puntaje de stock, no cuánta evidencia lo respalda. El caso
+// 'unconstrained' (sin datos de stock) y 'none' (receta vacía) reportaban 'high'
+// porque el ternario original solo distinguía 'presence' del resto: la ausencia
+// de datos se leía como confianza máxima.
+test('ADR-0007 Escala C: sin datos de stock la confianza es low, no high', () => {
+  const r = scoreRecipe(baseAn(), baseCtx({ stockIds: new Set() }));
+  assert.equal(r.provenance.stock.confidence, 'low');
+  assert.equal(r.provenance.stock.type, 'no-stock-data');
+});
+
+test('ADR-0007 Escala C: receta vacía no reporta confianza de stock alta', () => {
+  const r = scoreRecipe(baseAn(), baseCtx({ recipe: [], stockIds: new Set() }));
+  assert.equal(r.provenance.stock.confidence, 'low');
+  assert.equal(r.provenance.stock.type, 'no-stock-data');
+});
+
+test('ADR-0007 Escala C: solo presencia de IDs sigue siendo low/presence-only', () => {
+  const r = scoreRecipe(baseAn(), baseCtx({ stockIds: new Set(['base']) }));
+  assert.equal(r.provenance.stock.confidence, 'low');
+  assert.equal(r.provenance.stock.type, 'presence-only');
+});
+
+test('ADR-0007 Escala C: cantidades reales sí justifican high/quantity-aware', () => {
+  const r = scoreRecipe(baseAn(), baseCtx({
+    stockCoverageById: { base: 1, supp: 1 },
+  }));
+  assert.equal(r.provenance.stock.confidence, 'high');
+  assert.equal(r.provenance.stock.type, 'quantity-aware');
+});

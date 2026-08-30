@@ -47,9 +47,10 @@ names **three different scales**, and they are not interchangeable.
 
 Scale C is the sharpest illustration of this ADR's point: `provenance.eb.confidence`
 and `provenance.stock.confidence` are the same field name in the same object on
-different scales. It also currently reports `high` when no stock data exists at all
-(`mode: 'unconstrained'`) — absence of data presenting as maximum confidence, which
-is precisely the substitution this ADR forbids. ADR-0007 records it as open.
+different scales. It also *reported* `high` when no stock data existed at all
+(`mode: 'unconstrained'`) — absence of data presenting as maximum confidence,
+precisely the substitution this ADR forbids. Found while reconciling ADR-0007 and
+fixed on 2026-08-30: those modes now report `no-stock-data` / `low`.
 
 This belongs with this ADR because it is the same defect class: two distinct things
 that serialize to identical-looking values, where collapsing them destroys the

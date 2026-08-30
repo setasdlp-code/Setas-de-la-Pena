@@ -56,16 +56,25 @@ exists to prevent:
 |---|---|---|
 | **A** — Evidence confidence (`setas.cycle-evidence.v1`, `setas.historical-evidence.v1`) | `cycle-evidence.js` | **No** — capped at `medium` by construction |
 | **B** — `ebConfidence`, the EB prediction band | `scoring.js` `buildUncertainty()` | **Yes** — `recentN >= 20 && sim >= 0.8` sets `'high'` (raised from `h.n >= 8` per ADR-0007, merged) |
-| **C** — Provenance confidence (`provenance.{ph,risk,stock}.confidence`) | `scoring.js` provenance block | **Yes, trivially** — rates derivation *method*, not evidence. `stock` is `high` whenever `getStockDetail()` mode is not `'presence'`; `ph`/`risk` are hardcoded `'low'`/`'medium'` |
+| **C** — Provenance confidence (`provenance.{ph,risk,stock}.confidence`) | `scoring.js` provenance block | **Yes, trivially** — rates derivation *method*, not evidence. `stock` is `high` only for `quantity`/`coverage` modes (real quantities supplied); `ph`/`risk` are hardcoded `'low'`/`'medium'` |
 
 Two traps specific to Scale C (ADR-0007, amended 2026-08-30):
 
 - `provenance.eb.confidence` is **Scale B**, not Scale C, despite sitting in the
   provenance block. Same field name, same object, different scale.
-- `stock` reports `high` for mode `'unconstrained'` (no stock data at all) and
-  `'none'` (empty recipe) — absence of data currently reads as maximum confidence.
-  Recorded as **open** in ADR-0007, not ratified. Don't cite it as intended
-  behavior, and don't "fix" it as a side effect of another task.
+- Scale C has **no promotion criteria**. `high` there certifies input shape only —
+  "the caller gave us real quantities" — never evidentiary strength. Do not read it
+  as, or convert it into, a Scale A or B level.
+- `stock` provenance is an explicit mode map (`STOCK_PROVENANCE` in `scoring.js`),
+  not a ternary: `coverage`/`quantity` → `quantity-aware`/`high`; `presence` →
+  `presence-only`/`low`; `unconstrained`/`none` → `no-stock-data`/`low`; unknown
+  modes fail closed to `no-stock-data`/`low`. Until 2026-08-30 everything that was
+  not `'presence'` reported `high`, so absence of data read as certainty — fixed per
+  ADR-0007's second amendment. **Adding a new mode means adding a row to that map**;
+  a mode absent from it is silently downgraded, which is safe but not informative.
+- `getStockDetail()` still returns `score: 100` for `'unconstrained'`. That is
+  untouched on purpose — the score feeds ranking, so changing it is ADR-0004
+  territory. Open question, not settled.
 
 `ebConfidence` is fed by `ctx.historyCalibration` (via
 `recetario-model-bridge.js`), so farm-observational history **already** reaches
