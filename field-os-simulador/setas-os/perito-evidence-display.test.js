@@ -16,18 +16,36 @@ const HERE = __dirname;
 const jsx = fs.readFileSync(path.join(HERE, 'simulador-app.jsx'), 'utf8');
 
 // ── ADR-0004: scoring.js y perito-scenarios.js no se tocan ──────────────────
+// El ref a usar no es siempre "main": en un pull_request de CI el checkout no
+// crea la rama local, y en un worktree el "main" local puede estar atrasado
+// respecto del remoto. Se prueba "origin/main" primero — es el main real —
+// y se cae a "main" para el caso local sin remoto configurado.
+const resolveMainRef = () => {
+  for (const ref of ['origin/main', 'main']) {
+    try {
+      execFileSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
+        cwd: HERE, encoding: 'utf8', stdio: 'pipe',
+      });
+      return ref;
+    } catch { /* ref ausente: probar el siguiente */ }
+  }
+  return null;
+};
+
 test('scoring.js y perito-scenarios.js quedan byte-identicos a main (ADR-0004)', () => {
+  const ref = resolveMainRef();
+  // Sin ningún ref de main disponible no se puede probar la invariante, y no se
+  // debe fingir que pasó.
+  if (!ref) throw new Error('no hay ref de main (ni origin/main ni main) contra el cual diffear');
   let diff;
   try {
-    diff = execFileSync('git', ['diff', 'main', '--', 'scoring.js', 'perito-scenarios.js'], {
+    diff = execFileSync('git', ['diff', ref, '--', 'scoring.js', 'perito-scenarios.js'], {
       cwd: HERE, encoding: 'utf8',
     });
   } catch (e) {
-    // Sin ref "main" disponible (p.ej. checkout superficial): no se puede probar
-    // la invariante, pero no se debe fingir que pasó.
-    throw new Error(`no se pudo diffear contra main: ${e.message}`);
+    throw new Error(`no se pudo diffear contra ${ref}: ${e.message}`);
   }
-  assert.equal(diff, '', `scoring.js/perito-scenarios.js difieren de main:\n${diff}`);
+  assert.equal(diff, '', `scoring.js/perito-scenarios.js difieren de ${ref}:\n${diff}`);
 });
 
 // ── la UI lee out.historicalEvidence tal cual, no lo re-deriva ──────────────

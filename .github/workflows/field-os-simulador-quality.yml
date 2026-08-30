@@ -24,6 +24,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Historial completo: perito-evidence-display.test.js compara
+          # scoring.js/perito-scenarios.js contra main (invariante ADR-0004).
+          # Con el checkout superficial por defecto ese ref no existe en un
+          # pull_request y el guard falla por falta de referencia, no por
+          # una violacion real.
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
