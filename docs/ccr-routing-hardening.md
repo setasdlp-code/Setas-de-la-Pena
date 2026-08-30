@@ -22,6 +22,7 @@ The desired state records ordered rules because CCR uses **first match wins**. I
 `budget-by-agent.js` only recognizes explicit leading headings, case-insensitively:
 
 ```text
+Luna:
 quick factual pass:
 evidence intake:
 repository triage:

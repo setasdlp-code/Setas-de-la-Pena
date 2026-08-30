@@ -1,5 +1,5 @@
 const text = input.summary.lastUserText ?? "";
-const budgetHeading = /^\s*(?:quick factual pass|evidence intake|repository triage|inventory reconciliation|formatting pass|test-output triage)\s*:/i;
+const budgetHeading = /^\s*(?:luna|quick factual pass|evidence intake|repository triage|inventory reconciliation|formatting pass|test-output triage)\s*:/i;
 
 if (!budgetHeading.test(text)) {
   return null;
