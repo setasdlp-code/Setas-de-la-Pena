@@ -597,6 +597,53 @@ This still achieves the core goal from AGENTS.md §2 — Codex's default cost si
 
 Per AGENTS.md, Codex does **constrained, evidence-driven work** with a narrow scope — not open-ended design or long-horizon reasoning (that's Claude Code's lane). Its tasks are well-suited to `gpt-5.6-luna`/`gpt-5.6-sol` rather than reaching for Opus-tier cost. This keeps the division of labor from §2 of AGENTS.md reflected in the cost structure too: the lead agent (Claude Code) gets the expensive flagship when needed; the evidence/implementation worker (Codex) stays on the cheaper tier by default.
 
+## Fallback Chains (CCR's Reactive Resilience Layer)
+
+CCR does **not** support proactive quota-aware routing — verified against the documented Node.js script API (Aug 30, 2026): scripts get `input` (current request: body, headers, tokenCount estimate for *this* request, sessionId, apiKeyId) and `api` (fetch, fs, env, hash), but nothing exposes live provider quota/remaining-capacity data, and the gateway's own endpoint list (`GET /models`, `POST /v1/messages`, etc.) has no account-balance route either. The "Account Balance" percentages shown on CCR's Overview page aren't reachable from a routing rule.
+
+What CCR *does* support is **reactive** fallback: retry or fail over to other models after the chosen model's request actually fails. Two modes, configured per-rule via **On Failure** (or globally via **Default on failure** at the top of the Routing page):
+
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| Retry | 408, 409, 429, 5xx | Retry the *same* model up to N times |
+| Fallback targets | Any 4xx or 5xx | Try an ordered list of other models after the first fails |
+
+**Known limitation:** `Fallback targets` triggers on *any* 4xx, including non-transient errors (bad auth, malformed request, policy refusal) where switching models won't help and just wastes a call. CCR has no status-code filter for this — confirmed against the documented API, not something misconfigured on our end. Logging is automatic regardless (response headers `x-ccr-fallback-attempts`/`x-ccr-fallback-model`, full chain visible in Logs), so a runaway fallback pattern is at least visible after the fact even though it can't be prevented upfront.
+
+### Configured Chains
+
+Reviewed with a second model (GPT-5.6, via ChatGPT) before finalizing — the guiding principle: **preserve the capability tier a task was routed for before dropping to a cheaper/weaker model.** A request escalated to Opus failed for availability reasons, not because Sonnet's quality was suddenly acceptable — so the fallback should try an equally-capable cross-provider option first, and only degrade capability as the last resort.
+
+```
+Global default (Claude Code's Sonnet baseline):
+  claude-sonnet-5 → gpt-5.6-terra → claude-haiku-4-5-20251001
+
+4x Opus escalation rules (Opus / Opus-research / Opus-cross-module / Opus-impl plan):
+  claude-opus-5 → gpt-5.6-sol → claude-sonnet-5
+
+Codex → Terra rule:
+  gpt-5.6-terra → gpt-5.6-sol → gpt-5.6-luna
+```
+
+### How to Enter These in CCR
+
+- **Global default**: top of Global Routing page, "Default on failure" dropdown → Fallback targets → add the 2 targets in order
+- **Each of the 5 existing rules**: edit the rule (pencil icon) → On Failure → Fallback targets → add targets in order → save
+
+This is 6 separate edits — CCR has no bulk/JSON-paste path for this (same constraint as the routing rules themselves, see "What's Actually Implemented" above).
+
+**LIVE AND VERIFIED** (Aug 30, 2026, confirmed directly against `config.sqlite`, not just the UI): all 6 fallback configurations are correctly persisted — global default (`Terra → Haiku`), all 4 Opus rules (`Sol → Sonnet`), and the Codex rule (`Sol → Luna`).
+
+**Incident during setup, resolved**: an earlier browser-automation pass (tasked only with adding fallback chains) accidentally **deleted** 3 of the 4 Opus keyword rules (`Opus - research`, `Opus - cross-module`, `Opus - impl plan`) — likely from ambiguous rule-name matching across the 4 similarly-named "Opus*" rules. Caught via rule-ID sequence analysis (the Codex rule had been assigned `rule-2`, which only happens if the intermediate rule IDs were freed by deletion, not reassigned or hidden) and cross-checked against the live database. Recreated with a more explicitly-scoped prompt ("do not touch the existing rules, only create 3 new ones") and reverified against the database afterward. Lesson: when delegating CCR edits to a browser-automation assistant, explicitly forbid touching anything not named in the task — ambiguous same-prefix rule names are a real collision risk for name-based matching.
+
+### Risks Not Solved By This Setup
+
+Flagged during review, worth periodic checking in Logs rather than assuming solved:
+
+- **Cross-provider tool/format compatibility**: two of the three chains cross from Anthropic to OpenAI (Sonnet→Terra, Opus→Sol) — CCR's gateway presumably normalizes request/response shape for this to work at all, but that hasn't been independently verified here beyond "the request completes with 200." Worth spot-checking that cross-provider fallback responses are actually correct, not just successfully returned.
+- **No degraded-execution marker**: if a request bottoms out at Haiku or Luna (the weakest link in each chain), nothing in CCR flags that the response came from a downgraded model. If this matters, it would need external log-parsing built separately — not a CCR feature.
+- **Idempotency of side-effecting actions on retry**: not a CCR concern — this is governed by AGENTS.md's human-approval requirements for destructive/external actions at the agent level, independent of routing.
+
 ## References
 
 - **CCR Quick Start**: [`ccr-quick-start.md`](./ccr-quick-start.md)
