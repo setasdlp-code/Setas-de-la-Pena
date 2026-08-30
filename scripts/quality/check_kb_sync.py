@@ -29,8 +29,9 @@ import ast
 import json
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[2]
 KB = ROOT / "knowledge_base"
@@ -276,7 +277,7 @@ class SyncPoint:
     kb_section_pattern: str
     kb_row_pattern: str
     app_source: str
-    app_getter: callable  # (app_data) -> float | tuple[float, float] | None
+    app_getter: Callable[[dict], object]  # -> float | tuple[float, float] | None
 
 
 def app_range(value) -> tuple[float, float]:
@@ -504,12 +505,18 @@ KPI_SYNC_POINTS: list[SyncPoint] = [
               r".", r"Yield fresco por bloque", "yieldPerBlock"),
     kpi_point("Umbral de contaminación", "%", "02_substrates/contamination.md",
               r"Best Practices", r"contaminaci", "contamMax"),
+    # No known KB source for these three as of this writing — routed through
+    # the same empty-candidates path as everything else (instead of a
+    # special-cased footnote) so they surface as regular
+    # present_in_app_absent_from_kb findings, and so a future KB edit that
+    # adds a matching row is picked up automatically.
+    kpi_point("BE óptimo", "%", "06_operations/production_schedule.md",
+              r".", r"BE.*[oó]ptim|[oó]ptim.*BE", "beOptimal"),
+    kpi_point("BE de alerta", "%", "06_operations/production_schedule.md",
+              r".", r"BE.*alert|alert.*BE", "beAlert"),
+    kpi_point("Umbral de alerta de contaminación", "%", "02_substrates/contamination.md",
+              r"Best Practices", r"15%|alerta", "contamAlert"),
 ]
-
-# beOptimal, beAlert, contamAlert have no known KB source as of this writing;
-# call out the app-defined-only case explicitly for the human triage pass
-# rather than silently skipping them.
-KPI_APP_ONLY = ["beOptimal", "beAlert", "contamAlert"]
 
 
 # ---------------------------------------------------------------------------
@@ -628,11 +635,6 @@ def print_report(findings: list[Finding]) -> None:
         f"mismatch(es), {kb_only} KB-only, {app_only} app-only. "
         f"({len(findings)} finding(s) total.)"
     )
-    if KPI_APP_ONLY:
-        print(
-            f"Note: KPI fields with no known KB source (not counted above): "
-            f"{', '.join(KPI_APP_ONLY)}"
-        )
 
 
 def main() -> int:
