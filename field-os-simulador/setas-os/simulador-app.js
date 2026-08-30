@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 81b8d3ef9d11d5f1be06bc9eea819550ad6e25e735887aad5db17d09a567e743
+// source-hash: 439742591a472c6c79caab066d83db8464eee898386aa4613813a02aff18ba5d
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2502,6 +2502,17 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     targetKey,
     baseNames: bases.map((g) => g.name),
     suppNames: supps.map((g) => g.name)
+  };
+};
+const PERITO_EVIDENCE_CONFIDENCE_LABEL = { low: "baja", medium: "media" };
+const describePeritoEvidence = (evidence) => {
+  const sampleSize = evidence?.summary?.sampleSize || 0;
+  if (!evidence || sampleSize === 0) return { hasEvidence: false, sampleSize: 0 };
+  return {
+    hasEvidence: true,
+    sampleSize,
+    recordsWithEnvironment: evidence.summary?.recordsWithEnvironment || 0,
+    confidenceLabel: PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence] || evidence.confidence
   };
 };
 const generateQrSvgDataUrl = (text) => {
@@ -6499,11 +6510,13 @@ Click para ver análisis completo`
               const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
               const stockCount = diag.stockIds;
               byProfile[`_diag_${pk}`] = { stockCount, diag };
+              byProfile[`_evidence_${pk}`] = out.historicalEvidence || null;
               if (pk === optProfile) _diag = { stockCount, diag };
             } catch (e) {
               byProfile[pk] = [];
               const diag = { error: e.message || String(e), profileKey: pk, targetKey: optTarget };
               byProfile[`_diag_${pk}`] = { stockCount: 0, diag };
+              byProfile[`_evidence_${pk}`] = null;
               if (pk === optProfile) _diag = { stockCount: 0, diag };
             }
           });
@@ -6517,7 +6530,10 @@ Click para ver análisis completo`
   )), optUseStock ? (() => {
     const sc = [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0).map((l) => l.ingredienteId))].length;
     return sc > 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700,var(--accent-olive))", marginBottom: 12 } }, "Usando solo ingredientes en stock · ", sc, " disponibles en inventario") : /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 14px", background: "#FBF6E8", border: "1px solid #D4A838", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "#7A5A10", marginBottom: 12 } }, "Inventario vacío. Cambia a ", /* @__PURE__ */ React.createElement("strong", null, "Paleta completa"), " para generar recetas con toda la paleta, o registra compras en Inventario.");
-  })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-50,#FCEEE9)", border: "1px solid var(--coral-300,#E8B4A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, optResults[optProfile].length, " combinaciones exclusivas · perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " · ", optUseStock ? "solo stock" : "paleta completa", " · C:N objetivo ", SPP[optTarget]?.cn_optimal.ideal, ":1"), optResults[optProfile].map((r, i) => {
+  })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-50,#FCEEE9)", border: "1px solid var(--coral-300,#E8B4A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, optResults[optProfile].length, " combinaciones exclusivas · perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " · ", optUseStock ? "solo stock" : "paleta completa", " · C:N objetivo ", SPP[optTarget]?.cn_optimal.ideal, ":1"), (() => {
+    const evi = describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
+    return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: evi.hasEvidence ? "var(--moss-50,#F0F4EB)" : "var(--paper-100)", border: `1px solid ${evi.hasEvidence ? "var(--moss-300,#B8C9A0)" : "var(--border-soft)"}`, borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: evi.hasEvidence ? "var(--moss-700,var(--accent-olive))" : "var(--ink-500)", marginBottom: 12 } }, evi.hasEvidence ? `Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize === 1 ? "" : "s"} real${evi.sampleSize === 1 ? "" : "es"} de ${SPP[optTarget]?.name || optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)` : `Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name || optTarget} — Escenarios calculados solo con el modelo teórico.`);
+  })(), optResults[optProfile].map((r, i) => {
     const mainIngs = r.recipe.map((x) => {
       const g = INGS.find((ing) => ing.id === x.id);
       return g ? `${g.name} ${x.p}%` : x.id;

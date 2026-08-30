@@ -3655,6 +3655,24 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
   };
 };
 
+// Traduce setas.historical-evidence.v1 (production-learning-bridge.js) a texto
+// para el Perito. No deriva ni recalcula evidencia — solo lee lo que el bridge
+// ya adjuntó al resultado de searchScenarios(). La confianza nunca se redondea
+// hacia arriba: cycle-evidence.js buildHistoricalEvidence() topa esta escala en
+// 'medium' (ver ADR-0004) — un solo ciclo observacional jamás se muestra como
+// hecho establecido.
+const PERITO_EVIDENCE_CONFIDENCE_LABEL={low:'baja',medium:'media'};
+const describePeritoEvidence=(evidence)=>{
+  const sampleSize=evidence?.summary?.sampleSize||0;
+  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0};
+  return{
+    hasEvidence:true,
+    sampleSize,
+    recordsWithEnvironment:evidence.summary?.recordsWithEnvironment||0,
+    confidenceLabel:PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence]||evidence.confidence,
+  };
+};
+
 const generateQrSvgDataUrl = (text) => {
   try {
     const qrMini = typeof window !== 'undefined' ? window.QRMini : (typeof globalThis !== 'undefined' ? globalThis.QRMini : null);
@@ -9652,11 +9670,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
+                                        // Evidencia de producción tal como la adjuntó production-learning-bridge.js
+                                        // a searchScenarios() — solo lectura, no altera out.ranked ni su orden.
+                                        byProfile[`_evidence_${pk}`]=out.historicalEvidence||null;
                                         if(pk===optProfile)_diag={stockCount,diag};
                                       }catch(e){
                                         byProfile[pk]=[];
                                         const diag={error:e.message||String(e),profileKey:pk,targetKey:optTarget};
                                         byProfile[`_diag_${pk}`]={stockCount:0,diag};
+                                        byProfile[`_evidence_${pk}`]=null;
                                         if(pk===optProfile)_diag={stockCount:0,diag};
                                       }
                                     });
@@ -9689,6 +9711,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
                                   {optResults[optProfile].length} combinaciones exclusivas · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · C:N objetivo {SPP[optTarget]?.cn_optimal.ideal}:1
                                 </div>
+                                {(()=>{
+                                  const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
+                                  return(
+                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300,#B8C9A0)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
+                                      {evi.hasEvidence
+                                        ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
+                                        :`Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                    </div>
+                                  );
+                                })()}
                                 {optResults[optProfile].map((r,i)=>{
                                   const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
                                   const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
