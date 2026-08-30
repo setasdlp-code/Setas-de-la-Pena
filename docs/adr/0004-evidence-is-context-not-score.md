@@ -32,9 +32,30 @@ production fixtures before it may influence ranking.
 - Scenario ordering is a regression surface: a change that alters ranking while
   claiming to be display-only violates this ADR.
 
-## Related
+## Related — amended 2026-08-30 after ADR-0007
 
 ADR-0007 records a pre-existing exception discovered after this boundary was drawn.
+It is worth stating precisely, because the unqualified reading of this ADR is wrong.
+
+This ADR's "does not modify" list describes what the **production learning bridge**
+leaves untouched. It was never a claim that no observational data reaches the user's
+screen. A separate, older path already did: `historyCalibration` feeds
+`scoring.js` `buildUncertainty()`, where farm history sets `ebConfidence` and thereby
+the width of the EB interval a user sees. That path predates this vertical and was
+inherited, not introduced by it.
+
+So the boundary this ADR draws is narrower than "production evidence never affects
+output":
+
+- **Holds.** Production evidence does not enter ranking, Escenario selection, scoring
+  weights, or evidence confidence (Scale A). That is the boundary and it is intact.
+- **Does not hold.** Observational history may narrow the displayed EB prediction
+  band (Scale B). ADR-0007 ratified this deliberately, under promotion criteria,
+  rather than treating it as a violation to be closed.
+
+The Consequences below should be read with that carve-out. "Recommendations do not
+drift on confounded data" is about *ranking and evidence weight*, not about interval
+width, which is governed by ADR-0007.
 
 ## Source
 

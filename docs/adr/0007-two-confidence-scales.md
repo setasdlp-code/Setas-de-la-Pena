@@ -1,7 +1,8 @@
 # ADR-0007: `low`/`medium`/`high` names two different confidence scales
 
-Status: **Decided (Scale B promotion criteria) — implementation pending**
-Date: recorded 2026-08-30; decision recorded 2026-08-30
+Status: **Decided (Scale B promotion criteria) — partially implemented (2 of 5)**
+Date: recorded 2026-08-30; decision recorded 2026-08-30; gap table re-derived from
+code 2026-08-30, after criterion 2 and the recency half of criterion 3 landed.
 
 ## Context
 
@@ -25,12 +26,17 @@ for formal experimental designs per `experiment-model.js` (`classify()` returns
 `'comparative'` only when `randomization && minReplicates >= 3 && treatments.length >= 1`).
 
 **Scale B — `ebConfidence`, the EB prediction band.** `scoring.js` `buildUncertainty()`
-reaches `high` from observational history:
+reaches `high` from observational history. As it stood when this conflict surfaced:
 
 ```js
+// state at time of conflict — superseded, see gap table
 if (h.n >= 8 && sim >= 0.8) ebConfidence = 'high';
 else if (h.n >= 3 && sim >= 0.6) ebConfidence = 'medium';
 ```
+
+The `high` branch now reads `recentN >= EB_HIGH_MIN_RECENT_N && sim >= 0.8` with
+`EB_HIGH_MIN_RECENT_N = 20`. The snippet above is kept because it is the behavior
+the decision below was made against.
 
 `h` is `ctx.historyCalibration`, fed from real batch history via
 `recetario-model-bridge.js:84`. The level is not cosmetic — it narrows the interval
@@ -93,22 +99,27 @@ alone) are unaffected and unchanged by this decision.
 ## Gap Between This Decision and the Current Implementation
 
 Recorded so implementation work has a concrete starting point, not vague intent.
-Current code: `scoring.js:210-231` (`buildUncertainty`) and
-`historical-calibration.js:135-152` (`weightedCalibration`).
+**Re-derived from code on 2026-08-30**, after the `n >= 20` and recency work landed;
+the earlier version of this table described the pre-implementation state and is
+superseded. Current code: `scoring.js:210-232` (`buildUncertainty`) and
+`historical-calibration.js:174-200` (`weightedCalibration`).
 
 | Criterion | Current state | Gap |
 |---|---|---|
-| Same species/substrate/process/envelope | Species enforced via `sKey` upstream (`recetario-model-bridge.js:62`). Substrate/process/envelope match is *approximated* by recipe-composition distance (`similarity`), not an explicit categorical match. | Distance-based similarity is a proxy, not the same guarantee as matching on substrate family/process/envelope directly. |
-| `n ≥ 20` | Threshold is `h.n >= 8` for `high` (`scoring.js:217`). | Threshold too low by this decision; needs raising, and `weightedCalibration`'s `n` (`historical-calibration.js:146`) is the pool size to gate on. |
-| Recent data window, no material/process shift | No recency filter or shift detection anywhere in `weightedCalibration` or its callers. | Not implemented at all. |
-| Calibrated against held-out outcomes | `ground-truth-regression.js` exists and evaluates predictions against real `ebReal` fixtures — but it's an **offline** reporting harness, not wired into the live `buildUncertainty` calculation. `halfWidth` is derived from `h.sd` on the same in-sample pool that produced `meanEB` (`scoring.js:219`). | Live path has no held-out validation; would need `ground-truth-regression.js`'s approach (or similar) integrated into the confidence-promotion decision itself, not just run as a separate report. |
-| Coverage/error thresholds displayed | Only `confidence` label and a static `note` string are shown (`scoring.js:226-230`). No coverage or error metric is computed or surfaced. | Not implemented; needs a coverage/error computation and a UI surface for it. |
+| Same species/substrate/process/envelope | Species enforced via `sKey` upstream (`recetario-model-bridge.js:50`). Substrate/process/envelope match is *approximated* by recipe-composition distance (`similarity >= 0.55` to enter the pool, `>= 0.8` to promote), not an explicit categorical match. | **Open, unchanged.** Distance-based similarity is a proxy, not the same guarantee as matching on substrate family/process/envelope directly. |
+| `n >= 20` | **Closed.** `EB_HIGH_MIN_RECENT_N = 20`; promotion requires `recentN >= 20 && sim >= 0.8` (`scoring.js`). | None — and the implementation is *stricter* than this ADR asked: it requires 20 **recent** lots, not 20 of any age. `h.n` (total pool) still drives `medium` and the band width. |
+| Recent data window | **Closed.** `RECENCY_WINDOW_DAYS = 365`; `weightedCalibration` counts `recentN` as pool rows whose `fecha` parses inside the window. A row with no parseable date never counts as recent — absence of evidence does not promote. | The 365-day value is provisional and flagged in-code as not validated against the farm's real substrate/process drift cycle. |
+| No known material/process shift | Not implemented. No data source anywhere in the app detects a material or process change. | **Open.** This is the half of criterion 3 that `recentN` does not satisfy; recency is a proxy for stability, not a check for it. Left explicit rather than treated as solved by the window. |
+| Calibrated against held-out outcomes | Not implemented in the live path. `ground-truth-regression.js` evaluates predictions against real `ebReal` fixtures, but is **offline** — it is not imported by `scoring.js`, `historical-calibration.js`, or `recetario-model-bridge.js`. `halfWidth` derives from `h.sd` on the same in-sample pool that produced `meanEB`. | **Open, unchanged.** Would need held-out validation integrated into the promotion decision itself, not run as a separate report. |
+| Coverage/error thresholds displayed | Not implemented. Only the `confidence` label and a static `note` string are shown (`scoring.js:238-241`). No interval-coverage or error metric is computed. (The `coverage` identifiers in `scoring.js` refer to ingredient-stock coverage — unrelated.) | **Open, unchanged.** Needs a coverage/error computation and a UI surface. |
 
-**Scope note**: per direction from Sebastián, implementing this is scoped as
-*confidence semantics + promotion criteria* — tightening `buildUncertainty`'s gating
-logic and surfacing coverage/error alongside the existing label — not a new EB
-calculator or a broader scoring redesign. ADR-0004's boundary (no ranking/Escenario
-selection changes) still applies.
+**Net:** two of five criteria are enforced. A live `high` label now means "≥20 similar
+lots within 365 days," which is materially closer to the decision than the original
+`n >= 8` on any-age data — but it is still short of the full bar, because categorical
+matching, shift detection, held-out calibration, and coverage display are all open.
+
+**Re-derive this table rather than trusting it.** It has already drifted once between
+what the ADR recorded and what the code did.
 
 ## Consequences
 
@@ -116,13 +127,18 @@ selection changes) still applies.
   part of the original context is unchanged. Never quote a confidence level without
   naming which scale it came from.
 - Scale B's `high` now has a concrete, checkable definition instead of "enough rows,
-  enough similarity." The code does not yet enforce it (see gap table above) —
-  until it does, live-shown `high` labels may not actually meet this bar.
+  enough similarity." The code enforces two of its five criteria (see gap table
+  above) — until the rest land, a live-shown `high` label still does not certify
+  that this bar was met.
 - The `agronomic-claims` skill should carry the *new* criteria (not just the
   scale-conflation warning) as its reference for what `ebConfidence: high` is
   supposed to mean once implemented.
-- Implementing the gap-table items is separate follow-up work, not done as part of
-  recording this decision — flagged explicitly rather than silently deferred.
+- Implementing the remaining gap-table items is separate follow-up work — flagged
+  explicitly rather than silently deferred. ADR-0004's boundary (no ranking or
+  Escenario-selection changes) constrains that work.
+- ADR-0005 records a related limit: the Scale B pool is counted from Bitácora rows,
+  which its deterministic-ID scheme does not cover. `recentN >= 20` gating rests on
+  those counts.
 
 ## Source
 

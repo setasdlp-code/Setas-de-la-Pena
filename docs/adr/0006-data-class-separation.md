@@ -33,6 +33,28 @@ impossible telemetry is quarantined rather than silently averaged.
   (`.claude/skills/agronomic-claims/SKILL.md`), which loads automatically for agents
   touching scoring, evidence, or telemetry.
 
+## Related — added 2026-08-30 after ADR-0007
+
+The four classes above separate *kinds of number*. ADR-0007 found the same failure
+mode one level up, in the words attached to those numbers: `low`/`medium`/`high`
+names **two different scales**, and they are not interchangeable.
+
+| Scale | Rates | May reach `high` from observation |
+|---|---|---|
+| A — evidence confidence (`cycle-evidence.js`) | How much a body of evidence is worth | **No** — capped at `medium` by construction |
+| B — `ebConfidence` (`scoring.js` `buildUncertainty()`) | How tight an EB prediction band should be | **Yes** — ratified by ADR-0007, under promotion criteria |
+
+This belongs with this ADR because it is the same defect class: two distinct things
+that serialize to identical-looking values, where collapsing them destroys the
+ability to say what confidence a claim deserves. The operative rule — **never quote a
+confidence level without naming which scale it came from** — extends the "never
+silently substituted" principle from values to labels.
+
+The `agronomic-claims` skill carries both this scale conflation and ADR-0007's
+promotion criteria, and tracks which criteria the code actually enforces. Per that
+skill, re-derive its gap table from the code rather than trusting it — the
+implementation has moved since ADR-0007 was recorded.
+
 ## Source
 
 `PRODUCTION_LEARNING_LOOP_V1.md`, "Safety/quality rule"; `cycle-evidence.js`
