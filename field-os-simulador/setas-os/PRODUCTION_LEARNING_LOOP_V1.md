@@ -81,7 +81,7 @@ Status verified against the code on 2026-08-30.
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | Trigger `CycleEvidence` automatically at defined harvest/close milestones. | **Pending.** `materializeCycleEvidence()` exists in `production-learning-bridge.js` but no milestone calls it. |
+| 1 | Trigger `CycleEvidence` automatically at defined harvest/close milestones. | **Done.** `production-learning-bridge.js` exposes `onHarvestRecorded`/`onCycleClosed`; `upsertRoomCycle` fires the close milestone when `state === 'closed'`, and a runtime wrap of `SetasBitacoraDB.guardarCosecha` fires the harvest milestone. Both reuse `materializeCycleEvidence()`'s `cycleId+batchId` identity, so re-firing never duplicates a record. |
 | 2 | Add an ESP32 payload adapter that maps hardware messages into `setas.telemetry.v1` before persistence. | **Done.** `esp32-telemetry-adapter.js` + `esp32-telemetry-adapter.test.js`. |
 | 3 | Add `Hoy` exceptions for stale sensors, quarantined readings, environmental deviations and batches deviating materially from historical cycle duration. | **Data layer only.** Quarantine logic lives in `telemetry-contract.js`; nothing surfaces it in `Hoy`. |
 | 4 | Surface contextual evidence in Perito explanations without changing recommendation scores. | **Wired, not displayed.** The bridge attaches `historicalEvidence` and `productionLearning` to scenario results; no view consumes them yet. |
