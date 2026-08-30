@@ -89,18 +89,25 @@ strain, or regime."*
 ### The code does not enforce this yet
 
 **A `high` label produced by the current build does not necessarily meet the bar
-above.** The gaps, per ADR-0007's table:
+above.** The gaps, per ADR-0007's table — **a snapshot, actively being closed.**
+Verify against the code before relying on any row; do not cite this table as the
+current state:
 
 | Criterion | Current code |
 |---|---|
 | Categorical match | Approximated by recipe-distance `similarity`, not a categorical match |
-| `n >= 20` | Gates at `h.n >= 8` (`scoring.js:217`) |
+| `n >= 20` | Was `h.n >= 8`; being replaced by a recency-aware `recentN` gate — check `scoring.js` and `historical-calibration.js` directly |
 | Recency / shift check | Not implemented anywhere |
 | Held-out calibration | `halfWidth` uses `h.sd` from the same in-sample pool that produced `meanEB` (`historical-calibration.js` `weightedCalibration`); `ground-truth-regression.js` is an offline harness, not wired into the live path |
 | Coverage/error displayed | Only a label and a static `note` string are shown |
 
-So: treat a live `high` as unverified against ADR-0007 until those land. Do not cite
-it as evidence that a prediction is trustworthy, and do not widen its use.
+So: treat a live `high` as unverified against ADR-0007 until every row is closed —
+a partially-closed table is still not the ratified bar. Do not cite it as evidence
+that a prediction is trustworthy, and do not widen its use.
+
+**When you read this, re-derive the gap rather than trusting the table.** ADR-0007
+is the authority on the criteria; the code is the authority on what is enforced.
+This skill is neither.
 
 Closing any of these gaps is scoped work — confidence semantics and promotion
 gating, not a new EB calculator and not a scoring redesign. ADR-0004's boundary
