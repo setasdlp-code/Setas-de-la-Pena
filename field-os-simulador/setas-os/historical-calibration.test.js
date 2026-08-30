@@ -195,7 +195,7 @@ test('bitacoraAsTrialRows es [] sin lotes reales — no rompe a los bridges que 
 // recetas con los mismos ingredientes pero proporciones muy distintas (que
 // Jaccard llamaría "idénticas") no deben pesar como evidencia fuerte para EB,
 // que depende de esas proporciones. ──
-const { weightedCalibration } = require('./historical-calibration.js');
+const { weightedCalibration, parseRowDate } = require('./historical-calibration.js');
 const distL1 = (a = [], b = []) => {
   const mapOf = (r) => Object.fromEntries(r.map((x) => [x.id, Number(x.p ?? x.pct) || 0]));
   const aa = mapOf(a), bb = mapOf(b);
@@ -228,6 +228,37 @@ test('weightedCalibration usa el pool completo (sin recorte a top-N) cuando nada
   const h = weightedCalibration(activa, lejanas, distL1);
   assert.equal(h.n, 12, 'no debe recortar el pool de respaldo a un top-N arbitrario');
   assert.equal(h.matched, false);
+});
+
+// ── ADR-0007: parseRowDate y recentN ──────────────────────────────
+test('parseRowDate reconoce ISO (Bitácora) y es-CO (setas_v6), null en formato desconocido', () => {
+  assert.equal(parseRowDate('2026-08-30'), Date.UTC(2026, 7, 30));
+  assert.equal(parseRowDate('30/8/2026'), Date.UTC(2026, 7, 30));
+  assert.equal(parseRowDate('8/30/2026'), null, 'mes 30 no existe — no debe colarse como fecha válida');
+  assert.equal(parseRowDate('no es una fecha'), null);
+  assert.equal(parseRowDate(null), null);
+  assert.equal(parseRowDate(undefined), null);
+});
+
+test('recentN cuenta solo filas con fecha reconocible dentro de la ventana de recencia', () => {
+  const activa = [{ id: 'x', p: 100 }];
+  const now = Date.UTC(2026, 7, 30); // 2026-08-30, fijo para determinismo
+  const rows = [
+    { ...trial([{ id: 'x', p: 100 }], 90), fecha: '2026-08-01' }, // dentro de la ventana (29 días)
+    { ...trial([{ id: 'x', p: 100 }], 92), fecha: '2024-01-01' }, // fuera de la ventana (>365 días)
+    { ...trial([{ id: 'x', p: 100 }], 88), fecha: null },          // sin fecha — nunca cuenta como reciente
+  ];
+  const h = weightedCalibration(activa, rows, distL1, { now, recencyWindowDays: 365 });
+  assert.equal(h.n, 3, 'n sigue siendo el tamaño total del pool, sin filtrar por fecha');
+  assert.equal(h.recentN, 1, 'solo la fila de 2026-08-01 cae dentro de los 365 días desde now');
+});
+
+test('recentN es 0 cuando ninguna fila tiene fecha parseable — nunca promueve a high por defecto', () => {
+  const activa = [{ id: 'x', p: 100 }];
+  const rows = Array.from({ length: 25 }, (_, i) => trial([{ id: 'x', p: 100 }], 90 + i));
+  const h = weightedCalibration(activa, rows, distL1, { now: Date.now() });
+  assert.equal(h.n, 25);
+  assert.equal(h.recentN, 0, 'sin fecha en ninguna fila, recentN no puede inferirse como "todas recientes"');
 });
 
 // ── Contrato de cableado: el motor deja de calibrar con datos de demo ──
