@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 574cadcd6179e3c10a1f3ae326be430aa85855bd868f279e34cd3091fb70208b
+// source-hash: 718cd7e48285de38b0f8743b3912981e88c14aba9ca81d006436208f20b75ed7
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1959,6 +1959,16 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     }
     if (typeof setSelectedClimateRoom === "function") {
       setSelectedClimateRoom(roomId);
+    }
+    if (typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === "function") {
+      window.SetasFirebase.pushClimateReading({
+        roomId,
+        temperature_c: temp,
+        rh_pct: rh,
+        co2_ppm: co2,
+        substrate_temperature_c: subTemp,
+        source: "iot_hub_webhook"
+      }).catch((e) => console.warn("[IoT Hub] Error sincronizando a Firestore:", e));
     }
     return {
       success: true,

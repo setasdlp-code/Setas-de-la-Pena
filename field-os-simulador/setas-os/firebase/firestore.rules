@@ -77,6 +77,17 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    match /telemetria_lecturas/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      allow update, delete: if isAdmin();
+    }
+
+    match /telemetria_salas/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn() || request.resource.data.source == 'esp32_hardware';
+    }
+
     match /bitacora_lotes/{id} {
       allow read: if signedIn();
       allow write: if signedIn();

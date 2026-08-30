@@ -2632,6 +2632,17 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     if (typeof setSelectedClimateRoom === 'function') {
       setSelectedClimateRoom(roomId);
     }
+    // Sincronización en la nube hacia Firestore
+    if (typeof window !== 'undefined' && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === 'function') {
+      window.SetasFirebase.pushClimateReading({
+        roomId,
+        temperature_c: temp,
+        rh_pct: rh,
+        co2_ppm: co2,
+        substrate_temperature_c: subTemp,
+        source: 'iot_hub_webhook'
+      }).catch(e => console.warn('[IoT Hub] Error sincronizando a Firestore:', e));
+    }
     return {
       success: true,
       msg: `Telemetría recibida con éxito para sala "${roomId}": ${temp.toFixed(1)}°C, ${rh.toFixed(1)}% HR, ${co2.toFixed(0)} ppm CO2.`

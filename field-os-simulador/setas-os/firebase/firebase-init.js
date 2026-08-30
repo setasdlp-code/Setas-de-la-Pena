@@ -17,6 +17,7 @@ import {
 } from "../vendor/firebase/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { initSetasAI } from "./ai-logic.js";
+import { pushClimateReading, subscribeToLiveClimate } from "./telemetria-sync.js";
 
 const app = initializeApp(firebaseConfig);
 
@@ -33,8 +34,18 @@ const db = initializeFirestore(app, {
 const auth = getAuth(app);
 const ai = initSetasAI(app);
 
-window.SetasFirebase = { app, db, auth, ai, onAuthStateChanged, signInWithEmailAndPassword, signOut };
+window.SetasFirebase = {
+  app,
+  db,
+  auth,
+  ai,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  pushClimateReading: (reading) => pushClimateReading(db, reading),
+  subscribeToLiveClimate: (cb) => subscribeToLiveClimate(db, cb)
+};
 window.dispatchEvent(new CustomEvent("setas-firebase-ready"));
 
-export { app, db, auth, ai };
+export { app, db, auth, ai, pushClimateReading, subscribeToLiveClimate };
 
