@@ -102,7 +102,10 @@ Un cambio en React no está terminado hasta que:
 3. `simulador-app.js` regenerado forma parte del mismo commit.
 4. `node --test *.test.js` pasa.
 
-`package.json` todavía describe el proyecto como "HTML/JS/CSS estático, sin build step" — esa descripción es incorrecta para `simulador-app.jsx` desde que existe `build.js`; no usarla como guía operativa.
+Ninguna CI corre `node build.js`. Lo que hay es verificación: `build.test.js` lee el
+banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un hash
+fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
+commit — la CI detecta el desfase, pero no lo corrige.
 
 ## Preguntas para revisar un PR que toque navegación o el Formulador
 
