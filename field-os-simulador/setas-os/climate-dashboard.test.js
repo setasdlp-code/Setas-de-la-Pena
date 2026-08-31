@@ -107,3 +107,12 @@ test('simulador-app.jsx renders relay actuator controls and interactive override
   assert.match(jsx, /Disparar Pulso FAE/);
   assert.match(jsx, /Forzar Humidificación/);
 });
+
+test('ClimateDashboardSection solo se monta como componente, nunca se invoca como función', () => {
+  // Tiene 5 useState, 4 useRef y 2 useEffect: llamarla en el cuerpo del padre
+  // ejecuta esos 11 hooks en cada render del padre y descarta el JSX.
+  // PR #181 introdujo `const climateDashboardContent = ClimateDashboardSection();`
+  // sin ningún consumidor. Ver docs/triage/2026-08-30-merge-backlog.md.
+  assert.doesNotMatch(jsx, /ClimateDashboardSection\s*\(\s*\)/);
+  assert.match(jsx, /<ClimateDashboardSection\s*\/>/);
+});
