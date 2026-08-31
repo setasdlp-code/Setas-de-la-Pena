@@ -1,14 +1,14 @@
 ---
 title: Biblioteca de Sustratos
+document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-07-16
-confidence: medium
+last_reviewed: 2026-08-09
+confidence: high
 primary_sources:
   - Stamets 2000
   - Cotter 2014
-  - ICAR-DMR 2020 (guide_002)
-  - Zurbano, Bellere & Savilla 2017 (paper_001)
+  - Gupta & Sharma 2016
   - Cruz 2010
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006)
 related_documents:
@@ -16,11 +16,12 @@ related_documents:
   - sterilization.md
   - pasteurization.md
   - contamination.md
-  - 01_species/pleurotus_djamor.md
+  - ../01_species/lentinula_edodes.md
+  - ../01_species/pleurotus_djamor.md
 ---
 
 # Executive Summary
-Catálogo de sustratos disponibles y su compatibilidad con cada especie, incluyendo BE esperada, tratamiento requerido y disponibilidad en Colombia.
+Catálogo de evidencia sobre sustratos. DEC-013 establece shiitake como especie de arranque: la familia prioritaria es serrín de madera dura suplementado y esterilizado, pero la formulación del lote 1 continúa sin aprobar. Las recetas de Pleurotus quedan como referencia futura.
 
 # Research Consensus
 
@@ -30,11 +31,11 @@ Supported by:
 - Stamets (Growing Gourmet and Medicinal Mushrooms)
 - Cotter (Organic Mushroom Farming)
 - Zied & Pardo-Giménez
-- ICAR-DMR 2020 (guide_002)
+- Gupta 2016
 
-La paja pasteurizada es un sustrato de referencia para *Pleurotus*. Para *P. djamor*, guide_002 reporta un potencial de BE de 80–100% sobre pajas agrícolas; ese rango es una referencia institucional, no un resultado validado con paja de Tenjo.
+`P. djamor` puede crecer sobre paja pasteurizada, pero los resultados varían por cepa, sustrato y método. La auditoría 2026-07-23 retiró la BE universal de 80–130% y cualquier uso de esta receta como estándar activo.
 **Strength of evidence:** ★★★☆☆
-**Conflicting evidence:** paper_001 evaluó formulaciones de paja de arroz, cocopeat y salvado y obtuvo una BE máxima de 31,1%; no evaluó paja de trigo.
+**Project status:** referencia para una futura línea de Pleurotus.
 
 ## Master's Mix — Shiitake y Lion's Mane
 **Consensus**
@@ -43,16 +44,16 @@ Supported by:
 - Cotter 2014
 - Zied 2017
 
-Master's Mix (50% serrín de madera dura + 50% cascarilla de avena) produce BE 100–150% para L. edodes y H. erinaceus pero requiere esterilización obligatoria.
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Ninguno. La suplementación alta con pasteurización (sin esterilización) produce contaminación >50% de los casos.
+Las mezclas de serrín de madera dura suplementado son una familia relevante para shiitake y requieren un proceso térmico validado. La composición 50/50 es una referencia de literatura, no la receta aprobada del lote 1; no existe todavía una meta de BE del proyecto.
+**Strength of evidence:** ★★★★☆
+**Project status:** candidata pendiente de materias primas, formulación y validación de carga.
 
 ## Subproductos de Café (Colombia) — L. edodes y G. lucidum
 **Consensus (fuente única, investigación aplicada)**
 Supported by:
 - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé/FNC — paper_006)
 
-Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrato para hongos medicinales en mezclas formuladas a relación C/N objetivo (≈40 para shiitake; 40–60 para ganoderma). La mejor formulación de shiitake medida (T2: 28% aserrín de café + 50% borra + 19% salvado de maíz) alcanzó rendimiento medio 57,6% (>50% = umbral comercial). La pulpa de café **sola no fructifica**; debe ir en mezcla y ≤15% en ganoderma.
+Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrato para hongos medicinales en mezclas formuladas a relación C/N objetivo (≈40 para shiitake; 40–60 para ganoderma). La mejor formulación de shiitake medida (T2: 28% aserrín de café + 50% borra + 19% salvado de maíz) alcanzó rendimiento medio reportado de 57,6%. La definición de rendimiento debe conservarse y no asumirse automáticamente como BE comparable ni como umbral comercial del proyecto. La pulpa de café **sola no fructifica**; debe ir en mezcla y ≤15% en ganoderma.
 **Strength of evidence:** ★★★☆☆ (una sola fuente, medida con réplicas, pero en clima de zona cafetera 18–23°C — más cálido que Tenjo)
 **Conflicting evidence:** BE de café inferior a Master's Mix; revalidar bajo régimen térmico de Tenjo. Otros autores reportan BE mayores sobre cascarilla/borra (Leifa et al. 85–88%), lo que sugiere dependencia fuerte de cepa y proceso.
 
@@ -69,11 +70,9 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 |---|---|---|---|---|---|
 | Paja de trigo | ★★★★★ | ★★★★★ | ★★ | ★ | ★ |
 | Master's Mix (50/50) | ★★★★ | ★★★★ | ★★★★★ | ★★★★★ | ★★★★ |
-| **Master's Mix Local (serrín + cascarilla arroz)** | ★★★ | ★★★ | ★★★★ | ★★★★ | ★★★★ |
 | Serrín madera dura | ★★★ | ★★★ | ★★★★ | ★★★★★ | ★★★★★ |
 | Bagazo de caña | ★★★★ | ★★★★ | ★★ | ★ | ★★ |
 | Paja de arroz | ★★★★ | ★★★★ | ★★ | ★ | ★ |
-| **Cascarilla de arroz (suplemento/sustrato)** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ |
 | Troncos madera dura | ★ | ★★ | ★★★★ | ★★ | ★★★★★ |
 | Cartón / papel | ★★ | ★★ | ★ | ★ | ★ |
 | Borra de café (en mezcla) | ? | ? | ★★★ | ★★★ | ★★★ |
@@ -84,45 +83,32 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 
 **Nota (sustratos de café):** las calificaciones provienen de una sola fuente colombiana (paper_006, Cenicafé 2005) para *L. edodes* y *G. lucidum*, en clima más cálido que Tenjo. No hay datos para Pleurotus/Hericium sobre café en esa fuente. Borra sola BE shiitake ~16,9%; aserrín de tallo ~17,1% — usar siempre en mezcla formulada, no puros.
 
-⚠️ **P. djamor es incompatible con eucalipto** (inhibe micelio — dato validado).
+**Precaución sobre eucalipto:** la auditoría 2026-07-23 no encontró respaldo para una incompatibilidad universal con *P. djamor*. No aprobar una madera de eucalipto sin identificar especie, procedencia, tratamiento y respuesta de la cepa.
 
 ## Perfiles de Sustratos
 
 ### Paja de Trigo
 - **Composición:** Lignocelulosa ~70% (celulosa 35%, hemicelulosa 23%, lignina 12%)
-- **Disponibilidad Colombia:** Media — Colombia importa la mayor parte del trigo. En Sabana de Bogotá buscar en Boyacá/Nariño en temporada de cosecha o contactar molinos locales (Molino San Rafael)
-- **Precio estimado:** Variable por temporada y ubicación
+- **Disponibilidad Colombia:** Alta — subproducto agrícola abundante
+- **Precio estimado:** 2,000–5,000 COP/kg
 - **Tratamiento:** Pasteurización (75–82°C, 1–2h) suficiente para Pleurotus
 - **Humedad objetivo:** 65–70% (FC)
-- **BE potencial (P. djamor):** 80–100% como referencia de guide_002; objetivo local pendiente de tres lotes comparables
+- **BE del proyecto:** sin meta aprobada; referencia futura para Pleurotus
 - **Riesgos:** Trichoderma si temperatura pasteurización insuficiente
 
 ### Master's Mix (50/50 Serrín + Husks)
 - **Composición:** 50% serrín madera dura + 50% cascarilla de avena (oat hulls)
-- **Disponibilidad Colombia:** Baja — serrín disponible; **cascarilla de avena es rara en Colombia**
-- **Alternativa local verificada (agosto 2026):** 50% serrín + 50% **cascarilla de arroz** (ver perfil abajo). BE esperada ligeramente menor pero con disponibilidad garantizada. Otra opción: 50% serrín + 50% salvado de trigo (más económico pero mayor riesgo contaminación)
+- **Disponibilidad Colombia:** Media — serrín disponible; husks puede requerir importar o sustituir
+- **Alternativa local:** 50% serrín + 50% salvado de trigo (más económico; aumenta riesgo contaminación)
 - **Tratamiento:** **Esterilización obligatoria** (121°C, 2–4h)
 - **Humedad objetivo:** 60–65% (FC estricto)
 - **BE esperada (H. erinaceus, L. edodes):** 100–150%
 - **Riesgos:** Contaminación bacteriana si no se esteriliza; muy sensible a temperatura de proceso
 
-### Cascarilla de Arroz (Rice Hulls) — Alternativa Local Verificada
-*Agregado agosto 2026 tras investigación de disponibilidad local*
-- **Composición:** Lignocelulosa ~75% (celulosa 35%, hemicelulosa 25%, lignina 20%, sílice ~15%)
-- **Disponibilidad Colombia:** **Muy alta** — subproducto hiperabundante de la industria arrocera nacional
-- **Precio:** $18,000–$20,000 COP por bulto de 10 kg en almacenes agropecuarios de la Sabana de Bogotá
-- **Uso principal:** Sustituto directo de cascarilla de avena (oat hulls) en Master's Mix y otras mezclas suplementadas. Proporciona estructura, aireación y drenaje al sustrato
-- **Tratamiento:** Esterilización obligatoria cuando se usa en mezclas suplementadas (igual que Master's Mix original)
-- **Humedad objetivo:** 60–65% (FC). Absorbe menos agua que la cascarilla de avena — ajustar hidratación
-- **BE esperada:** ~80–120% en mezcla 50/50 con serrín (estimación conservadora; la cascarilla de avena da ~100–150%). La diferencia se debe al mayor contenido de sílice, menos digestible por el micelio
-- **Ventajas operativas:** Costo muy bajo, disponibilidad garantizada, sin necesidad de importar
-- **Riesgos:** Contenido de sílice alto puede reducir BE vs. avena pura. Requiere validación de campo para confirmar BE real. Partícula más rígida — triturar si es necesario para mejorar contacto con micelio
-- **Recomendación:** Usar como sustituto estándar de oat hulls para todas las fórmulas de Setas de la Peña hasta confirmar fuente viable de avena
-
 ### Serrín de Madera Dura (Sin Suplementar)
 - **Composición:** Lignocelulosa >80% (alta lignina)
 - **Disponibilidad Colombia:** Alta — aserraderos
-- **Maderas compatibles:** Roble, aliso, nogal, frutales (evitar coníferas y eucalipto)
+- **Madera para shiitake:** identificar especie y procedencia; aprobarla mediante formulación y piloto, sin listas universales de compatibilidad
 - **Tratamiento:** Pasteurización o esterilización según suplementación
 - **BE esperada:** 50–80% (sin suplementar)
 
@@ -131,7 +117,7 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 - **Disponibilidad Colombia:** Muy alta — subproducto cañero
 - **Precio:** Muy económico o gratuito en zonas cañeras
 - **Tratamiento:** Pasteurización suficiente para Pleurotus
-- **BE esperada (P. djamor):** 70–100%
+- **BE del proyecto:** sin meta aprobada; referencia futura para Pleurotus
 - **Riesgos:** Variabilidad por procedencia; puede traer contaminantes de proceso industrial
 
 ### Paja de Arroz
@@ -149,7 +135,7 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 - **Humedad objetivo:** 62,5% · **Tamaño de partícula:** 0,5–2 cm · **Ca (CaCO₃/CaSO₄):** ≥0,6% (acondiciona pH y estimula crecimiento hifal).
 - **Tratamiento:** Esterilización (121°C) recomendada; ruta artesanal a presión atmosférica documentada pero de mayor riesgo (ver `sterilization.md`).
 - **Formulaciones validadas:**
-  - **Shiitake T2** — 28% aserrín de café + 50% borra + 19% salvado de maíz (+Ca) → rendimiento medio **57,6%** (C/N 40). Cepas recomendadas: L54, L4055.
+  - **Shiitake T2** — 28% aserrín de café + 50% borra + 19% salvado de maíz (+Ca) → rendimiento medio **57,6%** (C/N 40). Cepas estudiadas: L54 y L4055; disponibilidad comercial actual no demostrada.
   - **Ganoderma T12** — con 11,5% borra → **13,1%**; **T13/T14** sin borra (más económicas para fincas lejanas de la fuente de borra), pulpa ≤15%.
 - **Disponibilidad Colombia:** Borra (café tostado) accesible vía cafeterías/restaurantes; pulpa requiere cercanía a beneficio de café y uso fresco (<2 días) o ensilada. Tenjo/Cundinamarca **por confirmar** (ver Open Questions).
 - **Riesgos:** BE inferior a Master's Mix; datos en clima 18–23°C (revalidar en Tenjo); **pulpa sola no fructifica**; borra densa limita BE por características físicas; contaminación temprana (~día 8) si esterilización deficiente.
@@ -162,18 +148,12 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 - **Demasiado seco (<60%):** No escurre nada — micelio crece lento o no crece.
 
 ## Proporción Spawn:Sustrato
-| Tipo Especie | Proporción Recomendada |
-|---|---|
-| Pleurotus (todos) | 10–20% peso seco sustrato |
-| Shiitake | 15–20% |
-| Lion's Mane | 15–20% |
-| Ganoderma | 10–15% |
 
-Mayor proporción de spawn = colonización más rápida = menor riesgo contaminación, pero mayor costo.
+Para el primer lote de shiitake no existe una tasa aprobada. paper_006 reporta 3,6% para spawn comercial y 5–7,5% para spawn propio; antes de aplicar esos valores se debe confirmar la base húmeda/seca y la definición experimental. Registrar siempre la tasa real y su denominador.
 
 # Best Practices
 - Siempre verificar FC antes de inocular — es la variable más ignorada y más crítica.
-- Usar paja local colombiana para P. djamor como primer sustrato de producción.
+- Elegir una sola formulación de serrín de madera dura suplementado para el piloto de shiitake y versionarla antes de comprar o mezclar insumos.
 - Documentar proveedor, lote y BE por lote para comparar.
 - No mezclar maderas de coníferas (pino, ciprés) con serrín — inhibición micelio.
 
@@ -186,18 +166,18 @@ Mayor proporción de spawn = colonización más rápida = menor riesgo contamina
 | Sustrato se seca rápido en carpa | Humedad FC inicial insuficiente | Agregar agua antes de inocular |
 
 # Open Questions
-- ~~¿Disponibilidad y precio de cascarilla de avena (oat husks) en Cundinamarca?~~ **RESUELTA (ago 2026):** Rara en Colombia. Sustituir por cascarilla de arroz ($18–20K COP/bulto 10kg).
-- ¿BE real de Master's Mix Local (serrín + cascarilla arroz) vs. Master's Mix original (serrín + avena)? (validación de campo pendiente)
-- ¿Sustrato alternativo regional a Master's Mix para H. erinaceus? → **Parcialmente resuelta:** Master's Mix Local con cascarilla de arroz es la mejor opción disponible
+- ¿Disponibilidad y precio de cascarilla de avena (oat husks) en Cundinamarca?
+- ¿Sustrato alternativo regional a Master's Mix para H. erinaceus?
 - ¿BE real de bagazo de caña local con P. djamor? (dato de campo pendiente)
-- ¿Acceso real a borra/pulpa/aserrín de café en Tenjo/Cundinamarca, y a qué costo/volumen? → **Parcialmente resuelta (ago 2026):** Borra de café gratuita vía cafeterías en Bogotá/Tenjo. Requiere pasteurización inmediata (<24h). Pulpa requiere cercanía a beneficio — por confirmar en Tenjo
+- ¿Acceso real a borra/pulpa/aserrín de café en Tenjo/Cundinamarca, y a qué costo/volumen? (define si las formulaciones de café son operacionales o solo referencia)
 - ¿BE de las formulaciones de café (T2 shiitake, T12 ganoderma) bajo el régimen térmico frío de Tenjo? (revalidación de campo pendiente)
-- ~~¿Cepas L54/L4055 de shiitake disponibles comercialmente en Colombia?~~ **RESUELTA (ago 2026):** No disponibles comercialmente. Cenicafé no vende al público. Usar cepas de laboratorios privados (Los Fungis, Setas de Siecha, Miceliolab)
+- ¿Cepas L54/L4055 de shiitake disponibles comercialmente en Colombia? (las de Cenicafé eran donaciones de investigación)
+- ¿Tuza de maíz molida como componente de sustrato para *L. edodes*? Nombrada de forma genérica junto a aserrín y bagazo en cultivo aséptico (paper_021), sin proporción, C/N, tratamiento térmico ni BE — no hay ensayo local ni dato específico de shiitake; requiere formulación control y prueba propia antes de considerarse candidato, conforme al protocolo de preproducción de `09_research/intake/shiitake_lot1_preproduction_validation.md`.
 
 # References
-- ICAR-Directorate of Mushroom Research. (2020). *Growing Oyster Mushroom* (Technical Bulletin). [guide_002]
-- Zurbano, L. Y., Bellere, A. D., & Savilla, L. C. (2017). *Mycelial growth, fruiting body production and proximate composition of Pleurotus djamor on different substrate*. [paper_001]
+- Gupta, R. & Sharma, K. (2016). Mycelial Growth and Fruiting Body Production on Different Substrates. ResearchGate.
 - Cruz, A. (2010). Eficiencia biológica de Pleurotus spp. en sustratos colombianos. *Acta Biol. Colomb.*
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 51–82.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
-- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
+- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006 / paper_006]
+- Ho, Q. B. T. & Suzuki, A. (2019). Technology of Mushroom Cultivation. *Vietnam Journal of Science and Technology*, 57(3), 265–286. [paper_021]

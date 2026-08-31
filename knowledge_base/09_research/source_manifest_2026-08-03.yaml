@@ -1,0 +1,61 @@
+intake_date: 2026-08-03
+scope: five user-supplied mushroom cultivation references
+original_location: user-supplied files; retained outside the public repository unless explicitly permitted
+records:
+  - source_id: paper_007
+    original_filename: Pleurotus djamor, un hongo con potencial aplicación biotecnológica para el neotrópico.pdf
+    citation_key: Salmones_2017
+    source_location: user-supplied intake, 2026-08-03
+    pages: 13 journal pages (pp. 73–85)
+    rights_status: binary retention pending license confirmation; metadata and curatorial notes may be versioned
+    source_type: peer_reviewed_narrative_review
+    language: es
+    sha256: ab0a8a7e4ded2885a9a0b62176a02ab85393354347e019f2f5acc47f6b09233a
+    repository_binary: pending_license_confirmation
+    evidence_scope: [Pleurotus_djamor, biotechnology, bioremediation, food_safety]
+  - source_id: book_004
+    original_filename: Paul-stamets-mycelium-running-how-mushrooms-can-help-save-the-worldpdf.pdf
+    citation_key: Stamets_2005
+    source_location: user-supplied scanned PDF, 2026-08-03
+    pages: 315 PDF pages; OCR scope pp. 58–303 printed / pp. 70–315 PDF
+    rights_status: private reference only; no binary or OCR transcription redistribution
+    source_type: technical_popular_book
+    language: en
+    sha256: b7ff9cd197f5a0b5194fb420cabc58729bb2c6978b087cab822091459a2bb0a9
+    repository_binary: private_reference_only
+    ocr_status: chapters_05_14_completed; 32_page_level_claims_verified
+    claim_register: knowledge_base/09_research/Mycelium_Running_ch5-14_claim_register.md
+    evidence_scope: [mycofiltration, mycoforestry, mycoremediation, mycopesticides, low_tech_cultivation]
+  - source_id: guide_002
+    original_filename: growing oyster muahroom CAR india.pdf
+    citation_key: ICAR_DMR_2020
+    source_location: user-supplied intake, 2026-08-03
+    pages: 48 pages
+    rights_status: user-permitted retention; confirm redistribution terms before publication
+    source_type: institutional_technical_bulletin
+    language: en
+    sha256: 4fcc832889d622a17a6ce3ce3150a5b74b4bc618b76d9bc98b51615b634e599a
+    repository_binary: permitted_by_user
+    evidence_scope: [Pleurotus_spp, cultivation, postharvest, crop_protection, farm_design]
+  - source_id: guide_004
+    original_filename: TM-Mushroom.pdf
+    citation_key: Chang_UNAPCAEM_ca2010
+    source_location: user-supplied intake, 2026-08-03
+    pages: 65 pages
+    rights_status: user-permitted retention; confirm redistribution terms before publication
+    source_type: institutional_training_manual
+    language: en
+    sha256: a3a714cce4da27f5ab6d8aa2c4b188361f146d8b7950a1b5be625410f234dd11
+    repository_binary: permitted_by_user
+    evidence_scope: [multi_species, training, production_systems, residues, environment]
+  - source_id: book_007
+    original_filename: mushrooms - cultivation, nutritional valu, medicinal effects.pdf
+    citation_key: Chang_Miles_2004
+    source_location: user-supplied PDF, 2026-08-03
+    pages: 391 printed pages plus preliminaries
+    rights_status: private reference only; no binary redistribution
+    source_type: technical_reference_book
+    language: en
+    sha256: e9cc3ddcc4a8fc3a30eba3f156fa312767a642acd2d05aaa1321deb94d2676ec
+    repository_binary: private_reference_only
+    evidence_scope: [multi_species, cultivation, nutrition, medicinal_context, environmental_impact]

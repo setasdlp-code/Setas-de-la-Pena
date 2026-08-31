@@ -1,0 +1,259 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f5; }
+    .cutaway { position: relative; background: #e0f2fe; border: 2px solid #333; }
+    .panel-stack { position: absolute; display: flex; flex-direction: column; }
+    .piece { border: 2px solid #8b6f47; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #5c4728; text-align: center; }
+    .piece-a { background: repeating-linear-gradient(90deg, #c9a876 0px, #c9a876 3px, #b8935f 3px, #b8935f 6px); }
+    .piece-b { background: repeating-linear-gradient(90deg, #d4c4a8 0px, #d4c4a8 3px, #c4b494 3px, #c4b494 6px); }
+    .cavity-fill { position: absolute; background: repeating-linear-gradient(45deg, #fef3c7 0px, #fef3c7 4px, #fde68a 4px, #fde68a 8px); border: 1px dashed #92400e; }
+    .layer-label { position: absolute; font-size: 9px; color: #333; background: white; padding: 2px 4px; border-radius: 2px; }
+    .roof { position: absolute; background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%); }
+    .roof-frame { position: absolute; background: #78716c; }
+    .fan-icon { position: absolute; border: 2px solid #059669; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .humidifier-icon { position: absolute; border: 2px solid #0284c7; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; text-align: center; padding: 4px; }
+    .tent-outline { position: absolute; border: 2px solid #db2777; background: rgba(219, 39, 119, 0.05); }
+    .floor { position: absolute; background: linear-gradient(90deg, #8b7355 0%, #a0826d 50%, #8b7355 100%); }
+    .title-block { margin-bottom: 16px; }
+    h2 { margin: 0 0 4px 0; font-size: 16px; color: #1f2937; }
+    .subtitle { margin: 0 0 16px 0; color: #666; font-size: 12px; }
+    .detail-callout { position: absolute; font-size: 9px; color: #444; }
+    .arrow-line { position: absolute; border-top: 1px solid #666; }
+    .notes { margin-top: 20px; padding: 12px; background: #dcfce7; border-left: 3px solid #16a34a; border-radius: 4px; font-size: 11px; color: #15803d; }
+    .notes ul { margin: 6px 0 0 16px; padding: 0; }
+    .equip-notes { margin-top: 12px; padding: 12px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 11px; color: #78350f; }
+    .equip-notes ul { margin: 6px 0 0 16px; padding: 0; }
+  </style>
+</helmet>
+
+<div style="padding: 24px; max-width: 1000px;">
+  <div class="title-block">
+    <h2>Corte Constructivo — Muro de Panel y Manejo de Aire</h2>
+    <p class="subtitle">Detalle de ensamble Pieza A + Pieza B, más equipos existentes asignados</p>
+  </div>
+
+  <!-- Wall detail cutaway -->
+  <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+
+    <!-- LEFT: Panel wall stack detail -->
+    <div>
+      <p style="font-size: 12px; font-weight: 600; margin: 0 0 8px 0; color: #333;">Ensamble de muro (por par de panel) — corte real por la mitad</p>
+      <div class="cutaway" style="width: 260px; height: 460px; position: relative;">
+        <div class="panel-stack" style="top: 20px; left: 60px;">
+          <!-- Piece top: 1.20m tall = 180px at scale, includes 1 full cavity + half of cavity 2 (open at cut edge) -->
+          <div class="piece piece-a" style="width: 140px; height: 180px;">
+            Pieza superior<br/>1.20 m<br/>1 cavidad completa +<br/>media cavidad<br/>(abierta en el corte)
+          </div>
+          <!-- Reinforcement blocking at the cut line - NOT an existing crossbrace -->
+          <div style="width: 140px; height: 14px; background: #dc2626; border: 1px solid #991b1b; display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; font-weight: 600;">BLOQUEO AÑADIDO</div>
+          <!-- Piece bottom: 1.20m tall, mirror of top -->
+          <div class="piece piece-b" style="width: 140px; height: 180px;">
+            Pieza inferior<br/>1.20 m<br/>media cavidad<br/>(abierta en el corte) +<br/>1 cavidad completa
+          </div>
+        </div>
+        <div class="layer-label" style="top: 10px; left: 10px;">2.40 m total</div>
+        <div class="detail-callout" style="top: 195px; left: 205px; width: 55px;">← corte real: dentro de cavidad 2, SIN travesaño existente aquí</div>
+        <div class="detail-callout" style="bottom: 10px; left: 10px; width: 220px; color: #991b1b;">El corte no coincide con ningún travesaño del panel original — cada pieza queda con un borde sin refuerzo. Listón de bloqueo (min. 38×63 mm, ~1.70–1.75 m, empotrado a ras del borde) atornillado a los largueros + cara del tablero, ANTES de fijar la placa de unión (contrachapado 12 mm o platina galvanizada, ≥150 mm de alto). 14 listones en total (7 paneles × 2 mitades). Mantener sección delgada — el listón resta espacio al espacio de aire que necesita la barrera radiante.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Cavity fill detail -->
+    <div>
+      <p style="font-size: 12px; font-weight: 600; margin: 0 0 8px 0; color: #333;">Relleno de cavidad (~10 cm) — sistema de barrera radiante</p>
+      <div class="cutaway" style="width: 260px; height: 420px; position: relative;">
+        <div style="position: absolute; top: 20px; left: 20px; width: 220px; height: 380px; border: 2px solid #8b6f47; background: white;">
+          <!-- Layer 1: exterior plywood (left edge of cavity) -->
+          <div style="position: absolute; top: 0; left: 0; width: 14px; height: 100%; background: repeating-linear-gradient(0deg, #c9a876 0px, #c9a876 3px, #b8935f 3px, #b8935f 6px); border-right: 1px solid #8b6f47;"></div>
+          <div class="layer-label" style="top: 6px; left: 18px; width: 60px; font-size: 8px;">Tablero exterior</div>
+
+          <!-- Layer 2: air gap -->
+          <div style="position: absolute; top: 40px; left: 18px; width: 30px; height: 300px; background: rgba(224,242,254,0.6); border: 1px dashed #0284c7;"></div>
+          <div class="layer-label" style="top: 180px; left: 12px; width: 40px; font-size: 8px; transform: rotate(-90deg);">Aire</div>
+
+          <!-- Layer 3: reflective (Mylar / manta) facing the gap -->
+          <div style="position: absolute; top: 40px; left: 50px; width: 4px; height: 300px; background: linear-gradient(90deg, #c0c0c0, #e8e8e8); border: 1px solid #999;"></div>
+          <div class="layer-label" style="top: 40px; left: 58px; width: 75px; font-size: 8px;">Mylar / manta isotérmica (cara reflectiva hacia el aire)</div>
+
+          <!-- Layer 4: EVA foam roll -->
+          <div class="cavity-fill" style="top: 40px; left: 58px; width: 55px; height: 300px;"></div>
+          <div class="layer-label" style="top: 350px; left: 58px; width: 75px; font-size: 8px;">Manta EVA 2 mm (autoadhesiva, resistente a humedad)</div>
+
+          <!-- Layer 5: interior plywood -->
+          <div style="position: absolute; top: 0; right: 22px; width: 14px; height: 100%; background: repeating-linear-gradient(0deg, #d4c4a8 0px, #d4c4a8 3px, #c4b494 3px, #c4b494 6px); border-left: 1px solid #8b6f47;"></div>
+          <div class="layer-label" style="top: 6px; right: 40px; width: 45px; font-size: 8px; text-align: right;">Tablero interior</div>
+
+          <!-- Layer 6: washable liner (PVC board / epoxy), facing the chamber -->
+          <div style="position: absolute; top: 0; right: 0; width: 8px; height: 100%; background: repeating-linear-gradient(0deg, #86efac 0px, #86efac 4px, #4ade80 4px, #4ade80 8px); border-left: 2px solid #15803d;"></div>
+          <div class="layer-label" style="top: 350px; right: 2px; width: 55px; font-size: 8px; text-align: right; color: #15803d;">Forro PVC 5–6mm (cámara) / epóxico (buffer)</div>
+        </div>
+        <div class="detail-callout" style="bottom: -12px; left: 10px; width: 240px;">Capa reflectiva debe quedar frente al espacio de aire (no comprimida) para funcionar como barrera radiante. No llenar la cavidad por completo. El forro lavable va atornillado sobre el tablero interior, hacia la cámara — no dentro de la cavidad.</div>
+      </div>
+    </div>
+
+    <!-- THIRD: Roof-to-wall junction detail -->
+    <div>
+      <p style="font-size: 12px; font-weight: 600; margin: 0 0 8px 0; color: #333;">Unión techo-muro — lona uso rudo (decisión del propietario 2026-08-29)</p>
+      <div class="cutaway" style="width: 260px; height: 460px; position: relative;">
+        <!-- Warning banner: deviation from DOC-0020 -->
+        <div style="position: absolute; top: -14px; left: 10px; width: 240px; font-size: 7px; color: #991b1b; font-weight: 600;">⚠ Sin cubierta rígida — desviación documentada de DOC-0020 y DECISIONS.md #434</div>
+
+        <!-- Lona uso rudo, tensioned directly over rafters, no rigid deck -->
+        <div style="position: absolute; top: 20px; left: 10px; width: 240px; height: 14px; background: repeating-linear-gradient(90deg, #78716c 0px, #78716c 12px, #57534e 12px, #57534e 16px); opacity: 0.9; border: 1px solid #44403c;"></div>
+        <div class="layer-label" style="top: 4px; left: 55px; font-size: 8px;">Lona uso rudo (cobertura única — sin teja rígida debajo)</div>
+
+        <!-- Rafter -->
+        <div style="position: absolute; top: 44px; left: 110px; width: 30px; height: 16px; background: #a8845f; border: 1px solid #78350f;"></div>
+        <div class="layer-label" style="top: 62px; left: 100px; font-size: 8px;">Cabio 38×89mm</div>
+
+        <!-- Ledger on wall top -->
+        <div style="position: absolute; top: 60px; left: 20px; width: 220px; height: 10px; background: #c9a876; border: 1px solid #8b6f47;"></div>
+        <div class="layer-label" style="top: 72px; left: 70px; font-size: 8px;">Durmiente 38×63mm (sobre marco original del panel)</div>
+
+        <!-- Flashing at wall top, tucked under tarp edge -->
+        <div style="position: absolute; top: 34px; left: 25px; width: 14px; height: 40px; background: #94a3b8; border: 1px solid #475569; transform: skewX(-8deg);"></div>
+        <div class="layer-label" style="top: 84px; left: 5px; width: 60px; font-size: 7px; color: #475569;">Tapajuntas — bajo el borde de la lona</div>
+
+        <!-- Exterior wall skin: lona wraps the outside too -->
+        <div style="position: absolute; top: 70px; left: 6px; width: 6px; height: 200px; background: repeating-linear-gradient(0deg, #78716c 0px, #78716c 8px, #57534e 8px, #57534e 11px); border: 1px solid #44403c;"></div>
+        <div style="position: absolute; top: 70px; left: 248px; width: 6px; height: 200px; background: repeating-linear-gradient(0deg, #78716c 0px, #78716c 8px, #57534e 8px, #57534e 11px); border: 1px solid #44403c;"></div>
+
+        <!-- Wall below -->
+        <div style="position: absolute; top: 70px; left: 20px; width: 16px; height: 200px; background: repeating-linear-gradient(0deg, #c9a876 0px, #c9a876 3px, #b8935f 3px, #b8935f 6px); border: 1px solid #8b6f47;"></div>
+        <div style="position: absolute; top: 70px; left: 224px; width: 16px; height: 200px; background: repeating-linear-gradient(0deg, #c9a876 0px, #c9a876 3px, #b8935f 3px, #b8935f 6px); border: 1px solid #8b6f47;"></div>
+        <div class="layer-label" style="top: 200px; left: 40px; font-size: 8px;">Muro (2.40 m) + barniz exterior bajo la lona</div>
+
+        <div class="detail-callout" style="bottom: 20px; left: 10px; width: 240px; color: #991b1b;">Punto de falla advertido en DOC-0020: sin tapajuntas, el agua escurre por la cara del panel — más crítico ahora sin teja rígida. Sin cubierta rígida debajo, la lona necesita tensión adecuada; cualquier hundimiento acumula agua en vez de escurrirla.</div>
+        <div class="detail-callout" style="bottom: 4px; left: 10px; width: 240px; color: #b45309;">Nuevo punto abierto: sin la teja, ya no hay cámara de aire para la condensación del techo — vigilar goteo en la cara inferior de la lona en noches frías. Es la Lona Toolcraft 5×7m ya en inventario (35 m²) — cobertura PARCIAL: techo + 6 muros de cámara (~34.68 m², margen ~0.3 m²); el muro del lado de la puerta queda excluido, cubierto con retal de tablero PVC (mismo material del forro interior) sobre barniz.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insulation material plan -->
+  <div class="equip-notes" style="margin-top: 24px;">
+    <strong>Plan de aislamiento (sin EPS disponible) — cobertura de las 6 posiciones CONFIRMADA con material en inventario; confianza térmica sigue BAJA, pendiente de validación</strong>
+    <ul>
+      <li><strong>Mylar (6 láminas, 1.2 × 1.8 m = 12.96 m²):</strong> orientadas con el lado de 1.2 m en vertical, 2 láminas apiladas = 2.40 m de alto, coincide casi exacto con la altura del muro. Cubre 3 de las 6 posiciones de muro a altura completa; falta parchar ~6 cm de ancho por posición con retal.</li>
+      <li><strong>Mantas isotérmicas doradas/plateadas (6 unidades, 210×160 cm = 3.36 m² cada una, confirmado en ficha de producto):</strong> cubren las 3 posiciones restantes exactamente — <strong>2 mantas por posición</strong>, orientadas con el lado de 1.60 m en vertical y 2.10 m en horizontal, apiladas con traslape generoso (~40 cm) para alcanzar los 2.40 m de alto del muro. El ancho de 2.10 m excede el 1.86 m necesario — recortar sobrante. Con esto, <strong>las 6 posiciones de muro quedan cubiertas con material 100% ya en inventario</strong> (3 con Mylar, 3 con mantas) — no se requiere comprar más lámina reflectiva.</li>
+      <li><strong>Manta EVA 2 mm autoadhesiva (rollo, 110×845 cm = 9.3 m²/rollo) — cantidad confirmada 2026-08-29:</strong> no es aislamiento de volumen — actúa como capa de barrera de humedad + amortiguación de vibración detrás de la capa reflectiva. El rollo de 110 cm de ancho no cubre el ancho de 1.86 m de una posición de muro en una sola tira — requiere 1 tira de ancho completo (110 cm) + 1 tira angosta (76 cm) por posición, con traslape de costura ~5–7 cm. Consumo real ≈4.63 m²/posición × 6 posiciones ≈ 27.8 m², dejando **3 rollos sin margen de maniobra** (28 sobre 27.9 m² provistos). <strong>Comprar 4 rollos</strong> (37.2 m² provistos, ~34% de margen) para absorber cortes, desperdicio de esquina y recorte alrededor de los listones de bloqueo — no 3, que no deja espacio para error de corte.</li>
+      <li><strong>Thermolon 15 mm (3.6 m² en inventario):</strong> cubre solo ~13% del área de muro; su rol es como relleno complementario donde se disponga, no como solución principal.</li>
+    </ul>
+    <p style="margin-top: 8px;"><strong>Advertencia de manipulación — Mylar y mantas isotérmicas se rasgan con facilidad:</strong></p>
+    <ul>
+      <li>No engrapar directamente sobre la lámina; sujetar el borde entre un listón y el tablero, o usar arandelas de cabeza ancha solo en el perímetro.</li>
+      <li>Cortar y posicionar antes de cerrar la cavidad — no estirar la lámina sobre un marco ya armado.</li>
+      <li>Cubrir con la manta EVA inmediatamente después de colocar cada lámina reflectiva, para minimizar manipulación expuesta.</li>
+      <li>Traslapar costuras 5–10 cm en vez de unir a tope.</li>
+      <li>Tratar esta capa como aporte complementario (barrera radiante parcial), no como sistema sellado — el control real de humedad y vibración recae en la manta EVA y el forro interior lavable, no en la integridad continua del Mylar/manta.</li>
+    </ul>
+  </div>
+
+  <!-- Sealing/liner material plan -->
+  <div class="notes" style="margin-top: 24px;">
+    <strong>Forro lavable de la cara interior — confianza MEDIA-BAJA, pendiente de verificar disponibilidad local</strong>
+    <p style="margin-top: 6px;"><strong>Cámara principal (26.78 m²) — tablero PVC espumado 5–6 mm:</strong></p>
+    <ul>
+      <li>Hoja estándar asumida 1.22 × 2.44 m (~2.98 m²/hoja) → <strong>10 hojas</strong> (9 calculadas + margen de corte)</li>
+      <li>Fijación mecánica — tornillo de cabeza ancha o avellanado, cuadrícula ~300 mm + perímetro ~150 mm. No pegamento de contacto en toda la superficie — la fijación mecánica permite retirar el forro para inspección/reparación</li>
+      <li>Cabezas de tornillo cubiertas con tapón de PVC o avellanadas y selladas — ningún metal expuesto en la superficie lavable</li>
+      <li>Juntas entre hojas: silicona resistente a moho, o moldura H de PVC si hay disponibilidad local</li>
+      <li>Remate de base: moldura de zócalo curvo en PVC, sellado al piso — sin esquina de 90° que atrape suciedad/humedad</li>
+    </ul>
+    <p style="margin-top: 8px;"><strong>Buffer (~2.2 m²) — pintura epóxica sobre tablero sellado:</strong></p>
+    <ul>
+      <li>Sellar juntas y huecos de tornillo con silicona ANTES de pintar — el epóxico no cubre huecos</li>
+      <li>Imprimante sellador de poros, 1 mano, curado completo antes del acabado</li>
+      <li>Acabado epóxico 2 componentes, mínimo 2 manos</li>
+      <li>Aplicar con ventilación abierta, clima seco, lejos de fructificación activa</li>
+    </ul>
+    <p style="margin-top: 8px;"><strong>Secuencia:</strong> forro aplicado en banco sobre cada pieza de panel ANTES de erigir en la terraza (más fácil de cortar/fijar) → erigir con herraje de bloqueo/empalme → sellar costuras y huecos de tornillo en sitio con silicona → zócalo al final, una vez el muro esté en pie y el piso sellado.</p>
+  </div>
+
+  <!-- Section through the chamber with equipment -->
+  <p style="font-size: 12px; font-weight: 600; margin: 24px 0 8px 0; color: #333;">Corte de la cámara — equipos asignados</p>
+  <div class="cutaway" style="width: 920px; height: 320px; position: relative;">
+
+    <!-- Roof + tarp -->
+    <div class="roof-frame" style="top: 0; left: 0; right: 0; height: 10px;"></div>
+    <div class="roof" style="top: -10px; left: 0; right: 0; height: 12px; opacity: 0.7;"></div>
+
+    <!-- Left wall (Panel 1 area, short end) -->
+    <div style="position: absolute; top: 10px; left: 20px; width: 16px; height: 280px; background: repeating-linear-gradient(0deg, #c9a876 0px, #c9a876 3px, #b8935f 3px, #b8935f 6px); border: 1px solid #8b6f47;"></div>
+
+    <!-- Tent A -->
+    <div class="tent-outline" style="top: 60px; left: 60px; width: 180px; height: 230px;">
+      <div style="padding: 8px; font-size: 10px; color: #831843; font-weight: 600;">CloudLab 844 — A<br/><span style="font-weight: 400; font-size: 9px;">203 cm alto</span></div>
+    </div>
+
+    <!-- Aisle -->
+    <div style="position: absolute; top: 10px; left: 260px; width: 130px; height: 280px; background: rgba(16,185,129,0.05); border-left: 1px dashed #10b981; border-right: 1px dashed #10b981;">
+      <div style="text-align: center; margin-top: 130px; font-size: 10px; color: #047857;">Pasillo</div>
+    </div>
+
+    <!-- Tent B -->
+    <div class="tent-outline" style="top: 60px; left: 410px; width: 180px; height: 230px;">
+      <div style="padding: 8px; font-size: 10px; color: #831843; font-weight: 600;">CloudLab 844 — B<br/><span style="font-weight: 400; font-size: 9px;">203 cm alto</span></div>
+    </div>
+
+    <!-- Right wall (buffer side) -->
+    <div style="position: absolute; top: 10px; left: 610px; width: 16px; height: 280px; background: repeating-linear-gradient(0deg, #d4c4a8 0px, #d4c4a8 3px, #c4b494 3px, #c4b494 6px); border: 1px dashed #8b6f47;"></div>
+
+    <!-- Buffer zone -->
+    <div style="position: absolute; top: 10px; left: 640px; width: 100px; height: 280px; background: rgba(212,196,168,0.15); border: 1px dashed #8b6f47;">
+      <div style="padding: 8px; font-size: 10px; color: #78350f; font-weight: 600;">Buffer<br/>EPP</div>
+    </div>
+
+    <!-- Humidifier T7 (existing equipment) -->
+    <div class="humidifier-icon" style="top: 250px; left: 300px; width: 60px; height: 30px;">
+      T7<br/>15L humid.
+    </div>
+
+    <!-- Fans H4 x2 (existing equipment) -->
+    <div class="fan-icon" style="top: 25px; left: 45px; width: 26px; height: 26px;">↑</div>
+    <div class="detail-callout" style="top: 25px; left: 5px;">H4<br/>intake</div>
+
+    <div class="fan-icon" style="top: 25px; left: 700px; width: 26px; height: 26px;">↓</div>
+    <div class="detail-callout" style="top: 25px; left: 730px;">H4<br/>extract</div>
+
+    <!-- Floor -->
+    <div class="floor" style="bottom: 0; left: 0; right: 0; height: 16px;"></div>
+  </div>
+
+  <div class="notes">
+    <strong>Manejo de aire (equipos existentes, sin compra nueva)</strong>
+    <ul>
+      <li>CLOUDLINE H4 #1: entrada filtrada, extremo cámara principal</li>
+      <li>CLOUDLINE H4 #2: extracción hacia exterior, extremo buffer — sin retorno a interior de vivienda</li>
+      <li>AC Infinity CloudForge T7 (15 L): humidificación central de la cámara compartida — dimensionado para volumen combinado de las dos tiendas</li>
+      <li>SHT3x / SHT45 existentes: sensor por tienda + uno en pasillo central</li>
+    </ul>
+  </div>
+
+  <div class="equip-notes">
+    <strong>Pendiente de definir / verificar</strong>
+    <ul>
+      <li>Capacidad real del T7 frente al volumen combinado (~6 m³ tiendas + cámara) — validar antes de fijar setpoints</li>
+      <li>Ubicación exacta de intake/extract respecto a la baranda y chimenea</li>
+      <li>Material de aislamiento para las cavidades (tipo y espesor según disponibilidad)</li>
+      <li>Sistema de unión entre Pieza A y Pieza B (placa metálica + tornillería, pendiente de diseño final)</li>
+      <li>Protección eléctrica diferencial para ambiente húmedo (RETIE)</li>
+    </ul>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

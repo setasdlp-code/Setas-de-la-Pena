@@ -1,12 +1,13 @@
 ---
 title: Identifier Standard
 document_id: STD-001
-version: 1.2
+category: project
+version: 1.1
 status: canonical
 authority: technical_standard
 load_priority: always
 owner: Setas de la Peña
-last_reviewed: 2026-07-17
+last_reviewed: 2026-07-07
 ---
 
 # Identifier Standard
@@ -113,12 +114,6 @@ The following prefixes are officially registered. All prefixes are reserved excl
 | DEC | Decision |
 | SOP | Standard Operating Procedure |
 | DOC | Repository Document |
-| STD | Technical Standard |
-| TMP | Operational Template |
-| WF | AI Workflow |
-| DOR | Daily Operational Review |
-| AIR | Daily AI Review |
-| QST | Open Question |
 
 ### 5.4 Infrastructure & Supply
 
@@ -129,7 +124,6 @@ The following prefixes are officially registered. All prefixes are reserved excl
 | RM | Raw Material |
 | SUP | Supplier |
 | ENV | Growing Environment (room, tent, chamber) |
-| INC | Operational Incident |
 
 ### 5.5 Future Prefixes
 

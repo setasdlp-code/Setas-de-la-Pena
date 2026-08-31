@@ -1,0 +1,233 @@
+intake_date: 2026-08-05
+scope: high-altitude atmosphere, ventilation, species microclimate, lignocellulosic substrates, forest provenance and postharvest for shiitake and Hericium in Tenjo
+curatorial_status: claims_checked_against_primary_or_official_sources_where_available
+binary_policy: no third-party binaries added; citations, DOI, URLs and limited curatorial summaries only
+transfer_rule: external values define hypotheses and test design; no automatic promotion to Tenjo setpoints, SOPs, supplier approvals or shelf-life claims
+submitted_source_policy: commercial blogs, mirrors and incomplete records retained only as search leads unless independently verified
+
+records:
+  - source_id: altitude_001
+    citation_key: NASA_Glenn_Atmosphere_Metric
+    title: Earth Atmosphere Equation — Metric
+    source: NASA Glenn Research Center
+    url: https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/earth-atmosphere-equation-metric/
+    country: USA
+    source_type: official_physical_model
+    evidence_scope: [altitude, pressure, temperature, density]
+    rights_status: public government web source
+    verification_status: verified
+    transfer_limit: standard atmosphere only; use measured pressure for operation
+
+  - source_id: gas_001
+    citation_key: NASA_Ideal_Gas
+    title: Ideal Gases under Constant Volume, Constant Pressure, Constant Temperature, and Adiabatic Conditions
+    source: NASA Glenn Research Center
+    url: https://www.grc.nasa.gov/WWW/K-12/Numbers/Math/Mathematical_Thinking/ideal_gases_under_constant.htm
+    country: USA
+    source_type: official_physics_reference
+    evidence_scope: [ideal_gas, molar_density, pressure_temperature_relation]
+    rights_status: public government web source
+    verification_status: verified
+
+  - source_id: sensor_001
+    citation_key: Sensirion_SCD30
+    title: SCD30 product page and interface description
+    source: Sensirion AG
+    url: https://sensirion.com/products/catalog/SCD30
+    country: Switzerland
+    source_type: manufacturer_primary_documentation
+    evidence_scope: [NDIR_CO2, altitude_compensation, ambient_pressure_compensation, accuracy]
+    rights_status: cite and link; do not redistribute documentation binary
+    verification_status: verified
+
+  - source_id: ventilation_001
+    citation_key: Erig_Garrison_1991_HTA
+    title: "Ventilation to eliminate oxygen deficiency in a confined space — Part III: heavier-than-air characteristics"
+    source: National Institute for Occupational Safety and Health
+    url: https://stacks.cdc.gov/view/cdc/205873
+    country: USA
+    source_type: government_experimental_study
+    evidence_scope: [stratification, mechanical_mixing, supply_jet, exhaust, inlet_outlet_height]
+    rights_status: public government repository
+    verification_status: verified
+    transfer_limit: confined-space model; validate in mushroom-room geometry
+
+  - source_id: ventilation_002
+    citation_key: NIOSH_1991_Confined_Space_Ventilation
+    title: Ventilation for Work in Confined Spaces
+    source: National Institute for Occupational Safety and Health
+    url: https://stacks.cdc.gov/view/cdc/217803
+    country: USA
+    source_type: government_technical_report
+    evidence_scope: [flow_rate, geometry, dilution, stratification, supply_exhaust]
+    rights_status: public government repository
+    verification_status: verified
+
+  - source_id: ventilation_003
+    citation_key: Chen_et_al_2022
+    title: Research progress on indoor environment of mushroom factory
+    source: International Journal of Agricultural and Biological Engineering 15(1):25-32
+    doi: 10.25165/j.ijabe.20221501.6872
+    country: China
+    source_type: peer_reviewed_review
+    evidence_scope: [mushroom_factory, spatial_uniformity, sensors, airflow, CFD]
+    rights_status: cite metadata and curatorial notes
+    verification_status: verified
+
+  - source_id: shiitake_001
+    citation_key: Chang_Miles_2004
+    title: Mushrooms — Cultivation, Nutritional Value, Medicinal Effect, and Environmental Impact
+    source: CRC Press
+    year: 2004
+    source_type: scientific_technical_book
+    evidence_scope: [shiitake_strain_classes, maturation, induction]
+    rights_status: copyrighted book; limited summary and citation only
+    verification_status: represented_in_repository_as_book_007
+
+  - source_id: shiitake_002
+    citation_key: Rodriguez_Valencia_Jaramillo_2005
+    title: Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera
+    source: Cenicafe / Federación Nacional de Cafeteros de Colombia
+    year: 2005
+    country: Colombia
+    source_type: institutional_applied_research
+    evidence_scope: [shiitake, coffee_residues, strains, substrate, Colombia]
+    rights_status: institutional publication; citation and summary
+    verification_status: represented_in_repository_as_paper_006
+
+  - source_id: shiitake_003
+    citation_key: El_Sebaaly_et_al_2024
+    title: Mixing oak and eucalyptus sawdusts improves shiitake yield and nutritional value
+    source: PLOS ONE 19(11):e0309787
+    doi: 10.1371/journal.pone.0309787
+    country: Lebanon
+    source_type: peer_reviewed_experiment
+    evidence_scope: [oak, eucalyptus, wheat_bran, biological_efficiency, shiitake]
+    rights_status: CC_BY
+    verification_status: verified
+    transfer_limit: species of wood, strain and process are study-specific
+
+  - source_id: hericium_001
+    citation_key: Tabi_et_al_2021
+    title: The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid Hericium isolates
+    source: Scientia Horticulturae 280:109915
+    doi: 10.1016/j.scienta.2021.109915
+    source_type: peer_reviewed_experiment
+    evidence_scope: [Hericium, strain_variation, fruiting_temperature, yield]
+    rights_status: citation and limited curatorial summary
+    verification_status: verified
+
+  - source_id: hericium_002
+    citation_key: Lu_et_al_2024
+    title: Optimization of substrate formulation for Hericium erinaceus by replacing wood by straw and their effect on enzyme activities
+    source: Frontiers in Plant Science 15:1436385
+    doi: 10.3389/fpls.2024.1436385
+    country: China
+    source_type: peer_reviewed_experiment
+    evidence_scope: [Hericium, wood, straw, substrate_optimization, enzymes]
+    rights_status: CC_BY
+    verification_status: verified
+
+  - source_id: hericium_003
+    citation_key: Friedman_2015
+    title: Chemistry, Nutrition, and Health-Promoting Properties of Hericium erinaceus
+    source: Journal of Agricultural and Food Chemistry 63(32):7108-7123
+    doi: 10.1021/acs.jafc.5b02914
+    source_type: peer_reviewed_review
+    evidence_scope: [Hericium_compounds, health_evidence]
+    rights_status: citation and limited summary
+    verification_status: represented_in_repository_as_paper_003
+    transfer_limit: no cultivation setpoints or fresh-product claims
+
+  - source_id: climate_001
+    citation_key: IDEAM_Normales_1991_2020
+    title: Normales climáticas estándar 1991–2020
+    source: IDEAM
+    url: https://www.ideam.gov.co/sala-de-prensa/informes/Normales%20clim%C3%A1ticas%20est%C3%A1ndar
+    country: Colombia
+    source_type: official_climatology
+    evidence_scope: [temperature, precipitation, climatic_normals, station_selection]
+    rights_status: public government source
+    verification_status: official_page_verified; Tenjo_station_locator_pending
+
+  - source_id: climate_002
+    citation_key: IDEAM_Helada_Definition
+    title: Helada — glosario meteorológico
+    source: IDEAM
+    url: https://www.ideam.gov.co/atencion-y-servicios-a-la-ciudadania/glosario/helada-alertas-hidrologicas
+    country: Colombia
+    source_type: official_definition
+    evidence_scope: [frost, temperature_threshold, measurement_height]
+    rights_status: public government source
+    verification_status: verified
+
+  - source_id: climate_003
+    citation_key: AGROSAVIA_Sabana_Minimum_February
+    title: Condiciones climáticas en Cundinamarca y Boyacá durante el mes de febrero
+    source: AGROSAVIA
+    url: https://www.agrosavia.co/noticias/investigadores-de-tibaitat%C3%A1-presentan-una-predicci%C3%B3n-del-comportamiento-que-tendr%C3%A1n-las-condiciones-clim%C3%A1ticas-en-cundinamarca-y-boyac%C3%A1-durante-el-mes-de-febrero
+    country: Colombia
+    source_type: institutional_climate_guidance
+    evidence_scope: [Sabana_de_Bogota, minimum_temperature, frost_risk]
+    rights_status: public institutional web source
+    verification_status: verified
+    transfer_limit: regional context, not farm measurement
+
+  - source_id: forestry_001
+    citation_key: ANLA_Forest_Permit_Regulation
+    title: Permiso y autorización de aprovechamiento forestal de bosques naturales
+    source: Autoridad Nacional de Licencias Ambientales
+    url: https://www.anla.gov.co/01_anla/index.php/permiso-y-autorizacion-aprovechamiento-florestal-bosques-naturales
+    country: Colombia
+    source_type: official_regulatory_guidance
+    evidence_scope: [Quercus_humboldtii, Resolution_316_1974, forest_provenance]
+    rights_status: public government source
+    verification_status: verified
+
+  - source_id: forestry_002
+    citation_key: INDERENA_Resolution_316_1974
+    title: Resolución 316 de 1974
+    source: INDERENA
+    country: Colombia
+    source_type: binding_environmental_rule
+    evidence_scope: [forest_species_ban, Quercus_humboldtii]
+    rights_status: public regulation
+    verification_status: listed_by_ANLA; current_application_requires_authority_check
+
+  - source_id: postharvest_001
+    citation_key: Silva_et_al_2025
+    title: Storage Temperature Effect on Quality and Shelf-Life of Hericium erinaceus Mushroom
+    source: Horticulturae 11(2):158
+    doi: 10.3390/horticulturae11020158
+    country: Portugal
+    source_type: peer_reviewed_postharvest_experiment
+    evidence_scope: [Hericium, storage_temperature, respiration, microbiology, browning, firmness]
+    rights_status: open_access
+    verification_status: verified
+    transfer_limit: product and packaging are study-specific
+
+submitted_sources_requiring_secondary_status_or_more_metadata:
+  - source_label: CO2_Tek_mushroom_airflow
+    status: practitioner_commercial_E3
+    permitted_use: hypothesis_only
+  - source_label: Merryhill_FAE
+    status: practitioner_commercial_E3
+    permitted_use: hypothesis_only
+  - source_label: Redwood_Mushroom_Supply_FAE
+    status: practitioner_commercial_E3
+    permitted_use: hypothesis_only
+  - source_label: NaturNext_temperature_ranges
+    status: secondary_commercial_E3
+    permitted_use: search_lead_only
+  - source_label: KUSTEC_container_guide
+    status: vendor_document
+    permitted_use: equipment_and_layout_context_only
+  - source_label: Scribd_urban_fungiculture
+    status: unsuitable_as_technical_evidence
+    permitted_use: locate_original_only
+  - source_label: Scribd_mushroom_market
+    status: unsuitable_as_technical_evidence
+    permitted_use: locate_original_only
+  - source_label: untitled_AGROSAVIA_download
+    status: incomplete_metadata
+    permitted_use: none_until_identified

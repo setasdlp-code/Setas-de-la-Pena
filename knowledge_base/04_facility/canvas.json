@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 700, "h": 760 },
+    { "file": "ZoneCrossSection.dc.html", "x": 760, "y": 0, "w": 1000, "h": 1450 }
+  ],
+  "annotations": [
+    { "id": "note-brief", "x": 40, "y": -100, "w": 300, "text": "Compact caseta sized for two CloudLab 844 tents only (fruiting + entry buffer). Built entirely from 7 recovered film-set panels, cut in half for transport. Zero panels left over." },
+    { "id": "note-materials", "x": 760, "y": -100, "w": 300, "text": "6 panel-pairs enclose the main chamber; the 7th pair forms the buffer/door. Roof + most walls now use the existing 5x7m Toolcraft tarp (owned, MAT-TARP-TOOLCRAFT-001, 180gsm) directly over rafters, no rigid deck (owner decision 2026-08-29) — deliberately deviates from home_rnd_lab.md AND DECISIONS.md #434's rule that this tarp is a secondary skin only, never the sole roof; documented, not silent. Coverage is PARTIAL: one sheet (35m2) covers roof (~7.9m2) + 6 chamber walls (~26.78m2) = ~34.68m2, ~0.3m2 margin only. The door-side buffer wall is excluded, covered by a different material (still undecided). Ponding and roof-underside condensation are new open items. Exterior varnish stays regardless, tarp is an added layer not a substitute. Air handling reuses existing H4 fans + T7 humidifier. Cavity insulation: Mylar + mantas isotermicas as a radiant barrier (facing an air gap, not compressed), backed by EVA foam roll for moisture/vibration control — no EPS on hand. LOW confidence, pending thermal validation; reflective films tear easily, see handling notes." }
+  ],
+  "launch": { "view": "canvas" }
+}

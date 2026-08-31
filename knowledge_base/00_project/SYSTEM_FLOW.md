@@ -1,6 +1,7 @@
 ---
 title: System Flow
 document_id: SYS-001
+category: architecture
 version: 1.1
 status: canonical
 authority: architectural

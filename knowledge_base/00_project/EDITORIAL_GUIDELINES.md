@@ -1,12 +1,14 @@
 ---
 title: Editorial Guidelines
 document_id: GOV-001
-version: 1.2
+category: editorial
+version: 1.3
 status: canonical
 authority: editorial
 load_priority: on_request
 owner: Setas de la Peña
-last_updated: 2026-07-09
+last_updated: 2026-08-13
+last_reviewed: 2026-08-13
 ---
 
 # Editorial Guidelines
@@ -34,6 +36,7 @@ Editorial guidelines apply to:
 - Operations procedures
 - Research summaries
 - Research literature database entries
+- Active Research Knowledge (`09_research/active_research_knowledge.md`)
 - Business documentation
 - Brand documentation
 - Current operational state (`FARM_BRAIN.md`)
@@ -52,6 +55,7 @@ Every edit must serve at least one of the following objectives:
 | **Maintainability** | Documents remain findable, updateable, and current. Scope violations and duplications are eliminated. |
 | **Minimal Duplication** | Information appears in a single authoritative location. Related documents reference that location rather than copying. |
 | **Evidence-Based** | Operational parameters are supported by field measurement or Tier 1/2 literature. Speculative content is labeled as such. |
+| **Knowledge Utility** | Verified evidence that is relevant but not yet operationally validated is preserved as an explicitly typed insight, hypothesis, design implication, or measurement opportunity rather than discarded or stranded in source summaries. |
 
 An edit that does not serve at least one of these objectives is rejected.
 
@@ -60,6 +64,8 @@ An edit that does not serve at least one of these objectives is rejected.
 ## 4. Repository Hierarchy
 
 The knowledge base enforces a strict precedence order, defined in full in `SETAS_DE_LA_PENA_CANON.md` Section 14 — the single source of truth for document precedence. Section 14.1 (Normative Authority) resolves conflicts between documents. Section 14.2 (Operational State) describes current reality and never overrides Normative Authority, however recent it is. This document does not restate that order; editors resolve precedence questions by consulting CANON Section 14 directly.
+
+Active Research Knowledge is **consultative and non-authoritative**. It may influence experiment design, measurement plans, engineering alternatives, unresolved questions, research priorities, and candidate Setas OS features. It does not override CANON, decisions, SOPs, approved setpoints, safety requirements, procurement authorization, or construction authorization.
 
 ### 4.1 Editorial Authority
 
@@ -101,6 +107,8 @@ Frontmatter is updated only when metadata content changes (e.g., `last_reviewed`
 
 The guideline is: **change as little as possible**. An edit that modifies 200 words to fix one inconsistency has failed this principle. Use `Find and Replace` to change terminology globally. Use targeted edits to update specific sections. Preserve the 90% of the document that is correct.
 
+Minimal editing does not justify suppressing a verified novel finding when it has material project relevance. In that case, route the finding to the smallest appropriate ARK entry rather than modifying an authoritative operational document prematurely.
+
 ### 5.4 Preference for References
 
 Avoid duplicating information. When a concept is defined in Document A and referenced in Document B, Document B should cite Document A rather than repeat the definition. Internal links use the syntax: `[[document_name]]` or `See: document_name.md`. See `CROSS_REFERENCE_STANDARD.md` for the full standard: canonical-home determination, reference syntax, and synchronization with `INDEX.yaml`.
@@ -121,10 +129,11 @@ Changes shall be classified as one of the following:
 |---|---|---|
 | **Editorial** | Grammar, formatting, references, wording. | Editorial authority; does not require architectural review. |
 | **Structural** | Document organization without changing meaning. | Editorial authority with documentation in FARM_BRAIN.md. |
+| **Research-interpretive** | Adds or revises a typed ARK insight, hypothesis, design implication, or measurement opportunity without changing required practice. | Consultative only; requires traceable evidence and applicability classification. |
 | **Operational** | Updates to procedures or workflows. | Requires SOP revision or CURRENT_OPERATIONS.md update. |
 | **Architectural** | Changes to governing principles. | Requires formal decision in DECISIONS.md; CANON modification authority. |
 
-Only Architectural changes modify the CANON. Operational changes update SOPs or CURRENT_OPERATIONS.md. Editorial changes do not require architectural review.
+Only Architectural changes modify the CANON. Operational changes update SOPs or CURRENT_OPERATIONS.md. Research-interpretive changes may influence what the project tests or measures but do not themselves change required practice.
 
 ---
 
@@ -153,6 +162,8 @@ Every operational parameter must include evidence strength. Examples:
 
 Speculative content must be labeled: "Unverified estimate," "Hypothesis pending field validation," or "Tier 3 practitioner report."
 
+ARK content must additionally state its type, evidence source, evidence quality, project applicability, transfer limits, and what would be required for operational promotion.
+
 ### 6.3 Technical Register
 
 All documentation uses technical-agronomic language. Mystical, animistic, or pseudoscientific language is prohibited. Reference: CANON, Section 3, Principle P-07.
@@ -174,6 +185,7 @@ Each document type has a defined scope and responsibility. Content outside this 
 | **Facility Blueprints** | Physical infrastructure; modules; layout | `04_facility/master_blueprint.md` |
 | **Operations SOPs** | Batch procedures; quality control; tracking | `06_operations/batch_tracking.md` |
 | **Research Summaries** | What literature states; evidence ratings | `09_research/literature_database.md` |
+| **Active Research Knowledge** | Verified, project-relevant implications that are not yet operational authority | `09_research/active_research_knowledge.md` |
 | **Lessons Learned** | Operational experience; failures; recovery procedures; validated insights | `LESSONS_LEARNED.md`, batch logs |
 | **Current Operations** | Executive operational snapshot; this week's priorities; immediate constraints | `FARM_BRAIN.md` |
 
@@ -202,6 +214,8 @@ The four operational documents serve distinct functions and must remain separate
 - **CURRENT_OPERATIONS.md** — What is happening today (detailed operational state)
 - **DECISIONS.md** — Why we decided to do it
 - **LESSONS_LEARNED.md** — What we learned from doing it
+
+`active_research_knowledge.md` is not a fifth operational document. It records research-derived candidates that may shape future tests or design work while remaining outside operational authority.
 
 ---
 
@@ -246,8 +260,10 @@ Before accepting a revision, verify:
 - [ ] **References updated** — All citations accurate; hyperlinks valid; cross-document links syntax-correct.
 - [ ] **Consistent with CANON** — No content contradicts CANON principles; reference CANON where appropriate.
 - [ ] **Scientifically supported** — Operational parameters include evidence source (field data or Tier 1–2 literature).
+- [ ] **ARK typed correctly** — Research-derived implications are explicitly non-authoritative and include evidence/applicability/transfer limits.
+- [ ] **Novelty not silently discarded** — Verified project-relevant mechanisms, variables, alternatives, or boundary conditions have been routed to ARK or explicitly rejected with rationale.
 - [ ] **Technical register maintained** — No mystical, animistic, or pseudoscientific language introduced.
-- [ ] **Minimal change principle met** — Only necessary edits applied; 90% of original content preserved.
+- [ ] **Minimal change principle met** — Only necessary edits applied; 90% of original content preserved where compatible with the requested change.
 - [ ] **Scope preserved** — Content belongs in this document type; no scope violations introduced.
 - [ ] **Clarity improved** — If procedural language was changed, execution clarity is maintained or improved.
 
@@ -263,8 +279,10 @@ The following editing practices create documentation debt and are prohibited:
 | Moving information between documents without architectural reason | Loses traceability; violates scope definitions | Keep information in its authoritative document; use references. |
 | Converting principles into procedures | Confuses governance with operations | Principles stay in CANON; procedures stay in SOPs. |
 | Writing operational instructions inside research summaries | Violates document type responsibility | Operational instructions in SOPs; research findings in research files. |
-| Adding project decisions directly into species documents | Species documents become mixed-type; loses traceability | Record decisions in FARM_BRAIN.md; reference from species documents. |
-| Changing document structure without recording rationale | Future editors lose understanding of why structure changed | Document rationale in FARM_BRAIN.md before making structural changes. |
+| Treating ARK as an approved operating rule | Collapses the boundary between useful research knowledge and validated practice | Keep ARK consultative; promote only through the applicable decision/validation path. |
+| Discarding verified novel evidence because it does not contradict current practice | Creates false negatives and institutional confirmation bias | Preserve relevant implications as typed ARK candidates. |
+| Adding project decisions directly into species documents | Species documents become mixed-type; loses traceability | Record decisions in DECISIONS.md; reference from species documents. |
+| Changing document structure without recording rationale | Future editors lose understanding of why structure changed | Document rationale before making structural changes. |
 | Using absolute categorical language without evidence | Makes claims difficult to maintain as conditions change | Use evidence-based wording; cite sources. |
 | Omitting evidence source for operational parameters | Readers cannot evaluate confidence or replicate decisions | Include source (field measurement or Tier 1/2 literature) with every parameter. |
 
@@ -282,9 +300,9 @@ The repository evolves by modifying the appropriate document type, not by modify
 
 **When supplier or vendor relationships change:** Update business documents (`07_business/suppliers.md`).
 
-**When a production cycle produces unexpected results:** Document in batch logs (`CURRENT_OPERATIONS.md`). If the result reveals a systemic issue, update the relevant operational SOP and record the decision in `FARM_BRAIN.md`.
+**When a production cycle produces unexpected results:** Document in batch logs (`CURRENT_OPERATIONS.md`). If the result reveals a systemic issue, evaluate the relevant SOP and record any resulting decision in `DECISIONS.md`.
 
-**When new literature is discovered:** Add to research literature database with evidence rating. Update operational SOPs only if the literature contradicts current practice and is Tier 1.
+**When new literature is discovered:** Add it to the research literature system with provenance and evidence rating. After claim verification and applicability assessment, project-relevant findings may be promoted to ARK as `applicable_insight`, `project_hypothesis`, `design_implication`, or `measurement_opportunity`, even when they do not contradict current practice and even when they are not sufficient to modify an SOP. Changes to mandatory procedures, active setpoints, safety rules, purchase authorization, construction authorization, CANON, or Setas OS control rules still require the higher evidence, validation, and decision thresholds applicable to those artifacts.
 
 **When a principle is discovered to be incorrect:** Follow the revision process in CANON Section 16. Do not modify the CANON without formal decision documentation.
 
@@ -297,6 +315,7 @@ Each document has an owner listed in frontmatter. The owner is responsible for:
 - Maintaining consistency with the CANON.
 - Updating the document when related documents change.
 - Monitoring `FARM_BRAIN.md` for decisions that affect the document's scope.
+- Monitoring ARK for hypotheses or design implications that warrant local testing in the owner's domain.
 - Initiating review when field data contradicts documented parameters.
 
 ---
@@ -307,10 +326,11 @@ Scheduled review intervals define the maximum time between reviews. Significant 
 
 | Document Type | Review Cycle | Trigger for Immediate Review |
 |---|---|---|
-| Species profiles | Annually or when new Tier 1 literature appears | Field data contradicts documented parameters |
+| Species profiles | Annually or when new directly relevant high-quality literature appears | Field data contradicts documented parameters |
 | Equipment documents | When equipment is modified or replaced | Equipment failure or operational limitation encountered |
 | SOPs | After each production cycle where metrics exceed thresholds | Contamination rate >10%; BE <80%; sensor uptime <95% |
-| Research summaries | When new literature is added | Literature contradicts current SOP; evidence rating changes |
+| Research summaries | When new literature is added | Material evidence or interpretation changes |
+| Active Research Knowledge | With each completed evidence/applicability promotion pass | New verified applicable insight; local test resolves or invalidates an ARK entry |
 | Business documents | Quarterly or when supplier relationship changes | Price change >10%; lead time change >4 weeks |
 | Decision records | After decision implementation | Measurement results contradict decision assumptions |
 
@@ -318,12 +338,14 @@ Scheduled review intervals define the maximum time between reviews. Significant 
 
 ## 14. Knowledge Lifecycle
 
-Knowledge normally progresses through the following stages:
+Operational learning and external literature follow parallel maturation paths.
+
+Operational path:
 
 ```
 Observation
   ↓
-Experiment
+Operational Record / Experiment
   ↓
 Lesson Learned
   ↓
@@ -331,28 +353,50 @@ Decision
   ↓
 Standard Operating Procedure
   ↓
-Stable Knowledge Base
+Validated Practice / Stable Knowledge
   ↓
 CANON (only when architectural principles change)
 ```
 
-Knowledge should mature gradually. No information should bypass this lifecycle without explicit justification.
+Literature path:
+
+```
+Discovery
+  ↓
+Source Verification
+  ↓
+Claim Verification
+  ↓
+Evidence + Applicability Rating
+  ↓
+Active Research Knowledge
+  ├─ Applicable Insight
+  ├─ Project Hypothesis
+  ├─ Design Implication
+  └─ Measurement Opportunity
+  ↓
+Decision Review / Local Validation where required
+  ↓
+Validated Practice / Stable Knowledge
+```
+
+Information must not bypass the evidence and applicability controls appropriate to its destination. ARK is a legitimate intermediate maturity state; entry into ARK is not equivalent to operational adoption.
 
 ---
 
 ## 15. Closing Statement
 
-The knowledge base's long-term value derives from preserving coherence across time, across personnel changes, and across technological iterations. This value is achieved through editorial discipline, not through maximizing documentation volume.
+The knowledge base's long-term value derives from preserving coherence across time, across personnel changes, and across technological iterations. This value is achieved through editorial discipline and through retaining useful uncertainty in a typed, traceable form.
 
-A repository with fewer, coherent documents is superior to a repository with many inconsistent documents. An edit that reduces inconsistency is always preferable to an edit that adds new content.
+A compact repository remains preferable to uncontrolled accumulation. Compactness must not be achieved by discarding verified, project-relevant knowledge simply because it is not yet mature enough to become a rule.
 
-The goal of every edit is to leave the knowledge base in a more reliable, more maintainable, and more consistent state than it was before.
+The goal of every edit is to leave the knowledge base more reliable, more maintainable, more useful, and more explicit about the maturity of what it knows.
 
 ---
 
-*Document version: 1.2*
-*Effective date: 2026-07-09*
+*Document version: 1.3*
+*Effective date: 2026-08-13*
 *Next scheduled review: 2026-12-29*
 *Authority: Knowledge Governance Architect — Setas de la Peña*
 *This document may only be revised through the decision process defined in CANON Section 16.*
-*Status: Stable — governance baseline established.*
+*Status: Stable — active research knowledge reconciliation applied.*

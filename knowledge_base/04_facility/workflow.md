@@ -1,126 +1,89 @@
 ---
-title: Flujo de Trabajo de Producción
+title: Flujo de Trabajo — Piloto Inicial de Shiitake
+document_id: DOC-0024
 category: facility
 load_priority: selective
-last_reviewed: 2026-06-29
-confidence: high
+last_reviewed: 2026-07-24
+confidence: medium
 primary_sources:
-  - Internal protocols
-  - Stamets 2000
-  - Cotter 2014
+  - DEC-013
+  - book_007
+  - paper_006
 related_documents:
   - master_blueprint.md
   - fruiting.md
   - incubation.md
-  - 06_operations/production_schedule.md
-  - 06_operations/batch_tracking.md
+  - ../06_operations/production_schedule.md
+  - ../06_operations/batch_tracking.md
+  - ../06_operations/quality_control.md
 ---
 
 # Executive Summary
-Flujo de trabajo completo desde sustrato hasta cosecha. Referencia operacional para el cuidador en campo.
 
-# Technical Details
+Flujo de trabajo para el primer piloto de *Lentinula edodes*. Avanza por compuertas verificables y no por un calendario fijo. El lote 1 permanece bloqueado hasta contar con spawn trazable, formulación aprobada y ciclo de autoclave validado con carga representativa.
 
-## Ciclo Completo — P. djamor (Especie Prioridad)
-
-```
-DÍA 0: PREPARACIÓN DE SUSTRATO
-├── Hidratar paja de trigo (remojo 12–24h)
-├── Pasteurizar (80°C, 60 min en agua caliente)
-├── Escurrir y enfriar (<30°C)
-└── Verificar FC (pocas gotas al exprimir)
-
-DÍA 0 (mismo día o DÍA 1): INOCULACIÓN
-├── Preparar área de inoculación (alcohol 70%, guantes, mascarilla)
-├── Mezclar spawn con sustrato (15% peso seco)
-├── Empacar en bolsas
-├── Sellar bolsas
-└── Etiquetar: especie, fecha, lote
-
-DÍAS 1–18: INCUBACIÓN (SPAWN RUN)
-├── T°: 24–28°C
-├── Sin luz
-├── Inspección visual cada 48h (sin abrir bolsas)
-├── Registrar % colonización en bitácora
-└── Aislar contaminados inmediatamente
-
-DÍA 14–18: INICIO FRUITING
-├── Verificar colonización completa (micelio blanco uniforme)
-├── Hacer cortes en bolsa (2–3 cortes por bloque)
-├── Colocar en cámara fructificación
-├── Configurar parámetros:
-│   ├── HR: 85–90%
-│   ├── Ventilación: control por CO₂; línea base tras commissioning
-│   ├── CO₂: objetivo 500–1.500 ppm; alarma >2.000 ppm
-│   └── Luz: 750–1,500 lux, 4h/día (timer)
-└── Registrar inicio de fruiting en bitácora
-
-DÍAS 22–27: PRIMERA COSECHA (FLUSH 1)
-├── Indicador: borde de caps comienza a enrollar
-├── Cosechar torciéndolos suavemente (no cortar)
-├── Limpiar zona de fructificación (remover muñones)
-├── Pesar y registrar yield
-└── Calcular BE: peso fresco / peso seco sustrato × 100
-
-DÍAS 28–42: SEGUNDA OLEADA (FLUSH 2)
-├── Remojar bloque en agua limpia 12–24h
-├── Devolver a cámara
-├── Repetir condiciones
-└── Esperar 10–14 días adicionales
-
-DÍAS 43–55: FLUSH 3 (SI APLICA)
-└── Repetir proceso de rehidratación
-```
-
-## Bitácora por Lote — Campos Obligatorios
+# Flujo
 
 ```
-LOTE #___
-Especie: _______________
-Fecha inoculación: _______
-Sustrato: ______________ FC estimado: ____%
-Spawn usado: ________ kg  Proporción: ____%
-Número de bloques: ___
-
-INCUBACIÓN:
-Día 3 — % colonización: ___  Observaciones: ___
-Día 7 — % colonización: ___  Observaciones: ___
-Día 14 — % colonización: ___  Observaciones: ___
-Contaminación: ___% bloques — Tipo: ___
-
-FRUCTIFICACIÓN:
-Fecha inicio: ________
-Día 1 HR: ___ T°: ___ CO₂: ___
-Fecha primeros pins: ________
-Flush 1: Fecha _______ Peso _______ g
-Flush 2: Fecha _______ Peso _______ g
-BE Total: _______ %
+Aprobar spawn y formulación
+  -> preparar y registrar sustrato
+  -> esterilizar con ciclo validado
+  -> enfriar y liberar carga
+  -> inocular y trazar lote LE
+  -> incubar y evaluar madurez
+  -> aprobar estrategia de inducción
+  -> fructificar bajo especificación versionada
+  -> cosechar, clasificar y almacenar
+  -> revisar métricas y cerrar lote
 ```
 
-## Tiempos Estimados de Trabajo (por Lote de 10 Bloques)
+# Compuertas
 
-| Actividad | Tiempo |
+| Transición | Condición |
 |---|---|
-| Preparar y pasteurizar sustrato | 3–4 h |
-| Inoculación | 1–2 h |
-| Revisión diaria incubación | 10 min/día |
-| Setup cámara fruiting | 30 min |
-| Revisión diaria fruiting | 15 min/día |
-| Cosecha | 30–60 min/flush |
-| Limpieza post-cosecha | 30 min |
+| Compra -> preparación | Proveedor, lote y cepa/código de spawn registrados; formulación versionada |
+| Preparación -> esterilización | Pesos, humedad, insumos y empaque completos |
+| Esterilización -> inoculación | Ciclo validado y registro de la carga aprobado |
+| Inoculación -> incubación | ID LE, operador, tasa real y ubicación registrados |
+| Incubación -> inducción | Criterio de madurez específico del lote cumplido |
+| Inducción -> fructificación | Método, tiempo, temperatura y respuesta inicial documentados |
+| Fructificación -> cosecha | Criterio de cosecha y condición de producto aprobados |
+| Cosecha -> cierre | Pesos por flush, grados, descartes, almacenamiento y desviaciones completos |
 
-**Total dedicación / semana (lote activo):** ~3–5 horas.
+# Registro mínimo del lote
 
-# Best Practices
-- Nunca mezclar lotes de diferentes fechas en la misma cámara si es posible.
-- El cuidador debe leer la bitácora del lote anterior antes de iniciar uno nuevo.
-- Si hay dudas sobre un paso: pausar y consultar con Sebastián antes de continuar.
+```
+Lote: YYYY-MM-LE-###
+Spawn: proveedor / cepa o código / lote / fecha
+Formulación: ID y versión
+Sustrato: peso seco / peso húmedo / humedad medida
+Esterilización: equipo / ciclo / carga / operador / aprobación
+Inoculación: fecha / operador / tasa real / contenedor
+Incubación: ubicación / ambiente / inspecciones / madurez
+Inducción: método / parámetros / fecha / respuesta
+Fructificación: ambiente / actuadores / morfología / desviaciones
+Cosecha: fecha / flush / peso / grado / descarte / destino
+Cierre: BE acumulada / contaminación / pérdidas / aprendizaje
+```
 
-# Common Failure Modes
-- Apresurar la transición incubación→fruiting sin colonización completa → rendimiento bajo.
-- No remojar bloques entre flushes → segunda oleada deficiente.
-- No registrar en bitácora → sin datos para mejorar.
+# Tiempos
 
-# References
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
-- Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
+La planificación provisional del ciclo total es de 90–150 días, pero ninguna transición ocurre por alcanzar un día específico. El primer lote es único y aislado. La cadencia siguiente se decide después de observar colonización sana, proceso aséptico controlado y un ciclo completo.
+
+# Reglas de operación
+
+- No mezclar lotes o formulaciones en el primer piloto.
+- No cambiar más de una variable deliberada dentro del mismo ensayo.
+- No abrir bolsas durante incubación para “comprobar” colonización.
+- Aislar cualquier material sospechoso y registrar evidencia.
+- Pausar una transición si falta una compuerta; no completar datos de memoria.
+- Leer el cierre del lote anterior antes de autorizar el siguiente.
+
+# Fallos comunes
+
+- Inocular una carga sin validación térmica.
+- Aplicar choque frío por rutina sin conocer la cepa.
+- Mover bloques por calendario antes de madurez.
+- Cambiar setpoints sin versionar la especificación.
+- Calcular BE con peso húmedo de sustrato.
+- Escalar antes de cerrar el piloto.

@@ -1,0 +1,158 @@
+intake_date: 2026-08-06
+scope: greenhouse envelope evidence transferred to the Tenjo marranera
+curatorial_status: audited_against_primary_or_publisher_sources_where_available
+binary_policy: no third-party PDFs or uploaded raw synthesis retained
+transfer_rule: plant-greenhouse geometry, schedules, airflow rates and yield effects are not mushroom-facility specifications
+
+records:
+  - source_id: intake_greenhouse_001
+    title: Diseño de Envolvente Térmica y Optimización Microclimática para Cultivos Protegidos en Tenjo, Cundinamarca
+    source_type: user_supplied_synthesis
+    received_as: pasted_text_attachment
+    evidence_scope: [Tenjo_climate, greenhouse_geometry, thermal_screens, films, thermal_mass, ventilation]
+    rights_status: user supplied for analysis; raw text not mirrored
+    verification_status: audited_claim_by_claim
+    disposition: retained_as_provenance_only
+
+  - source_id: local_002
+    citation_key: Alcaldia_Tenjo_Ecologia_2026
+    title: Ecología — Municipio de Tenjo
+    source: Alcaldía Municipal de Tenjo
+    url: https://www.tenjo-cundinamarca.gov.co/MiMunicipio/Paginas/Ecologia.aspx
+    country: Colombia
+    source_type: official_municipal_page
+    evidence_scope: [altitude, mean_temperature, annual_precipitation, climate_classification]
+    rights_status: public government information
+    verification_status: page_checked_2026-08-06
+    limitations: does not provide station, period, hourly profile, humidity, wind, radiation or frost frequency
+
+  - source_id: greenhouse_023
+    citation_key: Marin_Benitez_et_al_2023
+    title: Caracterización e inventario ambiental de cultivos bajo invernadero en Tenjo, Colombia
+    authors: Marín-Benítez, A. C.; Marín-Escobar, J. C.; Maury-Mena, S. C.; Maury, A.
+    source: Revista ION 36(1):79-89
+    year: 2023
+    doi: 10.18273/revion.v36n1-2023006
+    country: Colombia
+    site: Tenjo_Cundinamarca
+    source_type: cross_sectional_environmental_inventory
+    evidence_scope: [greenhouse_inventory, land_area, production_types, water_use_impacts]
+    rights_status: CC_BY_4_0
+    verification_status: full_html_and_publisher_metadata_checked
+    limitations: not a microclimate measurement or greenhouse engineering experiment
+
+  - source_id: greenhouse_024
+    citation_key: Duarte_Gualdron_et_al_2022
+    title: Simulación climática de un invernadero para rosas
+    authors: Duarte-Gualdrón, A. R.; Mahecha-Fernández, D. C.; Osorio-Hernández, R.
+    source: Revista Politécnica 18(36):107-114
+    year: 2022
+    doi: 10.33571/rpolitec.v18n36a8
+    country: Colombia
+    site: El_Rosal_Cundinamarca
+    source_type: CFD_model_with_field_validation_context
+    evidence_scope: [greenhouse_geometry, evapotranspiration, temperature, humidity, spatial_field]
+    rights_status: CC_BY_NC_SA_4_0
+    verification_status: full_html_checked
+    limitations: case geometry and climate inputs are specific to El Rosal and rose production
+
+  - source_id: greenhouse_025
+    citation_key: Villagran_et_al_2012
+    title: Optimization of ventilation and its effect on the microclimate of a Colombian multispan greenhouse
+    authors: Villagrán, E. A.; Gil, R.; Acuña, J. F.; Bojacá, C. R.
+    source: Agronomía Colombiana 30(2):282-288
+    year: 2012
+    country: Colombia
+    source_type: CFD_greenhouse_ventilation_study
+    evidence_scope: [natural_ventilation, ridge_orientation, spatial_uniformity, air_renewal]
+    rights_status: open journal article; citation and limited summary
+    verification_status: publisher_abstract_and_bibliographic_record_checked
+    limitations: plant greenhouse; does not set mushroom-room ACH or opening dimensions
+
+  - source_id: greenhouse_026
+    citation_key: Villagran_2016
+    title: Diseño y evaluación climática de un invernadero para condiciones de clima intertropical de montaña
+    author: Villagrán Munar, E. A.
+    source: Universidad Nacional de Colombia, tesis de maestría
+    year: 2016
+    country: Colombia
+    source_type: masters_thesis_CFD_and_field_evaluation
+    evidence_scope: [greenhouse_design, ventilation, CFD, geostatistics]
+    rights_status: institutional repository; citation and curatorial notes only
+    verification_status: metadata_and_abstract_checked
+    limitations: full PDF not cotejo-complete in this intake; do not quote numerical details not verified elsewhere
+
+  - source_id: screen_001
+    citation_key: Bailey_1981
+    title: The reduction of thermal radiation in glasshouses by thermal screens
+    author: Bailey, B. J.
+    source: Journal of Agricultural Engineering Research 26(3):215-224
+    year: 1981
+    doi: 10.1016/0021-8634(81)90106-2
+    source_type: thermal_radiation_screen_analysis
+    evidence_scope: [longwave_radiation, emissivity, transmissivity, condensation]
+    rights_status: publisher metadata and abstract; citation only
+    verification_status: abstract_checked
+    limitations: glasshouse conditions; reported heat-loss ranges do not predict Tenjo performance
+
+  - source_id: screen_002
+    citation_key: Kittas_et_al_2003
+    title: Influence of aluminized thermal screens on greenhouse microclimate and night transpiration
+    authors: Kittas, C.; Katsoulas, N.; Baille, A.
+    source: Acta Horticulturae 614
+    year: 2003
+    doi: 10.17660/ActaHortic.2003.614.58
+    source_type: greenhouse_screen_experiment
+    evidence_scope: [temperature, humidity, radiation, rose_crop, transpiration]
+    rights_status: publisher abstract; citation only
+    verification_status: abstract_checked
+    limitations: rose greenhouse and heated conditions
+
+  - source_id: screen_003
+    citation_key: Teitel_et_al_2009
+    title: Effect of cyclic heating and a thermal screen on the nocturnal heat loss and microclimate of a greenhouse
+    authors: Teitel, M.; Barak, M.; Antler, A.
+    source: Biosystems Engineering 102(2):162-170
+    year: 2009
+    doi: 10.1016/j.biosystemseng.2008.11.013
+    source_type: heated_greenhouse_experiment
+    evidence_scope: [thermal_screen, nocturnal_heat_loss, heating_control, microclimate]
+    rights_status: publisher abstract; citation only
+    verification_status: abstract_checked
+    limitations: fixed 18:00-06:00 schedule is an experimental protocol, not a Tenjo control rule
+
+  - source_id: screen_004
+    citation_key: Hemming_et_al_2017
+    title: Energy saving screen materials — measurement method of radiation exchange, air permeability and humidity transport
+    authors: Hemming, S.; Baeza Romero, E. J.; Mohammadkhani, V.; van Breugel, B.
+    source: Wageningen University and Research
+    year: 2017
+    source_type: standardized_material_characterization_research
+    evidence_scope: [emissivity, infrared_transmission, air_permeability, humidity_transport]
+    rights_status: institutional research summary; cite and link
+    verification_status: institutional_metadata_checked
+    limitations: material performance must be calculated for actual assembly and climate
+
+  - source_id: screen_user_001
+    citation_key: UNAL_thermal_screen_rose_unverified
+    title: Evaluación del uso de pantallas termoreflectoras en cultivo de rosa para exportación en Colombia
+    source: Universidad Nacional de Colombia repository
+    source_type: thesis_or_research_report
+    evidence_scope: [thermal_screen, rose_yield, nocturnal_temperature, fungicide_use]
+    rights_status: institutional repository; no binary retained
+    verification_status: title_and_user_supplied_url_only_full_claims_not_cotejo_complete
+    limitations: do not use claimed 20_percent_energy, 1_to_2_C or 30_percent_yield values as verified until page-level review
+    disposition: pending_full_source_audit
+
+  - source_id: climate_002
+    citation_key: IDEAM_helada_definition
+    title: Helada — glosario
+    source: Instituto de Hidrología, Meteorología y Estudios Ambientales
+    year: 2024
+    url: https://ideam.gov.co/atencion-y-servicios-a-la-ciudadania/glosario/helada-alertas-hidrologicas
+    country: Colombia
+    source_type: official_definition
+    evidence_scope: [meteorological_frost_definition]
+    rights_status: public government information
+    verification_status: page_checked_2026-08-06
+    limitations: does not establish frequency or minimum temperature at the farm

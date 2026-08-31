@@ -1,5 +1,6 @@
 ---
 title: Cultivo en Agar — MEA, PDA y WBS
+document_id: DOC-0015
 category: spawn
 load_priority: selective
 last_reviewed: 2026-06-30

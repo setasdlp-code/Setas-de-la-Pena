@@ -1,144 +1,217 @@
 ---
 title: Hericium erinaceus — Lion's Mane / Melena de León
+document_id: DOC-0006
 category: species
 load_priority: selective
-last_reviewed: 2026-07-16
+last_reviewed: 2026-08-05
 confidence: medium
 primary_sources:
-  - Friedman 2015 (Journal of Agricultural and Food Chemistry)
-  - Mori et al. 2008 (Biological & Pharmaceutical Bulletin; paper_002)
-  - Mori et al. 2009 (Phytotherapy Research; paper_007)
-  - Chen, Stamets & Zied 2018 (Int J Med Mushrooms; paper_010)
+  - Friedman 2015 (paper_003)
+  - Mori et al. 2009 (paper_002)
+  - Tabi et al. 2021
+  - Lu et al. 2024
   - Stamets 2000
-  - Mushroom Media Online
-  - Colorado Cultures LLC
 related_documents:
   - pleurotus_djamor.md
-  - 02_substrates/substrate_library.md
-  - 04_facility/fruiting.md
+  - lentinula_edodes.md
+  - ../02_substrates/substrate_library.md
+  - ../04_facility/fruiting.md
+  - ../05_equipment/environmental_control.md
+  - ../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md
+  - ../09_research/unresolved_questions.md
 ---
 
 # Executive Summary
-*Hericium erinaceus* (Lion's Mane / Melena de León) es la especie medicinal más valiosa del portafolio de Setas de la Peña. Alta demanda, precio premium. Sin embargo, es la especie más exigente del cultivo: la interacción T°+HR es extremadamente crítica, el CO₂ debe mantenerse <1,000 ppm, y las ventanas óptimas son muy estrechas. No es la primera especie para producción; requiere automatización precisa antes de escalar.
+
+*Hericium erinaceus* es una especie futura de alto valor para Setas de la Peña. El proyecto no dispone todavía de una cepa caracterizada, lotes trazables ni una curva local de temperatura, HR, CO₂ y velocidad de aire. Por ello, este perfil describe evidencia y requisitos de validación; no fija setpoints operativos.
+
+La literatura primaria confirma variación entre aislamientos. Un estudio comparó fructificación a 15, 20 y 25°C y encontró respuestas diferentes incluso entre cepas de *H. erinaceus*. La evidencia revisada no justifica presentar **CO₂ <1.000 ppm** como umbral universal, ni una única banda térmica, duración, número de flushes o eficiencia biológica.
+
+La especie puede desarrollar morfología elongada o coralina bajo condiciones inadecuadas de intercambio gaseoso, y puede deshidratarse cuando el flujo incide directamente sobre el carpóforo. Estas relaciones deben medirse con la cepa y el sistema de Setas de la Peña antes de escalar.
 
 # Research Consensus
 
-## Propiedades Neuroprotectoras
-**Consensus**
-Supported by:
-- Friedman 2015 (J. Agric. Food Chem.)
-- Mori et al. 2008 (estudio celular/preclínico; paper_002)
-- Mori et al. 2009 (ensayo clínico pequeño; paper_007)
-- Stamets 2000
+## Compuestos y evidencia de salud
 
-*H. erinaceus* contiene hericenonas y erinacinas estudiadas por actividad neurotrófica. paper_002 observó inducción de NGF por extractos en un modelo celular y un ensayo corto en ratones; paper_007 es un ensayo humano pequeño y separado. Esta evidencia no demuestra prevención, tratamiento ni cura.
-**Strength of evidence:** ★★★☆☆
-**Conflicting evidence:** La mayoría de estudios clínicos en humanos son de pequeña escala. Los claims medicinales requieren cuidado en marketing (regulación colombiana).
+Friedman (2015) revisa hericenonas, erinacinas, polisacáridos y otros compuestos de cuerpos fructíferos y micelio. Mori et al. (2009) evaluó una preparación oral en un ensayo pequeño de 30 participantes con deterioro cognitivo leve.
 
-## Parámetros de Cultivo
-**Consensus**
-Supported by:
-- Stamets 2000
-- Cotter 2014
-- Mushroom Media Online
-- Colorado Cultures LLC
+**Uso permitido:** contexto de investigación y desarrollo futuro.  
+**Límite:** estos estudios no autorizan claims terapéuticos del hongo fresco, polvo o extracto producido por Setas de la Peña. Cualquier claim requiere evidencia del producto, dosis, proceso y revisión regulatoria vigente.
 
-Temperatura 16–24°C y CO₂ <1,000 ppm son críticos. La interacción entre T° y HR es "significativamente más importante que en otras especies".
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Ninguno en parámetros básicos. Hay debate sobre el rango exacto de HR óptimo (80–95% según fuente).
+## Temperatura de fructificación
+
+Tabi et al. (2021) evaluó aislamientos silvestres e híbridos de *Hericium* a 15, 20 y 25°C. La respuesta de rendimiento y composición dependió del aislamiento; incluso cepas de la misma especie no compartieron una temperatura única de mejor desempeño.
+
+**Conclusión:** la temperatura se define por cepa y piloto. Los rangos de libros y productores sirven para diseñar una primera prueba, no para declarar un óptimo universal.
+
+## Humedad, CO₂ y velocidad de aire
+
+La literatura técnica y la práctica comercial coinciden en que *H. erinaceus* requiere humedad alta durante formación y desarrollo, intercambio gaseoso suficiente y ausencia de desecación superficial. Sin embargo, los umbrales exactos varían y la evidencia primaria de una curva universal de CO₂ es insuficiente.
+
+**Conclusión:** controlar simultáneamente temperatura, HR, CO₂, condensación y velocidad de aire. Evaluar morfología, pérdida de masa y longitud de dientes por posición.
+
+## Sustratos
+
+La base más estudiada es aserrín de madera dura suplementado. Lu et al. (2024) demostró que la sustitución parcial de madera por paja puede producir formulaciones viables y modificar actividad enzimática. Por tanto, queda retirada la afirmación de que la especie no tolera materiales de gramíneas.
+
+**Conclusión:** una formulación local puede incluir madera y materiales alternativos, pero debe evaluarse con base seca explícita, proceso térmico validado, réplicas y medición de contaminación y BE.
 
 # Core Principles
-- CO₂ <1,000 ppm es no negociable. Sin esto, crecimiento "stringy" en lugar de globular.
-- Dew point en caps es el objetivo real — no solo HR%.
-- La interacción T°+HR requiere sensor SCD30 + SHT3x monitoreados simultáneamente.
-- No producir comercialmente antes de dominar P. djamor y tener automatización estable.
+
+- Identificar cepa, proveedor y lote antes de definir parámetros.
+- Tratar temperatura, HR, CO₂ y velocidad de aire como variables interdependientes.
+- Evitar niebla o chorro directo sobre primordios y carpóforos.
+- Medir CO₂ en la zona de producto y caracterizar gradientes verticales durante comisionamiento.
+- Usar SCD30 con compensación por presión ambiente o altitud registrada.
+- No prometer BE, duración, flushes o vida útil sin datos locales.
+- Mantener *H. erinaceus* como piloto separado hasta estabilizar trazabilidad, esterilización y control ambiental.
 
 # Technical Details
 
 ## Taxonomía
-- **Reino:** Fungi
-- **Orden:** Russulales
-- **Familia:** Hericiaceae
-- **Sinónimos:** Crin de lion (Fr.), Yamabushitake (Jp.)
 
-## Compuestos Bioactivos
-| Compuesto | Ubicación | Acción |
+- Reino: Fungi
+- Orden: Russulales
+- Familia: Hericiaceae
+- Nombre común en español: melena de león
+- Nombres internacionales: Lion's Mane; Yamabushitake
+
+## Compuestos bioactivos — formulación prudente
+
+| Grupo | Ubicación reportada | Estado de evidencia |
 |---|---|---|
-| Hericenonas | Cuerpo fructífero | Actividad neurotrófica estudiada; resultados dependen del compuesto/modelo |
-| Erinacinas | Micelio | Actividad neurotrófica preclínica; algunos datos animales de distribución cerebral |
-| Beta-glucanos | Cuerpo fructífero | Inmunomodulación |
-| Ergosterol | General | Precursor vitamina D₂ |
+| Hericenonas | Principalmente cuerpo fructífero | Investigadas en estudios químicos y preclínicos |
+| Erinacinas | Principalmente micelio y cultivos específicos | Investigadas en modelos preclínicos; contenido depende de cepa y proceso |
+| Polisacáridos / beta-glucanos | Cuerpo fructífero y micelio | Composición variable; requiere análisis del producto |
+| Ergosterol | Tejido fúngico | Precursor de vitamina D₂ bajo condiciones apropiadas |
 
-## Ciclo de Vida
+No asumir concentración, biodisponibilidad o efecto clínico a partir del nombre de la especie.
 
-### Incubación (Spawn Run)
-| Parámetro | Valor |
-|---|---|
-| Temperatura | 20–24°C |
-| HR ambiente | 70% (bolsa sellada) |
-| Duración | 14–21 días |
-| Luz | No requerida |
+## Incubación — estado provisional
 
-### Fructificación
-| Parámetro | Valor |
-|---|---|
-| Temperatura | **16–24°C** (óptimo: 18–22°C) |
-| HR | 85–90% |
-| CO₂ | **<1,000 ppm — CRÍTICO** |
-| FAE | Alta — crecimiento "stringy" si insuficiente |
-| Luz | 750+ lux, 3–5 h/día |
-| Ciclo fruiting | 14–21 días |
-| Flushes esperados | 2–3 |
+| Variable | Estado de evidencia | Uso en Setas de la Peña |
+|---|---|---|
+| Temperatura | Rangos de cultivo publicados, dependientes de cepa | Definir banda inicial con ficha del spawn y piloto |
+| HR ambiente | La bolsa limita intercambio hídrico; controlar condensación y pérdida de agua | Registrar HR, peso del bloque y condición de filtro |
+| Duración | Frecuentemente descrita como rápida, con variación por cepa y formulación | No usar 14–21 días como criterio de liberación |
+| Luz | Requisitos durante incubación no están definidos como universales | Registrar condición; no invertir en control específico sin evidencia |
+| CO₂ / calor | Dependen de masa, fase, filtro y densidad de carga | Medir con carga representativa y temperatura interna de bloques |
 
-## Indicadores Visuales
-| Visual | Interpretación |
-|---|---|
-| Globo compacto, blanco, con "dientes" | Desarrollo óptimo ✅ |
-| Crecimiento elongado, "stringy" | CO₂ alto / FAE insuficiente |
-| Color café/amarillo en extremos | Exceso de calor o sequedad |
-| Manchas oscuras | Exceso HR + mal airflow o bacteria |
-| Pins abundantes, compactos | T°+HR bien calibrados ✅ |
+Criterios mínimos de madurez para ensayo: colonización compatible con la cepa, bloque íntegro, ausencia de contaminación, masa y humedad dentro de especificación y respuesta consistente en unidades replicadas.
 
-## Sustratos Compatibles y Formulación (C:N Óptimo 25:1 – 35:1)
-| Sustrato | Relación C:N | BE Esperada | Notas |
-|---|---|---|---|
-| Master's Mix (50/50 serrín roble + cascarilla soya) | 28:1 – 32:1 | **120–180%** | **Óptimo internacional para Lion's Mane**. Autoclave obligatorio |
-| Serrín de roble / álamo (80%) + salvado de trigo (18%) + CaCO₃ (2%) | 30:1 – 35:1 | 80–120% | Formulación estándar regional Sabana de Bogotá |
-| Tuza de maíz picada (50%) + serrín roble (25%) + salvado (20%) + yeso (5%) | 32:1 – 36:1 | 80–110% | Alternativa de economía circular validada |
-| Serrín de madera dura puro (sin suplementar) | 150:1 – 300:1 | 40–60% | Crecimiento lento y bajo rendimiento; no recomendado |
+## Fructificación — variables de prueba
 
-*H. erinaceus* es estrictamente ligninolítico y NO tolera paja de trigo o materiales de gramíneas como sustrato principal (requiere base de madera dura o tuza de maíz densa).
+| Variable | Evidencia disponible | Estado operacional |
+|---|---|---|
+| Temperatura | 15, 20 y 25°C han sido comparados experimentalmente; respuesta dependiente del aislamiento | Pendiente por cepa |
+| HR | Condiciones altas se repiten en literatura; agua libre aumenta riesgo de defectos y contaminación | Pendiente de mapeo y respuesta superficial |
+| CO₂ | Intercambio insuficiente se asocia con morfología anormal en práctica; falta umbral primario universal | Pendiente de curva local |
+| Velocidad de aire | Corriente directa puede aumentar desecación; falta límite transferible | Medir junto al producto |
+| Luz | Estudios usan intensidades y fotoperiodos distintos | Pendiente de piloto |
+| Duración / flushes | Cambian con cepa, sustrato y ambiente | No aprobados |
 
-## Complejidad en Tenjo
-- Temperatura de Tenjo (14–18°C) es **ventajosa** para H. erinaceus — encaja naturalmente con el rango de fructificación.
-- El reto principal es mantener CO₂ <1,000 ppm con FAE suficiente SIN bajar la HR por debajo de 85%.
-- Requiere SCD30 con compensación de altitud (2600 m s.n.m.) para lecturas precisas.
+No se adopta una tabla única de setpoints hasta que exista especificación del lote.
 
-# Best Practices
-- Monitorear CO₂ en tiempo real; un pico sostenido >1,200 ppm dispara ramificación anormal (*staghorn*).
-- Usar SHT3x + SCD30 simultáneamente — no solo uno.
-- No confiar en observación visual de HR; calcular dew point con T° + T° superficie y emplear niebla ultrasónica fina (<5 µm).
-- Primera producción: 1–2 bloques en paralelo con monitoreo intensivo antes de escalar.
+## Indicadores visuales y diagnóstico
+
+| Observación | Hipótesis inicial | Datos necesarios |
+|---|---|---|
+| Cuerpo compacto con dientes uniformes | Ambiente compatible con la cepa | T/HR/CO₂, posición, velocidad de aire, edad |
+| Crecimiento coralino o elongado | CO₂, aire, luz, temperatura o cepa | Serie multipunto y comparación entre posiciones |
+| Dientes cortos o desarrollo detenido | Madurez, temperatura, desecación o daño físico | Peso, superficie, T/HR y fotografías secuenciales |
+| Amarillamiento o pardeamiento | Edad, calor, sequedad, oxidación o contaminación | Temperatura superficial, pérdida de masa, olor y microbiología si aplica |
+| Superficie húmeda o exudado | Niebla directa, condensación, baja evaporación o deterioro | Punto de rocío, ciclos de humidificación y flujo |
+| Diferencia marcada por estante | Distribución desigual de aire, humedad o temperatura | Mapa por nivel y velocidad de aire |
+
+Una señal visual no identifica por sí sola la causa. Cambiar una variable principal a la vez cuando sea viable.
+
+## Sustratos candidatos
+
+| Ruta | Estado | Requisito de evaluación |
+|---|---|---|
+| Aserrín de madera dura + salvado | Referencia principal | Especie de madera, base seca, humedad, tratamiento térmico y cepa |
+| Mezclas de maderas legales | Plausible | Trazabilidad, ausencia de tratamientos y consistencia entre lotes |
+| Sustitución parcial con paja/gramíneas | Respaldada como línea experimental | Comparación controlada; no extrapolar formulación externa |
+| Cascarilla de arroz como aireante | Hipótesis | Densidad, retención de agua, compactación y BE |
+| Bagazo cervecero | Hipótesis de suplemento | Secado/proceso, proteína, variabilidad y riesgo de contaminación |
+| Borra de café | Experimental | Composición, pH, contaminación, mezcla y tratamiento térmico |
+
+No se mantienen rangos universales de BE. La eficiencia biológica debe calcularse con masa seca inicial documentada.
+
+# Aplicación en Tenjo
+
+La altura modifica presión y densidad molar del aire. A aproximadamente 2.600 m, un mismo transporte molar puede requerir mayor caudal volumétrico que al nivel del mar. Esto no equivale a aumentar automáticamente un porcentaje fijo de ACH.
+
+Para el piloto:
+
+1. medir presión barométrica, temperatura y HR exterior/interior;
+2. verificar compensación del SCD30;
+3. medir caudal efectivo con ductos y filtros;
+4. mapear CO₂, T y HR en varios niveles antes y después de cargar;
+5. registrar velocidad de aire junto a los primordios;
+6. fotografiar cada bloque desde posición y distancia constantes;
+7. registrar peso de bloque y cosecha;
+8. correlacionar morfología con series ambientales.
+
+Las noches frías pueden ayudar a mantener una banda apropiada para algunas cepas, pero también aumentar condensación y detener crecimiento si la temperatura cae por debajo de su tolerancia. El aislamiento y la calefacción se dimensionan después de medir la envolvente y definir la cepa.
+
+# Pilot Design
+
+## Fase 1 — Caracterización sin producto
+
+- prueba de sensores y presión/altitud;
+- mapa T/HR/CO₂ a tres alturas;
+- caudal y velocidad de aire;
+- respuesta a humidificación, extracción y apertura de puerta;
+- identificación de condensación.
+
+## Fase 2 — Carga simulada
+
+- masa térmica e hídrica representativa;
+- recuperación después de eventos;
+- gradiente por rack;
+- ajuste de impulsión y retorno.
+
+## Fase 3 — Primer lote biológico
+
+- una cepa y una formulación;
+- unidades identificadas por posición;
+- sin cambios simultáneos de varias variables principales;
+- criterios de retención por contaminación;
+- cosecha y BE documentadas;
+- revisión antes de segundo lote.
+
+## Fase 4 — Curva CO₂–morfología
+
+Solo después de obtener un primer ciclo estable. Comparar bandas definidas por diseño experimental y mantener temperatura, HR, luz, formulación y densidad tan constantes como sea viable.
 
 # Common Failure Modes
-| Problema | Causa | Solución |
+
+| Problema | Causas posibles | Intervención inicial reversible |
 |---|---|---|
-| Crecimiento "stringy" / elongado | CO₂ >1,000 ppm | Aumentar FAE; verificar sellado |
-| Desarrollo lento o nulo | Temperatura fuera de rango | Revisar T° con dos sensores |
-| Color café en extremos | Desecación / baja HR + alta T° | Verificar dew point; ajustar HR |
-| Contaminación bacteriana | Exceso HR / agua libre en espinas | Reducir HR; nebulizar más fino |
-| Poca producción general | Ventanas T°+HR no mantenidas con consistencia | Automatización necesaria antes de escalar |
+| Morfología elongada/coralina | CO₂, distribución de aire, luz, temperatura o cepa | Verificar sensores y mapa antes de aumentar extracción |
+| Superficie seca | Flujo directo, baja HR, calentamiento o tiempo de puerta | Reorientar flujo y verificar ciclos |
+| Condensación sobre producto | Superficie fría, niebla directa o baja evaporación | Separar descarga, medir punto de rocío y superficies |
+| Desarrollo lento | Cepa, bloque inmaduro, temperatura, sustrato o spawn | Revisar trazabilidad y comparar posiciones |
+| Variación por nivel | Cortocircuito de aire o gradiente térmico | Mapeo multipunto y ajuste físico |
+| Contaminación | Proceso térmico, inoculación, exceso de suplemento o agua libre | Retener unidades y auditar trazabilidad |
 
 # Open Questions
-- ¿Qué dosis de extracto es relevante para marketing en Colombia bajo regulación INVIMA?
-- ¿Se puede co-cultivar con P. djamor en la misma cámara? (Incompatible por CO₂: P. djamor tolera 1,500 ppm, H. erinaceus exige <800–1,000 ppm).
-- Temperatura mínima real en Tenjo de noche: ¿suficiente para H. erinaceus sin calefacción?
+
+- ¿Qué cepa comercial trazable de *H. erinaceus* está disponible en Colombia?
+- ¿Qué temperatura recomienda el proveedor para incubación, inducción y fructificación?
+- ¿Qué curva CO₂–morfología produce esa cepa en la celda de Tenjo?
+- ¿Qué velocidad de aire junto al producto evita zonas estancadas sin desecar?
+- ¿Qué formulación regional ofrece rendimiento repetible con contaminación aceptable?
+- ¿La sustitución parcial con paja, cascarilla, café o residuos agrícolas es viable bajo el tratamiento térmico disponible?
+- ¿Qué vida útil real se alcanza a 4–5°C con el empaque y transporte disponibles?
+- ¿Qué requisitos vigentes de INVIMA aplican a producto fresco, polvo, extracto y claims?
 
 # References
-- Chen, A. W., Stamets, P., & Zied, D. C. (2018). Cultivation of *Hericium erinaceus* on agricultural and forestry residues. *Int. J. Med. Mushrooms*, 20(6), 555–568. [paper_010]
-- Friedman, M. (2015). Chemistry, Nutrition, and Health-Promoting Properties of Hericium erinaceus. *J. Agric. Food Chem.* 63(32): 7108–7123.
-- Mori, K. et al. (2008). Nerve growth factor-inducing activity of *Hericium erinaceus* in 1321N1 human astrocytoma cells. *Biological & Pharmaceutical Bulletin*, 31(9), 1727–1732. [paper_002]
-- Mori, K. et al. (2009). Improving effects of *Yamabushitake* on mild cognitive impairment: a double-blind placebo-controlled clinical trial. *Phytotherapy Research*, 23(3), 367–372. [paper_007]
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 181–192.
-- Mushroom Media Online. *Lion's Mane cultivation challenges*. https://mushroommediaonline.com
-- Colorado Cultures LLC. *Humidity and airflow in mushroom cultivation*. https://www.coloradoculturesllc.com
+
+- Friedman, M. (2015). Chemistry, Nutrition, and Health-Promoting Properties of *Hericium erinaceus*. *Journal of Agricultural and Food Chemistry*, 63(32), 7108–7123. https://doi.org/10.1021/acs.jafc.5b02914
+- Mori, K. et al. (2009). Improving effects of Yamabushitake on mild cognitive impairment: a double-blind placebo-controlled clinical trial. *Phytotherapy Research*, 23(3), 367–372. https://doi.org/10.1002/ptr.2634
+- Tabi, A. N. M. et al. (2021). The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid *Hericium* isolates. *Scientia Horticulturae*, 280, 109915. https://doi.org/10.1016/j.scienta.2021.109915
+- Lu, Z. et al. (2024). Optimization of substrate formulation for *Hericium erinaceus* by replacing wood by straw and their effect on enzyme activities. *Frontiers in Plant Science*, 15, 1436385. https://doi.org/10.3389/fpls.2024.1436385
+- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
+- Ver `../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md` para la auditoría de altitud, ventilación, sustratos y poscosecha.

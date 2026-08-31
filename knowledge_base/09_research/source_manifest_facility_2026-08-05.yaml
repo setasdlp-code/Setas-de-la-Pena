@@ -1,0 +1,380 @@
+intake_date: 2026-08-05
+scope: facility adaptation, cold-climate engineering, hygiene and occupational safety for the Tenjo marranera
+curatorial_status: metadata_and_claims_verified_from_publisher_or_official_pages_unless_noted
+binary_policy: no third-party PDF binaries added; retain citations, DOIs, URLs and curatorial notes only
+transfer_rule: foreign values are evidence for hypotheses and test design, not Tenjo setpoints or construction specifications
+
+records:
+  - source_id: facility_001
+    citation_key: Chen_et_al_2022
+    title: Research progress on indoor environment of mushroom factory
+    source: International Journal of Agricultural and Biological Engineering 15(1):25-32
+    doi: 10.25165/j.ijabe.20221501.6872
+    country: China
+    source_type: peer_reviewed_review
+    evidence_scope: [indoor_environment, sensors, airflow, CFD, spatial_uniformity]
+    rights_status: publisher page and metadata may be cited; binary redistribution not evaluated
+
+  - source_id: facility_002
+    citation_key: Matsuyama_Terasawa_Horibe_1998
+    title: The Actual Culture Environment Conditions of a Culture and Ripening Room of Mushroom Factories
+    source: Journal of the Society of High Technology in Agriculture 10(2):70-78
+    doi: 10.2525/jshita.10.70
+    country: Japan
+    source_type: measured_factory_environment_and_model
+    evidence_scope: [metabolic_heat, CO2_generation, moisture_balance, factory_scale]
+    rights_status: J-STAGE free-access metadata and abstract; binary redistribution not evaluated
+
+  - source_id: facility_003
+    citation_key: Ma_et_al_2019
+    title: Structural Design and Thermal Performance Simulation of Shade Roof of Double-Slope Greenhouse for Mushroom-Vegetable Cultivation
+    source: International Journal of Agricultural and Biological Engineering 12(3):126-133
+    doi: 10.25165/j.ijabe.20191203.4852
+    country: China
+    source_type: peer_reviewed_thermal_simulation
+    evidence_scope: [roof, envelope, insulation, heating_load]
+    rights_status: publisher metadata and abstract may be cited; binary redistribution not evaluated
+
+  - source_id: facility_004
+    citation_key: Lee_et_al_2015
+    title: Technology for Improving the Uniformity of the Environment in the Oyster Mushroom Cultivation House by Using Multi-layered Shelves
+    source: Protected Horticulture and Plant Factory 24(2):128-133
+    doi: 10.12791/KSBEC.2015.24.2.128
+    country: South Korea
+    source_type: cultivation_house_measurement
+    evidence_scope: [rack_uniformity, temperature, humidity, CO2, circulation]
+    rights_status: citation and curatorial notes only
+
+  - source_id: facility_005
+    citation_key: Lee_et_al_2017
+    title: The Study on Enhanced Micro Climate of the Oyster Mushroom Cultivation House with Multi-layered Shelves by Using CFD Analysis
+    source: Journal of Mushrooms 15(1):14-20
+    doi: 10.14480/JM.2017.15.1.14
+    country: South Korea
+    source_type: CFD_study
+    evidence_scope: [rack_geometry, supply_air, return_air, dead_zones]
+    rights_status: citation and curatorial notes only
+
+  - source_id: facility_006
+    citation_key: Cornell_Indoor_Production
+    title: Indoor Production; Cultivating Indoors vs Outdoors
+    source: Cornell Small Farms Program
+    url: https://smallfarms.cornell.edu/resources/indoor-production/
+    country: USA
+    source_type: university_extension
+    evidence_scope: [building_conversion, separate_rooms, commercial_workflow]
+    rights_status: public web guidance; cite and link, do not mirror full text
+
+  - source_id: facility_007
+    citation_key: Annepu_Gupta_2021
+    title: Insights into the specialty mushrooms production in China — Key takeaways to Indian farmers
+    source: Mushroom Research 30(2):109-121
+    doi: 10.36036/MR.30.2.2021.119990
+    country: India_China
+    source_type: peer_reviewed_descriptive_review
+    evidence_scope: [production_flow, specialization, industrial_systems]
+    rights_status: citation and curatorial notes only
+
+  - source_id: facility_008
+    citation_key: Oguntoyinbo_et_al_2015
+    title: Development of the SMA (Speaking Mushroom Approach) Environmental Control System
+    source: Environmental Control in Biology 53(2):55-62
+    doi: 10.2525/ecb.53.55
+    country: Japan
+    source_type: experimental_control_system
+    evidence_scope: [synchronized_monitoring, actuators, biological_signals]
+    rights_status: J-STAGE source; citation and curatorial notes only
+
+  - source_id: facility_009
+    citation_key: Kashino_et_al_2018
+    title: Development of Energy-saving Ventilation System Considering Inside and Outside Temperatures of a Sawdust-based Shiitake Cultivation Facility
+    source: Journal of the Japanese Society of Taste Technology 16(2):4-12
+    doi: 10.11274/bimi.16.2_4
+    country: Japan
+    site: Tamano_Okayama
+    source_type: one_year_facility_trial
+    evidence_scope: [free_cooling, heat_recovery, inside_outside_temperature, shiitake]
+    rights_status: J-STAGE free access; citation and curatorial notes only
+
+  - source_id: facility_010
+    citation_key: Iwayoshi_Kindaichi_Nishina_2025
+    title: Energy Saving Effects of Ground Source Ventilation System for Mushroom Cultivation Facilities
+    source: AIJ Journal of Technology and Design 31(77):346-351
+    doi: 10.3130/aijt.31.346
+    country: Japan
+    site: Hiroshima
+    source_type: validated_energy_simulation
+    evidence_scope: [ground_source_ventilation, low_temperature_high_humidity, outdoor_air_load]
+    rights_status: J-STAGE free access; citation and curatorial notes only
+
+  - source_id: facility_011
+    citation_key: Kashino_et_al_2016
+    title: Effects of Cultivation Temperature and CO2 Concentration on Yield in Sawdust-based Shiitake Cultivation
+    source: Journal of the Japanese Society of Taste Technology 15(1):5-11
+    doi: 10.11274/bimi.15.1_5
+    country: Japan
+    source_type: controlled_shiitake_experiment
+    evidence_scope: [incubation_temperature, CO2, yield, energy]
+    rights_status: J-STAGE free access; citation and curatorial notes only
+
+  - source_id: facility_012
+    citation_key: Matsuyama_Terasawa_Horibe_2000
+    title: Computer Simulated Facility Investment Plan Part 1 — Development of Software and Elucidation of Mushroom Cultivation Environment
+    source: Journal of the Society of High Technology in Agriculture 12(2):126-133
+    doi: 10.2525/jshita.12.126
+    country: Japan
+    site: Nagano_City_reference_factory
+    source_type: facility_simulation
+    evidence_scope: [equipment_sizing, outdoor_air_penalty, seasonal_load, investment]
+    rights_status: J-STAGE free access; citation and curatorial notes only
+
+  - source_id: facility_013
+    citation_key: Matsuyama_et_al_2003
+    title: Practical Environmental Control by Reduction of Operating Costs
+    source: Journal of the Society of High Technology in Agriculture 15(1):33-38
+    doi: 10.2525/jshita.15.33
+    country: Japan
+    site: Nagano_City_reference_factory
+    source_type: facility_simulation_and_control_strategy
+    evidence_scope: [variable_capacity, flexible_control_bands, operating_cost]
+    rights_status: J-STAGE free access; citation and curatorial notes only
+
+  - source_id: facility_014
+    citation_key: Quality_Engineering_Society_2012_shiitake
+    title: Optimization of Shiitake Mushroom Cultivation Techniques Based on Robust Quality Engineering
+    source: Quality Engineering 20(3):96-101
+    doi: 10.18890/qes.20.3_96
+    country: Japan
+    source_type: one_year_low_control_greenhouse_trial
+    evidence_scope: [minimal_air_conditioning, seasonal_management, winter_failure, contamination]
+    rights_status: J-STAGE source; citation and curatorial notes only
+
+  - source_id: facility_015
+    citation_key: ChamsongI_environment_2025
+    title: Assessment of influence of indoor environmental conditions on the growth of Chamsong-I mushroom (Lentinula edodes)
+    source: Engineering in Agriculture, Environment and Food 18(2):92-104
+    doi: 10.37221/eaef.18.2_92
+    country: South_Korea
+    source_type: IoT_and_vision_monitoring_study
+    evidence_scope: [camera_monitoring, growth_rate, temperature, humidity, CO2]
+    rights_status: CC_BY_4_0
+
+  - source_id: facility_016
+    citation_key: Wang_et_al_2023_MPC
+    title: Energy-Saving Control Method for Factory Mushroom Room Air Conditioning Based on MPC
+    source: Energies 16(22):7623
+    doi: 10.3390/en16227623
+    country: China
+    source_type: model_predictive_control_study
+    evidence_scope: [HVAC, MPC, temperature_prediction, energy]
+    rights_status: open_access; cite, do not duplicate full article
+
+  - source_id: facility_017
+    citation_key: Song_et_al_2025_MPC
+    title: Research on Energy-Saving Optimization of Mushroom Growing Control Room Based on Neural Network Model Predictive Control
+    source: Energies 18(20):5550
+    doi: 10.3390/en18205550
+    country: China
+    source_type: sensor_selection_and_MPC_study
+    evidence_scope: [sensor_reduction, spatial_temperature, MPC, energy]
+    rights_status: open_access; cite, do not duplicate full article
+
+  - source_id: facility_018
+    citation_key: PINN_MPC_mushroom_room_2026
+    title: Energy-saving control method for air conditioning in mushroom room based on a simplified PINN model
+    source: Energy Reports 15:108970
+    doi: 10.1016/j.egyr.2025.108970
+    country: China
+    source_type: PINN_MPC_experiment
+    evidence_scope: [spatial_temperature, sparse_sensors, equipment_cycle, energy]
+    rights_status: open_access_CC; cite, do not duplicate full article
+
+  - source_id: facility_019
+    citation_key: Alian_et_al_2026
+    title: Financial analysis of shipping container-based mushroom cultivation
+    source: Sustainable Food Technology
+    doi: 10.1039/D6FB00006A
+    country: USA
+    source_type: techno_economic_and_thermal_model
+    evidence_scope: [medium_scale, modular_cells, thermal_load, ventilation_load, metabolic_heat, autoclave_separation]
+    rights_status: CC_BY_NC_3_0; citation and limited curatorial summary
+
+  - source_id: facility_020
+    citation_key: Yum_Kim_2021
+    title: Environmental uniformity using reversible circulation fans in an oyster mushroom cultivation house
+    country: South_Korea
+    source_type: cultivation_house_experiment
+    evidence_scope: [reversible_airflow, spatial_uniformity, multi_layer_racks]
+    rights_status: citation and curatorial notes only
+    verification_status: bibliography_details_to_recheck_before_direct_quotation
+
+  - source_id: facility_021
+    citation_key: Yum_Park_2022
+    title: Air circulation direction and mushroom quality in a multi-layer cultivation house
+    country: South_Korea
+    source_type: cultivation_house_experiment
+    evidence_scope: [air_velocity, downward_flow, morphology, quality]
+    rights_status: citation and curatorial notes only
+    verification_status: bibliography_details_to_recheck_before_direct_quotation
+
+  - source_id: facility_022
+    citation_key: Ryu_et_al_2017
+    title: CFD analysis of supply and return arrangements in a mushroom cultivation room
+    country: South_Korea
+    source_type: CFD_study
+    evidence_scope: [supply_return_separation, air_path, short_circuiting]
+    rights_status: citation and curatorial notes only
+    verification_status: bibliography_details_to_recheck_before_direct_quotation
+
+  - source_id: facility_023
+    citation_key: Chong_et_al_2023_IoT
+    title: Internet of Things (IoT)-based environmental monitoring and control system for home-based mushroom cultivation
+    source: Biosensors 13(1):98
+    doi: 10.3390/bios13010098
+    country: Malaysia
+    source_type: peer_reviewed_low_cost_IoT_prototype
+    evidence_scope: [IoT, environmental_monitoring, local_control, small_scale_cultivation]
+    rights_status: open_access; citation and curatorial summary
+    verification_status: DOI_and_article_metadata_verified
+    transfer_limit: architecture only; no direct transfer of biological performance or setpoints
+
+  - source_id: facility_024
+    citation_key: Elewi_et_al_2024_smart_oyster
+    title: Design and implementation of a cost-aware and smart oyster mushroom cultivation system
+    source: Smart Agricultural Technology 8:100439
+    doi: 10.1016/j.atech.2024.100439
+    source_type: peer_reviewed_cost_aware_control_prototype
+    evidence_scope: [IoT, sensors, actuation, monitoring, oyster_mushroom]
+    rights_status: cite and summarize
+    verification_status: DOI_and_article_metadata_verified
+    transfer_limit: Pleurotus prototype; validate hardware, economics and biology locally
+
+  - source_id: facility_025
+    citation_key: Ahmad_Termizi_et_al_2021_CFD
+    title: Computation fluid dynamics simulation of airflow ventilation system in 3D indoor mushroom cultivation house model
+    source: Lecture Notes in Mechanical Engineering
+    doi: 10.1007/978-981-16-0866-7_61
+    source_type: CFD_mushroom_house_study
+    evidence_scope: [CFD, ventilation, airflow, CO2_distribution]
+    rights_status: citation and curatorial notes only
+    verification_status: DOI_and_metadata_verified
+    transfer_limit: geometry-specific model; validate with local measurements
+
+  - source_id: facility_026
+    citation_key: Duman_et_al_2024_oyster_dataset
+    title: A novel dataset of annotated oyster mushroom images with environmental context for machine learning applications
+    source: Data in Brief 57:111074
+    doi: 10.1016/j.dib.2024.111074
+    source_type: peer_reviewed_annotated_dataset
+    evidence_scope: [computer_vision, morphology, environmental_context, time_series]
+    rights_status: open_dataset_article; confirm dataset license before reuse
+    verification_status: DOI_and_article_metadata_verified
+    transfer_limit: Pleurotus imagery; models require local labels before operational use
+
+  - source_id: adjacent_001
+    citation_key: Uno_Kumano_Araki_2021
+    title: Utilization of Snow and Geothermal Cold Heat for Temperature Control and Head Production in Witloof Chicory Hydroponic Forcing Culture in Summer
+    source: Environmental Control in Biology 59(3):125-133
+    doi: 10.2525/ecb.59.125
+    country: Japan
+    site: Hokkaido
+    source_type: adjacent_controlled_environment_trial
+    evidence_scope: [enclosed_dark_room, geothermal_cooling, groundwater, thermal_storage]
+    rights_status: J-STAGE free access; adjacent evidence only
+
+  - source_id: safety_001
+    citation_key: Sastre_et_al_1990
+    title: Occupational asthma and hypersensitivity pneumonitis caused by shiitake spores
+    source: Clinical and Experimental Allergy
+    country: Spain
+    source_type: occupational_exposure_study
+    evidence_scope: [shiitake_spores, respiratory_risk, worker_exposure]
+    rights_status: citation and curatorial notes only
+    verification_status: exact_title_volume_pages_pending_recheck
+
+  - source_id: safety_002
+    citation_key: NIOSH_1993_shiitake_farm
+    title: Health Hazard Evaluation in an Indoor Shiitake Mushroom Farm
+    source: United States National Institute for Occupational Safety and Health
+    country: USA
+    source_type: government_occupational_assessment
+    evidence_scope: [bioaerosols, worker_health, ventilation, PPE]
+    rights_status: public government report
+    verification_status: report_number_pending_recheck
+
+  - source_id: safety_003
+    citation_key: Vereda_et_al_2007_Pleurotus_asthma
+    title: Occupational asthma due to spores of Pleurotus ostreatus
+    source: Allergy 62(2):211-212
+    doi: 10.1111/j.1398-9995.2006.01286.x
+    source_type: occupational_case_report
+    evidence_scope: [Pleurotus_spores, occupational_asthma, worker_exposure]
+    rights_status: citation and limited curatorial summary
+    verification_status: DOI_and_article_metadata_verified
+    transfer_limit: hazard evidence; not an exposure limit or respirator specification
+
+  - source_id: safety_004
+    citation_key: Tarigan_et_al_2017_fungal_bioaerosol
+    title: Fungal bioaerosol exposure and its effects on the health of mushroom and vegetable farm workers in Taiwan
+    source: Aerosol and Air Quality Research 17:2064-2075
+    doi: 10.4209/aaqr.2016.09.0401
+    country: Taiwan
+    source_type: occupational_exposure_study
+    evidence_scope: [fungal_bioaerosols, lung_function, worker_health, farm_exposure]
+    rights_status: open_access; citation and curatorial summary
+    verification_status: DOI_and_article_metadata_verified
+    transfer_limit: occupational hazard evidence; Colombia SST assessment remains required
+
+  - source_id: regulation_001
+    citation_key: Colombia_Resolucion_2674_2013
+    title: Resolución 2674 de 2013
+    source: Ministerio de Salud y Protección Social / INVIMA normogram
+    country: Colombia
+    source_type: binding_food_sanitation_regulation
+    evidence_scope: [layout, separation, cleanable_surfaces, drainage, pest_exclusion, process_sequence]
+    rights_status: public regulation
+
+  - source_id: regulation_002
+    citation_key: ICA_BPA
+    title: Buenas Prácticas Agrícolas
+    source: Instituto Colombiano Agropecuario
+    country: Colombia
+    source_type: official_agricultural_guidance
+    evidence_scope: [water, workers, waste, traceability, preventive_controls]
+    rights_status: public institutional guidance
+
+  - source_id: regulation_003
+    citation_key: Codex_CXC_1_1969_2022
+    title: General Principles of Food Hygiene CXC 1-1969
+    source: FAO/WHO Codex Alimentarius
+    source_type: international_hygiene_code
+    evidence_scope: [GHP, HACCP, contamination_control, sanitation]
+    rights_status: public intergovernmental standard
+
+  - source_id: climate_001
+    citation_key: IDEAM_Tenjo_cold_night_reference
+    title: Informe técnico diario de condiciones hidrometeorológicas
+    source: IDEAM
+    country: Colombia
+    site: Tenjo
+    source_type: official_weather_observation
+    evidence_scope: [minimum_temperature, frost_risk, cold_night]
+    rights_status: public government bulletin
+    verification_status: exact_value_station_date_and_page_locator_pending_recheck_before_design_use
+
+  - source_id: technical_001
+    citation_key: US_EPA_MERV
+    title: What is a MERV rating?
+    source: United States Environmental Protection Agency
+    source_type: official_technical_definition
+    evidence_scope: [air_filter_classification, particle_size]
+    rights_status: public government guidance
+
+  - source_id: biosecurity_001
+    citation_key: Nagano_Prefecture_mushroom_gnat_2026
+    title: Survey of Mycetophilidae pests in mushroom facilities
+    source: Nagano Prefecture Vegetable and Ornamental Crops Experiment Station
+    country: Japan
+    source_type: official_extension_and_surveillance
+    evidence_scope: [pest_ingress, door_gaps, ventilation_openings, insect_mesh]
+    rights_status: public prefectural guidance

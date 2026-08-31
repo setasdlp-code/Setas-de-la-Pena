@@ -1,8 +1,9 @@
 ---
 title: Pleurotus ostreatus — Oyster / Orellana
+document_id: DOC-0009
 category: species
 load_priority: selective
-last_reviewed: 2026-06-29
+last_reviewed: 2026-07-24
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -15,7 +16,7 @@ related_documents:
 ---
 
 # Executive Summary
-*Pleurotus ostreatus* es la especie de Oyster más cultivada mundialmente y la más versátil. Para Setas de la Peña puede funcionar como especie de validación del sistema antes de escalar a P. djamor, dado que sus parámetros son más fáciles de manejar. Sin embargo, en Tenjo la temperatura puede ser marginalmente baja para fructificación en meses fríos.
+*Pleurotus ostreatus* es la especie de Oyster más cultivada mundialmente y la más versátil. Para Setas de la Peña permanece como candidato futuro. No se usa para validar el sistema antes del shiitake ni forma parte del arranque definido por DEC-013. Sin embargo, en Tenjo la temperatura puede ser marginalmente baja para fructificación en meses fríos.
 
 # Research Consensus
 
@@ -73,7 +74,7 @@ Supported by:
 | Cartón / papel | 40–60% (bajo — uso educativo) |
 
 # Best Practices
-- Usar como especie de "warm-up" para validar cámara antes de introducir P. djamor.
+- Diseñar un piloto separado únicamente después de revisar los primeros ciclos trazables de shiitake.
 - En Tenjo: vigilar temperatura mínima nocturna — si baja <13°C puede pausar fructificación.
 
 # Common Failure Modes
@@ -84,7 +85,7 @@ Supported by:
 | Pins abortados | HR irregular o ventilación excesiva | Estabilizar ciclo FAE |
 
 # Open Questions
-- ¿Incluir en primera temporada de producción o solo P. djamor?
+- ¿Qué evidencia justificaría introducir *P. ostreatus* después del programa inicial de shiitake?
 
 # References
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.

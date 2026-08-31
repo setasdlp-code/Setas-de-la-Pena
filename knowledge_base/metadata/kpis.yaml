@@ -1,113 +1,138 @@
 # Metadata — KPIs y Métricas Operacionales
 # Setas de la Peña
-# Última actualización: 2026-07-16
+# Última actualización: 2026-07-24
+#
+# DEC-013: Lentinula edodes es la especie prioritaria de arranque.
+# Estado: preproducción, 0 lotes activos. Los umbrales biológicos y comerciales
+# permanecen sin aprobar hasta completar pilotos trazables.
 
-# MÉTRICAS DE PRODUCCIÓN
+program:
+  active_species: lentinula_edodes
+  active_phase: preproduction
+  active_batches: 0
+  reference_sop: knowledge_base/06_operations/quality_control.md
+
 production_kpis:
-  biological_efficiency:
-    name: "Eficiencia Biológica (BE)"
-    formula: "(peso fresco cosecha / peso seco sustrato) × 100"
+  traceability_completeness:
+    name: Integridad de trazabilidad
+    formula: "(campos críticos completos / campos críticos requeridos) × 100"
     unit: percent
-    reference_potential_percent: [80, 100]
-    local_target_status: pending_three_comparable_batches
-    notes: "KPI principal. El rango 80–100% es referencia institucional, no umbral local validado."
+    target: 100
+    release_blocker_below: 100
+
+  biological_efficiency:
+    name: Eficiencia Biológica acumulada
+    formula: "(peso fresco acumulado / peso seco inicial de sustrato) × 100"
+    unit: percent
+    target_min: null
+    alert_threshold: null
+    status: baseline_pending
+    notes: "Registrar por flush y al cierre. No comparar estudios o lotes con denominadores distintos."
 
   contamination_rate:
-    name: "Tasa de Contaminación"
-    formula: "(bloques contaminados / bloques totales) × 100"
+    name: Tasa de contaminación
+    formula: "(bloques contaminados / bloques inoculados) × 100"
     unit: percent
-    target_max: 10
-    alert_threshold: 15
-    notes: "Si supera 15%, revisar protocolo de inoculación y asepsia."
+    target_max: null
+    alert_threshold: null
+    status: baseline_pending
+    notes: "Toda contaminación exige aislamiento y registro; el umbral de programa se aprueba después del piloto."
+
+  time_to_maturity:
+    name: Tiempo a madurez del bloque
+    unit: days
+    target: null
+    status: strain_dependent
+    notes: "Definir criterio por cepa: colonización, firmeza, protuberancias y pardeamiento cuando aplique."
 
   time_to_pinning:
-    name: "Tiempo a Pinning"
+    name: Tiempo a primordios
     unit: days
-    reference:
-      pleurotus_djamor: [14, 21]
-      hericium_erinaceus: [21, 35]
-      lentinula_edodes: [60, 120]
-    notes: "Contar desde inoculación hasta primordios visibles."
+    target: null
+    status: strain_and_induction_dependent
 
   yield_per_block:
-    name: "Rendimiento por Bloque"
+    name: Rendimiento por bloque
     unit: grams_fresh
-    target: 800
-    notes: "Para bloque de 1 kg sustrato seco. Varía por especie y flush."
+    target: null
+    status: baseline_pending
 
-# MÉTRICAS AMBIENTALES
 environmental_kpis:
-  temperature:
-    unit: celsius
+  temperature_c:
     measurement_frequency: continuous
     logging: home_assistant
-    alert_low: 18
-    alert_high: 30
+    alert_low: null
+    alert_high: null
+    source: batch_specification
 
-  humidity_rh:
-    unit: percent
+  humidity_rh_percent:
     measurement_frequency: continuous
     logging: home_assistant
-    alert_low: 82
-    alert_high: 98
+    alert_low: null
+    alert_high: null
+    source: batch_specification
 
   co2_ppm:
-    unit: ppm
     measurement_frequency: continuous
     logging: home_assistant
-    alert_max:
-      pleurotus_djamor: 2000
-      hericium_erinaceus: 1000
-      default: 1500
+    alert_max: null
+    source: batch_specification
+    notes: "No existe umbral de proyecto aprobado para shiitake."
 
-  ventilation_ach:
-    unit: air_changes_per_hour
-    provisional_range: [5, 8]
-    validation_status: commissioning_required
-    formula: "effective_airflow_cfm × duty_cycle × 60 / enclosure_volume_ft3"
-    notes: "Medir caudal efectivo instalado; no inferir ACH solo desde el temporizador. Control primario por CO2."
+  airflow:
+    volume_effective_m3: null
+    measured_flow_m3_h: null
+    ach_target: null
+    actuator_cycle: null
+    status: chamber_measurement_pending
+    notes: "No convertir minutos ON/OFF en ACH sin volumen efectivo y caudal medido bajo resistencia real."
 
-# MÉTRICAS FINANCIERAS
+  environmental_compliance:
+    formula: "(tiempo dentro de banda versionada / tiempo con datos válidos) × 100"
+    unit: percent
+    target: null
+    status: baseline_pending
+
 financial_kpis:
   cost_per_kg_produced:
-    formula: "costos variables totales / kg producidos"
-    unit: "COP/kg"
-    target_max: 15000
-    notes: "Calculado después de cada lote. Incluye spawn, sustrato, energía, MO."
+    formula: "costos variables trazables / kg vendible"
+    unit: COP_per_kg
+    target_max: null
+    status: blocked_until_pilot_yield
 
   revenue_per_week:
     unit: COP
-    phase_1_target: 300000
-    phase_2_target: 1000000
+    target: null
+    status: no_commercial_projection
 
   break_even_modules:
-    estimate: 3
-    unit: modules
-    notes: "Estimado. Validar con datos reales de campo."
+    estimate: null
+    status: no_validated_cost_model
 
-# MÉTRICAS DE CALIDAD
 quality_kpis:
-  grade_a_percent:
-    name: "% Producto Grade A"
-    target: 80
-    notes: "Caps >5cm, color uniforme, sin daño"
+  premium_product_percent:
+    formula: "(masa premium / masa fresca total) × 100"
+    target: null
+    status: buyer_specification_pending
+
+  postharvest_loss_percent:
+    formula: "(masa descartada o no vendible / masa cosechada) × 100"
+    target: null
+    status: baseline_pending
 
   shelf_life_days:
-    fresh_refrigerated: 5
-    dried: 365
-    notes: "A 4°C. Empacar con ventilación."
+    fresh_refrigerated: null
+    dried: null
+    status: validation_and_regulatory_review_pending
 
-# REGISTRO Y FRECUENCIA
 logging:
   batch_log:
     frequency: per_batch
-    template: "knowledge_base/06_operations/batch_tracking.md"
-
+    template: knowledge_base/06_operations/batch_tracking.md
   environmental_log:
     frequency: continuous
     platform: home_assistant
     retention_days: 90
-
   financial_log:
-    frequency: weekly
+    frequency: per_batch_and_monthly
     format: spreadsheet

@@ -1,147 +1,105 @@
 # Metadata — Sustratos y Recetas
 # Setas de la Peña
-# Última actualización: 2026-07-04
+# Última actualización: 2026-07-24
+
+substrate_program:
+  active_species: lentinula_edodes
+  approved_formula: null
+  status: blocked_pending_formula_and_autoclave_validation
+  primary_family: supplemented_hardwood_sawdust
+  note: "DEC-013 retira paja pasteurizada como sustrato inicial. Elegir y versionar una sola formulación antes del lote 1."
 
 substrates:
   - id: wheat_straw_pasteurized
     name: Paja de Trigo Pasteurizada
     type: pasteurized
-    nitrogen_percent: [1.5, 2.0]
     requires_autoclave: false
-    field_capacity_percent: 65
-    treatment_temp_c: 80
-    treatment_time_min: 60
     compatible_species: [pleurotus_djamor, pleurotus_ostreatus]
-    incompatible_species: []
     availability: local_cundinamarca
-    cost_estimate_cop_per_kg: 3000
-    evidence_rating: 5
-    notes: "Sustrato primario Fase 1. Disponible localmente en Sabana de Bogotá."
+    evidence_rating: 4
+    project_status: future_pleurotus_reference
+    notes: "No gobierna la Fase 1 de shiitake."
 
   - id: masters_mix
     name: "Master's Mix (50/50)"
     type: sterilized
-    composition:
+    literature_example_composition:
       hardwood_sawdust_percent: 50
-      oat_hulls_percent: 50
-    nitrogen_percent: [2.5, 3.5]
+      hulls_percent: 50
+    approved_composition: null
     requires_autoclave: true
-    autoclave_temp_c: 121
-    autoclave_time_h: 3
-    field_capacity_percent: 60
     compatible_species: [hericium_erinaceus, lentinula_edodes, ganoderma_lucidum]
-    incompatible_species: []
-    availability: requires_sourcing
-    evidence_rating: 5
-    notes: "Sustrato óptimo para Lion's Mane y Shiitake. Solo Fase 2 con autoclave."
-
-  - id: supplemented_sawdust
-    name: Serrín Suplementado
-    type: sterilized
-    composition:
-      hardwood_sawdust_percent: 80
-      wheat_bran_percent: 15
-      gypsum_percent: 1
-    nitrogen_percent: [2.0, 3.0]
-    requires_autoclave: true
-    compatible_species: [lentinula_edodes, ganoderma_lucidum, hericium_erinaceus]
-    incompatible_species: []
     availability: requires_sourcing
     evidence_rating: 4
-    notes: "Para Shiitake en formato log o bloque. Fase 2."
+    project_status: candidate_not_approved
+    notes: "Candidato para el piloto de shiitake; verificar disponibilidad de materias primas y validar la carga."
+
+  - id: supplemented_sawdust
+    name: Serrín de Madera Dura Suplementado
+    type: sterilized
+    approved_composition: null
+    requires_autoclave: true
+    compatible_species: [lentinula_edodes, ganoderma_lucidum, hericium_erinaceus]
+    availability: requires_sourcing
+    evidence_rating: 4
+    project_status: primary_family_formula_pending
+    notes: "Familia de sustrato prioritaria para shiitake. Especie de madera, suplemento, humedad y base de porcentaje deben quedar versionados."
 
   - id: rice_straw
     name: Paja de Arroz Pasteurizada
     type: pasteurized
-    nitrogen_percent: [0.8, 1.2]
     requires_autoclave: false
     compatible_species: [pleurotus_djamor, pleurotus_ostreatus]
-    incompatible_species: []
     availability: local_potential
     evidence_rating: 3
-    notes: "Menor BE que paja de trigo para P. djamor. Alternativa si paja de trigo escasea."
-
-  - id: corn_cob_tuza_maiz
-    name: Tuza de Maíz (Zuro / Olote)
-    type: pasteurized
-    nitrogen_percent: [0.5, 0.8]
-    requires_autoclave: false
-    field_capacity_percent: 65
-    treatment_temp_c: 80
-    treatment_time_min: 60
-    compatible_species: [pleurotus_djamor, pleurotus_ostreatus, pleurotus_eryngii]
-    incompatible_species: []
-    availability: local_cundinamarca
-    cost_estimate_cop_per_kg: 1500
-    evidence_rating: 4
-    notes: "Excelente sustrato base rico en hemicelulosa (C:N 70:1). Muy abundante en la Sabana de Bogotá y Cundinamarca."
+    project_status: future_pleurotus_reference
 
   - id: coffee_substrate_shiitake_t2
     name: "Subproductos de café — formulación T2 (Shiitake)"
     type: sterilized
-    composition:
+    literature_composition:
       coffee_stem_sawdust_percent: 28
-      spent_coffee_grounds_percent: 50   # borra
-      corn_bran_percent: 19              # salvado de maíz
-      calcium_compound_percent: 0.6      # CaCO3/CaSO4 minimo
-    carbon_nitrogen_ratio_target: 40
-    field_capacity_percent: 62.5
-    particle_size_cm: [0.5, 2.0]
+      spent_coffee_grounds_percent: 50
+      corn_bran_percent: 19
+      calcium_compound_percent_min: 0.6
+    carbon_nitrogen_ratio_reported: 40
+    moisture_percent_reported: 62.5
+    particle_size_cm_reported: [0.5, 2.0]
     requires_autoclave: true
-    be_percent: [50, 58]                 # rendimiento medio ~57.6% (Cenicafe, clima zona cafetera)
-    recommended_strains: [L54, L4055]
+    reported_yield_percent: 57.6
+    reported_strains_in_study: [L54, L4055]
     compatible_species: [lentinula_edodes]
-    incompatible_species: []
-    availability: local_potential        # borra accesible via cafeterias; confirmar en Tenjo
-    evidence_rating: 3                    # fuente unica, clima mas calido que Tenjo
-    source: paper_006                     # Cenicafe 2005
-    validation_status: needs_field_validation_tenjo
-    notes: "Pulpa de café sola NO fructifica. Borra fresca <2 dias o ensilada. Revalidar BE bajo regimen termico frio de Tenjo."
+    availability: local_potential
+    evidence_rating: 3
+    source: paper_006
+    project_status: candidate_requires_tenjo_validation
+    notes: "El rendimiento conserva la definición del estudio; no asumir BE comparable. Las cepas reportadas no son recomendación comercial ni disponibilidad confirmada."
 
   - id: coffee_substrate_ganoderma_t12
     name: "Subproductos de café — formulación T12 (Ganoderma)"
     type: sterilized
-    composition:
-      spent_coffee_grounds_percent: 11.5  # borra
-      coffee_pulp_max_percent: 15
-      calcium_compound_percent: 0.6
-    carbon_nitrogen_ratio_target: [40, 60]
-    field_capacity_percent: 62.5
-    particle_size_cm: [0.5, 2.0]
     requires_autoclave: true
-    be_percent: [13, 15]                  # rendimiento medio ~13.1% (1a cosecha ~15%)
+    reported_yield_percent: 13.1
     compatible_species: [ganoderma_lucidum]
-    incompatible_species: []
-    availability: local_potential
     evidence_rating: 3
-    source: paper_006                     # Cenicafe 2005
-    validation_status: needs_field_validation_tenjo
-    notes: "T13/T14 sin borra (mas economicas). Ganoderma en Tenjo requiere calefaccion activa (fruiting 27-32C) -> Fase 2."
+    source: paper_006
+    project_status: future_candidate
 
-# SUSTRATOS INCOMPATIBLES
-incompatible_substrates:
+compatibility_cautions:
   - substrate: eucalyptus_sawdust
-    incompatible_with: [pleurotus_djamor, hericium_erinaceus]
-    reason: "Eucaliptol y cineol inhiben el micelio. Nunca usar."
-    evidence_rating: 5
+    species: pleurotus_djamor
+    evidence_status: unresolved_not_absolute
+    action: "No aprobar como sustrato sin identificar especie/procedencia de madera y ejecutar ensayo específico."
+    note: "La auditoría 2026-07-23 retiró la incompatibilidad universal."
 
-spawn_ratios:
-  default_percent: 15
-  minimum_percent: 10
-  maximum_percent: 20
-  notes: "15% del peso seco es el estándar. Más spawn no mejora BE significativamente."
-
-gypsum:
-  name: "Yeso agrícola (CaSO₄ · 2H₂O)"
-  use_percent: [1, 2]
-  function: "pH buffer, anti-clumping, mejora estructura"
-  evidence_rating: 4
-  notes: "Suplemento seguro para todos los sustratos — no aumenta riesgo de contaminación."
+spawn_ratio:
+  approved_percent: null
+  lentinula_literature_percent: [3.6, 7.5]
+  definition_check_required: true
+  notes: "Confirmar si cada cifra usa base húmeda o seca y si corresponde a spawn comercial o propio antes de aprobarla."
 
 calcium_compounds:
-  name: "Compuestos de calcio (CaCO₃ / CaSO₄)"
-  minimum_functional_percent: 0.6
-  function: "Estabiliza la producción, acondiciona pH, aporta Ca²⁺ (estimula crecimiento hifal)"
-  evidence_rating: 3
-  source: paper_006   # Royse & Sanchez via Cenicafe
-  notes: "≥0,6% es umbral mínimo (no solo buffer). Mayor carbonato para acondicionar pH a ~4,5–5,5 en sustratos de café."
+  minimum_percent_reported: 0.6
+  source: paper_006
+  project_status: formula_dependent
+  notes: "Dato de literatura; la formulación final debe definir compuesto, función y porcentaje."

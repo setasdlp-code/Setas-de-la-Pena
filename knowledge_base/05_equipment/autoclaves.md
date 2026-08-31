@@ -1,107 +1,184 @@
 ---
 title: Autoclaves y Esterilización
+document_id: DOC-0025
 category: equipment
 load_priority: selective
-last_reviewed: 2026-07-10
+last_reviewed: 2026-08-19
 confidence: high
 primary_sources:
+  - All American 1930 — 1941X manufacturer specification, accessed 2026-08-19
+  - Registro visual interno del equipo, 2026-07-14
   - Stamets (2000)
-  - ESPHome documentation
+  - ../09_research/commissioning_validation_research.md
 related_documents:
   - laminar_flow.md
   - ../02_substrates/sterilization.md
   - ../04_facility/laboratory.md
+  - ../06_operations/operational_commissioning.md
+  - ../06_operations/quality_control.md
+  - ../09_research/commissioning_validation_research.md
 ---
 
 # Executive Summary
-Los autoclaves son equipamiento de esterilización que desbloquea la producción de sustratos complejos y spawn propio. En Fase 1 se trabaja exclusivamente con pasteurización. A medida que la escala operativa aumenta, la esterilización por presión se vuelve económicamente y biológicamente necesaria.
 
-Used industrial autoclaves pueden representar una adquisición estratégica cuando mejoran la madurez operativa sin comprometer confiabilidad o mantenibilidad. Referencia: CANON, sección 8 — Purchasing Philosophy.
+El equipo térmico relevante para el commissioning actual es el **All American 1941X no eléctrico** físicamente disponible para Setas de la Peña. La especificación vigente del fabricante indica **41 qt / 39 L** de capacidad nominal. El valor histórico de 44 L fue una cifra reportada por el propietario y no debe utilizarse para cálculos de capacidad.
 
-# Core Principles
-- Pasteurización (Fase 1) es suficiente para especies no-exigentes bajo spawn comercial.
-- Esterilización por presión desbloquea: Master's Mix, granos, spawn propio, especies exigentes.
-- Olla de presión doméstica (15 psi, 121°C) es la escalera mínima viable hacia producción de spawn.
-- Industrial equipment — autoclaves, laminar flow hoods — es una categoría legítima de adquisición cuando la condición, documentación y fitness for purpose son verificables.
+La capacidad nominal del recipiente tampoco determina cuántas bolsas de sustrato pueden procesarse de forma válida por ciclo. La capacidad operacional depende de dimensiones y masa de bolsa, formulación, humedad, geometría de carga, fuente de calor y comportamiento térmico demostrado en estudios de distribución y penetración.
 
-# Technical Details
+Este documento describe el equipo y su puesta en marcha. Los criterios de validación térmica pertenecen a `../06_operations/operational_commissioning.md`; la base de evidencia se conserva en `../09_research/commissioning_validation_research.md`.
 
-## Opciones por Escala
+# Current Equipment — All American 1941X
 
-| Opción | Capacidad | Costo (USD) | Adecuado para | Disponibilidad Colombia |
-|---|---|---|---|---|
-| Olla de presión doméstica (23L) | 10–15 bolsas | ~$50–80 | Prototipo Fase 2 | Alta (Alkosto, Amazon) |
-| All-American 921 (21 qt) | 15–20 bolsas/ciclo | ~$350–450 | Producción pequeña | Importar |
-| All-American 941 (41 qt) | 30–40 bolsas/ciclo | ~$550–700 | Producción mediana | Importar |
-| Autoclave vertical industrial | 50+ bolsas | >$2,000 | Escala grande | Proveedores locales industriales |
+La placa fotografiada el 2026-07-14 confirma el modelo `1941X` y el serial `C0046139`. Este registro visual no valida el funcionamiento ni sustituye el commissioning; ver `visual_records/autoclave_all_american_1941x_2026-07-14.md`.
 
-## Requisitos de Esterilización
+## Especificación verificada de fabricante
 
-| Parámetro | Valor | Notas |
-|---|---|---|
-| Temperatura | 121°C | Mínimo para destruir endosporas Bacillus |
-| Presión | 15 psi sobre presión local | No presión absoluta — presión manométrica |
-| Tiempo | 2–3 horas (4h para sustrato denso) | Desde que alcanza temperatura |
-| Recipiente | Bolsas PP (polipropileno) | NO PE (polietileno) — se derrite |
+| Campo | Valor |
+|---|---|
+| Fabricante | All American 1930 |
+| Modelo | `1941X Sterilizer` |
+| Tipo | Esterilizador no eléctrico / vapor a presión |
+| Capacidad nominal | **41 qt / 39 L** |
+| Altura exterior aproximada | 19 in |
+| Diámetro aproximado | 15.25 in |
+| Peso aproximado | 44 lb |
+| Fuente de calor | Externa; fabricante indica una fuente de calor efectiva |
+| Accesorios | Contenedor interior y rack según especificación de producto |
+| Uso declarado por fabricante | Esterilización de apósitos e instrumental |
+| Capacidad en bolsas de sustrato | **No especificada por fabricante; requiere medición local** |
 
-**A 2600m s.n.m. (Tenjo):**
-- Presión local ~73 kPa (vs. 101 kPa a nivel del mar)
-- Olla a 15 psi (103 kPa) sobre presión local → 176 kPa absolutos → sí alcanza 121°C
-- El manómetro de la olla ya indica presión manométrica — no requiere ajuste manual
+La configuración disponible en el proyecto usa una **estufa industrial doble a gas propano** como fuente de calor. La estabilidad, potencia efectiva, interacción con el recipiente y consumo de combustible deben medirse durante commissioning; no se asumen desde la potencia nominal de la estufa.
 
-## Protocolo de Uso (Olla de Presión Doméstica)
+# Architectural Role
 
-1. Preparar sustrato en bolsas PP 18×35cm, llenado hasta 2/3.
-2. Sellar bolsas con taponazo de algodón + papel aluminio o filter patch.
-3. Colocar bolsas verticales en olla, sin apilar excesivamente.
-4. Añadir 2–3 cm de agua en el fondo.
-5. Cerrar olla. Calentar hasta que la válvula comience a silbar.
-6. Reducir calor para mantener presión estable a 15 psi.
-7. Mantener 2.5–3 horas desde que alcanza presión.
-8. Apagar. Dejar enfriar completamente (8–12h) antes de abrir.
-9. Inocular solo cuando el sustrato esté a temperatura ambiente (≤25°C).
+El 1941X es actualmente la línea candidata de vapor a presión para el programa inicial de sustrato suplementado de shiitake. Su rol es establecer un baseline reproducible antes de comparar alternativas de mayor capacidad o procesos térmicos distintos.
 
-## Señales de Fallo en Esterilización
+No se adquiere otro recipiente a presión solo porque un cálculo teórico sugiera mayor throughput. Primero se mide la capacidad real del 1941X y se identifica si el tratamiento térmico es efectivamente el cuello de botella del sistema completo.
 
-| Síntoma | Causa probable | Acción |
-|---|---|---|
-| Contaminación en <5 días | Esterilización incompleta | Revisar presión, tiempo, bolsas |
-| Bolsas derretidas o deformadas | Bolsas PE en lugar de PP | Cambiar a PP |
-| Agua dentro de bolsas | Condensación excesiva | Reducir agua inicial en olla |
-| Verde temprano (Trichoderma) | Inoculación a sustrato caliente | Esperar enfriamiento completo |
+# Commissioning Requirements
 
-## Plan de Adquisición
+Antes de considerar el equipo disponible para producción normal:
 
-**Current Implementation (Fase 1):**
-Pasteurización exclusiva en producción activa. Un autoclave All American (44 L declarados por el propietario — ver `metadata/equipment.yaml`) está físicamente en sitio (garaje, `04_facility/home_rnd_lab.md`). Puesta en marcha (banco de pruebas) aún no realizada. Validación de ciclos de esterilización para cargas concretas aún no realizada. No se usa todavía en producción — la pasteurización sigue siendo el método validado.
+1. Confirmar placa/modelo y configuración física contra la documentación del fabricante.
+2. Inspeccionar integridad general, superficies de sellado, válvulas, manómetro y componentes de seguridad según instrucciones del fabricante.
+3. Confirmar que no existan modificaciones no documentadas del sistema de presión.
+4. Identificar y verificar los instrumentos que se usarán para decisiones de commissioning.
+5. Definir una carga representativa: receta, humedad, bolsa, masa, número de bolsas y geometría.
+6. Ejecutar estudio `HEAT_DISTRIBUTION` de la configuración cargada.
+7. Ejecutar estudio `HEAT_PENETRATION` dentro de bolsas candidatas a peor caso.
+8. Repetir cargas representativas para medir variabilidad entre ciclos.
+9. Registrar consumo de propano, tiempos de proceso, enfriamiento, trabajo del operador y capacidad real.
+10. Vincular los lotes inoculados con `thermal_cycle_id` y seguir contaminación, integridad de bolsa y desempeño biológico.
+11. Promover un ciclo a estándar operacional únicamente mediante la compuerta definida en `quality_control.md` y `operational_commissioning.md`.
 
-**Near-Term Roadmap:**
-1. Adquirir olla de presión doméstica 23L (~$60–80 USD) cuando escala alcance 20–30 bloques/semana.
-2. Validar en banco de pruebas con 5–10 bolsas.
-3. Documentar tasa de contaminación y BE en primer lote de sustrato esterilizado.
+# Thermal Process Principles
 
-**Long-Term Architecture:**
-- Evaluación de All-American 921 o equivalente industrial si volumen alcanza >50 bolsas/ciclo.
-- Consideración de autoclaves industriales usados con documentación verificable y condición comprobada.
+## No existe un ciclo genérico aprobado
 
-# Best Practices
-- Marcar el interior de la olla con nivel de agua máximo y mínimo.
-- Registrar en bitácora: fecha, duración, presión máxima, número de bolsas, resultado.
-- Nunca abrir el autoclave caliente — presión residual puede causar accidentes.
-- Inspeccionar junta de silicona cada 50 ciclos.
+Los valores de literatura como `121 °C`, `15 psi` o `2–4 h` **no son un protocolo de operación del 1941X de Setas de la Peña**.
 
-# Common Failure Modes
-- Usar bolsas PE que se derriten a 121°C.
-- Inocular antes de que el sustrato enfríe → matar spawn o contaminar.
-- Tiempo insuficiente para sustrato denso → endosporas sobreviven.
+Un ciclo válido debe corresponder a una configuración versionada. No se fija el tiempo de hold hasta caracterizar distribución y penetración térmica de la carga real.
+
+## Presión no equivale automáticamente a temperatura del sustrato
+
+Registrar:
+
+- tipo de manómetro;
+- presión manométrica vs absoluta cuando corresponda;
+- temperatura de cámara;
+- temperatura del producto durante estudios de penetración;
+- condiciones iniciales y fuente de calor.
+
+La presión del recipiente puede ser una variable de control útil, pero no sustituye la medición del historial tiempo-temperatura del sustrato en commissioning.
+
+## Altitud
+
+Tenjo opera a presión atmosférica menor que el nivel del mar. No utilizar una regla simplificada de “15 psi siempre produce exactamente 121 °C en el producto” como criterio de aceptación. Seguir límites e instrucciones del fabricante, distinguir presión gauge/absoluta y validar el producto con medición térmica.
+
+# Capacity — Measurement, Not Nameplate
+
+Las antiguas estimaciones de bolsas por ciclo para modelos All American se retiran como datos operacionales porque no estaban sustentadas por especificación de fabricante ni por ensayo con las bolsas reales.
+
+Para el 1941X registrar por configuración:
+
+- `bag_dimensions`
+- `wet_mass_per_bag`
+- `bag_count`
+- `total_load_mass`
+- `rack_configuration`
+- `load_pattern`
+- `cycle_elapsed_time`
+- `operator_minutes`
+- `propane_consumed`
+- `cooldown_time`
+- `thermal_validation_state`.
+
+La capacidad semanal se deriva después de la validación:
+
+`validated_bags_per_cycle × feasible_validated_cycles_per_week`
+
+Luego debe compararse contra los demás cuellos de botella; no se programa producción únicamente desde esta cifra.
+
+# Safety
+
+- No operar el recipiente fuera de las instrucciones y límites del fabricante.
+- No abrir con presión residual.
+- No bloquear, sustituir ni alterar dispositivos de seguridad con componentes no aprobados.
+- No fabricar o convertir recipientes artesanales en cámaras presurizadas para aumentar capacidad.
+- No modificar válvulas, pesos, manómetros o venteos para alcanzar presiones no especificadas.
+- Mantener la zona de trabajo estable, ventilada y apta para una fuente de calor a gas.
+- Cualquier anomalía mecánica, fuga, daño del cierre o comportamiento de presión no explicado detiene el ensayo hasta revisión.
+
+# Failure Interpretation
+
+No usar el momento de detección como prueba automática de causa.
+
+| Observación | Interpretación válida durante commissioning |
+|---|---|
+| Contaminación temprana | Puede originarse en materia prima, proceso térmico, enfriamiento, bolsa o inoculación; investigar trazabilidad |
+| Bolsa deformada | Revisar material, contacto térmico, carga, presión/temperatura y especificación de bolsa |
+| Curva térmica diferente entre ciclos | Revisar masa, humedad, geometría, fuente de calor, sensor y procedimiento |
+| Presión nominal alcanzada, producto lento | Es evidencia de penetración térmica insuficientemente caracterizada, no de un ciclo validado |
+| Bolsa centinela contaminada | Acota el problema a etapas anteriores a inoculación, pero no identifica por sí sola la causa raíz |
+
+# Near-Term Roadmap
+
+1. Verificar identidad y condición del 1941X.
+2. Definir una sola configuración representativa del primer sustrato de shiitake.
+3. Verificar sondas y sistema de registro.
+4. Mapear distribución térmica.
+5. Mapear penetración térmica y peor caso.
+6. Repetir el estudio para caracterizar variabilidad.
+7. Congelar una versión candidata de carga/ciclo solo cuando exista evidencia suficiente.
+8. Medir bolsas/ciclo, propano/ciclo, minutos-operador/ciclo y tiempo total de ocupación.
+9. Comparar la capacidad térmica validada con mezcla, embolsado, inoculación, incubación y fructificación antes de justificar nueva compra.
+
+# Procurement Trigger for Additional Thermal Capacity
+
+La compra de una segunda unidad o equipo mayor se justifica únicamente cuando:
+
+- el 1941X está comisionado;
+- su throughput validado es insuficiente para la cadencia aprobada;
+- tratamiento térmico es el cuello de botella real, no solo uno aparente;
+- se han considerado mejoras de programación/carga que no comprometan validación;
+- la alternativa propuesta reduce costo, trabajo o riesgo de forma medible.
+
+No usar umbrales arbitrarios como “20–30” o “>50 bolsas/semana” para activar compra sin el análisis completo.
 
 # Open Questions
-- ¿Está disponible All-American en Colombia o hay equivalente local?
-- ¿Proveedor de bolsas PP 18×35 para autoclave en Colombia?
-- ¿Cuál es el modelo y la capacidad nominal oficial del autoclave ya presente en sitio? Los 44 L son la cifra reportada por el propietario, no una especificación de catálogo verificada — confirmar contra la placa del fabricante antes de fijar protocolos de ciclo.
-- ¿Cuándo se realiza la puesta en marcha (banco de pruebas) de la unidad ya presente en sitio?
-- ¿Cuándo se completa la validación de ciclos de esterilización para cargas concretas de la unidad ya presente en sitio?
+
+- ¿La placa física confirma `1941X` y coincide con la configuración actual del fabricante?
+- ¿Cuál es la configuración de carga con peor distribución térmica?
+- ¿Cuál es la posición y zona interna de bolsa con calentamiento más lento?
+- ¿Cuántas bolsas reales caben en una carga reproducible sin comprometer circulación/penetración?
+- ¿Cuál es el tiempo de ocupación total del equipo por ciclo, incluido calentamiento y enfriamiento?
+- ¿Cuánto propano consume cada configuración?
+- ¿Qué variabilidad existe entre ciclos nominalmente idénticos?
+- ¿A qué throughput semanal validado el 1941X se convierte realmente en cuello de botella?
 
 # References
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*, Cap. 5.
-- Ver también: `02_substrates/sterilization.md`
+
+- All American 1930. `1941X Sterilizer`, manufacturer product specification, accessed 2026-08-19.
+- `../02_substrates/sterilization.md` — biological/process context.
+- `../06_operations/operational_commissioning.md` — commissioning and thermal-study protocol.
+- `../09_research/commissioning_validation_research.md` — evidence, transfer limits and research basis.

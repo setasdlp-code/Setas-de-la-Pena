@@ -1,6 +1,7 @@
 ---
 title: Roadmap
 document_id: ROADMAP-001
+category: project
 version: 1.0
 status: canonical
 authority: governance

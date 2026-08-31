@@ -1,3 +1,11 @@
+---
+title: README_MCP — Instrucciones de Recuperación para Modelos de Lenguaje
+document_id: DOC-0052
+category: project
+load_priority: always
+last_reviewed: 2026-07-24
+---
+
 # README_MCP — Instrucciones de Recuperación para Modelos de Lenguaje
 
 **Proyecto:** Setas de la Peña — Cultivo de setas gourmet y medicinales, Tenjo, Colombia
@@ -61,7 +69,7 @@ Para decisiones de cultivo, el orden de autoridad es:
 4. `references/bibliography.md` (citas formales, solo si se piden)
 
 **3. No repitas contenido entre archivos.**
-Si `species/pleurotus_djamor.md` referencia `substrates/substrate_library.md`, no cargues ambos completos — carga el más relevante para la pregunta.
+Si `01_species/lentinula_edodes.md` referencia `02_substrates/substrate_library.md`, no cargues ambos completos — carga el más relevante para la pregunta.
 
 **4. Usa research para revisar SOPs, no para operaciones cotidianas.**
 `09_research/research_summaries.md` y `literature_database.md` son para validar o actualizar protocolos, no para responder "¿a qué temperatura pasteurizo?"
@@ -69,8 +77,8 @@ Si `species/pleurotus_djamor.md` referencia `substrates/substrate_library.md`, n
 **5. Cita siempre la fuente y nivel de confianza.**
 Al dar información técnica, indica de dónde viene:
 - `[FARM_BRAIN]` — decisión operacional tomada
-- `[01_species/pleurotus_djamor.md]` — parámetro de especie
-- `[paper_001, ★★★☆☆]` — fuente primaria revisada; alcance limitado a lo que realmente estudió
+- `[01_species/lentinula_edodes.md]` — evidencia curada para la especie prioritaria
+- `[book_007, capítulo 13]` — respaldo bibliográfico; no equivale a setpoint aprobado
 - `[estimado, ★★★☆☆]` — dato no verificado en campo
 
 **6. Cuando haya incertidumbre, dilo.**
@@ -82,13 +90,14 @@ Si el dato no está en la knowledge base o es una estimación, indicarlo explíc
 
 Estas restricciones aplican en TODOS los documentos y respuestas:
 
-- ❌ VIVOSUN H05 sensor HR — **nunca usar su lectura** (sesgo +30–35%)
-- ❌ Eucalipto como sustrato con P. djamor — **incompatible**
-- ❌ Timer mecánico como backup FAE — **no confiable**
-- ❌ Claims medicinales sin evidencia — **riesgo regulatorio INVIMA**
-- ❌ Lenguaje místico/animista — **registro técnico-agrónomo siempre**
-- ✅ SCD30: `altitude_compensation: 2600` en ESPHome — **obligatorio**
-- ✅ Ventilación: calcular ACH con caudal efectivo y volumen; commissioning obligatorio y control primario por CO₂
+- [DESCARTADO] VIVOSUN H05 como sensor de HR — nunca usar su lectura; sesgo medido de +30–35%.
+- [DESCARTADO] Timer mecánico como respaldo de FAE.
+- [BLOQUEO] No iniciar el lote 1 sin spawn de shiitake trazable, formulación aprobada y ciclo de autoclave validado con carga representativa.
+- [BLOQUEO] No convertir minutos de ventilador en cambios de aire por hora sin volumen efectivo y caudal medido bajo presión.
+- [BLOQUEO] No fijar temperatura, HR, CO₂, luz o choque frío universales para shiitake antes de identificar la cepa y aprobar la especificación del lote.
+- [REGULATORIO] No publicar claims medicinales sin evidencia específica y revisión de requisitos INVIMA.
+- [OBLIGATORIO] SCD30: `altitude_compensation: 2600` en ESPHome.
+- [ESTADO] *Lentinula edodes* es la especie prioritaria de arranque; *P. djamor* permanece como candidato futuro.
 
 ---
 

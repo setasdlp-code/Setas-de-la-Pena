@@ -1,98 +1,103 @@
 ---
 title: Martha Tent — Setup de Prototipo
+document_id: DOC-0028
 category: equipment
 load_priority: selective
-last_reviewed: 2026-06-29
-confidence: high
+last_reviewed: 2026-07-24
+confidence: medium
 primary_sources:
   - Internal records
-  - AC Infinity documentation
+  - Terra Fungus product listing
 related_documents:
   - environmental_control.md
-  - 04_facility/fruiting.md
-  - 00_project/current_state.md
+  - ../04_facility/fruiting.md
+  - ../04_facility/home_rnd_lab.md
+  - ../CURRENT_OPERATIONS.md
 ---
 
 # Executive Summary
-La Martha Tent 63" (Terra Fungus) es una plataforma de prototipado y validación. Su función es desarrollar estrategias de control ambiental y validar parámetros de cultivo antes del despliegue en módulos de producción más grandes. Actualmente operada con control manual de HR (H05 en modo manual) y sensores Inkbird para lectura.
 
-# Technical Details
+La Terra Fungus Martha es la cámara de prototipado, I+D, cuarentena y respaldo. Su ubicación operacional registrada es Tenjo. La reserva espacial dibujada para la terraza de Bogotá no autoriza traslado; cualquier cambio de sede debe actualizar CURRENT_OPERATIONS.md y metadata/equipment.yaml.
 
-## Especificaciones Martha Tent
+La ficha anterior contenía dos errores de dimensionamiento: 160 × 60 × 155 cm no coincide con la ficha comercial encontrada y 149 L era aproximadamente un orden de magnitud menor que el volumen geométrico de esas medidas.
 
-| Parámetro | Valor |
-|---|---|
-| Modelo | Terra Fungus 63" |
-| Dimensiones | ~160×60×155 cm (L×W×H) |
-| Volumen aprox. | ~149 L |
-| Luces | Integradas (verificar espectro) |
-| Material | Malla + cubierta plástica |
+# Especificaciones
 
-## Rol Operativo
+| Parámetro | Valor corregido | Estado |
+|---|---|---|
+| Marca / tipo | Terra Fungus Martha grow tent | Confirmado por inventario |
+| Dimensiones comerciales | 27,5 × 19 × 65 in | Ficha comercial |
+| Dimensiones métricas aproximadas | 69,9 × 48,3 × 165,1 cm | Conversión |
+| Volumen anunciado | 20 ft³; aproximadamente 566 L | Ficha comercial |
+| Volumen geométrico exterior | aproximadamente 558 L | Cálculo con dimensiones métricas |
+| Huella de diseño | aproximadamente 0,70 × 0,48 m | Usar para anteproyecto |
+| Altura de diseño | aproximadamente 1,65 m, más ductos y mantenimiento | Usar para anteproyecto |
+| Verificación física | Pendiente | Medir carpa armada |
 
-La Martha Tent funciona como:
-- **Experimental platform:** Pruebas de nuevas especies o sustratos en escala controlada.
-- **Prototype environment:** Validación de arquitecturas de control antes de escalado.
-- **Validation platform:** Desarrollo de procedimientos ambientales transferibles a fruiting modules de mayor escala.
+La ficha comercial puede cambiar y puede corresponder a una revisión del producto. Antes de fabricar cerramientos, medir la unidad armada incluyendo conectores, bandeja, puertas, ductos y holgura de servicio.
 
-Data from Martha Tent experiments informs long-term decisions sobre environmental strategy para CLOUDLAB 844 y arquitectura futura.
+# Rol operativo
 
-## Equipos Actuales en Martha Tent
+- Plataforma de pruebas de sensores, humidificación, extracción y mezcla interna.
+- Cámara de I+D, cuarentena, especies especiales o respaldo.
+- Módulo independiente de CloudLab 844.
+- Fuente de datos para validar procedimientos antes de escalar.
+
+No conectar su circuito de aire con CloudLab 844. Una falla o contaminación en una cámara no debe propagarse a la otra.
+
+# Equipos registrados
 
 | Equipo | Modelo | Estado |
 |---|---|---|
-| Humidificador | VIVOSUN H05 | Activo — **modo manual** |
-| Sensores T/HR | Inkbird IBS-TH2 Plus ×2 | Activos |
-| Automatización | Ninguna aún | Pendiente ESP32 |
+| Humidificador | VIVOSUN H05 | Activo en modo manual |
+| Sensor de respaldo | Inkbird IBS-TH2 Plus | Activo |
+| Automatización | ESP32 / SHT3x / H4; sensor NDIR de CO₂ por aprobar | Comisionamiento pendiente |
 
-## VIVOSUN H05 — Notas Críticas
-- Sensor integrado: **DESCARTADO** — sesgo de +30–35% HR.
-- Siempre operar en **modo manual %** usando lectura de Inkbird como referencia.
-- Tanque: 5L (~20h a plena carga). Verificar nivel diariamente.
-- Agua: filtrada <30 ppm TDS es apta. No requiere destilada.
-- Rol futuro: backup cuando llegue T7.
+# VIVOSUN H05
 
-## Operación Manual Actual
+- La lectura integrada de HR está descartada por el sesgo registrado de +30 a +35 puntos porcentuales.
+- Operar el H05 como actuador manual hasta validar el sensor principal.
+- No usar su lectura para gobernar humedad ni registrar cumplimiento.
+- Verificar agua, niebla, fugas y limpieza según la rutina aprobada.
+- La banda de HR se define por cepa y lote; esta ficha no establece un objetivo universal.
 
-```
-RUTINA DIARIA — MARTHA TENT (Sin Automatización)
-1. Verificar lectura Inkbird (app BLE):
-   - HR objetivo: 85–90%
-   - T° objetivo: según especie activa
-2. Si HR < 83%: encender H05 en modo manual
-3. Si HR > 90%: apagar H05; verificar FAE
-4. Verificar agua en H05 — rellenar si necesario
-5. Inspección visual: pins, contaminación, estado general
-6. Registrar en bitácora: HR, T°, observaciones
-```
+# Rutina manual durante preproducción
 
-## Sensor Positioning & Redundant Sensing
+1. Leer Inkbird y registrar temperatura y HR.
+2. Observar superficie de bloques o masa de prueba, condensación y niebla.
+3. Accionar el H05 manualmente solo dentro del protocolo de prueba aprobado.
+4. Verificar agua, fugas, drenaje y estado del extractor.
+5. Revisar contaminación visible sin abrir bloques.
+6. Registrar hora, configuración y respuesta ambiental.
 
-Sensor placement in Martha Tent reflects principles of environmental monitoring applicable to larger fruiting modules:
+No automatizar histéresis, ciclos de extracción o umbrales de CO₂ heredados de Pleurotus.
 
-- **SHT3x probe:** Positioned at mid-canopy height, inside protective shield to avoid direct humidifier spray.
-- **SCD30:** Mounted in shielded enclosure with sampling tube inlet at vegetative layer height.
-- **Redundant measurement:** Inkbird IBS-TH2 Plus as independent validation point — delta tolerance ±0.5°C / ±3% RH indicates sensor agreement.
+# Posición de sensores
 
-These positioning principles transfer directly to environmental control documentation when larger modules are implemented. Ver: `environmental_control.md`.
+- SHT3x a altura representativa de los bloques, fuera del chorro directo de niebla.
+- Sensor NDIR de CO₂ aprobado en protección adecuada y con entrada de muestreo libre.
+- Inkbird como punto independiente de comparación.
+- Mapear más de una altura durante comisionamiento.
+- Validar respuesta con cámara vacía y con masa representativa.
 
-## Plan de Upgrade — Martha Tent con ESP32
-Con la llegada del hardware:
-1. Instalar SHT3x + SCD30 en Martha Tent con posicionamiento validado.
-2. Conectar T7 (reemplaza H05) a relay ESP32
-3. Conectar H4 a relay ESP32
-4. Flashear ESPHome y conectar a HA
-5. Automatizar HR y FAE bajo parámetros de P. djamor
+# Plan de comisionamiento
 
-Resultados de este upgrade informarán el despliegue de automatización en CLOUDLAB 844.
+1. Medir físicamente la carpa armada.
+2. Registrar volumen efectivo después de estantes, bandejas y ductos.
+3. Verificar SHT3x contra Inkbird.
+4. Seleccionar, configurar y validar el sensor NDIR de CO₂ para la altitud de la sede donde opere; el SCD30 pedido anteriormente no fue entregado.
+5. Medir caudal del extractor con ductos y restricciones reales.
+6. Ejecutar prueba vacía y prueba con masa térmica/hídrica.
+7. Evaluar recuperación tras apertura.
+8. Aprobar setpoints y alarmas únicamente para la cepa y lote definidos.
 
-# Best Practices
-- Nunca confiar en el sensor integrado del H05 — siempre usar Inkbird como referencia.
-- Revisar dos veces al día (mañana y tarde) mientras no haya automatización.
-- Documentar cualquier desviación de parámetros con hora exacta.
-- Mantener probe shields limpios — sedimento o biofilm distorsiona lecturas SHT3x.
+# Uso en el plan de Bogotá
+
+La carpa puede reservarse en planta con una huella de 0,70 × 0,48 m y altura de 1,65 m, añadiendo espacio de ductos y mantenimiento. Esta reserva no cambia su ubicación actual en Tenjo. Si se aprueba traslado o duplicación, la decisión debe actualizar inventario, sede, sensores asignados, compensación de altitud y rutas de extracción.
 
 # References
+
+- Terra Fungus product listing: https://www.amazon.com/Mushroom-Tent-Light-Monotub/dp/B0DY89RZQZ
 - VIVOSUN H05 manual.
 - Inkbird IBS-TH2 Plus documentation.
-- `environmental_control.md` — arquitectura general de sensores y control.
+- environmental_control.md.

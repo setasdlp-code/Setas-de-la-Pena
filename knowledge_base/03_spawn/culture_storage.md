@@ -1,5 +1,6 @@
 ---
 title: Almacenamiento de Culturas
+document_id: DOC-0016
 category: spawn
 load_priority: selective
 last_reviewed: 2026-06-30
@@ -163,7 +164,7 @@ Every production culture should remain traceable to its original biological sour
 
 # Open Questions
 
-- What P. djamor strain varieties are optimal for Tenjo climate? Should multiple strains be maintained?
+- ¿Qué cepa de shiitake y clase térmica se validará primero en Tenjo? No mantener múltiples líneas antes de estabilizar una.
 - Should strain library include non-production strains for experimental or genetic backup purposes?
 - What is optimal frequency for viability checks of stored agar plates?
 - Should culture database include performance metrics (yield, contamination rate, colonization speed)?

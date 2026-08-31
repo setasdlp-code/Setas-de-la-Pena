@@ -1,11 +1,12 @@
 ---
-title: Instantánea Histórica del Proyecto — 2026-06-29
+title: Snapshot Histórico del Proyecto — 2026-06-29
+document_id: DOC-0001
 category: project
-load_priority: selective
-last_reviewed: 2026-07-16
-confidence: historical
+load_priority: on_request
+last_reviewed: 2026-07-24
 status: superseded
 superseded_by: ../CURRENT_OPERATIONS.md
+confidence: high
 primary_sources:
   - Internal records
   - Amazon order history
@@ -16,11 +17,15 @@ related_documents:
   - 09_research/unresolved_questions.md
 ---
 
+# Estado del documento
+
+Este snapshot fue supersedido por `../CURRENT_OPERATIONS.md` y `../FARM_BRAIN.md`. Conserva el estado observado el 2026-06-29 como registro histórico; no gobierna compras, especie activa, setpoints ni prioridades. DEC-013, del 2026-07-14, estableció *Lentinula edodes* como especie prioritaria de arranque y dejó *P. djamor* como candidato futuro.
+
 # Executive Summary
-Instantánea histórica de lo reportado el 2026-06-29. No debe usarse como estado actual: fechas estimadas de entrega y estados de equipos no fueron confirmados posteriormente. La fuente vigente es `CURRENT_OPERATIONS.md`.
+Estado operacional histórico a junio 2026. Fase de prototipado activa con Martha Tent; producción en CLOUDLAB 844 en preparación (equipo en tránsito). Sistema de automatización ESP32/ESPHome diseñado, pendiente de banco de pruebas.
 
 # Core Principles
-Este documento se conserva para trazabilidad histórica. No se actualiza ni gobierna operaciones actuales.
+Este documento se actualiza con cada cambio de estado significativo. Representa la fotografía operacional más reciente del proyecto.
 
 # Technical Details
 
@@ -53,12 +58,15 @@ Este documento se conserva para trazabilidad histórica. No se actualiza ni gobi
 - Recinto PIR/PUR ~2.5×2.5×2.2m (cotizar FrigoMaster)
 - Calefactor cerámico PTC para recinto
 
-## Especies
-| Especie | Estado |
+## Especies — selección histórica supersedida
+
+La tabla siguiente registra la planificación del 2026-06-29 y no representa la estrategia vigente.
+
+| Especie | Estado histórico |
 |---|---|
-| P. djamor | **Prioridad #1** — primera en producción |
+| P. djamor | Selección del 2026-06-29; supersedida por DEC-013 |
 | H. erinaceus | Objetivo secundario — requiere control muy preciso |
-| L. edodes (Shiitake) | Objetivo a mediano plazo |
+| L. edodes (Shiitake) | Figuraba a mediano plazo; pasó a prioridad de arranque por DEC-013 |
 | P. ostreatus | Posible para validar sistema antes de djamor |
 | G. lucidum | Largo plazo / medicinal |
 
@@ -78,10 +86,10 @@ Este documento se conserva para trazabilidad histórica. No se actualiza ni gobi
 - Banco de pruebas pendiente → no se puede validar automatización en campo
 - Spawn no comprado → no hay producción activa
 
-## Prioridades Inmediatas (semana del 29 jun 2026)
+## Prioridades históricas (semana del 29 jun 2026; supersedidas)
 1. Recibir pedidos Amazon (28 jun, 3–18 jul)
 2. Armar banco de pruebas ESP32 + sensores
-3. Comprar spawn P. djamor para primer lote
+3. Compra de spawn de *P. djamor* propuesta entonces; tarea cancelada por DEC-013
 
 # Best Practices
 - Actualizar este archivo cada vez que cambie el estado de un componente.
@@ -96,4 +104,4 @@ Este documento se conserva para trazabilidad histórica. No se actualiza ni gobi
 - ¿Recinto PIR/PUR o cuarto adaptado? (pendiente cotización FrigoMaster)
 
 # References
-- Comprobantes de pedido almacenados fuera de Git por contener datos personales y referencias de compra.
+- Órdenes Amazon: registro interno

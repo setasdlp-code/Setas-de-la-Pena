@@ -1,5 +1,6 @@
 ---
 title: Cultivo Líquido (LC) — Liquid Culture
+document_id: DOC-0018
 category: spawn
 load_priority: selective
 last_reviewed: 2026-06-30

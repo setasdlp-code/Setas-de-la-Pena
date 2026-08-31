@@ -1,132 +1,183 @@
 ---
 title: Esterilización de Sustratos
+document_id: DOC-0012
 category: substrates
 load_priority: selective
-last_reviewed: 2026-07-04
+last_reviewed: 2026-08-19
 confidence: high
 primary_sources:
   - Stamets 2000
   - Cotter 2014
   - Zied & Pardo-Giménez 2017
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006, ruta atmosférica)
+  - Xiong et al. 2019, Bioresource Technology 274:65–72
+  - Levanon et al. 1993, Bioresource Technology 45:63–64
+  - FDA thermal-process guidance, methodological transfer only
 related_documents:
   - pasteurization.md
   - supplementation.md
   - contamination.md
-  - 05_equipment/autoclaves.md
+  - ../05_equipment/autoclaves.md
+  - ../06_operations/operational_commissioning.md
+  - ../09_research/commissioning_validation_research.md
 ---
 
 # Executive Summary
-La esterilización elimina toda forma de vida microbiana (incluyendo esporas). Es obligatoria para sustratos altamente suplementados (Master's Mix, salvado >10%) y para cultivos de Lion's Mane y Shiitake. Requiere autoclave o olla de presión. Proceso más complejo y costoso que pasteurización pero necesario para BE alta y sustratos enriquecidos.
+
+La esterilización por vapor a presión es una herramienta de control microbiológico particularmente útil para sustratos nutritivos y suplementados, spawn y otras operaciones donde una carga microbiana residual baja es importante. Sin embargo, **la especie por sí sola no determina que un sustrato deba procesarse siempre a 121 °C**. Existen estudios publicados de *Lentinula edodes* producida sobre sustratos pasteurizados, incluidos procesos térmicos por debajo de la esterilización a presión.
+
+Para el programa inicial de Setas de la Peña, el vapor a presión permanece como la **ruta conservadora candidata** para sustrato de aserrín suplementado, pero su ciclo real debe validarse localmente. Las alternativas de pasteurización permanecen como hipótesis de proceso separadas y no son intercambiables automáticamente con el proceso a presión.
+
+**Regla operacional:** los rangos de temperatura, presión y tiempo citados en este documento son referencias de literatura y no constituyen por sí solos un ciclo aprobado. Antes de liberar un lote para inoculación, la configuración real de equipo, formulación, masa de bolsa, número de bolsas y geometría de carga debe estar vinculada a un ciclo versionado validado según `../06_operations/operational_commissioning.md` y `../06_operations/quality_control.md`.
 
 # Research Consensus
 
-## Esterilización vs. Pasteurización en Sustratos Suplementados
-**Consensus**
-Supported by:
-- Stamets 2000
-- Cotter 2014
-- Zied 2017
-- Field & Forest Products
+## Vapor a presión como baseline de alta reducción microbiana
 
-Sustratos con suplementación nitrogenada >10% requieren esterilización a 121°C. Pasteurización de Master's Mix produce tasas de contaminación >60%.
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Ninguno en sustratos altamente suplementados.
+**Published evidence:** la esterilización por vapor a presión es ampliamente utilizada para sustratos suplementados y para preparación de spawn. Estudios de shiitake usan con frecuencia 121 °C, pero los tiempos publicados varían ampliamente con masa, geometría, formulación y equipo.
+
+**Transfer limit:** no existe un tiempo universal de 2, 3 o 4 horas aplicable a cualquier bolsa ni un umbral de suplementación que, por sí solo, establezca un ciclo válido para Setas de la Peña.
+
+## Pasteurización como alternativa condicionada
+
+**Published evidence:**
+
+- Xiong et al. (2019) compararon pasteurización por aire caliente de 75–100 °C con autoclave a 121 °C en sustrato de abedul para shiitake y reportaron colonización más rápida, fructificación más temprana y rendimiento igual o superior en el proceso de aire caliente.
+- Levanon et al. (1993) desarrollaron tratamiento a granel por pasteurización para shiitake en mezcla de pajas.
+- Rodríguez Valencia & Jaramillo López (2005) documentaron una ruta colombiana de vapor atmosférico prolongado en sustratos lignocelulósicos para hongos, incluida producción de shiitake.
+
+**Project implication:** la pasteurización no se descarta por principio, pero cada combinación de sustrato, suplementación, equipo y práctica de inoculación requiere validación propia.
 
 # Core Principles
-- **Condición de esterilización:** 121°C, 15 psi, 2–4 horas (dependiendo del volumen).
-- Solo equipos con control de presión (autoclave o olla de presión calibrada) garantizan 121°C.
-- Después de esterilización: terreno completamente limpio. La inoculación debe ser aséptica.
-- El tiempo de esterilización aumenta con el volumen: bolsas de 2 kg = 2h; 5 kg = 3–4h.
+
+- **Referencia de literatura:** 121 °C y vapor a presión son un marco común de esterilización húmeda, no una receta universal.
+- **No usar tiempo genérico como autorización:** 2–4 h o cualquier otro rango no es un criterio de liberación hasta que la carga real haya sido caracterizada y validada.
+- La temperatura o presión de cámara no demuestra automáticamente la temperatura en el punto más lento del producto.
+- El estudio térmico debe separar distribución de temperatura del equipo y penetración térmica dentro del sustrato.
+- La posición geométrica central de una bolsa es una ubicación candidata de medición, no un cold spot asumido.
+- Cambios materiales de formulación, humedad, masa por bolsa, cantidad de bolsas o distribución de carga requieren evaluación antes de transferir un ciclo previo.
+- Después del tratamiento térmico, la inoculación y manipulación deben proteger el sustrato de recontaminación.
 
 # Technical Details
 
-## Parámetros de Esterilización
+## Parámetros de referencia de literatura
 
-| Parámetro | Valor |
+| Parámetro | Referencia |
 |---|---|
-| Temperatura | **121°C** |
-| Presión | **15 psi (1 atm sobre presión atmosférica)** |
-| Tiempo mínimo | 2 h (bolsas <2.5 kg) |
-| Tiempo estándar | 2.5–3 h (bolsas 2.5–5 kg) |
-| Tiempo para bloques grandes | 3–4 h (bloques >5 kg) |
+| Temperatura | **121 °C** como referencia habitual de vapor a presión |
+| Presión | Valor dependiente del equipo y de la relación presión-temperatura real; registrar gauge vs absoluta |
+| Tiempo | Escala de minutos a horas según producto, carga y objetivo; no existe tiempo universal |
+| Carga | Masa, geometría, humedad, número de bolsas y disposición afectan penetración térmica |
 
-⚠️ En Tenjo (2600 m s.n.m.) el agua hierve a ~92°C en lugar de 100°C. La olla de presión compensa esto: **15 psi sobre presión local** sigue alcanzando 121°C. No ajustar la presión por altitud.
+Estos valores sirven para diseñar el estudio térmico, no para reemplazarlo. El criterio operacional depende del historial tiempo-temperatura del producto en la posición de calentamiento más lento, de la distribución térmica de la carga, de la repetibilidad y del objetivo microbiológico definido.
 
-## Equipos para Esterilización
+## Distribución y penetración térmica
 
-### 1. Autoclave de Laboratorio
-- Control preciso de T° y presión.
-- Capacidad: 20–100 L típico.
-- Costo: US$300–2,000 (nuevos), menos de segunda mano.
-- Para Setas de la Peña: inversión para Fase 2 (cuando se produzca Shiitake/Lion's Mane).
+Durante commissioning usar dos estudios:
 
-### 2. Olla de Presión Doméstica (Presto / All-American)
-- 23–41 qt (21–39 L) — suficiente para 3–6 bolsas de 1 kg.
-- All-American 921 (21 qt) = referencia en comunidad cultivadora.
-- Costo: US$150–400.
-- Requiere válvula de peso; no de jiggle-top para control exacto.
-- **Limitación:** Solo para volúmenes pequeños y sustratos en bolsas medianas.
+1. `HEAT_DISTRIBUTION` — múltiples sensores distribuidos en la carga/cámara, fuera del producto, para caracterizar el entorno térmico.
+2. `HEAT_PENETRATION` — sensores dentro de bolsas representativas para determinar el calentamiento del sustrato y localizar el punto más lento.
 
-### 3. Modificación de Olla Grande + Olla de Presión (Hack económico)
-- Olla grande de acero = cámara de vapor a presión casera.
-- Técnica documentada en comunidad cultivadora para escalar sin autoclave industrial.
-- Requiere adaptaciones de soldadura y válvula de seguridad.
-- Costo: US$50–150. Riesgo: presión no controlada con precisión.
+Ver metodología completa en `../06_operations/operational_commissioning.md`.
 
-### 4. Vapor a Presión Atmosférica (ruta artesanal de bajo capex) — validar antes de usar
-*Fuente: Rodríguez Valencia & Jaramillo López 2005 (Cenicafé/FNC — paper_006).*
+## Letalidad equivalente
 
-Vapor fluente en olla/recipiente metálico **sin presión**, manteniendo el sustrato sobre una parrilla por encima del agua durante **5 horas contadas desde que el termómetro marca la temperatura de ebullición local** (~91°C a 2.600 m; Cenicafé usó 94,5°C en zona cafetera). Cenicafé produjo shiitake y ganoderma comerciales con este método usando ollas de ~190 L (hasta 60 kg de sustrato, 25 L de agua).
+Registrar series de tiempo-temperatura con resolución suficiente para permitir análisis posterior de letalidad equivalente.
 
-⚠️ **Esto NO es esterilización real:** a presión atmosférica no se destruyen esporas termorresistentes. Es una **pasteurización intensa prolongada**. Riesgos documentados por la propia fuente: contaminación visible ~día 8 y aparición de *Neurospora* si el sustrato queda dentro del esterilizador tras el tratamiento.
+No usar `F0` como criterio automático de aprobación hasta que exista una base microbiológica definida para el proceso de sustrato: organismo objetivo, `T_ref`, `z`, carga inicial y reducción requerida. Los valores F0 provenientes de alimentos enlatados o esterilización médica no se transfieren automáticamente a cultivo de hongos.
 
-- **Estado:** *Supported Hypothesis* — no adoptar para Master's Mix ni sustratos suplementados >10% N sin banco de pruebas en Tenjo con tasa de contaminación medida.
-- **Ventaja:** capex mínimo (sin autoclave ni olla a presión), escala grande.
-- **Cuándo considerar:** sustratos de café / lignocelulósicos de menor suplementación; nunca como sustituto del estándar 121°C para sustratos altamente enriquecidos.
+## Altitud y presión
 
-## Protocolo de Esterilización
+En Tenjo (~2600 m s.n.m.) la presión atmosférica difiere de la del nivel del mar. Por lo tanto:
+
+- registrar si el instrumento indica presión manométrica o absoluta;
+- no inferir la temperatura del producto únicamente a partir de la presión;
+- verificar instrumentos antes del commissioning;
+- medir temperatura del producto cuando sea técnicamente posible;
+- seguir el manual y límites del fabricante del equipo.
+
+## Equipos para el programa actual
+
+### All American 1941X
+
+La especificación actual del fabricante para el esterilizador no eléctrico `1941X` es **41 qt / 39 L**. El fabricante lo describe para esterilización de apósitos e instrumental sobre una fuente de calor eficaz y no publica una capacidad validada en bolsas de sustrato.
+
+Para Setas de la Peña:
+
+- no inferir bolsas/ciclo a partir de litros nominales;
+- definir la capacidad con las bolsas reales, masa real y rack real;
+- registrar la fuente de calor y su estabilidad;
+- no usar ciclos de instrumentos médicos como ciclo automático de sustrato.
+
+### Otros recipientes a presión
+
+Cualquier otro equipo debe conservar su configuración de seguridad aprobada por fabricante. **No se autoriza fabricar o modificar cámaras de presión artesanales** como sustituto del equipo certificado.
+
+## Vapor a presión atmosférica — ruta experimental separada
+
+*Fuente interna: Rodríguez Valencia & Jaramillo López 2005 (Cenicafé/FNC — paper_006 / paper_006).*
+
+La literatura colombiana documenta vapor atmosférico prolongado para sustratos lignocelulósicos. Este proceso no debe denominarse esterilización equivalente a un proceso a presión y requiere un banco de pruebas propio en Tenjo.
+
+**Estado:** hipótesis de proceso. No usar como sustituto automático del baseline de vapor a presión en la formulación inicial de aserrín suplementado.
+
+# Protocolo de ejecución
 
 ```
-1. Preparar sustrato a FC (65%) en bolsas de polipropileno de alta temperatura.
-   - NO usar bolsas de polietileno regular → se derriten.
-2. Sellar bolsas con filtro de microporo o tyvek + tape.
-3. Cargar autoclave/olla sin amontonar (vapor debe circular).
-4. Llevar a 15 psi. Mantener 2–3h según volumen.
-5. Apagar calor. Dejar enfriar DENTRO del autoclave sin abrir.
-   - Tiempo de enfriamiento: 2–4h según carga.
-6. Extraer bolsas cuando <50°C. Dejar enfriar a temperatura ambiente.
-7. Inocular en flujo laminar o área de inoculación limpia (ver laboratorio.md).
+1. Preparar sustrato según receta versionada y registrar humedad, masa y lotes de materias primas.
+2. Usar bolsa compatible con la temperatura y el proceso declarados por su fabricante.
+3. Cargar el equipo según una geometría documentada; registrar número, masa y posición de bolsas.
+4. Ejecutar el `thermal_cycle_id` aprobado para esa configuración.
+5. Durante commissioning:
+   a. realizar estudio de distribución térmica;
+   b. realizar estudio de penetración térmica;
+   c. registrar come-up, hold y enfriamiento por separado.
+6. Registrar tiempo, temperatura, presión, desviaciones y consumo energético/combustible.
+7. Enfriar bajo condiciones definidas y registrar el tiempo de enfriamiento.
+8. Liberar a inoculación solo si la compuerta térmica de `quality_control.md` está satisfecha.
 ```
 
-## Bolsas para Esterilización
-| Tipo | Material | Temperatura Máx | Uso |
-|---|---|---|---|
-| Polipropileno (PP) | PP | 130–135°C | **Correcto** para autoclave |
-| Con filtro de microporo | PP | 130°C | Ideal — permite respiración |
-| Polyethylene (PE) | PE | 80–90°C | **Incorrecto** — se derrite en autoclave |
-| Mason jars | Vidrio | 150°C+ | Válido para volúmenes pequeños |
+# Bolsas para tratamiento térmico
+
+No usar límites genéricos de temperatura de polímeros como sustituto de la especificación del producto comprado. Registrar fabricante/modelo/lote de bolsa cuando sea posible y conservar la evidencia de compatibilidad con el proceso aplicado.
 
 # Best Practices
-- Usar bolsas PP de alta temperatura con filtro — evitan contaminación post-esterilización.
-- Nunca abrir el autoclave con presión residual — riesgo de explosión de vapor.
-- Marcar bolsas con fecha y contenido antes de esterilizar.
-- Si se usa olla de presión: colocar rejilla en el fondo (bolsas no deben tocar agua directamente).
+
+- Identificar equipo, instrumentos, receta, humedad, masa, número de bolsas y disposición en cada ciclo.
+- Marcar bolsas con fecha, `PROCESS_BATCH_ID` y contenido antes del proceso.
+- No abrir equipos presurizados con presión residual.
+- Mantener la configuración de seguridad especificada por fabricante.
+- No compactar la carga de forma no validada.
+- Vincular contaminación posterior con `thermal_cycle_id` antes de atribuir causa.
+- Durante commissioning considerar bolsas centinela procesadas y no inoculadas para ayudar a diferenciar fallos previos a inoculación de contaminación introducida después.
 
 # Common Failure Modes
-| Fallo | Causa | Solución |
+
+| Fallo | Causa posible | Respuesta |
 |---|---|---|
-| Sustrato no llega a 121°C | Olla a nivel del mar: ok. A 2600m: verificar psi en gauge | Usar gauge de presión calibrado |
-| Contaminación post-esterilización | Inoculación en área no limpia | Mejorar protocolo de inoculación (flujo laminar) |
-| Bolsas se derriten | Uso de PE en vez de PP | Comprar bolsas PP específicas para autoclave |
-| Tiempo insuficiente (< 2h) | Bloques grandes no esterilizan por completo | Aumentar tiempo según volumen |
+| Cámara alcanza condición nominal pero el producto no | Penetración térmica lenta / carga desfavorable | Mapear temperatura de producto y revisar geometría |
+| Zonas de la carga tardan más en calentar | Distribución no uniforme | Ejecutar/ajustar estudio de distribución |
+| Ciclo “igual” produce curvas distintas | Variación de masa, humedad, carga, energía o instrumento | Comparar parámetros de carga y verificación de sensores |
+| Contaminación post-proceso | Puede originarse en tratamiento, enfriado, bolsa, inoculación u otra etapa | Registrar evento y separar detección de origen probable/confirmado |
+| Bolsas se deforman o fallan | Especificación incompatible, contacto térmico o carga inadecuada | Verificar bolsa y disposición |
+| Tiempo genérico aplicado a carga nueva | Transferencia no validada | Volver a caracterización/commissioning |
 
 # Open Questions
-- ¿Proveedor de bolsas PP con filtro microporo en Colombia?
-- ¿All-American 921 disponible en Colombia o necesita importar?
-- Prioridad para adquirir autoclave: ¿después del CLOUDLAB 844 o simultáneo?
+
+- ¿Cuál es la geometría de carga con peor distribución térmica en el 1941X?
+- ¿Cuál es la posición de bolsa y zona interna con calentamiento más lento?
+- ¿Cuál es la variabilidad entre ciclos nominalmente idénticos?
+- ¿Qué criterio microbiológico de aceptación es apropiado para la formulación inicial?
+- ¿Qué número de bolsas por ciclo maximiza throughput sin perder reproducibilidad térmica?
+- ¿Qué alternativa de pasteurización merece banco de pruebas después de establecer el baseline a presión?
 
 # References
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 63–75.
+
+- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
+- Xiong S. et al. (2019). Energy-efficient substrate pasteurisation for combined production of shiitake mushroom and bioethanol. *Bioresource Technology* 274:65–72. doi:10.1016/j.biortech.2018.11.071.
+- Levanon D. et al. (1993). Bulk treatment of substrate for cultivation of Shiitake mushrooms on straw. *Bioresource Technology* 45:63–64. doi:10.1016/0960-8524(93)90145-2.
+- U.S. FDA. *Guide to Inspections of Low Acid Canned Food*, sections on temperature distribution and heat penetration. Methodological transfer only; not a mushroom-substrate standard.
+- All American 1930. `1941X Sterilizer` manufacturer product specification, accessed 2026-08-19.
+- `../09_research/commissioning_validation_research.md` — evidence review and transfer limits.

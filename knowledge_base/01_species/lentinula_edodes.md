@@ -1,137 +1,130 @@
 ---
 title: Lentinula edodes — Shiitake
+document_id: DOC-0007
 category: species
 load_priority: selective
-last_reviewed: 2026-07-04
+last_reviewed: 2026-07-23
 confidence: high
 primary_sources:
+  - Chang & Miles 2004 (book_007, cap. 13)
+  - Rodríguez Valencia & Jaramillo López 2005 (paper_006)
   - Stamets 2000
-  - Cotter 2014
-  - Field & Forest Products
   - Zied & Pardo-Giménez 2017
-  - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006)
 related_documents:
-  - pleurotus_djamor.md
-  - 02_substrates/substrate_library.md
-  - 02_substrates/sterilization.md
+  - ../09_research/literature_database.md
+  - ../09_research/unresolved_questions.md
+  - ../02_substrates/substrate_library.md
+  - ../02_substrates/sterilization.md
 ---
 
 # Executive Summary
-*Lentinula edodes* (Shiitake) es la segunda especie más cultivada del mundo y tiene alta demanda en mercados gourmet y medicinales colombianos. Sin embargo, requiere temperaturas de fructificación de 10–16°C — compatibles con Tenjo en meses fríos — y ciclos de producción más largos. Exige esterilización (no solo pasteurización) para la mayoría de sustratos. Especie de mediano plazo para Setas de la Peña.
+
+*Lentinula edodes* es la especie prioritaria de arranque de Setas de la Peña. El proyecto está en preproducción, con 0 lotes activos. El lote 1 depende de spawn trazable con cepa identificada, una formulación aprobada y un ciclo representativo de autoclave comisionado y validado.
+
+La temperatura de fructificación y la necesidad de choque frío dependen de la cepa. Chang y Miles distinguen cepas de baja, media y alta temperatura; por ello, 10–16°C no es un rango universal para shiitake.
 
 # Research Consensus
 
-## Requerimiento de Temperatura Baja
-**Consensus**
-Supported by:
-- Stamets 2000
-- Field & Forest Products
-- Cotter 2014
-- Zied & Pardo-Giménez 2017
+## Clase térmica de la cepa
 
-*L. edodes* NO fructifica en condiciones tropicales. Requiere T° 10–16°C para inducción de fructificación (cold shock o temperatura baja sostenida).
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Algunas variedades "warm weather" reportan fructificación hasta 21°C, pero el rendimiento es inferior. Cenicafé (paper_006) produjo comercialmente las cepas **L54 y L4055** en la zona cafetera colombiana (medias 18–23°C) con rendimiento medio >50% — evidencia de que existen cepas tolerantes a temperaturas más altas que el rango 10–16°C. La elección de cepa condiciona fuertemente el requerimiento térmico.
+Chang y Miles (2004, cap. 13) describen tres clases según temperatura de fructificación:
 
-## Tiempo de Incubación
-**Consensus**
-Supported by:
-- Stamets 2000
-- Field & Forest
+| Clase | Temperatura descrita | Implicación |
+|---|---|---|
+| Baja temperatura | <10°C | Requiere condiciones frías para fructificar |
+| Temperatura media | 10–20°C | Puede responder a descenso térmico o remojo frío |
+| Alta temperatura | >20°C | Puede fructificar por fluctuación natural y, en general, sin choque frío |
 
-*L. edodes* requiere 60–120 días de incubación completa en madera o sustrato complementario antes de fructificar. Significativamente más largo que Pleurotus.
-**Strength of evidence:** ★★★★★
-**Conflicting evidence:** Con Master's Mix enriquecido puede reducirse a 30–45 días.
+**Conclusión para el proyecto:** no se debe fijar la estrategia térmica de Tenjo hasta conocer la cepa y su clase. La afirmación anterior de que shiitake “no fructifica en condiciones tropicales” queda retirada.
 
-# Core Principles
-- NO tropical: temperatura mínima de fructificación 10°C. En Tenjo, viable en temporada fría.
-- Incubación muy larga: planificar ciclos de 2–4 meses.
-- Requiere esterilización (no pasteurización) para sustratos suplementados.
-- Cold shock (reducción brusca de T°) puede inducir pinning.
+## Madurez de bloques sintéticos
+
+Chang y Miles describen, para sistemas de tronco sintético, colonización y maduración alrededor de 22–25°C, formación de protuberancias hacia 50–60 días y retiro de bolsa aproximadamente a 60 días. Estas cifras son descripciones de proceso, no un calendario garantizado.
+
+La inducción debe depender también de indicadores de madurez:
+
+- colonización completa;
+- superficie firme;
+- protuberancias o “popcorning” según cepa;
+- pardeamiento o corteza cuando corresponda al sistema;
+- ausencia de contaminación y exceso de metabolitos.
+
+## Evidencia colombiana
+
+Cenicafé evaluó shiitake sobre subproductos de café y reportó producción con las cepas L54 y L4055 en su contexto experimental. La formulación T2 —28% aserrín de tallo de café, 50% borra y 19% salvado de maíz, más calcio— tuvo rendimiento medio reportado de 57,6%.
+
+Ese “rendimiento” debe conservar la definición del estudio y no asumirse automáticamente como BE comparable con otros trabajos. Las cepas fueron material de investigación; su disponibilidad comercial actual no está demostrada.
 
 # Technical Details
 
 ## Taxonomía
-- **Reino:** Fungi
-- **Orden:** Agaricales
-- **Familia:** Omphalotaceae
-- **Nombres comunes:** Shiitake, Lentin del roble, Black Forest Mushroom
 
-## Compuestos Bioactivos
-| Compuesto | Acción |
-|---|---|
-| Lentinano (beta-glucano) | Inmunomodulador — estudiado en oncología |
-| Eritadenina | Reduce colesterol LDL |
-| AHCC | Fracción activa hexosa correlacionada — inmunoestimulante |
-| Ergosterol | Precursor vitamina D₂ |
+- Reino: Fungi
+- Orden: Agaricales
+- Familia: Omphalotaceae
+- Nombres comunes: shiitake, lentino del roble.
 
-## Ciclo de Vida
+## Incubación y maduración — evidencia disponible
 
-### Incubación
-| Parámetro | Valor |
-|---|---|
-| Temperatura | 20–25°C (óptimo 25°C; rango tolerado 21–27°C — Cenicafé) |
-| HR ambiente | 70–85% (80–85% en fase de crecimiento micelial para evitar resecado — Cenicafé) |
-| Duración | **60–120 días** (L54 ~60 d, L13 ~65 d, L4055 ~120 d — Cenicafé; 30–45 d con Master's Mix) |
-| Tasa de inoculación | 3,6% (semilla comercial) / 5–7,5% (semilla propia) |
-| Formación de corteza | Bloques se endurecen y oscurecen (pardeamiento) — normal |
-
-### Inducción de Fructificación
-- Reducir temperatura a 10–16°C (cold shock: sumergir en agua fría o refrigeración)
-- Golpear el bloque para estimular pinning (técnica documentada)
-- Aumentar HR a 90–95%
-
-### Fructificación
-| Parámetro | Valor |
-|---|---|
-| Temperatura | **10–16°C** |
-| HR | 85–95% |
-| CO₂ | <1,000 ppm |
-| FAE | Moderada |
-| Luz | 750–1,500 lux |
-| Ciclo fruiting | 21–35 días a cosecha |
-| Flushes esperados | 3–6 (bloques duran meses) |
-
-## Sustratos Compatibles y Formulación (C:N Óptimo 35:1 – 50:1)
-| Sustrato | Relación C:N | BE Esperada | Tratamiento |
-|---|---|---|---|
-| Master's Mix (50/50 serrín roble + cascarilla soya) | 28:1 – 32:1 | 80–120% | Esterilización obligatoria |
-| Serrín de roble / álamo (78%) + salvado de trigo (20%) + CaCO₃ (2%) | 38:1 – 44:1 | 70–100% | Esterilización (Autoclave 121 °C / 2.5 h) |
-| Subproductos de café — formulación T2 (Cenicafé Colombia) | ~40:1 | 55–60% | Esterilización (28% aserrín tallo + 50% borra + 19% salvado maíz) |
-| Troncos naturales de roble (*Quercus humboldtii*) / aliso | 150:1 – 300:1 | 40–70% | Inoculación con taquetes; ciclo 9–18 meses |
-
-**Efecto Buffering de CaCO₃ (Royse & Sanchez-Vazquez 2003):** La incorporación de 1.0%–2.0% de CaCO₃ estabiliza el pH entre 5.5 y 6.2 frente a la secreción ácida micelial, aumentando la EB en ~18% y reduciendo la tasa de contaminación por *Trichoderma* durante los 60–90 días de incubación.
-
-## Viabilidad en Tenjo
-- Temperatura Tenjo: 12–18°C típico, puede bajar a 8–10°C en noches de enero–febrero.
-- En meses fríos (jun–ago, dic–feb): temperatura exterior puede ser suficiente para fructificación natural sin refrigeración activa.
-- En meses cálidos: requeriría cámara fría o el uso de cepas termotolerantes (como L54/L4055 de Cenicafé).
-- **Estrategia recomendada:** producción estacional Shiitake (temporada fría) + P. djamor todo el año.
-
-# Best Practices
-- **Fase de Pardeamiento (*Browning*):** No apresurar la apertura de la bolsa. Esperar que el 70–80% del bloque desarrolle la corteza marrón gruesa (*barking*).
-- **Choque Térmico Eficiente:** Inmersión en agua a 10–12 °C por 2–6 horas (sumergir completamente con pesos) para romper la latencia e hidratar el bloque para el primer flush.
-- Registrar duración de incubación por lote — varía mucho entre sustratos.
-- Semilla de siembra: usar con <15 días de elaborada, color uniforme (vetas = contaminación); si viene de nevera, atemperar 1 día antes.
-
-# Common Failure Modes
-| Problema | Causa | Solución |
+| Variable | Evidencia | Uso en Setas de la Peña |
 |---|---|---|
-| Micelio no coloniza | Contaminación inicial | Verificar esterilización y ambiente aséptico |
-| No hace pins después de inducción | Temperatura >18°C sostenida o browning incompleto | Choque frío a 10–12 °C; dar luz difusa antes de abrir |
-| Caps muy pequeños | HR insuficiente durante fruiting | Verificar sensores; ajustar humidificación a 85–90% |
-| Ciclos muy lentos | Temperatura incubación subóptima | Mantener 20–24°C en incubación |
+| Temperatura | 22–25°C en tronco sintético (book_007); óptimo 25°C y rango 21–27°C en paper_006 | Punto de partida para diseño; validar con la cepa comprada |
+| Duración | ~50–60 días a señales de madurez en book_007; 60–120 días según cepa en paper_006 | Planificación provisional de 90–150 días para el ciclo total, no promesa biológica |
+| Inoculación | 3,6% spawn comercial y 5–7,5% spawn propio en paper_006 | Verificar definición sobre base húmeda/seca antes de usar |
+| Sustrato | Aserrín de madera dura suplementado; formulación T2 de café en paper_006 | Elegir una sola formulación para el primer ensayo |
+| Tratamiento | Sustrato suplementado requiere proceso térmico controlado | No iniciar lote hasta validar el autoclave |
+
+## Inducción y fructificación
+
+No existe un setpoint universal aplicable a toda cepa.
+
+- El remojo en agua fría durante 12–24 h aparece como técnica de inducción para sistemas apropiados en book_007.
+- Cenicafé describe una variante de inmersión a 12°C durante 2–4 h.
+- Las cepas de alta temperatura pueden no requerir choque frío.
+- La humedad, ventilación, luz y CO₂ de la cámara deben definirse con la ficha del proveedor y un piloto instrumentado; los valores genéricos no se promueven aquí a estándar operacional.
+
+## Compuestos bioactivos
+
+| Compuesto | Estado prudente de la evidencia |
+|---|---|
+| Lentinano | Polisacárido estudiado; no sustenta por sí solo un claim del producto fresco |
+| Eritadenina | Compuesto investigado en metabolismo lipídico |
+| Ergosterol | Precursor de vitamina D₂ |
+
+Cualquier claim nutricional o medicinal requiere verificación regulatoria y evidencia específica del producto.
+
+# Aplicación en Tenjo
+
+Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la decisión no debe basarse solo en temperatura exterior. Antes del lote 1 se necesita:
+
+1. registrar temperatura y HR reales de incubación y fructificación;
+2. obtener identidad, proveedor, lote y clase térmica del spawn;
+3. escoger una formulación inicial y criterio de madurez;
+4. validar un ciclo de autoclave con carga representativa;
+5. definir inducción y cosecha con base en la cepa.
+
+# Failure Modes a vigilar
+
+| Señal | Hipótesis inicial | Verificación |
+|---|---|---|
+| Colonización incompleta | Spawn débil, proceso térmico insuficiente o formulación inadecuada | Revisar trazabilidad, controles y patrón del bloque |
+| Bloque maduro sin primordios | Estrategia térmica no compatible con la cepa | Confirmar clase térmica y registrar respuesta a inducción |
+| Pardeamiento irregular | Madurez, intercambio gaseoso o humedad desuniformes | Comparar posición, peso y microclima |
+| Sombreros pequeños o tallos largos | Ventilación/luz/CO₂ no validados | Medir CO₂ y caudal; no inferir ACH desde minutos de timer |
+| Contaminación | Carga, empaque o manipulación aséptica deficientes | Retener lote y revisar controles del proceso |
 
 # Open Questions
-- ¿Producción estacional o instalar cámara fría para Shiitake todo el año?
-- ¿Qué proveedores de spawn shiitake hay en Colombia? (pendiente; Cenicafé usó cepas L54/L4055 de origen asiático donadas para investigación, no necesariamente comerciales hoy)
-- ¿Las cepas tolerantes a temperatura (tipo L54/L4055) permitirían fructificación en Tenjo con menos exigencia de frío que las cepas 10–16°C?
-- ¿Requerimientos INVIMA para claims medicinales de lentinano en Colombia?
+
+- ¿Cuál proveedor ofrece spawn de shiitake con cepa y clase térmica verificables?
+- ¿La cepa elegida requiere choque frío, fluctuación natural o una combinación?
+- ¿Qué formulación única se aprobará para el lote 1?
+- ¿Cuál es el ciclo validado del autoclave con esa carga?
+- ¿Qué perfil térmico real presentan las cámaras de Tenjo?
+- ¿Las cepas L54/L4055 siguen disponibles comercialmente en Colombia?
 
 # References
-- Royse, D. J., & Sanchez-Vazquez, J. E. (2003). Influence of precipitated calcium carbonate (CaCO3) on shiitake (*Lentinula edodes*) yield and biological efficiency on synthetic logs. *Bioresource Technology*, 88(1), 43–49. [paper_009]
-- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 289–308.
-- Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
-- Field & Forest Products. *Shiitake cultivation guide*. https://fieldforest.net
-- Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
+
+- Chang, S.-T., & Miles, P. G. (2004). *Mushrooms: Cultivation, Nutritional Value, Medicinal Effect, and Environmental Impact* (2nd ed.), cap. 13, pp. 249–267; especialmente pp. 264–266 (PDF pp. 289–291).
+- Rodríguez Valencia, N., & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC. [paper_006 / paper_006]
+- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*.
+- Zied, D. C., & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms: Technology and Applications*.

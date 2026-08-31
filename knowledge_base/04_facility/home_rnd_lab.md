@@ -1,120 +1,127 @@
 ---
 title: Laboratorio de I+D (Casa) — Distribución y Adecuación
+document_id: DOC-0020
 category: facility
 load_priority: selective
-last_reviewed: 2026-07-10
+last_reviewed: 2026-07-24
 confidence: medium
 primary_sources:
-  - Internal design (layout aprobado por Sebastián, 2026-07-05)
-  - Stamets 2000
-  - Cotter 2014
+  - Observaciones y decisiones de Sebastián, 2026-07-05 a 2026-07-24
+  - Chang ca. 2010 (guide_004)
+  - Chang & Miles 2004 (book_007, capítulo 13)
 related_documents:
   - master_blueprint.md
   - laboratory.md
   - incubation.md
   - fruiting.md
-  - 05_equipment/laminar_flow.md
-  - 05_equipment/environmental_control.md
+  - ../05_equipment/martha.md
+  - ../05_equipment/environmental_control.md
+  - ../DECISIONS.md
 ---
 
 # Executive Summary
 
-Documenta la distribución del **laboratorio de desarrollo e investigación en casa**, la instalación de menor escala destinada a prototipado, I+D y producción propia de spawn. Es una instalación **distinta** al centro de cultivo comercial de las naves/marranera de Tenjo (ver `Propuesta_Adaptacion_Centro_Cultivo.docx`); no la reemplaza ni la duplica.
+Este documento describe la instalación urbana de I+D en la casa de Sebastián en Bogotá. Es distinta del centro de cultivo de Tenjo y no autoriza trasladar equipos entre ambas sedes.
 
-El sitio consta de tres espacios en dos niveles: **garaje** (planta baja), **pasillo de entrada cerrado** (nivel intermedio, conecta con escaleras a la azotea) y **terraza/azotea** (~21–24 m²). El criterio de diseño es el mismo flujo unidireccional sucio → limpio del `master_blueprint`, aprovechando el gradiente vertical del predio: la actividad más sucia queda abajo y la más sensible a contaminación en el paso cerrado intermedio.
+El sitio comprende garaje, un pasillo cerrado angosto que conecta con la escalera y una terraza irregular de aproximadamente 21,9 m² brutos según el croquis y una retícula de piso estimada en 60 × 60 cm. La escala sigue siendo provisional hasta medir en sitio.
 
-**Estado:** distribución aprobada por Sebastián el 2026-07-05 (puede cerrar lo necesario de la terraza y destinar el pasillo a laboratorio limpio). Pendiente de ejecución. Confidence *medium* — plan de diseño, no instalación construida ni medida con precisión.
+El pasillo fue descartado para SAB o LAF el 2026-07-24: no tiene ancho suficiente para la mesa inoxidable de 2,00 × 0,70 m, el operador y la circulación. Su función es transición sanitaria. La terraza debe contener tres ambientes físicamente separados: laboratorio limpio, incubación seca y fructificación húmeda.
 
-# Core Principles
+**Estado:** zonificación aprobada como decisión de diseño bajo DEC-014. Construcción, traslado de cámaras y setpoints operacionales siguen pendientes.
 
-- **Flujo unidireccional en gradiente vertical:** garaje (sucio) → pasillo (limpio/inoculación) → azotea (incubación → fructificación). El material sube; no baja de vuelta a zona sucia.
-- **El paso cerrado es la zona crítica:** la inoculación no puede ocurrir a la intemperie. El pasillo cerrado es la única zona donde la limpieza del aire realmente importa (presión positiva deseable).
-- **Separación física sucio/limpio** entre garaje y pasillo, con las escaleras como transición natural.
-- **La azotea requiere cerramiento:** es un techo expuesto (sol, lluvia, viento, noches frías de sabana). Sin cerramiento, el control de HR/T° y la electrónica pelean contra la intemperie de forma permanente.
+# Principios de diseño
 
-# Technical Details
+- Flujo ascendente: garaje sucio → pasillo de transición → laboratorio limpio en terraza → incubación seca → fructificación húmeda.
+- El laboratorio ocupa un recinto cerrado propio cerca del acceso a la terraza. No comparte retorno de aire con fructificación.
+- Incubación y fructificación operan como zonas independientes para aislar contaminación, humedad y fallos de control.
+- La baranda marca el borde de la placa; detrás hay caída libre. Ningún apoyo, cerramiento, circulación o equipo puede invadir ese vacío.
+- Las cifras ambientales de literatura informan el diseño del piloto. No son setpoints hasta identificar la cepa y aprobar la especificación del lote.
+- La ubicación actual de Terra Fungus y el programa CloudLab permanece documentada en Tenjo. Su representación en la terraza de Bogotá es una reserva espacial, no una orden de traslado.
 
-## Mapeo del modelo de 5 zonas al sitio físico
+# Distribución funcional
 
-| Zona (master_blueprint) | Espacio físico | Nivel |
-|---|---|---|
-| Zona 1 — Preparación de sustrato (sucio) | Garaje | Planta baja |
-| Esterilización (puente sucio↔limpio) | Garaje (junto a portón) | Planta baja |
-| Zona 5 — Bodega / almacenamiento | Garaje | Planta baja |
-| Zona 2 — Inoculación (limpio / lab) | Pasillo de entrada cerrado | Intermedio |
-| Zona 3 — Incubación | Terraza (sección cerrada) | Azotea |
-| Zona 4 — Fructificación (Martha tent) | Terraza (sección cerrada) | Azotea |
+| Zona | Ubicación | Función | Condición |
+|---|---|---|---|
+| Preparación, almacenamiento y esterilización | Garaje | Mezcla, embolsado, autoclave y materias primas | Zona sucia; ventilación y drenaje |
+| Transición sanitaria | Pasillo cerrado | Cambio de EPP, limpieza de manos y transferencia de contenedores cerrados | Sin SAB, LAF ni mesa de 2 m |
+| Laboratorio limpio | Terraza, junto al acceso | SAB actual; reserva para LAF; agar e inoculación | Recinto cerrado, aire filtrado, separado de esporas |
+| Incubación seca | Terraza, zona intermedia | Cuatro cajas de 120 L en rack | Ambiente neutro; control independiente |
+| Fructificación húmeda | Terraza, extremo opuesto al laboratorio | CloudLab 844 y Terra Fungus si se autoriza su asignación | Extracción independiente y leve presión negativa |
 
-## Garaje — Zona sucia + bodega + esterilización
+La secuencia física debe permitir llegar al laboratorio y a incubación sin atravesar fructificación. El aire extraído de las carpas no retorna al laboratorio, al pasillo ni a la vivienda.
 
-- **Bodega de materia prima seca** (paja, aserrín, pellets, salvado, cal): en uno de los racks metálicos, en contenedores sellados — en clima húmedo y con roedores próximos, bolsa abierta = plaga y moho.
-- **Procesamiento de sustrato:** hidratación, mezcla y embolsado sobre el mesón metálico (1.50 m) o piso lavable. Operación más polvosa de todo el flujo.
-- **Estación de esterilización aquí:** autoclave All American (44 L declarados por el propietario; modelo y capacidad nominal oficial pendientes de confirmar contra la placa del equipo — ver `metadata/equipment.yaml`) presente físicamente en el garaje, sobre la estufa doble industrial a gas propano. Puesta en marcha (banco de pruebas) pendiente. Validación de ciclos de esterilización para cargas concretas, pendiente por separado — ver `05_equipment/autoclaves.md`. El garaje es el lugar correcto por ventilación para el propano (riesgo de CO), acceso a agua y drenaje para vapor/condensado.
-- **Barrera física con carro y lavadora:** cortina plástica o panel que aísle el mesón de procesamiento del carro. Riesgo real = gases de escape y polvo del carro sobre sustrato abierto (la pelusa de la lavadora es manejable).
-- **Convivencia carro/lavadora:** *observación de Sebastián* — el garaje aloja además carro y lavadora, motivo por el que se descartó como laboratorio limpio. Se mantiene solo como zona sucia + bodega.
+# Geometría provisional de la terraza
 
-## Pasillo de entrada — Zona limpia / laboratorio
-
-- Espacio cerrado, paredes lavables, algo de luz por ventanas de vidrio/malla. Actualmente usado como depósito (cajas, bultos): **debe despejarse por completo**.
-- Aloja: **campana de flujo laminar (LAF) o still air box (SAB)**, trabajo en agar, cultivo líquido e inoculación de spawn/sustrato. Ver `laboratory.md` y `05_equipment/laminar_flow.md`.
-- Un mesón o rack pequeño para frascos/bolsas inoculados antes de subirlos a incubación.
-- Sellar juntas y, si el presupuesto lo permite, HEPA/purificador. Presión positiva deseable.
-
-## Terraza / azotea — Incubación + fructificación
-
-**Dimensiones estimadas** (*observación de Sebastián, medición aproximada*):
-
-| Lado | Medida |
+| Dato | Valor de diseño |
 |---|---|
-| Lado izquierdo (de la puerta al entrar) | 7 m |
-| Lado corto con baranda | 3 m |
-| Lado largo opuesto a la entrada | 6 m |
-| Lado corto opuesto a las barandas | 3.5 m |
+| Lados longitudinales | aproximadamente 6,50 m y 7,00 m |
+| Ancho junto al acceso | aproximadamente 3,00 m |
+| Ancho al fondo | aproximadamente 3,50 m |
+| Área bruta calculada | aproximadamente 21,9 m² |
+| Retícula de piso | 60 × 60 cm, pendiente de verificación |
+| Chimenea / ducto | Huella y función pendientes de medir |
 
-Cuadrilátero irregular, área útil ~21–24 m². Un ducto rotulado **"Chimenea / Ventilación casa"** ocupa parte del costado izquierdo.
+La terraza es un cuadrilátero irregular. No modelar como rectángulo de 7,00 × 3,50 m.
 
-- **Cerramiento de una sección** (recomendación): estructura ligera (caseta / mini-invernadero en policarbonato o lona) apoyada contra el **muro largo de 6 m opuesto a la entrada** — da masa térmica, superficie de montaje y protección de viento. El valor Cenicafé de ~1 m³ por 3,7 kg es solo una referencia histórica; dimensionar la capacidad útil por ΔT bloque–aire, uniformidad y acceso sanitario según `incubation.md`.
-- **Incubadoras** contra el muro, dentro o al costado del cerramiento. Al ser gabinetes aislados toleran más la exposición, pero la estabilidad de T° mejora bajo techo. Objetivo 20–24 °C; calefacción cerámica PTC leve si la noche baja de 20 °C (ver `incubation.md`).
-- **Martha tent:** la azotea es ideal por el FAE (aire fresco abundante), pero requiere protección de viento directo o el control de HR se vuelve inviable. Ubicar junto a desagüe existente y a punto de energía. Parámetros y posición de elementos en `fruiting.md`.
-- **Eléctrico exterior IP65 con diferencial (RCD/GFCI)** — no negociable a la intemperie; consistente con la arquitectura de automatización (electrónica en caja estanca IP65+, solo sensores/actuadores dentro de la cámara).
-- **Ducto "Chimenea / Ventilación casa":** *hipótesis* — si expulsa aire de la casa (cocina, etc.), alejar de él la toma de aire de la Martha tent y las incubadoras para no introducir partículas ni olores. Confirmar función del ducto antes de fijar posiciones.
+## Reserva espacial del laboratorio
 
-## Inventario de equipos y ubicación asignada
+- Mesa inoxidable: 2,00 × 0,70 m.
+- Longitud preliminar del módulo: 2,70 m, dejando 0,35 m en cada extremo de la mesa.
+- Fondo del recinto y ancho de circulación: pendientes de levantamiento métrico.
+- SAB sobre la mesa en la fase inicial.
+- Reserva de profundidad, peso, alimentación y toma de aire para una futura LAF.
+- Lavamanos o punto de higiene cerca del acceso, sin salpicar la superficie de inoculación.
+- Autoclave excluido de la terraza; permanece en el garaje sobre base y servicio aprobados.
 
-| Equipo | Cantidad | Ubicación |
+## Incubación seca
+
+Las cuatro cajas de 120 L se representan como capacidad prevista. Antes de fijar el rack se deben registrar dimensiones exteriores, peso máximo operativo, agua o calefacción contenida, cables, apertura de tapas y carga por apoyo. La incubación no comparte la sala negativa ni el aire de extracción de las carpas.
+
+## Fructificación húmeda
+
+| Cámara | Huella / altura de referencia | Estado de la cifra |
 |---|---|---|
-| Estufa doble industrial (gas propano) | 1 | Garaje (esterilización) |
-| Autoclave All American (44 L declarados por el propietario, en sitio — ver `metadata/equipment.yaml`, `05_equipment/autoclaves.md`) | 1 | Garaje (sobre estufa) |
-| Mesón metálico 1.50 m | 1 | Garaje (procesamiento) |
-| Racks metálicos | 3 | Garaje (bodega) / distribuir según necesidad |
-| Incubadoras | — | Terraza (sección cerrada) |
-| Martha tent | 1 (prototipo) | Terraza (sección cerrada) |
-| LAF / SAB | por adquirir | Pasillo (zona limpia) |
+| CLOUDLAB 844 | 48 × 48 × 80 in; aproximadamente 122 × 122 × 203 cm | Especificación del fabricante |
+| Terra Fungus | 27,5 × 19 × 65 in; aproximadamente 70 × 48 × 165 cm | Ficha comercial; verificar físicamente |
 
-# Best Practices
+Cada cámara requiere extracción, entrada y drenaje propios. La humedad alta queda contenida dentro de la carpa; el recinto exterior debe permanecer suficientemente seco para evitar condensación, corrosión y moho.
 
-- No subir materiales de zona sucia (paja sin tratar, sustrato crudo) al pasillo ni a la azotea.
-- Calzado / EPP dedicado a partir del pasillo hacia arriba; no reingresar a garaje con el mismo EPP tras cosecha.
-- Esterilizar en garaje con el portón entreabierto (evacuación de CO del propano).
-- Cerrar la terraza contra el muro sólido, no contra la baranda (viento y falta de anclaje).
+# Envolvente y seguridad
 
-# Common Failure Modes
+- Estructura ligera independiente, apoyada únicamente sobre líneas estructurales verificadas.
+- Cubierta y muros rígidos, aislados, lavables y sellados. No usar una envolvente transparente continua como solución térmica.
+- Lona Toolcraft gris 5 × 7 m como rainfly o segunda piel desmontable sobre la cubierta rígida. Orientar los 7 m longitudinalmente. No contarla como aislamiento, cubierta estructural ni fachada completa.
+- Fijación de la lona mediante prensado continuo y bastidor calculado; los ojillos son secundarios. No fijar a la baranda ni a la chimenea.
+- Mantener cámara ventilada entre lona y cubierta para secado y control de condensación.
+- Electricidad separada por laboratorio, incubación y fructificación, con protección diferencial y envolventes adecuadas para humedad.
+- Verificar impermeabilización, desagüe, cargas puntuales, viento y anclajes antes de construir.
+- Confirmar función de la chimenea antes de ubicar tomas de aire o materiales combustibles.
 
-- **Inocular a la intemperie** → contaminación sistemática. Motivo por el que el pasillo cerrado es obligatorio.
-- **Martha tent sin protección de viento** → imposible sostener HR 85–90 %.
-- **Electrónica exterior sin IP65/RCD** → falla eléctrica y riesgo de seguridad.
-- **Materia prima en bolsa abierta en garaje** → plaga/moho por humedad y roedores.
+# Transferencia sanitaria
 
-# Open Questions
+1. Preparar y esterilizar en el garaje.
+2. Limpiar el exterior de contenedores cerrados antes de subir.
+3. Cambiar EPP y lavarse las manos en la transición.
+4. Entrar al laboratorio sin atravesar fructificación.
+5. Transferir material inoculado a incubación en contenedor cerrado.
+6. Mover bloques maduros a fructificación.
+7. Retirar cosecha y residuos sin reingresar al laboratorio.
 
-- Confirmar ubicación y clima real del sitio (¿misma localidad de Tenjo u otra?) para dimensionar calefacción de incubación.
-- Material, dimensiones y presupuesto del cerramiento de la terraza.
-- Función real del ducto "Chimenea / Ventilación casa" (¿extracción de la casa o toma?).
-- Confirmar existencia y capacidad de desagüe en la terraza para escurrido de la Martha tent.
-- Asignar identificadores **ENV-XXXX** (Growing Environment) a incubación y a la Martha tent, y **EQ-XXXX** a autoclave/estufa/LAF, según `STD-001`.
+Chang (guide_004, pp. 35–36) exige minimizar movimiento de aire y transferir material esterilizado a un recinto limpio protegido durante el trayecto. El mismo manual (p. 45) presenta compartimentación de incubación y fructificación para manejar ciclos distintos.
+
+# Preguntas abiertas
+
+- Medir dos módulos consecutivos del piso para confirmar 1,20 m.
+- Medir ancho útil del pasillo y registrarlo como restricción física.
+- Levantar huella de chimenea, giro de puerta y distancia exacta a la baranda.
+- Medir las cuatro cajas de 120 L y su peso operativo máximo.
+- Confirmar ubicación de desagüe, agua, tablero y rutas de ductos.
+- Verificar vigas, muros y columnas bajo la placa con un profesional estructural.
+- Decidir por registro formal si CloudLab 844, Terra Fungus o equipos duplicados se asignarán a Bogotá.
 
 # References
 
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
-- Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
-- Setas de la Peña — `master_blueprint.md`, `laboratory.md`, `incubation.md`, `fruiting.md`.
+- Chang, S.-T. (ca. 2010). Training Manual on Mushroom Cultivation Technology. UNAPCAEM, pp. 35–36 y 45. guide_004.
+- Chang, S.-T., & Miles, P. G. (2004). Mushrooms: Cultivation, Nutritional Value, Medicinal Effect, and Environmental Impact, 2nd ed., capítulo 13. book_007.
+- AC Infinity. CLOUDLAB 844: https://acinfinity.com/cloudlab-844-advance-grow-tent-4x4-thickest-poles-and-canvas-48-x-48-x-80/
+- Terra Fungus product listing: https://www.amazon.com/Mushroom-Tent-Light-Monotub/dp/B0DY89RZQZ
