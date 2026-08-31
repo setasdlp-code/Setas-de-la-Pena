@@ -1,8 +1,9 @@
 ---
 title: Trazabilidad y Seguimiento de Lotes
+document_id: DOC-0030
 category: operations
 load_priority: selective
-last_reviewed: 2026-06-30
+last_reviewed: 2026-07-14
 confidence: high
 primary_sources:
   - Internal protocols
@@ -36,8 +37,8 @@ Traceability system for batches from inoculation through sale or disposal. Enabl
 ```
 Formato: [AÑO]-[MES]-[ESPECIE]-[NÚMERO]
 Ejemplos:
-  2026-07-DJ-001  → Julio 2026, P. djamor, lote 1
-  2026-08-LE-001  → Agosto 2026, L. edodes, lote 1
+  2026-07-LE-001  → Julio 2026, L. edodes, lote 1 (especie prioritaria)
+  2026-08-DJ-001  → Agosto 2026, P. djamor, lote 1 futuro
   2026-07-HE-001  → Julio 2026, H. erinaceus, lote 1
 ```
 

@@ -1,6 +1,7 @@
 ---
 title: INDEX Generation Specification
 document_id: SPEC-001
+category: architecture
 version: 1.1
 status: canonical
 authority: architecture

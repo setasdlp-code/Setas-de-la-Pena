@@ -1,3 +1,11 @@
+---
+title: AI Workflow Library — Setas de la Peña Knowledge System
+document_id: DOC-0110
+category: operations
+load_priority: on_request
+last_reviewed: 2026-07-07
+---
+
 # AI Workflow Library — Setas de la Peña Knowledge System
 *Version 1.1*
 

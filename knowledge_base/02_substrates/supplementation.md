@@ -1,5 +1,6 @@
 ---
 title: Suplementación de Sustratos
+document_id: DOC-0014
 category: substrates
 load_priority: selective
 last_reviewed: 2026-07-04
@@ -94,4 +95,4 @@ Sin autoclave propio → limitar suplementación:
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 61–70.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
-- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
+- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006 / paper_006]

@@ -1,6 +1,7 @@
 ---
 title: Cross-Reference Standard
 document_id: XREF-001
+category: editorial
 version: 1.0
 status: canonical
 authority: editorial

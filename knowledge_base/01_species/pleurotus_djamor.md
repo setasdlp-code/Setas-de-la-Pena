@@ -1,156 +1,140 @@
 ---
 title: Pleurotus djamor — Pink Oyster / Orellana Rosada
+document_id: DOC-0008
 category: species
 load_priority: selective
-last_reviewed: 2026-08-25
-confidence: high
+last_reviewed: 2026-07-23
+confidence: medium
 primary_sources:
+  - Zurbano, Bellere & Savilla 2017 (paper_001)
+  - Salmones 2017 (paper_007)
   - ICAR-DMR 2020 (guide_002)
-  - ICAR-DMR 2021 (guide_003)
-  - Zied & Pardo-Giménez 2017
-  - Stamets 2000
+  - Chang & Miles 2004 (book_007; datos generales de Pleurotus)
 related_documents:
+  - ../09_research/literature_database.md
+  - ../09_research/literature_audit_2026-07-23.md
   - pleurotus_ostreatus.md
-  - 02_substrates/substrate_library.md
-  - 04_facility/fruiting.md
-  - 06_operations/production_schedule.md
+  - ../02_substrates/substrate_library.md
 ---
 
 # Executive Summary
-*Pleurotus djamor* (Pink Oyster) es la especie prioritaria #1 de Setas de la Peña. Es tropical y de ciclo corto (7–10 días desde primordios en condiciones adecuadas). En Tenjo requiere validar temperatura nocturna y ventilación instalada antes del primer lote.
+
+*Pleurotus djamor* es un candidato futuro, no la especie activa de arranque. La literatura confirma su afinidad por condiciones cálidas y su capacidad de crecer sobre diversos residuos lignocelulósicos, pero no sustenta un setpoint universal de CO₂, FAE, BE ni duración de ciclo para Tenjo.
+
+No se debe convertir una duración de timer en cambios de aire por hora sin conocer volumen efectivo, caudal bajo presión y comportamiento del recinto. Cualquier piloto de P. djamor debe diseñarse después de estabilizar el programa inicial de shiitake.
 
 # Research Consensus
 
-## Parámetros de Fructificación
-**Consensus (actualizado 2026-08-25)**
-Supported by:
-- Stamets (Growing Gourmet and Medicinal Mushrooms)
-- Zied & Pardo-Giménez (Edible and Medicinal Mushrooms)
-- ICAR-DMR (guide_002 y guide_003)
-- Investigación profunda agosto 2026
+## Temperatura
 
-Para operación se adopta 20–30°C, HR 85–90% y **CO₂ 500–800 ppm para fructificación de calidad comercial**. Durante inducción de primordios (pinning) se tolera hasta 1,200 ppm, pero una vez formados los pins, niveles >1,000 ppm causan el síndrome de "piernas largas" (tallos alargados, sombreros subdesarrollados). La ventilación se dimensiona por volumen y caudal efectivo y se ajusta por CO₂ y morfología.
-**Strength of evidence:** ★★★★★ para temperatura/HR; ★★★★☆ para CO₂ óptimo vs tolerancia; ★★☆☆☆ para el objetivo provisional de ventilación.
-**Conflicting evidence:** guide_002 presenta 24–32°C y una notación ambigua de CO₂; guide_003 presenta 20–30°C y 500–1,500 ppm (este rango ahora se interpreta como tolerancia máxima, no óptimo).
+| Fuente | Contexto y dato |
+|---|---|
+| Salmones 2017 | Revisión narrativa: 22–30°C en estudios citados |
+| ICAR-DMR 2020 | Spawn run y fructificación descritos a 24–32°C |
+| Zurbano et al. 2017 | Incubación experimental a 32°C; no comparó un gradiente térmico |
+| Fuentes técnicas secundarias | Frecuentemente citan 20–30°C |
 
-## Tolerancia a CO₂
-**Consensus (actualizado 2026-08-25)**
-Supported by:
-- Zied & Pardo-Giménez
-- ICAR-DMR (guide_003)
-- Investigación profunda agosto 2026
+**Interpretación:** P. djamor es termófilo respecto de otras ostras, pero el rango operacional depende de cepa, sustrato y cámara. No se afirma que el clima de Tenjo sea suficiente sin medición.
 
-| Fase | CO₂ tolerado | CO₂ óptimo | Notas |
-|------|-------------|------------|-------|
-| Colonización | >10,000 ppm | N/A | Ambiente cerrado beneficia |
-| Pinning (inducción) | 1,200–1,500 ppm | <1,000 ppm | Algunos boletines confunden esta fase con fructificación |
-| **Fructificación** | <1,000 ppm | **500–800 ppm** | Calidad comercial requiere FAE agresivo |
+## CO₂ y ventilación
 
-**Implicación operativa:** FAE agresivo = pérdida de humedad. Acoplar ventilación con humidificación potente (85–95% RH).
-**Strength of evidence:** ★★★★☆
-**Conflicting evidence:** guide_002 usa una notación que puede interpretarse como tolerancia superior a 1,500 ppm; múltiples fuentes confirman que >1,000 ppm degrada calidad comercial.
+La evidencia revisada no permite fijar un único límite:
 
-# Core Principles
-- La acumulación de CO₂ y la morfología son las señales operativas de ventilación insuficiente.
-- Los cambios de aire por hora (ACH) se calculan como `caudal efectivo × 60 / volumen`; no se deducen solo de minutos ON/OFF.
-- El objetivo de ingeniería 5–8 ACH es provisional hasta medir el caudal instalado y hacer commissioning con CO₂.
-- Temperatura tropical: no requiere calefacción en Tenjo si el recinto mantiene >18°C.
+- guide_002 divide la leyenda entre `CO₂ concentration-` y, tras el salto de línea, `>1500 ppm`. La lectura tipográfica es “mayor de 1.500 ppm”; el valor es fisiológicamente atípico, no está acompañado de un estudio primario y puede ser un error editorial.
+- guide_003 reproduce rangos ambientales secundarios atribuidos a Stamets.
+- book_007 describe respuestas generales del género *Pleurotus*, no datos específicos de P. djamor.
+- paper_001 no midió CO₂, caudal, FAE ni morfología en función de ventilación.
+
+**Decisión curatorial:** no usar 500–1.500 ppm, “>1.500 ppm”, 5–8 ACH ni un ciclo fijo de timer como estándar. Un futuro piloto debe registrar CO₂, morfología, caudal y volumen antes de derivar control de ventilación.
+
+## Rendimiento y BE
+
+| Fuente | Resultado | Límite |
+|---|---|---|
+| Zurbano et al. 2017 | Máximo 31,10% BE con paja de arroz:cocopeat:salvado 7:3:1 | Una cepa y método filipino |
+| ICAR-DMR 2020 | BE 80–100% en el boletín | Protocolo de extensión sin diseño experimental publicado |
+| Salmones 2017 | Tabla con amplia dispersión entre residuos | Estudios heterogéneos |
+
+No existe una BE “esperada” única para paja de trigo, bagazo, aserrín o Master's Mix en Setas de la Peña.
 
 # Technical Details
 
 ## Taxonomía
-- **Reino:** Fungi
-- **Orden:** Agaricales
-- **Familia:** Pleurotaceae
-- **Sinónimos:** *Pleurotus salmoneostramineus*, Pink Oyster
 
-## Ciclo de Vida
+- Reino: Fungi
+- Orden: Agaricales
+- Familia: Pleurotaceae
+- Nombre común: pink oyster / orellana rosada.
 
-### Incubación (Spawn Run)
-| Parámetro | Valor |
-|---|---|
-| Temperatura | 24–28°C |
-| HR ambiente | 70% (no crítico — bolsa sellada) |
-| Duración | 10–18 días (según sustrato y temperatura) |
-| Luz | No requerida |
-| CO₂ | Tolerante — bolsa puede estar sellada |
+La sinonimia debe verificarse en una fuente taxonómica vigente antes de etiquetado o registros externos.
 
-### Fructificación (Fruiting)
-| Parámetro | Valor |
-|---|---|
-| Temperatura | 20–30°C |
-| HR | 85–90% |
-| CO₂ | 500–800 ppm (óptimo calidad comercial); alarma >1,000 ppm |
-| Ventilación | Objetivo provisional 5–8 ACH; validar con caudal efectivo, CO₂ y morfología |
-| Ciclo fijo | No establecido; control primario por CO₂ con límite de seguridad |
-| Luz | 750–1,500 lux, 3–5 h/día |
-| Ciclo fruiting | 7–10 días (rápido) |
-| Flushes esperados | 2–4 |
+## Cultivo madre y spawn — guide_002
 
-## Indicadores Visuales
-| Visual | Interpretación |
-|---|---|
-| Tiny droplets en walls, evaporan solos | 85–90% HR ✅ |
-| Paredes mojadas, sin goteo | ~90% borderline |
-| Goteo constante | >90% — exceso |
-| Sin moisture visible | <80% — muy seco |
-| Caps enrollados hacia arriba | Punto de cosecha |
-| Tallos muy largos, caps pequeños | CO₂ alto o FAE insuficiente |
-| Manchas café/negras en caps | >92% HR + mal airflow |
-
-## Sustratos Compatibles
-| Sustrato | BE Esperada | Notas |
+| Variable | Dato descrito | Uso permitido |
 |---|---|---|
-| Paja de trigo (pasteurizada) | 80–100% potencial | Rango institucional para *P. djamor*; validar con paja local |
-| Serrín de madera dura | 60–80% | Requiere suplementación para BE alta |
-| Master's Mix (50/50) | 100–150% | Requiere esterilización. Alta BE. |
-| Bagazo de caña | 70–100% | Subproducto regional. BE variable. |
-| Paja de arroz | 70–100% | Alternativa a paja de trigo |
+| Medio | PDA o MEA | Referencia para un futuro programa de cultivo |
+| Temperatura | 25±2°C | Punto de partida, no validado localmente |
+| pH | 7,0 | Dato del boletín |
+| Almacenamiento de cultivo | 3–4 meses a 15–18°C | Verificar viabilidad y contaminación |
+| Spawn | Trigo, arroz, centeno o mijo; 15–20 días | Depende de grano y procedimiento |
+| Tasa de inoculación | 3% del sustrato húmedo o 10% del seco | No mezclar bases al comparar |
+| Incubación | 10–11 días a 24–32°C | Contexto del boletín |
+| CO₂ en bolsa | 10.000–20.000 ppm | Descripción de spawn run, no objetivo de sala |
 
-*P. djamor* NO es compatible con eucalipto — inhibe el micelio.
+## Fructificación — evidencia de diseño, no SOP
 
-## Cultivo Madre y Spawn (guide_002 — ICAR-DMR 2020)
-| Parámetro | Valor |
-|---|---|
-| Medio de cultivo madre | PDA o MEA |
-| Temperatura cultivo madre | 25±2°C |
-| pH del medio | 7,0 |
-| Almacenamiento cultivo madre | 3–4 meses a 15–18°C |
-| Sustrato de spawn | Grano de trigo, arroz, centeno o mijo |
-| Edad de spawn al usar | 15–20 días |
-| Almacenamiento spawn | ≤1 mes a 15–18°C |
-| Tasa de inoculación | 3% (sustrato húmedo) o 10% (sustrato seco) |
-| CO₂ durante incubación | 10,000–20,000 ppm (normal en bolsa cerrada, no alarmante) |
-
-⚠️ **Nota sobre CO₂ en fructificación (RESUELTA 2026-08-25):** guide_002 reporta ">1.500 ppm" con una notación ambigua. Investigación profunda confirma que esa cifra refleja **tolerancia durante colonización/pinning**, no óptimo de fructificación. Para calidad comercial en fructificación: **500–800 ppm**. Valores >1,000 ppm causan tallos alargados y sombreros subdesarrollados ("piernas largas").
-
-## Ventajas Operacionales en Tenjo
-- Temperatura ambiente Tenjo (12–22°C típico) puede ser insuficiente en épocas frías → calefacción leve puede ser necesaria.
-- La tolerancia alta a CO₂ simplifica la gestión de FAE comparado con Shiitake o Lion's Mane.
-- Ciclo rápido (7–10 días) = más rotaciones por mes = cash flow más rápido.
-
-# Best Practices
-- Priorizar FAE sobre HR: un error de FAE es más dañino que ±3% de HR.
-- Verificar sensor de CO₂, caudal efectivo, compuertas y respuesta del extractor antes de cada lote.
-- Cosechar cuando el borde del cap empiece a enrollarse — antes de liberar esporas (nube rosada).
-- Registrar yield (peso fresco) por lote para calcular BE y comparar entre sustratos.
-
-# Common Failure Modes
-| Problema | Causa Probable | Solución |
+| Variable | Evidencia disponible | Estado |
 |---|---|---|
-| Tallos largos, caps pequeños | Ventilación insuficiente / CO₂ alto | Verificar sensor, caudal y aumentar ventilación gradualmente |
-| Contaminación verde (Trichoderma) | Sustrato muy húmedo / sterilización incompleta | Verificar FC al inocular; revisar proceso |
-| Pins no aparecen | HR muy baja o temperatura fuera de rango | Verificar sensores cruzados; ajustar parámetros |
-| Caps con manchas blandas | HR >92% + mal airflow | Reducir HR y aumentar FAE |
-| Micelio amarillo/marrón | Temperatura >30°C sostenida | Ventilación del recinto |
+| Temperatura | 22–30°C en paper_007; 24–32°C en guide_002 | Rango de literatura |
+| HR | 80–85% en guide_002; otras guías citan 85–90% | Resolver con prueba de cepa/cámara |
+| Luz | 600–800 lux en guide_002; otras fuentes secundarias difieren | Medir en piloto |
+| CO₂/FAE | Inconsistente o secundario | Sin setpoint aprobado |
+| Ciclo | Se reporta cosecha rápida, con definiciones variables | Sin duración aprobada |
+
+## Sustratos
+
+La especie puede utilizar múltiples residuos lignocelulósicos. Para el proyecto:
+
+- no se designa un sustrato primario antes de un ensayo comparativo;
+- no se mantiene la exclusión absoluta de eucalipto sin evidencia específica de especie, madera y tratamiento;
+- la humedad inicial, base de cálculo y tratamiento térmico deben registrarse;
+- rendimiento fresco, masa seca inicial y BE deben usar una definición uniforme.
+
+## Producto y poscosecha
+
+ICAR-DMR describe textura relativamente firme y vida útil corta, de 3–4 días, para su contexto. El color varía con genotipo y ambiente. Estos atributos exigen una validación comercial y de cadena fría antes de priorizar la especie.
+
+## Biotecnología y seguridad
+
+Salmones 2017 y Stamets 2005 documentan líneas de degradación, mycofiltration y remediación. Gran parte de la evidencia es de laboratorio, demostraciones o síntesis secundarias.
+
+- Mantener los ensayos de remediación separados física y documentalmente de la producción alimentaria.
+- No consumir ni vender cuerpos fructíferos cultivados sobre sustratos sospechosos de metales o contaminantes sin análisis de inocuidad.
+- No convertir resultados de laboratorio en claims de remediación sin piloto y medición analítica.
+
+# Future Pilot Gate
+
+Antes de activar P. djamor:
+
+1. seleccionar spawn trazable e identificar la cepa;
+2. medir la capacidad térmica real del recinto;
+3. definir dos o más formulaciones comparables;
+4. medir volumen y curva de caudal del sistema de extracción;
+5. acordar métricas de BE, contaminación, morfología y vida útil;
+6. separar cualquier línea ambiental de la alimentaria.
 
 # Open Questions
-- ¿BE óptima en paja local colombiana vs. paja importada? (pendiente dato de campo)
-- ¿Temperatura mínima en Tenjo en época de lluvias? (monitorear con sensores)
+
+- ¿Qué cepa comercial está disponible en Colombia y cuál es su ficha técnica?
+- ¿Puede la cámara sostener el rango térmico requerido sin comprometer costo y calidad?
+- ¿Qué formulación local ofrece mejor relación entre rendimiento, costo y contaminación?
+- ¿Qué relación CO₂–morfología aparece bajo el caudal medido de la instalación?
+- ¿Cuál es la vida útil real bajo la cadena fría disponible?
 
 # References
-- Zurbano, L. Y., Bellere, A. D., & Savilla, L. C. (2017). *Mycelial growth, fruiting body production and proximate composition of Pleurotus djamor on different substrate*. CLSU International Journal of Science and Technology, 2(1), 20–30. [paper_001]
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 253–265.
-- Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
-- ICAR-Directorate of Mushroom Research. (2020). *Growing Oyster Mushroom* (Technical Bulletin). [guide_002]
-- Chang, S.-T. & Miles, P.G. (2004). *Mushrooms: Cultivation, Nutritional Value, Medicinal Effect, and Environmental Impact* (2nd ed.). CRC Press, Ch. 16. [book_007]
+
+- Zurbano, L. Y., Bellere, A. D., & Savilla, L. C. (2017). Mycelial growth, fruiting body production and proximate composition of *Pleurotus djamor* on different substrate. *CLSU International Journal of Science & Technology, 2*(1). https://doi.org/10.22137/ijst.2017.v2n1.03
+- Salmones, D. (2017). *Pleurotus djamor*, un hongo con potencial aplicación biotecnológica para el neotrópico. *Scientia Fungorum, 46*, 73–85. https://doi.org/10.33885/sf.2017.46.1177
+- ICAR-Directorate of Mushroom Research. (2020). *Growing Oyster Mushroom*. [guide_002]
+- Chang, S.-T., & Miles, P. G. (2004). *Mushrooms: Cultivation, Nutritional Value, Medicinal Effect, and Environmental Impact* (2nd ed.), cap. 16. [Datos generales de Pleurotus]
+- Stamets, P. (2005). *Mycelium Running*. [book_004; fuente secundaria para hipótesis ambientales]

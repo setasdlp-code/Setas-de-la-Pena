@@ -1,194 +1,181 @@
 ---
-title: Control de Calidad
+title: Control de Calidad — Programa Inicial de Shiitake
+document_id: DOC-0033
 category: operations
 load_priority: selective
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-24
 confidence: medium
 primary_sources:
-  - Stamets 2000
-  - Cotter 2014
-  - Internal protocols
+  - Chang & Miles 2004 (book_007, capítulo 13)
+  - Rodríguez Valencia & Jaramillo López 2005 (paper_006)
+  - DEC-013
 related_documents:
-  - production_schedule.md
   - batch_tracking.md
-  - LESSONS_LEARNED.md
-  - 02_substrates/contamination.md
-  - 04_facility/fruiting.md
+  - production_schedule.md
+  - ../01_species/lentinula_edodes.md
+  - ../02_substrates/sterilization.md
+  - ../02_substrates/contamination.md
+  - ../DECISIONS.md
 ---
 
 # Architectural Context
 
-This document implements the Continuous Improvement philosophy defined in `SETAS_DE_LA_PENA_CANON.md` (Section 18). Quality control validates two distinct outcomes: (1) process reproducibility—whether production procedures generate consistent environmental conditions and biological responses across cycles, and (2) product fitness—whether harvested output meets market and safety specifications. Acceptance thresholds define operational decisions; when metrics fall below thresholds, root-cause investigation is triggered per CANON Section 13.
+Este SOP implementa DEC-013 y la mejora continua definida en `SETAS_DE_LA_PENA_CANON.md`. Control de calidad evalúa reproducibilidad del proceso, trazabilidad del lote y aptitud del producto. Los parámetros biológicos provienen de la ficha canónica de la especie; este documento define cómo se aprueban, registran y aplican.
 
-# Executive Summary
+# Alcance y estado
 
-Quality control in Setas de la Peña covers three integrated areas: process validation (environmental parameters within target range), product specification (harvested fruiting body characteristics), and knowledge capture (batch results documented and reviewed for process improvement). Quality is constructed in the process, not verified only at harvest. Consistent, reproducible process generates consistent product.
+Este SOP gobierna el programa inicial de *Lentinula edodes* (shiitake). *Pleurotus djamor* permanece como candidato futuro y sus antiguos rangos, criterios de color, metas de BE y ciclos de ventilación quedan retirados de la operación activa.
 
-# Core Principles
+El proyecto está en preproducción, con 0 lotes activos. No existen todavía setpoints ni umbrales de rendimiento validados para shiitake en Tenjo. Cada lote debe tener una especificación versionada que identifique cepa, formulación, proceso térmico, criterio de madurez, estrategia de inducción, bandas ambientales y criterio de cosecha.
 
-- Quality is constructed through process reproducibility, not through final inspection alone. Process validation prevents defects rather than detecting them.
-- Inconsistent product quality damages reputation more rapidly than high price. Consistency is the primary commercial quality metric.
-- Without batch log data, true quality control is impossible. Batch logs provide the measurement foundation for acceptance decisions and continuous improvement.
-- Quality control identifies both batch-level performance and systemic process gaps. Metrics exceeding thresholds trigger root-cause analysis and SOP review.
+# Principios
 
-# Technical Details
+- Ningún parámetro de literatura se convierte automáticamente en estándar operacional.
+- La identidad de la cepa condiciona temperatura, maduración e inducción.
+- Un lote sin trazabilidad o sin ciclo térmico validado no se libera para inoculación.
+- Minutos de ventilador no equivalen a cambios de aire por hora sin volumen efectivo y caudal medido.
+- Rendimiento, BE, contaminación y calidad comercial se miden desde el primer piloto; sus umbrales se aprueban después de evidencia local.
+- La ausencia de un dato obligatorio bloquea la decisión; no se completa con una estimación silenciosa.
 
-## Parámetros de Proceso — Criterios de Aceptación
+# Compuertas antes del lote 1
 
-| Parámetro | Rango Aceptable (P. djamor) | Alerta si: |
+| Compuerta | Evidencia requerida | Disposición si falta |
 |---|---|---|
-| HR Fructificación | 85–90% | <82% o >92% |
-| T° Fructificación | 20–30°C | <18°C o >32°C |
-| CO₂ Fructificación | 500–1,500 ppm | >2,000 ppm |
-| Ventilación | 5–8 ACH provisional tras commissioning | CO₂ >2.000 ppm, caudal no medido o morfología anómala |
-| Contaminación por lote | <10% de bloques | >15% = revisar proceso |
-| BE por lote | Línea base local pendiente | Registrar todos los lotes; fijar umbral tras tres lotes comparables |
+| Spawn trazable | Especie, cepa o código del proveedor, proveedor, lote, fecha, condición de recepción | Bloquear inoculación |
+| Formulación aprobada | Versión de receta, materias primas, bases de porcentaje, humedad objetivo y tamaño de lote | Bloquear preparación |
+| Proceso térmico validado | Referencia al ciclo aprobado en `02_substrates/sterilization.md`, carga representativa y registro completo | Bloquear inoculación |
+| Instrumentación disponible | Sensor principal identificado, verificación cruzada y registro continuo listo | Bloquear validación ambiental |
+| Especificación del lote | Criterio de madurez, estrategia de inducción, bandas ambientales y criterio de cosecha definidos antes de aplicar cada fase | Retener transición de fase |
+| Trazabilidad | ID `YYYY-MM-LE-###` y vínculos a spawn, sustrato, ciclo, ubicación y operador | Bloquear liberación |
 
-## Clasificación de Producto Final
+# Controles por etapa
 
-### Calidad Premium (para restaurantes, mercado gourmet)
-- Caps intactos, sin daño físico
-- Color uniforme (rosa vibrante en P. djamor)
-- Sin manchas, sin signos de sobre-maduración
-- Cosechado antes de liberar esporas
-- Peso: caps >3 cm diámetro
-- Aroma: fresco, característico de la especie
+| Etapa | Control obligatorio | Registro |
+|---|---|---|
+| Recepción de spawn | Identidad, integridad, apariencia, temperatura/condición de transporte cuando esté disponible | Bitácora del lote |
+| Preparación de sustrato | Versión de receta, peso seco y húmedo, humedad medida, proveedor/lote de insumos | Hoja de preparación |
+| Esterilización | Equipo, carga, temperatura, presión, tiempo, operador y referencia de validación | Registro de ciclo |
+| Inoculación | Fecha, operador, espacio de trabajo, tasa real y desviaciones | Bitácora del lote |
+| Incubación y maduración | Temperatura/HR de cámara, posición, masa y señales de madurez definidas para la cepa | Serie ambiental + inspecciones |
+| Inducción | Madurez aprobada, método, temperatura/tiempo si aplica y respuesta | Evento de transición |
+| Fructificación | Bandas versionadas de temperatura, HR, CO₂, luz y FAE; morfología y desviaciones | Serie ambiental + fotografías |
+| Cosecha y poscosecha | Fecha/hora, masa, grado, condición, almacenamiento y destino | Registro de cosecha |
 
-### Calidad Estándar (para mercado local, cocina)
-- Caps con pequeños defectos cosméticos
-- Color uniforme pero posible inicio de palidecer
-- Sin contaminación ni deterioro
+# Cumplimiento ambiental
 
-### Descarte (No vender)
-- Caps dañados significativamente
-- Color irregular o manchas
-- Signos de inicio de deterioro
-- Olor anormal
+La especificación del lote define las bandas antes de cada fase. El reporte debe calcular tiempo dentro de banda, duración y magnitud de excursiones, ubicación del sensor y datos faltantes. Hasta completar el piloto, ninguna cifra de `metadata/species.yaml` o de la literatura se trata como umbral de aceptación.
 
-## Pre-Harvest Quality Checklist
+FAE se documenta con volumen efectivo, caudal medido bajo la resistencia real del sistema y respuesta de CO₂. Un ciclo ON/OFF puede registrarse como comportamiento del actuador, pero no como ACH inferido.
 
-```
-☐ Cap color matches species standard (vibrant pink for P. djamor)
-☐ Cap margins beginning to curl upward (spore release has not begun)
-☐ No dark spots or unusual discoloration on caps
-☐ Aroma is fresh and species-characteristic; no sour, vinegary, or off odors
-☐ Hands washed and gloves donned before harvest begins
-☐ Scales calibrated and zero-checked before weighing harvest
-☐ Harvest containers are clean and contamination-free
-```
+# Disposición del lote
 
-## Post-Harvest Quality Checklist
+## Liberar a la siguiente etapa
 
-```
-☐ Fresh weight recorded in batch log within 10 minutes of harvest
-☐ Quality grade assigned: Premium / Standard / Discard per specifications
-☐ Block inspection completed: bases clean, stipe remnants removed, no bacterial slime visible
-☐ Photograph taken of representative sample before processing
-☐ Product placed in refrigeration (4°C) if not sold/delivered same day
-☐ Storage conditions and duration recorded in batch log
-☐ BE calculation completed within 24 hours; result recorded in batch log
-☐ Yield figures entered into digital batch tracking spreadsheet
-```
+Requiere:
 
-## Almacenamiento del Producto Cosechado
+- 100% de campos críticos de trazabilidad completos;
+- ausencia de contaminación o deterioro que comprometa el lote;
+- compuerta térmica y especificación de etapa aprobadas;
+- desviaciones evaluadas y firmadas;
+- evidencia fotográfica y ambiental suficiente para reconstruir la decisión.
 
-| Condición | Duración |
-|---|---|
-| Temperatura ambiente (Tenjo ~16°C) | 24–48h |
-| Refrigerador (4°C) | 5–7 días |
-| Deshidratado | 6–12 meses |
-| Congelado (blanqueado) | 3–6 meses |
+## Retener
 
-## Success Metrics & Acceptance Thresholds
+Retener y abrir revisión cuando exista:
 
-See also: `SETAS_DE_LA_PENA_CANON.md`, Section 13 (Success Metrics).
+- identidad de spawn incompleta;
+- registro térmico faltante o ciclo no validado;
+- excursión ambiental sin evaluación;
+- señal de contaminación, metabolitos atípicos u olor anormal;
+- transición propuesta sin cumplir el criterio de madurez.
 
-| Metric | Definition | Threshold | Document | Review Trigger |
-|---|---|---|---|---|
-| **Biological Efficiency (BE)** | Fresh yield / dry substrate weight × 100 | Sin umbral local hasta completar tres lotes comparables | batch_tracking.md | Desviación frente a la línea base una vez establecida |
-| **Contamination Rate** | Contaminated blocks / total blocks × 100 | <10% target; ≤15% acceptable | batch_tracking.md | Above 15% for two consecutive cycles |
-| **Grade A Yield** | Grade A product / total fresh yield × 100 | ≥80% | batch_tracking.md | Below 80% for two consecutive cycles |
-| **Flushes per Block** | Number of harvests per block, typically P. djamor | ≥2 expected; ≥1 minimum acceptable | batch_tracking.md | Only 1 flush or block exhaustion before secondary flush |
-| **Production Module Weekly Yield** | Fresh kilograms / module / week, measured over complete batch cycle | Baseline established during first complete cycle; target determined post-Phase 1 | batch_tracking.md | Declining trend or 20% variance from baseline |
-| **Knowledge Capture Rate** | Production cycles generating validated additions to knowledge base / total cycles | ≥1 per cycle | batch_tracking.md | See Section: Process Validation |
+## Descartar
 
-## Process Validation
+Descartar material según `02_substrates/contamination.md` cuando exista contaminación confirmada, pudrición, viscosidad, olor anormal persistente, plaga o pérdida de trazabilidad que impida demostrar aptitud. Registrar cantidad, evidencia, causa probable y disposición.
 
-Quality control validates process reproducibility by tracking whether standardized procedures generate consistent results across multiple batches. Process validation occurs during batch review phase.
+# Clasificación del producto
 
-**Process Validation Checklist:**
+Los límites de tamaño y grado comercial se definirán con compradores y validación local. Hasta entonces:
+
+## Premium provisional
+
+- sombreros intactos, firmes y de superficie limpia;
+- color y morfología coherentes dentro del lote;
+- sin viscosidad, moho, plagas, golpes severos ni olor anormal;
+- cosecha en la etapa definida en la especificación del lote;
+- corte y presentación consistentes.
+
+## Estándar provisional
+
+- producto apto, trazable y sin deterioro;
+- variación cosmética o de tamaño fuera del grado premium;
+- condición compatible con el canal de venta definido.
+
+## Descarte
+
+- moho, viscosidad, deterioro, olor agrio o anormal;
+- daño físico severo, infestación o deshidratación incompatible con venta;
+- pérdida de trazabilidad o ruptura de la condición de almacenamiento sin evaluación.
+
+# Checklist de precosecha
 
 ```
-☐ Colonization timeline: Within ±3 days of projected timeline for species/substrate
-☐ Fruiting induction: Within ±2 days of projected timeline
-☐ First flush timing: Within ±3 days of projected timeline
-☐ Environmental parameters maintained: HR within target range ≥90% of fruiting phase
-☐ Environmental parameters maintained: CO₂ within target range ≥90% of fruiting phase
-☐ Ventilation control: CO₂ within range and extractor/airflow response logged per commissioning baseline
-☐ Contamination isolated: No cross-contamination to adjacent blocks or modules
-☐ Product characteristics uniform: Cap size, color, morphology consistent within batch
+[ ] ID de lote LE verificado
+[ ] Criterio de madurez e inducción registrado
+[ ] Criterio de cosecha del lote registrado
+[ ] Sin contaminación, viscosidad, plagas u olor anormal
+[ ] Registro ambiental completo y revisado
+[ ] Balanza verificada y recipientes limpios
+[ ] Operador y hora de inicio registrados
 ```
 
-Process reproducibility enables isolation of variables and identification of causation. A batch that generates inconsistent results without documented causation cannot be used to update procedures.
-
-**Knowledge Capture Rate:**
-
-Knowledge Capture Rate = Batches generating validated additions to knowledge base / total batches completed.
-
-A validated addition is defined as:
-
-- Documented unexpected observation with identified causation, OR
-- Confirmed procedure refinement supported by measured performance data, OR
-- New hypothesis generated and logged for field testing, OR
-- Resolved question from `09_research/unresolved_questions.md`
-
-Minimum target: ≥1 validated addition per production cycle. Cycles generating no new knowledge represent incomplete documentation or insufficient observation depth, triggering review of batch logging thoroughness.
-
-# Quality Review Cycle
-
-Quality control operates as an integrated review process:
+# Checklist de poscosecha
 
 ```
-Batch Completion
-    ↓
-Calculate BE, Contamination Rate, Grade Distribution
-    ↓
-Compare to Acceptance Thresholds
-    ↓
-IF all metrics within threshold:
-  → Document as validated cycle
-  → Archive batch log
-  → Continue to next batch
-    ↓
-IF any metric exceeds threshold:
-  → Initiate Root-Cause Analysis (CANON Section 18)
-  → Review batch log for unexpected observations
-  → Investigate process deviations
-  → Document findings in batch log
-  → Update relevant SOP or record decision
-  → Archive updated documentation
+[ ] Peso fresco registrado por flush
+[ ] Grado y descarte registrados por separado
+[ ] Fotografía de muestra representativa
+[ ] Condición y hora de almacenamiento registradas
+[ ] Etiqueta vinculada al lote
+[ ] Destino o cliente registrado
+[ ] Desviaciones y decisión de liberación documentadas
 ```
 
-Root-cause analysis is initiated when any metric falls below threshold for two consecutive cycles, per CANON Section 13.
+La vida útil y la temperatura final de etiqueta permanecen pendientes de validación específica del producto y revisión regulatoria. No imprimir una duración basándose en el antiguo estándar de *P. djamor*.
 
-# Best Practices
+# Métricas del piloto
 
-- Photograph each lot at three critical moments: at inoculation/setup, at first pins appearance, at first harvest. Photographs document morphology consistency and serve as visual quality baseline.
-- Maintain cold chain from harvest through delivery if customer requires. Document storage conditions and duration to correlate with post-sale product feedback.
-- Record customer feedback as quality data. Organize by product grade, batch ID, and delivery conditions to identify product-quality drivers.
-- Calculate BE within 24 hours of batch completion while data context is fresh.
-- Compare batch results to previous three batches to identify trends requiring investigation.
+| Métrica | Definición | Estado |
+|---|---|---|
+| Integridad de trazabilidad | Campos críticos completos / campos críticos requeridos | 100% obligatorio |
+| Contaminación | Bloques contaminados / bloques inoculados | Medir; umbral pendiente |
+| Rendimiento por flush | Masa fresca cosechada por evento | Medir |
+| BE acumulada | Masa fresca acumulada / masa seca inicial de sustrato × 100 | Medir; sin meta aprobada |
+| Producto premium | Masa premium / masa fresca total × 100 | Medir; umbral pendiente |
+| Cumplimiento ambiental | Tiempo dentro de la banda versionada / tiempo con datos válidos | Medir; umbral pendiente |
+| Pérdida poscosecha | Masa descartada o no vendible / masa cosechada × 100 | Medir; umbral pendiente |
 
-# Common Failure Modes
+La BE se calcula de forma acumulada después de cada flush y al cierre del lote. No comparar resultados que usen denominadores o definiciones distintas.
 
-- Harvesting late (after spore release)—product loses color vibrancy, weight decreases, quality drops irreversibly.
-- Failing to clean block stipe/stalk remnants after flush 1—bacterial contamination propagates to secondary flush, reducing yield or rendering blocks unviable.
-- Storing at ambient temperature—fruit body respiration and dehydration rapidly reduce saleable weight and visual quality within 24–48 hours.
-- Skipping BE calculation—eliminates ability to identify substrate or process problems; comparison across batches becomes impossible.
-- Recording quality grades without photographic evidence—visual quality assessment becomes subjective and non-reproducible.
+# Ciclo de revisión
 
-# Open Questions
+```
+Cierre de fase o cosecha
+  -> verificar trazabilidad
+  -> calcular métricas
+  -> revisar desviaciones
+  -> clasificar: liberar / retener / descartar
+  -> documentar causa y acción
+  -> proponer cambio de SOP o decisión cuando exista evidencia repetida
+```
 
-- What post-harvest processing (vacuum sealing, drying, freeze processing) optimizes product shelf life for target market?
-- Should product be graded individually or by batch, and at what point in the value chain (harvest, packaging, delivery)?
-- What customer feedback metrics (freshness, aroma, appearance, cooking performance) correlate most strongly with BE and environmental parameters?
+Una observación aislada se registra como hipótesis. Los umbrales operacionales se aprueban después de ciclos trazables y quedan vinculados a cepa, formulación, cámara y versión de proceso.
+
+# Preguntas abiertas
+
+- ¿Qué cepa y clase térmica tendrá el primer spawn?
+- ¿Qué formulación se aprobará para el lote 1?
+- ¿Cuál será el ciclo validado del autoclave con la carga representativa?
+- ¿Qué criterio de madurez e inducción exige la cepa adquirida?
+- ¿Qué estándar comercial solicitan los primeros compradores?
+- ¿Qué vida útil y condición de etiqueta puede demostrarse localmente?

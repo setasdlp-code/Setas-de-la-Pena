@@ -1,5 +1,6 @@
 ---
 title: Spawn en Grano — Producción y Uso
+document_id: DOC-0017
 category: spawn
 load_priority: selective
 last_reviewed: 2026-06-30
@@ -207,7 +208,7 @@ See batch_tracking.md for production batch documentation.
 
 # Open Questions
 
-- What are reliable P. djamor spawn suppliers in Colombia?
+- ¿Qué proveedores ofrecen spawn de shiitake trazable en Colombia y qué cepa/clase térmica entregan?
 - Estimated cost per kg of grain spawn in Colombia?
 - Which local grain is easiest to process in Tenjo? (Availability, prep time, colonization rate)
 - What spawn quality benchmarks (viability rate, purity, colonization speed) justify Phase 2 transition?

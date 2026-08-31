@@ -1,12 +1,13 @@
 ---
 title: System Map
 document_id: SYSMAP-001
+category: navigation
 version: 1.0
 status: canonical
 authority: navigation
 load_priority: on_request
 owner: Setas de la Peña
-last_reviewed: 2026-07-09
+last_reviewed: 2026-07-24
 ---
 
 # System Map
@@ -37,7 +38,7 @@ knowledge_base/
 ├── README_MCP.md                   ← LLM loading-priority rules
 ├── FARM_BRAIN.md                   ← operational snapshot (Operational State)
 ├── CURRENT_OPERATIONS.md           ← granular field state (Operational State)
-├── DECISIONS.md                    ← decision log (DEC-001 … DEC-010)
+├── DECISIONS.md                    ← decision log (DEC-001 … DEC-013)
 ├── LESSONS_LEARNED.md              ← validated field lessons
 ├── CHANGELOG.md                    ← chronological change log
 ├── INDEX.yaml                      ← machine-readable document catalog (schema-stage)
@@ -151,7 +152,7 @@ CANON (principles)
 Governance Standards (structure, editorial rules, agent behavior, identifiers, navigation)
    │  authorizes / recorded in
    ▼
-DECISIONS.md (why a choice was made — DEC-001 … DEC-010)
+DECISIONS.md (why a choice was made — DEC-001 … DEC-013)
    │  implemented as
    ▼
 Canonical Knowledge (species, substrates, spawn, facility, equipment)

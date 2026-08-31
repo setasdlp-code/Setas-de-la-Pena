@@ -1,8 +1,9 @@
 ---
 title: Empaque y Presentación del Producto
+document_id: DOC-0040
 category: brand
 load_priority: on_request
-last_reviewed: 2026-06-29
+last_reviewed: 2026-07-24
 confidence: low
 primary_sources:
   - Internal records
@@ -14,7 +15,7 @@ related_documents:
 ---
 
 # Executive Summary
-Especificaciones de empaque para producto fresco y procesado. El empaque es parte de la propuesta de valor: comunica origen, trazabilidad y calidad. Fase 1 usa empaque funcional mínimo; Fase 2 introduce empaque de marca completo.
+Especificaciones provisionales para el piloto de shiitake. El empaque comercial, la condición de conservación y la vida útil permanecen pendientes de validación del producto y revisión regulatoria.
 
 # Core Principles
 - El empaque protege el producto y comunica la marca — en ese orden.
@@ -33,7 +34,7 @@ Especificaciones de empaque para producto fresco y procesado. El empaque es part
   - Nombre especie (español + latín)
   - Fecha de cosecha
   - Número de lote (YYYY-MM-SP-###)
-  - Temperatura de conservación (4°C; duración de referencia 5–7 días según `06_operations/quality_control.md` — valor final de etiqueta pendiente de validación, ver también verificación INVIMA pendiente más abajo)
+  - Condición de conservación y vida útil: completar únicamente después de validación documentada en `06_operations/quality_control.md` y revisión regulatoria
   - Contacto: WhatsApp / email
 - **Presentación:** Setas orientadas uniformemente, no apiladas por presión.
 
@@ -83,10 +84,10 @@ Según INVIMA para alimentos frescos:
 **Número de lote:** `YYYY-MM-SP-###`
 - YYYY: año
 - MM: mes
-- SP: código especie (DJ=djamor, HE=erinaceus, SH=shiitake)
+- SP: código especie (`LE` = *Lentinula edodes* para el programa inicial; otros códigos solo cuando la especie sea activada)
 - ###: número secuencial de lote
 
-**Ejemplo:** `2026-08-DJ-003` = tercer lote de P. djamor de agosto 2026
+**Ejemplo activo:** `2026-08-LE-003` = tercer lote de *L. edodes* de agosto de 2026
 
 Con el número de lote se puede rastrear:
 - Fecha de inoculación
@@ -108,7 +109,7 @@ Con el número de lote se puede rastrear:
 # Best Practices
 - Nunca empacar setas húmedas sin ventilación — se pudren en horas.
 - Perforar levemente el empaque para permitir respiración (hongos siguen respirando post-cosecha).
-- Temperatura de cadena de frío: 2–4°C desde cosecha hasta entrega.
+- La temperatura y duración de almacenamiento se fijan después de validación; registrar hora, condición y cualquier excursión desde cosecha hasta entrega.
 - En entrega a restaurante: incluir siempre nota con sugerencias de uso / temporada.
 
 # Common Failure Modes

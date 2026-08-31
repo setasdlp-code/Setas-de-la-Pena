@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f5; }
+    .floor-plan { background: #fafafa; border: 2px solid #333; position: relative; overflow: hidden; }
+    .panel-wall { position: absolute; background: repeating-linear-gradient(90deg, #c9a876 0px, #c9a876 2px, #b8935f 2px, #b8935f 4px); border: 2px solid #8b6f47; }
+    .panel-label { position: absolute; font-size: 8px; color: #5c4728; font-weight: 600; text-align: center; }
+    .buffer-wall { position: absolute; background: repeating-linear-gradient(90deg, #d4c4a8 0px, #d4c4a8 2px, #c4b494 2px, #c4b494 4px); border: 2px dashed #8b6f47; }
+    .tent { position: absolute; border: 2px solid #db2777; background: rgba(219, 39, 119, 0.1); display: flex; align-items: center; justify-content: center; text-align: center; }
+    .tent-label { font-size: 11px; font-weight: 600; color: #831843; }
+    .aisle { position: absolute; background: rgba(16, 185, 129, 0.06); border: 1px dashed #10b981; }
+    .aisle-label { position: absolute; font-size: 9px; color: #047857; font-weight: 500; }
+    .door-arrow { position: absolute; font-size: 14px; color: #db2777; }
+    .zone-label { position: absolute; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 6px; background: white; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .dimensions { position: absolute; color: #666; font-size: 10px; }
+    .legend { margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-swatch { width: 16px; height: 16px; border-radius: 2px; }
+    h2 { margin: 0 0 4px 0; font-size: 16px; color: #1f2937; }
+    .subtitle { margin: 0 0 16px 0; color: #666; font-size: 12px; }
+    .title-block { margin-bottom: 16px; }
+    .notes { margin-top: 20px; padding: 12px; background: #f0f9ff; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 11px; color: #0c4a6e; }
+    .notes ul { margin: 6px 0 0 16px; padding: 0; }
+  </style>
+</helmet>
+
+<div style="padding: 24px; max-width: 900px;">
+  <div class="title-block">
+    <h2>Caseta Compacta — Dos CloudLab 844</h2>
+    <p class="subtitle">Terraza Bogotá | Reutilización de 7 paneles de set (cortados a la mitad) | Vista en planta</p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background: #c9a876; border: 1px solid #8b6f47;"></div><span>Panel completo (Pieza A + B, 2.40 m alto) — 6 usados</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background: #d4c4a8; border: 1px dashed #8b6f47;"></div><span>Panel de reserva (buffer, 1 usado)</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background: rgba(219, 39, 119, 0.15); border: 1px solid #db2777;"></div><span>CloudLab 844</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background: rgba(16, 185, 129, 0.1); border: 1px dashed #10b981;"></div><span>Pasillo / acceso</span></div>
+  </div>
+
+  <!-- Floor plan: scale ~150px/m. Total footprint 1.86m x (0.8 buffer + 3.44 chamber) = 1.86 x 4.24 -->
+  <div class="floor-plan" style="width: 279px; height: 636px; margin: 0 auto;">
+
+    <!-- BUFFER / VESTIBULE (0.8m deep footprint, walled from spare 7th panel pair: 2x 1.20m pieces) -->
+    <div class="buffer-wall" style="top: 0; left: 0; width: 279px; height: 120px;">
+      <div class="zone-label" style="top: 6px; left: 50%; transform: translateX(-50%); color: #78350f; white-space: nowrap;">Buffer / EPP</div>
+      <div class="panel-label" style="top: 40px; left: 50%; transform: translateX(-50%);">Panel 7 (reserva)<br/>2x 1.20 m — usar 1 pieza<br/>de pared, 1 de repuesto</div>
+    </div>
+
+    <!-- Exterior door: terrace -> buffer, swings OUTWARD (0.8m buffer depth is too shallow for inward swing) -->
+    <div style="position: absolute; top: -3px; left: 90px; width: 60px; height: 4px; background: #059669; border: 1px solid #047857;"></div>
+    <div class="door-arrow" style="top: -20px; left: 55px; font-size: 9px; color: #047857;">puerta ext.<br/>(abre afuera)</div>
+
+    <!-- Interior transition: buffer -> chamber, PVC strip curtain, not a hinged door -->
+    <div style="position: absolute; top: 120px; left: 100px; width: 79px; height: 4px; background: repeating-linear-gradient(90deg, #a7f3d0 0px, #a7f3d0 4px, #6ee7b7 4px, #6ee7b7 8px); border-top: 1px dashed #059669;"></div>
+    <div class="door-arrow" style="top: 108px; left: 118px; font-size: 9px;">cortina PVC</div>
+
+    <!-- MAIN CHAMBER (1.66m x 3.44m interior, walls from 6 panel pairs) -->
+    <div class="panel-wall" style="top: 122px; left: 0; width: 279px; height: 30px;"></div>
+    <div class="panel-label" style="top: 130px; left: 90px;">Panel 1</div>
+
+    <div class="panel-wall" style="top: 122px; left: 0; width: 20px; height: 514px;"></div>
+    <div class="panel-wall" style="top: 122px; right: 0; width: 20px; height: 514px;"></div>
+    <div class="panel-label" style="top: 300px; left: 2px; writing-mode: vertical-rl;">Panel 2+3 (1.20+1.20)</div>
+    <div class="panel-label" style="top: 300px; right: 2px; writing-mode: vertical-rl;">Panel 4+5 (1.20+1.20)</div>
+
+    <div class="panel-wall" style="bottom: 0; left: 0; width: 279px; height: 30px;"></div>
+    <div class="panel-label" style="bottom: 8px; left: 90px;">Panel 6</div>
+
+    <!-- Tent A (near buffer, door faces aisle/center) -->
+    <div class="tent" style="top: 152px; left: 40px; width: 183px; height: 183px;">
+      <div>
+        <div class="tent-label">CloudLab 844 — A</div>
+        <div style="font-size: 9px; color: #831843; margin-top: 2px;">122×122×203 cm</div>
+        <div style="font-size: 9px; color: #831843;">puerta ↓</div>
+      </div>
+    </div>
+
+    <!-- Aisle -->
+    <div class="aisle" style="top: 335px; left: 20px; width: 239px; height: 150px;">
+      <div class="aisle-label" style="top: 6px; left: 50%; transform: translateX(-50%);">Pasillo 1.0 m</div>
+    </div>
+
+    <!-- Tent B (far end, door faces aisle/center) -->
+    <div class="tent" style="top: 485px; left: 40px; width: 183px; height: 183px;">
+      <div>
+        <div style="font-size: 9px; color: #831843;">puerta ↑</div>
+        <div class="tent-label">CloudLab 844 — B</div>
+        <div style="font-size: 9px; color: #831843; margin-top: 2px;">122×122×203 cm</div>
+      </div>
+    </div>
+
+    <!-- Dimensions -->
+    <div class="dimensions" style="top: -18px; left: 100px;">1.86 m</div>
+    <div class="dimensions" style="top: 300px; left: -50px; writing-mode: vertical-rl;">3.44 m (cámara)</div>
+  </div>
+
+  <div class="notes">
+    <strong>Presupuesto de paneles (7 disponibles → 7 usados, 0 sobrantes)</strong>
+    <ul>
+      <li><strong>Corrección de corte:</strong> los paneles se cortaron exactamente por la mitad (1.20 m + 1.20 m), no en el punto asimétrico del diagrama de referencia (1.60/0.80 sobre travesaño). El corte real cae dentro de la cavidad 2, sin travesaño en el borde — ver detalle de empalme en el corte constructivo.</li>
+      <li>Muro corto entrada (Panel 1): 1 par (2 piezas de 1.20 m apiladas = 2.40 m)</li>
+      <li>Muros largos (Panel 2+3, Panel 4+5): 2 pares cada uno = 4 pares</li>
+      <li>Muro corto fondo (Panel 6): 1 par</li>
+      <li>Buffer/vestíbulo (Panel 7): 1 par (2 piezas de 1.20 m) — usar 1 pieza como muro parcial, reservar la otra</li>
+      <li><strong>Total: 6 pares (12 piezas) para cámara principal + 1 par (2 piezas) para buffer = 7 pares / 14 piezas exactas</strong></li>
+    </ul>
+    <p style="margin-top: 8px;"><strong>Verificar en sitio antes de construir:</strong> ancho libre real tras espesor de muro (~1.66 m estimado, cavidad de 10 cm resta espacio), ubicación exacta en la terraza irregular, holgura de puerta de CloudLab, punto de anclaje seguro alejado de la baranda, y refuerzo de bloqueo en cada línea de corte (sin travesaño existente).</p>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

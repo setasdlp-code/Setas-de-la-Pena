@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/deepseek-ai/DeepSeek-OCR-2",
+  "commit": "2f3699ebbb96fa8af32212e8c170f2cc28730fad",
+  "model": "deepseek-ai/DeepSeek-OCR-2",
+  "license": "Apache-2.0",
+  "verified_date": "2026-08-12"
+}

@@ -1,8 +1,9 @@
 ---
 title: Cronograma de Producción
+document_id: DOC-0032
 category: operations
 load_priority: selective
-last_reviewed: 2026-06-30
+last_reviewed: 2026-07-14
 confidence: medium
 primary_sources:
   - Internal planning
@@ -20,7 +21,7 @@ This document implements the Production Philosophy and Automation Philosophy def
 
 # Executive Summary
 
-Production scheduling framework for P. djamor as primary species. Staggered production (batches initiated in sequence) enables continuous harvests rather than single-cycle flush patterns. Production cadence is determined by measured biological efficiency, available fruiting capacity, laboratory maturity, and validated spawn availability.
+Production scheduling framework for *Lentinula edodes* as the primary species. The current stage is pre-production. Staggered production begins only after autoclave commissioning, substrate validation, spawn verification and a complete pilot cycle. Cadence is determined by measured biological efficiency, long incubation time, fruiting capacity and operator workload.
 
 # Core Principles
 
@@ -31,46 +32,23 @@ Production scheduling framework for P. djamor as primary species. Staggered prod
 
 # Technical Details
 
-## Ciclo P. djamor — Resumen de Tiempos
+## Ciclo Shiitake — Marco Inicial de Tiempos
 
-| Fase | Duración |
+| Fase | Duración de referencia |
 |---|---|
-| Preparación + Inoculación | Día 0 (4–6h trabajo) |
-| Incubación | 10–18 días |
-| Inducción fruiting | Días 14–18 |
-| Flush 1 | Días 22–27 desde inoculación |
-| Intervalo entre flushes | 10–14 días |
-| Flush 2 | Días 35–42 |
-| Flush 3 (si aplica) | Días 48–58 |
-| **Ciclo total** | **~55–60 días** |
+| Preparación, esterilización e inoculación | Día 0; duración depende de la carga validada |
+| Incubación y colonización | 30–120 días según cepa y formulación |
+| Pardeamiento / maduración | Incluido en la maduración del bloque; no inducir antes de completarlo |
+| Inducción | Según cepa; reducción térmica y/o inmersión documentada |
+| Primera cosecha | Aproximadamente 90–150 días desde inoculación como marco conservador |
+| Intervalo entre flushes | Determinado por rehidratación y respuesta del bloque |
+| Ciclo total | Varios meses; validar localmente antes de fijar cadencia |
 
-## Staggered Production Model (Example: 2 Fruiting Modules, Batches Initiated Every 2 Weeks)
+No se establece todavía una proyección semanal de rendimiento. La BE de referencia del repositorio es 40–70%, pero la capacidad y el rendimiento de Setas de la Peña permanecen sin validar.
 
-```
-WEEK      1    2    3    4    5    6    7    8    9    10
-BATCH A  [I]──────[F]──[C1]──────[C2]──────[C3]
-BATCH B        [I]──────[F]──[C1]──────[C2]──────[C3]
+## Modelo de escalonamiento
 
-[I] = Inoculation
-[F] = Fruiting Induction
-[C1] = First Harvest
-[C2] = Second Harvest (post-rehydration)
-[C3] = Third Harvest
-```
-
-With 2 active fruiting modules and batches initiated every 2 weeks: **harvests generally become available every 1–2 weeks** beginning in week 5, based on actual biological performance and module readiness. Timing is validated during initial production cycles and adjusted according to measured biological efficiency.
-
-## Proyección de Yield (10 bloques de 1 kg sustrato seco por lote)
-
-| Supuesto | Valor |
-|---|---|
-| Peso sustrato seco por bloque | 1 kg |
-| BE total objetivo | 80% |
-| Yield fresco por bloque | 800 g |
-| Yield por lote (10 bloques) | ~8 kg frescos |
-| Yield por flush (F1 más grande) | ~4–5 kg |
-
-**Con 2 lotes escalonados: ~4–5 kg/semana en estado estable.**
+El primer lote será piloto y aislado. El segundo lote puede iniciarse cuando el primero muestre colonización sana, el ciclo de esterilización haya quedado documentado y el proceso de inoculación no presente contaminación. La cadencia quincenal o mensual se define después del primer ciclo completo; no se hereda del antiguo cronograma de *P. djamor*.
 
 ## Production Milestone Sequence (Representative Timeline, Actual Dates Determined by Phase Completion)
 
@@ -80,7 +58,7 @@ Production progresses through phases determined by successful completion of prec
 |---|---|---|---|
 | **Phase 1: Infrastructure** | CLOUDLAB installation, sensor testing, HA configuration | Duration determined by equipment arrival and testing completion | Equipment received and functional |
 | **Phase 2: Laboratory Setup** | SAB configuration, agar work, tissue cloning technique development | Duration determined by operator skill development | SAB operational and contamination protocols established |
-| **Phase 3: Spawn Acquisition** | Obtain P. djamor spawn; validate supplier quality | Duration determined by supplier lead time and spawn viability validation | Spawn received and tested for viability and contamination |
+| **Phase 3: Spawn Acquisition** | Obtain shiitake spawn with identified strain and supplier; validate quality | Duration determined by supplier lead time and spawn viability validation | Spawn received and tested for viability and contamination |
 | **Phase 4: First Batch Inoculation** | Substrate preparation, inoculation of first batch | Single batch, no scaling | Spawn validated and substrate protocols established |
 | **Phase 5: First Cycle Completion** | Incubation, fruiting, first harvest | Complete documentation of all observations | First batch reaches harvest milestone |
 | **Phase 6: Second Batch Initiation** | Inoculation of second staggered batch | Begins only after first batch incubation is stable | First batch colonization within target parameters |
@@ -91,9 +69,9 @@ Production progresses through phases determined by successful completion of prec
 Capacity is determined by validated operational constraints, not aspirational targets.
 
 **Current Phase 1 Constraints:**
-- Laboratory capacity: SAB operation produces spawn for 1–2 batches per week (capacity to increase upon Phase 2 validation)
-- Fruiting capacity: 2 production modules currently operational
-- Substrate capacity: Pasteurization throughput supports 10–20 kg dry weight per week
+- Laboratory capacity: inoculation capacity not yet validated
+- Fruiting capacity: two modules available, environmental suitability for shiitake pending validation
+- Substrate capacity: autoclave in site but not commissioned; sterilization throughput unknown until validation
 - Operator attention bandwidth: Estimated 15–20 hours per week per operator
 
 **Scaling Triggers (Phase-Dependent):**

@@ -1,19 +1,20 @@
 ---
 title: Architecture Status
 document_id: ARCH-STATUS-001
-version: 1.2
+category: architecture
+version: 1.1
 status: canonical
 authority: governance
 load_priority: always
 owner: Setas de la Peña
-last_reviewed: 2026-07-17
+last_reviewed: 2026-07-09
 ---
 
 # Architecture Status
 
 ## Purpose
 
-This document records the verified maturity of the Setas de la Peña Knowledge System. Architectural completeness, operational readiness, and automation readiness are separate claims; none implies the others.
+This document records the maturity state of the Setas de la Peña Knowledge System. It does not measure operational performance. It exists to formally declare that the repository architecture is complete, that governance is established, and to define the criteria under which the architecture may change.
 
 ---
 
@@ -21,15 +22,13 @@ This document records the verified maturity of the Setas de la Peña Knowledge S
 
 | Component | Status |
 |---|---|
-| Canonical Git home | `setasdlp-code/Setas-de-la-Pena/knowledge_base` (DEC-013) |
-| Repository baseline | Version controlled; automated quality checks added |
-| Architecture | Established and reviewable, not frozen |
+| Repository | Production Ready |
+| Architecture | Frozen |
 | Governance | Established |
-| Operational Knowledge | `verification_required`; no documented active batch |
-| Research | Curated, continuous; source PDFs excluded from the monorepo |
-| AI Workflow Library | Assisted-work templates; not autonomous operation |
+| Operational Knowledge | Active Development |
+| Research | Continuous Development |
+| AI Workflow Library | Operational |
 | AI Retrieval Layer | Schema-Stage (Phase 2 — see `ROADMAP.md`) |
-| ECC automation | Blocked pending commissioning |
 
 ---
 
@@ -53,24 +52,25 @@ This document records the verified maturity of the Setas de la Peña Knowledge S
 
 ## Repository Maturity
 
-Percentages are not used because the project has no validated numerical maturity model.
+| Area | Maturity |
+|---|---|
+| Architecture | 100% |
+| Governance | 100% |
+| Navigation | 100% |
+| Agent Behavior | 100% |
+| Knowledge Domains | 95% |
+| Operational Knowledge | Growing |
+| Research | Growing |
+| Automation | Future Expansion |
+| AI Retrieval Layer | Schema-Stage — full catalog population is future work, see `ROADMAP.md` |
 
-| Area | Assessment | Evidence or gap |
-|---|---|---|
-| Structure and navigation | Verified | Canonical paths match the committed tree |
-| Governance | Established | Authority, editorial, cross-reference and identifier standards exist |
-| Scientific traceability | Corrected, continuously reviewed | Literature identifiers resolve to bibliography and curated summaries |
-| Operational state | Pre-production | No active batch or current sensor dataset is documented |
-| Equipment | Partially verified | Autoclave presence confirmed; remaining inventory and commissioning require field evidence |
-| Environmental control | Not commissioned | Effective airflow, sensor cross-checks and fail-safe behavior remain pending |
-| AI retrieval layer | Schema-stage | Full generated catalog remains outside the scope authorized by DEC-012/DEC-013 |
-| Automated quality | Active for deterministic checks | CI does not validate biological truth or physical readiness |
+Operational Knowledge and Research are excluded from fixed percentages because they expand continuously through cultivation activity.
 
 ---
 
 ## Evolution Policy
 
-The architecture is stable but not immutable. No new architectural documents should be created unless a demonstrated operational need exists that cannot be addressed within the current structure.
+The architecture is stable. No new architectural documents should be created unless a demonstrated operational need exists that cannot be addressed within the current structure.
 
 Future development effort should prioritize:
 

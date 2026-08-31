@@ -1,5 +1,6 @@
 ---
 title: Glosario Técnico — Setas de la Peña
+document_id: DOC-0002
 category: project
 load_priority: selective
 last_reviewed: 2026-06-29

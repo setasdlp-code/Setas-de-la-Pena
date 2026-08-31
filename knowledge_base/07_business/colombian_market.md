@@ -1,5 +1,6 @@
 ---
 title: Mercado Colombiano de Setas
+document_id: DOC-0034
 category: business
 load_priority: on_request
 last_reviewed: 2026-06-29

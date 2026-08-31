@@ -1,200 +1,69 @@
-# Metadata — Inventario de equipos
-# Última actualización documental: 2026-07-16
-# Regla: verification_required no significa perdido ni no entregado; significa que falta evidencia de campo reciente.
+# Metadata — Inventario Maestro de Equipos
+# Setas de la Peña
+# Last registry update: 2026-08-14
+schema_version: "2.3"
+registry_type: equipment
+currency_default: COP
+required_fields: [id, category, quantity, unit, status, location, purchase_date, supplier, cost, received_date, condition, assigned_module, last_physical_verification]
 
-equipment:
-  - id: ENV-0001
-    legacy_key: cloudlab_844
-    name: AC Infinity CLOUDLAB 844
-    category: fruiting_chamber
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    ordered: "2026-06-27"
-    estimated_arrival_historical: "2026-07-05"
-    dimensions_cm: [120, 120, 200]
-    volume_m3: 2.88
-    source: "https://acinfinity.com/cloudlab-844-advance-grow-tent-4x4-thickest-poles-and-canvas-48-x-48-x-80/"
-    document: 05_equipment/environmental_control.md
+inventory:
+  - {id: EQ-CHAMBER-MARTHA-001, name: 'Martha Tent 63" Terra Fungus', category: fruiting_chamber, quantity: 1, unit: unit, status: operational, location: tenjo, purchase_date: null, supplier: Terra Fungus, cost: null, received_date: null, condition: good, assigned_module: prototype_fruiting, last_physical_verification: "2026-08-13", specifications: {dimensions_cm: [70,51,165]}, evidence_status: owner_confirmed}
+  - {id: EQ-CHAMBER-CLOUDLAB844-001, name: AC Infinity CLOUDLAB 844, category: fruiting_chamber, quantity: 1, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon / AC Infinity, cost: null, received_date: null, condition: operational, assigned_module: production_fruiting_01, last_physical_verification: "2026-08-13", specifications: {dimensions_in: [48,48,80], dimensions_cm: [122,122,203]}, evidence_status: owner_confirmed}
+  - {id: EQ-CHAMBER-MUSHROOM-LED-001, name: Tienda de cultivo de hongos con luz LED y temporizador, category: fruiting_chamber, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon, cost: null, received_date: null, condition: unknown, assigned_module: prototype_fruiting, last_physical_verification: "2026-08-13", specifications: {integrated_led: true, programmable_timer: true}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-HUM-VIVOSUN-H05-001, name: VIVOSUN AeroStream H05, category: humidifier, quantity: 1, unit: unit, status: operational, location: martha_tent, purchase_date: null, supplier: VIVOSUN / Amazon, cost: null, received_date: null, condition: good, assigned_module: prototype_fruiting, last_physical_verification: "2026-08-13", specifications: {capacity_l: 5, technology: ultrasonic, wifi_control: true, app_control: true}, evidence_status: owner_confirmed_amazon_detail}
+  - {id: EQ-HUM-ACINF-T7-001, name: AC Infinity CloudForge T7, category: humidifier, quantity: 1, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon / AC Infinity, cost: null, received_date: null, condition: operational, assigned_module: production_fruiting_01, last_physical_verification: "2026-08-13", specifications: {capacity_l: 15}, evidence_status: owner_confirmed}
+  - {id: EQ-FAN-H4-001, name: AC Infinity CLOUDLINE H4, category: extractor_fae, quantity: 2, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon / AC Infinity, cost: null, received_date: null, condition: operational, assigned_module: environmental_control, last_physical_verification: "2026-08-13", specifications: {duct_diameter_in: 4, ip_rating: IP65, motor_type: EC, speed_control: true}, evidence_status: owner_confirmed_amazon_detail}
+  - {id: EQ-FAN-NOCTUA-NFP12-001, name: Noctua NF-P12 redux-1700 PWM, category: circulation_fan, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: "2026-07-09", supplier: Mercado Libre / Noctua, cost: null, received_date: null, condition: unknown, assigned_module: incubation_prototype, last_physical_verification: "2026-08-14", specifications: {size_mm: 120, connector: '4-pin PWM', max_rpm: 1700}, evidence_status: owner_purchase_record}
+  - {id: EQ-FAN-GDSTIME-IP68-001, name: GDSTIME IP68 fan, category: circulation_fan, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / GDSTIME, cost: null, received_date: null, condition: unknown, assigned_module: incubation_prototype, last_physical_verification: "2026-08-13", specifications: {dimensions_mm: [80,80,25], voltage_vdc: 12, ip_rating: IP68}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-SENSOR-INKBIRD-TH2-001, name: Inkbird IBS-TH2 Plus, category: sensor_temperature_humidity, quantity: 2, unit: unit, status: operational, location: tenjo, purchase_date: null, supplier: Inkbird / Amazon, cost: null, received_date: null, condition: good, assigned_module: environmental_reference, last_physical_verification: "2026-08-13", specifications: {connectivity: Bluetooth, external_probe: true}, evidence_status: owner_confirmed_amazon_detail}
+  - {id: EQ-SENSOR-SHT3X-001, name: Sensirion SHT3x via AC Infinity probe, category: sensor_temperature_humidity, quantity: 2, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon / AC Infinity, cost: null, received_date: null, condition: operational, assigned_module: environmental_control, last_physical_verification: "2026-08-13", evidence_status: owner_confirmed}
+  - {id: EQ-SENSOR-SHT45-KLANATA-001, name: Klanata SHT45 probe, category: sensor_temperature_humidity, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Klanata, cost: null, received_date: null, condition: unknown, assigned_module: incubation_prototype, last_physical_verification: "2026-08-13", specifications: {sensor: Sensirion_SHT45, enclosure: stainless_steel_304, ip_rating: IP67, interface: I2C, voltage_v: 3.3}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-SENSOR-SHT45-BREAKOUT-001, name: Sensirion SHT45 breakout module, category: sensor_temperature_humidity, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon, cost: null, received_date: null, condition: unknown, assigned_module: electronics_prototyping, last_physical_verification: "2026-08-13", specifications: {sensor: Sensirion_SHT45, form: breakout_board, compatible_with: [Arduino, ESP32]}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-SENSOR-MHZ19C-001, name: EC Buying MH-Z19C CO2 NDIR module, category: sensor_co2, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / EC Buying, cost: null, received_date: null, condition: unknown, assigned_module: environmental_control_prototyping, last_physical_verification: "2026-08-13", specifications: {measurement_principle: NDIR, analyte: CO2}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-MCU-ESP32-001, name: ESP32-WROOM-32 ACEIRMC, category: microcontroller, quantity: 3, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon, cost: null, received_date: null, condition: operational, assigned_module: environmental_control, last_physical_verification: "2026-08-13", evidence_status: owner_confirmed}
+  - {id: EQ-SBC-RPI-ZERO2W-001, name: Raspberry Pi Zero 2 W, category: single_board_computer, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Raspberry Pi, cost: null, received_date: null, condition: unknown, assigned_module: distributed_control_prototyping, last_physical_verification: "2026-08-13", specifications: {cpu: quad_core_64_bit, wifi: true, bluetooth: true}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-HUB-RPI4-001, name: Vilros Raspberry Pi 4 Model B kit, category: automation_hub, quantity: 1, unit: kit, status: on_hand, location: tenjo, purchase_date: null, supplier: Amazon / Vilros, cost: null, received_date: null, condition: unknown, assigned_module: home_assistant, last_physical_verification: "2026-08-13", specifications: {ram_gb: 4, includes_case: true, includes_power_supply: true, includes_accessories: true}, evidence_status: owner_confirmed_amazon_detail}
+  - {id: EQ-POWER-USBC-5V3A-001, name: USB-C 5V 3A power adapter for Raspberry Pi 4, category: power_supply, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon, cost: null, received_date: null, condition: unknown, assigned_module: home_assistant, last_physical_verification: "2026-08-13", specifications: {output_voltage_v: 5, output_current_a: 3, connector: USB-C}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-POWER-MEANWELL-LRS50-12-001, name: Mean Well LRS-50-12, category: power_supply, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Mean Well, cost: null, received_date: null, condition: unknown, assigned_module: environmental_control_prototyping, last_physical_verification: "2026-08-13", specifications: {power_w: 50, output_voltage_vdc: 12, output_current_a: 4.2}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-HEATER-QUIETWARMTH-001, name: QuietWarmth Float QWARM1.5X5F120, category: radiant_heater, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / QuietWarmth, cost: null, received_date: null, condition: unknown, assigned_module: incubation_prototype, last_physical_verification: "2026-08-13", specifications: {dimensions_ft: [1.5,5], dimensions_cm: [45.7,152.4], voltage_vac: 120}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-ENCLOSURE-TICONN-IP67-001, name: TICONN IP67 Enclosure, category: electronics_enclosure, quantity: 2, unit: unit, status: operational, location: tenjo, purchase_date: "2026-06-27", supplier: Amazon, cost: null, received_date: null, condition: operational, assigned_module: environmental_control, last_physical_verification: "2026-08-13", evidence_status: owner_confirmed}
+  - {id: EQ-WIRE-DUPONT-ELEGOO-001, name: ELEGOO Dupont jumper wire kit, category: electronics_prototyping, quantity: 120, unit: wire, status: on_hand, location: null, purchase_date: null, supplier: Amazon / ELEGOO, cost: null, received_date: null, condition: unknown, assigned_module: electronics_prototyping, last_physical_verification: "2026-08-13", specifications: {types: [male_male, female_female, male_female]}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-RELAY-FASTRONIX-WP-001, name: Fastronix weatherproof relay terminals, category: electrical_connector, quantity: 10, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Fastronix, cost: null, received_date: null, condition: unknown, assigned_module: environmental_control_prototyping, last_physical_verification: "2026-08-13", evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-RELAY-HOSYOND-2CH-001, name: Hosyond 2-channel relay module, category: relay_module, quantity: 6, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Hosyond, cost: null, received_date: null, condition: unknown, assigned_module: environmental_control_prototyping, last_physical_verification: "2026-08-13", specifications: {channels_per_module: 2, coil_voltage_vdc: 5, optocoupler_isolation: true}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-CONNECTOR-WAGO221-001, name: WAGO 221 lever connector assortment, category: electrical_connector, quantity: 28, unit: piece, status: on_hand, location: null, purchase_date: null, supplier: Amazon / WAGO, cost: null, received_date: null, condition: unknown, assigned_module: electrical_prototyping, last_physical_verification: "2026-08-13", evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-CABLEGLAND-IP68-001, name: Nylon IP68 cable gland assortment, category: cable_management, quantity: 20, unit: piece, status: on_hand, location: null, purchase_date: null, supplier: Amazon, cost: null, received_date: null, condition: unknown, assigned_module: electrical_prototyping, last_physical_verification: "2026-08-13", specifications: {material: nylon, ip_rating: IP68}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-FUSE-ZIPCCI-AUTO-001, name: ZIPCCI standard automotive blade fuse kit, category: electrical_protection, quantity: 80, unit: fuse, status: on_hand, location: null, purchase_date: null, supplier: Amazon / ZIPCCI, cost: null, received_date: null, condition: unknown, assigned_module: electrical_prototyping, last_physical_verification: "2026-08-13", evidence_status: amazon_inventory_owner_report}
 
-  - id: ENV-0002
-    legacy_key: martha_tent
-    name: Martha Tent 63in Terra Fungus
-    category: fruiting_chamber
-    status: verification_required
-    last_confirmed_status: active_manual
-    last_confirmed_on: "2026-06-29"
-    last_confirmed_location: tenjo
+  - {id: EQ-LAB-CUTTINGBOARD-SS304-001, name: Tabla de trabajo acero inoxidable 304, category: laboratory_work_surface, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: "2026-07-26", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory_and_clean_work, last_physical_verification: "2026-08-14", specifications: {dimensions_cm: [50,40], material: stainless_steel_304, surface: smooth}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-SCALPEL11-001, name: Bisturí con mango y cuchilla No. 11, category: laboratory_tool, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {blade_number: 11}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-BEAKER250-001, name: Vaso de precipitado borosilicato 250 ml, category: laboratory_glassware, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {capacity_ml: 250, material: borosilicate_glass}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-BEAKER600-001, name: Vaso de precipitado borosilicato 600 ml, category: laboratory_glassware, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {capacity_ml: 600, material: borosilicate_glass}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-ALCOHOL-LAMP-001, name: Lámpara / mechero de alcohol, category: laboratory_tool, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-FORCEPS145-001, name: Pinza de disección en punta 145 mm, category: laboratory_tool, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {length_mm: 145, tip: pointed}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-WASHBOTTLE500-001, name: Frasco lavador plástico 500 ml, category: laboratory_container, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {capacity_ml: 500, material: plastic}, evidence_status: owner_purchase_record}
+  - {id: EQ-LAB-TRAY-SS-26X15-001, name: Bandeja de acero inoxidable para instrumental, category: laboratory_tray, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", specifications: {dimensions_cm: [26,15], material: stainless_steel}, evidence_status: owner_purchase_record}
+  - {id: EQ-LIGHT-LED-NEON-USB-001, name: Tira LED Neon Flex USB impermeable, category: cultivation_light, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-07-02", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: prototype_lighting, last_physical_verification: "2026-08-14", specifications: {voltage_v: 5, color_temperature_label: cold_white, waterproof_listing: true}, evidence_status: owner_purchase_record}
+  - {id: EQ-MESH-BAG-60X60-001, name: Bolsa de malla con cremallera 60 x 60 cm, category: reusable_process_container, quantity: 5, unit: unit, status: on_hand, location: null, purchase_date: "2026-07-02", supplier: Mercado Libre / Mados, cost: null, received_date: null, condition: unknown, assigned_module: washing_and_material_handling, last_physical_verification: "2026-08-14", specifications: {dimensions_cm: [60,60], closure: zipper}, evidence_status: owner_purchase_record, notes: "1 pack purchased containing 5 mesh bags."}
 
-  - id: EQ-0001
-    legacy_key: ac_infinity_t7
-    name: AC Infinity CloudForge T7
-    category: humidifier
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    capacity_liters: 15
-    ordered: "2026-06-27"
-    estimated_arrival_historical: "2026-06-28"
+  - {id: EQ-PPE-COVERALL-BLUE-XL-001, name: Overol de dril multicierre azul oscuro XL, category: ppe, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-23", supplier: Mercado Libre / Vulcano, cost: null, received_date: null, condition: unknown, assigned_module: general_operations, last_physical_verification: "2026-08-14", specifications: {size: XL, color: dark_blue}, evidence_status: owner_purchase_record}
+  - {id: EQ-PPE-COVERALL-BLACK-XL-001, name: Overol de dril multicierre negro XL, category: ppe, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-23", supplier: Mercado Libre / Vulcano, cost: null, received_date: null, condition: unknown, assigned_module: general_operations, last_physical_verification: "2026-08-14", specifications: {size: XL, color: black}, evidence_status: owner_purchase_record}
+  - {id: EQ-PPE-GOGGLES-3M-001, name: Gafas de seguridad 3M Scotchgard, category: ppe, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-23", supplier: Mercado Libre / 3M, cost: null, received_date: null, condition: unknown, assigned_module: general_operations, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+  - {id: EQ-PPE-KLEENGUARD-A35-XL-001, name: Traje de protección Kleenguard A35 XL, category: ppe, quantity: 2, unit: unit, status: on_hand, location: null, purchase_date: "2026-06-23", supplier: Mercado Libre / Kleenguard, cost: null, received_date: null, condition: unknown, assigned_module: clean_operations, last_physical_verification: "2026-08-14", specifications: {size: XL}, evidence_status: owner_purchase_record}
+  - {id: EQ-PPE-HEAT-GLOVES-001, name: Guantes para protección térmica, category: ppe, quantity: 1, unit: pair, status: on_hand, location: null, purchase_date: "2026-06-23", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: substrate_thermal_processing, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
 
-  - id: EQ-0002
-    legacy_key: vivosun_h05
-    name: VIVOSUN H05 Ultrasonic Humidifier
-    category: humidifier
-    status: verification_required
-    last_confirmed_status: active_manual
-    last_confirmed_on: "2026-06-29"
-    sensor_discarded: true
-    sensor_bias_rh_percent: "+30 a +35"
-    notes: "Solo modo manual; nunca usar la lectura HR integrada."
+  - {id: EQ-RACK-TUJURICH-001, name: Tujurich 5-tier metal storage shelving, category: shelving, quantity: 1, unit: unit, status: on_hand, location: null, purchase_date: null, supplier: Amazon / Tujurich, cost: null, received_date: null, condition: unknown, assigned_module: storage_and_prototyping, last_physical_verification: "2026-08-13", specifications: {tiers: 5, width_in: 36.4, width_cm: 92.5, adjustable_feet: true}, evidence_status: amazon_inventory_owner_report}
+  - {id: EQ-STER-ALLAMERICAN-001, name: All American 1941X, category: sterilization, quantity: 1, unit: unit, status: on_site_uncommissioned, location: home_rnd_lab_garage, purchase_date: null, supplier: All American, cost: null, received_date: null, condition: unknown, assigned_module: substrate_thermal_processing, last_physical_verification: "2026-08-14", specifications: {model: 1941X, serial_number: C0046139, nominal_capacity: "41 qt / 39 L", gauge_range_psi: [0, 30]}, evidence_status: visual_identity_plus_manufacturer_specification, visual_record: 05_equipment/visual_records/autoclave_all_american_1941x_2026-07-14.md}
+  - {id: EQ-HEAT-STOVE-001, name: Estufa doble industrial a gas propano, category: thermal_source, quantity: 1, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_thermal_processing, last_physical_verification: "2026-07-10"}
+  - {id: EQ-BENCH-METAL-001, name: Mesón metálico 1.50 m, category: workbench, quantity: 1, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-07-10"}
+  - {id: EQ-RACK-METAL-001, name: Racks metálicos, category: shelving, quantity: 3, unit: unit, status: operational, location: home_rnd_lab_garage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: storage, last_physical_verification: "2026-07-10"}
 
-  - id: EQ-0003
-    legacy_key: ac_infinity_h4_1
-    name: AC Infinity CLOUDLINE H4 (unidad 1)
-    category: extractor
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    ip_rating: IP65
-    max_airflow_cfm_nameplate: 212
-    installed_airflow_status: commissioning_required
+excluded_or_not_owned:
+  - {id: EXC-SCD30-AMAZON-001, name: Sensor de aire digital SCD30 CO2, category: sensor_co2, ownership_status: not_owned, order_status: undeliverable, acquisition_plan: none_from_this_order, last_confirmed: "2026-08-13", source: amazon_owner_report}
+  - {id: EXC-RELAY-4CH-33V-001, name: Módulo de relé de 3.3V de 4 canales optoacoplado, category: relay_module, ownership_status: not_owned, order_status: cancelled, acquisition_plan: none_from_this_order, last_confirmed: "2026-08-13", source: amazon_owner_report}
+  - {id: EXC-INKBIRD-ICC500T-S01-001, name: Inkbird ICC-500T + S-01, category: co2_controller, ownership_status: not_owned, acquisition_plan: none_currently, last_confirmed: "2026-08-13", source: owner_confirmation}
+  - {id: EXC-UPS-APC-BE600M1-001, name: APC BE600M1 UPS, category: ups, ownership_status: not_owned, acquisition_plan: none_currently, last_confirmed: "2026-08-13", source: owner_confirmation}
 
-  - id: EQ-0004
-    legacy_key: ac_infinity_h4_2
-    name: AC Infinity CLOUDLINE H4 (unidad 2)
-    category: extractor
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    ip_rating: IP65
-    max_airflow_cfm_nameplate: 212
-    installed_airflow_status: commissioning_required
-
-  - id: SNS-0001
-    legacy_key: sht3x_1
-    name: Sensirion SHT3x via AC Infinity probe (unidad 1)
-    category: sensor_th
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    i2c_address: "0x44"
-    precision_rh: "±2%"
-    precision_temp_c: "±0.2°C"
-
-  - id: SNS-0002
-    legacy_key: sht3x_2
-    name: Sensirion SHT3x via AC Infinity probe (unidad 2)
-    category: sensor_th
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    i2c_address: "0x44"
-
-  - id: SNS-0003
-    legacy_key: scd30_1
-    name: Sensirion SCD30 CO2 (unidad 1)
-    category: sensor_co2
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    i2c_address: "0x61"
-    altitude_compensation_m: 2600
-    precision_co2_ppm: "±(30 ppm + 3%)"
-
-  - id: SNS-0004
-    legacy_key: scd30_2
-    name: Sensirion SCD30 CO2 (unidad 2)
-    category: sensor_co2
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    i2c_address: "0x61"
-    altitude_compensation_m: 2600
-
-  - id: SNS-0005
-    legacy_key: inkbird_1
-    name: Inkbird IBS-TH2 Plus (unidad 1)
-    category: sensor_th_backup
-    status: verification_required
-    last_confirmed_status: active
-    last_confirmed_on: "2026-06-29"
-
-  - id: SNS-0006
-    legacy_key: inkbird_2
-    name: Inkbird IBS-TH2 Plus (unidad 2)
-    category: sensor_th_backup
-    status: verification_required
-    last_confirmed_status: active
-    last_confirmed_on: "2026-06-29"
-
-  - id: EQ-0005
-    legacy_key: esp32_1
-    name: ESP32-WROOM-32 ACEIRMC (unidad 1)
-    category: microcontroller
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    firmware_expected: esphome
-
-  - id: EQ-0006
-    legacy_key: esp32_2
-    name: ESP32-WROOM-32 ACEIRMC (unidad 2)
-    category: microcontroller
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    firmware_expected: esphome
-
-  - id: EQ-0007
-    legacy_key: esp32_3
-    name: ESP32-WROOM-32 ACEIRMC (unidad 3)
-    category: microcontroller
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    firmware_expected: esphome
-
-  - id: EQ-0008
-    legacy_key: ticonn_ip67_1
-    name: TICONN IP67 Enclosure (unidad 1)
-    category: enclosure
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    ip_rating: IP67
-
-  - id: EQ-0009
-    legacy_key: ticonn_ip67_2
-    name: TICONN IP67 Enclosure (unidad 2)
-    category: enclosure
-    status: verification_required
-    last_confirmed_status: ordered
-    last_confirmed_on: "2026-06-29"
-    ip_rating: IP67
-
-  - id: EQ-0010
-    legacy_key: raspberry_pi4
-    name: Raspberry Pi 4 Model B
-    category: hub
-    status: verification_required
-    last_confirmed_status: conflicting_records
-    last_confirmed_on: "2026-06-29"
-    software_expected: home_assistant
-    notes: "Un documento lo reportaba configurado y otro pendiente; verificar presencia, versión y configuración."
-
-  - id: EQ-0011
-    legacy_key: autoclave_all_american
-    name: All American (autoclave de esterilización)
-    category: sterilization
-    status: on_site_uncommissioned
-    last_confirmed_status: on_site
-    last_confirmed_on: "2026-07-10"
-    last_confirmed_location: home_rnd_lab_garage
-    model_status: verification_required
-    reported_capacity_liters: 44
-    official_capacity_status: verification_required
-    commissioning: pending
-    cycle_validation: pending
-    source: "Presencia física confirmada por el propietario el 2026-07-10."
-    document: 05_equipment/autoclaves.md
-    notes: "Confirmar placa y capacidad nominal. No usar como proceso validado hasta completar banco de pruebas y validación para una carga definida."
+reconciliation_queue:
+  - id: REC-EQ-2026-08-14-002
+    reason: "Mercado Libre reusable equipment and PPE purchases reconciled; storage locations and costs remain incomplete for several items."
+    next_action: "Assign physical storage locations during next inventory pass."

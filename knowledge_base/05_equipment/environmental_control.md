@@ -1,180 +1,146 @@
 ---
 title: Control Ambiental — ESP32 / ESPHome / Home Assistant
+document_id: DOC-0026
 category: equipment
 load_priority: selective
-last_reviewed: 2026-08-23
-confidence: medium
+last_reviewed: 2026-08-05
+confidence: high
 primary_sources:
   - ESPHome documentation
   - Home Assistant documentation
+  - Sensirion SHT4x and SCD30 documentation
+  - Analog Devices DS18B20 documentation
   - Internal design Setas de la Peña
-  - Sensirion SCD30 and SHT3x technical documentation
-  - 09_research/incubation_fruiting_chambers_2026.md
 related_documents:
   - martha.md
-  - 04_facility/fruiting.md
-  - 00_project/current_state.md
+  - ../04_facility/fruiting.md
+  - ../04_facility/incubation.md
+  - ../09_research/incubation_module_engineering_review_2026-08-05.md
+  - ../10_ai_workflows/OAP-0001-modular-incubation-validation.md
+  - ../00_project/current_state.md
 ---
 
 # Executive Summary
-La arquitectura prevista usa ESP32 con ESPHome por módulo y Home Assistant en RPi4 para supervisión. El estado físico y la configuración actuales requieren verificación; este documento define el diseño y el commissioning, no certifica que el sistema esté instalado.
+
+El sistema de automatización ambiental de Setas de la Peña usa ESP32 con ESPHome por módulo, con supervisión central en Home Assistant. Cada módulo debe ejecutar localmente sus funciones críticas aunque Home Assistant o la red fallen.
+
+En fructificación, el sistema registra T/HR y CO₂ y acciona humidificación y extracción cuando la especificación del lote lo autoriza. En incubación, controla únicamente calefacción y circulación de aire; la HR es diagnóstica y no autoriza humidificación dentro de cajas con bolsas selladas.
 
 # Core Principles
-- ESP32 por carpa = autonomía local. HA = supervisión, no dependencia.
-- Toda la electrónica (ESP32, relay, PSU) va FUERA de la carpa (caja estanca IP67).
-- **Física de gases y altitud (Tenjo, 2.600 m s.n.m. / ~74 kPa):**
-  - Para sensores NDIR sin registro interno de altitud como el `MH-Z19C`, aplicar en firmware el factor de compensación barométrica: `filters: - multiply: 1.369`.
-  - **Desactivar obligatoriamente el autocalibrado (ABC):** `automatic_baseline_calibration: false`.
-  - Para `SCD30`: configurar `altitude_compensation: 2600`.
-- **Protección de relés electromecánicos (Hosyond):** Prohibido el control PID de alta frecuencia. Usar histéresis amplia y tiempo mínimo de reposo anti-ciclo corto (`min_idle_time: 120s`). En reinicio: `restore_mode: ALWAYS_OFF`.
-- **Dinámica FAE:** El extractor H4 (212 CFM) debe regularse físicamente a velocidad 1–2 y operar en pulsos cortos para no colapsar la humedad en la carpa de 3 m³.
-- Banco de pruebas en mesa (48–72h) antes de instalar en campo.
-- Las protecciones críticas operan localmente aunque fallen Wi‑Fi o Home Assistant.
-- **Automation augments observation.** La automatización asiste la consistencia; no sustituye el juicio biológico.
+
+- ESP32 por módulo = autonomía local. Home Assistant = supervisión, históricos y alarmas.
+- Toda la electrónica de potencia, PSU y relés queda fuera de la zona húmeda o dentro de gabinete adecuado.
+- Banco de pruebas antes de producción.
+- Ningún umbral biológico se hereda de otra especie, cepa o fase.
+- Cada automatización declara sensor de control, banda, histéresis, límites, estado ante datos inválidos y comportamiento tras pérdida de energía.
+- Las protecciones térmicas físicas funcionan sin ESP32, Wi‑Fi ni software.
+- La instalación eléctrica debe revisarse frente al RETIE vigente y usar protección diferencial de alta sensibilidad cuando corresponda por condición húmeda o mojada.
+- Referencia arquitectónica: CANON, sección 7 — Automation Philosophy.
 
 # Technical Details
 
-## Arquitectura del Sistema
+## Arquitectura General
 
 ```
-[SHT45 / SHT3x Sonda] (I²C) ──┐
-[MH-Z19C CO₂] (UART) ─────────┤
-[Inkbird BLE (Auditoría)] ────│──► [ESP32 WROOM-32] ──► WiFi ──► [Home Assistant / RPi4]
-                              │         │
-[T7 Humidificador] ───────────┤         ├──► [Relay Hosyond Ch1] ──► T7 ON/OFF
-[H4 Extractor FAE] ───────────┘         └──► [Relay Hosyond Ch2] ──► H4 ON/OFF (Pulsos)
+[Sensores locales] ──► [ESP32 + ESPHome] ──► [Actuadores locales]
+                              │
+                              └── Wi‑Fi ──► [Home Assistant / históricos]
 ```
+
+Home Assistant no debe cerrar el lazo de control térmico primario. Una pérdida de red no debe interrumpir la lectura local ni modificar el estado seguro definido para el módulo.
 
 ## Sensores
 
-### Klanata SHT45 (Sonda T/HR Acero Inoxidable 304, IP67)
-- Chip: Sensirion SHT45
-- Interfaz: I²C, dirección 0x44 (3.3V)
-- ESPHome component: `sht4x`
-- Precisión: ±0.1°C / ±1.0% RH (alta precisión con resistencia a condensación)
-- Ubicación: A la altura de los bloques, protegida de rocío directo del humidificador.
-- Longitud máxima recomendada de cable I²C sin repetidor: ≤ 1.5 m.
+### SHT3x existente — fructificación y redundancia
 
-### Sensirion SHT3x / AC Infinity (Sonda T/HR Secundaria)
-- Chip: Sensirion SHT3x
-- Interfaz: I²C, dirección 0x44
-- ESPHome component: `sht3xd`
-- Precisión: ±0.2°C / ±2% RH
+- Interfaz I²C; dirección usual 0x44.
+- Componente ESPHome: `sht3xd`.
+- Verificar pinout antes de conectar.
+- Mantener como sensor disponible si ya fue comprado y pasa comparación de banco.
 
-### Winsen / EC Buying MH-Z19C (NDIR CO₂) — Sensor Principal
-- Chip: MH-Z19C NDIR
-- Interfaz: UART (TX/RX), 9600 baudios
-- ESPHome component: `mhz19`
-- Rango: 400–5.000 ppm (±50 ppm + 5% lectura)
-- **Ajustes obligatorios Tenjo:**
-  - `automatic_baseline_calibration: false` (evita que el sensor tome el ambiente de cultivo como 400 ppm exterior).
-  - `filters: - multiply: 1.369` (ajuste por presión barométrica a 2.600 m s.n.m., $P_0/P_{Tenjo} = 101.3/74.0$).
+### SHT45 / familia SHT4x — referencia para incubación
 
-### Sensirion SCD30 (NDIR CO₂ / T / HR — Alternativa I²C)
-- Interfaz: I²C, dirección 0x61
-- ESPHome component: `scd30`
-- Parámetro crítico: `altitude_compensation: 2600`
-- `automatic_self_calibration: false`
+- Precisión típica publicada para SHT45: ±1,0% RH y ±0,1 °C.
+- Interfaz I²C; dirección ESPHome predeterminada 0x44.
+- Componente ESPHome: `sht4x`.
+- Usar versión con membrana PTFE integrada o capuchón protector equivalente; una placa expuesta no es configuración aprobada.
+- El calentador interno del sensor se usa solo para recuperación documentada tras condensación o exposición prolongada a HR extrema; no calienta el módulo.
+- Instalar protegido de goteo, partículas, radiación directa del PTC y contacto con paredes frías.
+- La HR es diagnóstica durante incubación de bolsas selladas.
+- Después de condensación o exposición prolongada por encima de aproximadamente 90% RH, ejecutar el procedimiento de recuperación y comparación antes de devolverlo a control.
 
-### Inkbird IBS-TH2 Plus (BLE — Verificación Cruzada y Auditoría)
-- Conectividad Bluetooth independiente hacia app móvil.
-- Utilizado para auditoría y validación semanal cruzada vs. SHT45 (delta aceptable: ≤ ±0.5°C / ≤ ±3% HR).
+### DS18B20 — mapa térmico de incubación
 
-## Variables Derivadas y Calidad del Dato
+- Componente ESPHome: `dallas_temp` sobre bus `one_wire`.
+- Resistencia pull-up externa aproximada de 4,7 kΩ entre 3,3 V y datos.
+- Usar dirección física, no índice, cuando haya varios sensores.
+- Instalar tres unidades durante calificación: base, centro y parte superior/carga.
+- Comparar las tres sondas juntas durante 48–72 h antes del ensayo; registrar offset individual y no interpretar diferencias próximas a la tolerancia publicada sin esa comparación.
+- Etiquetar físicamente cada dirección y conservarla en configuración y registro de equipo.
 
-- Calcular punto de rocío y VPD del aire a partir de T/HR como variables diagnósticas.
-- Marcar como inválidos los datos durante condensación, desconexión, calentamiento inicial o valores físicamente imposibles.
-- Registrar ubicación del sensor, fecha de verificación, offset aplicado y referencia utilizada.
-- No controlar por VPD hasta contar con temperatura superficial y validación biológica local.
-- Conservar mínimo, máximo, duración fuera de banda y estado de actuadores; el promedio por sí solo oculta eventos críticos.
+### Sensirion SCD30 — CO₂
 
-## Actuadores y Potencia
+- Interfaz I²C; dirección 0x61.
+- Componente ESPHome: `scd30`.
+- Seleccionar una estrategia de compensación:
+  - `altitude_compensation: 2600` cuando no se suministre presión ambiente; o
+  - compensación por presión ambiente cuando exista medición válida.
+- No aplicar simultáneamente altitud fija y presión ambiente como correcciones acumulativas.
+- En incubación se usa temporalmente para calificar ventilación del módulo y del recinto; no se aprueba un umbral universal.
+- Proteger el trayecto de muestreo contra condensación y verificar respuesta en aire exterior antes y después del ensayo.
 
-### AC Infinity CloudForge T7 (Humidificador 15L)
-- Control: Relay simple ON/OFF (Hosyond 2ch optoacoplado).
-- Modo operativo: Manual % al 100% (el ESP32 gobierna los ciclos).
-- Banda de histéresis: ON si HR < 83%, OFF si HR ≥ 89%.
-- Calidad de agua: Filtrada / desmineralizada (< 30 ppm TDS) para evitar depósitos minerales en hongos y sensores.
+### Inkbird IBS-TH2 Plus — redundancia
 
-### AC Infinity Cloudline H4 (Extractor FAE 4")
-- Control: Relay simple ON/OFF conmutado en pulsos.
-- Regulación física: Potenciómetro/controlador EC ajustado a **Velocidad 1 o 2**.
-- Lógica: Pulsos de 30–45s cuando CO₂ > 800 ppm (o ciclo periódico de línea base). Previene el vaciado violento de humedad de la carpa de 3 m³. Objetivo óptimo de fructificación: 500–800 ppm.
+- Lectura BLE/app como comparación independiente.
+- Comparar contra sensor principal durante banco y después de intervenciones.
+- Cualquier tolerancia de aceptación debe quedar en el protocolo de calibración, no inferirse de la ficha comercial.
 
-### Malla Radiante QuietWarmth Float (Incubadora 100L)
-- Potencia: 120V / 90W con placa difusora de aluminio y lámina dieléctrica.
-- Control: Conmutación por relé con histéresis de 1.0°C (ON < 23.5°C, OFF ≥ 24.5°C) y `min_idle_time: 180s`.
-- Seguridad: Fusible térmico bimetálico en serie (corte físico a > 32°C).
+## Actuadores de Fructificación
 
-## Dinámica Térmica y Selección de Especies en Tenjo
-- Noches en Tenjo: 6–10°C. Carpa CLOUDLAB 844 no aislada térmicamente.
-- **Especies óptimas para arranque:** *Pleurotus ostreatus* (14–20°C) y *Hericium erinaceus* (15–20°C).
-- *Pleurotus djamor* (20–28°C) requiere aislamiento o calefacción de ambiente si la temperatura de carpa desciende de 18°C.
+### AC Infinity T7 — humidificación
 
-## Dimensionamiento y Commissioning de Ventilación
+- Control por relé simple ON/OFF cuando el lote tenga banda aprobada.
+- No usar la lectura integrada del H05 como sensor de control.
+- No aplicar a incubación de bolsas selladas.
 
-El CLOUDLAB 844 mide 120 × 120 × 200 cm: volumen aproximado **3,02 m³ / 106,6 ft³**. Para el objetivo provisional de 5–8 cambios de aire por hora:
+### AC Infinity H4 — extracción / FAE
 
-`Q efectivo requerido (CFM) = ACH × volumen (ft³) / 60`
+- Control por relé simple ON/OFF cuando exista especificación de lote.
+- Antes de automatizar, medir volumen efectivo, caudal bajo resistencia real y respuesta de CO₂.
 
-| Objetivo provisional | Caudal efectivo medio requerido |
-|---|---:|
-| 5 ACH | 8,5 CFM |
-| 8 ACH | 13,6 CFM |
+## Actuadores de Incubación
 
-### Compensación por Altitud (2,600 m s.n.m.) — CRÍTICO
+### Calefactor PTC externo
 
-Los ventiladores son máquinas de "volumen constante" — un ventilador de 100 CFM mueve 100 CFM tanto a nivel del mar como a 2,600m. **Sin embargo**, a 2,600m ese mismo volumen contiene ~26% menos masa de aire (menos O₂ entrando, menos masa de CO₂ siendo extraída).
+- Instalar en plenum externo con ventilador y trayectoria de aire verificable.
+- No ubicar elemento calefactor expuesto dentro de una caja plástica con bolsas.
+- Dimensionar potencia después del perfil de Tenjo y ensayos vacío/cargado.
+- Incorporar termostato físico de límite alto y fusible térmico independientes del relé.
+- El relé o contactor debe quedar desenergizado al iniciar y ante fallo del controlador.
+- Verificar materiales próximos, reacción al fuego, separación del aislamiento combustible y temperatura de superficies.
 
-**Factor de corrección por densidad:**
+### Ventilador de circulación
 
-`CFM ajustado = CFM nivel del mar / (P_Tenjo / P_nivel_mar) = CFM / 0.74`
+- Debe operar antes o simultáneamente con el PTC.
+- Incluir señal de funcionamiento cuando sea posible: tacómetro, presostato o sensor de corriente.
+- Un ventilador detenido debe bloquear la calefacción.
+- La circulación interna no sustituye la ventilación necesaria para retirar calor y CO₂.
 
-**Ejemplo práctico con pérdidas:**
-
-| Parámetro | Cálculo |
-|-----------|---------|
-| ACH objetivo | 6 (medio del rango) |
-| CFM nivel del mar | 106.6 × 6 / 60 = **10.7 CFM** |
-| CFM ajustado altitud (÷0.74) | **14.4 CFM** |
-| CFM con pérdidas (filtros/ductos, η=0.8) | **~18 CFM** |
-
-**Equipo recomendado:** Ventiladores de flujo mixto con motor EC (serie **AC Infinity Cloudline** o clones). Silenciosos, alta presión estática, controlador de velocidad. Extraer aire (presión negativa) desde la parte superior.
-
-Con operación intermitente:
-
-`ACH estimado = Q efectivo medido × duty_cycle × 60 / volumen`
-
-donde `duty_cycle = tiempo ON / (tiempo ON + tiempo OFF)`. El caudal efectivo debe medirse en la instalación con filtros, ductos, curvas y compuertas; no debe sustituirse por los 212 CFM nominales del H4. El commissioning debe:
-
-1. Medir caudal efectivo en al menos tres velocidades.
-2. Confirmar mezcla de aire y ausencia de zonas muertas.
-3. Registrar respuesta del CO₂ con cámara cargada.
-4. Definir velocidad/línea base mínima y control por CO₂.
-5. Verificar que la ventilación no saque HR del rango.
-6. Mapear CO₂ y T/HR en entrada, salida, centro, varias alturas y esquina remota con cámara vacía y cargada.
-7. Confirmar que el sensor permanente representa la exposición de los cuerpos fructíferos y no el aire recién impulsado o extraído.
-
-Fuentes de ingeniería: [CDC — definición y fórmula de ACH](https://stacks.cdc.gov/view/cdc/157087/cdc_157087_DS1.pdf), [AC Infinity — CLOUDLAB 844](https://acinfinity.com/cloudlab-844-advance-grow-tent-4x4-thickest-poles-and-canvas-48-x-48-x-80/), [AC Infinity — CLOUDLINE H4](https://acinfinity.com/cloudline-h4-humidity-proof-inline-fan-4-with-speed-controller/).
-
-## ESPHome — Configuración Base (Carpa CLOUDLAB 844 / Martha)
+## ESPHome — Fructificación, Base de Instrumentación
 
 ```yaml
-# cloudlab_esp32.yaml — ESP32 Carpa CLOUDLAB 844
+# setas_martha_01.yaml — ESP32 carpa 1
 
 esphome:
-  name: setas-cloudlab-01
-  friendly_name: CLOUDLAB 01
+  name: setas-martha-01
+  friendly_name: Martha 01
 
 esp32:
   board: esp32dev
-  framework:
-    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  reboot_timeout: 15min  # Mantiene lógica local si se cae el WiFi
 
 api:
   encryption:
@@ -183,161 +149,247 @@ api:
 ota:
   password: !secret ota_password
 
-# Bus I2C para sonda Klanata SHT45 (o Sensirion SHT3x)
 i2c:
   sda: GPIO21
   scl: GPIO22
   scan: true
-  frequency: 100kHz
-
-# Bus UART para sensor NDIR MH-Z19C
-uart:
-  rx_pin: GPIO16
-  tx_pin: GPIO17
-  baud_rate: 9600
 
 sensor:
-  # Sonda principal T/HR SHT45 (Klanata IP67)
-  - platform: sht4x
+  - platform: sht3xd
     temperature:
-      name: "CLOUDLAB01 Temperatura"
-      id: cloudlab_temp
+      name: "Martha01 Temperatura"
     humidity:
-      name: "CLOUDLAB01 Humedad"
-      id: cloudlab_hum
+      name: "Martha01 Humedad"
     address: 0x44
-    heater_max_duty_cycle: 0.0  # Usar solo si se detecta condensación persistente
     update_interval: 30s
 
-  # Sensor NDIR CO2 MH-Z19C con compensación Tenjo (2.600 msnm)
-  - platform: mhz19
+  - platform: scd30
     co2:
-      name: "CLOUDLAB01 CO2"
-      id: cloudlab_co2
-      filters:
-        - multiply: 1.369   # Factor barométrico: 101.3 kPa / 74.0 kPa
+      name: "Martha01 CO2"
     temperature:
-      name: "CLOUDLAB01 MHZ Temp"
-    automatic_baseline_calibration: false  # OBLIGATORIO: Evita descalibración en cultivo
+      name: "Martha01 CO2 Temp"
+    humidity:
+      name: "Martha01 CO2 HR"
+    altitude_compensation: 2600
     update_interval: 30s
 
 switch:
-  # Relé Ch1: Humidificador CloudForge T7 (Modo 100% Manual conmutado)
   - platform: gpio
-    name: "CLOUDLAB01 Humidificador"
+    name: "Martha01 Humidificador"
     pin: GPIO26
     id: relay_humidificador
-    restore_mode: ALWAYS_OFF  # Failsafe: Siempre apagado tras reinicio
+    restore_mode: ALWAYS_OFF
 
-  # Relé Ch2: Extractor Cloudline H4 (Velocidad física baja en potenciómetro)
   - platform: gpio
-    name: "CLOUDLAB01 Extractor FAE"
+    name: "Martha01 Extractor"
     pin: GPIO27
     id: relay_extractor
     restore_mode: ALWAYS_OFF
+
+# Si se implementa compensación por presión ambiente en SCD30,
+# retirar `altitude_compensation` y documentar la fuente de presión.
+# No añadir ciclos de FAE o HR hasta aprobar la especificación del lote.
 ```
 
-`automatic_baseline_calibration: false` es obligatorio en el `MH-Z19C` para evitar que el algoritmo ABC asuma como 400 ppm el nivel más bajo de una cámara donde el micelio mantiene niveles elevados. El filtro `multiply: 1.369` compensa la menor densidad molecular por presión atmosférica a 2.600 m s.n.m. en Tenjo.
+## ESPHome — Prototipo de Incubación
 
-## Automatización Home Assistant (Supervisión y Control)
+Esta plantilla deja la calefacción apagada en cada arranque. La banda térmica se configura únicamente después de aprobar la especificación de cepa/lote y verificar las protecciones físicas.
 
 ```yaml
-# control_ambiental_cloudlab01.yaml
-automation:
-  - alias: "CLOUDLAB01 — Encender Humidificador"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.cloudlab01_humedad
-      below: 83
-    action:
-      service: switch.turn_on
-      target:
-        entity_id: switch.cloudlab01_humidificador
+# setas_incubacion_prototipo_01.yaml
 
-  - alias: "CLOUDLAB01 — Apagar Humidificador"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.cloudlab01_humedad
-      above: 89
-    action:
-      service: switch.turn_off
-      target:
-        entity_id: switch.cloudlab01_humidificador
+esphome:
+  name: setas-incubacion-prototipo-01
+  friendly_name: Incubacion Prototipo 01
 
-  - alias: "CLOUDLAB01 — Alivio de CO2 por Pulsos"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.cloudlab01_co2
-      above: 850  # Óptimo fructificación: 500-800 ppm; alarma >1000 ppm
-    action:
-      - service: switch.turn_on
-        target:
-          entity_id: switch.cloudlab01_extractor_fae
-      - delay: "00:00:40"
-      - service: switch.turn_off
-        target:
-          entity_id: switch.cloudlab01_extractor_fae
+esp32:
+  board: esp32dev
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  password: !secret ota_password
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+
+one_wire:
+  - platform: gpio
+    pin: GPIO4
+    id: bus_incubacion
+
+sensor:
+  - platform: sht4x
+    temperature:
+      name: "Incubacion Aire Temperatura"
+      id: t_aire_incubacion
+    humidity:
+      name: "Incubacion Aire HR"
+    address: 0x44
+    precision: High
+    heater_max_duty: 0.0
+    update_interval: 30s
+
+  # Después de leer las direcciones en el log, crear tres entradas
+  # `dallas_temp` con `one_wire_id: bus_incubacion` y dirección fija:
+  # - base
+  # - centro
+  # - parte superior/carga
+  # Registrar el offset medido de cada sonda; no inventar direcciones.
+
+switch:
+  - platform: gpio
+    name: "Incubacion Calefactor"
+    id: relay_calefactor
+    pin: GPIO26
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    name: "Incubacion Ventilador"
+    id: relay_ventilador
+    pin: GPIO27
+    restore_mode: ALWAYS_OFF
+
+climate:
+  - platform: thermostat
+    name: "Incubacion Control Termico"
+    id: control_termico_incubacion
+    sensor: t_aire_incubacion
+    min_heating_off_time: 300s
+    min_heating_run_time: 60s
+    min_idle_time: 30s
+    startup_delay: true
+    heat_action:
+      - switch.turn_on: relay_ventilador
+      - delay: 5s
+      - switch.turn_on: relay_calefactor
+    idle_action:
+      - switch.turn_off: relay_calefactor
+      - delay: 30s
+      - switch.turn_off: relay_ventilador
+    default_preset: Arranque seguro
+    on_boot_restore_from: default_preset
+    preset:
+      - name: Arranque seguro
+        default_target_temperature_low: !secret incubation_qualification_target_c
+        mode: OFF
 ```
+
+El archivo no incluye direcciones ficticias de DS18B20. Deben capturarse del log del equipo físico y fijarse antes del ensayo. `incubation_qualification_target_c` queda en `secrets.yaml` y no constituye un setpoint biológico aprobado.
+
+## Interbloqueos y Estado Seguro
+
+| Condición | Respuesta requerida |
+|---|---|
+| Arranque o retorno de energía | Calefactor OFF; control térmico en modo OFF |
+| Sensor principal inválido o desconectado | Calefactor OFF y alarma |
+| Ventilador detenido | Calefactor OFF por interbloqueo independiente cuando sea posible |
+| Sobretemperatura de aire o placa | Corte por termostato físico; ESPHome solo registra/alarma |
+| Wi‑Fi o Home Assistant ausente | Control local continúa con último modo explícitamente autorizado |
+| Relé de control pegado | Termostato físico/fusible térmico limita el evento |
+| Reinicio repetitivo del ESP32 | Calefactor permanece OFF por `restore_mode` y preset de arranque |
+| Condensación en sensor o gabinete | Calefacción inhibida hasta inspección y secado |
+
+## Automatización Home Assistant
+
+En preproducción, Home Assistant registra sensores, muestra alarmas y permite pruebas manuales. No desplegar automatizaciones con umbrales heredados. Cada configuración aprobada debe declarar:
+
+- especie, cepa, lote y fase;
+- banda, histéresis y fuente de aprobación;
+- sensor de control y sensores de verificación;
+- condición de datos inválidos;
+- límites físicos y de software;
+- estrategia de compensación del SCD30;
+- offsets y direcciones de sensores;
+- versión, fecha y responsable;
+- respuesta a pérdida de red y energía.
 
 ## Protección Física
 
-| Componente | IP | Ubicación |
+| Componente | Requisito | Ubicación |
 |---|---|---|
-| TICONN (caja electrónica) | IP67 | Fuera de carpa |
-| H4 extractor | IP65 | Fuera de carpa / línea de extracción |
-| Klanata SHT45 sonda | IP67 Acero 304 | Dentro de carpa, protegida de spray |
-| MH-Z19C | IP30 | Dentro caja estanca con puerto de muestreo protegido |
-| Prensaestopas | IP68 | Entradas inferiores de caja TICONN |
+| Gabinete de electrónica | Grado adecuado al polvo/humedad real; prensaestopas y alivio de tensión | Fuera del módulo |
+| ESP32, PSU y relés | Separados de condensación y del flujo caliente | Gabinete externo |
+| Protección de circuito | Interruptor/protección dimensionada y RCD/GFCI cuando aplique conforme al RETIE | Tablero o alimentación del módulo |
+| SHT45/SHT4x | Membrana PTFE o capuchón permeable; sin contacto directo con agua | Aire del módulo |
+| DS18B20 | Sonda identificada y fijada sin crear punto de compresión en bolsa | Base/centro/tope |
+| SCD30 | Protegido; muestreo que no atrape condensación | Temporal durante calificación |
+| PTC y fusible térmico | Plenum adecuado, accesible para inspección y separado de materiales combustibles | Externo |
 
-## Estados Seguros Locales (Fail-Safe)
-
-| Falla | Respuesta mínima local a validar |
-|---|---|
-| SHT45 inválido/desconectado | Apagar humidificador inmediatamente; mantener ventilación de línea base; generar alarma móvil. |
-| MH-Z19C inválido/desconectado | Conmutar extractor a pulsos periódicos de línea base (ej. 30s cada 15 min); alarmar. |
-| Wi‑Fi o Home Assistant caído | ESP32 continúa ejecutando control local autónomo con setpoints locales. |
-| Reinicio de ESP32 | Actuadores inician en `ALWAYS_OFF` respetando tiempo anti-ciclo corto. |
-| Fuga de agua / Condensación | Corte de humidificación y protección de electrónica; inspección manual. |
-| Sobretemperatura en incubadora | Desconexión por relé y corte mecánico físico por fusible térmico bimetálico. |
-
-## Plan de Validación (Banco de Pruebas)
+## Plan de Validación
 
 ```
-1. Armar: ESP32 + SHT45 (I2C) + MH-Z19C (UART) + Relé Hosyond 2ch en mesa de trabajo.
-2. Flashear ESPHome con compensación barométrica (x1.369) y ABC desactivado.
-3. Verificar dirección I²C (0x44 para SHT45) y recepción de tramas UART (9600 baud).
-4. Operar 48–72h continuas → verificar estabilidad de lectura sin drift.
-5. Simular >85% HR en cámara de prueba → confirmar lectura SHT45.
-6. Probar relay T7 y relay H4 con comandos locales y remotos.
-7. Simular pérdida de Wi-Fi, desconexión de sensor y reinicio eléctrico; verificar estados seguros.
-8. Solo tras validación: instalar en carpa CLOUDLAB 844.
+1. Armar ESP32 + sensores sin actuadores energizados.
+2. Verificar I²C y registrar direcciones 1-Wire.
+3. Comparar SHT45 y DS18B20 durante 48–72 h en un mismo punto; registrar offsets.
+4. Verificar membrana/capuchón del SHT45 y procedimiento posterior a condensación/HR extrema.
+5. Seleccionar y documentar una sola estrategia de compensación del SCD30.
+6. Probar desconexión de SHT45 y cada DS18B20.
+7. Probar relés con carga segura y verificar `restore_mode: ALWAYS_OFF`.
+8. Probar corte/retorno de energía: calefactor debe permanecer OFF.
+9. Integrar ventilador y confirmar interbloqueo antes del PTC.
+10. Ejecutar 72 h vacío y 72 h con masa simulada.
+11. Verificar protección diferencial y revisión eléctrica aplicable.
+12. Solo después: ciclo biológico piloto con mapa térmico y CO₂.
 ```
 
 # Best Practices
+
 - Nunca instalar código no probado en producción activa.
-- Mantener backups de configuración ESPHome en repositorio (git o carpeta del proyecto).
-- Documentar dirección GPIO de cada relay en etiqueta física en la caja.
+- Mantener configuraciones y `secrets.yaml` fuera de exposición pública.
+- Etiquetar GPIO, relés, fusibles, sensores y dirección física.
+- Registrar versión de firmware, offsets, compensaciones y fecha de cambio.
+- No usar el calentador interno del SHT4x como control de condensación del módulo.
+- Retener una configuración de referencia y repetir comparación después de reemplazar sensor, cable o firmware.
 
 # Common Failure Modes
-| Problema | Causa | Solución |
+
+| Problema | Causa | Acción |
 |---|---|---|
-| SHT3x no aparece en I²C | Pinout incorrecto o sin pull-ups | Verificar con multímetro; agregar 4.7kΩ |
-| SCD30 lecturas erráticas | Sin compensación de altitud | Agregar `altitude_compensation: 2600` |
-| Relay no activa | Pin GPIO incorrecto o relay activo bajo (LOW) | Verificar lógica de relay; invertir si necesario |
-| ESP32 se desconecta de HA | WiFi inestable | Verificar señal WiFi en ubicación de caja |
+| SHT4x no aparece | Pinout, alimentación o bus I²C | Verificar cableado y escáner I²C |
+| DS18B20 inestable | Falta de pull-up, cable largo o dirección no fijada | Instalar 4,7 kΩ y usar dirección física |
+| Gradiente aparente pequeño | Offsets entre DS18B20 no medidos | Repetir comparación conjunta y corregir interpretación |
+| Lectura HR alta tras condensación | Sensor mojado o creep por HR extrema | Retirar causa; aplicar recuperación documentada y comparar antes de reutilizar |
+| SCD30 incoherente | Compensación duplicada o muestreo con condensación | Mantener una sola compensación y revisar trayecto de muestra |
+| Relé activo al reinicio | Lógica invertida o `restore_mode` ausente | Corregir lógica y repetir prueba de corte |
+| PTC energizado sin flujo | Interbloqueo inexistente | Desenergizar; no operar hasta instalar protección |
+| ESP32 desconectado de HA | Wi‑Fi inestable | Mantener control local; corregir cobertura sin cambiar seguridad |
 
 # Open Questions
-- ¿Cuántos ESP32 por RPi4 sin degradar HA? (Estimado: hasta 10–15 sin problema)
-- ¿Sensor de fuga de agua necesario en zona electrónica?
-- ¿Qué pin GPIO usar para relay en ESP32 ACEIRMC específico?
+
+- ¿Qué módulo físico SHT45 con membrana o capuchón protegido y disponible localmente pasa el banco de pruebas?
+- ¿Qué método de confirmación de flujo se usará para el ventilador del PTC?
+- ¿Qué potencia de PTC resulta de los ensayos vacío, carga simulada y carga biológica?
+- ¿Qué límites físicos de temperatura se fijarán después de medir materiales y cepa?
+- ¿Se mantendrá altitud fija o se integrará presión ambiente para el SCD30?
 
 # References
-- ESPHome Documentation. https://esphome.io
-- Home Assistant Documentation. https://home-assistant.io
-- Sensirion SCD30 Datasheet.
-- AC Infinity T7 Manual.
-- ESPHome. *SCD30 CO₂, Temperature and Relative Humidity Sensor*. https://esphome.io/components/sensor/scd30/
-- ESPHome. *SHT3X-D Temperature+Humidity Sensor*. https://esphome.io/components/sensor/sht3xd/
-- Sensirion. *SCD30 product specifications, interface description and field calibration note*. https://sensirion.com/products/catalog/SCD30
-- Sensirion. *SHT3x datasheet and SHT/STS design-in guide*. https://sensirion.com/products/downloads
-- `09_research/incubation_fruiting_chambers_2026.md`.
+
+- ESPHome Documentation: `sht4x`, `sht3xd`, `one_wire`, `dallas_temp`, `scd30`, `thermostat` and GPIO switch components.
+- Sensirion. SHT4x datasheet, revision 04/2025; SHT45 product specification; SCD30 documentation.
+- Analog Devices. DS18B20 product documentation.
+- Home Assistant Documentation.
+- AC Infinity T7 and H4 manuals.
+- RETIE vigente, Resolución 40284 del 23 de junio de 2026.
+- `../09_research/incubation_module_engineering_review_2026-08-05.md` — límites y justificación de ingeniería.
+
+Con operación intermitente:
+
+
+
+donde . El caudal efectivo requerido es de 8,5 CFM a 13,6 CFM según especie y densidad de carga.
+
+
+Con operacion intermitente:
+
+ACH estimado = Q efectivo medido * duty_cycle * 60 / volumen
+
+donde duty_cycle = tiempo ON / (tiempo ON + tiempo OFF). El caudal efectivo requerido es de 8,5 CFM a 13,6 CFM segun especie y densidad de carga.

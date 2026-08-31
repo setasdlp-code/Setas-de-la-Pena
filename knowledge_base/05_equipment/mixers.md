@@ -1,5 +1,6 @@
 ---
 title: Mezcladores y Equipos de Preparación de Sustrato
+document_id: DOC-0029
 category: equipment
 load_priority: selective
 last_reviewed: 2026-06-29
@@ -37,7 +38,7 @@ Los equipos de preparación de sustrato determinan la velocidad y consistencia d
 | Termómetro de cocina | Verificar temperatura de pasteurización | Verificar disponibilidad |
 | Báscula (1g precisión) | Pesar spawn y suplementos | Verificar disponibilidad |
 
-### Proceso de mezcla manual (P. djamor, paja)
+### Proceso histórico de mezcla manual (Pleurotus en paja; fuera del arranque)
 
 1. Pesar paja seca en balde (ej. 1 kg por bloque × 10 bloques = 10 kg).
 2. Añadir agua caliente hasta cubrir paja.
@@ -109,7 +110,7 @@ Registrar en bitácora de producción:
 Equipment selection for mixing and substrate preparation depends on operational scale rather than technical sophistication.
 
 ```
-Manual mixing (balde, pala)
+Mezcla manual validada para la formulación de shiitake
   ↓
 DIY horizontal mixer (tambor motorizado básico)
   ↓

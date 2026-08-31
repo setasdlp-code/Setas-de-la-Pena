@@ -1,12 +1,14 @@
 ---
 title: Daily Operational Review Template
 document_id: TMP-001
+category: operations
 version: 1.0
 status: operational_template
 authority: operations
 load_priority: selective
 owner: Setas de la Peña
 created: 2026-06-30
+last_reviewed: 2026-06-30
 ---
 
 # Daily Operational Review

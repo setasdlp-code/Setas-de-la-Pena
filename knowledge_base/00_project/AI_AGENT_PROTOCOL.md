@@ -1,13 +1,15 @@
 ---
 title: AI Agent Protocol
 document_id: AGENT-001
-version: 1.3
+category: project
+version: 1.4
 status: canonical
 authority: agent_behavior
 load_priority: always
 owner: Setas de la Peña
 created: 2026-06-30
-revised: 2026-07-09
+revised: 2026-08-13
+last_reviewed: 2026-08-13
 ---
 
 # AI Agent Protocol
@@ -50,9 +52,10 @@ Default sequence for general queries:
 | 6 | `DECISIONS.md` |
 | 7 | `LESSONS_LEARNED.md` |
 | 8 | Research summaries |
-| 9 | External literature |
+| 9 | `09_research/active_research_knowledge.md` (ARK) |
+| 10 | External literature |
 
-This order changes depending on request type. See §5 for type-specific retrieval sequences.
+This order changes depending on request type. See §5 for type-specific retrieval sequences. ARK is consultative: its position in retrieval order does not grant authority over decisions, SOPs, canonical parameters, or current operational state.
 
 ---
 
@@ -73,8 +76,10 @@ Classify every user request before retrieving documents.
 **Consult first:** Relevant SOP → `LESSONS_LEARNED.md` → domain document → `CURRENT_OPERATIONS.md`
 
 ### 5.4 Research Question
-**Definition:** Requests to evaluate a paper, book, or external reference against current practice.
-**Consult first:** Relevant domain document → research summaries → `DECISIONS.md` → external literature
+**Definition:** Requests to evaluate a paper, book, external reference, mechanism, hypothesis, or novel technical option against current practice.
+**Consult first:** Relevant domain document → research summaries → ARK → `DECISIONS.md` → external literature
+
+Research questions must evaluate both compatibility with current practice and useful novelty. A finding is not discarded merely because it does not contradict an existing rule.
 
 ### 5.5 Equipment Decision
 **Definition:** Evaluation, purchase, replacement, or configuration of hardware or sensors.
@@ -106,7 +111,7 @@ Classify every user request before retrieving documents.
 
 When two or more documents provide contradictory information, apply the precedence model defined in `SETAS_DE_LA_PENA_CANON.md` Section 14 — the single source of truth for document precedence. Section 14.1 (Normative Authority) determines which document's content prevails. Section 14.2 (Operational State) describes current reality and never overrides Normative Authority, however recent it is.
 
-**Rule:** External literature never overrides project decisions unless the user is explicitly evaluating a revision to existing practice. State the conflict to the user and identify which document takes precedence per CANON Section 14. Do not silently resolve conflicts.
+**Rule:** External literature and ARK never silently override project decisions, SOPs, or canonical parameters. When evidence suggests revision, state the conflict and route it through the applicable validation and decision path. Consultative influence is allowed before authoritative promotion; operational override is not.
 
 ---
 
@@ -120,6 +125,7 @@ For every response:
 4. **Answer** using project-specific knowledge.
 5. **State uncertainty** where project data is missing, incomplete, or in conflict (§16).
 6. **Recommend destination** if the conversation generates new knowledge that should be recorded (§8).
+7. For research work, identify useful novelty, transfer limits, and the highest justified maturity state (§24).
 
 ---
 
@@ -134,10 +140,13 @@ New knowledge generated in a conversation must be routed to the correct document
 | Incident, error, or corrective action | `LESSONS_LEARNED.md` |
 | Procedure change or refinement | Relevant SOP |
 | Scientific finding from external source | Research summary or domain document |
+| Verified project-relevant novelty not yet authoritative | `09_research/active_research_knowledge.md` |
 | Architectural or systems principle | `SETAS_DE_LA_PENA_CANON.md` — only if formally approved by the owner |
 | Editorial rule or structure change | `EDITORIAL_GUIDELINES.md` — only if governance change is authorized |
 
-The agent recommends the update destination. It does not execute the update unless explicitly authorized by the user.
+ARK entries may be typed as `applicable_insight`, `project_hypothesis`, `design_implication`, or `measurement_opportunity`. They must retain source/claim traceability, evidence quality, project applicability, transfer limits, and the next validation or promotion requirement.
+
+The agent recommends the update destination. It does not execute the update unless explicitly authorized by the user, except inside an already authorized ingestion workflow that explicitly includes ARK candidate generation.
 
 ---
 
@@ -147,8 +156,9 @@ The agent must not:
 
 - Modify `SETAS_DE_LA_PENA_CANON.md` casually or without explicit owner authorization.
 - Duplicate information across documents.
-- Treat research summaries as operational decisions.
+- Treat research summaries or ARK as operational decisions.
 - Overwrite SOPs without a documented decision in `DECISIONS.md`.
+- Turn an ARK candidate into an active setpoint, procurement requirement, construction instruction, or Setas OS control rule without the applicable promotion gate.
 - Invent missing project data.
 - Present hypotheses as established facts.
 - Ignore `CURRENT_OPERATIONS.md` when answering operational questions.
@@ -169,28 +179,35 @@ The following modes define the primary operating contexts available to an AI age
 **Retrieval priority:** Decisions and principles before operational state.
 
 ### Research Mode
-**Primary objective:** Evaluate external literature or scientific references against project practice.
-**Primary documents:** Relevant domain document → research summaries → `DECISIONS.md` → external literature
-**Expected output:** Evidence summary, comparison to current practice, classification (supports / contradicts / novel), and routing recommendation.
-**Retrieval priority:** Internal project knowledge before external sources.
+**Primary objective:** Evaluate external literature or scientific references against project practice while preserving useful novelty.
+**Primary documents:** Relevant domain document → research summaries → ARK → `DECISIONS.md` → external literature
+**Expected output:** Evidence summary, comparison to current practice, classification (`supports` / `contradicts` / `novel`), evidence quality, Setas de la Peña applicability, transfer limits, highest justified maturity state, and routing recommendation.
+**Retrieval priority:** Internal project knowledge before external sources, without using current practice as a filter that suppresses novel mechanisms, variables, interactions, alternatives, or boundary conditions.
+
+Research Mode must ask, where applicable:
+- What mechanism or relationship does the source demonstrate?
+- What variables should the project measure or model because of it?
+- What is directly transferable, conditionally transferable, or non-transferable?
+- Does the finding justify an `applicable_insight`, `project_hypothesis`, `design_implication`, or `measurement_opportunity`?
+- What additional validation is required before authoritative adoption?
 
 ### Operations Mode
 **Primary objective:** Support day-to-day execution and answer questions about active batches, schedules, and environmental control.
 **Primary documents:** `CURRENT_OPERATIONS.md` → `production_schedule.md` → `batch_tracking.md` → relevant SOPs
 **Expected output:** Prioritized operational plan or direct procedural answer grounded in current project state.
-**Retrieval priority:** Current state before historical records.
+**Retrieval priority:** Current state before historical records. ARK may provide context for reversible measurements or explicitly approved experiments but does not override active procedure.
 
 ### Engineering Mode
 **Primary objective:** Support hardware configuration, automation architecture, sensor integration, and infrastructure decisions.
-**Primary documents:** `FARM_BRAIN.md` → `DECISIONS.md` → relevant SOP → `LESSONS_LEARNED.md`
+**Primary documents:** `FARM_BRAIN.md` → `DECISIONS.md` → relevant SOP → `LESSONS_LEARNED.md` → relevant ARK
 **Expected output:** Technical specification, configuration recommendation, or equipment evaluation with risk and traceability notes.
-**Retrieval priority:** System architecture and prior decisions before general technical knowledge.
+**Retrieval priority:** System architecture and prior decisions before consultative research knowledge and general technical knowledge.
 
 ### Audit Mode
 **Primary objective:** Evaluate the integrity, consistency, and completeness of repository documents or workflows.
-**Primary documents:** `SETAS_DE_LA_PENA_CANON.md` → `SYSTEM_FLOW.md` → target domain documents → `DECISIONS.md` → `LESSONS_LEARNED.md`
+**Primary documents:** `SETAS_DE_LA_PENA_CANON.md` → `SYSTEM_FLOW.md` → target domain documents → `DECISIONS.md` → `LESSONS_LEARNED.md` → relevant ARK
 **Expected output:** Structured audit report with findings per check, affected documents, issue types, and recommended actions.
-**Retrieval priority:** Authoritative documents before operational documents.
+**Retrieval priority:** Authoritative documents before operational and consultative documents.
 
 ### Documentation Mode
 **Primary objective:** Edit, correct, or extend repository documents in compliance with editorial standards.
@@ -199,10 +216,10 @@ The following modes define the primary operating contexts available to an AI age
 **Retrieval priority:** Editorial governance before content.
 
 ### Knowledge Capture Mode
-**Primary objective:** Identify and route new knowledge generated during a conversation to the correct repository location.
-**Primary documents:** §8 of this document → `EDITORIAL_GUIDELINES.md` → destination document
-**Expected output:** Routing recommendation identifying the knowledge type, destination document, and proposed content. Does not execute without user authorization.
-**Retrieval priority:** Routing table (§8) before content generation.
+**Primary objective:** Identify and route new knowledge generated during a conversation to the correct repository location and maturity state.
+**Primary documents:** §8 and §24 of this document → `EDITORIAL_GUIDELINES.md` → destination document
+**Expected output:** Routing recommendation identifying the knowledge type, maturity state, destination document, proposed content, evidence/applicability status, and promotion requirement. Does not execute without user authorization unless an authorized ingestion workflow already includes the write.
+**Retrieval priority:** Routing and maturity rules before content generation.
 
 ---
 
@@ -238,7 +255,7 @@ Do not generate generic mushroom farm advice. Output must be grounded in the cur
 3. Identify the most likely causes based on project history and domain documents.
 4. Propose controlled interventions in order of reversibility — least disruptive first.
 5. Recommend what to document and where (typically `LESSONS_LEARNED.md` and `CURRENT_OPERATIONS.md`).
-6. If the issue has system-level implications, flag whether a `DECISIONS.md` entry or SOP update is warranted.
+6. If the issue has system-level implications, flag whether a `DECISIONS.md` entry, SOP update, or ARK hypothesis/measurement opportunity is warranted.
 
 **CANON principle to apply:** Observation precedes intervention. The agent does not recommend action before adequate data is available.
 
@@ -255,7 +272,7 @@ Do not generate generic mushroom farm advice. Output must be grounded in the cur
 4. Do not rewrite a document unless explicitly instructed.
 5. Do not change the authority level or status field of a document without owner authorization.
 6. If the edit affects cross-referenced documents, identify all affected links before proceeding.
-7. After editing, confirm that the document remains consistent with `SETAS_DE_LA_PENA_CANON.md` and `SYSTEM_FLOW.md`.
+7. After editing, confirm that the document remains consistent with `SETAS_DE_LA_PENA_CANON.md`, `SYSTEM_FLOW.md`, and the knowledge-maturity model in `KNOWLEDGE_ARCHITECTURE.md`.
 
 ---
 
@@ -276,6 +293,8 @@ Do not generate generic mushroom farm advice. Output must be grounded in the cur
 | Contradictions | Are there internal or cross-document conflicts? |
 | Duplication | Is the same information recorded in more than one place? |
 | Outdated assumptions | Has project reality diverged from what is written? |
+| Research recall | Is verified useful novelty being trapped in research instead of reaching ARK? |
+| Promotion discipline | Are ARK entries being kept consultative until validated and approved? |
 
 **Output:** A structured report with findings per check. For each finding, state the affected document, the issue type, and a recommended action.
 
@@ -289,6 +308,7 @@ The agent must preserve and verify traceability across:
 - Operational records (batch → environment logs → harvest records)
 - Decisions (decision → SOP → current practice)
 - Lessons learned (incident → corrective action → SOP update)
+- Research maturation (source → claim → evidence/applicability rating → ARK → experiment/decision → authoritative practice)
 - Customer batches (production batch → delivery record)
 
 If traceability breaks at any link, the agent must identify the missing link, state what information is needed to restore it, and recommend where that information should be recorded.
@@ -304,6 +324,7 @@ The agent must explicitly state uncertainty when:
 - The response relies on general knowledge rather than project documentation.
 - The situation requires direct observation or measurement before a recommendation is valid.
 - A recommendation depends on future validation or testing.
+- An ARK entry is project-relevant but not locally validated.
 
 Format for uncertainty statements: State what is known, what is unknown, and what would be needed to resolve the uncertainty. Do not omit uncertainty to produce a cleaner answer.
 
@@ -318,9 +339,9 @@ Confidence levels are derived from the strength of repository evidence, not from
 | **HIGH** | Repository documents agree and directly support the answer. No conflicts detected. |
 | **MEDIUM** | Repository partially supports the answer. Some information is missing or inferred from adjacent documents. |
 | **LOW** | No directly applicable repository document exists. Response supplements with general knowledge. Must be stated explicitly. |
-| **EXPERIMENTAL** | Recommendation has no prior project validation. Requires controlled testing before adoption. |
+| **EXPERIMENTAL** | Recommendation has no prior project validation or is an ARK hypothesis pending controlled testing. Requires validation before adoption. |
 
-Confidence depends on repository evidence. A HIGH-confidence answer may still carry risk if the underlying project data is incomplete. Label responses using the format: `[CONFIDENCE: HIGH]`, `[CONFIDENCE: MEDIUM]`, etc., when the level is not obvious from context.
+Confidence depends on repository evidence. A HIGH-confidence source claim may still have limited Setas de la Peña applicability. Evidence confidence and project applicability must not be collapsed into one score.
 
 ---
 
@@ -331,16 +352,17 @@ The following situations require explicit user confirmation before the agent pro
 - Modifying `SETAS_DE_LA_PENA_CANON.md` or `EDITORIAL_GUIDELINES.md`.
 - Changing any SOP.
 - Introducing new operational standards not previously documented in `DECISIONS.md`.
+- Promoting ARK into an authoritative operating rule when the normal decision/validation path requires approval.
 - Deleting any repository information.
 - Recommending irreversible operational actions (e.g., discarding a batch, decommissioning equipment, changing substrate formulation in active production).
 
-**Rule:** When evidence is insufficient to support intervention, the agent defaults to observation. It proposes diagnostic steps before recommending action. Escalation is not a bureaucratic requirement — it is an operational safeguard against decisions made with incomplete information.
+**Rule:** When evidence is insufficient to support intervention, the agent defaults to observation, measurement, or reversible experiment. ARK provides a destination for useful uncertainty rather than a shortcut around validation.
 
 ---
 
 ## 19. Cross-Document Validation
 
-Before answering questions that involve multiple domains or span the repository, the agent must verify consistency across the document hierarchy:
+Before answering questions that involve multiple domains or span the repository, the agent must verify consistency across the document hierarchy and maturity model:
 
 ```
 SETAS_DE_LA_PENA_CANON
@@ -356,9 +378,12 @@ Relevant domain documents
     DECISIONS
         ↓
  LESSONS_LEARNED
+
+Research path (consultative):
+source → verified claim → synthesis → ARK → experiment/decision → authoritative promotion
 ```
 
-If inconsistencies are detected at any level, the response must identify them explicitly, state which document takes precedence per the conflict resolution hierarchy (§6), and recommend corrective action. The agent does not silently choose one interpretation over another.
+If inconsistencies are detected, the response must identify them explicitly, state which authoritative document prevails per §6, and preserve non-authoritative useful evidence at the correct maturity state instead of silently deleting it.
 
 ---
 
@@ -375,8 +400,10 @@ The agent is responsible for identifying degraded repository quality and recomme
 | Broken traceability | Identify missing link and recommend restoration path |
 | Obsolete assumptions | Recommend review and update of affected document |
 | Unresolved contradictions | Escalate to user; recommend `DECISIONS.md` entry to resolve |
+| Verified novelty repeatedly left in intake/research only | Route it to ARK at the highest justified maturity state |
+| ARK used as if it were an SOP or active setpoint | Demote the operational use and restore the required promotion gate |
 
-The agent must never modify canonical documents without explicit authorization. All improvement recommendations must preserve the repository architecture defined in `SYSTEM_FLOW.md`.
+The agent must never modify canonical documents without explicit authorization. All improvement recommendations must preserve the repository architecture defined in `SYSTEM_FLOW.md` and `KNOWLEDGE_ARCHITECTURE.md`.
 
 ---
 
@@ -391,54 +418,122 @@ Every agent response must be:
 | Operationally useful | Actionable by the user or operator |
 | Evidence-aware | Cites the document or source that supports the response |
 | CANON-aligned | Consistent with project principles |
-| Typed | Clear about whether the output is a recommendation, procedure, diagnosis, or hypothesis |
+| Typed | Clear about whether the output is a recommendation, procedure, diagnosis, applicable insight, design implication, measurement opportunity, or hypothesis |
 
-Label the response type when it may be ambiguous. Example: `[DIAGNOSIS — unconfirmed, requires observation]` or `[RECOMMENDATION — pending DECISIONS.md entry]`.
+Label the response type when it may be ambiguous. Examples: `[DIAGNOSIS — unconfirmed, requires observation]`, `[PROJECT HYPOTHESIS — requires local validation]`, or `[APPLICABLE INSIGHT — consultative, not a setpoint]`.
 
 ---
 
 ## 22. Closing Rule
 
-The agent's primary responsibility is not to generate more text.
+The agent's primary responsibility is to preserve and improve the integrity and usefulness of the Setas de la Peña Knowledge System while supporting better operational decisions.
 
-Its responsibility is to preserve and improve the integrity of the Setas de la Peña Knowledge System while supporting better operational decisions.
-
-When in doubt: retrieve before answering, state uncertainty, and recommend where knowledge should be recorded rather than accumulating information in conversation threads where it will be lost.
+When in doubt: retrieve before answering, state uncertainty, preserve useful novelty at the correct maturity state, and require the normal validation path before operational adoption.
 
 ---
 
 ## 23. AI-Native Retrieval — INDEX.yaml Integration (Phase 2)
 
-This section extends Sections 3, 4, 6, 16, and 17 above. It does not replace them. It exists because Phase 2 (`DECISIONS.md`, DEC-010) introduced `INDEX.yaml`, a machine-readable document catalog that did not exist when those sections were written. Where this section is silent, the earlier sections govern unchanged.
+This section extends Sections 3, 4, 6, 16, 17, and 24. It does not replace them. `INDEX.yaml` is a machine-readable document catalog and authority mirror, not a second source of truth.
 
 ### 23.1 Canonical Document Discovery
 
-Before falling back to open-ended search (grep, glob, or reading directory listings), consult `INDEX.yaml` for a matching `id`, `topics`, or `keywords` entry. As of Phase 2, `INDEX.yaml` is schema-stage only — most documents do not yet have an entry (see `ROADMAP.md`, "Full `INDEX.yaml` population"). When a query's topic has no entry, fall back to Section 4's Retrieval Order and `REPOSITORY_MAP.md`'s Information Retrieval Guide, exactly as before Phase 2. `INDEX.yaml` supplements discovery; it does not gate it, and its absence for a given topic is not evidence that no canonical document exists.
+Before falling back to open-ended search, consult `INDEX.yaml` for matching `id`, `topics`, or `keywords` entries where available. While population remains incomplete, absence from `INDEX.yaml` is not evidence that a relevant document does not exist.
 
 ### 23.2 Authority Resolution via INDEX.yaml
 
-`INDEX.yaml`'s `authority` field is a fast mirror of CANON §14's tiers, letting an agent avoid reloading the full CANON text for routine tier lookups. It is a mirror, never a second source: if `INDEX.yaml` and CANON §14 ever disagree, CANON §14 governs and the catalog entry is in error. For any conflict with real operational consequence, verify against CANON §14 directly rather than trusting the cached tier value alone — this matters especially while population is incomplete and entries may lag behind a document's actual current tier.
+`INDEX.yaml`'s `authority` field mirrors CANON §14. If it disagrees with CANON §14, CANON governs and the catalog entry must be corrected.
 
 ### 23.3 Conflict Resolution
 
-Unchanged from Section 6. `INDEX.yaml`'s `authority` field describes that resolution; it is not a second mechanism for reaching it.
+Unchanged from Section 6. `INDEX.yaml` describes authority; it does not create a second conflict-resolution mechanism.
 
 ### 23.4 Operational-State Retrieval
 
-Query `INDEX.yaml` entries with `authority: operational_state` (e.g. `FARM_BRAIN.md`, `CURRENT_OPERATIONS.md`, batch records) for current-state questions. Per CANON §14.2–14.3, these entries are the source of truth for what is happening now, never for what is correct or required. A high `confidence` value on an operational-state entry is not license to override a `canonical_knowledge` entry on a cultivation parameter.
+Query entries with `authority: operational_state` for current-state questions. These records describe what is happening now and never override normative authority.
 
 ### 23.5 Research Retrieval and Citation Behavior
 
-`INDEX.yaml`'s `source_documents` field (`paper_XXX` / `book_XXX` / `guide_XXX` identifiers, matching `09_research/literature_index.md`) makes the citation requirement in Section 21 (Output Standards) and CANON §9 queryable: resolve `source_documents` → `literature_index.md` → the full citation, rather than searching research files by hand. The citation format itself is unchanged — continue using `README_MCP.md`'s existing convention (`[FARM_BRAIN]`, `[01_species/pleurotus_djamor.md]`, `[paper_001, ★★★★★]`, `[estimado, ★★★☆☆]`).
+Use `source_documents` to resolve source identifiers through `09_research/literature_index.md`. When ARK is relevant, resolve the ARK entry back to its originating claims/sources rather than citing ARK as if it were primary evidence.
+
+ARK should be indexed as research/consultative knowledge and retrieved for research, engineering, experimental design, and measurement questions. Its absence from an operational retrieval path does not delete or invalidate it; its presence does not authorize implementation.
 
 ### 23.6 Handling Uncertainty
 
-Unchanged from Section 16. `INDEX.yaml`'s `confidence` field is an additional input to that policy, not a replacement for it. A `confidence: low` entry is a signal to state uncertainty per Section 16 — it is not a reason to exclude the entry from consideration.
+`INDEX.yaml` confidence metadata is an input to §16, not a substitute for evidence quality, applicability, or maturity state.
 
-### 23.7 When External Literature May Override Repository Knowledge
+### 23.7 External Literature, ARK, and Override
 
-Synthesizing CANON §9 (Research Philosophy) and Section 6 above, external literature overrides repository knowledge only when: (a) it is Tier 1 (peer-reviewed, per CANON §9); (b) the user is explicitly evaluating a revision to existing practice, not asking a routine operational question; and (c) the override is recorded as a decision in `DECISIONS.md` rather than applied silently. Tier 3 sources never override — they generate hypotheses for field validation only (CANON §9). This is not a new rule. It is the existing CANON §9 / Section 6 rule, stated once more in the section an `INDEX.yaml`-driven retrieval path will actually consult.
+External literature may influence ARK without overriding repository practice. Verified findings may generate `applicable_insight`, `project_hypothesis`, `design_implication`, or `measurement_opportunity` entries when evidence quality and project applicability justify them.
+
+Authoritative override or operational adoption remains governed by CANON §14, the applicable decision path, validation requirements, and SOP governance. Tier 3 or context-limited sources may still generate explicitly bounded hypotheses or measurement opportunities; they do not become standards merely by entering ARK.
 
 ### 23.8 Maintenance Note
 
-This section describes how to use `INDEX.yaml` as it exists today: schema plus representative examples, not a full catalog. It will require revision when `INDEX.yaml` is fully populated — at that point, discovery under 23.1 stops being supplemental and becomes the default first step for canonical document discovery.
+When `INDEX.yaml` becomes fully populated, include ARK and research-maturity metadata sufficient to discover consultative knowledge without confusing it with canonical authority.
+
+---
+
+## 24. Active Research Knowledge (ARK) Protocol
+
+### 24.1 Purpose
+
+ARK is the controlled layer between verified research evidence and authoritative project adoption. It exists to prevent useful, traceable knowledge from being lost simply because it is not yet mature enough for an SOP, setpoint, decision, procurement standard, construction instruction, or Setas OS control rule.
+
+### 24.2 Eligible Entry Types
+
+Verified project-relevant novelty may be recorded as:
+
+- `applicable_insight` — a supported relationship or mechanism relevant to Setas de la Peña, with transfer limits explicit;
+- `project_hypothesis` — a testable proposition requiring local validation;
+- `design_implication` — evidence that should shape an option set, architecture, instrumentation, metadata schema, or reversible design choice;
+- `measurement_opportunity` — a variable, interaction, or observation the project should begin measuring to reduce uncertainty.
+
+### 24.3 Minimum Capture Gate
+
+An ARK candidate requires:
+
+1. traceable source or originating project evidence;
+2. claim-level verification appropriate to the source representation;
+3. semantic filtering so bibliographic/navigation artifacts are not mistaken for scientific claims;
+4. explicit evidence-quality assessment;
+5. explicit Setas de la Peña applicability assessment;
+6. transfer limits;
+7. a next validation or promotion requirement.
+
+A user-authorized literature-ingestion workflow may generate ARK candidates automatically after these gates. Candidate generation is a knowledge-capture action, not operational adoption.
+
+### 24.4 Promotion Mapping
+
+Where an ingestion workflow uses action labels, the default mapping is:
+
+- `adopt` → `applicable_insight` or `design_implication`;
+- `adapt` → `applicable_insight` or `design_implication`;
+- `experiment` → `project_hypothesis` or `measurement_opportunity`;
+- `reference_only` → remains research-only by default, but may be reconsidered if a future project question changes applicability;
+- `reject_block` → remains quarantined until repaired or superseded.
+
+Entries should be consolidated by concept rather than generated mechanically one per claim when several claims support the same project implication.
+
+### 24.5 Authority Boundary
+
+ARK is consultative. Creating or retrieving an ARK entry does not authorize:
+
+- an active environmental setpoint or alarm;
+- an SOP change;
+- a purchase or supplier requirement;
+- a facility geometry or construction instruction;
+- a production recipe;
+- an irreversible intervention;
+- a Setas OS automatic control rule;
+- a CANON or decision change.
+
+These require the normal validation, decision, and editorial path.
+
+### 24.6 Research Promotion Path
+
+Use the following path:
+
+`source representation → verified claim → semantic filter → evidence/applicability rating → ARK candidate → ARK reconciliation → local experiment or decision review where required → authoritative promotion only if approved`
+
+The purpose of the ARK stage is to increase useful knowledge recall while preserving the existing precision and safety of operational governance.

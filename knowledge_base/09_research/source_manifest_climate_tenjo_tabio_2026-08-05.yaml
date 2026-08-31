@@ -1,0 +1,136 @@
+intake_date: 2026-08-05
+scope: audit of a submitted climatology and agroecological suitability synthesis for mushroom cultivation in Tenjo and Tabio
+curatorial_status: audited_as_submitted_synthesis_not_independent_evidence
+binary_policy: original pasted text not committed; only curatorial audit, metadata, URLs and limited summaries
+transfer_rule: no claim from the submitted synthesis may become a setpoint, SOP, purchase specification, facility dimension or seasonal disease calendar without primary or official evidence plus local validation
+related_documents:
+  - climate_agroecology_tenjo_tabio_claim_audit_2026-08-05.md
+  - high_altitude_microclimate_shiitake_hericium_2026-08-05.md
+  - unresolved_questions.md
+  - ../04_facility/marranera_medium_scale_design_basis.md
+
+submitted_artifact:
+  source_id: submitted_climate_synthesis_001
+  title: Análisis Climatológico y Evaluación de Aptitud Agroecológica para el Cultivo Industrial de Setas en Tenjo y Tabio
+  received_as: Pasted text(20260806-044030).txt
+  source_type: user_submitted_synthesis
+  language: es
+  line_count: 290
+  rights_status: user supplied for repository analysis; original text not redistributed
+  verification_status: partially audited
+  evidence_class: E4_synthesis_with_mixed_sources
+  permitted_use: claim discovery, risk mapping and research-question generation
+  prohibited_use:
+    - operational setpoints
+    - HVAC or insulation sizing
+    - supplier approval
+    - disease seasonality claims
+    - species transfer
+    - shelf-life or yield claims
+  structural_defects:
+    - numeric citations do not map to a numbered bibliography
+    - several CO2 and pH symbols were lost in export
+    - sources of incompatible evidence quality are pooled
+    - local causal claims exceed the listed evidence
+    - irrelevant sources are included
+
+verified_or_context_sources:
+  - source_id: climate_screening_001
+    citation_key: WeatherSpark_Tenjo
+    title: El clima y el tiempo promedio en todo el año en Tenjo
+    source: WeatherSpark
+    url: https://es.weatherspark.com/y/23341/Clima-promedio-en-Tenjo-Colombia-durante-todo-el-a%C3%B1o
+    source_type: secondary_modelled_climate_portal
+    evidence_class: E3
+    evidence_scope: [temperature_screening, cloud_cover_screening, precipitation_seasonality_screening, wind_screening]
+    verification_status: page_verified
+    rights_status: link and limited summary only
+    transfer_limit: MERRA-2 based reconstruction at coarse spatial resolution; not a local station normal or microclimate measurement
+
+  - source_id: climate_method_001
+    citation_key: NASA_MERRA2_Methodology
+    title: MERRA-2 system characteristics and meteorological methodology
+    source: NASA Global Modeling and Assimilation Office / NASA POWER
+    url: https://gmao.gsfc.nasa.gov/gmao-products/merra-2/system-characteristics_merra-2/
+    source_type: official_model_documentation
+    evidence_class: E1_official_method
+    evidence_scope: [data_assimilation, spatial_resolution, reanalysis_limitations]
+    verification_status: verified
+    rights_status: public government web source
+    transfer_limit: explains the model; does not validate Tenjo microclimate
+
+  - source_id: climate_local_001
+    citation_key: Alcaldia_Tenjo_Ecologia
+    title: Ecología — Municipio de Tenjo
+    source: Alcaldía Municipal de Tenjo
+    url: https://www.tenjo-cundinamarca.gov.co/MiMunicipio/Paginas/Ecologia.aspx
+    source_type: official_municipal_secondary_profile
+    evidence_class: E2_institutional_secondary
+    evidence_scope: [altitude, municipal_mean_temperature, municipal_annual_precipitation, local_climate_description]
+    verification_status: page_verified
+    rights_status: public institutional web source
+    transfer_limit: station, period and quality-control metadata are not stated; use as context only
+
+  - source_id: pathology_001
+    citation_key: AHDB_Bacterial_Blotch
+    title: Identification and control of bacterial blotch on mushrooms
+    source: Agriculture and Horticulture Development Board archive
+    url: https://archive.ahdb.org.uk/knowledge-library/identification-and-control-of-bacterial-blotch-on-mushrooms
+    source_type: technical_extension_guidance
+    evidence_class: E2
+    evidence_scope: [cap_wetness, dew_point, airflow, bacterial_blotch]
+    verification_status: verified
+    rights_status: cite and limited summary
+    transfer_limit: primarily Agaricus guidance; seasonal timing in Tenjo is not established
+
+  - source_id: pathology_002
+    citation_key: Soler_Rivas_et_al_1999
+    title: Biochemical and physiological aspects of brown blotch disease of Agaricus bisporus
+    source: FEMS Microbiology Reviews 23:591-614
+    doi: 10.1111/j.1574-6976.1999.tb00415.x
+    source_type: peer_reviewed_review
+    evidence_class: E1
+    evidence_scope: [Pseudomonas_tolaasii, temperature, humidity, disease_mechanism]
+    verification_status: verified
+    rights_status: citation and limited summary
+    transfer_limit: Agaricus-centered; does not establish Tenjo month-by-month incidence
+
+submitted_reference_disposition:
+  relevant_pending_primary_review:
+    - UNAD Pleurotus substrate thesis
+    - Universidad de Nariño Pleurotus studies
+    - Cenicafe oyster and shiitake publication
+    - SENA commercial oyster guide
+    - Universidad de El Salvador applied cultivation report
+    - Javeriana feasibility study
+  practitioner_or_secondary_only:
+    - Setas y Hongos del Sur FAQ
+    - Producción de Setas 2023 presentation
+  unsuitable_without_original:
+    - Scribd mirrors and uploads
+  irrelevant_to_scope:
+    - Arqueoastronomía Muisca
+    - Programa Ondas Cundinamarca
+    - Tartas y Pasteles de Queso
+
+claim_disposition:
+  retained_as_design_context:
+    - cool exterior air may be useful during some operating windows
+    - nocturnal heat loss is a relevant incubation risk
+    - condensation and cap wetness require active management
+    - filtration and insect exclusion require design attention
+    - local multipoint monitoring is mandatory before sizing
+  retained_as_hypothesis_only:
+    - bimodal seasonal influence on facility load
+    - topographic differences between Tenjo and Tabio
+    - free-cooling and heat-recovery operating modes
+    - high-pressure fogging or ultrasonic humidification
+  rejected_as_operational_standard:
+    - universal species setpoints
+    - no ventilation during incubation
+    - fixed 4 to 8 air changes per hour
+    - universal CO2 threshold below 800 to 1000 ppm
+    - fixed 50 mm insulation minimum
+    - fixed G4 plus F7/F9 plus 50 mesh filtration train
+    - fixed 70 to 80 bar fogging specification
+    - fixed disease-risk months

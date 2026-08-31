@@ -1,5 +1,6 @@
 ---
 title: Ganoderma lucidum — Reishi / Lingzhi
+document_id: DOC-0005
 category: species
 load_priority: selective
 last_reviewed: 2026-07-04
@@ -45,7 +46,7 @@ Supported by:
 - **Orden:** Polyporales
 - **Familia:** Ganodermataceae
 
-> **Nota nomenclatural.** El material medicinal asiático tradicionalmente comercializado como *G. lucidum* corresponde, en la taxonomía actual, a *Ganoderma lingzhi* (Cao et al. 2012); *G. lucidum* sensu stricto es un taxón europeo. Se mantiene "*G. lucidum*" como nombre de uso comercial en este documento, con esta salvedad. Relevante para etiquetado y claims medicinales (ver open questions INVIMA). Fuente: Piepenbring 2015 (book_005).
+> **Nota nomenclatural.** El material medicinal asiático tradicionalmente comercializado como *G. lucidum* corresponde, en la taxonomía actual, a *Ganoderma lingzhi* (Cao et al. 2012); *G. lucidum* sensu stricto es un taxón europeo. Se mantiene "*G. lucidum*" como nombre de uso comercial en este documento, con esta salvedad. Relevante para etiquetado y claims medicinales (ver open questions INVIMA). Fuente: Piepenbring 2015 (ref_alt_001).
 
 ## Compuestos Bioactivos
 | Compuesto | Acción |
@@ -118,6 +119,6 @@ Supported by:
 # References
 - Wachtel-Galor, S. et al. (2011). Ganoderma lucidum: A Potent Pharmacological Macrofungus. In *Herbal Medicine*, CRC Press.
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
-- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006]
+- Rodríguez Valencia, N. & Jaramillo López, C. (2005). *Cultivo de hongos medicinales en residuos agrícolas de la zona cafetera*. Cenicafé/FNC, Chinchiná, Caldas. [paper_006 / paper_006]
 - Zied, D.C. & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms*. Wiley-Blackwell.
 - Piepenbring, M. (2015). *Introducción a la Micología en los Trópicos*. APS Press. [Sinonimia *G. lingzhi* / *G. lucidum*, Cao et al. 2012]

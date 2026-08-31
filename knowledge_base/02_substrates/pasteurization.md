@@ -1,5 +1,6 @@
 ---
 title: Pasteurización de Sustratos
+document_id: DOC-0011
 category: substrates
 load_priority: selective
 last_reviewed: 2026-06-29

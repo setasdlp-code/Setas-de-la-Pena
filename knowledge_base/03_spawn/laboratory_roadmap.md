@@ -145,7 +145,7 @@ Laboratory capability develops through four sequential levels, each demonstratin
 - Construct Still Air Box
 - Develop agar technique
 - Achieve <10% contamination rate
-- Successfully isolate and maintain P. djamor strain
+- Successfully isolate and maintain the selected L. edodes strain after external spawn has been validated
 - Produce minimum 50 clean agar plates
 
 **Tools & Equipment:**
@@ -177,7 +177,7 @@ Laboratory capability develops through four sequential levels, each demonstratin
 **Duration:** 12–16 weeks (overlaps with production Phase 2)
 
 **Objectives:**
-- Acquire P. djamor spawn from external supplier
+- Acquire traceable L. edodes spawn with strain or commercial code from an external supplier
 - Validate grain spawn production protocol
 - Establish reproducible colonization timeline
 - Build grain spawn documentation and QC procedures

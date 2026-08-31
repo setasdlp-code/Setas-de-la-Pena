@@ -1,156 +1,85 @@
 ---
-title: Resúmenes de Investigación por Tema
+title: Síntesis de Investigación Aplicada
+document_id: DOC-0044
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-23
+last_reviewed: 2026-07-24
 confidence: medium
 primary_sources:
-  - literature_database.md
+  - book_007
+  - paper_006
+  - paper_007
+  - guide_002
 related_documents:
+  - literature_audit_2026-07-23.md
   - literature_database.md
-  - literature_index.md
   - unresolved_questions.md
-  - incubation_fruiting_chambers_2026.md
+  - ../01_species/lentinula_edodes.md
 ---
 
-# Executive Summary
-Síntesis temática del estado del conocimiento científico aplicado a Setas de la Peña. Cada sección resume lo que sabemos con certeza, lo que está en debate y lo que es incógnita activa.
+# Alcance
 
----
+Esta síntesis interpreta la literatura para el estado actual del proyecto. *Lentinula edodes* es la especie prioritaria de arranque; *Pleurotus djamor* permanece como candidato futuro. La evidencia de investigación no sustituye una especificación operacional aprobada.
 
-## TEMA 1: FAE (Fresh Air Exchange) y Ventilación
+# Shiitake: cepa, madurez e inducción
 
-### Lo que está respaldado
-- El CO₂ y la morfología deben gobernar el ajuste de ventilación durante fructificación.
-- guide_003 aporta un rango de CO₂ de 500–1.500 ppm para *P. djamor*; se adopta >2.000 ppm como alarma operacional conservadora.
-- H. erinaceus es más sensible: >1000 ppm CO₂ afecta formación de espinas.
+Chang y Miles (book_007, cap. 13) distinguen cepas de fructificación baja, media y alta temperatura. La necesidad de choque frío depende de la cepa. Por tanto:
 
-### Mecanismo comprendido
-- Las plantas fructíferas se orientan hacia fuentes de CO₂ bajo (hacia el aire fresco).
-- FAE insuficiente = caps apuntando hacia la ventilación en lugar de crecer normalmente.
-- El FAE también controla la humedad relativa — exceso de FAE puede resecar el ambiente.
+- 10–16°C no es un rango universal;
+- el choque frío no es obligatorio para toda cepa;
+- la identidad y clase térmica del spawn son datos de entrada críticos;
+- la transición a fructificación debe usar señales de madurez del bloque y una estrategia versionada.
 
-### Implicación para Setas de la Peña
-- Usar 5–8 ACH solo como objetivo provisional de commissioning, no como resultado demostrado por paper_001.
-- Calcular `ACH = caudal efectivo × 60 / volumen` y medir el caudal instalado; los minutos ON/OFF solo determinan el ciclo de trabajo.
-- Controlar el extractor vía ESP32/HA principalmente por CO₂, con límites de seguridad y una línea base validada en campo.
+Para troncos sintéticos, la literatura describe colonización, formación de protuberancias y pardeamiento como etapas relevantes. Sus tiempos sirven para planificar observaciones, no como calendario garantizado.
 
----
+# Sustrato inicial de shiitake
 
-## TEMA 2: Humedad Relativa, Punto de Rocío y VPD
+El programa prioriza la familia de serrín de madera dura suplementado y esterilizado. La receta exacta sigue pendiente.
 
-### Lo que la ciencia dice con certeza (★★★★★)
-- La HR de fructificación depende de la especie y debe interpretarse junto con temperatura; el punto de rocío y el VPD ayudan a diagnosticar evaporación y condensación.
-- Si la temperatura superficial está por encima del punto de rocío, existe potencial de evaporación; si está por debajo, puede condensarse agua sobre el tejido.
-- El sensor de HR mide el aire, no la superficie del hongo.
+paper_006 reporta la formulación T2 de subproductos de café y un rendimiento medio de 57,6% en su contexto experimental. Ese resultado:
 
-### Aplicación práctica
-- HR 90% a 24°C produce un punto de rocío cercano a 22,3°C: una superficie a 21°C puede condensar; una superficie a 24°C todavía tiene potencial de evaporación.
-- La niebla fría puede modificar simultáneamente HR y temperatura superficial; su efecto debe medirse, no asumirse siempre beneficioso.
-- El VPD del aire sirve para comparar condiciones, pero no se adopta un setpoint universal para hongos sin temperatura superficial y validación por especie.
+- conserva la definición del estudio y no se traduce automáticamente a BE;
+- fue obtenido con cepas y clima específicos;
+- no demuestra disponibilidad comercial actual de L54 o L4055;
+- requiere validación en Tenjo antes de convertirse en receta.
 
-### Implicación para Setas de la Peña
-- Usar SHT3x para medir T° y HR del aire.
-- En HA: calcular punto de rocío y VPD como variables diagnósticas, además de HR.
-- Ante grietas, bordes secos, abortos o tejido mojado: revisar margen superficie–punto de rocío, patrón de aire y agua libre; no diagnosticar por HR sola.
+# Esterilización y altitud
 
----
+Los sustratos suplementados de shiitake requieren un proceso térmico controlado. El autoclave está en sitio, pero el ciclo representativo no está comisionado ni validado.
 
-## TEMA 3: Eficiencia Biológica (BE) y Sustratos
+Aproximadamente 2.600 m s. n. m. cambia el punto de ebullición del agua y exige distinguir vapor a presión atmosférica de esterilización presurizada. La presión, temperatura, tiempo, carga y penetración térmica deben registrarse; una duración aislada no prueba esterilidad.
 
-### Lo que está respaldado (★★★☆☆)
-- guide_002 presenta un potencial de BE de **80–100%** para *P. djamor* sobre pajas agrícolas; falta validarlo con paja local y el proceso real.
-- paper_001 no estudió paja de trigo: su BE máxima fue 31,1% en formulaciones basadas en paja de arroz/cocopeat/salvado.
-- P. djamor es el Pleurotus con mayor tolerancia a CO₂ — permite FAE menos agresivo que P. ostreatus.
-- Eucalipto (Eucalyptus spp.) contiene inhibidores (cineol, eucaliptol) que impiden colonización de P. djamor.
+# Pleurotus djamor: límites de la evidencia
 
-### Lo que está en debate (★★★☆☆)
-- BE real con paja colombiana local (variabilidad de nutrientes por variedad y región).
-- Efecto de la altitud de Tenjo (2600m) en tasa de colonización y BE — sin datos publicados.
+La literatura revisada confirma que *P. djamor* es un hongo de afinidad cálida y que puede utilizar diversos residuos lignocelulósicos. No respalda una regla universal para Tenjo de:
 
-### Implicación para Setas de la Peña
-- Sustrato de inicio: paja de trigo local, pasteurizada.
-- Documentar BE de cada lote como KPI principal.
-- No usar ningún sustrato de madera de eucalipto.
-- Registrar BE sin fijar todavía un umbral de aceptación local. Tras tres lotes comparables, establecer línea base y criterio de revisión.
+- 5–8 ACH;
+- 5 minutos ON / 20 minutos OFF;
+- CO₂ máximo único;
+- BE de 80–130%;
+- incompatibilidad absoluta con eucalipto.
 
----
+Un timer solo describe el actuador. Para expresar ACH se necesitan volumen efectivo y caudal bajo la resistencia real del sistema. Cualquier piloto futuro debe identificar cepa, sustrato y cámara y medir su respuesta.
 
-## TEMA 4: Hericium erinaceus — Compuestos Medicinales
+# Tenjo y control ambiental
 
-### Lo que la ciencia dice con certeza (★★★★★)
-- Hericenones (del cuerpo fructífero) y erinacinas (del micelio) son los compuestos bioactivos principales.
-- Inducen síntesis de NGF (Nerve Growth Factor) in vitro — demostrado en múltiples estudios.
-- Las erinacinas cruzan la barrera hematoencefálica (estudios en animales).
+La temperatura exterior de Tenjo no basta para aprobar una cepa. El proyecto debe registrar microclima real de incubación y fructificación, compensar el SCD30 a 2.600 m y validar sensores en alta humedad.
 
-### Lo que está en debate o es limitado (★★★☆☆)
-- Los estudios clínicos en humanos son escasos y de pequeña escala.
-- Dosis efectiva para consumo oral no está bien establecida.
-- La mayoría de estudios son japoneses o coreanos — variabilidad de cepas.
+Las cámaras CLOUDLAB y Terra Fungus son infraestructura disponible para prueba. Sus bandas de control se definen después de conocer la cepa y completar mediciones de volumen, caudal y estabilidad.
 
-### Implicación para Setas de la Peña
-- Posicionar H. erinaceus como "hongo funcional con propiedades neuroprotectoras estudiadas" — no como medicamento.
-- Claims de marketing deben incluir disclaimer de que los estudios son preliminares.
-- No hacer claims de tratamiento o cura — riesgo regulatorio INVIMA Colombia.
+# Evidencia medicinal y claims
 
----
+La corrección de paper_002 confirma que Mori et al. (2009) fue un ensayo pequeño en deterioro cognitivo leve, no un estudio celular de NGF. Ninguna ficha de especie autoriza claims de tratamiento. Cualquier mensaje nutricional o medicinal exige evidencia específica del producto y revisión regulatoria.
 
-## TEMA 5: Altitud y Condiciones de Tenjo (2600m s.n.m.)
+# Decisiones operacionales derivadas
 
-### Lo que sabemos (★★★☆☆)
-- A 2600m el punto de ebullición del agua es ~91°C — crítico para pasteurización (requiere más tiempo o temperatura).
-- La presión atmosférica reducida afecta las lecturas del sensor SCD30 de CO₂ — requiere compensación de altitud.
-- La temperatura promedio en Tenjo (12–22°C) es baja para P. djamor (óptimo 24–28°C) → puede requerir calefacción nocturna.
+1. Comprar spawn de shiitake solo con trazabilidad suficiente para identificar proveedor, lote y cepa o código comercial.
+2. Aprobar una formulación antes de preparar el lote.
+3. Validar el autoclave con carga representativa.
+4. Definir criterios de madurez, inducción, ambiente y cosecha en la especificación del lote.
+5. Medir BE, contaminación, calidad y pérdidas sin imponer metas previas al piloto.
+6. Mantener *P. djamor* fuera del arranque hasta revisar los primeros ciclos documentados de shiitake.
 
-### Sin datos publicados
-- Efecto de altitud 2600m específicamente en tasa de colonización de P. djamor.
-- Adaptación de cepas tropicales a temperaturas nocturnas <15°C.
+# Referencias
 
-### Implicación para Setas de la Peña
-- SCD30: configurar `altitude_compensation: 2600` en ESPHome (ya documentado).
-- Pasteurización: extender tiempo a 80 min o verificar temperatura interna del sustrato con termómetro.
-- Monitorear temperatura nocturna con Inkbird — si baja de 18°C, añadir calefactor PTC.
-
----
-
-## TEMA 6: Sterilización vs. Pasteurización
-
-### Consenso científico claro (★★★★★)
-- **Pasteurización (75–82°C, 60 min):** Suficiente para sustratos de bajo nitrógeno (<10% N). Elimina competidores pero no todas las esporas.
-- **Esterilización (121°C, 15 psi, 2–3h):** Requerida para sustratos suplementados con >10% N (Master's Mix, granos). Elimina todo incluyendo endosporas.
-- Error crítico: esterilizar en olla de presión doméstica sin verificar que alcanza 15 psi → puede no llegar a 121°C.
-
-### A 2600m s.n.m.
-- Olla de presión a 15 psi *por encima de la presión local* sí alcanza 121°C — la compensación de presión ya está incorporada en la física.
-- La clave es verificar que el manómetro marque 15 psi sostenidos durante 2–3h.
-
-### Implicación para Setas de la Peña
-- Fase 1 (sin autoclave): solo paja pasteurizada = P. djamor, P. ostreatus.
-- Fase 2 (con autoclave): desbloquea Master's Mix, granos, H. erinaceus, L. edodes.
-
----
-
-## TEMA 7: Cámaras de Cultivo, Sensores y Automatización Avanzada
-
-### Lo que está respaldado
-
-- Un valor central de T/HR/CO₂ no demuestra uniformidad; posición de entradas, salidas, carga y estanterías puede crear zonas muertas.
-- El CO₂ se mezcla con el aire en presencia de movimiento. La altura del extractor no se define solo por densidad del gas.
-- La temperatura interna del sustrato puede superar la del aire por calor metabólico durante colonización.
-- Sistemas IoT de bajo costo permiten monitoreo y control remoto, pero muchos estudios validan la plataforma más que el rendimiento biológico multilot.
-- Esporas y otros bioaerosoles de salas de fructificación constituyen un riesgo ocupacional documentado.
-
-### Avances 2024–2026
-
-- Datos visuales de *Pleurotus* con variables ambientales sincronizadas habilitan investigación local de madurez y deformaciones (paper_014).
-- Control predictivo y redes informadas por física reportan ahorro energético en salas industriales de otras especies (paper_015), pero no son todavía transferibles como controlador operativo de una CLOUDLAB en Tenjo.
-
-### Implicación para Setas de la Peña
-
-- Priorizar mapeo multipunto, calibración, estados seguros y calidad de datos antes de IA.
-- Mantener control local determinista; usar analítica predictiva inicialmente en modo observación.
-- Ver revisión completa y plan por fases en `incubation_fruiting_chambers_2026.md`.
-
-# References
-- Ver `literature_database.md` y `incubation_fruiting_chambers_2026.md` para citas completas de cada afirmación.
-- Stamets (2000, 2005); Friedman (2015); Mori et al. (2009).
+Ver `literature_database.md`, `literature_index.md` y `literature_audit_2026-07-23.md` para citas, localizadores y límites de cada fuente.

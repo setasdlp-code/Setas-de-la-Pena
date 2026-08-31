@@ -1,157 +1,100 @@
 ---
-title: Cámara de Fructificación — Setup y Operación
+title: Cámaras de Fructificación — Comisionamiento para Shiitake
+document_id: DOC-0019
 category: facility
 load_priority: selective
-last_reviewed: 2026-08-23
+last_reviewed: 2026-07-24
 confidence: medium
 primary_sources:
-  - Stamets 2000
+  - Chang & Miles 2004 (book_007, capítulo 13)
   - AC Infinity CLOUDLAB 844 manual
-  - Internal protocols
-  - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006, construcción de bajo costo)
-  - 09_research/incubation_fruiting_chambers_2026.md
+  - Rodríguez Valencia & Jaramillo López 2005 (paper_006)
 related_documents:
   - master_blueprint.md
   - incubation.md
-  - 05_equipment/environmental_control.md
-  - 01_species/pleurotus_djamor.md
+  - ../05_equipment/environmental_control.md
+  - ../01_species/lentinula_edodes.md
+  - ../06_operations/quality_control.md
 ---
 
 # Executive Summary
-La cámara de fructificación controla HR, T°, CO₂, ventilación y luz. El diseño previsto usa ESP32/ESPHome/HA, pero el estado físico actual de equipos y automatización requiere verificación de campo antes de declararse operativo.
 
-# Core Principles
-- La ventilación se valida por CO₂, caudal efectivo y morfología; un temporizador por sí solo no demuestra ACH.
-- La posición de entrada y extracción se valida con CO₂ y flujo multipunto. El CO₂ se mezcla con el aire; no se diseña suponiendo que siempre sube o baja.
-- Cada cámara es un módulo autónomo con su propio ESP32.
-- Un sensor permanente solo se considera representativo después de un mapeo temporal en varias posiciones.
-- Verificar parámetros con dos sensores independientes (SHT3x + referencia redundante) y protegerlos de niebla/condensación.
+CLOUDLAB 844 es el módulo principal y Terra Fungus Martha el módulo de I+D, cuarentena y respaldo. Ambos deben comisionarse para el programa inicial de shiitake. No hay setpoints activos de temperatura, HR, CO₂, luz o FAE hasta identificar la cepa y aprobar la especificación del lote.
 
-> **Alternativa de bajo costo (escalamiento no automatizado).** Para salones de fructificación económicos en clima frío (Tenjo 12–18°C), Cenicafé documenta estructuras livianas (guadua) con **plástico transparente** en el salón de fructificación (vs. negro en incubación), ventilación natural con ventanillas inferiores en malla mosquitera y falso techo para salida de aire. Aplica a expansión de bajo capex; los módulos CLOUDLAB/Martha automatizados siguen siendo el estándar. Dimensionamiento y desinfección de cuarto en `incubation.md`.
+# Arquitectura
 
-# Technical Details
+Cada cámara opera con control local en ESP32/ESPHome. Home Assistant supervisa y registra; una pérdida de red no debe eliminar las funciones locales aprobadas.
 
-## Equipos por Módulo de Fructificación
-
-| Equipo | Función | Modelo |
+| Componente | Función | Estado requerido |
 |---|---|---|
-| Cámara | Estructura y aislamiento | CLOUDLAB 844 (producción) / Martha Tent 63" (prototipo) |
-| Humidificador | Control HR | AC Infinity T7 (15L, VPD) |
-| Extractor | FAE + control CO₂ | AC Infinity H4 (4", IP65) |
-| Sensor T/HR | Monitoreo continuo | AC Infinity SHT3x (sonda) |
-| Sensor CO₂ | Monitoreo CO₂ | Sensirion SCD30 |
-| Microcontrolador | Control local | ESP32-WROOM-32 |
-| Firmware | Automatización | ESPHome → Home Assistant |
-| Luz | Fotoperíodo | Timer 3–5h/día, 750–1500 lux |
+| SHT3x/SHT31 | Temperatura y HR principal | Verificación cruzada documentada |
+| SCD30 | CO₂ de cámara | Compensación de altitud a 2.600 m |
+| H4 | Extracción | Caudal medido con la resistencia real |
+| T7/H05 | Humidificación | Actuación independiente de sensores descartados |
+| Noctua | Mezcla interna | Flujo suave, sin desecar bloques |
+| ESP32 | Control local | Banco de pruebas aprobado |
+| Home Assistant | Tendencias y alertas | Registro continuo |
 
-## Posición de Elementos Dentro de la Cámara
+La posición de extracción, entrada, humidificación y sensores se valida mediante medición. No se justifica por una regla simplificada sobre el peso del CO₂. El sensor debe representar la zona de los bloques y quedar fuera del chorro directo de niebla o aire.
 
-```
-┌─────────────────────────────┐
-│         [EXHAUST H4]        │ ← Posición provisional; validar flujo real
-│                             │
-│  [BLOQUES EN ESTANTERÍA]    │
-│                             │
-│  [SENSOR SHT3x + SCD30]    │ ← A altura de bloques, lejos del difusor
-│                             │
-│         [T7 DIFUSOR]        │ ← Abajo o lateral, nunca apuntando a bloques
-└─────────────────────────────┘
-         ↑ INTAKE (filtrado)
-```
+# Estado de parámetros
 
-La ubicación mostrada es el punto de partida del módulo actual, no una regla física universal. Verificar que no exista cortocircuito de aire entre intake y exhaust y medir CO₂ en zona baja, media, alta y esquina remota con la cámara cargada.
-
-## Humedad, Punto de Rocío y VPD
-
-- HR es una razón dependiente de temperatura; no describe por sí sola el potencial de secado.
-- Calcular punto de rocío y VPD del aire en Home Assistant como variables diagnósticas.
-- Si `T_superficie > T_rocío`, existe potencial de evaporación; si `T_superficie < T_rocío`, puede aparecer condensación.
-- No se adopta un setpoint universal de VPD para hongos: requiere temperatura superficial y validación por especie/lote.
-- Evitar niebla directa y agua libre persistente sobre primordios, cuerpos fructíferos, sensores y piso.
-
-Ver fundamento, limitaciones y plan de ensayo en `09_research/incubation_fruiting_chambers_2026.md`.
-
-## Mapeo Ambiental y Capacidad Útil
-
-Antes de declarar operativa una configuración de carga:
-
-1. Registrar T/HR/CO₂ en entrada, salida, centro y extremos durante 48–72 h.
-2. Medir con cámara vacía y con carga representativa.
-3. Confirmar ausencia de chorro directo sobre primordios y zonas estancadas.
-4. Relacionar ubicación del estante con morfología, peso y calidad de cosecha.
-5. Repetir si cambian carga, estanterías, ductos, ventilador o humidificador.
-
-## Parámetros por Especie
-
-| Parámetro | P. djamor | H. erinaceus | P. ostreatus |
-|---|---|---|---|
-| T° | 20–30°C | 16–24°C | 13–24°C |
-| HR | 85–90% | 85–90% | 85–95% |
-| CO₂ | <1,500 ppm | **<1,000 ppm** | <1,000 ppm |
-| Ventilación | 5–8 ACH provisional; validar | Ajustar por CO₂ y morfología | Validar por CO₂ y caudal |
-| Ciclo fijo | No establecido | No establecido | No establecido |
-| Luz | 750–1,500 lux, 3–5h | 750+ lux, 3–5h | 750–1,500 lux |
-
-## Incompatibilidad de Co-Cultivo en Misma Cámara (Validado 2026-08-25)
-
-> [!WARNING]
-> **No es viable ni recomendable co-cultivar *P. djamor*, *P. ostreatus* y *H. erinaceus* en la misma cámara.** 
-
-**Razones biológicas y físicas:**
-1. **Incompatibilidad Térmica en Tenjo (2.600m):** *P. djamor* es tropical (20–30°C; <18°C aborta o muere). *P. ostreatus* (14–22°C) y *H. erinaceus* (16–22°C) aprovechan el clima natural frío de Tenjo (8–18°C). Calentar la carpa para djamor estresa y deforma a ostreatus y hericium.
-2. **Esporulación Masiva de Pleurotus:** Las orellanas liberan cargas pesadas de esporas que se depositan sobre las delicadas espinas de *H. erinaceus*, asfixiándolo y propiciando manchas bacterianas (*bacterial blotch*).
-3. **Dinámica de Flujo de Aire (FAE):** Pleurotus exige ventilación turbulenta y agresiva; Hericium requiere flujo de aire indirecto y suave para no deshidratar sus formaciones espinosas.
-
-### Reglas de Zonificación Arquitectónica:
-- **Mínimo 2 Cámaras de Fructificación Separadas:**
-  - **Cámara 1 (Tropical / Calefaccionada):** Dedicada exclusivamente a *Pleurotus djamor* (20–28°C).
-  - **Cámara 2 (Templada-Fría / Natural Tenjo):** Dedicada a *Pleurotus ostreatus* y *Hericium erinaceus* (14–20°C).
-- **Si *P. ostreatus* y *H. erinaceus* comparten cámara 2:** Ubicar *Hericium* en la zona de inyección de aire fresco (aguas arriba) y *Pleurotus* hacia los extractores (aguas abajo) para alejar la nube de esporas de la Melena de León.
-- **Extracción de aire:** Descargar hacia el exterior desde nivel bajo (CO₂ y esporas son densos) con filtros lavables para proteger motores.
-
-## Checklist Diario de Fructificación
-
-```
-☐ Verificar HR en HA dashboard — en rango para especie activa
-☐ Verificar CO₂ — en rango para especie activa
-☐ Verificar T° — en rango
-☐ Confirmar extractor operativo, CO₂ en rango y ausencia de zonas muertas
-☐ Revisar punto de rocío/VPD y signos de condensación o secado
-☐ Inspección visual de bloques — buscar pins o señales de contaminación
-☐ Verificar agua en T7 — rellenar si <20% capacidad
-☐ Anotar observaciones en bitácora
-```
-
-## Inducción de Fructificación (Pinning Triggers)
-
-| Especie | Trigger Principal |
-|---|---|
-| P. djamor | Hacer cortes en bolsa + FAE correcto + HR 85–90% |
-| H. erinaceus | Temperatura baja (<22°C) + CO₂ <1,000 + alta HR |
-| L. edodes | Cold shock (sumergir en agua fría 12–24h) |
-| P. ostreatus | Hacer cortes + reduce T° |
-
-# Best Practices
-- Hacer los cortes de fruiting en 2–3 lados de la bolsa, no en la parte inferior (acumula agua).
-- Remojar bloques agotados en agua limpia 12–24h para estimular segunda oleada.
-- Cosechar antes de que los sombreros liberen esporas de forma intensa.
-- Entre lotes, retirar materia orgánica, limpiar y aplicar un desinfectante compatible con concentración y tiempo de contacto definidos; alcohol 70% solo sobre superficies compatibles y previamente limpias.
-- Descargar aire de fructificación al exterior lejos de tomas de aire y zonas ocupadas; no recircularlo hacia incubación o inoculación.
-- Usar medidas de protección respiratoria durante cosecha tardía y limpieza según evaluación de SST.
-
-# Common Failure Modes
-| Problema | Causa | Solución |
+| Variable | Estado | Método de aprobación |
 |---|---|---|
-| No aparecen pins | HR insuficiente, T° fuera de rango o FAE excesivo | Verificar todos los parámetros |
-| Tallos elongados | Ventilación insuficiente (CO₂ alto) | Verificar sensor/caudal y aumentar ventilación gradualmente |
-| Contaminación en fruiting | HR >92% + FAE insuficiente | Aumentar FAE, reducir HR levemente |
-| Caps muy pequeños | Exceso CO₂ o temperatura alta | Verificar CO₂ con SCD30 |
+| Temperatura | Pendiente por cepa/clase térmica | Ficha de spawn + piloto |
+| HR | Pendiente | Piloto instrumentado y respuesta superficial del bloque |
+| CO₂ | Pendiente | Morfología + serie de datos |
+| FAE / ACH | Pendiente | Volumen efectivo + caudal medido |
+| Luz | Pendiente | Especificación de cepa y prueba local |
+| Inducción | Pendiente | Criterio de madurez + respuesta de la cepa |
+| Criterio de cosecha | Pendiente | Especificación de calidad y comprador |
 
-# Open Questions
-- ¿Cuántos bloques caben en un CLOUDLAB 844 sin comprometer FAE?
-- ¿Sistema de luces LED espectro completo o luz blanca fría es suficiente?
+No usar valores antiguos de *P. djamor* ni convertir un ciclo ON/OFF en ACH.
 
-# References
-- Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
-- AC Infinity. *CLOUDLAB 844 Setup Guide*.
-- ZombieMyco. *Humidity management*. https://zombiemyco.com
+# Comisionamiento por cámara
+
+1. Verificar sellos, drenaje, seguridad eléctrica y ubicación de actuadores.
+2. Medir volumen efectivo y registrar configuración de estanterías.
+3. Verificar SHT3x contra Inkbird; descartar la lectura integrada del H05.
+4. Configurar SCD30 con compensación de altitud y comparar respuesta de tendencia.
+5. Medir caudal del H4 con ductos, filtros y restricciones instalados.
+6. Ejecutar una prueba vacía y otra con masa térmica/hídrica representativa.
+7. Mapear temperatura y HR en más de una posición.
+8. Documentar recuperación tras apertura de puerta, humidificación y extracción.
+9. Aprobar alertas solo después de definir la especificación del lote.
+10. Registrar versión de firmware, configuración física y fecha.
+
+# Checklist diario durante piloto
+
+```
+[ ] Cámara, lote y versión de especificación confirmados
+[ ] Datos de T/HR/CO₂ presentes y sin huecos críticos
+[ ] Actuadores responden y el ciclo ejecutado coincide con el registro
+[ ] Sin condensación libre sobre bloques ni acumulación peligrosa de agua
+[ ] Sin contaminación, plagas, viscosidad u olor anormal
+[ ] Morfología y estado de superficie fotografiados
+[ ] Aperturas de puerta, rellenos y ajustes anotados
+```
+
+# Inducción de shiitake
+
+La inducción se aplica solo después de aprobar la madurez del bloque. Según la cepa, puede involucrar descenso térmico, remojo, fluctuación natural u otra combinación. El choque frío y el remojo de 12–24 horas son técnicas descritas en literatura, no pasos automáticos para toda cepa.
+
+Registrar método, temperatura, duración, condición inicial del bloque y respuesta. No repetir una inducción fallida sin revisión de causa.
+
+# Fallos a investigar
+
+| Señal | Hipótesis | Evidencia mínima |
+|---|---|---|
+| Sin primordios | Bloque inmaduro o inducción incompatible con la cepa | Criterio de madurez, clase térmica, registro de inducción |
+| Tallos largos/sombreros pequeños | CO₂, luz o densidad de carga | Serie CO₂, caudal, posición, fotografías |
+| Superficie seca | Flujo directo o HR inadecuada | Mapa de aire/HR y posición |
+| Condensación o viscosidad | Niebla directa, exceso de humedad o baja evaporación | Ciclos, temperatura de superficies, inspección |
+| Variación por estante | Mezcla o distribución desigual | Mapa multipunto y ubicación de bloques |
+
+# Preguntas abiertas
+
+- ¿Qué clase térmica tendrá la cepa adquirida?
+- ¿Qué densidad de bloques mantiene uniformidad en cada módulo?
+- ¿Qué volumen efectivo y caudal real tiene cada configuración?
+- ¿Qué estrategia de inducción produce respuesta repetible?

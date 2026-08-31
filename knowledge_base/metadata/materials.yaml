@@ -1,0 +1,120 @@
+# Metadata — Inventario Maestro de Materiales
+# Setas de la Peña
+# Last registry update: 2026-08-14
+schema_version: "1.1"
+registry_type: materials
+currency_default: COP
+required_fields: [id, category, quantity, unit, status, location, purchase_date, supplier, cost, received_date, condition, assigned_module, last_physical_verification]
+
+inventory:
+  - id: MAT-INS-THERMOLON-001
+    name: Thermolon 15 mm
+    category: insulation
+    quantity: 3.6
+    unit: m2
+    status: on_hand
+    location: null
+    purchase_date: "2026-07-09"
+    supplier: Mercado Libre
+    cost: null
+    received_date: null
+    condition: unknown
+    assigned_module: terrace_pilot_envelope
+    last_physical_verification: "2026-08-14"
+    specifications: {sheet_width_m: 1.2, sheet_length_m: 3.0, thickness_mm: 15}
+    evidence_status: owner_purchase_record
+
+  - {id: MAT-INS-CAMP-MAT-ALU-001, name: Colchonetas de camping aluminizadas, category: insulation_reflective, quantity: null, unit: unit, status: reported_purchased_quantity_unknown, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: terrace_pilot_envelope, last_physical_verification: null, evidence_status: purchase_report_needs_count}
+  - {id: MAT-REF-MYLAR-001, name: Mylar reflectivo, category: reflective_membrane, quantity: null, unit: m2, status: reported_purchased_quantity_unknown, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: terrace_pilot_envelope, last_physical_verification: null, evidence_status: purchase_report_needs_measurement}
+  - {id: MAT-INS-YUMBOLON-001, name: Yumbolón, category: insulation, quantity: null, unit: m2, status: reported_available_quantity_unknown, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: incubation_and_terrace_pilot, last_physical_verification: null, evidence_status: reported_needs_verification}
+
+  - id: MAT-INS-EPS-001
+    name: EPS insulation panels
+    category: rigid_insulation
+    quantity: null
+    unit: m2
+    status: partially_owned
+    location: null
+    purchase_date: null
+    supplier: null
+    cost: null
+    received_date: null
+    condition: unknown
+    assigned_module: incubation_and_terrace_pilot
+    last_physical_verification: "2026-08-13"
+    specifications:
+      thickness_inventory:
+        - {thickness_mm: 15, status: reported_available_quantity_unknown}
+        - {thickness_mm: 30, status: not_owned}
+        - {thickness_mm: 50, status: not_owned}
+    evidence_status: owner_corrected_2026_08_13
+
+  - {id: MAT-INS-FOAM-MAT-6MM-001, name: Colchoneta aislante 6 mm, category: flexible_insulation, quantity: null, unit: m2, status: reported_available_quantity_unknown, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: incubation_pilot, last_physical_verification: null, evidence_status: reported_needs_measurement}
+
+  - id: MAT-INS-THERMAL-BLANKET-001
+    name: Manta isotérmica dorada/plateada
+    category: reflective_insulation
+    quantity: 6
+    unit: unit
+    status: on_hand
+    location: null
+    purchase_date: "2026-07-07"
+    supplier: Mercado Libre
+    cost: null
+    received_date: null
+    condition: unknown
+    assigned_module: terrace_pilot_envelope
+    last_physical_verification: "2026-08-14"
+    specifications: {dimensions_cm: [210, 160], weight_g: 67, material: "poliéster aluminizado", coverage_per_unit_m2: 3.36}
+    notes: "2 packs purchased; 3 blankets per pack. Dimensions from Mercado Libre listing text (not a physical measurement). Assigned to caseta_compacta_build_checklist.md (DOC-0103) as radiant-barrier fill for 3 of 6 wall positions, 2 units per position, oriented 1.60m vertical / 2.10m horizontal, overlapped ~40cm per seam to reach 2.40m wall height."
+    evidence_status: owner_provided_listing_text
+    evidence_status: owner_purchase_record
+
+  - {id: MAT-REF-HOLZTEK-2MM-001, name: Holztek reflectante 2 mm, category: reflective_lining, quantity: null, unit: m2, status: reported_available_quantity_unknown, location: null, purchase_date: null, supplier: Holztek, cost: null, received_date: null, condition: unknown, assigned_module: incubation_pilot, last_physical_verification: null, evidence_status: reported_needs_measurement}
+  - {id: MAT-PANEL-RECOVERED-SET-001, name: Paneles de madera recuperados de set de televisión, category: construction_panel, quantity: 14, unit: piece, status: on_hand, location: terrace_project, purchase_date: null, supplier: recovered_material, cost: null, received_date: null, condition: unknown, assigned_module: terrace_pilot_structure, last_physical_verification: "2026-08-29", specifications: {original_panel_count: 7, piece_dimensions_m: [1.20, 1.86], cut_type: straight_middle_no_crossbrace_at_seam}, evidence_status: owner_confirmed_2026_08_29, notes: "7 original panels, each cut exactly in half into 2 pieces of 1.20x1.86m. Panel condition inspection still pending per DOC-0105."}
+
+  - id: MAT-TARP-TOOLCRAFT-001
+    name: Lona Impermeable Gris Reforzada Toolcraft Uso Rudo
+    category: exterior_covering
+    quantity: 1
+    unit: unit
+    status: on_hand
+    location: terrace_project
+    purchase_date: null
+    supplier: null
+    cost: null
+    received_date: null
+    condition: unknown
+    assigned_module: terrace_pilot_envelope
+    last_physical_verification: "2026-08-29"
+    specifications: {dimensions_m: [5, 7], area_m2: 35, weight_gsm: 180, material: HDPE, weave_density: "14x14 hilos/pulgada2", grommets: aluminum, edges: "double-stitched, riveted reinforcements"}
+    evidence_status: owner_confirmed_2026_08_29
+    notes: "Referenced as design material since home_rnd_lab.md (roof rainfly/secondary skin) and DECISIONS.md line 434, but never previously logged as owned in this registry. Now assigned to caseta_compacta_build_checklist.md (DOC-0103) as sole exterior covering for roof + most walls (owner decision 2026-08-29, documented deviation from DOC-0020/DECISIONS.md #434's 'segunda piel, no reemplaza la envolvente rigida' principle). One 5x7m sheet (35 m2) covers roof (~7.9 m2) + 6 main chamber wall positions (~26.78 m2) = ~34.68 m2, leaving only ~0.3 m2 margin for overlap -- very tight, prioritize roof sealing quality. Door-side buffer wall explicitly excluded, covered by a different material (TBD)."
+
+  - id: MAT-FLOOR-RUBBER-50X50-20MM-001
+    name: Tapete de piso de caucho 50 x 50 cm x 20 mm
+    category: floor_material
+    quantity: 2
+    unit: unit
+    status: on_hand
+    location: null
+    purchase_date: "2026-07-03"
+    supplier: Mercado Libre / Sportfitne
+    cost: null
+    received_date: null
+    condition: unknown
+    assigned_module: prototype_flooring
+    last_physical_verification: "2026-08-14"
+    specifications: {dimensions_cm: [50,50], thickness_mm: 20, material: rubber}
+    evidence_status: owner_purchase_record
+
+  - {id: MAT-DIEL-HDPE-PP-001, name: Lámina dieléctrica rígida HDPE/PP, category: electrical_safety_material, quantity: null, unit: m2, status: design_spec_not_confirmed_on_hand, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: incubation_pilot_heated_floor, last_physical_verification: null, evidence_status: specification_only}
+  - {id: MAT-ALU-DIFFUSER-001, name: Lámina difusora de aluminio, category: thermal_distribution_material, quantity: null, unit: m2, status: design_spec_not_confirmed_on_hand, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: incubation_pilot_heated_floor, last_physical_verification: null, specifications: {thickness_mm_range: [0.15,0.5]}, evidence_status: specification_only}
+
+reconciliation_queue:
+  - id: REC-MAT-2026-08-14-001
+    reason: "Some legacy insulation materials still lack physical measurement; Mercado Libre Thermolon and thermal blankets are reconciled."
+    next_action: "Measure remaining legacy materials only when physically inventoried."
+  - id: REC-MAT-2026-08-29-001
+    reason: "MAT-PANEL-RECOVERED-SET-001 (recovered panels) and MAT-TARP-TOOLCRAFT-001 (Toolcraft tarp) reconciled from owner confirmation during the caseta compacta build session -- quantities and dimensions were previously unconfirmed/unlogged despite both being referenced in design documents for weeks."
+    next_action: "Panel condition inspection (warping/damage check) still pending per caseta_compacta_site_visit_checklist.md (DOC-0105). Tarp cost/purchase_date/supplier fields remain null -- fill in if a receipt is located."

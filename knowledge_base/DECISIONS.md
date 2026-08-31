@@ -1,8 +1,9 @@
 ---
 title: Registro de Decisiones — Setas de la Peña
+document_id: DOC-0048
 category: meta
 load_priority: selective
-last_reviewed: 2026-07-17
+last_reviewed: 2026-08-05
 ---
 
 # DECISIONS
@@ -91,7 +92,7 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 ## DEC-004 — Especie Prioritaria Fase 1: Pleurotus djamor
 
 **Fecha:** 2026-06-29
-**Estado:** Activa
+**Estado:** Supersedida por DEC-013 (2026-07-14)
 **Área:** Producción / Estrategia
 
 **Problema:** Seleccionar especie primaria para producción en Fase 1, considerando las condiciones de Tenjo (2600m, 12–22°C), infraestructura disponible (sin autoclave), y tiempo de ciclo.
@@ -120,7 +121,7 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 ## DEC-005 — Sustrato Inicial: Paja de Trigo Pasteurizada
 
 **Fecha:** 2026-06-29
-**Estado:** Activa
+**Estado:** Supersedida para Fase 1 por DEC-013 (2026-07-14); permanece como referencia para una futura línea de Pleurotus
 **Área:** Producción / Sustratos
 
 **Problema:** Seleccionar sustrato para Fase 1 dado que no existe autoclave y el insumo debe ser localmente disponible.
@@ -135,27 +136,27 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 
 ---
 
-## DEC-006 — Control de ventilación: CO₂ + relay ESP32
+## DEC-006 — Control FAE: Relay ESP32, No Timer Mecánico
 
 **Fecha:** 2026-06-29
 **Estado:** Activa
 **Área:** Automatización / FAE
 
-**Problema:** Seleccionar un mecanismo de ventilación que responda al estado real de la cámara y permita demostrar el intercambio de aire efectivo.
+**Problema:** Seleccionar mecanismo de control del ciclo FAE (Fresh Air Exchange) para módulos de fructificación.
 
 **Alternativas evaluadas:**
 
-| Opción | Variable de control | Monitoreo | Limitación |
+| Opción | Precisión ciclo | Monitoreo | Fallo seguro |
 |---|---|---|---|
-| Timer mecánico | Tiempo fijo | No | No demuestra ACH ni responde a CO₂ |
-| Timer digital | Tiempo fijo | Parcial | Repite un ciclo aunque cambien caudal, filtros o carga |
-| **CO₂ + relay ESP32/HA** | CO₂, con línea base de caudal | Sí — log continuo | Requiere commissioning y límites locales de seguridad |
+| Timer mecánico analógico | ±2–5 min | No | No — si falla, no hay alerta |
+| Timer digital | ±1 min | No | No |
+| **Relay ESP32 + HA** | <1 seg | Sí — log continuo | Sí — alerta en HA |
 
-**Decisión:** Relay controlado por ESP32/ESPHome, con control primario por CO₂ y límites locales de seguridad. La línea base se define después de medir el caudal efectivo instalado y calcular ACH con el volumen y el duty cycle reales. El timer mecánico queda descartado como control principal.
+**Decisión:** Relay controlado por ESP32 via ESPHome, con ciclo configurado en HA. Timer mecánico explícitamente descartado como backup o solución provisional.
 
-**Justificación:** Un intervalo ON/OFF no equivale a cambios de aire por hora. El caudal nominal se reduce con ductos, filtros, curvas y compuertas, y la demanda cambia con la carga biológica. CO₂, caudal efectivo y morfología permiten validar la respuesta real; el relay aporta registro y alertas.
+**Justificación:** El FAE insuficiente o no trazable puede comprometer la morfología y el rendimiento de cualquier lote. Para shiitake, el control debe ajustarse por CO₂ medido, etapa y respuesta de la cepa, sin heredar ciclos fijos de Pleurotus. El relay ESP32 genera log de cada ciclo ON/OFF, permite ajuste remoto y emite alerta si el control se interrumpe.
 
-**Criterio de revisión:** Revisar después del commissioning o si la curva de CO₂, la HR o la morfología muestran que la línea base no mantiene el rango provisional.
+**Criterio de revisión:** Si el relay falla más de una vez por mes, revisar calidad del hardware o introducir relay redundante.
 
 **Documentos afectados:** `FARM_BRAIN.md`, `05_equipment/environmental_control.md`
 
@@ -185,7 +186,7 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 
 **Limpieza completada (2026-07-08):** la carpeta `knowledge_base/11_sources/` (incluido el tombstone `SRC-0004.md`) fue eliminada con `git rm` — su contenido permanece recuperable en la historia de git. La línea correspondiente se retiró de `REPOSITORY_MAP.md`. Ver `CHANGELOG.md` 2026-07-08.
 
-**Limpieza de alias completada (2026-07-16):** los alias activos `SRC-0005` / `SRC-0006` fueron reemplazados por `paper_006` / `book_005`. Las menciones que permanecen en esta decisión y en el changelog son historia de la migración, no identificadores vigentes.
+**Nota — alias `SRC-####` en documentos de dominio:** los alias históricos `paper_006` / `ref_alt_001` aún aparecen junto a `paper_006` / `book_005` en archivos de especies, sustratos, `bibliography.md` y metadata. Su retiro se difiere a la fase de unificación de identificadores (Fase 2 del plan de migración) para no tocar convenciones de identificadores en esta fase. No son rutas rotas; son referencias cruzadas de literatura.
 
 **Documentos afectados:** `09_research/literature_index.md`, `references/bibliography.md`, `knowledge_base/11_sources/` (eliminada)
 
@@ -375,32 +376,146 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 
 ---
 
-## DEC-013 — Fuente canónica integrada y calidad automática
+## DEC-013 — Especie Prioritaria de Arranque: Lentinula edodes (Shiitake)
 
-**Fecha:** 2026-07-17
+**Fecha:** 2026-07-14
 **Estado:** Activa
-**Área:** Arquitectura de repositorio / Calidad
+**Área:** Producción / Estrategia
 
-**Problema:** La base de conocimiento existía simultáneamente en `setasdlp-code/Knowledge-Base` y dentro del monorepo `setasdlp-code/Setas-de-la-Pena`, con divergencias científicas, operativas y arquitectónicas. Mantener edición bidireccional produciría nuevas contradicciones. DEC-012, además, no autorizaba todavía CI.
+**Problema:** La documentación seguía presentando *Pleurotus djamor* como especie prioritaria de Fase 1, pero esa prioridad ya no representa la dirección definida por el propietario. El proyecto debe comenzar enfocado en shiitake y evitar diseñar el arranque alrededor de Pleurotus.
+
+**Decisión:** *Lentinula edodes* (shiitake) es la especie prioritaria de arranque. *Pleurotus djamor* deja de ser especie activa o enfoque inicial y queda como candidata futura. DEC-004 queda supersedida. DEC-005 deja de gobernar el sustrato de Fase 1 porque la paja pasteurizada no corresponde al sistema inicial de shiitake.
+
+**Implicaciones operacionales:**
+- El proyecto permanece en pre-producción, con 0 lotes activos.
+- El primer lote requiere spawn de shiitake con cepa y proveedor identificados.
+- El sustrato inicial será una formulación para shiitake basada en serrín de madera dura suplementado o una alternativa local validable; la receta exacta requiere una decisión separada basada en disponibilidad y ensayo.
+- Los bloques suplementados deben esterilizarse. El autoclave presente en sitio debe comisionarse y validar su ciclo con carga representativa antes de producir.
+- Los parámetros ambientales, cronograma, códigos de lote y métricas deben usar *L. edodes* como referencia primaria.
+- No se introduce una segunda especie antes de completar y revisar los primeros ciclos documentados de shiitake.
+
+**Justificación:** La prioridad de especie es una decisión estratégica del propietario. Shiitake también encaja con el posicionamiento gourmet y con el clima frío de Tenjo, aunque exige mayor control de proceso, esterilización validada y ciclos más largos. Estas dependencias se aceptan explícitamente como parte del arranque.
+
+**Riesgos conocidos:** Ciclo de 90–150 días; variabilidad térmica entre cepas; disponibilidad incierta de spawn identificado en Colombia; riesgo alto de contaminación si el ciclo de esterilización o la inoculación aséptica no están validados.
+
+**Criterio de revisión:** Revisar la estrategia después de tres ciclos completos y trazables de shiitake, o antes si no se consigue una cepa viable, no puede validarse la esterilización o las condiciones térmicas impiden fructificación repetible.
+
+**Implementación:** El propietario autorizó explícitamente la propagación operacional el 2026-07-24. Cualquier documento que presente *P. djamor* como especie activa, producto principal, sustrato inicial o referencia de setpoints contradice esta decisión. Los rangos de shiitake se aprueban por cepa y lote; no se heredan de Pleurotus.
+
+**Documentos afectados:** `README_MCP.md`, `INDEX.yaml`, `FARM_BRAIN.md`, `CURRENT_OPERATIONS.md`, `00_project/current_state.md`, fichas de especie, `02_substrates/`, `03_spawn/`, `04_facility/`, `05_equipment/`, `06_operations/`, `07_business/`, `08_brand/packaging.md`, `09_research/research_summaries.md`, `metadata/species.yaml`, `metadata/substrates.yaml`, `metadata/kpis.yaml` y `CHANGELOG.md`.
+
+---
+
+## DEC-014 — Laboratorio limpio de Bogotá en la terraza
+
+**Fecha:** 2026-07-24
+**Estado:** Activa
+**Área:** Infraestructura / Laboratorio urbano
+
+**Problema:** El diseño anterior asignaba el pasillo cerrado de la casa en Bogotá al SAB o a una futura LAF. Sebastián confirmó que el pasillo es demasiado angosto para alojar la mesa inoxidable de 2,00 × 0,70 m, el equipo, el operador y la circulación. Mantener esa asignación produciría una planta que cabe en el documento y no puede operar físicamente.
 
 **Alternativas evaluadas:**
 
-| Opción | Ventaja | Riesgo |
+| Opción | Ventajas | Desventajas |
 |---|---|---|
-| Mantener dos copias editables | Separación aparente | Divergencia recurrente y autoridad ambigua |
-| Submódulo privado | Historial aislado | Mayor fricción de clonación, permisos y edición |
-| **Monorepo canónico + remoto histórico** | Una sola ruta de cambio y CI integrado | Requiere una reconciliación inicial explícita |
+| Pasillo cerrado como laboratorio | Separación natural entre garaje y terraza | Ancho insuficiente; no admite mesa, operador y salida |
+| Garaje como laboratorio | Servicios y autoclave próximos | Polvo, materias primas, carro, lavadora y proceso sucio |
+| Terraza con módulo limpio independiente | Permite mesa de 2 m, SAB y reserva para LAF; acceso directo a incubación | Requiere cerramiento, filtración, separación ambiental y verificación estructural |
 
-**Decisión:** `setasdlp-code/Setas-de-la-Pena/knowledge_base` es la copia canónica integrada. `setasdlp-code/Knowledge-Base` se conserva como referencia histórica y fuente de la reconciliación de 2026-07-17, pero no recibe ediciones independientes. Se autoriza CI para validar estructura, formatos, rutas, secretos, archivos excluidos y regresiones científicas/FAE conocidas.
+**Decisión:** El pasillo funciona como transición sanitaria y control de acceso. El laboratorio limpio de Bogotá se ubica en un recinto cerrado sobre la terraza, cerca de la puerta, con una mesa de 2,00 × 0,70 m, SAB en la fase inicial y reserva para una futura LAF. La terraza se sectoriza en laboratorio limpio, incubación seca y fructificación húmeda.
 
-**Límites:** Esta decisión no autoriza el generador de `INDEX.yaml`, su población completa, automatización física, cambios de parámetros productivos ni publicación de PDFs fuente. Los datos de ejemplo de ECC no constituyen evidencia operacional.
+**Condiciones de diseño:**
 
-**Justificación:** Una sola copia editable elimina el conflicto de autoridad. El CI verifica propiedades deterministas sin presentar inferencias biológicas como hechos ni ampliar el alcance aprobado por DEC-012.
+- El operador accede al laboratorio sin atravesar fructificación.
+- El laboratorio no comparte retorno de aire con las carpas.
+- Incubación no se ubica dentro de la sala negativa ni del circuito de esporas.
+- La baranda es el borde de la placa y no recibe apoyos o anclajes.
+- Las dimensiones de la terraza y la retícula de 60 × 60 cm son provisionales hasta levantamiento.
+- La lona Toolcraft 5 × 7 m es una segunda piel de cubierta; no reemplaza la envolvente rígida.
+- CloudLab 844 y Terra Fungus conservan su ubicación operacional documentada en Tenjo. Esta decisión reserva espacio en Bogotá y no autoriza traslado.
+- No se aprueban setpoints ambientales mediante esta decisión.
 
-**Criterio de revisión:** Revisar si el monorepo se vuelve inmanejable, si los permisos requieren separar la documentación o si una herramienta demuestra que un submódulo/subtree reduce fricción sin reintroducir duplicidad.
+**Evidencia:** Observación directa del propietario sobre el ancho del pasillo, fotografías y croquis de la terraza, huella confirmada de la mesa y fichas dimensionales de las cámaras. guide_004, pp. 35–36, respalda el traslado protegido a un recinto limpio; p. 45 respalda la compartimentación de incubación y fructificación.
 
-**Documentos afectados:** `README.md`, `knowledge_base/`, `.github/workflows/quality.yml`, `scripts/quality/`.
+**Criterio de revisión:** Revisar si un levantamiento métrico demuestra que la terraza no puede alojar el módulo limpio con circulación segura, si aparece otro cuarto interior adecuado o si la verificación estructural impide el cerramiento propuesto.
 
+**Documentos afectados:** `04_facility/home_rnd_lab.md`, `04_facility/laboratory.md`, `04_facility/incubation.md`, `04_facility/master_blueprint.md`, `05_equipment/martha.md`, `metadata/equipment.yaml` y `CHANGELOG.md`.
+
+---
+
+## DEC-015 — Calificación de Módulos Secundarios de Incubación
+
+**Fecha:** 2026-07-26
+**Estado:** Activa — autorización limitada a prototipo
+**Área:** Infraestructura / Incubación / Producción
+
+**Nota de identificador:** `DEC-014` corresponde a “Laboratorio limpio de Bogotá en la terraza”, registrado arriba con fecha 2026-07-24. Esta decisión usa `DEC-015` para preservar la secuencia temporal.
+
+**Problema:** El programa de shiitake requiere una solución de incubación que permita aislar fallos, organizar cargas y controlar temperatura en Tenjo. La propuesta inicial de cajas apilables mezclaba una decisión de arquitectura con especificaciones no validadas —hermeticidad, drenaje “MERV-13”, aislamiento expresado sin sistema completo, temperatura universal y capacidad proyectada— y podía provocar una compra de volumen antes de medir bolsa, módulo y recinto como un solo sistema.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Riesgos o límites actuales |
+|---|---|---|
+| Estantería abierta en recinto acondicionado | Acceso simple; ventilación natural alrededor de bolsas; componentes comerciales | Menor contención secundaria; requiere diseñar el recinto y la separación entre cargas |
+| Recinto de incubación dedicado | Control ambiental centralizado; operación convencional | Inversión mayor; un fallo común puede afectar toda la carga |
+| Cajas plásticas ventiladas como envolvente secundaria | Modularidad, derrames contenidos, unidades reemplazables y ensayos por muestra | Puede acumular calor/CO₂, deformarse bajo carga o dificultar limpieza si se adopta sin calificación |
+
+**Decisión:** Se autoriza únicamente la **calificación de hasta tres muestras físicas** de cajas de 60 × 40 × 40–41 cm como envolventes secundarias ventiladas para incubación. Las cajas no quedan adoptadas como línea base de producción y no se autoriza comprar 18 torres, 54 cajas ni otra cantidad superior a tres muestras.
+
+La operación normal no es hermética. Las bolsas conservan su propio intercambio gaseoso mediante el parche filtrante; la caja debe demostrar que no obstruye ese intercambio, no acumula calor o CO₂ y puede limpiarse y manipularse de forma segura. El cierre completo se limita a traslado o cuarentena breve de material sospechoso.
+
+**Alcance autorizado:**
+
+- solicitar cotizaciones y fichas técnicas;
+- adquirir hasta tres muestras;
+- montar junta, cierres, aislamiento exterior, rejilla, bandeja, ventilación e instrumentación de prototipo;
+- ejecutar perfil del sitio, pruebas vacías, carga simulada y un piloto biológico pequeño si los gates críticos pasan;
+- usar ESPHome para control local y registro con arranque seguro;
+- retener una unidad patrón y definir inspección de recepción/control de cambios.
+
+**No autoriza:**
+
+- compra en volumen;
+- capacidad productiva proyectada;
+- setpoint térmico universal, duración universal o potencia fija del PTC;
+- caja hermética durante incubación normal;
+- drenaje permanente antes de demostrar su necesidad;
+- “MERV-13” aplicado a drenaje;
+- depender exclusivamente de ESPHome, Wi‑Fi o Home Assistant para seguridad térmica;
+- declarar una referencia comercial aprobada antes de completar los ensayos.
+
+**Condiciones de calificación:**
+
+| Gate | Requisito para cerrar |
+|---|---|
+| Documental | Resina y grado, contenido reciclado si aplica, dimensiones, carga, apilamiento, temperatura, garantía, lote y repuestos documentados |
+| Mecánico inicial | Torre de tres cajas con carga representativa durante siete días sin pérdida funcional |
+| Fluencia prolongada | Al menos 30 días cargada o un ciclo biológico completo sin deformación progresiva |
+| Limpieza | Treinta ciclos con detergente/desinfectante aprobado sin daño ni retención de líquido |
+| Térmico | Ensayos vacío, carga simulada y piloto; mapa base–centro–tope interpretado con offsets de sensores |
+| Gas/ventilación | Perfil cargado frente a referencia abierta sin acumulación monotónica de CO₂ ni obstrucción de parches |
+| Condensación | Sin agua libre sobre bolsas, aislamiento, cableado, sensores o calefactor |
+| Eléctrico | Arranque OFF, sensor inválido, ventilador detenido, relé pegado y retorno de energía contenidos por protecciones físicas; revisión RETIE aplicable cerrada |
+| Operativo | Desmontaje, inspección, lavado y manipulación seguros por el operador |
+| Proveedor | Unidad patrón, inspección por lote y notificación/control de cambios establecidos |
+| Costo total | Caja, tapa, junta, cierres, aislamiento, interior, ventilación, sensores, calefacción, control, protección, flete y mano de obra cotizados |
+
+Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de siete días no reemplaza el seguimiento de fluencia de 30 días o ciclo completo.
+
+**Instrumentación autorizada para calificación:**
+
+- SHT45 con membrana PTFE integrada o capuchón protector equivalente;
+- tres DS18B20 comparados juntos durante 48–72 h, identificados por dirección y con offsets registrados;
+- SCD30 temporal usando una sola estrategia de compensación: altitud fija o presión ambiente, no ambas;
+- ESP32/ESPHome con calefactor y ventilador en `ALWAYS_OFF` al reinicio;
+- PTC externo en plenum, termostato físico, fusible térmico, protección de circuito e interbloqueo de ventilador.
+
+**Justificación:** La decisión conserva la modularidad como hipótesis verificable sin convertirla en compra irreversible. Cumple CANON P-03 al aislar el experimento, P-05 al exigir medición antes de escala, y los principios de seguridad y mantenibilidad al separar control operativo de protección física. La evidencia y sus límites están consolidados en `09_research/incubation_module_engineering_review_2026-08-05.md` (`DOC-0051`).
+
+**Criterio de revisión:** Revisar al completar tres muestras, todos los gates y el primer ciclo biológico piloto. La escala requiere una **decisión posterior independiente** basada en resultados, costo total, operación y comparación con estantería/recinto. Si la arquitectura acumula calor o CO₂, presenta fluencia, retiene humedad, falla limpieza/seguridad o no justifica su costo, se corrige o descarta.
+
+**Documentos afectados:** `04_facility/incubation.md`, `04_facility/master_blueprint.md`, `05_equipment/environmental_control.md`, `07_business/suppliers.md`, `09_research/incubation_module_engineering_review_2026-08-05.md`, `10_ai_workflows/OAP-0001-modular-incubation-validation.md` y `FARM_BRAIN.md`.
 ---
 
 ## Plantilla para nuevas decisiones

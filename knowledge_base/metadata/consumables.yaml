@@ -1,0 +1,57 @@
+# Metadata — Inventario Maestro de Consumibles
+# Setas de la Peña
+# Last registry update: 2026-08-14
+schema_version: "1.3"
+registry_type: consumables
+currency_default: COP
+required_fields: [id, category, quantity, unit, status, location, purchase_date, supplier, cost, received_date, condition, assigned_module, last_physical_verification]
+
+inventory:
+  - {id: CON-SUP-WHEAT-BRAN-001, name: Salvado de trigo, category: substrate_supplement, quantity: 10, unit: kg, status: reported_on_hand, location: storage, purchase_date: "2026-05-02", supplier: null, cost: null, received_date: "2026-05-02", condition: unknown, assigned_module: substrate_preparation, last_physical_verification: null, evidence_status: owner_record_needs_physical_count}
+  - {id: CON-SUP-OAT-BRAN-001, name: Salvado de avena, category: substrate_supplement, quantity: 5, unit: kg, status: on_hand, location: storage, purchase_date: "2026-06-26", supplier: Mercado Libre / Frutos D' Antaño, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+  - {id: CON-BULK-RICE-HULL-001, name: Cascarilla de arroz cruda, category: substrate_bulk, quantity: 15, unit: kg, alternate_quantity: 120, alternate_unit: L, status: on_hand, location: storage, purchase_date: "2026-06-26", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "3 units purchased; each listing unit = 5 kg / 40 L."}
+  - {id: CON-BULK-COCO-001, name: Coco buferizado, category: substrate_bulk, quantity: 50, unit: L, status: on_hand, location: storage, purchase_date: "2026-06-26", supplier: Mercado Libre / Confiabonos, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+  - {id: CON-MIN-CACO3-001, name: Carbonato de calcio, category: mineral_amendment, quantity: 1, unit: kg, status: reported_on_hand, location: storage, purchase_date: "2026-05-02", supplier: null, cost: null, received_date: "2026-05-02", condition: unknown, assigned_module: substrate_preparation, last_physical_verification: null, evidence_status: owner_record_needs_physical_count}
+  - {id: CON-MIN-QUICKLIME-001, name: Cal viva, category: mineral_amendment, quantity: 3, unit: kg, status: reported_on_hand, location: storage, purchase_date: "2026-05-07", supplier: null, cost: null, received_date: "2026-05-07", condition: unknown, assigned_module: substrate_preparation, last_physical_verification: null, evidence_status: owner_record_needs_physical_count}
+  - {id: CON-MIN-GYPSUM-001, name: Yeso agrícola, category: mineral_amendment, quantity: null, unit: kg, status: reported_on_hand_quantity_unknown, location: storage, purchase_date: "2026-06-17", supplier: null, cost: null, received_date: "2026-06-17", condition: unknown, assigned_module: substrate_preparation, last_physical_verification: null, evidence_status: owner_record_needs_physical_count}
+  - {id: CON-BULK-COFFEE-001, name: Borra de café, category: substrate_bulk, quantity: null, unit: kg, status: reported_available_quantity_unknown, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_trials, last_physical_verification: null, evidence_status: reported_needs_verification}
+  - {id: CON-BULK-EGGSHELL-001, name: Cáscara de huevo, category: experimental_input, quantity: null, unit: kg, status: reported_available_quantity_unknown, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_trials, last_physical_verification: null, evidence_status: reported_needs_verification}
+  - {id: CON-BULK-CARDBOARD-001, name: Cartón corrugado, category: experimental_input, quantity: null, unit: kg, status: reported_available_quantity_unknown, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_trials, last_physical_verification: null, evidence_status: reported_needs_verification}
+  - {id: CON-BULK-SUNFLOWER-STEM-001, name: Tallo de girasol, category: experimental_input, quantity: null, unit: kg, status: reported_available_quantity_unknown, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: substrate_trials, last_physical_verification: null, evidence_status: reported_needs_verification}
+  - {id: CON-BULK-VERMICULITE-001, name: Vermiculita gruesa orgánica, category: mineral_substrate_component, quantity: null, unit: L, status: on_hand_quantity_unknown, location: storage, purchase_date: null, supplier: Amazon, cost: null, received_date: null, condition: unknown, assigned_module: substrate_trials, last_physical_verification: "2026-08-13", specifications: {grade: coarse, material: expanded_vermiculite, function: moisture_retention}, evidence_status: amazon_inventory_owner_report}
+  - {id: CON-BULK-CORNCOB-001, name: Tuza de maíz, category: experimental_input, quantity: 0, unit: kg, status: not_on_hand, location: null, purchase_date: null, supplier: null, cost: null, received_date: null, condition: not_applicable, assigned_module: substrate_trials, last_physical_verification: "2026-08-13", evidence_status: owner_confirmed}
+
+  - {id: CON-BULK-WOOD-PELLETS-001, name: Pellets de madera para fungicultura, category: substrate_bulk, quantity: 3, unit: package, status: on_hand, location: storage, purchase_date: "2026-07-02", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "Package mass not provided in purchase record."}
+  - {id: CON-LAB-AGAR-001, name: Agar agar en polvo, category: culture_media_ingredient, quantity: 140, unit: g, status: on_hand, location: storage, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "2 units x 70 g."}
+  - {id: CON-LAB-MALT-EXTRACT-001, name: Extracto de malta en polvo, category: culture_media_ingredient, quantity: 1000, unit: g, status: on_hand, location: storage, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "2 units x 500 g."}
+  - {id: CON-LAB-PETRI-90X15-001, name: Cajas Petri plásticas estériles 90 x 15 mm, category: sterile_lab_consumable, quantity: 20, unit: dish, status: on_hand, location: storage, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: sterile_packaged, assigned_module: laboratory, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "2 packs x 10 dishes."}
+  - {id: CON-LAB-PH-STRIPS-001, name: Tiras de papel indicador de pH, category: measurement_consumable, quantity: 240, unit: strip, status: on_hand, location: storage, purchase_date: "2026-07-02", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: substrate_preparation_and_lab, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "3 packs x 80 strips."}
+  - {id: CON-LAB-ALCOHOL-WICK-001, name: Mechas para mechero de alcohol 20 cm, category: laboratory_consumable, quantity: 30, unit: wick, status: on_hand, location: storage, purchase_date: "2026-07-19", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: laboratory, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record, notes: "3 packs x 10 wicks."}
+  - {id: CON-CLEAN-VINEGAR-001, name: Vinagre blanco Regis, category: cleaning_consumable, quantity: 3, unit: L, status: on_hand, location: storage, purchase_date: "2026-07-02", supplier: Mercado Libre / Regis, cost: null, received_date: null, condition: unknown, assigned_module: cleaning, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+  - {id: CON-CLEAN-PEROXIDE4-001, name: Peróxido de hidrógeno 4%, category: cleaning_consumable, quantity: 2, unit: unit, status: on_hand, location: storage, purchase_date: "2026-06-29", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: cleaning_and_lab, last_physical_verification: "2026-08-14", specifications: {concentration_percent: 4, form: gel}, evidence_status: owner_purchase_record, notes: "1 purchase unit contained 2 product units."}
+  - {id: CON-CLEAN-PAPER-Z-001, name: Toalla de papel tipo Z, category: cleaning_consumable, quantity: 150, unit: sheet, status: on_hand, location: storage, purchase_date: "2026-07-02", supplier: Mercado Libre, cost: null, received_date: null, condition: unknown, assigned_module: cleaning, last_physical_verification: "2026-08-14", evidence_status: owner_purchase_record}
+
+  - id: CON-BAG-UNICORN-001
+    name: Bolsas Unicorn con filtro
+    category: cultivation_bag
+    quantity: 100
+    unit: unit
+    status: on_hand
+    location: storage
+    purchase_date: null
+    supplier: Unicorn Bags
+    cost: null
+    received_date: null
+    condition: good
+    assigned_module: bagging_sterilization
+    last_physical_verification: "2026-08-14"
+    specifications: {material: polypropylene, autoclavable: true, dimensions_in: [8,5,20], dimensions_cm: [20.3,12.7,50.8], thickness_mm: 0.315, filter_patch: micrometric}
+    evidence_status: owner_confirmed_count_and_identity
+
+  - {id: CON-BAG-PP-50X20X12-001, name: Bolsas PP 50 x 20 x 12 cm, category: cultivation_bag, quantity: 20, unit: unit, status: on_hand, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: good, assigned_module: bagging_sterilization, last_physical_verification: "2026-08-13", specifications: {material: polypropylene, dimensions_cm: [50,20,12]}, evidence_status: owner_confirmed_count}
+  - {id: CON-LABEL-40X30-001, name: Etiquetas de lote 40 x 30 mm, category: labeling, quantity: null, unit: unit, status: reported_available_quantity_unknown, location: storage, purchase_date: null, supplier: null, cost: null, received_date: null, condition: unknown, assigned_module: batch_tracking, last_physical_verification: null, evidence_status: reported_needs_count}
+
+reconciliation_queue:
+  - id: REC-CON-2026-08-14-002
+    reason: "Mercado Libre purchases reconciled; some legacy bulk materials and labels still lack physical counts."
+    next_action: "Only remaining legacy unknown-count consumables require physical count."

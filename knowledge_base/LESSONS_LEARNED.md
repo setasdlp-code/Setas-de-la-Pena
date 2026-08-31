@@ -1,5 +1,7 @@
 ---
 title: Lecciones Aprendidas — Setas de la Peña
+document_id: DOC-0050
+last_reviewed: 2026-07-24
 category: meta
 load_priority: selective
 ---
@@ -76,7 +78,7 @@ Consecuencias observadas o que hubieran ocurrido sin detección.
 | ID | Pregunta | Origen | Estado |
 |---|---|---|---|
 | I-001 | ¿Qué BE real se obtiene con paja de trigo de la Sabana de Bogotá? | Planificación Fase 1 | Pendiente primer lote |
-| I-002 | ¿Baja la T° nocturna en Tenjo de 18°C en época seca? | Riesgo P. djamor | Monitoreo Inkbird activo |
+| I-002 | ¿Baja la T° nocturna en Tenjo de 18°C en época seca? | Investigación futura de P. djamor | Diferida; no bloquea el arranque shiitake |
 | I-003 | ¿SCD30 requiere ajuste adicional más allá de `altitude_compensation: 2600`? | ESPHome docs | Pendiente banco de pruebas |
 | I-004 | ¿Proveedores de spawn colombianos: calidad y disponibilidad real? | Planificación Fase 1 | Investigación pendiente |
 

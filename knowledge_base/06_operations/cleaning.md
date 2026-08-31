@@ -1,5 +1,6 @@
 ---
 title: Protocolos de Limpieza y Desinfección
+document_id: DOC-0031
 category: operations
 load_priority: selective
 last_reviewed: 2026-06-30

@@ -1,8 +1,9 @@
 ---
 title: Identidad de Marca — Setas de la Peña
+document_id: DOC-0038
 category: brand
 load_priority: on_request
-last_reviewed: 2026-06-29
+last_reviewed: 2026-07-24
 confidence: medium
 primary_sources:
   - Internal brand definition
@@ -57,7 +58,7 @@ Es:
 | Verde musgo / tierra | Color primario — naturaleza, rigor | #4A5E3A |
 | Beige cálido | Fondo — sustrato, naturaleza | #F5EDD6 |
 | Crema oscuro | Textos secundarios | #8B7355 |
-| Naranja terracota | Acento — P. djamor (Pink Oyster) | #C4622D |
+| Naranja terracota | Acento cálido territorial | #C4622D |
 | Blanco roto | Espacio limpio | #FAFAF5 |
 
 *La paleta evita colores brillantes artificiales — transmite naturaleza real, no producto industrial.*

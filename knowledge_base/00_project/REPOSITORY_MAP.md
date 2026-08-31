@@ -1,11 +1,13 @@
 ---
 title: Repository Map
 document_id: MAP-001
+category: navigation
 version: 1.1
 status: canonical
 authority: navigation
 load_priority: always
 owner: Setas de la Peña
+last_reviewed: 2026-07-08
 ---
 
 # Repository Map

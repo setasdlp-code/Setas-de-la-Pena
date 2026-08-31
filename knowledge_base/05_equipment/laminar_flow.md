@@ -1,5 +1,6 @@
 ---
 title: Flujo Laminar (LAF) — Cabina de Siembra
+document_id: DOC-0027
 category: equipment
 load_priority: selective
 last_reviewed: 2026-06-29

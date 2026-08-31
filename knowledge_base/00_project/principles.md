@@ -1,5 +1,6 @@
 ---
 title: Principios Operacionales — Setas de la Peña
+document_id: DOC-0004
 category: project
 load_priority: selective
 last_reviewed: 2026-06-29

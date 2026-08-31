@@ -1,8 +1,9 @@
 ---
 title: Estilo Visual e Ilustración
+document_id: DOC-0039
 category: brand
 load_priority: on_request
-last_reviewed: 2026-06-29
+last_reviewed: 2026-07-24
 confidence: low
 primary_sources:
   - Internal brand definition
@@ -73,7 +74,7 @@ mushroom cap and gills visible, natural light, no fantasy elements"
 ## Elementos Visuales de Marca
 
 ### Logo
-- Concepto: silueta estilizada del hongo más característico (P. djamor en abanico) + nombre tipográfico.
+- Concepto: silueta botánica sobria que no codifique una especie futura como producto principal. Para piezas de producción inicial, usar *L. edodes* como referencia.
 - Sin iconos complejos — legible en pequeño (etiquetas, sellos, redes).
 
 ### Fotografía Editorial (Redes Sociales)
@@ -92,8 +93,8 @@ mushroom cap and gills visible, natural light, no fantasy elements"
 1. Pink Oyster mushrooms on dark wooden board, natural light from left,
    earthy tones, editorial food photography style, muted warm palette
 
-2. Botanical scientific illustration of Pleurotus djamor, 
-   cream background, detailed gills, soft shadows, no text
+2. Botanical scientific illustration of Lentinula edodes,
+   cream background, detailed gills and cap texture, soft shadows, no text
 
 3. Mushroom cultivation chamber interior, ESP32 sensor visible, 
    humidity visible in air, technical-documentary photography style
