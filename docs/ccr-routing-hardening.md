@@ -19,7 +19,7 @@ The desired state records ordered rules because CCR uses **first match wins**. I
 | Budget headings | `Codex API/gpt-5.6-luna` | Script: Terra → Sol |
 | Codex baseline | `Codex API/gpt-5.6-terra` | Sol → Luna |
 
-`budget-by-agent.js` only recognizes explicit leading headings, case-insensitively:
+`budget-by-agent.js` only recognizes explicit leading headings, case-insensitively. It reads the latest user message from both Anthropic-style `messages` requests and OpenAI Responses-style `input` requests:
 
 ```text
 Luna:
@@ -58,10 +58,10 @@ The tool fails closed for any other version, an unexpected source layout, or a p
 
 Use CCR Logs after configuration changes; full successful-request sampling and error-body capture are enabled in the desired state. Confirm both the selected model and fallback attempts from the request trace.
 
-Observed on August 30, 2026:
+Observed on August 30–31, 2026:
 
 - A Claude-shaped request carrying session metadata reached Terra successfully after the metadata guard.
-- Claude and Codex requests with a budget heading each selected Luna in one attempt.
+- Anthropic-shaped budget requests selected Luna in one attempt. The Responses-style parser covers Codex `input` requests so the later generic Codex rule cannot overwrite a matching budget route.
 - A normal Codex request selected Terra in one attempt.
 - A normal Claude baseline request reached Sonnet, received a provider `429`, then completed through Terra. This verifies the prior malformed-request `400` was removed; it does **not** prove Sonnet was available at that moment.
 
