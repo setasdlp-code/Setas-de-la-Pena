@@ -1,0 +1,21 @@
+Ramas superadas borradas 2026-08-30 (tenian commits unicos, pero main las supera)
+Recuperar: git branch <nombre> <sha> && git push origin <nombre>
+Justificacion por rama: ver triaje.md
+
+f91bc7a99c6ab7936815d16b2820b97ebbb6f882 claude/setas-bridge-mcp-server
+f6e5a8265e21d33098f33324692146a616733c84 implement_grill_me_feature
+c3b85f2162ebc7291c22a592022ee8bde39c3da3 chatgpt/production-learning-loop-v1
+a21b395a33de13a2799e1d48f23511dbae720f2e fix/ingredient-catalog-audit
+6b3a1f5a48580ef547a35b483978c68918071a42 fix/ingredient-catalog-transparency
+1d55d5b2e06bdc7d3675c1506b93a756138a0d18 agent/perito-confidence-calibration
+574e7431b6aebd63dc76db399f8a7fbeacf1ee36 feature/setas-os-ux-architecture-v2
+d3329df15ecdee6ebe2a08b6605bd060cb8a01b6 agent/perito-scenario-engine
+4f84e38d389e26de064954eaa0b7dbed702e2ebc docs/architecture-and-provenance
+43b7f7965a03d24dbdea8d5189429f7d1c99d48b test/e2e-playwright-navigation
+83a085061af05a390d8c8826d1a7403199df43ad agent/setas-os-navigation-workspaces
+77f9e28ba814e1fe7fb80c7aae3e97a93cb121b5 studio/home-cockpit-import
+c573be221a24c35b8009082258c6c45dc1e432a0 fix/bitacora-emoji-svg-brand-voice
+ae6ca81d50ccb71bade77c644f2c62108e0b59b8 fix/formulador-emoji-svg-brand-voice
+de7f07cc9e9bb9aa11fc3136d88a4b9c83ebc103 claude/home-controller-setas-hy9tvi
+e64f62ac704f562b179d6c26607c2a5fefcee592 redesign_setas_os_form
+add22915968e68c0d8ff77ccfc76fc364fe8214f codex/reconcile-knowledge-base-ci

@@ -1,0 +1,12 @@
+Ramas borradas 2026-08-30 (0 commits nuevos vs origin/main, verificado por patch-id)
+Recuperar con: git branch <nombre> <sha> && git push origin <nombre>
+8ac767e audit/pr22-home-cockpit
+081f4aa fix/optimizer-result-diversity
+af1bede test/catalog-integrity-and-e2e
+9a2ae19 test/setas-os-playwright-e2e
+ef16af5 codex/fix-setas-os-hoy
+a1a0c9f refactor/hoy-tablero-control-kanban-lotes
+80c003f claude/setas-os-mobile-a11y-review-acfc8e
+b4089e2 codex/ccr-routing-hardening
+efbc15a feat/perito-evidence-display
+dcc83da guard/env-template-secrets
