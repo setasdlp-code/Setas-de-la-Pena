@@ -7499,8 +7499,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
-  const climateDashboardContent = ClimateDashboardSection();
-
   return(
     <div>
       <div className="topbar">
