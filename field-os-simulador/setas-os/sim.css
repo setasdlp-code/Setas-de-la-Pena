@@ -3698,6 +3698,7 @@
   font:800 var(--text-2xs)/1.4 var(--font-mono);
   text-align:center;
 }
+.sim-root .formular-coform-control{min-width:0;}
 .sim-root .formular-coform-toggle{
   min-height:48px;
   display:grid;
@@ -3746,6 +3747,8 @@
 .sim-root .co-form-issue{color:var(--coral-800);font-weight:800}
 .sim-root .co-form-species-results{display:flex;gap:6px;flex-wrap:wrap}
 .sim-root .co-form-species-results > div{padding:4px 7px;border:1px solid var(--border-soft);background:var(--paper-0);font-size:var(--text-2xs)}
+.sim-root .manual-species-summary > *{min-width:0;}
+.sim-root .generator-results-heading:focus-visible{outline:2px solid var(--focus-ring,var(--coral-500));outline-offset:4px;}
 .sim-root .form-mobile-start{display:none}
 .sim-root .form-species-origin-toggle{display:none}
 .sim-root .form-production-command{
@@ -3833,6 +3836,9 @@
   .sim-root .co-form-panel-head p{text-align:left}
   .sim-root .co-form-panel-grid{grid-template-columns:1fr}
   .sim-root .co-form-summary-head{display:grid;gap:4px}
+  .sim-root .formular-coform-toggle{width:100%;min-height:48px;}
+  .sim-root .manual-species-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important;}
+  .sim-root .manual-result-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
   .sim-root .form-mobile-start{
     display:grid;
     gap:10px;
