@@ -168,10 +168,11 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
 test('Formular V2 separates Mesa and Generator without undefined replacement helpers', () => {
   const modeNav = jsx.match(/<nav className="formular-mode-nav" role="tablist"[\s\S]*?<\/nav>/);
   assert.ok(modeNav, 'Formular mode tablist not found');
+  assert.equal((modeNav[0].match(/role="tab"/g) || []).length, 2, 'only Mesa and Generator are tabs');
   assert.match(modeNav[0], /id="formular-tab-mesa"[\s\S]*?aria-controls="formular-panel-mesa"/);
   assert.match(modeNav[0], /id="formular-tab-generador"[\s\S]*?aria-controls="formular-panel-generador"/);
   assert.doesNotMatch(modeNav[0], /coform|Co-Formulación/, 'Co-Formulación is a toggle, not a third tab without a panel');
-  assert.match(jsx, /id="formular-coform-toggle"[\s\S]*?aria-pressed=\{coFormMode\}[\s\S]*?aria-controls="co-form-panel"/);
+  assert.match(jsx, /id="formular-coform-toggle"[\s\S]*?aria-pressed=\{coFormMode\}[\s\S]*?aria-controls="co-form-panel"[\s\S]*?aria-expanded=\{coFormMode\}/);
   assert.match(jsx, /<section id="co-form-panel"[\s\S]*?aria-labelledby="formular-coform-toggle"/);
   assert.match(jsx, /id="formular-panel-mesa"[\s\S]*?role="tabpanel"/);
   assert.match(jsx, /id="formular-panel-generador"[\s\S]*?role="tabpanel"/);
@@ -208,8 +209,12 @@ test('mobile production flow resets scroll and exposes one progressive next acti
   assert.match(jsx, /setSKey\(sKey\);setRecipe\(invResult\.recipe\);openBuilderSubTab\('formular'\)/);
   assert.match(css, /\.form-production-command\{[\s\S]*position:sticky;[\s\S]*top:0;[\s\S]*z-index:var\(--z-sticky-panel\)/);
   assert.match(css, /@media\(max-width:560px\)[\s\S]*\.formular-mode-nav\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.formular-mode-wrapper\{[\s\S]*grid-template-columns:minmax\(0,1fr\) minmax\(13\.75rem,\.45fr\)/);
   assert.match(css, /@media\(max-width:560px\)[\s\S]*\.form-mobile-start\{[\s\S]*display:grid[\s\S]*\.form-flow\{display:none\}/);
   assert.match(css, /\.form-species-context\.is-empty\{display:none\}[\s\S]*\.form-species-context\.has-recipe/);
+  assert.match(jsx, /className=\{`form-flow\$\{recipe\.length>0\?' has-recipe':''\}`\}/);
+  assert.match(css, /\.form-species-context\{[\s\S]*position:relative;[\s\S]*top:auto;[\s\S]*z-index:auto;/);
+  assert.match(css, /\.builder-wrap > \.sim-live-dashboard\{[\s\S]*position:relative;[\s\S]*top:auto;[\s\S]*z-index:auto;/);
 });
 
 test('Formular persists and validates the active draft for reload recovery', () => {
