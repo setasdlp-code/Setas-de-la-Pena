@@ -9803,13 +9803,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       try{
                                         const out=runHybridRecipeSearch({
                                           targetKey:optTarget,
-                                          recipe:[],
+                                          recipe:lockedIds.length?recipe:[],
                                           invLotes,
                                           maxCost:optMaxCost,
                                           ingredients:optimizerINGS,
                                           useStock:optUseStock,
                                           profileKey:pk,
                                           stockMap,
+                                          lockedIds,
                                         });
                                         noStock=noStock||!!out.noStock;
                                         byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
@@ -9885,8 +9886,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds([]);goTab('produccion');}}>Producir</button>
+                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
+                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
