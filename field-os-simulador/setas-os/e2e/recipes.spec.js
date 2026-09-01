@@ -106,6 +106,29 @@ test('el solver C:N calcula una receta y la carga en la Mesa de Mezcla', async (
   await expect(page.getByTestId('formulator-next-action')).toContainText('Preparar lote');
 });
 
+test('mobile: el solver C:N no recorta el panel y anuncia el resultado', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'Contrato específico del solver móvil');
+
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await selectSpecies(page, 'p_ostreatus_gris');
+
+  await page.getByRole('tab', { name: /Generador de Recetas/ }).click();
+  const generator = page.locator('#formular-panel-generador');
+  await generator.getByRole('button', { name: 'Por objetivo C:N', exact: true }).click();
+
+  await generator.locator('#inv-base').selectOption('paja_trigo');
+  await generator.locator('#inv-supp').selectOption('salvado_trigo');
+  await generator.getByRole('button', { name: /Calcular proporciones exactas/ }).click();
+
+  await expect(generator.getByRole('status')).toContainText(/Proporciones calculadas/i);
+  await expect(generator.locator('#manual-result-heading')).toBeFocused();
+  await expect(generator).toEvaluate((node) => node.scrollWidth <= node.clientWidth);
+  await expect(generator.locator('.manual-species-summary')).toEvaluate((node) => node.scrollWidth <= node.clientWidth);
+  await expect(generator.locator('#inv-base')).toHaveAttribute('name', 'manualBaseIngredient');
+  await expect(generator.locator('#inv-min')).toHaveAttribute('name', 'manualMineralPct');
+});
+
 test('la acción móvil principal guía especie → balance → preparación', async ({ page }) => {
   await openApp(page);
   await goWorkspace(page, 'formular');
