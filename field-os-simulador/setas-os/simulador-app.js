@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: c280750b152536cb4d01af243221ac7d18a7cc088bc217b860818b82a1259558
+// source-hash: 8de6919054792dfd112f1f1920f59c86dcc8411f6a5f1c265603d0a89c8d6aff
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6572,13 +6572,14 @@ Click para ver análisis completo`
             try {
               const out = runHybridRecipeSearch({
                 targetKey: optTarget,
-                recipe: [],
+                recipe: lockedIds.length ? recipe : [],
                 invLotes,
                 maxCost: optMaxCost,
                 ingredients: optimizerINGS,
                 useStock: optUseStock,
                 profileKey: pk,
-                stockMap
+                stockMap,
+                lockedIds
               });
               noStock = noStock || !!out.noStock;
               byProfile[pk] = (out.ranked || []).slice(0, 12).map(
@@ -6635,7 +6636,7 @@ Click para ver análisis completo`
     return /* @__PURE__ */ React.createElement("div", { key: i, className: "opt-result", "data-result-id": i, "data-base-signature": baseSig }, /* @__PURE__ */ React.createElement("div", { className: "opt-result-head" }, /* @__PURE__ */ React.createElement("div", { className: "opt-rank" }, "#", i + 1), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "opt-score" }, r.score), /* @__PURE__ */ React.createElement("div", { className: "opt-score-lbl" }, "SCORE")), /* @__PURE__ */ React.createElement("div", { className: "opt-pills", style: { flex: 1 } }, mainIngs.map((s, j) => /* @__PURE__ */ React.createElement("span", { key: j, className: "opt-pill" }, s)), r.suppOverLimit && /* @__PURE__ */ React.createElement("span", { className: "opt-pill", style: { background: "var(--status-attention-bg)", borderColor: "var(--status-attention)", color: "var(--status-attention)" } }, "⚠ Supl. ", r.suppPct.toFixed(0), "% > límite")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "opt-load", onClick: () => {
       setSKey(optTarget);
       setRecipe(r.recipe);
-      setLockedIds([]);
+      setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
       openBuilderSubTab("formular");
       goTab("formular");
       setLoadedFlash(true);
@@ -6643,7 +6644,7 @@ Click para ver análisis completo`
     } }, "🥣 Cargar en Mesa"), /* @__PURE__ */ React.createElement("button", { className: "opt-load", style: { background: "var(--moss-600,var(--accent-olive))", borderColor: "var(--moss-700,var(--accent-olive))" }, onClick: () => {
       setSKey(optTarget);
       setRecipe(r.recipe);
-      setLockedIds([]);
+      setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
       goTab("produccion");
     } }, "Producir"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
       const tOpt = calcTreatment(r.an, optTarget, SPP);
