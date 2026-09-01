@@ -50,6 +50,42 @@ test('Calcular produce >=4 firmas de base distintas en el top-12, sin ninguna en
   expect(new Set(recipeKeys).size).toBe(recipeKeys.length);
 });
 
+test('mobile: Generador conserva tabs válidos, anuncia resultados y no desborda', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'Contrato específico del Generador móvil');
+
+  await openApp(page);
+  await goWorkspace(page, 'formular');
+  await selectSpecies(page, 'p_ostreatus_gris');
+  await page.getByTestId('form-mobile-start').getByRole('button', { name: 'Catálogo', exact: true }).click();
+
+  const modeTabs = page.locator('.formular-mode-nav[role="tablist"]').getByRole('tab');
+  await expect(modeTabs).toHaveCount(2);
+  await expect(modeTabs.nth(0)).toHaveAttribute('aria-controls', 'formular-panel-mesa');
+  await expect(modeTabs.nth(1)).toHaveAttribute('aria-controls', 'formular-panel-generador');
+
+  const coFormToggle = page.getByTestId('co-form-toggle');
+  await expect(coFormToggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(coFormToggle).not.toHaveAttribute('role', 'tab');
+
+  const generatorTab = modeTabs.nth(1);
+  await generatorTab.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(modeTabs.nth(0)).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(generatorTab).toBeFocused();
+
+  await generatorTab.click();
+  const generator = page.locator('#formular-panel-generador');
+  await expect(generator.getByRole('heading', { name: /Automejora.*Generador de recetas/i, level: 2 })).toBeVisible();
+  await generator.getByRole('button', { name: 'Calcular', exact: true }).click();
+
+  const status = generator.getByRole('status');
+  await expect(status).toContainText(/\d+ escenario|No hay ingredientes en stock|No hay combinaciones válidas|No se pudieron calcular/i);
+  await expect(generator.locator('#generator-results-heading')).toBeFocused();
+  await expect(generator).toEvaluate((node) => node.scrollWidth <= node.clientWidth);
+  await expect(generator.locator('.opt-result')).not.toHaveCount(0);
+});
+
 // Prueba de vida del adaptador nativo: el Formulador debe registrarse ante
 // SetasFormulatorAPI apenas monta, sin depender de ninguna interacción del
 // usuario. Si esto falla con adapterType()==='dom' (o undefined), el

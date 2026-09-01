@@ -3956,6 +3956,8 @@ function sowingRecommendation(deficitKg) {
   const [optMaxCost,setOptMaxCost]=useState(0);
   const [optResults,setOptResults]=useState(null);
   const [optRunning,setOptRunning]=useState(false);
+  const [generatorStatus,setGeneratorStatus]=useState('');
+  const [generatorFocusTarget,setGeneratorFocusTarget]=useState(null);
   const [optProfile,setOptProfile]=useState('produccion');
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
@@ -4236,6 +4238,11 @@ function sowingRecommendation(deficitKg) {
       requestAnimationFrame(()=>document.getElementById(next==='formular'?'formular-tab-mesa':'formular-tab-generador')?.focus());
     }
   };
+  useEffect(()=>{
+    if(!generatorFocusTarget) return;
+    document.getElementById(generatorFocusTarget)?.focus();
+    setGeneratorFocusTarget(null);
+  },[generatorFocusTarget]);
   const onBuilderTabKeyDown=e=>{
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
     e.preventDefault();
@@ -8579,21 +8586,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span aria-hidden="true">⚡</span>
                 <span>Generador de Recetas</span>
               </button>
+            </nav>
+            <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
               <button
                 type="button"
-                role="tab"
-                id="formular-tab-coform"
-                aria-selected={coFormMode}
-                tabIndex={0}
-                className={`formular-mode-btn${coFormMode?' is-active':''}`}
+                id="formular-coform-toggle"
+                aria-pressed={coFormMode}
+                aria-expanded={coFormMode}
+                aria-controls="co-form-panel"
+                className={`formular-mode-btn formular-coform-toggle${coFormMode?' is-active':''}`}
                 data-testid="co-form-toggle"
                 onClick={()=>setCoFormMode(!coFormMode)}>
                 <span aria-hidden="true">🧬</span>
                 <span>{coFormMode?'Co-Formulación Activa':'Modo Co-Formulación'}</span>
               </button>
-            </nav>
+            </div>
             {coFormMode&&(
-              <div className="co-form-panel" data-testid="co-form-panel" style={{margin:'10px 0',padding:'12px',background:'var(--surface-card,#fbf9f4)',borderRadius:'8px',border:'1px solid var(--border-subtle,#e2dacd)'}}>
+              <section id="co-form-panel" className="co-form-panel" data-testid="co-form-panel" aria-labelledby="formular-coform-toggle" style={{margin:'10px 0',padding:'12px',background:'var(--surface-card,#fbf9f4)',borderRadius:'8px',border:'1px solid var(--border-subtle,#e2dacd)'}}>
                 <header style={{display:'flex',justify:'space-between',alignItems:'center',marginBottom:'8px'}}>
                   <strong style={{fontSize:'0.9rem'}}>🧬 Co-Formulación Multi-Especie (Ponderación de Lote)</strong>
                   <span style={{fontSize:'0.8rem',color:'var(--ink-600,#666)'}}>Proporción de producción por especie</span>
@@ -8642,7 +8651,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                 )}
-              </div>
+              </section>
             )}
           </div>
         )}
@@ -9746,14 +9755,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='formular'&&builderSubTab==='generador'&&(
           <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
 {/* ── GENERADOR DE RECETAS ── */}
-            <div id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" style={{marginTop:18}}>
+            <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
-                <div className="sec" id="gen-panel-title" style={{marginBottom:0,borderBottom:'none'}}>Automejora · Generador de recetas</div>
+                <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
                   <button type="button" className="tog" onClick={()=>openBuilderSubTab('formular')}>← Mesa de Mezcla</button>
                   <button type="button" className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
                 </div>
               </div>
+              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{generatorStatus}</div>
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
                   <div className="seg-row" style={{marginBottom:14}}>
@@ -9793,9 +9803,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               </div>
                               <button
+                                type="button"
                                 className="btn dark"
+                                disabled={optRunning}
                                 onClick={()=>{
-                                  setOptRunning(true);setOptResults(null);
+                                  setOptRunning(true);setOptResults(null);setGeneratorStatus('Calculando escenarios…');
                                   setTimeout(()=>{
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
@@ -9834,10 +9846,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     // Sin fallback — cada perfil muestra solo lo que le corresponde
                                     setOptResults({...byProfile,noStock,_diag});
                                     setOptRunning(false);
+                                    const activeResults=byProfile[optProfile]||[];
+                                    const activeDiag=byProfile[`_diag_${optProfile}`]?.diag||_diag?.diag;
+                                    if(activeDiag?.error){
+                                      setGeneratorStatus('No se pudieron calcular escenarios. Revisa el diagnóstico del Generador.');
+                                    }else if(noStock){
+                                      setGeneratorStatus('No hay ingredientes en stock registrados. Ve a Bodega para agregar ingredientes.');
+                                    }else if(activeResults.length){
+                                      setGeneratorStatus(`${activeResults.length} escenario${activeResults.length===1?'':'s'} disponible${activeResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`);
+                                      setGeneratorFocusTarget('generator-results-heading');
+                                    }else{
+                                      setGeneratorStatus('No hay combinaciones válidas. Revisa el diagnóstico del Generador.');
+                                      setGeneratorFocusTarget('generator-results-heading');
+                                    }
                                   },50);
                                 }}
                                 style={{marginLeft:'auto',flex:'none',minWidth:0,padding:'6px 16px'}}>
-                                {optRunning?<span><span className="spin">↻</span> …</span>:'Calcular'}
+                                {optRunning?<span><span className="spin" aria-hidden="true">↻</span> Calculando…</span>:'Calcular'}
                               </button>
                             </div>
                             {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
@@ -9857,9 +9882,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             )}
                             {optResults&&optResults[optProfile]&&(
                               <div>
-                                <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
+                                <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
                                   {optResults[optProfile].length} combinaciones exclusivas · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · C:N objetivo {SPP[optTarget]?.cn_optimal.ideal}:1
-                                </div>
+                                </h3>
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
                                   return(
@@ -10013,7 +10038,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
                           </div>
                           {sp&&(
-                            <div style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
+                            <div className="manual-species-summary" style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
                               <div>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
                                 <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.name}</div>
@@ -10035,7 +10060,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="inv-grid">
                             <div className="inv-field">
                               <label htmlFor="inv-base">Ingrediente base (carbono)</label>
-                              <select id="inv-base" value={invBase} onChange={e=>setInvBase(e.target.value)}>
+                              <select id="inv-base" name="manualBaseIngredient" value={invBase} onChange={e=>setInvBase(e.target.value)}>
                                 <option value="">— Seleccionar —</option>
                                 {INGS.filter(g=>g.role==='base_carbono'&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
                                   <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
@@ -10044,7 +10069,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="inv-field">
                               <label htmlFor="inv-supp">Suplemento nitrógeno</label>
-                              <select id="inv-supp" value={invSupp} onChange={e=>setInvSupp(e.target.value)}>
+                              <select id="inv-supp" name="manualNitrogenSupplement" value={invSupp} onChange={e=>setInvSupp(e.target.value)}>
                                 <option value="">— Seleccionar —</option>
                                 {INGS.filter(g=>['suplemento_n','suplemento_medio'].includes(g.role)&&g.cn>0&&g.n>0&&g.cs.includes(sKey)).map(g=>(
                                   <option key={g.id} value={g.id}>{g.name} · C:N {g.cn}:1 · N {g.n}%</option>
@@ -10053,7 +10078,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="inv-field">
                               <label htmlFor="inv-aer">Aireador (opcional)</label>
-                              <select id="inv-aer" value={invAer} onChange={e=>setInvAer(e.target.value)}>
+                              <select id="inv-aer" name="manualAerator" value={invAer} onChange={e=>setInvAer(e.target.value)}>
                                 <option value="">— Ninguno —</option>
                                 {INGS.filter(g=>g.role==='aireador'&&g.cs.includes(sKey)).map(g=>(
                                   <option key={g.id} value={g.id}>{g.name}</option>
@@ -10062,12 +10087,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="inv-field">
                               <label htmlFor="inv-min">Mineral / corrector pH (%)</label>
-                              <input id="inv-min" type="number" min="0" max="10" step="0.5" inputMode="decimal" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
+                              <input id="inv-min" name="manualMineralPct" type="number" min="0" max="10" step="0.5" inputMode="decimal" autoComplete="off" required value={invMin} onChange={e=>setInvMin(parseFloat(e.target.value)||0)}/>
                             </div>
                             {invAer&&(
                               <div className="inv-field">
                                 <label htmlFor="inv-aerpct">Aireador fijo (%)</label>
-                                <input id="inv-aerpct" type="number" min="5" max="25" step="1" inputMode="numeric" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
+                                <input id="inv-aerpct" name="manualAeratorPct" type="number" min="5" max="25" step="1" inputMode="numeric" autoComplete="off" required value={invAerPct} onChange={e=>setInvAerPct(parseInt(e.target.value)||10)}/>
                               </div>
                             )}
                           </div>
@@ -10076,7 +10101,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N objetivo</span>
                               <span style={{fontFamily:"var(--font-num)",fontSize:28,fontWeight:600,color:sp&&invTargetCN>=sp.cn_optimal.min&&invTargetCN<=sp.cn_optimal.max?'var(--moss-500)':'var(--coral-500)'}}>{invTargetCN}:1</span>
                             </div>
-                            <input type="range" min="10" max="120" step="1" value={invTargetCN} onChange={e=>setInvTargetCN(parseInt(e.target.value))} aria-label="Relación C:N objetivo" aria-valuetext={`${invTargetCN}:1`} style={{width:'100%',accentColor:'var(--coral-500)',marginBottom:6}}/>
+                            <input name="manualTargetCN" type="range" min="10" max="120" step="1" value={invTargetCN} onChange={e=>setInvTargetCN(parseInt(e.target.value))} aria-label="Relación C:N objetivo" aria-valuetext={`${invTargetCN}:1`} style={{width:'100%',accentColor:'var(--coral-500)',marginBottom:6}}/>
                             {sp&&(
                               <div style={{position:'relative',height:4,background:'var(--paper-300)',borderRadius:2}}>
                                 <div style={{position:'absolute',left:`${((sp.cn_optimal.min-10)/110)*100}%`,width:`${((sp.cn_optimal.max-sp.cn_optimal.min)/110)*100}%`,height:'100%',background:'rgba(77,98,53,.35)',borderRadius:2}}/>
@@ -10091,22 +10116,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           <button className="btn pri" style={{width:'100%',padding:13,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)'}} disabled={!invBase||!invSupp}
                             onClick={()=>{
+                              setGeneratorStatus('Calculando proporciones…');
+                              const reportManualError=message=>{
+                                setGeneratorStatus('');
+                                setInvResult({error:message});
+                                setGeneratorFocusTarget('manual-result-message');
+                              };
                               const bI=INGS.find(i=>i.id===invBase);
                               const sI=INGS.find(i=>i.id===invSupp);
                               if(!bI||!sI) return;
                               const T=invTargetCN, pMin=invMin, pAer=invAer?invAerPct:0;
                               const pRem=100-pMin-pAer;
-                              if(pRem<=2){setInvResult({error:'Los porcentajes fijos superan 98%. Reduce mineral o aireador.'});return;}
+                              if(pRem<=2){reportManualError('Los porcentajes fijos superan 98%. Reduce mineral o aireador.');return;}
                               const bDry=1-Math.min(0.92,Math.max(0,(bI.moisture||0)/100));
                               const sDry=1-Math.min(0.92,Math.max(0,(sI.moisture||0)/100));
                               const cb=bI.c*bDry, nb=bI.n*bDry, cs=sI.c*sDry, ns=sI.n*sDry;
                               const denom=(cb-cs)-T*(nb-ns);
-                              if(Math.abs(denom)<0.001){setInvResult({error:'Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N.'});return;}
+                              if(Math.abs(denom)<0.001){reportManualError('Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N.');return;}
                               const ps=pRem*(cb-T*nb)/denom;
                               const pb=pRem-ps;
                               if(ps<0||pb<0||ps>pRem){
                                 const cnMin=Math.min(bI.cn,sI.cn).toFixed(0), cnMax=Math.max(bI.cn,sI.cn).toFixed(0);
-                                setInvResult({error:`C:N ${T}:1 no alcanzable con estos ingredientes. Rango posible: ${cnMin}–${cnMax}:1`});
+                                reportManualError(`C:N ${T}:1 no alcanzable con estos ingredientes. Rango posible: ${cnMin}–${cnMax}:1`);
                                 return;
                               }
                               const res=[];
@@ -10116,14 +10147,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               if(pMin>0) res.push({id:'carbonato_calcio',p:pMin});
                               const anRes=analyze(res,sKey,effectiveINGS);
                               setInvResult({recipe:res,an:anRes});
+                              setGeneratorStatus('Proporciones calculadas. Revisa el resultado antes de cargarlo en Mesa de Mezcla.');
+                              setGeneratorFocusTarget('manual-result-heading');
                             }}
                           >⇌ Calcular proporciones exactas</button>
                           {invResult&&(
                             <div className="inv-result">
                               {invResult.error
-                                ?<div style={{color:'var(--coral-500)',fontFamily:"var(--font-num)",fontSize:18,fontStyle:'italic',lineHeight:1.5}}>{invResult.error}</div>
+                                ?<div id="manual-result-message" tabIndex={-1} role="alert" style={{color:'var(--coral-500)',fontFamily:"var(--font-num)",fontSize:18,fontStyle:'italic',lineHeight:1.5}}>{invResult.error}</div>
                                 :(<>
-                                  <div className="sec" style={{marginTop:0}}>Resultado</div>
+                                  <h3 id="manual-result-heading" tabIndex={-1} className="sec" style={{marginTop:0}}>Resultado</h3>
                                   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
                                     {invResult.recipe.map(r=>{
                                       const g=INGS.find(i=>i.id===r.id);
@@ -10136,7 +10169,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     })}
                                   </div>
                                   {invResult.an&&(
-                                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginBottom:14}}>
+                                    <div className="manual-result-metrics" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginBottom:14}}>
                                       {[
                                         {l:'C:N logrado',v:`${invResult.an.cn.toFixed(1)}:1`,ok:sp&&invResult.an.cn>=sp.cn_optimal.min&&invResult.an.cn<=sp.cn_optimal.max},
                                         {l:'Nitrógeno',v:`${invResult.an.avgN.toFixed(2)}%`,ok:sp&&invResult.an.avgN>=sp.n_optimal.min&&invResult.an.avgN<=sp.n_optimal.max},
@@ -10159,7 +10192,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}
                 </div>
               </>)}
-            </div>
+            </section>
           </div>
         )}
 
