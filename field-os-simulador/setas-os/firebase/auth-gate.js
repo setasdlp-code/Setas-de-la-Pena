@@ -23,6 +23,29 @@ const ERRORES = {
 
 export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesión. Inténtalo de nuevo.";
 
+const AUTH_STATE_EVENT = "setas-auth-state";
+
+function syncAuthGatedResources(authenticated) {
+  // El runtime .dc conserva una copia fuente oculta y una copia viva dentro de
+  // #dc-root. Hidratamos recursos solo en la copia viva para no iniciar dos
+  // iframes ni cargar módulos ocultos detrás del gate.
+  const scope = document.querySelector("#dc-root") || document;
+  scope.querySelectorAll("[data-auth-src]").forEach((node) => {
+    if (authenticated) {
+      if (!node.getAttribute("src")) node.setAttribute("src", node.dataset.authSrc);
+    } else {
+      node.removeAttribute("src");
+    }
+  });
+}
+
+function publishAuthState(authenticated) {
+  window.__setasAuthState = authenticated;
+  document.documentElement.dataset.setasAuthState = authenticated ? "authenticated" : "unauthenticated";
+  syncAuthGatedResources(authenticated);
+  window.dispatchEvent(new CustomEvent(AUTH_STATE_EVENT, { detail: { authenticated } }));
+}
+
 export function buildGate() {
   const gate = document.createElement("div");
   gate.id = "setas-auth-gate";
@@ -82,6 +105,7 @@ function init() {
   let busy = false;
 
   onAuthStateChanged(auth, (user) => {
+    publishAuthState(!!user);
     if (user) {
       el.gate.style.display = "none";
       el.signoutBtn.style.display = "block";

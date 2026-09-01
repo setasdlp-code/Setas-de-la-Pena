@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-setas-auth-state="pending">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +8,17 @@
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
+<style>
+  /*
+   * Firebase resolves after the .dc runtime parses this document. Keep
+   * application-only surfaces out of the login paint until that verdict.
+   */
+  html[data-setas-auth-state="pending"] .setas-auth-gated,
+  html[data-setas-auth-state="unauthenticated"] .setas-auth-gated {
+    content-visibility: hidden;
+    contain-intrinsic-size: 1px 1px;
+  }
+</style>
 </head>
 <body>
 <x-dc>
@@ -984,13 +995,13 @@
     </div>
     </sc-if>
 
-    <!-- =================== SIMULADOR (nativo, siempre montado) =================== -->
-    <div class="sim-root" style="{{ simRootStyle }}">
+    <!-- =================== SIMULADOR (se monta tras autenticar) =================== -->
+    <div class="sim-root setas-auth-gated" style="{{ simRootStyle }}">
       <x-import component-from-global-scope="SimuladorApp" from="./simulador-app.js" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
     </div>
 
-    <!-- =================== BANCO CLIMÁTICO (iframe, siempre montado para monitoreo continuo) =================== -->
-    <iframe src="climate-bench.html" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
+    <!-- =================== BANCO CLIMÁTICO (solo después de autenticar) =================== -->
+    <iframe class="setas-auth-gated" data-auth-src="climate-bench.html" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
 
     <!-- =================== REVISIÓN DIARIA =================== -->
     <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
