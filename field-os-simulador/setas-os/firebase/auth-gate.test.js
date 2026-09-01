@@ -228,6 +228,28 @@ test('onAuthStateChanged shows/hides gate based on user login state', () => {
   assert.match(authHandler, /el\.signoutBtn\.style\.display\s*=\s*"none"/, 'debe ocultar signout cuando no hay usuario');
 });
 
+test('auth state gates the protected runtime and publishes a mount signal', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const app = read('../simulador-app.jsx');
+
+  assert.match(src, /window\.__setasAuthState\s*=\s*authenticated/, 'debe guardar el estado de auth para el puente React');
+  assert.match(src, /new CustomEvent\(AUTH_STATE_EVENT,\s*\{\s*detail:\s*\{\s*authenticated\s*\}\s*\}\)/, 'debe publicar el cambio de auth');
+  assert.match(src, /syncAuthGatedResources\(authenticated\)/, 'debe hidratar recursos solo con sesión válida');
+  assert.match(src, /querySelectorAll\("\[data-auth-src\]"\)/, 'debe localizar recursos diferidos');
+  assert.match(src, /node\.setAttribute\("src",\s*node\.dataset\.authSrc\)/, 'debe iniciar el iframe solo al autenticar');
+  assert.match(src, /node\.removeAttribute\("src"\)/, 'debe liberar el iframe al cerrar sesión');
+
+  assert.match(shell, /<html[^>]*data-setas-auth-state="pending"/, 'el shell debe empezar protegido antes de que Firebase responda');
+  assert.match(shell, /class="sim-root setas-auth-gated"/, 'el simulador debe estar marcado como superficie protegida');
+  assert.match(shell, /<iframe class="setas-auth-gated" data-auth-src="climate-bench\.html"/, 'el banco climático debe diferir su carga');
+  assert.match(shell, /content-visibility:\s*hidden/, 'la superficie protegida debe omitir paint mientras no hay sesión');
+
+  assert.match(app, /function SimuladorShell\(props\)/, 'la aplicación pesada debe vivir detrás del shell de auth');
+  assert.match(app, /window\.addEventListener\('setas-auth-state',onAuthState\)/, 'el shell React debe escuchar la señal de auth');
+  assert.match(app, /return isAuthenticated\?<SimuladorShell \{\.\.\.props\}\/>:null/, 'el simulador no debe montar antes de autenticar');
+});
+
 test('signout button listener calls signOut(auth)', () => {
   const src = read('auth-gate.js');
   assert.match(src, /el\.signoutBtn\.addEventListener\("click",\s*\(\)\s*=>\s*signOut\(auth\)\)/, 'signout button debe llamar signOut');

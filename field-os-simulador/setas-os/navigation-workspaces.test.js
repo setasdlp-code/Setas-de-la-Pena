@@ -237,8 +237,8 @@ test('Control remains the visual reference and Formular overrides stay locally s
   assert.doesNotMatch(scoped[0], /\.home-/);
 });
 
-test('the climate iframe starts from a concrete URL without a template 404', () => {
-  assert.match(shell, /<iframe src="climate-bench\.html" title="Banco Climático"/);
+test('the climate iframe defers a concrete URL until authenticated without a template 404', () => {
+  assert.match(shell, /<iframe class="setas-auth-gated" data-auth-src="climate-bench\.html" title="Banco Climático"/);
   assert.doesNotMatch(shell, /src="\{\{\s*climaSrc\s*\}\}"/);
   assert.doesNotMatch(shell, /climaSrc:/);
 });

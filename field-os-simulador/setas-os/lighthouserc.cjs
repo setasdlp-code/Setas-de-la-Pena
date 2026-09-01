@@ -43,25 +43,23 @@ const CLS_BUDGET = 0.1; // good
  *   performance 0.69 · seo 1.0 · accessibility 1.0 · best-practices 0.93
  *
  * SEO/accessibility/best-practices hit Google's "good" band with real margin —
- * left at the standard floor. Performance did NOT: LCP simulates at ~10.2s on
- * throttled mobile because the app renders its *entire* UI (every module,
- * every species illustration) into the DOM unconditionally, regardless of
- * auth state or active tab — confirmed by testing that `loading="lazy"` on
- * the species images had zero effect, since they sit in-viewport behind the
- * login overlay (z-index stacking, not off-screen) so the lazy heuristic never
- * defers them. Fixing this needs the login gate's auth state wired into the
- * main component so `<x-import>`/hidden modules mount only once authenticated
- * — a real architecture change, out of scope for setting up this gate.
- * PERF_FLOOR is set to the measured baseline (with a small buffer) so the
- * gate still catches NEW regressions without hard-blocking on this known,
- * already-diagnosed issue. Raise it back to 0.9 once that fix ships.
+ * left at the standard floor. Performance did NOT: the app used to render its
+ * *entire* UI (every module and species illustration) behind the login overlay.
+ * The auth gate now publishes its verified state to simulador-app.jsx, whose
+ * lightweight wrapper mounts SimuladorShell only after login; protected shell
+ * sections use content-visibility:hidden while auth is pending and defer the
+ * climate iframe's src. `loading="lazy"` remains useful for off-screen species
+ * images after login, but it was never a sufficient pre-login solution because
+ * those images sat in-viewport behind the overlay.
+ *
+ * PERF_FLOOR remains at 0.35 until CI establishes a new stable baseline. It is
+ * deliberately conservative and must not be changed without new measurements.
  *
  * Re-measured 2026-08-09 after merging main (PR #11/#12 — Perito/Formulador
- * improvements): the larger simulador-app.js bundle (537KB→582KB, still all
- * mounted unconditionally per the note above) pushed performance down further
- * to 0.4 and Total Blocking Time up to ~2.0s. Same root cause, more code —
- * not a new bug. Floor and TBT lowered/downgraded again to match; raise both
- * back once the auth-gated mounting fix ships.
+ * improvements): the larger simulador-app.js bundle (537KB→582KB) was still
+ * mounted behind the login overlay. The auth-gated mounting fix above is
+ * intended to remove that pre-login work; CI, not this comment, remains the
+ * evidence for changing the budget.
  */
 const PERF_FLOOR = 0.35;
 const SEO_FLOOR = 0.95;

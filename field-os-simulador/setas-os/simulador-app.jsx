@@ -1800,7 +1800,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         </button>
         {/* Nombre + imagen — editorial full-bleed */}
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
-          {img&&<img src={img} alt={sp.name} width="320" height="240" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
+          {img&&<img src={img} alt={sp.name} width="320" height="240" loading="lazy" decoding="async" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
           <div style={{padding:'14px 16px 16px',position:'relative',zIndex:'var(--z-local)',maxWidth:img?'60%':'100%'}}>
             <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
             <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
@@ -3793,7 +3793,7 @@ const readFormDraft=()=>{
   }catch(e){return null;}
 };
 
-function App(props){
+function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
   // Oculta la barra fija de especie al bajar (deja más alto útil en mobile, donde
@@ -12158,6 +12158,19 @@ interval:
       </section>)}
     </div>
   );
+}
+
+const isSetasAuthenticated=()=>typeof window!=='undefined'&&window.__setasAuthState===true;
+
+function App(props){
+  const [isAuthenticated,setIsAuthenticated]=React.useState(isSetasAuthenticated);
+  React.useEffect(()=>{
+    const onAuthState=(event)=>setIsAuthenticated(event?.detail?.authenticated===true);
+    window.addEventListener('setas-auth-state',onAuthState);
+    setIsAuthenticated(isSetasAuthenticated());
+    return()=>window.removeEventListener('setas-auth-state',onAuthState);
+  },[]);
+  return isAuthenticated?<SimuladorShell {...props}/>:null;
 }
 window.SimuladorApp = App;
 
