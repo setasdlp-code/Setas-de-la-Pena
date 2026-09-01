@@ -7536,13 +7536,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </header>
 
       <div className="wrap">
-        <div className="print-header" style={{display:'flex',alignItems:'center',gap:14}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="70" height="36" style={{width:70,height:'auto',maxHeight:38,objectFit:'contain'}} />
-          <div>
-            <h1 style={{margin:0,fontSize:22}}>Setas de la Peña</h1>
-            <p style={{margin:'2px 0 0',fontSize:12,color:'var(--ink-2)'}}>Biogranja fungícola · Tenjo, Cundinamarca · 2.600 msnm</p>
-          </div>
-        </div>
         <div className="page-title-bar" style={{display:(tab==='catalogo'||tab==='inicio'||tab==='home')?'none':undefined}}>
           <span className="page-title-eyebrow">{RECETA_TABS.includes(tab)?'Receta':'Cultivo'}</span>
           <h1 className="page-title-h">{TAB_PAGE_TITLES[tab]}</h1>
