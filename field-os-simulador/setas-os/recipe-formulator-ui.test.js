@@ -31,6 +31,21 @@ test('Setas OS — Formulator UI/UX Elite Suite', async (t) => {
     assert.match(jsx, /Evidencia:.*heurística de composición.*confianza/i);
   });
 
+  await t.test('Recipe Generator preserves active locks when calculating and loading a candidate', () => {
+    const generatorStart = jsx.indexOf('Object.keys(OPT_PROFILES).forEach(pk=>');
+    const generatorCallStart = jsx.indexOf('const out=runHybridRecipeSearch({', generatorStart);
+    const generatorCallEnd = jsx.indexOf('});', generatorCallStart) + 3;
+    const generatorCall = jsx.slice(generatorCallStart, generatorCallEnd);
+    const resultStart = jsx.indexOf('<button className="opt-load"', generatorCallEnd);
+    const resultEnd = jsx.indexOf('</button>', jsx.indexOf('</button>', resultStart) + 9) + 9;
+    const resultActions = jsx.slice(resultStart, resultEnd);
+
+    assert.match(generatorCall, /recipe\s*:\s*lockedIds\.length\s*\?\s*recipe\s*:\s*\[\]/);
+    assert.match(generatorCall, /\blockedIds\s*,/);
+    assert.doesNotMatch(resultActions, /setLockedIds\(\[\]\)/);
+    assert.match(resultActions, /setLockedIds\(lockedIds\.filter\(id=>r\.recipe\.some\(item=>item\.id===id\)\)\)/);
+  });
+
   await t.test('Formulator integrates batch launching calculator with moisture, bag count, and primary CTA', () => {
     assert.match(jsx, /Preparar Mezcla|Ficha de Mezclado|Bolsas|Lanzar/i);
   });
