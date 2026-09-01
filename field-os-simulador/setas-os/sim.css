@@ -266,6 +266,34 @@
 
 /* ── HERO: oculto permanentemente — mismo motivo. Ver .sim-root .hero{display:none!important} más abajo. ── */
 
+/* ── MARCA DE AGUA BOTÁNICA: fondo decorativo de la montaña (Juaica) ── */
+.fos-bg-mountain {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: clamp(280px, 34vw, 520px);
+  height: clamp(280px, 34vw, 520px);
+  background-image: url('_standalone_imgs/mountain-juaica.png');
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: contain;
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+  mix-blend-mode: multiply;
+}
+@media (max-width: 859px) {
+  .fos-bg-mountain {
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    width: clamp(180px, 42vw, 280px);
+    height: clamp(180px, 42vw, 280px);
+    opacity: 0.035;
+  }
+}
+@media print {
+  .fos-bg-mountain { display: none !important; }
+}
 
 /* ── LA PÁGINA (hoja abierta del cuaderno) ──────────────────── */
 .sim-root .wrap{
