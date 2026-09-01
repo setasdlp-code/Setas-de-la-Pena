@@ -166,7 +166,13 @@ test('loading a saved recipe from Recetario notifies the shell instead of desync
 });
 
 test('Formular V2 separates Mesa and Generator without undefined replacement helpers', () => {
-  assert.match(jsx, /className="formular-mode-nav" role="tablist"/);
+  const modeNav = jsx.match(/<nav className="formular-mode-nav" role="tablist"[\s\S]*?<\/nav>/);
+  assert.ok(modeNav, 'Formular mode tablist not found');
+  assert.match(modeNav[0], /id="formular-tab-mesa"[\s\S]*?aria-controls="formular-panel-mesa"/);
+  assert.match(modeNav[0], /id="formular-tab-generador"[\s\S]*?aria-controls="formular-panel-generador"/);
+  assert.doesNotMatch(modeNav[0], /coform|Co-Formulación/, 'Co-Formulación is a toggle, not a third tab without a panel');
+  assert.match(jsx, /id="formular-coform-toggle"[\s\S]*?aria-pressed=\{coFormMode\}[\s\S]*?aria-controls="co-form-panel"/);
+  assert.match(jsx, /<section id="co-form-panel"[\s\S]*?aria-labelledby="formular-coform-toggle"/);
   assert.match(jsx, /id="formular-panel-mesa"[\s\S]*?role="tabpanel"/);
   assert.match(jsx, /id="formular-panel-generador"[\s\S]*?role="tabpanel"/);
   assert.match(jsx, /openBuilderSubTab\('formular'\)[\s\S]*?Cargar en Mesa/);
@@ -174,6 +180,20 @@ test('Formular V2 separates Mesa and Generator without undefined replacement hel
   assert.doesNotMatch(jsx, /\bFORM_ROLE_GROUPS\b/);
   assert.ok(jsx.indexOf('const renderIngRow=') < jsx.lastIndexOf('renderIngRow'), 'renderIngRow must be defined before use');
   assert.doesNotMatch(jsx, /\bsolveCN\s*\(/);
+});
+
+test('Generator exposes semantic headings, live status, and mobile-safe manual controls', () => {
+  assert.match(jsx, /<section id="gen-panel"[\s\S]*?aria-busy=\{optRunning\}/);
+  assert.match(jsx, /<h2 className="sec" id="gen-panel-title"/);
+  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true">\{generatorStatus\}/);
+  assert.match(jsx, /id="generator-results-heading" tabIndex=\{-1\}/);
+  assert.match(jsx, /className="manual-species-summary"/);
+  assert.match(jsx, /name="manualBaseIngredient"/);
+  assert.match(jsx, /name="manualNitrogenSupplement"/);
+  assert.match(jsx, /name="manualMineralPct"[\s\S]*?autoComplete="off"/);
+  assert.match(jsx, /name="manualTargetCN"/);
+  assert.match(css, /\.manual-species-summary\{display:grid!important;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.manual-result-metrics\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important;/);
 });
 
 test('mobile production flow resets scroll and exposes one progressive next action', () => {
