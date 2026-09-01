@@ -3024,13 +3024,38 @@
   padding:0;
   list-style:none;
 }
+.sim-root .form-flow.has-recipe{
+  margin-bottom:12px;
+  border-top-width:1px;
+}
+.sim-root .form-flow-complete{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:14px;
+  padding:10px 12px;
+}
+.sim-root .form-flow-complete > div{display:grid;gap:3px;min-width:0}
+.sim-root .form-flow-complete strong{overflow:hidden;color:var(--ink-900);font:800 var(--text-sm)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-flow-complete button{
+  min-height:40px;
+  padding:7px 10px;
+  border:1px solid var(--ink-900);
+  border-radius:0;
+  background:var(--paper-0);
+  color:var(--ink-900);
+  font:800 var(--text-xs)/1 var(--font-display);
+  cursor:pointer;
+}
+.sim-root .form-flow-complete button:hover,
+.sim-root .form-flow-complete button:focus-visible{background:var(--paper-200);outline:2px solid var(--accent-olive);outline-offset:2px}
 
-/* Contexto biológico persistente del Formulador. Sustituye la antigua barra
-   condicional: la especie y sus metas existen antes de agregar ingredientes. */
+/* Contexto biológico de la receta. La franja de siguiente paso es la única
+   superficie sticky: este bloque permanece disponible sin competir por altura. */
 .sim-root .form-species-context{
-  position:sticky;
-  top:52px;
-  z-index:var(--z-sticky-panel);
+  position:relative;
+  top:auto;
+  z-index:auto;
   display:grid;
   grid-template-columns:minmax(230px,.85fr) minmax(190px,.55fr) minmax(420px,1.6fr);
   align-items:center;
@@ -3042,7 +3067,7 @@
   border-radius:var(--radius-sm);
   background:var(--ink-900);
   color:var(--paper-0);
-  box-shadow:0 5px 18px rgba(18,22,17,.14);
+  box-shadow:none;
 }
 .sim-root .form-species-identity{display:flex;align-items:center;gap:var(--sp-6);min-width:0}
 .sim-root .form-species-kicker,
@@ -3074,12 +3099,12 @@
 .sim-root .form-species-targets b{overflow:hidden;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-mono);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-mode.is-investigacion b{color:var(--color-investigacion)}
 
-/* Resumen compacto persistente mientras se recorre el catálogo. La especie vive
-   en su propia barra; aquí permanecen únicamente receta y evaluación en vivo. */
+/* Resumen de receta y evaluación en vivo. Permanece en el flujo para evitar
+   apilar varias barras sticky sobre el trabajo de ingredientes. */
 .sim-root .builder-wrap > .sim-live-dashboard{
-  position:sticky;
-  top:126px;
-  z-index:calc(var(--z-sticky-panel) - 1);
+  position:relative;
+  top:auto;
+  z-index:auto;
   display:block;
   margin:0 0 14px;
   border:1px solid var(--border-strong);
@@ -3597,6 +3622,8 @@
   .sim-root .form-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sim-root .form-step:nth-child(2){border-right:0}
   .sim-root .form-step:nth-child(-n+2){border-bottom:1px solid var(--border-soft)}
+  .sim-root .form-flow-complete{grid-template-columns:minmax(0,1fr) auto}
+  .sim-root .form-flow-complete .form-flow-progress{grid-column:1/-1}
 }
 @media(max-width:560px){
   .sim-root .form-flow-head{align-items:flex-start;flex-direction:column;gap:6px}
@@ -3629,13 +3656,19 @@
   .sim-root .p-chip-val{font-size:9px}
 }
 
-/* Formulador V2 quirúrgico: separa los dos trabajos sin reemplazar el
-   editor, el Perito ni el solver existentes. */
+/* Formulador V2 quirúrgico: mantiene Mesa y Generador como tabs reales; la
+   co-formulación se presenta como herramienta avanzada independiente. */
+.sim-root .formular-mode-wrapper{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(13.75rem,.45fr);
+  gap:6px;
+  margin:0 0 14px;
+}
 .sim-root .formular-mode-nav{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:6px;
-  margin:0 0 14px;
+  margin:0;
   padding:5px;
   border:1px solid var(--ink-900);
   background:var(--paper-200);
@@ -3665,9 +3698,55 @@
   font:800 var(--text-2xs)/1.4 var(--font-mono);
   text-align:center;
 }
-.sim-root .formular-coform-control{display:flex;justify-content:flex-end;margin:-8px 0 12px;}
-.sim-root .formular-coform-toggle{min-height:44px;border-color:var(--ink-900);background:var(--paper-100);}
-.sim-root .formular-coform-toggle.is-active{background:var(--paper-0);}
+.sim-root .formular-coform-control{min-width:0;}
+.sim-root .formular-coform-toggle{
+  min-height:48px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:"icon title" "icon detail";
+  column-gap:8px;
+  align-items:center;
+  padding:7px 10px;
+  border:1px solid var(--ink-900);
+  border-left:4px solid var(--ink-700);
+  border-radius:0;
+  background:var(--paper-100);
+  color:var(--ink-900);
+  text-align:left;
+  cursor:pointer;
+}
+.sim-root .formular-coform-toggle > span[aria-hidden="true"]{grid-area:icon;font-size:16px}
+.sim-root .formular-coform-toggle > span:not([aria-hidden="true"]){grid-area:title;font:800 var(--text-sm)/1.1 var(--font-display)}
+.sim-root .formular-coform-toggle small{grid-area:detail;color:var(--ink-600);font:700 var(--text-2xs)/1.15 var(--font-mono)}
+.sim-root .formular-coform-toggle:hover,
+.sim-root .formular-coform-toggle:focus-visible{background:var(--paper-0);outline:2px solid var(--accent-olive);outline-offset:2px}
+.sim-root .formular-coform-toggle.is-active{border-left-color:var(--accent-olive);background:var(--ink-900);color:var(--paper-0)}
+.sim-root .formular-coform-toggle.is-active small{color:rgba(255,255,255,.68)}
+.sim-root .co-form-panel{
+  grid-column:1/-1;
+  display:grid;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--ink-900);
+  border-top:3px solid var(--accent-olive);
+  background:var(--paper-0);
+}
+.sim-root .co-form-panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--border-soft)}
+.sim-root .co-form-panel-head > div{display:grid;gap:3px}
+.sim-root .co-form-panel-head span{color:var(--ink-500);font:800 var(--text-2xs)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
+.sim-root .co-form-panel-head h2{margin:0;color:var(--ink-900);font:800 var(--text-lg)/1.15 var(--font-display)}
+.sim-root .co-form-panel-head p{max-width:42ch;margin:0;color:var(--ink-600);font:400 var(--text-xs)/1.4 var(--font-body);text-align:right}
+.sim-root .co-form-panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.sim-root .co-form-species{display:grid;gap:7px;padding:9px 10px;border:1px solid var(--border-soft);background:var(--paper-50)}
+.sim-root .co-form-species.is-active{border-color:var(--accent-olive);background:color-mix(in oklab,var(--accent-olive) 8%,var(--paper-0))}
+.sim-root .co-form-species-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--ink-800);font:700 var(--text-xs)/1.2 var(--font-display)}
+.sim-root .co-form-species-head strong{font:800 var(--text-sm)/1 var(--font-mono)}
+.sim-root .co-form-species input{width:100%;accent-color:var(--accent-olive)}
+.sim-root .co-form-summary{display:grid;gap:8px;padding:10px;border:1px solid color-mix(in oklab,var(--accent-olive) 45%,var(--border-soft));background:color-mix(in oklab,var(--accent-olive) 8%,var(--paper-0));color:var(--ink-800);font:700 var(--text-xs)/1.35 var(--font-mono)}
+.sim-root .co-form-summary-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sim-root .co-form-issue{color:var(--coral-800);font-weight:800}
+.sim-root .co-form-species-results{display:flex;gap:6px;flex-wrap:wrap}
+.sim-root .co-form-species-results > div{padding:4px 7px;border:1px solid var(--border-soft);background:var(--paper-0);font-size:var(--text-2xs)}
 .sim-root .manual-species-summary > *{min-width:0;}
 .sim-root .generator-results-heading:focus-visible{outline:2px solid var(--focus-ring,var(--coral-500));outline-offset:4px;}
 .sim-root .form-mobile-start{display:none}
@@ -3747,10 +3826,16 @@
 .sim-root .mass-balance-action{min-height:44px}
 
 @media(max-width:560px){
+  .sim-root .formular-mode-wrapper{grid-template-columns:1fr;gap:4px;margin-bottom:10px}
   .sim-root .formular-mode-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
   .sim-root .formular-mode-btn{min-height:48px;gap:4px;padding:6px 4px;font-size:var(--text-xs)}
   .sim-root .formular-mode-badge{min-width:18px;padding:2px 4px}
-  .sim-root .formular-coform-control{display:block;margin:-8px 0 10px;}
+  .sim-root .formular-coform-toggle{min-height:46px}
+  .sim-root .co-form-panel{gap:10px;padding:10px}
+  .sim-root .co-form-panel-head{align-items:flex-start;flex-direction:column;gap:6px}
+  .sim-root .co-form-panel-head p{text-align:left}
+  .sim-root .co-form-panel-grid{grid-template-columns:1fr}
+  .sim-root .co-form-summary-head{display:grid;gap:4px}
   .sim-root .formular-coform-toggle{width:100%;min-height:48px;}
   .sim-root .manual-species-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important;}
   .sim-root .manual-result-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
@@ -5094,4 +5179,3 @@
 .sim-root .iot-copy-btn:hover {
   background: var(--paper-100);
 }
-

@@ -8591,32 +8591,38 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <button
                 type="button"
                 id="formular-coform-toggle"
-                aria-pressed={coFormMode}
-                aria-expanded={coFormMode}
-                aria-controls="co-form-panel"
-                className={`formular-mode-btn formular-coform-toggle${coFormMode?' is-active':''}`}
+                className={`formular-coform-toggle${coFormMode?' is-active':''}`}
                 data-testid="co-form-toggle"
+                aria-pressed={coFormMode}
+                aria-controls="co-form-panel"
+                aria-expanded={coFormMode}
                 onClick={()=>setCoFormMode(!coFormMode)}>
                 <span aria-hidden="true">🧬</span>
-                <span>{coFormMode?'Co-Formulación Activa':'Modo Co-Formulación'}</span>
+                <span>{coFormMode?'Co-Formulación activa':'Co-Formulación'}</span>
+                <small>{coFormMode?'Ocultar ponderación':'Combinar especies'}</small>
               </button>
             </div>
             {coFormMode&&(
-              <section id="co-form-panel" className="co-form-panel" data-testid="co-form-panel" aria-labelledby="formular-coform-toggle" style={{margin:'10px 0',padding:'12px',background:'var(--surface-card,#fbf9f4)',borderRadius:'8px',border:'1px solid var(--border-subtle,#e2dacd)'}}>
-                <header style={{display:'flex',justify:'space-between',alignItems:'center',marginBottom:'8px'}}>
-                  <strong style={{fontSize:'0.9rem'}}>🧬 Co-Formulación Multi-Especie (Ponderación de Lote)</strong>
-                  <span style={{fontSize:'0.8rem',color:'var(--ink-600,#666)'}}>Proporción de producción por especie</span>
+              <section id="co-form-panel" className="co-form-panel" data-testid="co-form-panel" aria-labelledby="formular-coform-toggle">
+                <header className="co-form-panel-head">
+                  <div>
+                    <span>Herramienta avanzada</span>
+                    <h2>Co-Formulación multi-especie</h2>
+                  </div>
+                  <p>Define la proporción de producción por especie antes de calcular la mezcla.</p>
                 </header>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:'10px'}}>
+                <div className="co-form-panel-grid">
                   {Object.entries(SPP).map(([k,d])=>{
                     const weight = coSpecConfig[k] || 0;
                     return (
-                      <div key={k} style={{display:'flex',flexDirection:'column',gap:'4px',padding:'6px 10px',background:'var(--bg-main,#fff)',borderRadius:'6px',border:weight>0?'1px solid var(--primary,#5A7042)':'1px solid #ddd'}}>
-                        <div style={{display:'flex',justify:'space-between',alignItems:'center'}}>
-                          <span style={{fontSize:'0.8rem',fontWeight:600}}>{d.name}</span>
-                          <span style={{fontSize:'0.8rem',fontWeight:700,color:weight>0?'var(--primary,#5A7042)':'#999'}}>{weight}%</span>
+                      <div key={k} className={`co-form-species${weight>0?' is-active':''}`}>
+                        <div className="co-form-species-head">
+                          <span>{d.name}</span>
+                          <strong>{weight}%</strong>
                         </div>
+                        <label className="sr-only" htmlFor={`co-form-weight-${k}`}>Proporción de {d.name}</label>
                         <input
+                          id={`co-form-weight-${k}`}
                           type="range"
                           min="0"
                           max="100"
@@ -8632,19 +8638,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   })}
                 </div>
                 {coAnalysis&&(
-                  <div style={{marginTop:'12px',padding:'10px',background:'#f0f4ec',borderRadius:'6px',fontSize:'0.85rem',display:'flex',flexDirection:'column',gap:'6px'}}>
-                    <div style={{display:'flex',justify:'space-between',fontWeight:600}}>
+                  <div className="co-form-summary" role="status" aria-live="polite">
+                    <div className="co-form-summary-head">
                       <span>Target C:N Ponderado: {coAnalysis.weightedTargets.cn.ideal}:1 ({coAnalysis.weightedTargets.cn.min} - {coAnalysis.weightedTargets.cn.max})</span>
                       <span>EB Conjunta Estimada: {coAnalysis.jointEB}%</span>
                     </div>
                     {coAnalysis.allIncompatibilities.length>0&&(
-                      <div style={{color:'var(--color-critical,#c53030)',fontWeight:600}}>
+                      <div className="co-form-issue">
                         ⚠️ Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
                       </div>
                     )}
-                    <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginTop:'4px'}}>
+                    <div className="co-form-species-results">
                       {coAnalysis.speciesResults.map(r=>(
-                        <div key={r.speciesKey} style={{fontSize:'0.8rem',padding:'4px 8px',background:'#fff',borderRadius:'4px',border:'1px solid #c8d6be'}}>
+                        <div key={r.speciesKey}>
                           <strong>{r.speciesName} ({r.weightPct}%)</strong>: EB est. {r.an?.eb?Math.round(r.an.eb):'—'}%
                         </div>
                       ))}
@@ -8713,53 +8719,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
               el editor manual como el Perito y el Generador automático. */}
-          <section className="form-flow" aria-labelledby="form-flow-title">
-            <div className="form-flow-head">
-              <div>
-                <span className="form-flow-eyebrow">Nueva formulación</span>
-                <h2 id="form-flow-title">Especie → Origen → Ingredientes → Validar y guardar</h2>
+          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label={recipe.length>0?'Configuración activa de receta':'Flujo de nueva formulación'}>
+            {recipe.length===0?(
+              <>
+                <div className="form-flow-head">
+                  <div>
+                    <span className="form-flow-eyebrow">Nueva formulación</span>
+                    <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
+                  </div>
+                  <span className="form-flow-progress" aria-live="polite">Preparado para comenzar</span>
+                </div>
+                <ol className="form-flow-grid">
+                  <li className="form-step is-ready">
+                    <span className="form-step-num">01</span>
+                    <span className="form-step-label">Especie</span>
+                    <div className="form-step-species-state">
+                      <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
+                      <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                    </div>
+                    <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
+                  </li>
+                  <li className="form-step is-ready">
+                    <span className="form-step-num">02</span>
+                    <span className="form-step-label">Origen</span>
+                    <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                      <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
+                      <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
+                    </div>
+                    <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
+                  </li>
+                  <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
+                    <span className="form-step-num">03</span>
+                    <span className="form-step-label">Ingredientes</span>
+                    <div className="form-step-actions">
+                      <button type="button" onClick={focusIngredientCatalog}>Elegir manualmente</button>
+                      <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
+                    </div>
+                    <span className="form-step-help">Agrega insumos o calcula una base.</span>
+                  </li>
+                  <li className="form-step">
+                    <span className="form-step-num">04</span>
+                    <span className="form-step-label">Validar y guardar</span>
+                    <button type="button" className="form-step-primary" disabled onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>Agrega ingredientes</button>
+                    <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
+                  </li>
+                </ol>
+              </>
+            ):(
+              <div className="form-flow-complete">
+                <div>
+                  <span className="form-flow-eyebrow">Configuración activa</span>
+                  <strong>{hasPickedSpecies?`${sp.name} · ${globalMode==='produccion'?'Bodega':'Paleta completa'}`:'Falta definir la especie'}</strong>
+                </div>
+                <span className="form-flow-progress" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'} · Perito {Math.round(opt.score)}/100</span>
+                <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>Editar especie y origen</button>
               </div>
-              <span className="form-flow-progress" aria-live="polite">
-                {recipe.length>0?`${recipe.length} ingrediente${recipe.length===1?'':'s'} · Perito ${Math.round(opt.score)}/100`:'Preparado para comenzar'}
-              </span>
-            </div>
-            <ol className="form-flow-grid">
-              <li className="form-step is-ready">
-                <span className="form-step-num">01</span>
-                <span className="form-step-label">Especie</span>
-                <div className="form-step-species-state">
-                  <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
-                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
-                </div>
-                <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
-              </li>
-              <li className="form-step is-ready">
-                <span className="form-step-num">02</span>
-                <span className="form-step-label">Origen</span>
-                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
-                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
-                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
-                </div>
-                <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
-              </li>
-              <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
-                <span className="form-step-num">03</span>
-                <span className="form-step-label">Ingredientes</span>
-                <div className="form-step-actions">
-                  <button type="button" onClick={focusIngredientCatalog}>Elegir manualmente</button>
-                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
-                </div>
-                <span className="form-step-help">Agrega insumos o calcula una base.</span>
-              </li>
-              <li className={`form-step${recipe.length>0?' is-ready':''}`}>
-                <span className="form-step-num">04</span>
-                <span className="form-step-label">Validar y guardar</span>
-                <button type="button" className="form-step-primary" disabled={recipe.length===0} onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>
-                  {recipe.length>0?'Revisar receta':'Agrega ingredientes'}
-                </button>
-                <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
-              </li>
-            </ol>
+            )}
           </section>
 
           <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">

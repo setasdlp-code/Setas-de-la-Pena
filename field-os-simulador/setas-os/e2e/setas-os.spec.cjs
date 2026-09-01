@@ -128,6 +128,7 @@ test.describe('desktop navigation contract', () => {
     const summary = page.locator('#bl-receta-summary');
     const ingredients = page.locator('#bl-ingredientes');
     const advanced = page.locator('.form-advanced-tools-head');
+    const command = page.locator('.form-production-command');
 
     await expect(species).toBeVisible();
     await expect(species).toContainText('Orellana Gris');
@@ -155,10 +156,11 @@ test.describe('desktop navigation contract', () => {
     await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
     await expect(liveSummary).toBeVisible();
     await expect(liveSummary).toContainText('Paja de trigo');
-    // Editing lives only in the sticky tray now — the summary panel below has no row list.
+    // Editing lives in the recipe summary — the panel below has no row list.
     await expect(recipe).toContainText('Paja de trigo');
     await expect(summary).toBeVisible();
     await expect(summary).not.toContainText('Paja de trigo');
+    await expect(command).toBeVisible();
 
     // The score/gauges panel keeps its two-column layout alongside RecipeGauges.
     const layoutAfter = await page.evaluate(() => {
@@ -171,12 +173,23 @@ test.describe('desktop navigation contract', () => {
     expect(layoutAfter.evaluationLeft).toBeGreaterThan(layoutAfter.summaryLeft);
 
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight / 2; });
-    const sticky = await liveSummary.evaluate(el => {
-      const r = el.getBoundingClientRect();
-      return { top:r.top, bottom:r.bottom, viewport:window.innerHeight };
+    const sticky = await page.evaluate(() => {
+      const rect = sel => document.querySelector(sel).getBoundingClientRect();
+      const live = document.querySelector('.sim-live-dashboard');
+      const species = document.querySelector('.form-species-context');
+      const command = rect('.form-production-command');
+      return {
+        commandTop:command.top,
+        commandBottom:command.bottom,
+        viewport:window.innerHeight,
+        livePosition:getComputedStyle(live).position,
+        speciesPosition:getComputedStyle(species).position,
+      };
     });
-    expect(sticky.top).toBeGreaterThanOrEqual(120);
-    expect(sticky.bottom).toBeLessThan(sticky.viewport);
+    expect(sticky.commandTop).toBeGreaterThanOrEqual(0);
+    expect(sticky.commandBottom).toBeLessThan(sticky.viewport);
+    expect(sticky.livePosition).toBe('relative');
+    expect(sticky.speciesPosition).toBe('relative');
   });
 
   test('ingredient groups use the workspace scroll and collapse independently', async ({ page }) => {
