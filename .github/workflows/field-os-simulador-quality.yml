@@ -6,6 +6,7 @@ on:
       - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
   push:
+    branches: [main]
     paths:
       - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
