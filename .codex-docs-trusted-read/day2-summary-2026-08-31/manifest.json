@@ -1,0 +1,57 @@
+{
+  "bridgeVersion": "3.6",
+  "kind": "google-docs-trusted-read",
+  "status": "complete",
+  "outputDir": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31",
+  "target": {
+    "documentId": "1CuPMD0PaAidZwb04iE86SeiiJ87IsXy9Z7mCAj5IVK0",
+    "title": "Presentación de metodología a Pares locales",
+    "revisionId": "AIroW36iGF1b0qTY4WrK1SnhtHHDGUf7qJihpFZoY84KqVq5wcM9l-HJZbJxFcQgUIMsuDKOlRezXgVKxunz-i78gIJn2XEcCH8E2G0Pw-8",
+    "documentUrl": "https://docs.google.com/document/d/1CuPMD0PaAidZwb04iE86SeiiJ87IsXy9Z7mCAj5IVK0",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "controlAwareness": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "affectedParagraphCount": 0,
+    "nativeElementCounts": {},
+    "preservationRequired": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope."
+  },
+  "warnings": [],
+  "files": {
+    "document_result": {
+      "path": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31/document-result.json",
+      "bytes": 63606,
+      "sha256": "8985843db0c0f4fd66a4830285c79e3b2562d52f6a46c4387a27164ff1f609ab"
+    },
+    "control_inventory": {
+      "path": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31/control-inventory.json",
+      "bytes": 1050,
+      "sha256": "868535f742b5f58f67592cd4d86a6b60d3cf639bb882c54e7583025a199a50be"
+    },
+    "document_outline": {
+      "path": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31/document-outline.json",
+      "bytes": 30797,
+      "sha256": "3580a4139b6130f97ef2b05274bf65455697027a0041cfe107cdb3673d85e0ff"
+    },
+    "document_text": {
+      "path": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31/document-text.md",
+      "bytes": 11435,
+      "sha256": "7066f52de4b7de1ef26f3153a62990d822c80d9fa8f979e38d54f9ec44be1ff0"
+    },
+    "receipt": {
+      "path": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.codex-docs-trusted-read/day2-summary-2026-08-31/receipt.json",
+      "bytes": 981,
+      "sha256": "d27742406d4cef753e43933825786581e1f8d66a42ec289f0fe56cab8ef23dcb"
+    }
+  },
+  "error": null
+}

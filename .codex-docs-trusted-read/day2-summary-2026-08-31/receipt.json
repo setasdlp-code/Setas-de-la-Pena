@@ -1,0 +1,29 @@
+{
+  "bridgeVersion": "3.6",
+  "kind": "google-docs-trusted-read-receipt",
+  "status": "complete",
+  "target": {
+    "documentId": "1CuPMD0PaAidZwb04iE86SeiiJ87IsXy9Z7mCAj5IVK0",
+    "title": "Presentación de metodología a Pares locales",
+    "revisionId": "AIroW36iGF1b0qTY4WrK1SnhtHHDGUf7qJihpFZoY84KqVq5wcM9l-HJZbJxFcQgUIMsuDKOlRezXgVKxunz-i78gIJn2XEcCH8E2G0Pw-8",
+    "documentUrl": "https://docs.google.com/document/d/1CuPMD0PaAidZwb04iE86SeiiJ87IsXy9Z7mCAj5IVK0",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "controlAwareness": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "affectedParagraphCount": 0,
+    "nativeElementCounts": {},
+    "preservationRequired": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope."
+  },
+  "warnings": [],
+  "error": null
+}
