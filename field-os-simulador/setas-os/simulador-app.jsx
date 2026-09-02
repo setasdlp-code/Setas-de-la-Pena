@@ -2422,14 +2422,17 @@ wifi:
   fast_connect: true
   ap:
     ssid: "Setas-Fallback-\${device_name}"
-    password: "setas-recovery"
+    # Definir en secrets.yaml durante el aprovisionamiento; no incluir
+    # contraseñas de recuperación en un firmware exportado.
+    password: !secret fallback_password
 
 captive_portal:
 logger:
   level: INFO
 
 ota:
-  password: "setas-ota-secure"
+  # La clave OTA es única por nodo y vive fuera del firmware versionado.
+  password: !secret ota_password
 
 i2c:
   sda: ${mcu.includes('esp8266') ? 'GPIO4' : 'GPIO21'}

@@ -27,6 +27,13 @@ test('Setas OS — Hub de Integración IoT de Bajo Costo (ESP32 / Sonoff / Webho
     assert.match(jsx, /sht3xd|scd30|dht|ds18b20/);
   });
 
+  await t.test('ESPHome firmware never exports fallback or OTA passwords embedded in source', () => {
+    assert.match(jsx, /password: !secret fallback_password/);
+    assert.match(jsx, /password: !secret ota_password/);
+    assert.doesNotMatch(jsx, /password: "setas-recovery"/);
+    assert.doesNotMatch(jsx, /password: "setas-ota-secure"/);
+  });
+
   await t.test('Webhook tester parses and validates incoming payloads with canonical telemetry contract', () => {
     assert.match(jsx, /handleTestWebhook/);
     assert.match(jsx, /temperature_c|rh_pct|co2_ppm/);
