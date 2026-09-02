@@ -11157,7 +11157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               bagCode: 'LOTE MAESTRO',
               species: lote.especie || 'Sustrato colonizado',
               date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
-              recipe: lote.recipeRef?.name || 'Receta Estándar',
+              recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
               bagsText: `${totalBags} bolsas`,
               qrUrl: `https://setasdelapena.co/l/${lote.codigo}`
             });
@@ -11172,7 +11172,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 bagCode: `BOLSA #${bagNum} de ${totalBags}`,
                 species: lote.especie || 'Sustrato colonizado',
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
-                recipe: lote.recipeRef?.name || 'Receta Estándar',
+                recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
                 qrUrl: `https://setasdelapena.co/c/${bagId}`
               });
@@ -11341,11 +11341,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="thermal-species">{item.species}</div>
                             <div className="thermal-meta">
                               {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
-                              <div>Inoc: {item.date}</div>
-                              <div>Fórmula: {item.recipe}</div>
+                              <div>{item.date}</div>
+                              <div>{item.recipe}</div>
                             </div>
-                            <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
-                              <img src="_standalone_imgs/logo-sdlp.png" alt="" width="20" height="11" style={{width:20,height:'auto',maxHeight:11,objectFit:'contain',display:'inline-block'}} />
+                            <div className="thermal-footer">
                               <span>Setas de la Peña</span>
                             </div>
                           </div>
@@ -11385,11 +11384,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="thermal-species">{item.species}</div>
                           <div className="thermal-meta">
                             {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
-                            <div>Inoc: {item.date}</div>
-                            <div>Fórmula: {item.recipe}</div>
+                            <div>{item.date}</div>
+                            <div>{item.recipe}</div>
                           </div>
-                          <div className="thermal-footer" style={{display:'flex',alignItems:'center',gap:4}}>
-                            <img src="_standalone_imgs/logo-sdlp.png" alt="" width="20" height="11" style={{width:20,height:'auto',maxHeight:11,objectFit:'contain',display:'inline-block'}} />
+                          <div className="thermal-footer">
                             <span>Setas de la Peña</span>
                           </div>
                         </div>
