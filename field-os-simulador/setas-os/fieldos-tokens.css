@@ -149,33 +149,41 @@
   --shadow-lift:  var(--shadow-none);
   --shadow-inset: var(--shadow-none);
 
-  /* ── ELEVATION SCALE — base shadow levels for layering UI without decoration.
-     Warm neutral tint (26,20,16 = warm brown) keeps shadows from feeling cold;
-     scales with increasing opacity to communicate depth hierarchy. ── */
-  --shadow-xs:  0 1px 2px rgba(26,20,16,0.04);
-  --shadow-sm:  0 1px 4px rgba(26,20,16,0.05);
-  --shadow-md:  0 4px 12px rgba(26,20,16,0.09);
-  --shadow-lg:  0 12px 36px rgba(26,20,16,0.22);
+  /* ── ELEVATION SCALE → RULE WEIGHTS.
+     The DS has no elevation model: it is a field ledger, and depth on paper
+     is drawn, not cast. structure.css ships --rule-hairline/strong/heavy and
+     --shadow-none; components.css states it outright ("01.3 no shadow, no
+     radius"). The blurred scale that used to live here contradicted that.
 
-  /* ── FOCUS / INSET RINGS — feedback and selection states ── */
+     These names are kept so existing call sites keep resolving, but each now
+     paints a crisp 0-blur ring: emphasis comes from line weight, not haze.
+     Rings are inset so they land on the element's own 1px border instead of
+     bleeding outside it and nudging layout. ── */
+  --shadow-xs:  var(--shadow-none);
+  --shadow-sm:  var(--shadow-none);
+  --shadow-md:  inset 0 0 0 1px var(--border-strong);
+  --shadow-lg:  inset 0 0 0 2px var(--border-heavy);
+
+  /* ── FOCUS / INSET RINGS — already crisp rules; kept as-is.
+     --shadow-ring-accent loses only its outer glow half. ── */
   --shadow-focus-ring: inset 0 0 0 3px var(--paper-50);
-  --shadow-ring-accent: inset 0 0 0 3px var(--accent-blue-grey), 0 6px 18px color-mix(in oklab, var(--accent-blue-grey) 28%, transparent);
+  --shadow-ring-accent: inset 0 0 0 3px var(--accent-blue-grey);
 
-  /* ── FUNCTIONAL SHADOWS — v5 exception. Not decoration: each communicates
-     a real state (selection, hover elevation, sticky separation) that has
-     no other visual cue. Ink-tinted (never pure black) to match the DS's
-     warm neutral base; accent-tinted variants use color-mix off the live
-     accent so they stay in sync if the accent hue ever changes.
-     Consolidated 2026-08 — previously ~10 hand-tuned rgba() literals in
-     sim.css, redefined here once so they can't silently drift apart. ── */
-  --shadow-card-rest:   var(--shadow-sm);
-  --shadow-card-hover:  var(--shadow-md);
-  --shadow-panel-lift:  4px 4px 0 rgba(26,20,16,0.05), 0 6px 24px rgba(26,20,16,0.09);
-  --shadow-sticky-edge: 0 -6px 12px -6px rgba(26,20,16,0.12);
-  --shadow-fab:         0 6px 18px rgba(26,20,16,0.3);
-  --shadow-badge-accent: 0 2px 6px color-mix(in oklab, var(--accent-blue-grey) 35%, transparent);
-  --shadow-hover-accent2-sm: 0 2px 4px color-mix(in oklab, var(--coral-500) 15%, transparent);
-  --shadow-hover-accent2-md: 0 3px 8px color-mix(in oklab, var(--coral-500) 25%, transparent);
+  /* ── FUNCTIONAL STATES — each communicates a real state (selection, hover,
+     sticky separation) that has no other visual cue, so the declaration stays
+     — but expressed in the DS's own vocabulary:
+       rest    → nothing; the element's own border already draws it
+       hover   → one step of extra line weight on that same border
+       sticky  → an actual separator rule, not a fading gradient
+       fab     → an outer keyline, since it floats over arbitrary content ── */
+  --shadow-card-rest:   var(--shadow-none);
+  --shadow-card-hover:  inset 0 0 0 1px var(--border-strong);
+  --shadow-panel-lift:  inset 0 0 0 1px var(--border-strong);
+  --shadow-sticky-edge: 0 -1px 0 0 var(--border-hairline);
+  --shadow-fab:         0 0 0 1px var(--border-heavy);
+  --shadow-badge-accent: var(--shadow-none);
+  --shadow-hover-accent2-sm: var(--shadow-none);
+  --shadow-hover-accent2-md: var(--shadow-none);
 
   /* ── V5 — controlled dark surfaces, mixed from the DS's own accents.
      Used sparingly (~1 in 4–6 pages) for declaration / chapter-opening
