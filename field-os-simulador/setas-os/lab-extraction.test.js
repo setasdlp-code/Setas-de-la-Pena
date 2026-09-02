@@ -74,7 +74,9 @@ test("Lab Extraction — calculations, yields, costs and component integration",
 
   await t.test("Setas OS v5.dc.html includes labExtraction and bioCheck in allowlists and workspace maps", () => {
     const shellCode = fs.readFileSync(path.join(__dirname, "Setas OS v5.dc.html"), "utf8");
-    assert.match(shellCode, /allowedTabs=\[[^\]]*'labExtraction'[^\]]*'bioCheck'/);
+    const navigationCode = fs.readFileSync(path.join(__dirname, "navigation-state.js"), "utf8");
+    assert.match(navigationCode, /'labExtraction'/);
+    assert.match(navigationCode, /'bioCheck'/);
     assert.match(shellCode, /onSimTabChange:\(tab\)=>\{[\s\S]*?allowed=\[[^\]]*'labExtraction'[^\]]*'bioCheck'/);
     assert.match(shellCode, /SIM_CRUMB = \{[^}]*bioCheck:'Bio-Check'[^}]*labExtraction:'Laboratorio'/);
     assert.match(shellCode, /SIM_WORKSPACE = \{[^}]*bioCheck:'Producción'[^}]*labExtraction:'Producción'/);

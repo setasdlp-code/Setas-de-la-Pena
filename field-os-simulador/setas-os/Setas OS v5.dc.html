@@ -43,6 +43,7 @@
 <script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
 <script src="qr-mini.js"></script>
 <script src="bridge-protocol.js"></script>
+<script src="navigation-state.js"></script>
 <script src="setas-os-workflow.js"></script>
 <link rel="stylesheet" href="sim.css">
 <script src="recipe-recommender.js"></script>
@@ -2305,13 +2306,9 @@ class Component extends DCLogic {
   componentDidMount(){
     this.loadPersisted();
     this.setState({ online: navigator.onLine!==false });
-    try{
-      const requested=new URLSearchParams(window.location.search).get('view');
-      const viewAlias={camaras:'clima',iot:'clima',telemetria:'clima'};
-      const initialTab=viewAlias[requested]||requested;
-      const allowedTabs=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
-      if(allowedTabs.includes(initialTab)) this.setState({module:'sim',simTab:initialTab});
-    }catch(e){}
+    this.applyRouteFromLocation();
+    this._onPopState=()=>this.applyRouteFromLocation();
+    window.addEventListener('popstate',this._onPopState);
     this._onKeyDown = (e)=>{
       if((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')){ e.preventDefault(); this.setState(s=>({cmdOpen:!s.cmdOpen, cmdQ:''})); return; }
       if(e.key==='Tab' && this.dialogIsOpen(this.state)){this.trapDialogFocus(e);return;}
@@ -2344,6 +2341,17 @@ class Component extends DCLogic {
     };
     window.addEventListener('message', this._onClimate);
   }
+  applyRouteFromLocation(){
+    try{
+      const navigation=window.SetasOSNavigation;
+      const route=navigation
+        ?navigation.readLocation(window.location)
+        :{view:new URLSearchParams(window.location.search).get('view')||'home'};
+      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
+      if(!allowed.includes(route.view)) return;
+      this.setState(s=>({module:'sim',simTab:route.view,simTabNonce:s.simTabNonce+1}));
+    }catch(e){}
+  }
   onClimateAlert(d){
     const note = d.chamber+' · '+d.phase+' · '+(d.detail||('Desviaci\u00f3n de '+d.metric));
     this.push({ type:'clima', container:d.chamber, note });
@@ -2365,6 +2373,7 @@ class Component extends DCLogic {
     window.removeEventListener('online', this._onOnline);
     window.removeEventListener('offline', this._onOffline);
     window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('popstate', this._onPopState);
   }
   componentDidUpdate(pp, ps){
     if(!ps) return;
@@ -2754,11 +2763,24 @@ class Component extends DCLogic {
     return (map[key]||cloud)();
   }
   goSimTab(tab){
-    try{const url=new URL(window.location.href);url.searchParams.set('view',tab);window.history.replaceState(null,'',url);}catch(e){}
-    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:tab, simTabNonce:s.simTabNonce+1 }));
+    const navigation=window.SetasOSNavigation;
+    const next=navigation?navigation.normalizeView(tab,null):tab;
+    if(!next) return;
+    try{
+      if(navigation) navigation.navigate(window,next);
+      else {const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);}
+    }catch(e){}
+    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:next, simTabNonce:s.simTabNonce+1 }));
   }
   goBitTab(bitSubtab){
-    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab, bitSubtabNonce:s.bitSubtabNonce+1 }));
+    const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
+    const next=allowed.includes(bitSubtab)?bitSubtab:'bit_dash';
+    try{
+      const navigation=window.SetasOSNavigation;
+      if(navigation) navigation.navigate(window,'bitacora');
+      else {const url=new URL(window.location.href);url.searchParams.set('view','bitacora');window.history.pushState(null,'',url);}
+    }catch(e){}
+    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab:next, bitSubtabNonce:s.bitSubtabNonce+1 }));
   }
   handleWorkspaceKeys(e){
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;

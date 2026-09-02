@@ -34,8 +34,8 @@ test('the shell and React simulator synchronize navigation bidirectionally', () 
   assert.doesNotMatch(shell, /simPendingTab/);
   assert.match(shell, /on-tab-change="\{\{ onSimTabChange \}\}"/);
   assert.match(shell, /on-bit-subtab-change="\{\{ onBitSubtabChange \}\}"/);
-  assert.match(jsx, /const applyTab=.*setTab/);
-  assert.match(jsx, /const goTab=.*props\.onTabChange/);
+  assert.match(jsx, /const applyTab=t=>\{[\s\S]*setTab\(t\)/);
+  assert.match(jsx, /const goTab=t=>\{[\s\S]*props\.onTabChange/);
   assert.match(jsx, /if\(props\.tab\) applyTab\(props\.tab\)/);
   assert.match(jsx, /props\.onBitSubtabChange/);
 });

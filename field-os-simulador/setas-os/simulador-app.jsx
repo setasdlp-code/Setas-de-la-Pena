@@ -3858,7 +3858,13 @@ function SimuladorShell(props){
   const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
-  const [tab,setTab]=useState(()=>{try{return new URLSearchParams(window.location.search).get('view')||'home';}catch(e){return'home';}});
+  const [tab,setTab]=useState(()=>{
+    try{
+      const navigation=window.SetasOSNavigation;
+      const requested=new URLSearchParams(window.location.search).get('view');
+      return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
+    }catch(e){return'home';}
+  });
   const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
@@ -3873,9 +3879,32 @@ function SimuladorShell(props){
   const RECETA_TABS=['catalogo','formular','dashboard'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
   const TAB_ALIASES={optimizar:'formular'};
-  const applyTab=t=>{t=TAB_ALIASES[t]||t;setTab(t);setMode(RECETA_TABS.includes(t)?'receta':'cultivo');return t;};
-  const goTab=t=>{const next=applyTab(t);try{const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.replaceState(null,'',url);}catch(e){}if(typeof props.onTabChange==='function')props.onTabChange(next);};
-  useEffect(()=>{const onPop=()=>{try{applyTab(new URLSearchParams(window.location.search).get('view')||'home');}catch(e){}};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
+  const applyTab=t=>{
+    t=TAB_ALIASES[t]||t;
+    try{t=window.SetasOSNavigation?.normalizeView(t,'home')||'home';}catch(e){}
+    setTab(t);
+    setMode(RECETA_TABS.includes(t)?'receta':'cultivo');
+    return t;
+  };
+  const goTab=t=>{
+    const next=applyTab(t);
+    try{
+      const navigation=window.SetasOSNavigation;
+      if(navigation) navigation.navigate(window,next);
+      else {const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);}
+    }catch(e){}
+    if(typeof props.onTabChange==='function')props.onTabChange(next);
+  };
+  useEffect(()=>{
+    const onPop=()=>{
+      try{
+        const navigation=window.SetasOSNavigation;
+        applyTab(navigation?navigation.readLocation(window.location).view:(new URLSearchParams(window.location.search).get('view')||'home'));
+      }catch(e){}
+    };
+    window.addEventListener('popstate',onPop);
+    return()=>window.removeEventListener('popstate',onPop);
+  },[]);
   useEffect(()=>{ if(props.tab) applyTab(props.tab); },[props.tab, props.tabNonce]);
   const _preInit=useRef(true);
   useEffect(()=>{
@@ -4191,7 +4220,15 @@ function sowingRecommendation(deficitKg) {
     setBitTab(next);
     return next;
   };
-  const goBitTab=(raw,hasActiveLote)=>{const next=applyBitTab(raw,hasActiveLote);if(typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);};
+  const goBitTab=(raw,hasActiveLote)=>{
+    const next=applyBitTab(raw,hasActiveLote);
+    try{
+      const navigation=window.SetasOSNavigation;
+      if(navigation) navigation.navigate(window,'bitacora');
+      else {const url=new URL(window.location.href);url.searchParams.set('view','bitacora');window.history.pushState(null,'',url);}
+    }catch(e){}
+    if(typeof props.onBitSubtabChange==='function')props.onBitSubtabChange(next);
+  };
   useEffect(()=>{
     if(!props.bitSubtab)return;
     const next=applyBitTab(props.bitSubtab);
