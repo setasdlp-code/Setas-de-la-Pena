@@ -40,7 +40,11 @@ let protectedAppScriptsPromise = null;
 function loadClassicScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = src;
+    // <script src> resuelve rutas relativas contra la URL del documento, no
+    // contra la de este módulo — a diferencia de import(). En GitHub Pages el
+    // shell vive bajo /Setas-de-la-Pena/, así que "../recipe-recommender.js"
+    // sin este new URL() se escapa fuera de esa carpeta y da 404.
+    script.src = new URL(src, import.meta.url).href;
     script.async = false;
     script.dataset.setasAuthScript = src;
     script.onload = () => resolve();
