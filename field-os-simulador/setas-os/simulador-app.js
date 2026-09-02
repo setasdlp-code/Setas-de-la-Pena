@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 30296b8b0d6c8b112a3e9a6586c43581236e2df65821671e20f42776501ac04d
+// source-hash: 3bc405e03e1dc6cb3fdf958a487a4ecf030e6cef640ed1e4aef99afc8e449587
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2666,7 +2666,9 @@ function SimuladorShell(props) {
   const [cmpKey, setCmpKey] = useState("p_ostreatus_gris");
   const [tab, setTab] = useState(() => {
     try {
-      return new URLSearchParams(window.location.search).get("view") || "home";
+      const navigation = window.SetasOSNavigation;
+      const requested = new URLSearchParams(window.location.search).get("view");
+      return navigation ? navigation.normalizeView(requested, "home") : requested || "home";
     } catch (e) {
       return "home";
     }
@@ -2687,6 +2689,10 @@ function SimuladorShell(props) {
   const TAB_ALIASES = { optimizar: "formular" };
   const applyTab = (t) => {
     t = TAB_ALIASES[t] || t;
+    try {
+      t = window.SetasOSNavigation?.normalizeView(t, "home") || "home";
+    } catch (e) {
+    }
     setTab(t);
     setMode(RECETA_TABS.includes(t) ? "receta" : "cultivo");
     return t;
@@ -2694,9 +2700,13 @@ function SimuladorShell(props) {
   const goTab = (t) => {
     const next = applyTab(t);
     try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("view", next);
-      window.history.replaceState(null, "", url);
+      const navigation = window.SetasOSNavigation;
+      if (navigation) navigation.navigate(window, next);
+      else {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", next);
+        window.history.pushState(null, "", url);
+      }
     } catch (e) {
     }
     if (typeof props.onTabChange === "function") props.onTabChange(next);
@@ -2704,7 +2714,8 @@ function SimuladorShell(props) {
   useEffect(() => {
     const onPop = () => {
       try {
-        applyTab(new URLSearchParams(window.location.search).get("view") || "home");
+        const navigation = window.SetasOSNavigation;
+        applyTab(navigation ? navigation.readLocation(window.location).view : new URLSearchParams(window.location.search).get("view") || "home");
       } catch (e) {
       }
     };
@@ -3028,6 +3039,16 @@ function SimuladorShell(props) {
   };
   const goBitTab = (raw, hasActiveLote) => {
     const next = applyBitTab(raw, hasActiveLote);
+    try {
+      const navigation = window.SetasOSNavigation;
+      if (navigation) navigation.navigate(window, "bitacora");
+      else {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", "bitacora");
+        window.history.pushState(null, "", url);
+      }
+    } catch (e) {
+    }
     if (typeof props.onBitSubtabChange === "function") props.onBitSubtabChange(next);
   };
   useEffect(() => {
