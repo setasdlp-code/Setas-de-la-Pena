@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 3bc405e03e1dc6cb3fdf958a487a4ecf030e6cef640ed1e4aef99afc8e449587
+// source-hash: 2317626a27d470bc0d43f6292284814d27b2c7f3c48be1a83b34374d22d2bd2c
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1755,14 +1755,17 @@ wifi:
   fast_connect: true
   ap:
     ssid: "Setas-Fallback-\${device_name}"
-    password: "setas-recovery"
+    # Definir en secrets.yaml durante el aprovisionamiento; no incluir
+    # contraseñas de recuperación en un firmware exportado.
+    password: !secret fallback_password
 
 captive_portal:
 logger:
   level: INFO
 
 ota:
-  password: "setas-ota-secure"
+  # La clave OTA es única por nodo y vive fuera del firmware versionado.
+  password: !secret ota_password
 
 i2c:
   sda: ${mcu.includes("esp8266") ? "GPIO4" : "GPIO21"}
