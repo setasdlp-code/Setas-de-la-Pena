@@ -44,3 +44,29 @@ test('cambiar de pestaña contextual dentro de Formular actualiza el shell (Reac
   await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Formular');
   await expect(page.locator('[data-testid="breadcrumb"]')).toContainText(/formulador/i);
 });
+
+// E2E-12 — Las rutas son estados de navegación reales, no solo decoración del
+// URL. Atrás/adelante debe restaurar shell y React de manera coherente después
+// de que el operador navegue entre una pestaña del shell y una pestaña React.
+test('atrás y adelante restauran el workspace y la pestaña contextual', async ({ page }) => {
+  await openApp(page);
+
+  await goWorkspace(page, 'formular');
+  await expect(page).toHaveURL(/view=formular/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Formular');
+
+  await page.getByRole('tab', { name: 'Recetario' }).click();
+  await expect(page).toHaveURL(/view=dashboard/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  expect(await activeWorkspace(page)).toBe('formular');
+
+  await page.goBack();
+  await expect(page).toHaveURL(/view=formular/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Formular');
+  expect(await activeWorkspace(page)).toBe('formular');
+
+  await page.goForward();
+  await expect(page).toHaveURL(/view=dashboard/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  expect(await activeWorkspace(page)).toBe('formular');
+});
