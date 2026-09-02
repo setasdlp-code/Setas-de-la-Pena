@@ -1,17 +1,17 @@
 {
-  "_instrucciones": "Agrega los bloques 'setas' y 'setas_bridge' dentro de 'mcpServers' en tu claude_desktop_config.json (~/.config/claude/claude_desktop_config.json en Mac). Ambos usan el mismo entorno .venv; si mueves el proyecto, actualiza las cuatro rutas absolutas.",
+  "_instrucciones": "Agrega los bloques 'setas' y 'setas_bridge' dentro de 'mcpServers' en tu claude_desktop_config.json (~/Library/Application Support/Claude/claude_desktop_config.json en Mac). 'command' apunta al intérprete del entorno .venv (el único con mcp+pydantic instalados); 'args' apunta a los scripts del checkout activo en ~/Projects/Setas-de-la-Pena. Los servidores resuelven REPO_ROOT desde la ruta del script, así que leen el repo indicado en 'args', no el del intérprete. Si mueves el proyecto o recreas el entorno, actualiza las cuatro rutas absolutas.",
   "mcpServers": {
     "setas": {
       "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
       "args": [
-        "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_mcp.py"
+        "/Users/sebastianpinzon/Projects/Setas-de-la-Pena/mcp/setas_mcp.py"
       ],
       "env": {}
     },
     "setas_bridge": {
       "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
       "args": [
-        "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_bridge_mcp.py"
+        "/Users/sebastianpinzon/Projects/Setas-de-la-Pena/mcp/setas_bridge_mcp.py"
       ],
       "env": {}
     }

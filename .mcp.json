@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "setas": {
+      "type": "stdio",
+      "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/mcp/setas_mcp.py"]
+    },
+    "setas-bridge": {
+      "type": "stdio",
+      "command": "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/.venv/bin/python",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/mcp/setas_bridge_mcp.py"]
+    }
+  }
+}
