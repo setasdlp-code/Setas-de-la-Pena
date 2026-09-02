@@ -31,3 +31,10 @@ test('firebase/firestore.rules limita escrituras de catálogo e incidencias a us
   assert.match(rules, /match \/ingredientes\/\{id\}[\s\S]*?allow write: if isAdmin\(\);/);
   assert.match(rules, /match \/app_errors\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
 });
+
+test('firebase/firestore.rules no acepta telemetría anónima según un campo source autodeclarado', () => {
+  const rules = read('firebase/firestore.rules');
+  assert.match(rules, /match \/telemetria_lecturas\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
+  assert.match(rules, /match \/telemetria_salas\/\{id\}[\s\S]*?allow write: if signedIn\(\);/);
+  assert.doesNotMatch(rules, /source\s*==\s*['"]esp32_hardware['"]/);
+});

@@ -79,13 +79,17 @@ service cloud.firestore {
 
     match /telemetria_lecturas/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      // `source` es un campo controlado por el cliente, no una credencial:
+      // permitirlo como bypass hacía posible que cualquiera escribiera datos
+      // climáticos falsos. El adaptador ESP32 usa el endpoint LAN; la
+      // persistencia en Firestore ocurre desde la aplicación autenticada.
+      allow create: if signedIn();
       allow update, delete: if isAdmin();
     }
 
     match /telemetria_salas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      allow write: if signedIn();
     }
 
     match /bitacora_lotes/{id} {
