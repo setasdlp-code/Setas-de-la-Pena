@@ -1163,33 +1163,41 @@ const PRESETS={
 // ── TIPOS DE CONTENEDOR / BOLSA ─────────────────────────────────────────────
 // kgHumedo: carga típica en kg húmedo por unidad
 // vol_L: volumen útil aproximado en litros
+// stockId: id del insumo en invLotes (Bodega) que rastrea las unidades físicas
+//   disponibles de este tipo de bolsa — ver SEED_LOTES para el stock inicial.
+//   Un tipo sin stockId (o sin lotes activos) no tiene unidades en existencia:
+//   la UI lo debe mostrar deshabilitado, no ocultarlo, para que quede claro que
+//   es una técnica documentada pero sin insumo comprado todavía.
 // El simulador usa kgHumedo como valor por defecto de prodKg al seleccionar el tipo
 const BAG_TYPES=[
   {id:'bolsa_20x50',icon:'',
-   name:'Bolsa 20×50 cm · filtro 0.06mm',
+   name:'Unicorn Bag microfiltro 8×5×20"',
+   stockId:'bolsa_unicorn_microfiltro',
    kgHumedo:1.8,vol_L:3.6,
-   tratamiento:'cwlp_thermal',
+   tratamiento:'autoclave',
    color:'var(--moss-500,var(--accent-olive))',
-   dim:'20×50 cm',
-   notas:'Formato estándar Setas de la Peña. Compatible con CWLP o pasteurización. Inocular mezclando en capas o por la boca superior antes de cerrar con filtro.',
+   dim:'8×5×20" (≈20×13×51 cm)',
+   notas:'Polipropileno autoclavable con microfiltro 0.315 mm. Formato en existencia (ver Bodega). Inocular mezclando en capas o por la boca superior antes de cerrar con filtro.',
    produccion:'Colgar o apoyar verticalmente. Sin orificios adicionales — el filtro maneja el intercambio gaseoso.',
   },
   {id:'bolsa_18x35',icon:'',
-   name:'Bolsa 18×35 cm · filtro 0.06mm',
+   name:'Bolsa PP plana 50×20×12 cm',
+   stockId:'bolsa_pp_plana',
    kgHumedo:1.0,vol_L:2.0,
-   tratamiento:'cwlp_thermal',
+   tratamiento:'autoclave',
    color:'var(--ochre-600)',
-   dim:'18×35 cm',
-   notas:'Formato pequeño. Ideal para pruebas de receta, especies exigentes (P. eryngii, Lions Mane), o Martha tent con poco espacio.',
-   produccion:'Apilar en estantería o colgar. Bajo peso = fácil manejo. 30 bolsas = ~30 kg de sustrato húmedo.',
+   dim:'50×20×12 cm',
+   notas:'Polipropileno plano sin microfiltro integrado — requiere filtro o algodón + papel kraft al cerrar. Formato en existencia (ver Bodega), útil para pruebas de receta o especies exigentes (P. eryngii, Lions Mane).',
+   produccion:'Apilar en estantería o colgar. Bajo peso = fácil manejo.',
   },
   {id:'punch_bag_martha',icon:'',
    name:'Bolsa colgante (punch bag · Martha tent)',
+   stockId:null,
    kgHumedo:3.5,vol_L:7.0,
    tratamiento:'thermal',
    color:'var(--coral-700)',
    dim:'~22×70 cm relleno',
-   notas:'Versión escalada para Martha tent (1 bolsa de polipropileno 22×80cm aprox.). Llenar 3.5–4 kg. Colgar del centro del tent con cuerda o gancho. Cortar 6–8 orificios Ø2–2.5cm en espiral cada ~10 cm desde la base. Ideal Pleurotus — alta densidad de fructificación por m².',
+   notas:'Versión escalada para Martha tent (1 bolsa de polipropileno 22×80cm aprox.). Llenar 3.5–4 kg. Colgar del centro del tent con cuerda o gancho. Cortar 6–8 orificios Ø2–2.5cm en espiral cada ~10 cm desde la base. Ideal Pleurotus — alta densidad de fructificación por m². Sin stock en Bodega — técnica documentada, insumo aún no comprado.',
    produccion:'Un solo punch bag ocupa el espacio central del tent y deja espacio alrededor para humidificación uniforme. Escalar a 2 bolsas para un tent 120×60cm. Pinchar con cuchillo o sacabocado caliente, no con tijeras.',
   },
 ];
@@ -3552,11 +3560,19 @@ const SEED_PROVEEDORES=[
 const SEED_CID_PALO='compra_seed_palo';
 const SEED_CID_ELROSAL='compra_seed_elrosal';
 const SEED_CID_BAV='compra_seed_bav';
+// Las bolsas usan el mismo modelo de lotes/FIFO que los insumos de sustrato,
+// pero cantidadKgDisponible representa unidades (uds), no kg — ver stockId en
+// BAG_TYPES y el filtro por INGS en BodegaSection que las excluye de la tabla
+// de Bodega (que sí está etiquetada en kg). Cantidades tomadas del inventario
+// físico registrado en knowledge_base/05_equipment/hardware_inventory_august_2026.md.
+const SEED_CID_BOLSAS='compra_seed_bolsas';
 const SEED_LOTES=[
   {id:'lote_s1',compraId:SEED_CID_PALO,ingredienteId:'paja_trigo',cantidadKgTotal:15,precioPorKgCOP:1200,fechaIngreso:'2026-06-01',cantidadKgDisponible:15,activo:true},
   {id:'lote_s3',compraId:SEED_CID_PALO,ingredienteId:'salvado_trigo',cantidadKgTotal:5,precioPorKgCOP:2100,fechaIngreso:'2026-06-01',cantidadKgDisponible:5,activo:true},
   {id:'lote_s2',compraId:SEED_CID_ELROSAL,ingredienteId:'aserrin_roble',cantidadKgTotal:8,precioPorKgCOP:800,fechaIngreso:'2026-06-01',cantidadKgDisponible:8,activo:true},
   {id:'lote_s4',compraId:SEED_CID_BAV,ingredienteId:'afrecho_cerveceria',cantidadKgTotal:3,precioPorKgCOP:500,fechaIngreso:'2026-06-01',cantidadKgDisponible:3,activo:true},
+  {id:'lote_s5',compraId:SEED_CID_BOLSAS,ingredienteId:'bolsa_unicorn_microfiltro',cantidadKgTotal:100,precioPorKgCOP:0,fechaIngreso:'2026-08-01',cantidadKgDisponible:100,activo:true},
+  {id:'lote_s6',compraId:SEED_CID_BOLSAS,ingredienteId:'bolsa_pp_plana',cantidadKgTotal:20,precioPorKgCOP:0,fechaIngreso:'2026-08-01',cantidadKgDisponible:20,activo:true},
 ];
 const SEED_COMPRAS=[
   {id:SEED_CID_PALO,fecha:'2026-06-01',proveedorId:'prov_paloquemao',
@@ -3567,6 +3583,9 @@ const SEED_COMPRAS=[
    fuenteCaptura:'manual',revisadoManualmente:true},
   {id:SEED_CID_BAV,fecha:'2026-06-01',proveedorId:'prov_bavaria',
    items:[{ingredienteId:'afrecho_cerveceria',kg:3,precio:500}],
+   fuenteCaptura:'manual',revisadoManualmente:true},
+  {id:SEED_CID_BOLSAS,fecha:'2026-08-01',proveedorId:'',
+   items:[{ingredienteId:'bolsa_unicorn_microfiltro',kg:100,precio:0},{ingredienteId:'bolsa_pp_plana',kg:20,precio:0}],
    fuenteCaptura:'manual',revisadoManualmente:true},
 ];
 const SEED_MOVIMIENTOS=SEED_LOTES.map((l,i)=>({
@@ -4915,9 +4934,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!rows||!rows.length) return;
     const preview=rows.filter(x=>x.g).map(x=>{
       const krKg=x.grR/1000;
-      const stockActual=invLotes.filter(l=>l.activo&&l.ingredienteId===x.g.id).reduce((s,l)=>s+l.cantidadKgDisponible,0);
-      return{id:x.g.id,name:x.g.name,krKg,stockActual,ok:stockActual>=krKg*0.999};
+      const stock=invLotes.filter(l=>l.activo&&l.ingredienteId===x.g.id).reduce((s,l)=>s+l.cantidadKgDisponible,0);
+      return{id:x.g.id,name:x.g.name,krKg,stockActual:stock,unit:'kg',ok:stock>=krKg*0.999};
     });
+    // La bolsa seleccionada en "Tipo de contenedor" también se descuenta del inventario
+    // (en unidades, no kg) — comparte el mismo modelo FIFO que el sustrato vía stockId.
+    const bt=BAG_TYPES.find(b=>b.id===prodBagType);
+    if(bt&&bt.stockId){
+      const needed=parseInt(prodBags)||0;
+      const stock=stockActual(bt.stockId,invLotes);
+      preview.push({id:bt.stockId,name:bt.name,krKg:needed,stockActual:stock,unit:'uds',ok:stock>=needed});
+    }
     setLoteBatchConfirm({preview,loteNum,fecha});
   };
   const confirmarEjecucion=()=>{
@@ -5606,11 +5633,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {/* STATS ROW — editorial */}
               <div className="inv-stat-row">
                 <div className="inv-stat">
-                  <div className="inv-stat-val">{[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length}</div>
+                  <div className="inv-stat-val">{[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0&&INGS.some(i=>i.id===l.ingredienteId)).map(l=>l.ingredienteId))].length}</div>
                   <div className="inv-stat-lbl">En stock</div>
                 </div>
                 <div className="inv-stat">
-                  <div className="inv-stat-val">{invLotes.filter(l=>l.activo).reduce((s,l)=>s+l.cantidadKgDisponible,0).toFixed(1)}</div>
+                  <div className="inv-stat-val">{invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).reduce((s,l)=>s+l.cantidadKgDisponible,0).toFixed(1)}</div>
                   <div className="inv-stat-lbl">kg disp.</div>
                 </div>
                 <div className="inv-stat">
@@ -5634,7 +5661,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
-                    const ingIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
+                    // Las bolsas viven en invLotes con el mismo modelo FIFO, pero se
+                    // cuentan en unidades, no kg — se excluyen de esta tabla (kg) y se
+                    // gestionan en el selector "Tipo de contenedor" de la pestaña Producción.
+                    const ingIds=[...new Set(invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).map(l=>l.ingredienteId))];
                     if(!ingIds.length) return(
                       <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
                         Sin inventario.
@@ -7597,7 +7627,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {(tab==='home'||tab==='inicio')&&(()=>{
           // Cálculos y Métricas en vivo para el Centro de Mando
-          const totalStockKg = invLotes.filter(l=>l.activo).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
+          const totalStockKg = invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
           const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
           const aggregatedStock = {};
           invLotes.filter(l=>l.activo).forEach(l=>{
@@ -7920,7 +7950,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Lotes de Insumos</div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invLotes.filter(l=>l.activo).length}
+                            {invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).length}
                           </div>
                         </div>
                         <div>
@@ -10280,10 +10310,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:10}}>
                 {BAG_TYPES.map(bt=>{
                   const on=prodBagType===bt.id;
+                  const stockUds=bt.stockId?stockActual(bt.stockId,invLotes):0;
+                  const noStock=!bt.stockId||stockUds<=0;
                   return(
-                    <button key={bt.id} onClick={()=>{setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:'pointer',textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
+                    <button key={bt.id} disabled={noStock} aria-disabled={noStock} title={noStock?'Sin unidades en Bodega — no se puede seleccionar para ejecutar el lote':`${stockUds} uds disponibles en Bodega`} onClick={()=>{if(noStock) return;setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:noStock?'not-allowed':'pointer',opacity:noStock?.5:1,textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:noStock?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{bt.stockId?`${stockUds} uds en Bodega`:'Sin stock'}</div>
                     </button>
                   );
                 })}
@@ -10363,7 +10396,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar kg comerciales del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
+                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
                   </div>
                 </div>
@@ -10760,15 +10793,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {loteBatchConfirm&&(
           <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:520,maxWidth:'calc(100vw - 32px)'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los kg comerciales (FIFO, del lote más antiguo al más nuevo).</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
               <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
-                <thead><tr>{['Ingrediente','Requerido kg','Stock kg',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido kg'||h==='Stock kg'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
+                <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
                 <tbody>
                   {loteBatchConfirm.preview.map(row=>(
                     <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{row.krKg.toFixed(3)}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{row.stockActual.toFixed(3)}</td>
+                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
+                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
                       <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
                     </tr>
                   ))}
