@@ -216,12 +216,13 @@ test('error display is cleared before form submission', () => {
 
 test('onAuthStateChanged shows/hides gate based on user login state', () => {
   const src = read('auth-gate.js');
-  const authStart = src.indexOf('onAuthStateChanged(auth, (user) => {');
+  const authStart = src.indexOf('onAuthStateChanged(auth, async (user) => {');
   const authEnd = src.indexOf('el.form.addEventListener("submit"');
   const authHandler = src.slice(authStart, authEnd);
 
   assert.match(authHandler, /if\s*\(user\)/, 'debe verificar si user existe');
-  assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"none"/, 'debe ocultar gate cuando hay usuario');
+  assert.match(authHandler, /await loadDataRuntime\(\)/, 'debe preparar servicios de datos antes de montar la app');
+  assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"none"/, 'debe ocultar gate cuando hay usuario y datos listos');
   assert.match(authHandler, /el\.signoutBtn\.style\.display\s*=\s*"block"/, 'debe mostrar signout cuando hay usuario');
   assert.match(authHandler, /el\.signoutBtn\.title\s*=\s*user\.email/, 'debe mostrar email en title del botón');
   assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"flex"/, 'debe mostrar gate cuando no hay usuario');
@@ -248,6 +249,24 @@ test('auth state gates the protected runtime and publishes a mount signal', () =
   assert.match(app, /function SimuladorShell\(props\)/, 'la aplicación pesada debe vivir detrás del shell de auth');
   assert.match(app, /window\.addEventListener\('setas-auth-state',onAuthState\)/, 'el shell React debe escuchar la señal de auth');
   assert.match(app, /return isAuthenticated\?<SimuladorShell \{\.\.\.props\}\/>:null/, 'el simulador no debe montar antes de autenticar');
+});
+
+test('los servicios Firestore solo se importan después de confirmar Auth', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const bootstrap = read('firebase-auth-bootstrap.js');
+  const dataRuntime = read('firebase-init.js');
+
+  assert.match(src, /await import\("\.\/firebase-init\.js"\)/);
+  assert.match(src, /import\("\.\/error-monitor\.js"\)/);
+  assert.match(src, /import\("\.\/db\.js"\)/);
+  assert.match(src, /import\("\.\/bitacora-sync\.js"\)/);
+  assert.match(src, /new CustomEvent\(DATA_READY_EVENT\)/);
+  assert.doesNotMatch(shell, /<script type="module" src="firebase\/firebase-init\.js"><\/script>/);
+  assert.doesNotMatch(shell, /<script type="module" src="firebase\/db\.js"><\/script>/);
+  assert.match(bootstrap, /from "\.\.\/vendor\/firebase\/firebase-auth\.js"/);
+  assert.doesNotMatch(bootstrap, /firebase-firestore\.js/);
+  assert.match(dataRuntime, /from "\.\.\/vendor\/firebase\/firebase-firestore\.js"/);
 });
 
 test('signout button listener calls signOut(auth)', () => {

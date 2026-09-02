@@ -273,7 +273,7 @@
   bottom: 0;
   width: clamp(280px, 34vw, 520px);
   height: clamp(280px, 34vw, 520px);
-  background-image: url('_standalone_imgs/mountain-juaica.png');
+  background-image: none;
   background-repeat: no-repeat;
   background-position: bottom right;
   background-size: contain;
@@ -282,6 +282,9 @@
   z-index: 0;
   user-select: none;
   mix-blend-mode: multiply;
+}
+html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
+  background-image: url('_standalone_imgs/mountain-juaica.png');
 }
 @media (max-width: 859px) {
   .fos-bg-mountain {

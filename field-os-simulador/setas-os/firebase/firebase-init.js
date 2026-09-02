@@ -1,25 +1,23 @@
-// Inicialización única de Firebase para Setas OS.
-// Se carga como <script type="module" src="firebase/firebase-init.js"></script>
-// y expone window.SetasFirebase para que simulador.html / Setas OS.dc.html
-// (que no son módulos ES, son scripts clásicos con Babel-en-navegador) puedan
-// usarlo sin necesitar ellos mismos un <script type="module">.
-import { initializeApp } from "../vendor/firebase/firebase-app.js";
+// Servicios de datos de Firebase para Setas OS.
+//
+// Auth carga primero firebase-auth-bootstrap.js para pintar el acceso sin
+// descargar Firestore. auth-gate.js importa este módulo solo después de
+// confirmar una sesión, y luego publica los servicios de datos en
+// window.SetasFirebase para el shell clásico.
 import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "../vendor/firebase/firebase-firestore.js";
 import {
-  getAuth,
+  app,
+  auth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-} from "../vendor/firebase/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js";
+} from "./firebase-auth-bootstrap.js";
 import { initSetasAI } from "./ai-logic.js";
 import { pushClimateReading, subscribeToLiveClimate } from "./telemetria-sync.js";
-
-const app = initializeApp(firebaseConfig);
 
 // Caché local persistente (IndexedDB) con soporte multi-pestaña: las escrituras
 // hechas sin señal quedan encoladas y se sincronizan solas al reconectar — es
@@ -31,10 +29,11 @@ const db = initializeFirestore(app, {
   }),
 });
 
-const auth = getAuth(app);
-const ai = initSetasAI(app);
+// ai-logic.js puede inicializar SetasAI al detectar el bootstrap de Auth. No
+// se duplica el evento ni el objeto global si ya ocurrió durante su evaluación.
+const ai = window.SetasAI || initSetasAI(app);
 
-window.SetasFirebase = {
+Object.assign(window.SetasFirebase, {
   app,
   db,
   auth,
@@ -44,8 +43,8 @@ window.SetasFirebase = {
   signOut,
   pushClimateReading: (reading) => pushClimateReading(db, reading),
   subscribeToLiveClimate: (cb) => subscribeToLiveClimate(db, cb)
-};
+});
 window.dispatchEvent(new CustomEvent("setas-firebase-ready"));
+window.dispatchEvent(new CustomEvent("setas-firebase-data-ready"));
 
 export { app, db, auth, ai, pushClimateReading, subscribeToLiveClimate };
-

@@ -9,7 +9,7 @@
 // la copia equivocada (la oculta). Por eso el gate se construye 100% por JS y
 // se inyecta directo en document.body — nace después de esa clonación, así que
 // nunca se duplica.
-import { auth } from "./firebase-init.js";
+import { auth } from "./firebase-auth-bootstrap.js";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "../vendor/firebase/firebase-auth.js";
 
 const ERRORES = {
@@ -24,6 +24,29 @@ const ERRORES = {
 export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesión. Inténtalo de nuevo.";
 
 const AUTH_STATE_EVENT = "setas-auth-state";
+const DATA_READY_EVENT = "setas-data-ready";
+let dataRuntimePromise = null;
+
+function loadDataRuntime() {
+  if (!dataRuntimePromise) {
+    dataRuntimePromise = (async () => {
+      // Firestore se importa primero para que los módulos que lo consumen
+      // reciban el mismo singleton de db y no intenten montar el shell con
+      // window.SetasDB / window.SetasBitacoraDB todavía ausentes.
+      await import("./firebase-init.js");
+      await Promise.all([
+        import("./error-monitor.js"),
+        import("./db.js"),
+        import("./bitacora-sync.js"),
+      ]);
+      window.dispatchEvent(new CustomEvent(DATA_READY_EVENT));
+    })().catch((error) => {
+      dataRuntimePromise = null;
+      throw error;
+    });
+  }
+  return dataRuntimePromise;
+}
 
 function syncAuthGatedResources(authenticated) {
   // El runtime .dc conserva una copia fuente oculta y una copia viva dentro de
@@ -103,14 +126,40 @@ export function buildGate() {
 function init() {
   const el = buildGate();
   let busy = false;
+  let authRevision = 0;
 
-  onAuthStateChanged(auth, (user) => {
-    publishAuthState(!!user);
+  onAuthStateChanged(auth, async (user) => {
+    const revision = ++authRevision;
     if (user) {
-      el.gate.style.display = "none";
-      el.signoutBtn.style.display = "block";
-      el.signoutBtn.title = user.email || "";
+      // No exponer el shell operativo hasta que la capa de datos esté lista.
+      // El gate se mantiene visible como estado de preparación, no como un
+      // overlay que permite interactuar con datos parcialmente inicializados.
+      el.gate.style.display = "flex";
+      el.signoutBtn.style.display = "none";
+      el.err.textContent = "";
+      el.status.style.display = "block";
+      el.status.textContent = "Preparando datos protegidos…";
+      el.emailLabel.style.display = "none";
+      el.passwordLabel.style.display = "none";
+      el.email.style.display = "none";
+      el.password.style.display = "none";
+      el.submit.style.display = "none";
+      try {
+        await loadDataRuntime();
+        if (revision !== authRevision || !auth.currentUser) return;
+        publishAuthState(true);
+        el.gate.style.display = "none";
+        el.signoutBtn.style.display = "block";
+        el.signoutBtn.title = user.email || "";
+      } catch (error) {
+        if (revision !== authRevision || !auth.currentUser) return;
+        publishAuthState(false);
+        el.gate.style.display = "flex";
+        el.status.textContent = "No se pudieron preparar los datos.";
+        el.err.textContent = "Recarga la página antes de continuar.";
+      }
     } else {
+      publishAuthState(false);
       el.gate.style.display = "flex";
       el.signoutBtn.style.display = "none";
       el.status.style.display = "none";

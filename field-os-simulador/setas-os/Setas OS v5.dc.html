@@ -53,15 +53,10 @@
     <script src="historical-calibration.js"></script>
 <script src="recipe-optimizer.js"></script>
 <script src="perito-scenarios.js"></script>
-<script type="module" src="firebase/firebase-init.js"></script>
-<script type="module" src="firebase/error-monitor.js"></script>
-<script type="module" src="firebase/db.js"></script>
-<script type="module" src="firebase/bitacora-sync.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
-<!-- error-monitor.js va ANTES de db.js/auth-gate.js a propósito: cuando era
-     el último <script> de <helmet>, el runtime .dc lo descartaba (ver
-     compile()'s "mayBePartial" en support.js — trata al último hijo distinto
-     mientras streaming). Puesto en medio, sobrevive. -->
+<!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida importa
+     firebase-init.js, error-monitor.js, db.js y bitacora-sync.js, para no
+     descargar Firestore/IA/telemetría durante la pantalla de acceso. -->
 <meta name="ext-resource-dependency" content="climate-bench.html" data-resource-id="climaBenchHtml">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-rosa.png" data-resource-id="imgOrellanaRosa">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-blanca.png" data-resource-id="imgOrellanaBlanca">
@@ -233,7 +228,7 @@
     bottom:0;
     width:clamp(280px, 34vw, 520px);
     height:clamp(280px, 34vw, 520px);
-    background-image:url('_standalone_imgs/mountain-juaica.png');
+    background-image:none;
     background-repeat:no-repeat;
     background-position:bottom right;
     background-size:contain;
@@ -242,6 +237,9 @@
     z-index:0;
     user-select:none;
     mix-blend-mode:multiply;
+  }
+  html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
+    background-image:url('_standalone_imgs/mountain-juaica.png');
   }
   @media (max-width:859px) {
     .fos-bg-mountain {

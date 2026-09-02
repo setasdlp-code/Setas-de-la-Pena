@@ -26,14 +26,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install @lhci/cli
-        run: npm install --no-save @lhci/cli
+      # Respeta package-lock.json. Antes `npm install --no-save @lhci/cli`
+      # resolvía una versión distinta en cada runner, de modo que el umbral
+      # Lighthouse y su cadena de navegadores no eran reproducibles.
+      - name: Install locked CI dependencies
+        run: npm ci
 
       # Setas OS v5 has no build step (static HTML/JS/CSS, vendored deps) —
       # lighthouserc.cjs uses staticDistDir to serve this folder directly,
       # no dev/prod server to start first.
       - name: Run Lighthouse CI
-        run: npx lhci autorun --config=./lighthouserc.cjs
+        run: npm run lhci
 
       - name: Upload Lighthouse reports
         if: always()
