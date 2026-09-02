@@ -892,17 +892,7 @@
                   <span style="font-family:var(--font-mono);font-size:15px;color:{{ cm.liveAccent }};">{{ cm.liveCo2 }} ppm CO₂</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);align-self:center;">{{ cm.liveStatusLabel }}</span>
                 </div>
-                <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ cm.sparkTrendLabel }}" style="width:100%;height:44px;overflow:visible;">
-                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <sc-for list="{{ cm.sparkPoints }}" as="sp" hint-placeholder-count="6">
-                    <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
-                  </sc-for>
-                </svg>
+                <x-import component-from-global-scope="SetasClimateSparkline" temp-points="{{ cm.tempSpark }}" hum-points="{{ cm.humSpark }}" co2-points="{{ cm.co2Spark }}" temp-end-y="{{ cm.tempSparkEndY }}" hum-end-y="{{ cm.humSparkEndY }}" co2-end-y="{{ cm.co2SparkEndY }}" spark-points="{{ cm.sparkPoints }}" trend-label="{{ cm.sparkTrendLabel }}" chart-height="44" margin-top="0" hint-size="100%,44px"></x-import>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp. <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveTemp }}°</b></span>
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveHum }}%</b></span>
@@ -974,17 +964,7 @@
               <span style="font-family:var(--font-mono);font-size:20px;color:{{ camDetail.liveAccent }};">{{ camDetail.liveCo2 }} ppm CO₂</span>
               <span style="font:var(--t-caption);color:var(--text-metadata);">{{ camDetail.liveStatusLabel }}</span>
             </div>
-            <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ camDetail.sparkTrendLabel }}" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
-              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <sc-for list="{{ camDetail.sparkPoints }}" as="sp" hint-placeholder-count="6">
-                <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
-              </sc-for>
-            </svg>
+            <x-import component-from-global-scope="SetasClimateSparkline" temp-points="{{ camDetail.tempSpark }}" hum-points="{{ camDetail.humSpark }}" co2-points="{{ camDetail.co2Spark }}" temp-end-y="{{ camDetail.tempSparkEndY }}" hum-end-y="{{ camDetail.humSparkEndY }}" co2-end-y="{{ camDetail.co2SparkEndY }}" spark-points="{{ camDetail.sparkPoints }}" trend-label="{{ camDetail.sparkTrendLabel }}" chart-height="90" margin-top="10" hint-size="100%,90px"></x-import>
             <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveTemp }}°C</b></span>
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveHum }}%</b></span>
