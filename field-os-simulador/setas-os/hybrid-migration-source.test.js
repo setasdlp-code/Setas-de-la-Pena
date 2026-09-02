@@ -27,9 +27,11 @@ test('simulador deja de consumir runAutoOptimizer y enruta los tres flujos al he
   assert.match(jsx, /\(out\.ranked\|\|\[\]\)\.slice\(0,12\)/);
 });
 
-test('HTML carga perito-scenarios antes del bundle que consume el global', () => {
-  const html = read('Setas OS v5.dc.html');
-  const perito = html.indexOf('<script src="perito-scenarios.js"></script>');
-  const optimizer = html.indexOf('<script src="recipe-optimizer.js"></script>');
-  assert.ok(perito > optimizer, 'perito-scenarios.js debe cargarse después de scoring/recipe optimizer y antes del app runtime');
+test('Auth carga perito-scenarios después de scoring/optimizer y antes del bundle que consume el global', () => {
+  const authGate = read('firebase/auth-gate.js');
+  const perito = authGate.indexOf('"../perito-scenarios.js"');
+  const optimizer = authGate.indexOf('"../recipe-optimizer.js"');
+  const app = authGate.indexOf('await import("../simulador-app.js")');
+  assert.ok(perito > optimizer, 'perito-scenarios.js debe cargarse después de scoring/recipe optimizer');
+  assert.ok(app > perito, 'el bundle React debe esperar perito-scenarios');
 });

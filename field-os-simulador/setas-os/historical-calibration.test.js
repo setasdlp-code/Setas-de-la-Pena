@@ -279,10 +279,10 @@ test('la calibración se deriva de lotes y cosechas reales de Bitácora', () => 
   assert.match(jsx, /historicalEB\s*\(\s*sKey/);
 });
 
-test('el HTML carga historical-calibration.js antes del bundle que lo consume', () => {
-  const html = read('Setas OS v5.dc.html');
-  const mod = html.indexOf('<script src="historical-calibration.js"></script>');
-  const app = html.indexOf('simulador-app.js');
-  assert.ok(mod > -1, 'historical-calibration.js no está cargado en el shell');
+test('Auth carga historical-calibration.js antes del bundle que lo consume', () => {
+  const authGate = read('firebase/auth-gate.js');
+  const mod = authGate.indexOf('"../historical-calibration.js"');
+  const app = authGate.indexOf('await import("../simulador-app.js")');
+  assert.ok(mod > -1, 'historical-calibration.js debe estar en el runtime protegido');
   assert.ok(mod < app, 'debe cargarse antes del bundle que lee el global');
 });
