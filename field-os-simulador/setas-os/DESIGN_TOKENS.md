@@ -17,6 +17,11 @@ Canonical token reference for `sim.css`. These tokens define the visual language
 
 #### Ingredient Categories
 
+> **Defined in the design system**, not `sim.css`: see
+> `_ds/<bundle>/tokens/colors.css`, section "Ingredient categories".
+> The values and WCAG rationale below are mirrored there verbatim; edit that
+> file, not `sim.css`.
+
 Each category has four states: default (border), hover (tinted background), hover-text, and `-on` (solid-fill "selected" state).
 
 | Token | Use | Default | Hover | Hover text | `-on` fill |

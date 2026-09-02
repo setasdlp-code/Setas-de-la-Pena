@@ -66,4 +66,82 @@
   --link: var(--accent-blue-grey);
   --link-hover: var(--ink-0);
   --focus-ring: var(--accent-olive);
+
+  /* ---- Ingredient categories: classification hues for badges & tab accents ----
+     A closed set, one hue per substrate ingredient family. Each has: base
+     (border/hover accent), hover tint, text (on hover), and -on (solid-fill
+     "selected" state). -on may differ from base — see the WCAG notes on
+     base/sup/trop/circ, which fail 4.5:1 against the real foreground at their
+     natural hue and use a darkened -on value instead.
+
+     These hues are deliberately NOT the --accent-* set: they classify
+     ingredients, not status, and the contrast values below were audited
+     against these exact hexes. Do not "harmonise" them toward --accent-*
+     without redoing the audit. */
+  --cat-base: #5A7042;
+  --cat-base-hover: color-mix(in oklab, #5A7042 12%, var(--paper-0));
+  --cat-base-text: #3a4f2a;
+  --cat-base-on: #5A7042;             /* fill-vs-white contrast 5.48:1 — passes AA */
+
+  --cat-cafe: #7A4A2F;
+  --cat-cafe-hover: color-mix(in oklab, #7A4A2F 12%, var(--paper-0));
+  --cat-cafe-text: #7A4A2F;
+  --cat-cafe-on: #7A4A2F;             /* fill-vs-white contrast 7.37:1 — passes AA */
+
+  --cat-sup: #C68F2C;
+  --cat-sup-hover: color-mix(in oklab, #C68F2C 12%, var(--paper-0));
+  --cat-sup-text: #8B6014;
+  --cat-sup-on: #8B641F;              /* WCAG FIX v2: .on renders --text-on-dark, which
+                                          resolves --paper-50 → --paper-0 → #F7F4EC (a
+                                          warm cream, NOT white). Original fix computed
+                                          against white and still failed vs the real
+                                          foreground (2.85:1 base, 4.36:1 first darken —
+                                          both fail). Darkened 30% from base to 4.85:1
+                                          against #F7F4EC. Border/hover keep the
+                                          original hue; only .on uses this value. */
+
+  --cat-est: #6B4E31;
+  --cat-est-hover: color-mix(in oklab, #6B4E31 12%, var(--paper-0));
+  --cat-est-text: #6B4E31;
+  --cat-est-on: #6B4E31;              /* fill-vs-#F7F4EC contrast ~6.9:1 — passes AA */
+
+  --cat-local: #7A5A3F;
+  --cat-local-hover: color-mix(in oklab, #7A5A3F 12%, var(--paper-0));
+  --cat-local-text: #7A5A3F;
+  --cat-local-on: #7A5A3F;            /* fill-vs-#F7F4EC contrast ~5.7:1 — passes AA */
+
+  --cat-trop: #B8694B;
+  --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
+  --cat-trop-text: #8C5039;            /* WCAG FIX v3: --cat-trop-hover is computed via
+                                           color-mix(in oklab, ...) — its actual rendered
+                                           value is ~#F1E3D8, NOT plain --paper-0 (OKLab
+                                           mixing is non-linear; the tint is lighter than
+                                           the untinted base in this case). The v2 fix
+                                           (#9C5940, tuned against untinted --paper-0)
+                                           only reached 4.27:1 against the real tinted
+                                           background — still failing. Darkened 24% from
+                                           the base hue to 5.03:1 against the actual
+                                           color-mix() output and 5.75:1 against untinted
+                                           --paper-0 — passes both. */
+  --cat-trop-on: #8C5039;              /* WCAG FIX v3: reused — .on renders on #F7F4EC
+                                           (not white; see --cat-sup note above). This
+                                           value clears 5.75:1 there, well past 4.5:1. */
+
+  --cat-circ: #6B7C5F;
+  --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
+  --cat-circ-text: #56634C;            /* WCAG FIX v3: same issue as --cat-trop-text —
+                                           the actual color-mix(in oklab, ...) output for
+                                           --cat-circ-hover is ~#E5E5DA, and the v2 fix
+                                           (#607056) only reached 4.19:1 against it.
+                                           Darkened 20% from base to 5.04:1 against the
+                                           real tinted background and 5.82:1 against
+                                           untinted --paper-0. */
+  --cat-circ-on: #56634C;              /* WCAG FIX v3: reused — clears 5.82:1 against
+                                           the actual #F7F4EC .on foreground. */
+
+  --cat-adit: var(--accent-blue-grey);
+  --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
+  --cat-adit-text: var(--accent-blue-grey);
+  /* --cat-adit-on intentionally omitted: .on rule uses --cat-adit directly
+     (design-system --accent-blue-grey already passes AA at its own value) */
 }

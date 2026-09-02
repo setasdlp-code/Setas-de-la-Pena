@@ -94,7 +94,7 @@
   --btn-border: var(--ink-900);
   --btn-text: var(--ink-900);
   --btn-hover-bg: var(--paper-200);
-  --btn-hover-shadow: 0 2px 4px rgba(11, 11, 11, 0.08);
+  --btn-hover-shadow: var(--shadow-card-hover);
   --btn-active-transform: translateY(-1px);
 
   --btn-pri-bg: var(--moss-700);
@@ -134,77 +134,11 @@
   --color-norm-bar: #6B8E5A;  /* moss-green for normalization/balance indicators */
   --color-investigacion: #f0b093;  /* peach for investigation/experimental mode */
 
-  /* ── INGREDIENT CATEGORY COLORS — ingredient badges & tab accents ──
-     Each has: base (border/hover accent), hover tint, text (on hover), and
-     -on (solid-fill "selected" state). -on may differ from base — see WCAG
-     note below for base/sup/trop/circ, which fail 4.5:1 white-text contrast
-     at their natural hue and use a darkened -on value instead. */
-  --cat-base: #5A7042;
-  --cat-base-hover: color-mix(in oklab, #5A7042 12%, var(--paper-0));
-  --cat-base-text: #3a4f2a;
-  --cat-base-on: #5A7042;             /* fill-vs-white contrast 5.48:1 — passes AA */
-
-  --cat-cafe: #7A4A2F;
-  --cat-cafe-hover: color-mix(in oklab, #7A4A2F 12%, var(--paper-0));
-  --cat-cafe-text: #7A4A2F;
-  --cat-cafe-on: #7A4A2F;             /* fill-vs-white contrast 7.37:1 — passes AA */
-
-  --cat-sup: #C68F2C;
-  --cat-sup-hover: color-mix(in oklab, #C68F2C 12%, var(--paper-0));
-  --cat-sup-text: #8B6014;
-  --cat-sup-on: #8B641F;              /* WCAG FIX v2: .on renders --text-on-dark, which
-                                          resolves --paper-50 → --paper-0 → #F7F4EC (a
-                                          warm cream, NOT white). Original fix computed
-                                          against white and still failed vs the real
-                                          foreground (2.85:1 base, 4.36:1 first darken —
-                                          both fail). Darkened 30% from base to 4.85:1
-                                          against #F7F4EC. Border/hover keep the
-                                          original hue; only .on uses this value. */
-
-  --cat-est: #6B4E31;
-  --cat-est-hover: color-mix(in oklab, #6B4E31 12%, var(--paper-0));
-  --cat-est-text: #6B4E31;
-  --cat-est-on: #6B4E31;              /* fill-vs-#F7F4EC contrast ~6.9:1 — passes AA */
-
-  --cat-local: #7A5A3F;
-  --cat-local-hover: color-mix(in oklab, #7A5A3F 12%, var(--paper-0));
-  --cat-local-text: #7A5A3F;
-  --cat-local-on: #7A5A3F;            /* fill-vs-#F7F4EC contrast ~5.7:1 — passes AA */
-
-  --cat-trop: #B8694B;
-  --cat-trop-hover: color-mix(in oklab, #B8694B 12%, var(--paper-0));
-  --cat-trop-text: #8C5039;            /* WCAG FIX v3: --cat-trop-hover is computed via
-                                           color-mix(in oklab, ...) — its actual rendered
-                                           value is ~#F1E3D8, NOT plain --paper-0 (OKLab
-                                           mixing is non-linear; the tint is lighter than
-                                           the untinted base in this case). The v2 fix
-                                           (#9C5940, tuned against untinted --paper-0)
-                                           only reached 4.27:1 against the real tinted
-                                           background — still failing. Darkened 24% from
-                                           the base hue to 5.03:1 against the actual
-                                           color-mix() output and 5.75:1 against untinted
-                                           --paper-0 — passes both. */
-  --cat-trop-on: #8C5039;              /* WCAG FIX v3: reused — .on renders on #F7F4EC
-                                           (not white; see --cat-sup note above). This
-                                           value clears 5.75:1 there, well past 4.5:1. */
-
-  --cat-circ: #6B7C5F;
-  --cat-circ-hover: color-mix(in oklab, #6B7C5F 12%, var(--paper-0));
-  --cat-circ-text: #56634C;            /* WCAG FIX v3: same issue as --cat-trop-text —
-                                           the actual color-mix(in oklab, ...) output for
-                                           --cat-circ-hover is ~#E5E5DA, and the v2 fix
-                                           (#607056) only reached 4.19:1 against it.
-                                           Darkened 20% from base to 5.04:1 against the
-                                           real tinted background and 5.82:1 against
-                                           untinted --paper-0. */
-  --cat-circ-on: #56634C;              /* WCAG FIX v3: reused — clears 5.82:1 against
-                                           the actual #F7F4EC .on foreground. */
-
-  --cat-adit: var(--accent-blue-grey);
-  --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
-  --cat-adit-text: var(--accent-blue-grey);
-  /* --cat-adit-on intentionally omitted: .on rule uses --cat-adit directly
-     (design-system --accent-blue-grey already passes AA at its own value) */
+  /* ── INGREDIENT CATEGORY COLORS ──
+     Moved into the design system: see tokens/colors.css, section
+     "Ingredient categories". The --cat-* tokens (and their WCAG rationale)
+     now live there so the whole category palette is versioned with the DS.
+     Do not redefine them here. */
 
   /* ── MOTION SCALE — replaces 8 scattered durations (.1s–.4s) ──
      Pick by role, not by feel. Pair with --ease (existing curve) unless noted. */
@@ -537,12 +471,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   width:100%; padding:12px 14px; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
   background:var(--paper-0); font-family:var(--font-mono); font-size:13px;
   color:var(--ink-1); margin-bottom:14px; transition:border-color var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
-  box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);
+  box-shadow:var(--shadow-none);
 }
 .sim-root .search:focus-visible{
   outline:2px solid var(--focus-ring,var(--coral-500));outline-offset:2px;
   border-color:var(--slate-600,var(--accent-blue-grey));
-  box-shadow:inset 0 1px 3px rgba(0,0,0,0.05), 0 0 0 2px rgba(78,106,122,0.12);
+  /* the outline above is the focus cue; the old glow was a second, softer copy */
+  box-shadow:var(--shadow-none);
 }
 .sim-root .search::placeholder{ color:var(--ink-3,#96907C); opacity:1; }
 
@@ -652,7 +587,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .rec-row input:focus{ 
   border-color:var(--ink-2); 
   background:var(--paper-1);
-  box-shadow:inset 0 0 0 2px rgba(139, 111, 71, 0.1);
+  box-shadow:inset 0 0 0 2px var(--accent-olive-dim);
 }
 .sim-root .pct{ font-family:var(--font-mono); font-size:13px; color:var(--ink-2); }
 .sim-root .rem{ 
@@ -1556,7 +1491,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root input[type=range]::-webkit-slider-thumb{ 
   -webkit-appearance:none; width:16px; height:16px; border-radius:0; 
   background:var(--ink-2); cursor:pointer; border:2px solid var(--paper-0); 
-  box-shadow:0 2px 4px rgba(0,0,0,0.15);
+  /* keyline, not lift: separates thumb from track without casting */
+  box-shadow:0 0 0 1px var(--border-heavy);
 }
 .sim-root input[type=range]::-moz-range-thumb{ 
   width:16px; height:16px; border-radius:0; 
@@ -1706,7 +1642,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bg-row{margin-bottom:9px;}
 .sim-root .bg-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
 .sim-root .bg-label{font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-800);}
-.sim-root .bg-track{position:relative;height:7px;background:var(--paper-300);border-radius:4px;overflow:visible;}
+.sim-root .bg-track{position:relative;height:7px;background:var(--paper-300);border-radius:var(--radius-sm);overflow:visible;}
 .sim-root .bg-band{position:absolute;top:0;bottom:0;border-radius:3px;transition:left var(--duration-notice) var(--ease),width var(--duration-notice) var(--ease);}
 .sim-root .bg-ideal{position:absolute;top:-2px;bottom:-2px;width:1.5px;border-radius:1px;}
 .sim-root .bg-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid var(--paper-50);transition:left var(--duration-notice) var(--ease),background var(--duration-notice) var(--ease);z-index:2;}
@@ -1878,7 +1814,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--sp-10);padding-bottom:var(--sp-7);border-bottom:1px solid var(--border-soft);}
 .sim-root .prov-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
 .sim-root .prov-row:last-child{border-bottom:none;}
-.sim-root .prov-tipo-chip{font-family:var(--font-mono);font-size:12px;padding:3px 8px;border-radius:20px;background:var(--paper-200);color:var(--ink-700);flex-shrink:0;font-weight:600;}
+.sim-root .prov-tipo-chip{font-family:var(--font-mono);font-size:12px;padding:3px 8px;border-radius:var(--radius-sm);background:var(--paper-200);color:var(--ink-700);flex-shrink:0;font-weight:600;}
 .sim-root .prov-name{font-family:var(--font-body);font-size:13px;color:var(--ink-900);flex:1;}
 .sim-root .prov-muni{font-family:var(--font-mono);font-size:13px;color:var(--ink-700);font-weight:600;}
 .sim-root .inv-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:transparent;border:none;border-bottom:1px solid rgba(26,20,16,0.1);border-top:1px solid rgba(26,20,16,0.1);margin-bottom:20px;}
@@ -2110,7 +2046,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* 16b. Species detail card: stack en móvil */
   .sim-root .cat-modal-bg{padding:0!important;align-items:flex-end!important;}
-  .sim-root .cat-modal-box{max-height:92vh!important;border-radius:12px 12px 0 0!important;overflow-y:auto!important;}
+  .sim-root .cat-modal-box{max-height:92vh!important;border-radius:var(--radius-md) var(--radius-md) 0 0!important;overflow-y:auto!important;}
   .sim-root .spp-info-2col{grid-template-columns:1fr!important;overflow-y:visible!important;}
   .sim-root .spp-info-left{min-height:unset!important;border-right:none!important;border-bottom:1px solid rgba(26,20,16,0.1)!important;}
   .sim-root .spp-info-top{padding:20px 18px 16px!important;}
@@ -2286,7 +2222,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .pantry-chip-kg{font-family:var(--font-mono);font-size:9px;color:color-mix(in oklab, var(--accent-olive) 75%, black);opacity:0.9;font-weight:400;margin-left:1px;}
 /* ── v6.0: STOCK DOTS ─────────────────────────────────────── */
 .sim-root .ing-stock-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0;}
-.sim-root .ing-stock-kg{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:8px;background:var(--surface-accent-soft);color:var(--surface-accent-soft-text);margin-left:3px;}
+.sim-root .ing-stock-kg{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:var(--radius-sm);background:var(--surface-accent-soft);color:var(--surface-accent-soft-text);margin-left:3px;}
 @media(max-width:600px){
   .sim-root .page-title-bar{padding:16px 16px 0;}
   .sim-root .page-title-h{font-size:28px;}
@@ -2322,7 +2258,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* Wrapper div around each IngredientItem — becomes the card shell */
 .sim-root .ing-list > div{
-  border-radius:4px!important;
+  border-radius:var(--radius-md)!important;
   border:1px solid rgba(26,20,16,0.11)!important;
   box-shadow:var(--shadow-card-rest)!important;
   /* NO overflow:hidden here — absolute-positioned buttons live in this wrapper */
@@ -2343,7 +2279,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items:stretch!important;
   gap:0!important;
   overflow:hidden!important;
-  border-radius:4px!important;
+  border-radius:var(--radius-md)!important;
 }
 
 /* Left vertical category strip — like .p-family-strip */
@@ -2784,7 +2720,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .sguide-section{padding:10px 14px;}
 .sim-root .sguide-section+.sguide-section{border-top:1px solid rgba(26,20,16,0.07);}
-.sim-root .sguide-section:last-child{background:color-mix(in oklab,var(--paper-100) 70%,var(--coral-500) 6%);padding:14px 16px;margin:12px -14px -10px -14px;border-radius:0 0 6px 6px;border-top:2.5px solid var(--coral-500);box-shadow:inset 0 1px 0 rgba(197,86,45,0.1);}
+.sim-root .sguide-section:last-child{background:color-mix(in oklab,var(--paper-100) 70%,var(--coral-500) 6%);padding:14px 16px;margin:12px -14px -10px -14px;border-radius:0 0 var(--radius-md) var(--radius-md);border-top:2.5px solid var(--coral-500);box-shadow:var(--shadow-none);}
 .sim-root .sguide-section-lbl{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral-500);margin-bottom:8px;}
 .sim-root .sguide-section:last-child .sguide-section-lbl{color:var(--coral-600);font-size:10px;letter-spacing:.2em;font-weight:900;}
 .sim-root .sguide-hechos{display:flex;flex-direction:column;gap:8px;}
@@ -2869,7 +2805,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .home-header-cockpit {
   background: var(--paper-0);
   border: 1px solid var(--border-soft);
-  border-radius: var(--r-md);
+  border-radius: var(--radius-md);
   padding: 20px 24px;
   position: relative;
   overflow: hidden;
@@ -2886,7 +2822,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .home-quick-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(30, 29, 25, 0.08);
+  box-shadow: var(--shadow-card-hover);
   border-color: var(--border-strong);
   background: var(--paper-50);
 }
@@ -2908,7 +2844,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .home-workspace-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(30, 29, 25, 0.09);
+  box-shadow: var(--shadow-none); /* border-color below is the hover cue */
   border-color: var(--border-strong);
 }
 
@@ -2920,7 +2856,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .home-lote-card:hover {
   transform: translateY(-1.5px);
-  box-shadow: 0 3px 8px rgba(30, 29, 25, 0.07);
+  box-shadow: var(--shadow-none); /* border-color below is the hover cue */
   border-color: var(--border-strong);
   background: var(--paper-50);
 }
@@ -3142,7 +3078,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-left:4px solid var(--accent-olive);
   border-radius:var(--radius-sm);
   background:var(--paper-0);
-  box-shadow:0 5px 16px rgba(18,22,17,.1);
+  box-shadow:var(--shadow-fab); /* floats over content — needs an outer keyline */
 }
 .sim-root .live-dash-bar{display:flex;align-items:center;gap:12px;padding:8px 10px;border-bottom:1px solid var(--border-soft)}
 .sim-root .live-dash-left{display:flex;align-items:center;gap:7px;min-width:160px}
@@ -3775,7 +3711,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .co-form-species input{width:100%;accent-color:var(--accent-olive)}
 .sim-root .co-form-summary{display:grid;gap:8px;padding:10px;border:1px solid color-mix(in oklab,var(--accent-olive) 45%,var(--border-soft));background:color-mix(in oklab,var(--accent-olive) 8%,var(--paper-0));color:var(--ink-800);font:700 var(--text-xs)/1.35 var(--font-mono)}
 .sim-root .co-form-summary-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.sim-root .co-form-issue{color:var(--coral-800);font-weight:800}
+.sim-root .co-form-issue{color:var(--accent-terracotta-hover);font-weight:800}
 .sim-root .co-form-species-results{display:flex;gap:6px;flex-wrap:wrap}
 .sim-root .co-form-species-results > div{padding:4px 7px;border:1px solid var(--border-soft);background:var(--paper-0);font-size:var(--text-2xs)}
 .sim-root .manual-species-summary > *{min-width:0;}
@@ -3795,7 +3731,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border:1px solid var(--ink-900);
   border-left:5px solid var(--moss-700);
   background:var(--paper-0);
-  box-shadow:0 5px 16px rgba(18,22,17,.13);
+  box-shadow:var(--shadow-none); /* 1px ink border + 5px accent edge already carry it */
 }
 .sim-root .form-production-command.is-species,
 .sim-root .form-production-command.is-balance{border-left-color:var(--coral-600)}
@@ -3822,7 +3758,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   white-space:nowrap;
 }
 .sim-root .form-production-command-btn.is-species,
-.sim-root .form-production-command-btn.is-balance{border-color:var(--coral-800);background:var(--coral-600)}
+.sim-root .form-production-command-btn.is-balance{border-color:var(--accent-terracotta-hover);background:var(--coral-600)}
 .sim-root .form-production-command-btn:hover,
 .sim-root .form-production-command-btn:focus-visible{filter:brightness(.94);outline:2px solid var(--ink-900);outline-offset:2px}
 .sim-root .mix-lock-btn,
@@ -4416,7 +4352,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border: 1px solid var(--border-medium, #4A4433);
   border-radius: var(--radius-md, 3px);
   padding: 20px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  box-shadow: var(--shadow-lg); /* modal: scrim separates it, keyline defines it */
 }
 
 .sim-root .os-diag-preview {
@@ -4524,7 +4460,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--border-soft);
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-sm);
   background: var(--paper-50);
   color: var(--ink-900);
   text-align: left;
@@ -4549,8 +4485,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .climate-occupancy i { display:block;height:100%; }
 .sim-root .climate-occupancy b { color:var(--ink-500);font:600 var(--text-2xs)/1 var(--font-mono); }
 .sim-root .climate-module-alert { display:block;margin-top:10px;color:var(--coral-700);font:600 var(--text-xs)/1.35 var(--font-body); }
-.sim-root .climate-detail-btn { min-height:36px;padding:7px 11px;border:1px solid var(--ink-900);border-radius:var(--r-xs);background:var(--ink-900);color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-body);cursor:pointer;transition:background-color var(--duration-standard),border-color var(--duration-standard),transform var(--duration-standard); }
-.sim-root .climate-detail-btn:hover { background:var(--moss-800);border-color:var(--moss-800);transform:translateY(-1px); }
+.sim-root .climate-detail-btn { min-height:36px;padding:7px 11px;border:1px solid var(--ink-900);border-radius:var(--radius-sm);background:var(--ink-900);color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-body);cursor:pointer;transition:background-color var(--duration-standard),border-color var(--duration-standard),transform var(--duration-standard); }
+.sim-root .climate-detail-btn:hover { background:var(--accent-olive-hover);border-color:var(--accent-olive-hover);transform:translateY(-1px); }
 .sim-root .climate-detail-btn:active { transform:translateY(0); }
 .sim-root .climate-empty { margin-top:16px;padding:28px;border:1px dashed var(--border-soft);color:var(--ink-500);text-align:center;font:var(--text-sm)/1.4 var(--font-body); }
 
@@ -4698,7 +4634,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .today-climate-card:hover {
   border-color: var(--moss-700, var(--color-dark-secondary));
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-none); /* border-color above is the hover cue */
 }
 
 /* ── Panel de Actuadores y Relés de Potencia ─────────────────────────────────── */
@@ -4823,13 +4759,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 6px rgba(56, 89, 51, 0.25);
+  box-shadow: var(--shadow-none);
   transition: background .15s, transform .1s, box-shadow .15s;
 }
 
 .sim-root .btn-launch-prod:hover:not(:disabled) {
   background: var(--moss-800, #2E3B2F);
-  box-shadow: 0 4px 10px rgba(56, 89, 51, 0.35);
+  box-shadow: var(--shadow-none); /* background shift + lift is the hover cue */
   transform: translateY(-1px);
 }
 
@@ -4971,7 +4907,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-4);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: .08em;
@@ -4985,7 +4921,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius: var(--radius-sm, 2px);
   padding: 24px 20px;
   color: var(--ink-0, #1A1410);
-  box-shadow: 0 4px 20px rgba(26,20,16,0.06);
+  box-shadow: var(--shadow-none);
 }
 
 .sim-root .tasting-dossier-hdr {
@@ -5075,8 +5011,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   width: 140px;
   height: 140px;
   border: 2px solid var(--accent-olive, #5B6B44);
+  /* SHADOW POLICY EXCEPTION (1 of 2): not a shadow — a 0-blur scrim that dims
+     the camera feed outside the reticle. Renders over live video, not paper. */
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   pointer-events: none;
 }
 
@@ -5087,6 +5025,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   right: 0;
   height: 2px;
   background: var(--coral-500, #E06D53);
+  /* SHADOW POLICY EXCEPTION (2 of 2): the glow IS the scanning-laser metaphor,
+     and it renders over live video, not paper. Keep. */
   box-shadow: 0 0 8px var(--coral-500, #E06D53);
   animation: qrLaserScan 2s infinite ease-in-out;
 }
@@ -5119,7 +5059,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius: var(--radius-sm, 2px);
   padding: 24px;
   color: var(--ink-0, #1A1410);
-  box-shadow: 0 8px 30px rgba(26,20,16,0.12);
+  box-shadow: var(--shadow-lg);
   max-width: 860px;
   width: 100%;
 }
@@ -5172,13 +5112,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-mono);
   font-size: 10px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   text-transform: uppercase;
 }
 .sim-root .iot-node-badge.online {
   background: color-mix(in oklab, var(--moss-600) 15%, var(--paper-0));
-  color: var(--moss-800);
+  color: var(--accent-olive-hover);
   border: 1px solid var(--moss-500);
 }
 .sim-root .iot-code-box {
@@ -5188,7 +5128,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: 11.5px;
   line-height: 1.5;
   padding: 16px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   overflow-x: auto;
   max-height: 380px;
   border: 1px solid #332B24;
