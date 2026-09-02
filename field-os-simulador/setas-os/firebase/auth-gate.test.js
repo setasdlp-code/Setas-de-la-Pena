@@ -93,6 +93,7 @@ test('auth gate has accessible labels for inputs', () => {
 
   assert.match(formHTML, /<label[^>]*for="setas-auth-email"/, 'debe tener label for email input');
   assert.match(formHTML, /<label[^>]*for="setas-auth-password"/, 'debe tener label for password input');
+  assert.doesNotMatch(formHTML, /font-weight:800/, 'el login usa el peso Bold ya precargado y evita descargar Gaya Black');
 });
 
 test('auth gate has accessible status region with aria-live', () => {
