@@ -54,8 +54,8 @@ function loadDataRuntime() {
 
 function syncAuthGatedResources(authenticated) {
   // El runtime .dc conserva una copia fuente oculta y una copia viva dentro de
-  // #dc-root. Hidratamos recursos solo en la copia viva para no iniciar dos
-  // iframes ni cargar módulos ocultos detrás del gate.
+  // #dc-root. Hidratamos recursos solo en la copia viva para no iniciar
+  // iframes ni descargar imágenes ocultas detrás del gate.
   const scope = document.querySelector("#dc-root") || document;
   scope.querySelectorAll("[data-auth-src]").forEach((node) => {
     if (authenticated) {

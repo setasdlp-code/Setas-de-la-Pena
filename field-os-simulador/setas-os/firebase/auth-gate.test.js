@@ -244,6 +244,8 @@ test('auth state gates the protected runtime and publishes a mount signal', () =
   assert.match(shell, /<html[^>]*data-setas-auth-state="pending"/, 'el shell debe empezar protegido antes de que Firebase responda');
   assert.match(shell, /class="sim-root setas-auth-gated"/, 'el simulador debe estar marcado como superficie protegida');
   assert.match(shell, /<iframe class="setas-auth-gated" data-auth-src="climate-bench\.html"/, 'el banco climático debe diferir su carga');
+  assert.match(shell, /<img data-auth-src="_standalone_imgs\/logo-sdlp\.png"/, 'el logo del rail debe esperar la sesión');
+  assert.doesNotMatch(shell, /<img src="_standalone_imgs\/logo-sdlp\.png"/, 'el logo oculto no debe descargarse en el login');
   assert.match(shell, /content-visibility:\s*hidden/, 'la superficie protegida debe omitir paint mientras no hay sesión');
 
   assert.match(app, /function SimuladorShell\(props\)/, 'la aplicación pesada debe vivir detrás del shell de auth');
