@@ -57,6 +57,30 @@ Reglas agronómicas de diagnóstico de Setas de la Peña:
 7. Devuelve SOLO el bloque JSON sin etiquetas markdown ni explicaciones externas.
 `;
 
+const FORMULATION_SCHEMA_PROMPT = `
+Eres el perito agrónomo especializado de Setas de la Peña (Tenjo, Cundinamarca, 2.600 msnm).
+Analiza la formulación actual del sustrato de cultivo y sus métricas agronómicas.
+
+Debes proponer recomendaciones de ajuste agronómico y devolver ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+{
+  "diagnostico_agronomico": "Explicación clara del estado actual y cuello de botella o riesgo detectado",
+  "meta_cn_sugerida": 28.0,
+  "ajuste_suplementacion": "Recomendación específica sobre suplementación N o minerales",
+  "ingredientes_sugeridos": ["id_ingrediente_1", "id_ingrediente_2"],
+  "restricciones_sugeridas": {
+    "maxSupp": 12,
+    "preferTreatment": "thermal"
+  },
+  "confianza": "alta | media | baja"
+}
+
+Reglas agronómicas de Setas de la Peña:
+1. No inventar cifras de masa balance: la matemática exacta la computa el motor determinístico SetasPeritoScenarios.
+2. Si el C:N es muy bajo (<22) para Orellana o Melena de León, recomendar elevar bases de carbono (ej. kikuyo, hojarasca, paja) o reducir harina de soya / torta.
+3. Si la tasa de suplementación supera los límites seguros de la especie, advertir riesgo de Trichoderma spp. y sugerir pasteurización térmica estricta o autoclave.
+4. Devuelve SOLO el bloque JSON sin etiquetas markdown adicionales ni explicaciones externas.
+`;
+
 /**
  * Normaliza y limpia una respuesta de texto para extraer el JSON válido.
  * @param {string} text 
@@ -130,6 +154,34 @@ export function buildInvoicePrompt(knownIngredients = [], extraContext = '') {
   if (extraContext) {
     prompt += `\n\nContexto adicional del operario:\n${extraContext}`;
   }
+  return prompt;
+}
+
+/**
+ * Construye el prompt contextualizado para recomendaciones de formulación.
+ * @param {object} params
+ * @returns {string}
+ */
+export function buildFormulationPrompt({ currentRecipe = [], analysis = {}, targetKey = 'orellana_gris', anomalyOrGoal = '', speciesName = '', knownIngredients = [] } = {}) {
+  let prompt = FORMULATION_SCHEMA_PROMPT;
+  const details = [];
+  if (speciesName || targetKey) details.push(`Especie de hongo: ${speciesName || targetKey}`);
+  if (analysis.cn !== undefined) details.push(`C:N actual: ${analysis.cn}`);
+  if (analysis.n !== undefined) details.push(`Nitrógeno N%: ${analysis.n}%`);
+  if (analysis.be !== undefined) details.push(`Eficiencia Biológica (EB) estimada: ${analysis.be}%`);
+  if (analysis.cost !== undefined) details.push(`Costo estimado/kg: $${analysis.cost}`);
+  if (analysis.risk !== undefined) details.push(`Nivel de riesgo de contaminación: ${analysis.risk}`);
+  if (Array.isArray(currentRecipe) && currentRecipe.length > 0) {
+    const items = currentRecipe.map(r => `${r.id}: ${r.p || r.pct}%`).join(', ');
+    details.push(`Receta actual: [${items}]`);
+  }
+  if (anomalyOrGoal) details.push(`Objetivo o problema reportado por el operario: ${anomalyOrGoal}`);
+  if (Array.isArray(knownIngredients) && knownIngredients.length > 0) {
+    const names = knownIngredients.map(g => `${g.id} (${g.name || g.id})`).join(', ');
+    details.push(`Ingredientes disponibles en catálogo/bodega: ${names}`);
+  }
+
+  prompt += `\n\nContexto actual de la formulación:\n${details.join('\n')}`;
   return prompt;
 }
 
@@ -304,6 +356,36 @@ export function initSetasAI(firebaseApp) {
       }
 
       throw new Error('El servicio de IA no está disponible para análisis visual.');
+    },
+
+    /**
+     * Sugiere ajustes agronómicos de formulación usando Gemini.
+     * @param {object} params
+     * @param {Array} [params.currentRecipe] Receta actual
+     * @param {object} [params.analysis] Métricas del sustrato (cn, n, be, cost, risk)
+     * @param {string} [params.targetKey] Especie objetivo
+     * @param {string} [params.anomalyOrGoal] Meta o problema reportado
+     * @param {string} [params.speciesName] Nombre visible de la especie
+     * @param {Array} [params.knownIngredients] Catálogo/ingredientes de bodega
+     * @returns {Promise<object>}
+     */
+    async suggestFormulationAdjustments({ currentRecipe = [], analysis = {}, targetKey = 'orellana_gris', anomalyOrGoal = '', speciesName = '', knownIngredients = [] } = {}) {
+      const prompt = buildFormulationPrompt({ currentRecipe, analysis, targetKey, anomalyOrGoal, speciesName, knownIngredients });
+
+      if (defaultModel && typeof defaultModel.generateContent === 'function') {
+        const result = await defaultModel.generateContent(prompt);
+        const text = result?.response?.text ? result.response.text() : String(result?.response || '');
+        return extractValidDiagnosisJson(text);
+      }
+
+      if (typeof window !== 'undefined' && window.claude && typeof window.claude.complete === 'function') {
+        const resp = await window.claude.complete({
+          messages: [{ role: 'user', content: prompt }],
+        });
+        return extractValidDiagnosisJson(typeof resp === 'string' ? resp : JSON.stringify(resp));
+      }
+
+      throw new Error('El servicio de IA no está disponible para sugerir ajustes de formulación.');
     },
   };
 

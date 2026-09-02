@@ -8,6 +8,7 @@ const path = require('node:path');
 const {
   extractValidDiagnosisJson,
   buildDiagnosisPrompt,
+  buildFormulationPrompt,
   initSetasAI
 } = require('./firebase/ai-logic.js');
 
@@ -74,10 +75,29 @@ test('buildDiagnosisPrompt incluye contexto de especie, etapa y reglas agronómi
   assert.ok(prompt.includes('Manchas verdosas en el tercio superior'));
 });
 
-test('initSetasAI expone diagnoseContaminationImage', () => {
+test('initSetasAI expone diagnoseContaminationImage y suggestFormulationAdjustments', () => {
   const ai = initSetasAI();
   assert.ok(ai);
   assert.equal(typeof ai.diagnoseContaminationImage, 'function');
+  assert.equal(typeof ai.suggestFormulationAdjustments, 'function');
+});
+
+test('buildFormulationPrompt incluye métricas agronómicas, receta actual y objetivo', () => {
+  const prompt = buildFormulationPrompt({
+    currentRecipe: [{ id: 'kikuyo', p: 80 }, { id: 'harina_soya', p: 20 }],
+    analysis: { cn: 18.2, n: 2.8, be: 75, cost: 1850, risk: 'alto' },
+    targetKey: 'orellana_gris',
+    speciesName: 'Orellana Gris (Pleurotus ostreatus)',
+    anomalyOrGoal: 'Elevar C:N a 28 para reducir riesgo de Trichoderma',
+    knownIngredients: [{ id: 'kikuyo', name: 'Pasto Kikuyo' }, { id: 'cascara_huevo', name: 'Cáscara de Huevo' }]
+  });
+
+  assert.ok(prompt.includes('Orellana Gris'));
+  assert.ok(prompt.includes('C:N actual: 18.2'));
+  assert.ok(prompt.includes('Nitrógeno N%: 2.8%'));
+  assert.ok(prompt.includes('kikuyo: 80%'));
+  assert.ok(prompt.includes('Elevar C:N a 28'));
+  assert.ok(prompt.includes('cascara_huevo'));
 });
 
 test('simulador-app.jsx incluye ContaminationDiagnosisModal y disparadores en TodayV2 y BatchDetailV2', () => {

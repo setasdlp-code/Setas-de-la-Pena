@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 30296b8b0d6c8b112a3e9a6586c43581236e2df65821671e20f42776501ac04d
+// source-hash: b338e328b2928cf1bc6598453260e0a7f15fff52d52f70cb0be9199791b782a6
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2873,8 +2873,12 @@ function SimuladorShell(props) {
   const [diagImageMime, setDiagImageMime] = useState("image/jpeg");
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState(null);
-  const [diagError, setDiagError] = useState("");
-  const [diagNotes, setDiagNotes] = useState("");
+  const [showDiagNotes, setShowDiagNotes] = useState("");
+  const [showAIFormModal, setShowAIFormModal] = useState(false);
+  const [aiFormGoal, setAiFormGoal] = useState("");
+  const [aiFormLoading, setAiFormLoading] = useState(false);
+  const [aiFormResult, setAiFormResult] = useState(null);
+  const [aiFormError, setAiFormError] = useState("");
   const ROOMS_CONFIG = {
     martha_01: {
       id: "martha_01",
@@ -3112,14 +3116,14 @@ function SimuladorShell(props) {
     }
   });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showAIFormModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showAIFormModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -6420,7 +6424,11 @@ Click para ver análisis completo`
     return /* @__PURE__ */ React.createElement("div", { className: "panel print-panel", id: "bl-perito", style: { background: hasPer ? sm.bg : "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: 12, transition: "background .3s,border-color .3s" } }, hasPer && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${sm.border}40`, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 62, height: 62, borderRadius: "50%", background: sm.badge, flexShrink: 0, transition: "background .3s" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 24, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.7)", letterSpacing: "var(--tracking-button)", marginTop: 1 } }, "SCORE")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, marginBottom: 2 } }, "Perito · Veredicto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 800, color: sm.txt, lineHeight: 1, transition: "color .3s" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, marginTop: 4, lineHeight: 1.4 } }, sm.accion && /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700 } }, sm.accion), (() => {
       const causa = peritoMainLimiter(opt, an);
       return causa ? /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.8, marginTop: 2 } }, /* @__PURE__ */ React.createElement("b", null, "Causa:"), " ", causa) : null;
-    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, formNextLabel), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setShowAIFormModal(true);
+      setAiFormResult(null);
+      setAiFormError("");
+    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "🤖"), " Asistente IA (Gemini)"), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, formNextLabel), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setPromptDlg({ title: "Nueva prueba experimental", label: "Nombre de la prueba", placeholder: "ej. Ostra gris — ajuste C:N lote 12", confirmLabel: "Guardar prueba", onSubmit: (nm) => {
         const trSave = calcTreatment(an, sKey, SPP);
         const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an.eb.toFixed(0), cn: an.cn.toFixed(1), score: opt.score, cost: Math.round(an.cost), treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
@@ -7799,6 +7807,109 @@ interval:
           fontWeight: 600
         },
         onClick: () => setShowDiagModal(false)
+      },
+      "Cerrar"
+    )))));
+  })(), showAIFormModal && (() => {
+    const handleRunAISuggestions = async () => {
+      setAiFormLoading(true);
+      setAiFormError("");
+      setAiFormResult(null);
+      try {
+        if (window.SetasAI && typeof window.SetasAI.suggestFormulationAdjustments === "function") {
+          const res = await window.SetasAI.suggestFormulationAdjustments({
+            currentRecipe: recipe,
+            analysis: { cn: an?.cn, n: an?.n, be: blendedEB || an?.be, cost: realCostPerKg || an?.cost, risk: an?.trichoderma ? "critico" : "normal" },
+            targetKey: sKey,
+            anomalyOrGoal: aiFormGoal,
+            speciesName: sp?.name || sKey,
+            knownIngredients: effectiveINGS
+          });
+          setAiFormResult(res);
+        } else {
+          throw new Error("Servicio de IA no activo en este navegador.");
+        }
+      } catch (err) {
+        setAiFormError(err?.message || "Error al comunicarse con la IA de Perito.");
+      } finally {
+        setAiFormLoading(false);
+      }
+    };
+    const handleApplyAISuggestions = () => {
+      setShowAIFormModal(false);
+      openBuilderSubTab("generador");
+      if (aiFormResult?.meta_cn_sugerida) {
+        setNoticeDlg({
+          title: "🤖 Recomendación IA de Perito Registrada",
+          msg: `Meta sugerida de C:N: ${aiFormResult.meta_cn_sugerida}. ${aiFormResult.ajuste_suplementacion || ""}`
+        });
+      }
+    };
+    return /* @__PURE__ */ React.createElement("div", { className: "inv-modal-bg", style: { zIndex: 99999 }, onClick: () => setShowAIFormModal(false) }, /* @__PURE__ */ React.createElement("div", { className: "os-diag-modal", "data-testid": "ai-formulation-advisor-modal", style: { maxWidth: 620 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--moss-700)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Perito Asistente Gemini · Setas OS"), /* @__PURE__ */ React.createElement("h2", { style: { margin: "2px 0 0", fontFamily: "var(--font-display)", fontSize: 18, color: "var(--ink-0)" } }, "🤖 Asistente IA de Formulaciones y Diagnóstico Agronómico")), /* @__PURE__ */ React.createElement("button", { type: "button", style: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--ink-2)" }, onClick: () => setShowAIFormModal(false), "aria-label": "Cerrar modal" }, "×")), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-1)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-hairline)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("b", null, "Estado actual:"), " ", sp?.name || sKey, " · C:N ", an?.cn?.toFixed(1) || "--", " · N ", an?.n?.toFixed(2) || "--", "% · EB ", (blendedEB || an?.be || 0).toFixed(0), "%"), /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-0)", fontWeight: 600, marginTop: 8, marginBottom: 4 } }, "¿Cuál es el objetivo o problema observacional en la granja? (opcional)"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        placeholder: "ej. Elevar C:N a 28, reducir costo por kg, o evitar Trichoderma en Orellana",
+        value: aiFormGoal,
+        onChange: (e) => setAiFormGoal(e.target.value),
+        style: { width: "100%", padding: "8px 10px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" }
+      }
+    )), !aiFormResult && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        disabled: aiFormLoading,
+        onClick: handleRunAISuggestions,
+        style: {
+          width: "100%",
+          minHeight: 42,
+          background: aiFormLoading ? "var(--ink-500)" : "var(--moss-700)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: aiFormLoading ? "not-allowed" : "pointer"
+        }
+      },
+      aiFormLoading ? "⏳ Generando dictamen con Gemini..." : "🤖 Analizar Fórmula & Proponer Ajustes"
+    ), aiFormError && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "8px 12px", background: "rgba(197,48,48,.1)", border: "1px solid #C53030", borderRadius: "var(--radius-sm)", fontSize: 12, color: "#C53030" } }, "⚠️ ", aiFormError), aiFormResult && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px", background: "rgba(56,89,51,.06)", border: "1px solid rgba(56,89,51,.2)", borderRadius: "var(--radius-sm)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", color: "var(--moss-700)", fontWeight: 700, marginBottom: 4 } }, "Dictamen Agronómico Gemini (Confianza: ", (aiFormResult.confianza || "alta").toUpperCase(), ")"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--ink-0)", lineHeight: 1.4, marginBottom: 8 } }, aiFormResult.diagnostico_agronomico), aiFormResult.meta_cn_sugerida && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--moss-700)", fontWeight: 700 } }, "🎯 Meta C:N Sugerida: ", aiFormResult.meta_cn_sugerida), aiFormResult.ajuste_suplementacion && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1)", marginTop: 4 } }, "💡 ", /* @__PURE__ */ React.createElement("b", null, "Suplementación:"), " ", aiFormResult.ajuste_suplementacion)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: handleApplyAISuggestions,
+        style: {
+          flex: 1,
+          minHeight: 42,
+          background: "var(--moss-700)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: "pointer"
+        }
+      },
+      "✦ Abrir Generador de Escenarios Perito con este Dictamen"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setShowAIFormModal(false),
+        style: {
+          minHeight: 42,
+          padding: "0 14px",
+          background: "var(--paper-1)",
+          color: "var(--ink-0)",
+          border: "1px solid var(--border-hairline)",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: "pointer"
+        }
       },
       "Cerrar"
     )))));
