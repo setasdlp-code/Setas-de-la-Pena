@@ -1,6 +1,8 @@
 // Security Rules — Setas OS (sdlp-os)
 //
 // Cómo desplegar (no lo hace el agente — requiere tu cuenta de Firebase):
+//   0) Ejecuta el comando desde `field-os-simulador/setas-os/`, donde viven
+//      el único `firebase.json` canónico y el alias de proyecto `.firebaserc`.
 //   1) npm install -g firebase-tools
 //   2) firebase login
 //   3) firebase deploy --only firestore:rules --project sdlp-os
