@@ -1,6 +1,6 @@
 ---
 title: Cámaras de Incubación y Fructificación — Estado del Conocimiento 2026
-document_id: DOC-0001
+document_id: DOC-0116
 category: research
 load_priority: on_request
 last_reviewed: 2026-08-23
