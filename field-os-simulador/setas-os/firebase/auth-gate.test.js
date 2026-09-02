@@ -279,6 +279,30 @@ test('los servicios Firestore solo se importan después de confirmar Auth', () =
   assert.match(dataRuntime, /from "\.\.\/vendor\/firebase\/firebase-firestore\.js"/);
 });
 
+test('los motores operativos UMD esperan Auth y conservan su orden de dependencias', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const scripts = [
+    '../recipe-recommender.js',
+    '../scoring.js',
+    '../bitacora-model.js',
+    '../climate-math.js',
+    '../historical-calibration.js',
+    '../recipe-optimizer.js',
+    '../perito-scenarios.js',
+  ];
+
+  scripts.forEach((script) => assert.match(src, new RegExp(`["']${script.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`)));
+  assert.match(src, /script\.async\s*=\s*false/, 'los scripts clásicos deben ejecutar secuencialmente');
+  assert.match(src, /await loadProtectedApplicationScripts\(\)/);
+  assert.ok(
+    src.indexOf('await loadProtectedApplicationScripts()') < src.indexOf('await import("../simulador-app.js")'),
+    'el bundle React debe esperar sus globals de producción'
+  );
+  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
+    .forEach((script) => assert.doesNotMatch(shell, new RegExp(`<script src="${script.replace('.', '\\.')}"></script>`), `${script} no debe descargar antes del login`));
+});
+
 test('signout button listener calls signOut(auth)', () => {
   const src = read('auth-gate.js');
   assert.match(src, /el\.signoutBtn\.addEventListener\("click",\s*\(\)\s*=>\s*signOut\(auth\)\)/, 'signout button debe llamar signOut');

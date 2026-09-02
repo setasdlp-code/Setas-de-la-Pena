@@ -46,17 +46,11 @@
 <script src="navigation-state.js"></script>
 <script src="setas-os-workflow.js"></script>
 <link rel="stylesheet" href="sim.css">
-<script src="recipe-recommender.js"></script>
-<script src="scoring.js"></script>
-<script src="bitacora-model.js"></script>
-<script src="climate-math.js"></script>
-    <script src="historical-calibration.js"></script>
-<script src="recipe-optimizer.js"></script>
-<script src="perito-scenarios.js"></script>
 <script type="module" src="firebase/auth-gate.js"></script>
-<!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida importa
-     firebase-init.js, error-monitor.js, db.js y bitacora-sync.js, para no
-     descargar Firestore/IA/telemetría durante la pantalla de acceso. -->
+<!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida inicializa
+     firebase-init.js, error-monitor.js, db.js y bitacora-sync.js, y luego
+     carga los motores de formulación; el login no descarga el runtime
+     operativo. -->
 <meta name="ext-resource-dependency" content="climate-bench.html" data-resource-id="climaBenchHtml">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-rosa.png" data-resource-id="imgOrellanaRosa">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-blanca.png" data-resource-id="imgOrellanaBlanca">

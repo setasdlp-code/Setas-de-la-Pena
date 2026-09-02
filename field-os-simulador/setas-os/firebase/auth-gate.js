@@ -25,7 +25,43 @@ export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesi
 
 const AUTH_STATE_EVENT = "setas-auth-state";
 const DATA_READY_EVENT = "setas-data-ready";
+const PROTECTED_APP_SCRIPTS = [
+  "../recipe-recommender.js",
+  "../scoring.js",
+  "../bitacora-model.js",
+  "../climate-math.js",
+  "../historical-calibration.js",
+  "../recipe-optimizer.js",
+  "../perito-scenarios.js",
+];
 let dataRuntimePromise = null;
+let protectedAppScriptsPromise = null;
+
+function loadClassicScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.dataset.setasAuthScript = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function loadProtectedApplicationScripts() {
+  if (!protectedAppScriptsPromise) {
+    protectedAppScriptsPromise = (async () => {
+      for (const src of PROTECTED_APP_SCRIPTS) {
+        await loadClassicScript(src);
+      }
+    })().catch((error) => {
+      protectedAppScriptsPromise = null;
+      throw error;
+    });
+  }
+  return protectedAppScriptsPromise;
+}
 
 function loadDataRuntime() {
   if (!dataRuntimePromise) {
@@ -39,6 +75,9 @@ function loadDataRuntime() {
         import("./db.js"),
         import("./bitacora-sync.js"),
       ]);
+      // Estos motores UMD dependen entre sí y el bundle React los resuelve
+      // como globals. Se ejecutan en orden solo tras Auth, antes del bundle.
+      await loadProtectedApplicationScripts();
       // El shell React pesa casi 900 KB sin comprimir. x-import conserva el
       // contrato de componente global y lo detecta cuando este módulo termina;
       // así la pantalla de acceso no lo descarga ni lo evalúa prematuramente.
