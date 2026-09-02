@@ -261,9 +261,16 @@ test('los servicios Firestore solo se importan después de confirmar Auth', () =
   assert.match(src, /import\("\.\/error-monitor\.js"\)/);
   assert.match(src, /import\("\.\/db\.js"\)/);
   assert.match(src, /import\("\.\/bitacora-sync\.js"\)/);
+  assert.match(src, /await import\("\.\.\/simulador-app\.js"\)/, 'el shell React debe cargarse después de los servicios de datos');
+  assert.ok(
+    src.indexOf('await import("../simulador-app.js")') > src.indexOf('import("./bitacora-sync.js")'),
+    'el shell React debe esperar al runtime de Bitácora'
+  );
   assert.match(src, /new CustomEvent\(DATA_READY_EVENT\)/);
   assert.doesNotMatch(shell, /<script type="module" src="firebase\/firebase-init\.js"><\/script>/);
   assert.doesNotMatch(shell, /<script type="module" src="firebase\/db\.js"><\/script>/);
+  assert.doesNotMatch(shell, /<x-import[^>]+\sfrom="\.\/simulador-app\.js"/, 'el login no debe tener un x-import estático del bundle React');
+  assert.match(shell, /<x-import component-from-global-scope="SimuladorApp"\s+tab=/, 'el runtime debe conservar el punto de montaje global');
   assert.match(bootstrap, /from "\.\.\/vendor\/firebase\/firebase-auth\.js"/);
   assert.doesNotMatch(bootstrap, /firebase-firestore\.js/);
   assert.match(dataRuntime, /from "\.\.\/vendor\/firebase\/firebase-firestore\.js"/);

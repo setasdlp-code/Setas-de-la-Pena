@@ -57,9 +57,10 @@ const CLS_BUDGET = 0.1; // good
  *
  * Re-measured 2026-08-09 after merging main (PR #11/#12 — Perito/Formulador
  * improvements): the larger simulador-app.js bundle (537KB→582KB) was still
- * mounted behind the login overlay. The auth-gated mounting fix above is
- * intended to remove that pre-login work; CI, not this comment, remains the
- * evidence for changing the budget.
+ * downloaded behind the login overlay. As of 2026-09-02, auth-gate imports
+ * that bundle only after a valid session and the protected data runtime are
+ * ready; the login screen therefore does not fetch or evaluate it. CI—not
+ * this comment—remains the evidence for changing the budget.
  */
 const PERF_FLOOR = 0.35;
 const SEO_FLOOR = 0.95;

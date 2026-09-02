@@ -39,6 +39,10 @@ function loadDataRuntime() {
         import("./db.js"),
         import("./bitacora-sync.js"),
       ]);
+      // El shell React pesa casi 900 KB sin comprimir. x-import conserva el
+      // contrato de componente global y lo detecta cuando este módulo termina;
+      // así la pantalla de acceso no lo descarga ni lo evalúa prematuramente.
+      await import("../simulador-app.js");
       window.dispatchEvent(new CustomEvent(DATA_READY_EVENT));
     })().catch((error) => {
       dataRuntimePromise = null;
