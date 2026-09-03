@@ -116,6 +116,11 @@ export async function guardarTelemetry(reading) {
   }, { merge: true });
 }
 
+export async function guardarTelemetryBatch(readings = []) {
+  if (!Array.isArray(readings) || readings.length === 0) return [];
+  return Promise.all(readings.map(guardarTelemetry));
+}
+
 export async function guardarCycleEvidence(evidence) {
   if (!evidence?.sourceId || !evidence?.batchId) throw new Error('CycleEvidence requiere sourceId y batchId.');
   const id = safeId(`${evidence.sourceId}__${evidence.batchId}`);
@@ -149,7 +154,7 @@ export async function actualizarIncidencia(id, campos) {
 window.SetasDB = {
   computeTot, isMassBalanced, saveReceta, listRecetas,
   crearLoteProduccion, descontarInventarioFIFO,
-  guardarRoomCycle, guardarTelemetry, guardarCycleEvidence, listCycleEvidence,
+  guardarRoomCycle, guardarTelemetry, guardarTelemetryBatch, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,
 };
 window.dispatchEvent(new CustomEvent("setas-db-ready"));
