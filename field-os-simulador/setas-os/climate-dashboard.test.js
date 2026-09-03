@@ -89,7 +89,8 @@ test('Setas OS v5.dc.html exposes one merged Cameras and IoT route', () => {
   assert.doesNotMatch(shell, /contextTab\('Cámaras',/);
   assert.match(shell, /closeCam:\(\)=>this\.goSimTab\('clima'\)/);
   assert.match(shell, /tempSeries:c\.tempSeries/);
-  assert.match(shell, /<script src="navigation-state\.js"><\/script>/);
+  assert.match(authGate, /"\.\.\/navigation-state\.js"/, 'navigation-state debe cargar tras Auth antes del runtime .dc');
+  assert.doesNotMatch(shell, /<script src="navigation-state\.js"><\/script>/, 'navigation-state no debe descargarse en el login');
   assert.match(shell, /navigation\.navigate\(window,next\)/);
   assert.match(navigation, /camaras: 'clima'/);
   assert.match(navigation, /iot: 'clima'/);

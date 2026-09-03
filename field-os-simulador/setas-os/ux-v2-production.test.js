@@ -12,8 +12,14 @@ const styles = fs.readFileSync(path.join(root, 'sim.css'), 'utf8');
 const authGate = fs.readFileSync(path.join(root, 'firebase/auth-gate.js'), 'utf8');
 const climate = fs.readFileSync(path.join(root, 'climate-bench.html'), 'utf8');
 
-test('production shell loads the canonical workflow before the React app', () => {
-  assert.match(shell, /<script src="navigation-state\.js"><\/script>[\s\S]*<script src="setas-os-workflow\.js"><\/script>[\s\S]*<x-import[^>]+component-from-global-scope="SimuladorApp"/);
+test('production shell stages the canonical workflow behind Auth before the React app', () => {
+  assert.match(authGate, /const DC_RUNTIME_SCRIPTS = \[[\s\S]*"\.\.\/navigation-state\.js",[\s\S]*"\.\.\/setas-os-workflow\.js",[\s\S]*"\.\.\/support\.js"/);
+  assert.ok(
+    authGate.indexOf('await import("../simulador-app.js")') < authGate.indexOf('await loadDcRuntime()'),
+    'DCLogic debe arrancar solo cuando el global React, datos y workflow ya están disponibles',
+  );
+  assert.doesNotMatch(shell, /<script src="navigation-state\.js"><\/script>/, 'el workflow no debe descargarse antes de autenticar');
+  assert.match(shell, /<x-import[^>]+component-from-global-scope="SimuladorApp"/, 'el punto de montaje global se conserva');
   assert.doesNotMatch(shell, /<x-import[^>]+\sfrom="\.\/simulador-app\.js"/, 'el bundle React no debe descargarse antes de autenticar');
   assert.match(authGate, /await import\("\.\.\/simulador-app\.js"\)/, 'Auth carga el shell React al terminar el runtime protegido');
 });
