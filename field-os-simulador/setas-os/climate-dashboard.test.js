@@ -9,6 +9,8 @@ const ROOT = __dirname;
 const shell = fs.readFileSync(path.join(ROOT, 'Setas OS v5.dc.html'), 'utf8');
 const jsx = fs.readFileSync(path.join(ROOT, 'simulador-app.jsx'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8');
+const navigation = fs.readFileSync(path.join(ROOT, 'navigation-state.js'), 'utf8');
+const authGate = fs.readFileSync(path.join(ROOT, 'firebase/auth-gate.js'), 'utf8');
 
 const {
   calcVPsat,
@@ -80,14 +82,18 @@ test('simulador-app.jsx integrates live telemetry dashboard and Today widget', (
 });
 
 test('Setas OS v5.dc.html exposes one merged Cameras and IoT route', () => {
-  assert.match(shell, /<script src="climate-math\.js"><\/script>/);
+  assert.match(authGate, /"(\.\.\/)?climate-math\.js"/, 'climate-math debe cargar tras Auth antes del dashboard');
+  assert.doesNotMatch(shell, /<script src="climate-math\.js"><\/script>/, 'climate-math no debe descargarse en el login');
   assert.match(shell, /contextTab\('Cámaras & IoT',/);
   assert.doesNotMatch(shell, /contextTab\('Telemetría IoT',/);
   assert.doesNotMatch(shell, /contextTab\('Cámaras',/);
   assert.match(shell, /closeCam:\(\)=>this\.goSimTab\('clima'\)/);
   assert.match(shell, /tempSeries:c\.tempSeries/);
-  assert.match(shell, /viewAlias=\{camaras:'clima',iot:'clima',telemetria:'clima'\}/);
-  assert.match(shell, /url\.searchParams\.set\('view',tab\)/);
+  assert.match(shell, /<script src="navigation-state\.js"><\/script>/);
+  assert.match(shell, /navigation\.navigate\(window,next\)/);
+  assert.match(navigation, /camaras: 'clima'/);
+  assert.match(navigation, /iot: 'clima'/);
+  assert.match(navigation, /telemetria: 'clima'/);
 });
 
 test('sim.css defines climate telemetry styles and responsive cards', () => {

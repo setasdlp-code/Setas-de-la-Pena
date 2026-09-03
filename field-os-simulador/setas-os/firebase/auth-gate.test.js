@@ -93,6 +93,7 @@ test('auth gate has accessible labels for inputs', () => {
 
   assert.match(formHTML, /<label[^>]*for="setas-auth-email"/, 'debe tener label for email input');
   assert.match(formHTML, /<label[^>]*for="setas-auth-password"/, 'debe tener label for password input');
+  assert.doesNotMatch(formHTML, /font-weight:800/, 'el login usa el peso Bold ya precargado y evita descargar Gaya Black');
 });
 
 test('auth gate has accessible status region with aria-live', () => {
@@ -216,12 +217,13 @@ test('error display is cleared before form submission', () => {
 
 test('onAuthStateChanged shows/hides gate based on user login state', () => {
   const src = read('auth-gate.js');
-  const authStart = src.indexOf('onAuthStateChanged(auth, (user) => {');
+  const authStart = src.indexOf('onAuthStateChanged(auth, async (user) => {');
   const authEnd = src.indexOf('el.form.addEventListener("submit"');
   const authHandler = src.slice(authStart, authEnd);
 
   assert.match(authHandler, /if\s*\(user\)/, 'debe verificar si user existe');
-  assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"none"/, 'debe ocultar gate cuando hay usuario');
+  assert.match(authHandler, /await loadDataRuntime\(\)/, 'debe preparar servicios de datos antes de montar la app');
+  assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"none"/, 'debe ocultar gate cuando hay usuario y datos listos');
   assert.match(authHandler, /el\.signoutBtn\.style\.display\s*=\s*"block"/, 'debe mostrar signout cuando hay usuario');
   assert.match(authHandler, /el\.signoutBtn\.title\s*=\s*user\.email/, 'debe mostrar email en title del botón');
   assert.match(authHandler, /el\.gate\.style\.display\s*=\s*"flex"/, 'debe mostrar gate cuando no hay usuario');
@@ -243,11 +245,62 @@ test('auth state gates the protected runtime and publishes a mount signal', () =
   assert.match(shell, /<html[^>]*data-setas-auth-state="pending"/, 'el shell debe empezar protegido antes de que Firebase responda');
   assert.match(shell, /class="sim-root setas-auth-gated"/, 'el simulador debe estar marcado como superficie protegida');
   assert.match(shell, /<iframe class="setas-auth-gated" data-auth-src="climate-bench\.html"/, 'el banco climático debe diferir su carga');
+  assert.match(shell, /<img data-auth-src="_standalone_imgs\/logo-sdlp\.png"/, 'el logo del rail debe esperar la sesión');
+  assert.doesNotMatch(shell, /<img src="_standalone_imgs\/logo-sdlp\.png"/, 'el logo oculto no debe descargarse en el login');
   assert.match(shell, /content-visibility:\s*hidden/, 'la superficie protegida debe omitir paint mientras no hay sesión');
 
   assert.match(app, /function SimuladorShell\(props\)/, 'la aplicación pesada debe vivir detrás del shell de auth');
   assert.match(app, /window\.addEventListener\('setas-auth-state',onAuthState\)/, 'el shell React debe escuchar la señal de auth');
   assert.match(app, /return isAuthenticated\?<SimuladorShell \{\.\.\.props\}\/>:null/, 'el simulador no debe montar antes de autenticar');
+});
+
+test('los servicios Firestore solo se importan después de confirmar Auth', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const bootstrap = read('firebase-auth-bootstrap.js');
+  const dataRuntime = read('firebase-init.js');
+
+  assert.match(src, /await import\("\.\/firebase-init\.js"\)/);
+  assert.match(src, /import\("\.\/error-monitor\.js"\)/);
+  assert.match(src, /import\("\.\/db\.js"\)/);
+  assert.match(src, /import\("\.\/bitacora-sync\.js"\)/);
+  assert.match(src, /await import\("\.\.\/simulador-app\.js"\)/, 'el shell React debe cargarse después de los servicios de datos');
+  assert.ok(
+    src.indexOf('await import("../simulador-app.js")') > src.indexOf('import("./bitacora-sync.js")'),
+    'el shell React debe esperar al runtime de Bitácora'
+  );
+  assert.match(src, /new CustomEvent\(DATA_READY_EVENT\)/);
+  assert.doesNotMatch(shell, /<script type="module" src="firebase\/firebase-init\.js"><\/script>/);
+  assert.doesNotMatch(shell, /<script type="module" src="firebase\/db\.js"><\/script>/);
+  assert.doesNotMatch(shell, /<x-import[^>]+\sfrom="\.\/simulador-app\.js"/, 'el login no debe tener un x-import estático del bundle React');
+  assert.match(shell, /<x-import component-from-global-scope="SimuladorApp"\s+tab=/, 'el runtime debe conservar el punto de montaje global');
+  assert.match(bootstrap, /from "\.\.\/vendor\/firebase\/firebase-auth\.js"/);
+  assert.doesNotMatch(bootstrap, /firebase-firestore\.js/);
+  assert.match(dataRuntime, /from "\.\.\/vendor\/firebase\/firebase-firestore\.js"/);
+});
+
+test('los motores operativos UMD esperan Auth y conservan su orden de dependencias', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const scripts = [
+    '../recipe-recommender.js',
+    '../scoring.js',
+    '../bitacora-model.js',
+    '../climate-math.js',
+    '../historical-calibration.js',
+    '../recipe-optimizer.js',
+    '../perito-scenarios.js',
+  ];
+
+  scripts.forEach((script) => assert.match(src, new RegExp(`["']${script.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`)));
+  assert.match(src, /script\.async\s*=\s*false/, 'los scripts clásicos deben ejecutar secuencialmente');
+  assert.match(src, /await loadProtectedApplicationScripts\(\)/);
+  assert.ok(
+    src.indexOf('await loadProtectedApplicationScripts()') < src.indexOf('await import("../simulador-app.js")'),
+    'el bundle React debe esperar sus globals de producción'
+  );
+  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
+    .forEach((script) => assert.doesNotMatch(shell, new RegExp(`<script src="${script.replace('.', '\\.')}"></script>`), `${script} no debe descargar antes del login`));
 });
 
 test('signout button listener calls signOut(auth)', () => {

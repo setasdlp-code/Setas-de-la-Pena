@@ -6,10 +6,19 @@
 @font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
 
 
-/* The packaged DS does not yet carry the canonical IBM Plex binaries.
-   Keep the canonical faces through one shared web-font request until those files
-   are vendored into the application package. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+/* IBM Plex — display and operational-data faces, packaged for the same
+   offline / rural-3G guarantee as Gaya. Licensed under SIL OFL 1.1; the
+   license is shipped beside the binaries at assets/fonts/IBM-Plex-OFL.txt. */
+@font-face { font-family: 'IBM Plex Sans'; src: url('../assets/fonts/IBMPlexSans-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('../assets/fonts/IBMPlexSans-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('../assets/fonts/IBMPlexSans-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('../assets/fonts/IBMPlexSans-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('../assets/fonts/IBMPlexSans-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
+@font-face { font-family: 'IBM Plex Mono'; src: url('../assets/fonts/IBMPlexMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('../assets/fonts/IBMPlexMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('../assets/fonts/IBMPlexMono-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('../assets/fonts/IBMPlexMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
 
 :root {
   --font-sans: 'Gaya', 'Helvetica Neue', Arial, sans-serif;

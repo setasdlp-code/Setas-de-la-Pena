@@ -1,6 +1,8 @@
 // Security Rules — Setas OS (sdlp-os)
 //
 // Cómo desplegar (no lo hace el agente — requiere tu cuenta de Firebase):
+//   0) Ejecuta el comando desde `field-os-simulador/setas-os/`, donde viven
+//      el único `firebase.json` canónico y el alias de proyecto `.firebaserc`.
 //   1) npm install -g firebase-tools
 //   2) firebase login
 //   3) firebase deploy --only firestore:rules --project sdlp-os
@@ -79,13 +81,17 @@ service cloud.firestore {
 
     match /telemetria_lecturas/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      // `source` es un campo controlado por el cliente, no una credencial:
+      // permitirlo como bypass hacía posible que cualquiera escribiera datos
+      // climáticos falsos. El adaptador ESP32 usa el endpoint LAN; la
+      // persistencia en Firestore ocurre desde la aplicación autenticada.
+      allow create: if signedIn();
       allow update, delete: if isAdmin();
     }
 
     match /telemetria_salas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn() || request.resource.data.source == 'esp32_hardware';
+      allow write: if signedIn();
     }
 
     match /bitacora_lotes/{id} {

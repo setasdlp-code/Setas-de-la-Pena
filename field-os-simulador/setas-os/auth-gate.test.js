@@ -7,9 +7,9 @@ const path = require('node:path');
 const ROOT = __dirname;
 const read = name => fs.readFileSync(path.join(ROOT, name), 'utf8');
 
-test('firebase/auth-gate.js importa dependencias de firebase-init y vendor auth', () => {
+test('firebase/auth-gate.js importa el bootstrap mínimo de Auth y vendor auth', () => {
   const src = read('firebase/auth-gate.js');
-  assert.match(src, /import\s+\{\s*auth\s*\}\s+from\s+["']\.\/firebase-init\.js["']/);
+  assert.match(src, /import\s+\{\s*auth\s*\}\s+from\s+["']\.\/firebase-auth-bootstrap\.js["']/);
   assert.match(src, /import\s+\{\s*onAuthStateChanged,\s*signInWithEmailAndPassword,\s*signOut\s*\}\s+from\s+["']\.\.\/vendor\/firebase\/firebase-auth\.js["']/);
 });
 

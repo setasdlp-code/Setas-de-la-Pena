@@ -12,12 +12,15 @@ El shell (`Setas OS v5.dc.html`) es dueño del estado de navegación. Tres campo
 
 El componente React (`simulador-app.jsx`) mantiene estados locales `tab`/`bitTab` porque necesita renderizarlos, pero son **espejos** del estado canónico del shell. Una interacción del usuario dentro de React nunca debe cambiar solo esos estados locales — siempre debe notificar al shell.
 
+`navigation-state.js` es el contrato único de la representación pública de la vista: normaliza aliases históricos (`camaras`, `iot`, `telemetria`, `optimizar`), conserva otros parámetros de URL y escribe solo vistas conocidas. El query `view` permite enlaces y el historial del navegador; no sustituye `module`/`simTab`/`bitSubtab` como dueño de estado. El shell y React deben leerlo con `SetasOSNavigation.readLocation(...)`, escribirlo con `SetasOSNavigation.navigate(...)` y reaccionar a `popstate`.
+
 Patrón correcto:
 
 ```js
 const applyTab = t => { setTab(t); return t; };
 const goTab = t => {
   const next = applyTab(t);
+  window.SetasOSNavigation.navigate(window, next);
   if (typeof props.onTabChange === 'function') props.onTabChange(next);
 };
 ```

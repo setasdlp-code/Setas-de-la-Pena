@@ -33,12 +33,18 @@ test('bitacora-sync.js excluye la foto del respaldo de bolsas', () => {
   assert.match(src.slice(actualizarBolsaStart, actualizarBolsaEnd), /stripFoto\(/, 'actualizarBolsa debe usar stripFoto');
 });
 
-test('Setas OS v5.dc.html carga bitacora-sync.js como módulo después de db.js', () => {
+test('auth-gate carga db y bitacora-sync solo después de inicializar el runtime de datos', () => {
   const html = read('Setas OS v5.dc.html');
-  const dbIdx = html.indexOf('<script type="module" src="firebase/db.js">');
-  const syncIdx = html.indexOf('<script type="module" src="firebase/bitacora-sync.js">');
-  assert.ok(dbIdx > -1, 'no se encontró la carga de firebase/db.js');
-  assert.ok(syncIdx > dbIdx, 'bitacora-sync.js debe cargarse después de db.js, en el mismo shell');
+  const gate = read('firebase/auth-gate.js');
+  const initIdx = gate.indexOf('await import("./firebase-init.js")');
+  const dbIdx = gate.indexOf('import("./db.js")');
+  const syncIdx = gate.indexOf('import("./bitacora-sync.js")');
+
+  assert.ok(initIdx > -1, 'auth-gate debe iniciar Firebase data runtime');
+  assert.ok(dbIdx > initIdx, 'db.js debe esperar al singleton de Firebase data runtime');
+  assert.ok(syncIdx > initIdx, 'bitacora-sync.js debe esperar al singleton de Firebase data runtime');
+  assert.equal(html.includes('<script type="module" src="firebase/db.js">'), false, 'db.js no debe descargarse antes del login');
+  assert.equal(html.includes('<script type="module" src="firebase/bitacora-sync.js">'), false, 'bitacora-sync.js no debe descargarse antes del login');
 });
 
 test('crearBitLote respalda el lote y sus bolsas nuevas en Firestore', () => {

@@ -13,7 +13,9 @@ const authGate = fs.readFileSync(path.join(root, 'firebase/auth-gate.js'), 'utf8
 const climate = fs.readFileSync(path.join(root, 'climate-bench.html'), 'utf8');
 
 test('production shell loads the canonical workflow before the React app', () => {
-  assert.match(shell, /<script src="setas-os-workflow\.js"><\/script>[\s\S]*<x-import[^>]+from="\.\/simulador-app\.js"/);
+  assert.match(shell, /<script src="navigation-state\.js"><\/script>[\s\S]*<script src="setas-os-workflow\.js"><\/script>[\s\S]*<x-import[^>]+component-from-global-scope="SimuladorApp"/);
+  assert.doesNotMatch(shell, /<x-import[^>]+\sfrom="\.\/simulador-app\.js"/, 'el bundle React no debe descargarse antes de autenticar');
+  assert.match(authGate, /await import\("\.\.\/simulador-app\.js"\)/, 'Auth carga el shell React al terminar el runtime protegido');
 });
 
 test('production Hoy is ordered by the shared workflow contract', () => {
@@ -88,9 +90,13 @@ test('auth and climate controls expose accessible status and form metadata', () 
 });
 
 test('workspace state is deep-linkable through the view query parameter', () => {
-  assert.match(source, /URLSearchParams\(window\.location\.search\)\.get\('view'\)/);
-  assert.match(source, /searchParams\.set\('view',next\)/);
+  assert.match(source, /navigation\?navigation\.normalizeView\(requested,'home'\)/);
+  assert.match(source, /window\.SetasOSNavigation\?\.normalizeView\(t,'home'\)/);
+  assert.match(source, /navigation\.navigate\(window,next\)/);
   assert.match(source, /addEventListener\('popstate',onPop\)/);
+  assert.match(shell, /applyRouteFromLocation\(\)/);
+  assert.match(shell, /window\.addEventListener\('popstate',this\._onPopState\)/);
+  assert.match(shell, /window\.removeEventListener\('popstate', this\._onPopState\)/);
 });
 
 test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
@@ -192,7 +198,3 @@ test('climate dashboard generates and exports customizable ESPHome firmware YAML
   assert.match(source, /relay_ch2_fae/);
   assert.match(styles, /\.sim-root \.esp32-code-preview/);
 });
-
-
-
-

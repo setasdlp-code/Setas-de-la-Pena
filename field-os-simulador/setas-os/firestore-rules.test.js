@@ -7,6 +7,19 @@ const path = require('node:path');
 const ROOT = __dirname;
 const read = name => fs.readFileSync(path.join(ROOT, name), 'utf8');
 
+test('la configuración Firebase canónica despliega las reglas rastreadas desde la raíz de Setas OS', () => {
+  const config = JSON.parse(read('firebase.json'));
+  const project = JSON.parse(read('.firebaserc'));
+
+  assert.equal(config.firestore.rules, 'firebase/firestore.rules');
+  assert.equal(config.firestore.indexes, 'firebase/firestore.indexes.json');
+  assert.equal(project.projects.default, 'sdlp-os');
+  assert.equal(fs.existsSync(path.join(ROOT, config.firestore.rules)), true);
+  assert.equal(fs.existsSync(path.join(ROOT, config.firestore.indexes)), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'firebase', 'firebase.json')), false);
+  assert.equal(fs.existsSync(path.join(ROOT, 'firebase', '.firebaserc')), false);
+});
+
 test('firebase/firestore.rules define masaBalanceada sin funciones recursivas', () => {
   const rules = read('firebase/firestore.rules');
   assert.match(rules, /function getPct\(ingredientes, i\)/);
@@ -30,4 +43,11 @@ test('firebase/firestore.rules limita escrituras de catálogo e incidencias a us
   const rules = read('firebase/firestore.rules');
   assert.match(rules, /match \/ingredientes\/\{id\}[\s\S]*?allow write: if isAdmin\(\);/);
   assert.match(rules, /match \/app_errors\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
+});
+
+test('firebase/firestore.rules no acepta telemetría anónima según un campo source autodeclarado', () => {
+  const rules = read('firebase/firestore.rules');
+  assert.match(rules, /match \/telemetria_lecturas\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
+  assert.match(rules, /match \/telemetria_salas\/\{id\}[\s\S]*?allow write: if signedIn\(\);/);
+  assert.doesNotMatch(rules, /source\s*==\s*['"]esp32_hardware['"]/);
 });
