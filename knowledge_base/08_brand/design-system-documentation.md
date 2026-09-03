@@ -1,3 +1,12 @@
+---
+title: Setas de la Peña — Design System Documentation (FOS)
+document_id: DOC-0119
+category: brand
+load_priority: selective
+last_reviewed: 2026-09-03
+confidence: high
+---
+
 # Setas de la Peña — Design System Documentation
 
 **Sistema vigente: Field Operating System (FOS).** Este documento reemplaza por completo la versión anterior (moss/coral, PP Object Sans, esquinas redondeadas, sombras). FOS es ahora la única fuente de verdad para color, tipografía, geometría y componentes — tanto para operación de campo (fichas, lotes, dashboards) como para la capa de cara al cliente (empaque, venta, mercado).

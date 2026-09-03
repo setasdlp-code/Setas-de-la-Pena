@@ -3,11 +3,12 @@ title: Biblioteca de Sustratos
 document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-08-09
+last_reviewed: 2026-09-03
 confidence: high
 primary_sources:
   - Stamets 2000
   - Cotter 2014
+  - Atila 2019 (paper_024)
   - Gupta & Sharma 2016
   - Cruz 2010
   - Rodríguez Valencia & Jaramillo López 2005 (Cenicafé — paper_006)
@@ -17,7 +18,9 @@ related_documents:
   - pasteurization.md
   - contamination.md
   - ../01_species/lentinula_edodes.md
+  - ../01_species/hericium_erinaceus.md
   - ../01_species/pleurotus_djamor.md
+  - ../09_research/active_research_knowledge.md
 ---
 
 # Executive Summary
@@ -96,14 +99,14 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 - **BE del proyecto:** sin meta aprobada; referencia futura para Pleurotus
 - **Riesgos:** Trichoderma si temperatura pasteurización insuficiente
 
-### Master's Mix (50/50 Serrín + Husks)
-- **Composición:** 50% serrín madera dura + 50% cascarilla de avena (oat hulls)
-- **Disponibilidad Colombia:** Media — serrín disponible; husks puede requerir importar o sustituir
-- **Alternativa local:** 50% serrín + 50% salvado de trigo (más económico; aumenta riesgo contaminación)
-- **Tratamiento:** **Esterilización obligatoria** (121°C, 2–4h)
-- **Humedad objetivo:** 60–65% (FC estricto)
-- **BE esperada (H. erinaceus, L. edodes):** 100–150%
-- **Riesgos:** Contaminación bacteriana si no se esteriliza; muy sensible a temperatura de proceso
+### Master's Mix (50/50 Serrín + Cascarilla de Soya)
+- **Composición canónica:** 50% serrín madera dura (roble) + 50% cascarilla de soya (*soybean hulls*).
+- **Disponibilidad Colombia:** Media — serrín de roble disponible; cascarilla de soya peletizada disponible a través de proveedores agropecuarios y de alimentos balanceados.
+- **Alternativa local:** 70–80% serrín + 20–30% salvado de trigo limpio + 1–2% yeso (más accesible localmente; formulación candidata para arranque).
+- **Tratamiento:** **Esterilización obligatoria a 121 °C** (All American 1941X).
+- **Humedad objetivo:** 60–65% (Field Capacity estricto).
+- **BE referencia literatura (H. erinaceus, L. edodes):** 80–120% (referencia de literatura en condiciones controladas; requiere validación de masa seca y cepa en Tenjo).
+- **Riesgos:** Alta carga nutritiva soluble; cualquier fallo en ciclo de esterilización o manipulación aséptica produce contaminación bacteriana o *Trichoderma*.
 
 ### Serrín de Madera Dura (Sin Suplementar)
 - **Composición:** Lignocelulosa >80% (alta lignina)

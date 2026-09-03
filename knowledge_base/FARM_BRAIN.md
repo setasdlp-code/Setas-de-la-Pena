@@ -3,7 +3,7 @@ title: Farm Brain — Setas de la Peña
 document_id: DOC-0049
 category: project
 load_priority: always
-last_reviewed: 2026-08-05
+last_reviewed: 2026-09-03
 confidence: high
 ---
 
@@ -18,13 +18,14 @@ confidence: high
 
 | Módulo | Cámara | Estado | Especies |
 |---|---|---|---|
-| Prototipo | Terra Fungus Martha | En adecuación / validación ambiental | L. edodes |
-| Producción | CLOUDLAB 844 | En adecuación / validación ambiental | L. edodes |
+| Prototipo | Terra Fungus Martha 63" | Operacional / validación ambiental | L. edodes / I+D |
+| Producción | CLOUDLAB 844 (4×4 ft) | Operacional / comisionamiento ambiental | L. edodes |
 | Incubación modular | Cajas 60 × 40 × 40–41 cm | Calificación autorizada por DEC-015; compra en volumen bloqueada | L. edodes |
 
 **Especie prioritaria:** *Lentinula edodes* (shiitake) — Fase 1.
-**Estado de producción:** Preproducción; 0 lotes activos. El primer lote depende de spawn viable, formulación definida y ciclo de autoclave comisionado y validado.
-**Sustrato inicial candidato:** Serrín de madera dura suplementado o formulación local equivalente; receta final pendiente de decisión y validación. Esterilización obligatoria.
+**Estado de producción:** Preproducción; 0 lotes activos. El primer lote depende de spawn viable con clase térmica identificada, formulación definida y ciclo de autoclave comisionado y validado.
+**Material biológico en stock:** ~2.0 kg P. djamor, ~2.0 kg H. erinaceus, ~2.0 kg P. ostreatus (spawn en refrigeración 2–4 °C para caracterización y pruebas auxiliares de cámara).
+**Sustrato inicial candidato:** Serrín de madera dura (roble) suplementado; receta final pendiente de validación térmica. Esterilización obligatoria.
 **Capacidad actual validada:** 0 kg/mes. No proyectar capacidad comercial hasta completar los primeros ciclos documentados.
 
 > Parámetros por especie → `01_species/lentinula_edodes.md`
@@ -34,22 +35,24 @@ confidence: high
 
 ---
 
-## Hardware Crítico
+## Hardware Crítico (Inventario Físico en Tenjo Confirmado)
 
-| Función | Equipo | Estado documental |
+| Función | Equipo | Estado documental / físico |
 |---|---|---|
-| Humidificación producción | AC Infinity T7 | Verificar inventario y banco |
-| Humidificación prototipo | VIVOSUN H05 | Solo modo manual; sensor integrado descartado |
-| Extracción / FAE | H4 IP65 ×2 | Verificar inventario y banco |
-| Sensor T/HR existente | SHT3x | Verificar inventario y banco |
-| Sensor T/HR de calificación | SHT45 con membrana/capuchón protector | Selección de módulo físico pendiente |
-| Mapa térmico | DS18B20 ×3 por prototipo | Pendiente de compra, identificación y comparación de offsets |
-| Sensor CO₂ | SCD30 | Verificar inventario y banco; definir una sola compensación |
-| Microcontrolador | ESP32-WROOM-32 | Verificar inventario y banco |
-| Hub central | RPi4 + Home Assistant | Configurado; no es control crítico local |
-| Calefacción incubación | PTC externo + ventilador + protecciones físicas | Potencia pendiente de ensayo |
+| Humidificación producción | AC Infinity CloudForge T7 (15 L) | Operacional en Tenjo |
+| Humidificación prototipo | VIVOSUN AeroStream H05 (5 L) | Operacional en Tenjo (solo modo manual; sensor integrado descartado) |
+| Extracción / FAE | AC Infinity Cloudline H4 IP65 ×2 | Operacionales en Tenjo |
+| Sensor T/HR producción | Klanata SHT45 (sonda inox IP67) + SHT3x ×2 | Klanata disponible; SHT3x operacionales en Tenjo |
+| Sensor T/HR incubación | Sensirion SHT45 Breakouts ×2 | Disponibles en Tenjo para banco de pruebas |
+| Sensor CO₂ | Sensirion SCD30 ×2 + EC Buying MH-Z19C | Disponibles en Tenjo (compensación 2600m; ABC=OFF) |
+| Termohigrómetro verificación | Inkbird IBS-TH2 Plus ×2 | Operacionales en Tenjo (referencia cruzada Bluetooth) |
+| Microcontroladores de borde | ESP32-WROOM-32 ×3 en TICONN IP67 | Operacionales en Tenjo con ESPHome |
+| Hub central | Vilros RPi4 Model B (4GB) + RPi Zero 2 W | Disponibles en Tenjo para Home Assistant OS |
+| Esterilización | All American 1941X (39 L) + Estufa Propano | En sitio en Tenjo; comisionamiento de ciclo pendiente |
+| Calefacción incubación | QuietWarmth Malla Radiante (90W) + PTC externo | Malla disponible; plenum PTC en desarrollo |
 
 > Arquitectura ESPHome/HA → `05_equipment/environmental_control.md`
+> Inventario técnico detallado → `05_equipment/hardware_inventory_august_2026.md`
 
 ---
 
