@@ -2,6 +2,7 @@
 import './room-cycle.js';
 import './telemetry-contract.js';
 import './cycle-evidence.js';
+import './batch-traceability.js';
 
 (function attachProductionLearningBridge() {
   if (globalThis.__setasProductionLearningLoaded) return;
@@ -52,14 +53,25 @@ import './cycle-evidence.js';
   const ingestTelemetry = raw => {
     const api = globalThis.SetasTelemetry;
     if (!api) throw new Error('SetasTelemetry unavailable');
-    const errors = api.validateTelemetry(raw);
-    if (errors.length) throw new Error(`Telemetría inválida: ${errors.join('; ')}`);
-    const reading = api.normalizeTelemetry(raw);
+    const items = Array.isArray(raw) ? raw : [raw];
     const keyFn = x => [x.room_id, x.device_id, x.metric, x.observed_at].join('__');
-    writeJson(KEYS.telemetry, upsertBy(readJson(KEYS.telemetry), reading, keyFn));
-    fireAndForget(globalThis.SetasDB?.guardarTelemetry, reading);
-    window.dispatchEvent(new CustomEvent('setas-telemetry-ingested', { detail: reading }));
-    return reading;
+    const processed = [];
+
+    items.forEach(item => {
+      const errors = api.validateTelemetry(item);
+      if (errors.length) throw new Error(`Telemetría inválida: ${errors.join('; ')}`);
+      processed.push(api.normalizeTelemetry(item));
+    });
+
+    let current = readJson(KEYS.telemetry);
+    processed.forEach(reading => {
+      current = upsertBy(current, reading, keyFn);
+      fireAndForget(globalThis.SetasDB?.guardarTelemetry, reading);
+      window.dispatchEvent(new CustomEvent('setas-telemetry-ingested', { detail: reading }));
+    });
+    writeJson(KEYS.telemetry, current);
+
+    return Array.isArray(raw) ? processed : processed[0];
   };
 
   const extractTraceability = lote => ({
@@ -143,6 +155,32 @@ import './cycle-evidence.js';
     },
   });
 
+  const getBatchTraceabilityReport = batchId => {
+    const traceApi = globalThis.SetasBatchTraceability;
+    if (!traceApi) throw new Error('SetasBatchTraceability unavailable');
+
+    const lote = (readJson('sdp_bit_lotes') || []).find(x => x.id === batchId) ||
+      (readJson('lotes_produccion') || []).find(x => x.id === batchId);
+    if (!lote) throw new Error(`Lote no encontrado: ${batchId}`);
+
+    const cycles = readJson(KEYS.cycles);
+    const telemetry = readJson(KEYS.telemetry);
+    const bolsas = (readJson('sdp_bit_bolsas') || []).filter(x => x.loteId === batchId);
+    const cosechas = (readJson('sdp_bit_cosechas') || []).filter(x => x.loteId === batchId);
+    const incidencias = readJson('incidencias_climaticas');
+
+    return traceApi.buildBatchTraceabilityReport({
+      lote, cycles, telemetry, bolsas, cosechas, incidencias,
+    });
+  };
+
+  const exportBatchTraceabilityCertificate = (batchId, options = {}) => {
+    const traceApi = globalThis.SetasBatchTraceability;
+    if (!traceApi) throw new Error('SetasBatchTraceability unavailable');
+    const report = getBatchTraceabilityReport(batchId);
+    return traceApi.exportBatchCertificate(report, options);
+  };
+
   globalThis.SetasProductionLearning = {
     KEYS,
     upsertRoomCycle,
@@ -152,6 +190,8 @@ import './cycle-evidence.js';
     onCycleClosed,
     historicalEvidenceFor,
     contextForPerito,
+    getBatchTraceabilityReport,
+    exportBatchTraceabilityCertificate,
   };
 
   // Integración deliberadamente contextual: añade evidencia al contrato de entrada
