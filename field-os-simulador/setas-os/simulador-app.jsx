@@ -4093,8 +4093,12 @@ function sowingRecommendation(deficitKg) {
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
-  const [diagError,setDiagError]=useState('');
-  const [diagNotes,setDiagNotes]=useState('');
+  const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [showAIFormModal,setShowAIFormModal]=useState(false);
+  const [aiFormGoal,setAiFormGoal]=useState('');
+  const [aiFormLoading,setAiFormLoading]=useState(false);
+  const [aiFormResult,setAiFormResult]=useState(null);
+  const [aiFormError,setAiFormError]=useState('');
   const ROOMS_CONFIG = {
     martha_01: {
       id: 'martha_01',
@@ -4333,12 +4337,12 @@ function sowingRecommendation(deficitKg) {
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -9424,6 +9428,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
+                          <span aria-hidden="true">🤖</span> Asistente IA (Gemini)
+                        </button>
                         {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
@@ -12133,6 +12140,168 @@ interval:
                           fontWeight:600
                         }}
                         onClick={()=>setShowDiagModal(false)}
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {showAIFormModal && (() => {
+          const handleRunAISuggestions = async () => {
+            setAiFormLoading(true);
+            setAiFormError('');
+            setAiFormResult(null);
+            try {
+              if (window.SetasAI && typeof window.SetasAI.suggestFormulationAdjustments === 'function') {
+                const res = await window.SetasAI.suggestFormulationAdjustments({
+                  currentRecipe: recipe,
+                  analysis: { cn: an?.cn, n: an?.n, be: blendedEB || an?.be, cost: realCostPerKg || an?.cost, risk: an?.trichoderma ? 'critico' : 'normal' },
+                  targetKey: sKey,
+                  anomalyOrGoal: aiFormGoal,
+                  speciesName: sp?.name || sKey,
+                  knownIngredients: effectiveINGS
+                });
+                setAiFormResult(res);
+              } else {
+                throw new Error('Servicio de IA no activo en este navegador.');
+              }
+            } catch (err) {
+              setAiFormError(err?.message || 'Error al comunicarse con la IA de Perito.');
+            } finally {
+              setAiFormLoading(false);
+            }
+          };
+
+          const handleApplyAISuggestions = () => {
+            setShowAIFormModal(false);
+            openBuilderSubTab('generador');
+            if (aiFormResult?.meta_cn_sugerida) {
+              setNoticeDlg({
+                title: '🤖 Recomendación IA de Perito Registrada',
+                msg: `Meta sugerida de C:N: ${aiFormResult.meta_cn_sugerida}. ${aiFormResult.ajuste_suplementacion || ''}`
+              });
+            }
+          };
+
+          return (
+            <div className="inv-modal-bg" style={{zIndex:99999}} onClick={()=>setShowAIFormModal(false)}>
+              <div className="os-diag-modal" data-testid="ai-formulation-advisor-modal" style={{maxWidth:620}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                      Perito Asistente Gemini · Setas OS
+                    </div>
+                    <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
+                      🤖 Asistente IA de Formulaciones y Diagnóstico Agronómico
+                    </h2>
+                  </div>
+                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal">×</button>
+                </div>
+
+                <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
+                    <b>Estado actual:</b> {sp?.name || sKey} · C:N {an?.cn?.toFixed(1) || '--'} · N {an?.n?.toFixed(2) || '--'}% · EB {((blendedEB || an?.be) || 0).toFixed(0)}%
+                  </div>
+                  <label style={{display:'block',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-0)',fontWeight:600,marginTop:8,marginBottom:4}}>
+                    ¿Cuál es el objetivo o problema observacional en la granja? (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. Elevar C:N a 28, reducir costo por kg, o evitar Trichoderma en Orellana"
+                    value={aiFormGoal}
+                    onChange={e=>setAiFormGoal(e.target.value)}
+                    style={{width:'100%',padding:'8px 10px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                  />
+                </div>
+
+                {!aiFormResult && (
+                  <button
+                    type="button"
+                    disabled={aiFormLoading}
+                    onClick={handleRunAISuggestions}
+                    style={{
+                      width:'100%',
+                      minHeight:42,
+                      background:aiFormLoading?'var(--ink-500)':'var(--moss-700)',
+                      color:'#fff',
+                      border:'none',
+                      borderRadius:'var(--radius-sm)',
+                      fontFamily:'var(--font-sans)',
+                      fontSize:13,
+                      fontWeight:700,
+                      cursor:aiFormLoading?'not-allowed':'pointer'
+                    }}
+                  >
+                    {aiFormLoading ? '⏳ Generando dictamen con Gemini...' : '🤖 Analizar Fórmula & Proponer Ajustes'}
+                  </button>
+                )}
+
+                {aiFormError && (
+                  <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
+                    ⚠️ {aiFormError}
+                  </div>
+                )}
+
+                {aiFormResult && (
+                  <div style={{marginTop:12}}>
+                    <div style={{padding:'12px',background:'rgba(56,89,51,.06)',border:'1px solid rgba(56,89,51,.2)',borderRadius:'var(--radius-sm)',marginBottom:12}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',color:'var(--moss-700)',fontWeight:700,marginBottom:4}}>
+                        Dictamen Agronómico Gemini (Confianza: {(aiFormResult.confianza||'alta').toUpperCase()})
+                      </div>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--ink-0)',lineHeight:1.4,marginBottom:8}}>
+                        {aiFormResult.diagnostico_agronomico}
+                      </div>
+                      {aiFormResult.meta_cn_sugerida && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--moss-700)',fontWeight:700}}>
+                          🎯 Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
+                        </div>
+                      )}
+                      {aiFormResult.ajuste_suplementacion && (
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:4}}>
+                          💡 <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{display:'flex',gap:8}}>
+                      <button
+                        type="button"
+                        onClick={handleApplyAISuggestions}
+                        style={{
+                          flex:1,
+                          minHeight:42,
+                          background:'var(--moss-700)',
+                          color:'#fff',
+                          border:'none',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:700,
+                          cursor:'pointer'
+                        }}
+                      >
+                        ✦ Abrir Generador de Escenarios Perito con este Dictamen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={()=>setShowAIFormModal(false)}
+                        style={{
+                          minHeight:42,
+                          padding:'0 14px',
+                          background:'var(--paper-1)',
+                          color:'var(--ink-0)',
+                          border:'1px solid var(--border-hairline)',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:600,
+                          cursor:'pointer'
+                        }}
                       >
                         Cerrar
                       </button>
