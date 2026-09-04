@@ -8477,8 +8477,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {saved.length > 0 && (() => {
-                const costs = saved.map(e => {
+              {/* Resumen de la selección activa. Las métricas vienen de #218, que las
+                  movió aquí desde el panel "Finanzas & Rendimiento" de la home; al
+                  fusionar Catálogo y Recetario pasan a seguir el filtro de especie,
+                  porque el costo/kg varía demasiado entre especies para que un
+                  promedio global signifique algo (orellana ~$640 vs shiitake ~$1.730).
+                  Con "Todas" seleccionado siguen siendo las cifras de cartera de #218.
+                  El tile de ciclo se sustituyó por EB promedio: `sch` depende de
+                  `schKey`, el selector de la pestaña Cronograma, y no de estas
+                  recetas — mostraba un dato ajeno a la especie en pantalla. */}
+              {shown.length > 0 && (() => {
+                const costs = shown.map(e => {
                   const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
                   const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
                   const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
@@ -8491,33 +8500,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }).filter(c => c > 0);
                 const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
                 const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-                const avgCycleDays = sch?.totDays || 45;
-
+                const ebs = shown.map(e => parseFloat(e.eb)).filter(v => v > 0);
+                const avgEb = ebs.length > 0 ? Math.round(ebs.reduce((a,b)=>a+b, 0) / ebs.length) : null;
+                const tiles = [
+                  {lbl:'Fórmulas Guardadas', val:shown.length, unit:shown.length===1?'receta':'recetas'},
+                  {lbl:'Costo Promedio / kg', val:'$'+avgCostKg.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'Bolsa Estándar (1.5 kg)', val:'$'+avgBagCost.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'EB Promedio', val:avgEb!=null?avgEb+'%':'—', unit:avgEb==null?'sin dato':(ebs.length===shown.length?'eficiencia biológica':`sobre ${ebs.length} de ${shown.length}`)},
+                ];
                 return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
-                      </div>
+                  <div className="recetario-kpis">
+                    <div className="recetario-kpis-lbl">Promedios · {focusSpp?focusSpp.name:'Todas las recetas'}</div>
+                    <div className="recetario-kpis-grid">
+                      {tiles.map(t => (
+                        <div key={t.lbl}>
+                          <div className="recetario-kpi-lbl">{t.lbl}</div>
+                          <div className="recetario-kpi-val">{t.val} <span>{t.unit}</span></div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

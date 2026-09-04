@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 1f207e43824c204f34978bd4e9c530a802e1b1b275ae00b2d48d8385827e0cb1
+// source-hash: 3022c6ccc9e9dccbfa2565c1789cd582139f47a5f8f19406b6369f36b7bb02bd
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6114,8 +6114,8 @@ BATCH (${numBags}×${kgBag} kg):
       setSKey(focusKey);
       openBuilderSubTab("formular");
       goTab("formular");
-    } }, "Formular con ", focusSpp.name))), saved.length > 0 && (() => {
-      const costs = saved.map((e) => {
+    } }, "Formular con ", focusSpp.name))), shown.length > 0 && (() => {
+      const costs = shown.map((e) => {
         const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
         const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
         const costIngKg = e.cost > 0 ? e.cost : a2 ? Math.round(a2.cost) : 0;
@@ -6128,8 +6128,15 @@ BATCH (${numBags}×${kgBag} kg):
       }).filter((c) => c > 0);
       const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a, b) => a + b, 0) / costs.length) : an?.cost ? Math.round(an.cost) : 0;
       const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-      const avgCycleDays = sch?.totDays || 45;
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, background: "var(--paper-50)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-sm)", padding: "12px 16px", marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Fórmulas Guardadas"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, saved.length, " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "recetas"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Costo Promedio / kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", avgCostKg.toLocaleString("es-CO"), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Bolsa Estándar (1.5 kg)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "$", avgBagCost.toLocaleString("es-CO"), " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "COP"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-500)", textTransform: "uppercase" } }, "Ciclo Promedio Estimado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)" } }, "~", avgCycleDays, " ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "días"))));
+      const ebs = shown.map((e) => parseFloat(e.eb)).filter((v) => v > 0);
+      const avgEb = ebs.length > 0 ? Math.round(ebs.reduce((a, b) => a + b, 0) / ebs.length) : null;
+      const tiles = [
+        { lbl: "Fórmulas Guardadas", val: shown.length, unit: shown.length === 1 ? "receta" : "recetas" },
+        { lbl: "Costo Promedio / kg", val: "$" + avgCostKg.toLocaleString("es-CO"), unit: "COP" },
+        { lbl: "Bolsa Estándar (1.5 kg)", val: "$" + avgBagCost.toLocaleString("es-CO"), unit: "COP" },
+        { lbl: "EB Promedio", val: avgEb != null ? avgEb + "%" : "—", unit: avgEb == null ? "sin dato" : ebs.length === shown.length ? "eficiencia biológica" : `sobre ${ebs.length} de ${shown.length}` }
+      ];
+      return /* @__PURE__ */ React.createElement("div", { className: "recetario-kpis" }, /* @__PURE__ */ React.createElement("div", { className: "recetario-kpis-lbl" }, "Promedios · ", focusSpp ? focusSpp.name : "Todas las recetas"), /* @__PURE__ */ React.createElement("div", { className: "recetario-kpis-grid" }, tiles.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.lbl }, /* @__PURE__ */ React.createElement("div", { className: "recetario-kpi-lbl" }, t.lbl), /* @__PURE__ */ React.createElement("div", { className: "recetario-kpi-val" }, t.val, " ", /* @__PURE__ */ React.createElement("span", null, t.unit))))));
     })(), /* @__PURE__ */ React.createElement("div", { className: "recetario-filters", role: "group", "aria-label": "Filtrar recetas por especie" }, ["all", ...Object.keys(SPP)].map((k) => {
       const n = k === "all" ? saved.length : (recipesBySpp[k] || []).length;
       return /* @__PURE__ */ React.createElement("button", { key: k, className: `cat${dashFilter === k ? " on" : ""}`, "aria-pressed": dashFilter === k, onClick: () => {
