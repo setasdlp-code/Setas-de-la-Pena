@@ -5204,6 +5204,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
       })();
     }
+    window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
 
     // 3. Cerrar modal y proceder
     setShowProdLaunchModal(false);
@@ -5248,6 +5249,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    window.SetasPublicTraceDB?.publicarLote(lote).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -5258,6 +5260,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    const loteActual=bitLotes.find(l=>l.id===loteId);
+    if(loteActual?.codigo){
+      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+    }
   };
   const updateBitBolsa=(bolsaId,fields)=>{
     const fechaKey=['col25','col50','col100'].find(k=>k in fields);
@@ -5286,6 +5292,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    const loteCosecha=bitLotes.find(l=>l.id===e.loteId);
+    if(loteCosecha?.codigo){
+      window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
+    }
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});

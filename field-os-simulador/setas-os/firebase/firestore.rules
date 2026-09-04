@@ -116,6 +116,26 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Ficha pública de trazabilidad (QR en etiquetas térmicas, ver
+    // firebase/public-trace-sync.js) — lectura sin autenticar para
+    // cualquiera que escanee el código impreso en una bolsa/lote.
+    // Solo guarda un subconjunto saneado del lote: nunca costos, proveedores,
+    // ni la fórmula/receta completa (eso vive en lotes_produccion, protegido).
+    function camposPublicosSeguros(data) {
+      let prohibidos = ['costo', 'cost', 'costoIngKg', 'proveedor', 'recetaSnapshot', 'receta', 'operador', 'notas'];
+      return !prohibidos.hasAny(data.keys());
+    }
+
+    match /public_lotes/{codigo} {
+      allow read: if true;
+      allow write: if signedIn() && camposPublicosSeguros(request.resource.data);
+
+      match /cosechas/{cosechaId} {
+        allow read: if true;
+        allow write: if signedIn() && camposPublicosSeguros(request.resource.data);
+      }
+    }
+
     // Monitoreo de errores del cliente (ver firebase/error-monitor.js) — cada
     // operador puede reportar sus propios errores, pero no leer los de otros
     // ni modificar/borrar el historial (evita que un error mal-intencionado

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: cb5918c048fb52128b1e80fca89b63f0a9489f04669fb26a530cd8f652d5f2eb
+// source-hash: 380f26db3532ac03ed218d6e152eee24b229d8dc665cbfcaaf7ac2b2fab92bb4
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4079,6 +4079,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
       })();
     }
+    window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     setShowProdLaunchModal(false);
     if (printQr) {
       setThermalLoteId(lote.id);
@@ -4133,6 +4134,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     } else {
       console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
+    window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     return lote.id;
   };
   const updateBitLote = (loteId, fields) => {
@@ -4156,6 +4158,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
       })();
     } else {
       console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
+    }
+    const loteActual = bitLotes.find((l) => l.id === loteId);
+    if (loteActual?.codigo) {
+      window.SetasPublicTraceDB?.publicarLote({ ...loteActual, ...fields }).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     }
   };
   const updateBitBolsa = (bolsaId, fields) => {
@@ -4212,6 +4218,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
       })();
     } else {
       console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
+    }
+    const loteCosecha = bitLotes.find((l) => l.id === e.loteId);
+    if (loteCosecha?.codigo) {
+      window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo, e).catch((err) => console.warn("No se publicó la cosecha en la ficha pública:", err));
     }
   };
   const deleteBitCosecha = (id) => {

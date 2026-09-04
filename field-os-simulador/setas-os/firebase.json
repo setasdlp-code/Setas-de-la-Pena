@@ -14,6 +14,11 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/l/**", "destination": "/public/trace.html" },
+      { "source": "/c/**", "destination": "/public/trace.html" },
+      { "source": "/trace/**", "destination": "/public/trace.html" }
     ]
   }
 }
