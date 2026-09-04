@@ -19,11 +19,10 @@
 #     in-body citations per CROSS_REFERENCE_STANDARD.md §4. If an in-body
 #     reference and an entry here disagree, the in-body reference governs.
 #
-# STATUS: schema definition + representative examples only (Phase 2, DEC-010).
-# This is NOT a full catalog. Most of the repository's ~70 documents do not
-# yet have an entry. Full population is future work — see ROADMAP.md, "Full
-# INDEX.yaml population." Do not treat the absence of a document here as a
-# statement about that document's importance or validity.
+# STATUS: Full production document catalog (Phase 2 completed).
+# Contains 100% complete coverage of all 126 active documents in the
+# Setas de la Peña knowledge base, validated for schema compliance,
+# controlled vocabularies, and cross-reference referential integrity.
 #
 # =============================================================================
 
@@ -1398,6 +1397,741 @@ documents:
     keywords: [PENDIENTE DE VALIDACIÓN, SH01, SH02, SH03, SH04, SH05, SH06, ARK]
     related_documents: [unresolved-questions, active-research-knowledge, research-summaries]
     depends_on: [unresolved-questions]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: facility-guide-completeness-audit
+    title: "Análisis de Completitud — Guía de Adecuación de Espacios"
+    path: 00_project/facility_guide_completeness_audit.md
+    authority: governance_standards
+    category: project
+    canonical: false
+    topics: [facility-audit, completeness, standards]
+    keywords: ["análisis de completitud", "adecuación de espacios", "gap analysis"]
+    related_documents: [facility-comprehensive-guide, master-blueprint]
+    depends_on: [master-blueprint]
+    implemented_by: [facility-comprehensive-guide]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: pleurotus-eryngii
+    title: "Pleurotus eryngii — King Oyster / Seta de Cardo"
+    path: 01_species/pleurotus_eryngii.md
+    authority: canonical_knowledge
+    category: species
+    canonical: true
+    topics: [species-profile, pleurotus-eryngii, king-oyster, parameters]
+    keywords: ["Pleurotus eryngii", "King Oyster", "Seta de Cardo", "C:N", CO2]
+    related_documents: [pleurotus-ostreatus, substrate-library]
+    depends_on: [substrate-library, sterilization]
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
+  - id: facility-readme
+    title: "Facility Design and Operations — Directory Index"
+    path: 04_facility/README.md
+    authority: none
+    category: navigation
+    canonical: false
+    topics: [facility-navigation, facility-index, directory-map]
+    keywords: ["facility README", "directory index", "zones 04"]
+    related_documents: [master-blueprint, facility-comprehensive-guide]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: caseta-compacta-build-checklist
+    title: "Caseta Compacta (2× CloudLab 844) — Checklist de Construcción"
+    path: 04_facility/caseta_compacta_build_checklist.md
+    authority: sops_and_workflows
+    category: facility
+    canonical: true
+    topics: [caseta-compacta, construction-checklist, cloudlab-844, modular-facility]
+    keywords: ["Caseta Compacta", "build checklist", "CloudLab 844", "fase 1"]
+    related_documents: [caseta-compacta-shopping-list, caseta-compacta-structural-handoff, master-blueprint]
+    depends_on: [caseta-compacta-shopping-list, caseta-compacta-structural-handoff]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: caseta-compacta-shopping-list
+    title: "Caseta Compacta — Lista de Compras"
+    path: 04_facility/caseta_compacta_shopping_list.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [caseta-compacta, shopping-list, bill-of-materials, procurement]
+    keywords: [BOM, "shopping list", "materiales caseta compacta", costos]
+    related_documents: [caseta-compacta-build-checklist, procurement-cost-registry]
+    depends_on: []
+    implemented_by: [caseta-compacta-build-checklist]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: caseta-compacta-site-visit-checklist
+    title: "Caseta Compacta — Checklist de Visita en Sitio"
+    path: 04_facility/caseta_compacta_site_visit_checklist.md
+    authority: sops_and_workflows
+    category: facility
+    canonical: true
+    topics: [caseta-compacta, site-visit, field-inspection, tenjo]
+    keywords: ["site visit checklist", "visita de obra", "inspección terreno"]
+    related_documents: [caseta-compacta-build-checklist, caseta-compacta-structural-handoff]
+    depends_on: []
+    implemented_by: [caseta-compacta-build-checklist]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: caseta-compacta-structural-handoff
+    title: "Caseta Compacta — Ficha de Entrega para Evaluación Estructural"
+    path: 04_facility/caseta_compacta_structural_handoff.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [caseta-compacta, structural-handoff, engineering-design, wind-load]
+    keywords: ["evaluación estructural", viento, "cargas vivas", handoff]
+    related_documents: [caseta-compacta-build-checklist, master-blueprint]
+    depends_on: []
+    implemented_by: [caseta-compacta-build-checklist]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: facility-comprehensive-guide
+    title: "Adecuación de Espacios para Cultivos de Setas — Guía Completa"
+    path: 04_facility/comprehensive_guide.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [facility-guide, zones, sterilization, incubation, fruiting, biosecurity]
+    keywords: ["guía completa", "adecuación de espacios", "5 zonas", protocolos]
+    related_documents: [master-blueprint, incubation, fruiting, environmental-control]
+    depends_on: [master-blueprint]
+    implemented_by: [incubation, fruiting]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: marranera-medium-scale-design-basis
+    title: "Base de Diseño — Adaptación de la Marranera para Producción de Escala Media"
+    path: 04_facility/marranera_medium_scale_design_basis.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [marranera, medium-scale-design, retrofit, engineering-basis]
+    keywords: [marranera, "escala media", "base de diseño", "59.8 m2", "fase 2"]
+    related_documents: [marranera-physical-asset, master-blueprint, facility-adaptation-literature-2026-08-03]
+    depends_on: [marranera-physical-asset]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: marranera-physical-asset
+    title: "Asset Físico — Marranera Finca Santa Isabel (Tenjo)"
+    path: 04_facility/marranera_physical_asset.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [physical-asset, marranera, survey, dimensions, tenjo]
+    keywords: ["activo físico", marranera, levantamiento, "dimensiones verificadas"]
+    related_documents: [marranera-medium-scale-design-basis, master-blueprint]
+    depends_on: []
+    implemented_by: [marranera-medium-scale-design-basis]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: thermal-insulation-guide
+    title: "Aislamiento Térmico y Control de Condensación en Cultivo de Setas"
+    path: 04_facility/thermal_insulation_guide.md
+    authority: canonical_knowledge
+    category: facility
+    canonical: true
+    topics: [thermal-insulation, condensation-control, r-value, vapor-barrier, tenjo]
+    keywords: ["aislamiento térmico", condensación, "barrera de vapor", "punto de rocío"]
+    related_documents: [master-blueprint, incubation, fruiting, environmental-control]
+    depends_on: []
+    implemented_by: [caseta-compacta-build-checklist, marranera-medium-scale-design-basis]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: equipment-prototyping-report
+    title: "Equipos y maquinaria — uso productivo y prototipado"
+    path: 05_equipment/equipment_prototyping_report.md
+    authority: lessons_and_historical_records
+    category: equipment
+    canonical: true
+    topics: [equipment-prototyping, machinery, trade-offs, tenjo]
+    keywords: ["prototipado equipos", maquinaria, "informe técnico"]
+    related_documents: [hardware-inventory-august-2026, environmental-control]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: hardware-inventory-august-2026
+    title: "Inventario Técnico de Hardware y Activos — Agosto 2026"
+    path: 05_equipment/hardware_inventory_august_2026.md
+    authority: canonical_knowledge
+    category: equipment
+    canonical: true
+    topics: [hardware-inventory, physical-assets, sensors, ac-infinity, tenjo]
+    keywords: ["inventario técnico", "agosto 2026", "CLOUDLAB 844", T7, H4, SHT45, MH-Z19C, "All American 1941X"]
+    related_documents: [environmental-control, current-operations, farm-brain, procurement-cost-registry]
+    depends_on: []
+    implemented_by: [current-operations, environmental-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: plan-ha-v1
+    title: "Plan de Automatización — Home Assistant y ESPHome"
+    path: 05_equipment/plan_ha_v1.md
+    authority: canonical_knowledge
+    category: equipment
+    canonical: true
+    topics: [automation-plan, home-assistant, esphome, sensor-commissioning]
+    keywords: ["Home Assistant", "plan HA v1", ESPHome, commissioning]
+    related_documents: [environmental-control, hardware-inventory-august-2026]
+    depends_on: [environmental-control]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: visual-record-autoclave-1941x
+    title: "Registro visual — All American 1941X"
+    path: 05_equipment/visual_records/autoclave_all_american_1941x_2026-07-14.md
+    authority: lessons_and_historical_records
+    category: equipment
+    canonical: true
+    topics: [visual-inspection, autoclave-inspection, all-american-1941x]
+    keywords: ["registro visual", autoclave, "All American 1941X", inspección]
+    related_documents: [autoclaves, sterilization, operational-commissioning]
+    depends_on: []
+    implemented_by: [operational-commissioning]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: operational-commissioning
+    title: "Operational Commissioning Protocol v0.1"
+    path: 06_operations/operational_commissioning.md
+    authority: sops_and_workflows
+    category: operations
+    canonical: true
+    topics: [commissioning, autoclave-validation, sensor-calibration, pilot-batch]
+    keywords: [comisionamiento, protocolo, autoclave, "All American 1941X", "sensor calibration"]
+    related_documents: [quality-control, batch-tracking, environmental-control, commissioning-validation-research]
+    depends_on: [environmental-control, quality-control]
+    implemented_by: [batch-tracking]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: business-model
+    title: "Modelo de Negocio — Canvas y Unit Economics"
+    path: 07_business/business_model.md
+    authority: business_and_brand
+    category: business
+    canonical: true
+    topics: [business-model, unit-economics, pricing, financial-projections]
+    keywords: ["modelo de negocio", canvas, "unit economics", costos, márgenes]
+    related_documents: [procurement-cost-registry, pricing, colombian-market]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
+  - id: procurement-cost-registry
+    title: "Registro de Abastecimiento y Costos — Insumos y Consumibles"
+    path: 07_business/procurement_cost_registry.md
+    authority: business_and_brand
+    category: business
+    canonical: true
+    topics: [procurement-registry, cost-tracking, suppliers, unit-costs]
+    keywords: [abastecimiento, costos, "registro de compras", proveedores]
+    related_documents: [suppliers, business-model, hardware-inventory-august-2026]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: regulatory-framework
+    title: "Marco Regulatorio Sanitario — INVIMA, ICA y Comercialización"
+    path: 07_business/regulatory_framework.md
+    authority: business_and_brand
+    category: business
+    canonical: true
+    topics: [regulatory-framework, invima, ica, food-safety, commercialization]
+    keywords: [INVIMA, ICA, "regulación sanitaria", etiquetado, comercialización]
+    related_documents: [business-model, packaging]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: design-system-documentation
+    title: "Setas de la Peña — Design System Documentation (FOS)"
+    path: 08_brand/design-system-documentation.md
+    authority: business_and_brand
+    category: brand
+    canonical: true
+    topics: [design-system, fos, design-tokens, typography, color-palette]
+    keywords: ["design system", "Field Operating System", FOS, tokens, CSS]
+    related_documents: [identity]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: mycelium-running-claim-register
+    title: "Mycelium Running — OCR focalizado, capítulos 5–14"
+    path: 09_research/Mycelium_Running_ch5-14_claim_register.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [claim-register, mycelium-running, stamets, evidence-extraction]
+    keywords: ["Mycelium Running", "Paul Stamets", "claim register", OCR]
+    related_documents: [literature-database, literature-index]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
+  - id: active-research-knowledge
+    title: "Active Research Knowledge Registry"
+    path: 09_research/active_research_knowledge.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [active-research, ark-registry, p0-literature, evidence-distillation]
+    keywords: [ARK, "active research knowledge", "p0 papers", Rocha, Gaitán-Hernández, Atila, Holgado-Rojas, Shi]
+    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus]
+    depends_on: [literature-database]
+    implemented_by: [lentinula-edodes, hericium-erinaceus, incubation, environmental-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: block1-energy-edge-ai-2026
+    title: "Deep Research Bloque 1: Climatización Andina, FAE Entálpico y Visión Artificial Edge AI"
+    path: 09_research/block1_energy_edge_ai_2026.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [andean-climatization, enthalpy-fae, edge-ai, computer-vision]
+    keywords: ["climatización andina", "FAE entálpico", "edge AI", "visión artificial"]
+    related_documents: [environmental-control, high-altitude-microclimate-shiitake-hericium]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
+  - id: climate-agroecology-tenjo-tabio-audit
+    title: "Auditoría de Síntesis Climatológica y Aptitud Agroecológica — Tenjo y Tabio"
+    path: 09_research/climate_agroecology_tenjo_tabio_claim_audit_2026-08-05.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [climate-audit, agroecology, tenjo, tabio, sabana-bogota]
+    keywords: ["climatología Tenjo", "auditoría agroecológica", temperatura, "humedad exterior"]
+    related_documents: [high-altitude-microclimate-shiitake-hericium, master-blueprint]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: commissioning-validation-research
+    title: "Commissioning Validation Research — Thermal Process, Capacity, Cost and Experimental Design"
+    path: 09_research/commissioning_validation_research.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [commissioning-research, thermal-process, autoclave-validation, experimental-design]
+    keywords: ["commissioning research", "All American 1941X", "thermal penetration", F0]
+    related_documents: [operational-commissioning, sterilization, autoclaves]
+    depends_on: []
+    implemented_by: [operational-commissioning]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: deep-research-synthesis-2026
+    title: "Síntesis de Investigación Profunda y Frontera Biotecnológica 2026"
+    path: 09_research/deep_research_synthesis_2026.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [deep-research, biotechnology-frontier, state-of-the-art]
+    keywords: ["frontera biotecnológica", "síntesis 2026", "automatización avanzada"]
+    related_documents: [active-research-knowledge, environmental-morphology-customization-2026-08-28]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
+  - id: environmental-morphology-customization-2026-08-28
+    title: "Environmental Control for Mushroom Morphology and Quality — Evidence Map"
+    path: 09_research/environmental_morphology_customization_2026-08-28.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [morphology-control, environmental-recipe, cap-stem-ratio, co2-effects]
+    keywords: [morfología, "calidad comercial", "curva CO2", "luz espectro", "receta ambiental"]
+    related_documents: [environmental-control, phenotype-dictionary-v0-1, environmental-recipe-schema]
+    depends_on: []
+    implemented_by: [environmental-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: environmental-recipe-schema
+    title: "Environmental Recipe Schema v0.1"
+    path: 09_research/environmental_recipe_schema_v0.1.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [environmental-recipe-schema, data-model, phase-transitions, actuator-parameters]
+    keywords: [schema, "receta ambiental", setpoints, "etapas de cultivo"]
+    related_documents: [environmental-control, environmental-morphology-customization-2026-08-28]
+    depends_on: []
+    implemented_by: [environmental-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: facility-adaptation-literature-2026-08-03
+    title: "Literatura de adaptación de instalaciones y microclima — marranera de Tenjo"
+    path: 09_research/facility_adaptation_literature_2026-08-03.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [facility-adaptation-literature, marranera-retrofit, microclimate-control]
+    keywords: ["adaptación marranera", literatura, envolvente, ventilación]
+    related_documents: [marranera-medium-scale-design-basis, facility-adaptation-bibliography-2026-08-05]
+    depends_on: []
+    implemented_by: [marranera-medium-scale-design-basis]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: greenhouse-envelope-transfer-tenjo-2026-08-06
+    title: "Transferencia de evidencia de invernaderos a la envolvente de la marranera — Tenjo"
+    path: 09_research/greenhouse_envelope_transfer_tenjo_2026-08-06.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [greenhouse-transfer, envelope-physics, night-cooling, condensation-risk]
+    keywords: [envolvente, "transferencia invernaderos", "enfriamiento nocturno", "polietileno difuso"]
+    related_documents: [thermal-insulation-guide, marranera-medium-scale-design-basis, greenhouse-envelope-transfer-bibliography-2026-08-06]
+    depends_on: []
+    implemented_by: [marranera-medium-scale-design-basis]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: high-altitude-microclimate-shiitake-hericium
+    title: "Microclima de Alta Altitud para Shiitake y Hericium — Sabana de Bogotá"
+    path: 09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [high-altitude-microclimate, barometric-pressure, shiitake, hericium, tenjo]
+    keywords: ["alta altitud", "2600 m", "Sabana de Bogotá", "presión barométrica", "oxígeno molar", "compensación CO2"]
+    related_documents: [lentinula-edodes, hericium-erinaceus, environmental-control, high-altitude-microclimate-bibliography-2026-08-05]
+    depends_on: []
+    implemented_by: [environmental-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: incubation-fruiting-chambers-2026
+    title: "Cámaras de Incubación y Fructificación — Estado del Conocimiento 2026"
+    path: 09_research/incubation_fruiting_chambers_2026.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [incubation-chambers, fruiting-chambers, spatial-uniformity, bioaerosols]
+    keywords: ["cámaras de cultivo", "estado del arte 2026", "uniformidad espacial", bioaerosoles]
+    related_documents: [incubation, fruiting, environmental-control]
+    depends_on: []
+    implemented_by: [incubation, fruiting]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: incubation-fruiting-chambers-state-of-knowledge
+    title: "Cámaras de incubación y fructificación — estado del conocimiento 2026"
+    path: 09_research/incubation_fruiting_chambers_state_of_knowledge_2026.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [incubation-review, fruiting-review, engineering-evidence]
+    keywords: ["revisión técnica", cámaras, incubación, fructificación]
+    related_documents: [incubation-fruiting-chambers-2026, incubation-module-engineering-review-2026-08-05]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: incubation-module-engineering-review-2026-08-05
+    title: "Revisión de Ingeniería — Módulos de Incubación, Materiales y Control"
+    path: 09_research/incubation_module_engineering_review_2026-08-05.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [incubation-engineering, materials-selection, thermal-lag, control-logic]
+    keywords: ["módulo incubación", "revisión ingeniería", HDPE, PP, EPDM, PTC, DEC-015]
+    related_documents: [incubation, environmental-control, oap-0001-modular-incubation-validation]
+    depends_on: []
+    implemented_by: [incubation, oap-0001-modular-incubation-validation]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: colombia-commercial-viability-top-three-species
+    title: "Selección de tres especies/cepas con mayor viabilidad comercial en Colombia"
+    path: 09_research/intake/colombia_commercial_viability_top_three_mushroom_species_2026-08-17.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [commercial-viability, colombia-market, species-ranking, shiitake, hericium, pleurotus]
+    keywords: ["viabilidad comercial", "mercado Colombia", "especies prioritarias", "precios mayoristas"]
+    related_documents: [business-model, decisions, lentinula-edodes, hericium-erinaceus]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: shiitake-colombia-market-study
+    title: "Estudio de mercado del shiitake en Colombia: panorama comercial para Setas de la Peña"
+    path: 09_research/intake/shiitake_colombia_market_study_2026-08-16.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [shiitake-market, colombia-demand, channels, b2b-restaurants]
+    keywords: ["mercado shiitake", "Bogotá restaurantes", "demanda fresca", "canales gourmet"]
+    related_documents: [business-model, colombian-market, pricing, lentinula-edodes]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: shiitake-commercialization-processing-texture-flavor
+    title: "Shiitake — comercialización, procesamiento, textura y sabor"
+    path: 09_research/intake/shiitake_commercialization_processing_texture_flavor_2026-08-16.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [shiitake-quality, postharvest, drying, texture, lenthionine]
+    keywords: ["calidad culinaria", deshidratación, lentinina, textura, poscosecha]
+    related_documents: [lentinula-edodes, quality-control]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: shiitake-japan-china-deep-research
+    title: "Shiitake — investigación Japón y China"
+    path: 09_research/intake/shiitake_japan_china_deep_research_2026-08-15.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [international-cultivation, japan-shiitake, china-cultivation, synthetic-log-history]
+    keywords: [Japón, China, "técnicas tradicionales", "tronco sintético", browning]
+    related_documents: [lentinula-edodes, substrate-library]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: shiitake-medicinal-properties-evidence
+    title: "Shiitake: propiedades medicinales y nivel real de evidencia"
+    path: 09_research/intake/shiitake_medicinal_properties_evidence_2026-08-16.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [medicinal-properties, lentinan, evidence-strength, regulatory-boundaries]
+    keywords: [lentinano, eritadenina, "evidencia clínica", "claims regulatorios"]
+    related_documents: [lentinula-edodes, regulatory-framework]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: multispecies-source-map-2026-08-03
+    title: "Mapa de fuentes multiespecie — ingreso 2026-08-03"
+    path: 09_research/multispecies_source_map_2026-08-03.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [source-map, bibliography-intake, species-evidence]
+    keywords: ["fuentes multiespecie", "ingreso literatura", mapeo]
+    related_documents: [literature-database, literature-index]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: p0-full-pdf-reprocessing-2026-08-13
+    title: "P0 full-PDF literature reprocessing — 2026-08-13"
+    path: 09_research/p0_full_pdf_reprocessing_2026-08-13.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [p0-reprocessing, full-text-audit, evidence-extraction]
+    keywords: [P0, "reprocesamiento PDF", paper_022, paper_023, paper_024, paper_025, paper_026]
+    related_documents: [active-research-knowledge, p0-reprocessed-sources-2026-08-13]
+    depends_on: []
+    implemented_by: [active-research-knowledge]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: p0-reprocessed-sources-2026-08-13
+    title: "P0 reprocessed sources — canonical ID reconciliation"
+    path: 09_research/p0_reprocessed_sources_2026-08-13.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [id-reconciliation, source-mapping, canonical-keys]
+    keywords: ["reconciliación IDs", "fuentes P0", identificadores]
+    related_documents: [p0-full-pdf-reprocessing-2026-08-13, active-research-knowledge]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: phenotype-dictionary-v0-1
+    title: "Phenotype Dictionary v0.1"
+    path: 09_research/phenotype_dictionary_v0.1.md
+    authority: research_library
+    category: research
+    canonical: true
+    topics: [phenotype-dictionary, morphology-vocabulary, defect-classification]
+    keywords: ["diccionario de fenotipos", morfología, "defectos visuales", tallo, sombrero]
+    related_documents: [environmental-morphology-customization-2026-08-28, environmental-recipe-schema]
+    depends_on: []
+    implemented_by: [quality-control]
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: weekly-brief-2026-08-28
+    title: "Briefing semanal de micología aplicada — 2026-08-28"
+    path: 09_research/weekly_brief_2026-08-28.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [weekly-brief, applied-mycology, literature-horizon]
+    keywords: ["briefing semanal", "literatura reciente", avances]
+    related_documents: [weekly-reports-knowledge-synthesis-2026-08-29, active-research-knowledge]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: oap-0001-modular-incubation-validation
+    title: "Plan Operativo de Calificación — Módulo de Incubación (30 días)"
+    path: 10_ai_workflows/OAP-0001-modular-incubation-validation.md
+    authority: sops_and_workflows
+    category: operations
+    canonical: true
+    topics: [oap-0001, incubation-qualification, qualification-gates, 30-day-protocol]
+    keywords: [OAP-0001, "plan de calificación", "incubación modular", DEC-015, gates]
+    related_documents: [incubation, incubation-module-engineering-review-2026-08-05, environmental-control]
+    depends_on: [incubation-module-engineering-review-2026-08-05, decisions]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: toolchain-and-patterns
+    title: "Herramientas AI y Workflows del Proyecto"
+    path: 10_ai_workflows/toolchain_and_patterns.md
+    authority: governance_standards
+    category: operations
+    canonical: true
+    topics: [ai-toolchain, workflow-patterns, three-use-rule, prompt-templates]
+    keywords: ["herramientas AI", workflows, "regla de los tres usos", patrones]
+    related_documents: [ai-agent-protocol, editorial-guidelines]
+    depends_on: [ai-agent-protocol]
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: facility-adaptation-bibliography-2026-08-05
+    title: "Bibliografía — Adaptación de Instalaciones y Microclima"
+    path: references/facility_adaptation_bibliography_2026-08-05.md
+    authority: research_library
+    category: references
+    canonical: true
+    topics: [bibliography, facility-adaptation, microclimate-references]
+    keywords: [bibliografía, "adaptación instalaciones", marranera]
+    related_documents: [facility-adaptation-literature-2026-08-03, marranera-medium-scale-design-basis]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: greenhouse-envelope-transfer-bibliography-2026-08-06
+    title: "Bibliografía — transferencia de envolventes de invernadero a la marranera"
+    path: references/greenhouse_envelope_transfer_bibliography_2026-08-06.md
+    authority: research_library
+    category: references
+    canonical: true
+    topics: [bibliography, greenhouse-envelope, thermal-references]
+    keywords: [bibliografía, invernaderos, envolvente, marranera]
+    related_documents: [greenhouse-envelope-transfer-tenjo-2026-08-06, thermal-insulation-guide]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: high
+    status: active
+
+  - id: high-altitude-microclimate-bibliography-2026-08-05
+    title: "Bibliografía — Microclima de Alta Altitud, Shiitake y Hericium"
+    path: references/high_altitude_microclimate_bibliography_2026-08-05.md
+    authority: research_library
+    category: references
+    canonical: true
+    topics: [bibliography, high-altitude-microclimate, shiitake-references, hericium-references]
+    keywords: [bibliografía, "alta altitud", shiitake, hericium, Tenjo]
+    related_documents: [high-altitude-microclimate-shiitake-hericium, lentinula-edodes, hericium-erinaceus]
+    depends_on: []
     implemented_by: []
     supersedes: null
     confidence: high

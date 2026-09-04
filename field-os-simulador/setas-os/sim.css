@@ -1159,7 +1159,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Search & filters ── */
   .sim-root .search{ font-size:16px; padding:10px 12px; margin-bottom:10px; }
   .sim-root .cats{ gap:3px; margin-bottom:10px; }
-  .sim-root .cat{ font-size:8px; padding:4px 8px; min-height:44px; }
+  .sim-root .cat{ font-size:11px; padding:4px 8px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:none; }
@@ -1291,7 +1291,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Search ── */
   .sim-root .search{ font-size:16px; padding:9px 10px; margin-bottom:8px; }
   .sim-root .cats{ gap:2px; margin-bottom:8px; }
-  .sim-root .cat{ font-size:7px; padding:3px 7px; min-height:44px; }
+  .sim-root .cat{ font-size:11px; padding:3px 7px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:none; }
@@ -1417,11 +1417,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:rgba(255,255,255,.08); color:var(--paper-0); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
   max-width:180px;
 }
+/* item 5 (MOBILE_A11Y_REVIEW_2026-08-30): .bridge-cambiar no tenía min-height
+   en ningún sitio — su altura era padding 6px + caja de línea de 11.5px (~26px),
+   muy por debajo de los 44px que .cat y .workspace-tab ya imponen, y justo al
+   lado de otro control pequeño. El padding va en estilo inline en el JSX, así
+   que la altura se fija aquí. */
+.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; }
+/* El JSX fija fontSize:var(--text-xs) en estilo inline, que resuelve a 9.5px —
+   por debajo del piso legible. Sólo !important gana a un estilo inline. */
+.sim-root .bridge-cambiar{ font-size:11px!important; }
+.sim-root .bridge-select{ touch-action:manipulation; }
 .sim-root .bridge-select:hover{ background:rgba(255,255,255,.16); }
 .sim-root .bridge-select:focus{ border-color:var(--paper-0); }
 .sim-root .bridge-select option{ color:var(--ink-900); }
 @media(max-width:600px){
-  .sim-root .bridge-select{ font-size:10px; padding:5px 7px; max-width:120px; }
+  /* Era 10px/5px: por debajo del piso legible y sin altura táctil. */
+  .sim-root .bridge-select{ font-size:11px; padding:8px 7px; max-width:120px; min-height:44px; }
 }
 .sim-root .species-bridge{
   background: var(--paper-0);
@@ -1835,14 +1846,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
-.sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
+.sim-root .species-bridge .bridge-activo{font-size:11px!important;padding:3px 7px!important;letter-spacing:.12em!important;}
 
 .sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:10.35px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:4px 8px;border-radius:0;flex-shrink:0;}
 .sim-root .bridge-dot{font-size:10.35px;color:var(--text-on-dark)!important;}
 .sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:22.25px!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
 .sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--paper-2)!important;opacity:var(--opacity-strong);flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:8.35px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
+.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
 .sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:14.95px;font-weight:700;color:var(--paper-0)!important;}
 
 /* Species grid — fixed 2 columns, generous gap, larger cards */
@@ -1884,8 +1895,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
 .sim-root .p-common{font-family:var(--font-display);font-weight:400;font-size:28px;color:var(--ink-900);line-height:1.1;}
 /* ACTIVA badge */
-.sim-root .p-activa{display:none;font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:transparent;color:var(--status-active);padding:2px 8px;border:1px solid var(--status-active);border-radius:0;}
-.sim-root .spp-card.on .p-activa{display:inline-block;}
 /* Archival header */
 .sim-root .p-arch-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px 9px 14px;border-bottom:1px solid rgba(26,20,16,0.07);}
 .sim-root .p-arch-left{display:flex;align-items:baseline;gap:6px;}
@@ -1956,12 +1965,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* Bridge: stack on mobile (unified) */
   .sim-root .bridge-inner{flex-wrap:wrap!important;padding:10px 16px!important;gap:8px 14px!important;align-items:center!important;overflow-x:visible!important;}
-  .sim-root .bridge-activo{font-size:8px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.1em!important;}
   .sim-root .bridge-name{font-size:15px!important;}
   .sim-root .bridge-sci{font-size:11px!important;}
   .sim-root .bridge-stats-group{margin-left:0!important;width:100%!important;flex-wrap:wrap!important;gap:14px!important;}
-  .sim-root .bridge-stat-val{font-size:11px!important;}
-  .sim-root .bridge-stat-lbl{font-size:6.5px!important;}
+  .sim-root .bridge-stat-val{font-size:13px!important;}
+  .sim-root .bridge-stat-lbl{font-size:11px!important;}
   .sim-root .bridge-cambiar{flex-shrink:0!important;}
 }
 
@@ -1972,7 +1981,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* Bridge sticky + compact en móvil */
   .sim-root .species-bridge{position:sticky!important;bottom:0!important;top:auto!important;z-index:50!important;}
   .sim-root .bridge-inner{padding:8px 14px!important;gap:8px 10px!important;}
-  .sim-root .bridge-activo{font-size:7px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.08em!important;}
   /* Bridge stats: hide on very small screens, keep button always visible */
   .sim-root .bridge-stats-group{display:none!important;}
   .sim-root .bridge-cambiar{display:inline-flex!important;margin-left:auto!important;}
@@ -2916,6 +2925,41 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: stretch;
 }
 @media(max-width:900px){ .sim-root .home-tareas-lotes-row{ grid-template-columns:1fr!important; } }
+
+/* "Hoy" · Sección A consolidada: Acciones Rápidas y Tareas de Hoy lado a lado */
+.sim-root .home-acciones-tareas-row {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 20px;
+  align-items: stretch;
+}
+.sim-root .home-acciones-tareas-row > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media(max-width:960px){ .sim-root .home-acciones-tareas-row{ grid-template-columns:minmax(0,1fr)!important; } }
+
+/* "Hoy" · Sección C: Ambientes & Sensores - Tira compacta de cámaras */
+.sim-root .home-ambient-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media(max-width:840px){ .sim-root .home-ambient-strip{ grid-template-columns: 1fr; } }
+.sim-root .ambient-chamber-card {
+  background: var(--paper-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color .15s ease;
+}
+.sim-root .ambient-chamber-card:hover {
+  border-color: var(--paper-400);
+}
 
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
    Intentionally scoped to the two containers rendered only when
@@ -5149,4 +5193,88 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .iot-copy-btn:hover {
   background: var(--paper-100);
+}
+
+/* ==========================================================================
+   CATÁLOGO & RECETARIO (vista fusionada, 2026-09)
+   La rejilla de especies es el filtro maestro del recetario: la especie
+   seleccionada define qué recetas guardadas se listan debajo.
+   ========================================================================== */
+
+.sim-root .catalog-hdr-stats{display:flex;align-items:baseline;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--ink-500);white-space:nowrap;}
+.sim-root .catalog-hdr-stats b{font-family:var(--font-num);font-size:15px;font-weight:700;color:var(--ink-900);}
+
+/* Contador de recetas guardadas en la cabecera de cada tarjeta de especie */
+.sim-root .p-rec-badge{
+  height:20px;padding:0 8px;border-radius:10px;gap:4px;
+  display:inline-flex;align-items:baseline;justify-content:center;
+  background:var(--accent-blue-grey);color:var(--paper-0);
+  border:1px solid var(--accent-blue-grey);
+}
+.sim-root .p-rec-badge b{font-family:var(--font-num);font-weight:700;font-size:11px;line-height:20px;}
+.sim-root .p-rec-badge span{font-family:var(--font-body);font-weight:800;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;line-height:20px;}
+.sim-root .p-rec-badge.is-empty{background:transparent;color:var(--ink-400);border-color:var(--paper-300);}
+
+/* Tarjeta cuya especie filtra el recetario en este momento */
+.sim-root .spp-card.is-filtering{box-shadow:var(--shadow-ring-accent)!important;}
+
+.sim-root .recetario-sect{
+  margin-top:40px;padding-top:28px;
+  border-top:1px solid color-mix(in oklab,var(--ink-900) 14%,transparent);
+}
+.sim-root .recetario-hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.sim-root .recetario-title{
+  font-family:var(--font-display);font-size:28px;font-weight:400;line-height:1.1;
+  color:var(--ink-0);margin:0;display:flex;align-items:baseline;gap:10px;
+}
+.sim-root .recetario-count{
+  font-family:var(--font-num);font-size:13px;font-weight:700;color:var(--ink-500);
+  background:var(--paper-100);border:1px solid var(--paper-300);border-radius:10px;padding:1px 9px;
+}
+.sim-root .recetario-hdr-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.sim-root .recetario-act{
+  font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:var(--tracking-button);
+  text-transform:uppercase;padding:9px 14px;min-height:44px;cursor:pointer;
+  background:var(--paper-0);color:var(--ink-700);border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-sm);
+  transition:background-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease);
+}
+.sim-root .recetario-act:hover{background:var(--paper-100);}
+.sim-root .recetario-act.is-primary{background:var(--accent-terracotta);color:#fff;border-color:var(--accent-terracotta);}
+.sim-root .recetario-act.is-primary:hover{background:color-mix(in oklab,var(--accent-terracotta) 85%,black);}
+
+.sim-root .recetario-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.sim-root .cat-n{
+  font-family:var(--font-num);font-size:11px;font-weight:700;margin-left:7px;
+  opacity:.7;font-variant-numeric:tabular-nums;
+}
+
+/* Resumen de ficha de la especie seleccionada — la información del catálogo
+   visible en la página, sin tener que abrir el modal. */
+.sim-root .recetario-ficha{
+  display:flex;gap:18px;align-items:flex-start;margin-bottom:22px;padding:16px;
+  background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));
+  border:1px solid color-mix(in oklab,var(--moss-300) 25%,var(--paper-300));
+  border-radius:var(--radius-sm);
+}
+.sim-root .recetario-ficha-img{flex-shrink:0;width:120px;height:90px;overflow:hidden;border-radius:var(--radius-sm);background:var(--paper-100);}
+.sim-root .recetario-ficha-img img{width:100%;height:100%;object-fit:cover;object-position:center 65%;display:block;}
+.sim-root .recetario-ficha-body{flex:1;min-width:0;}
+.sim-root .recetario-ficha-sci{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--moss-700);margin-bottom:4px;}
+.sim-root .recetario-ficha-note{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--ink-800);margin:0 0 12px;text-wrap:pretty;}
+.sim-root .recetario-ficha-params{display:flex;flex-wrap:wrap;gap:6px;}
+.sim-root .recetario-ficha-param{
+  display:flex;align-items:baseline;gap:6px;padding:4px 10px;
+  background:var(--paper-0);border:1px solid var(--paper-300);border-radius:var(--radius-sm);
+}
+.sim-root .recetario-ficha-param span{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);}
+.sim-root .recetario-ficha-param b{font-family:var(--font-num);font-size:13px;font-weight:700;color:var(--ink-900);font-variant-numeric:tabular-nums;}
+
+@media(max-width:768px){
+  .sim-root .catalog-hdr-stats{width:100%;margin-top:8px;}
+  .sim-root .recetario-sect{margin-top:28px;padding-top:20px;}
+  .sim-root .recetario-title{font-size:22px;}
+  .sim-root .recetario-hdr-actions{width:100%;}
+  .sim-root .recetario-act{flex:1;justify-content:center;text-align:center;}
+  .sim-root .recetario-ficha{flex-direction:column;gap:12px;}
+  .sim-root .recetario-ficha-img{width:100%;height:140px;}
 }

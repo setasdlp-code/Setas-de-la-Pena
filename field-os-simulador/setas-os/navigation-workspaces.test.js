@@ -18,16 +18,16 @@ test('the primary navigation exposes exactly four operational workspaces', () =>
 });
 
 test('workspace routes preserve the agreed information architecture', () => {
-  assert.match(shell, /FORMULAR_SIM_TABS = \['catalogo','formular','dashboard'\]/);
+  assert.match(shell, /FORMULAR_SIM_TABS = \['catalogo','formular'\]/);
   assert.match(shell, /PRODUCCION_SIM_TABS = \['produccion','inventario','schedule'\]/);
-  assert.match(shell, /contextTab\('Recetario'.*goSimTab\('dashboard'\)/);
+  assert.match(shell, /contextTab\('Catálogo & Recetario'.*goSimTab\('catalogo'\)/);
   assert.match(shell, /contextTab\('Preparar mezcla'.*goSimTab\('produccion'\)/);
   assert.match(shell, /contextTab\('Bodega'.*goSimTab\('inventario'\)/);
   assert.match(shell, /contextTab\('Métricas'.*reviewTab:'rendimiento'/);
   assert.match(shell, /contextTab\('Registrar evento',s\.module==='sesion'/);
   assert.match(shell, /contextTab\('Registrar evento',[\s\S]*?screen:'home',capture:true/);
   assert.match(shell, /onGoSesion:\(\)=>this\.setState\(\{module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false\}\)/);
-  assert.match(jsx, /dashboard:'Recetario'/);
+  assert.match(jsx, /catalogo:'Catálogo & Recetario'/);
 });
 
 test('the shell and React simulator synchronize navigation bidirectionally', () => {

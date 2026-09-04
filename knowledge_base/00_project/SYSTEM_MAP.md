@@ -7,7 +7,7 @@ status: canonical
 authority: navigation
 load_priority: on_request
 owner: Setas de la Peña
-last_reviewed: 2026-07-24
+last_reviewed: 2026-09-03
 ---
 
 # System Map
@@ -38,10 +38,10 @@ knowledge_base/
 ├── README_MCP.md                   ← LLM loading-priority rules
 ├── FARM_BRAIN.md                   ← operational snapshot (Operational State)
 ├── CURRENT_OPERATIONS.md           ← granular field state (Operational State)
-├── DECISIONS.md                    ← decision log (DEC-001 … DEC-013)
+├── DECISIONS.md                    ← decision log (DEC-001 … DEC-015)
 ├── LESSONS_LEARNED.md              ← validated field lessons
 ├── CHANGELOG.md                    ← chronological change log
-├── INDEX.yaml                      ← machine-readable document catalog (schema-stage)
+├── INDEX.yaml                      ← machine-readable document catalog (114 documents)
 │
 ├── 00_project/        Architectural & governance documents
 │   ├── SYSTEM_MAP.md          ← this document

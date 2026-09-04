@@ -7,7 +7,7 @@ status: canonical
 authority: navigation
 load_priority: always
 owner: Setas de la Peña
-last_reviewed: 2026-07-08
+last_reviewed: 2026-09-03
 ---
 
 # Repository Map
@@ -32,17 +32,18 @@ SETAS_DE_LA_PENA_CANON.md          ← Project philosophy and immutable principl
                            ├─ 01_species/         Species knowledge
                            ├─ 02_substrates/      Substrate formulations
                            ├─ 03_spawn/           Spawn production and laboratory roadmap
-                           ├─ 04_facility/        Physical infrastructure and laboratory
-                           ├─ 05_equipment/       Equipment, sensors, automation
-                           ├─ 06_operations/      Production SOPs and review templates
-                           ├─ 07_business/        Commercial and financial records
-                           ├─ 08_brand/           Brand identity and communication
-                           ├─ 09_research/        Scientific evidence and literature
-                           └─ 10_ai_workflows/    Reusable human–AI workflow library
+                           ├─ 04_facility/        Physical infrastructure (Caseta Compacta, Marranera, Lab)
+                           ├─ 05_equipment/       Equipment, sensors, automation, hardware inventory
+                           ├─ 06_operations/      Production SOPs, commissioning, batch tracking
+                           ├─ 07_business/        Commercial records, procurement cost registry
+                           ├─ 08_brand/           Brand identity, packaging, design system
+                           ├─ 09_research/        Scientific evidence, literature, active research (ARK)
+                           └─ 10_ai_workflows/    Reusable human–AI workflow library (OAP qualification)
 
      Living documents (CURRENT_OPERATIONS.md, DECISIONS.md, LESSONS_LEARNED.md,
-     FARM_BRAIN.md, CHANGELOG.md) and MCP retrieval rules (README_MCP.md) live at
-     the knowledge_base/ root, alongside metadata/ and references/.
+     FARM_BRAIN.md, CHANGELOG.md), machine-readable catalog (INDEX.yaml), and MCP
+     retrieval rules (README_MCP.md) live at the knowledge_base/ root, alongside
+     metadata/ and references/.
 ```
 
 ---

@@ -16,7 +16,6 @@
     'inventario',
     'produccion',
     'schedule',
-    'dashboard',
     'clima',
     'bitacora',
     'labExtraction',
@@ -29,6 +28,9 @@
     iot: 'clima',
     telemetria: 'clima',
     optimizar: 'formular',
+    // El Recetario se fusionó con el Catálogo de especies en una sola vista
+    // (2026-09). Se conserva como alias para no romper enlaces ni marcadores.
+    dashboard: 'catalogo',
   });
 
   function normalizeView(value, fallback = 'home') {

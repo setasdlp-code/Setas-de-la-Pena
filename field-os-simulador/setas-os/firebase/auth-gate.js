@@ -25,17 +25,37 @@ export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesi
 
 const AUTH_STATE_EVENT = "setas-auth-state";
 const DATA_READY_EVENT = "setas-data-ready";
+const AUTH_RUNTIME_SCRIPTS = [
+  "../vendor/react.production.min.js",
+  "../vendor/react-dom.production.min.js",
+];
+const DC_RUNTIME_SCRIPTS = [
+  "../_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js",
+  "../qr-mini.js",
+  "../bridge-protocol.js",
+  "../navigation-state.js",
+  "../setas-os-workflow.js",
+  "../climate-sparkline.js",
+  "../support.js",
+];
 const PROTECTED_APP_SCRIPTS = [
   "../recipe-recommender.js",
   "../scoring.js",
   "../bitacora-model.js",
   "../climate-math.js",
+  "../flush-forecast-engine.js",
+  "../sterilization-kinetics.js",
+  "../co-cultivation-matrix.js",
+  "../post-harvest-engine.js",
   "../historical-calibration.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;
+let authRuntimePromise = null;
+let dcRuntimePromise = null;
+let authDocumentResourcesObserver = null;
 
 function loadClassicScript(src) {
   return new Promise((resolve, reject) => {
@@ -51,6 +71,32 @@ function loadClassicScript(src) {
     script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
     document.head.appendChild(script);
   });
+}
+
+function loadScriptList(scripts) {
+  return (async () => {
+    for (const src of scripts) await loadClassicScript(src);
+  })();
+}
+
+function loadAuthRuntime() {
+  if (!authRuntimePromise) {
+    authRuntimePromise = loadScriptList(AUTH_RUNTIME_SCRIPTS).catch((error) => {
+      authRuntimePromise = null;
+      throw error;
+    });
+  }
+  return authRuntimePromise;
+}
+
+function loadDcRuntime() {
+  if (!dcRuntimePromise) {
+    dcRuntimePromise = loadScriptList(DC_RUNTIME_SCRIPTS).catch((error) => {
+      dcRuntimePromise = null;
+      throw error;
+    });
+  }
+  return dcRuntimePromise;
 }
 
 function loadProtectedApplicationScripts() {
@@ -73,6 +119,12 @@ function loadDataRuntime() {
       // Firestore se importa primero para que los módulos que lo consumen
       // reciban el mismo singleton de db y no intenten montar el shell con
       // window.SetasDB / window.SetasBitacoraDB todavía ausentes.
+      // El gate inicial tiene estilos propios; las hojas del workspace se
+      // restauran solo para una sesión válida y antes de montar DCLogic.
+      setAuthDocumentResources(true);
+      // simulador-app.js usa React al evaluarse, pero el runtime .dc no se
+      // monta hasta que datos, motores y el global SimuladorApp estén listos.
+      await loadAuthRuntime();
       await import("./firebase-init.js");
       await Promise.all([
         import("./error-monitor.js"),
@@ -87,6 +139,7 @@ function loadDataRuntime() {
       // contrato de componente global y lo detecta cuando este módulo termina;
       // así la pantalla de acceso no lo descarga ni lo evalúa prematuramente.
       await import("../simulador-app.js");
+      await loadDcRuntime();
       window.dispatchEvent(new CustomEvent(DATA_READY_EVENT));
     })().catch((error) => {
       dataRuntimePromise = null;
@@ -94,6 +147,32 @@ function loadDataRuntime() {
     });
   }
   return dataRuntimePromise;
+}
+
+function syncAuthDocumentResources(authenticated) {
+  document.querySelectorAll("link[data-auth-rel][data-auth-href]").forEach((node) => {
+    if (authenticated) {
+      if (!node.getAttribute("href")) node.setAttribute("href", node.dataset.authHref);
+      if (!node.getAttribute("rel")) node.setAttribute("rel", node.dataset.authRel);
+    } else {
+      node.removeAttribute("rel");
+      node.removeAttribute("href");
+    }
+  });
+}
+
+function setAuthDocumentResources(authenticated) {
+  if (authenticated) {
+    syncAuthDocumentResources(true);
+    if (!authDocumentResourcesObserver) {
+      authDocumentResourcesObserver = new MutationObserver(() => syncAuthDocumentResources(true));
+      authDocumentResourcesObserver.observe(document.head, { childList: true, subtree: true });
+    }
+  } else {
+    authDocumentResourcesObserver?.disconnect();
+    authDocumentResourcesObserver = null;
+    syncAuthDocumentResources(false);
+  }
 }
 
 function syncAuthGatedResources(authenticated) {
@@ -111,6 +190,7 @@ function syncAuthGatedResources(authenticated) {
 }
 
 function publishAuthState(authenticated) {
+  setAuthDocumentResources(authenticated);
   window.__setasAuthState = authenticated;
   document.documentElement.dataset.setasAuthState = authenticated ? "authenticated" : "unauthenticated";
   syncAuthGatedResources(authenticated);
@@ -118,7 +198,10 @@ function publishAuthState(authenticated) {
 }
 
 export function buildGate() {
-  const gate = document.createElement("div");
+  // El HTML inicial entrega el mismo formulario de acceso sin esperar a Firebase.
+  // Al llegar el módulo solo se hidrata: no hay reemplazo visual ni IDs duplicados.
+  const gate = document.getElementById("setas-auth-gate") || document.createElement("div");
+  const prebuilt = gate.dataset.setasAuthPrebuilt === "true";
   gate.id = "setas-auth-gate";
   Object.assign(gate.style, {
     position: "fixed", inset: "0", zIndex: "var(--z-overlay, 1000)", display: "flex",
@@ -127,7 +210,7 @@ export function buildGate() {
     contain: "strict",
   });
 
-  gate.innerHTML = `
+  if (!prebuilt) gate.innerHTML = `
     <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
         <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
@@ -154,7 +237,7 @@ export function buildGate() {
     color: "var(--ink-2,#6b6759)", cursor: "pointer", display: "none",
   });
 
-  document.body.appendChild(gate);
+  if (!gate.isConnected) document.body.appendChild(gate);
   document.body.appendChild(signoutBtn);
 
   return {
@@ -183,6 +266,7 @@ function init() {
       // El gate se mantiene visible como estado de preparación, no como un
       // overlay que permite interactuar con datos parcialmente inicializados.
       el.gate.style.display = "flex";
+      el.gate.setAttribute("aria-busy", "true");
       el.signoutBtn.style.display = "none";
       el.err.textContent = "";
       el.status.style.display = "block";
@@ -196,6 +280,7 @@ function init() {
         await loadDataRuntime();
         if (revision !== authRevision || !auth.currentUser) return;
         publishAuthState(true);
+        el.gate.removeAttribute("aria-busy");
         el.gate.style.display = "none";
         el.signoutBtn.style.display = "block";
         el.signoutBtn.title = user.email || "";
@@ -208,6 +293,7 @@ function init() {
       }
     } else {
       publishAuthState(false);
+      el.gate.removeAttribute("aria-busy");
       el.gate.style.display = "flex";
       el.signoutBtn.style.display = "none";
       el.status.style.display = "none";

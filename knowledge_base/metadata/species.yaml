@@ -29,16 +29,18 @@ species:
     priority: 2
     phase: future_candidate
     document: 01_species/hericium_erinaceus.md
-    fruiting_temp_c: [18, 24]
-    incubation_temp_c: [21, 24]
-    humidity_percent: [90, 97]
-    fruiting_co2_ppm_max: 1000
-    fae_per_hour: [8, 12]
+    literature_fruiting_temp_c: [16, 24]
+    literature_incubation_temp_c: [21, 25]
+    literature_humidity_percent: [85, 95]
+    fruiting_temp_c: null
+    humidity_percent: null
+    fruiting_co2_ppm_max: null
+    fae_per_hour: null
     substrate_primary: masters_mix
     substrate_incompatible: []
-    be_range_percent: [80, 120]
-    cycle_days: [60, 90]
-    status_notes: "Alta complejidad. Requiere autoclave y parámetros muy estrechos."
+    be_range_percent: null
+    cycle_days: null
+    status_notes: "Fase de I+D / preproducción (~2.0 kg spawn en refrigeración en Tenjo). Región experimental <1200 ppm (Atila 2019); no usar 1000 ppm como umbral universal. Requiere autoclave y piloto de cepa."
 
   - id: lentinula_edodes
     common_name: Shiitake

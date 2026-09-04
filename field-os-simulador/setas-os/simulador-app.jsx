@@ -1230,7 +1230,7 @@ const SppSvg=({sKey,c})=>{
 const analyze=(recipe,sKey,ings=INGS)=>{
   if(!recipe.length) return null;
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
-  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
+  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
   const DENSOS=['aserrin_roble','aserrin_eucalipto','aserrin_pino','aserrin_pino_compostado','borra_cafe','afrecho_cerveceria','chips_poda_urbana','guadua','carton_corrugado','pulpa_papel'];
   recipe.forEach(r=>{
     const g=ings.find(i=>i.id===r.id);if(!g) return;
@@ -1246,6 +1246,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     if(g.cn>0&&!esAditivoSeco){wC+=g.c*dryFrac;wN+=g.n*dryFrac;nP+=dryFrac;}
     wPh+=g.ph*p; wDig+=g.dig*p; wCra+=g.cra*p;
     if(g.role==='suplemento_n') suppP+=p;
+    if(g.role==='suplemento_medio') suppMedP+=p;
     if(g.role==='base_carbono') baseP+=p;
     if(['aditivo_ph','aditivo_estructura','aditivo_micronutriente'].includes(g.role)) addP+=p;
     if(g.role==='aireador') airP+=p;
@@ -1258,13 +1259,15 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   const avgPh=tot?wPh/tot:7;
   const avgDig=tot?wDig/tot:5;
   const avgCra=tot?wCra/tot:3;
+  const suppTotalP=suppP+suppMedP;
+  const suppEffectiveP=suppP+(suppMedP*0.6);
   const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);return g?s+(g.cost*(parseFloat(r.p)||0)/100):s;},0);
   const sp=SPP[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
     const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
     const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
     eb=sp.eb_baseline+(sp.eb_optimal-sp.eb_baseline)*(cF*.6+nF*.4);
-    const needsAutoclave=suppP>sp.supplementation_max;
+    const needsAutoclave=suppEffectiveP>sp.supplementation_max;
     const nThresh=needsAutoclave?sp.n_optimal.max*1.2:sp.n_optimal.max*1.15;
     if(avgN>nThresh&&!needsAutoclave){trichoderma=true;eb*=.45;}
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
@@ -1294,15 +1297,15 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     if(ebMods.aerF<0.95) ebCvVal+=0.05;
     if(ebMods.digF<0.95) ebCvVal+=0.04;
     if(incompat.length) ebCvVal+=0.08;
-    if(suppP>sp.supplementation_max) ebCvVal+=0.10;
+    if(suppEffectiveP>sp.supplementation_max) ebCvVal+=0.10;
     if(trichoderma) ebCvVal=0.50;
     ebCvVal=Math.min(trichoderma?0.50:0.40,ebCvVal);
     var ebLow=Math.round(eb*(1-ebCvVal));
     var ebHigh=Math.round(eb*(1+ebCvVal));
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
-    dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppP/5));
+    dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
@@ -1402,6 +1405,50 @@ const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 
   ? SetasHistoricalCalibration
   : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
 
+// ── Pronóstico biológico de cosechas y oleadas — puente hacia flush-forecast-engine.js ──
+const {
+  SPECIES_FLUSH_PROFILES,
+  calcThermalDelayFactor,
+  calculateLotYieldAndFlushes,
+  calculateSowingRequirement,
+  sowingRecommendation: engineSowingRecommendation,
+  matchWeeklyCoverage: engineMatchWeeklyCoverage,
+  calibrateFlushProfileFromHarvests,
+  predictSubstrateCostPerFreshKg,
+  getSpeciesFlushProfile,
+} = (typeof SetasFlushForecast !== 'undefined'
+  ? SetasFlushForecast
+  : (typeof require !== 'undefined' ? require('./flush-forecast-engine.js') : {}));
+
+// ── Cinética de Esterilización Térmica en Altitud — puente hacia sterilization-kinetics.js ──
+const {
+  validateAutoclaveCycle: engineValidateAutoclaveCycle,
+  calcRequiredGaugePressurePsi: engineCalcRequiredGaugePressurePsi,
+  calcTimeCompFactorAt15Psi: engineCalcTimeCompFactorAt15Psi,
+  simulateCorePenetration: engineSimulateCorePenetration,
+} = (typeof SetasSterilization !== 'undefined'
+  ? SetasSterilization
+  : (typeof require !== 'undefined' ? require('./sterilization-kinetics.js') : {}));
+
+// ── Matriz de Co-Cultivo e Intersección Climática — puente hacia co-cultivation-matrix.js ──
+const {
+  calcPairwiseCompatibility: engineCalcPairwiseCompatibility,
+  optimizeChamberSetpoints: engineOptimizeChamberSetpoints,
+  SPECIES_CLIMATE_PROFILES,
+} = (typeof SetasCoCultivation !== 'undefined'
+  ? SetasCoCultivation
+  : (typeof require !== 'undefined' ? require('./co-cultivation-matrix.js') : {}));
+
+// ── Fisiología Poscosecha y Cadena de Frío — puente hacia post-harvest-engine.js ──
+const {
+  predictShelfLife: enginePredictShelfLife,
+  calcPostHarvestRespiration: engineCalcPostHarvestRespiration,
+  calcTranspirationLoss: engineCalcTranspirationLoss,
+  SPECIES_POSTHARVEST_PROFILES,
+} = (typeof SetasPostHarvest !== 'undefined'
+  ? SetasPostHarvest
+  : (typeof require !== 'undefined' ? require('./post-harvest-engine.js') : {}));
+
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
 
@@ -1495,29 +1542,56 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
   };
 };
 
-const calcSchedule=(sKey,dateStr,eb)=>{
+const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
   const d=T[sKey]||T.p_ostreatus_gris;
-  const adj=n=>Math.round(n/Math.max(.85,Math.min(1.2,(eb||100)/100)));
+
+  // Cinética térmica Q10 = 2.0 (Efecto Tenjo 2.600 msnm vs cámara térmica controlada)
+  const thermal=(typeof calcThermalDelayFactor==='function')
+    ? calcThermalDelayFactor(ambientTemp,sKey,'colonization')
+    : {factor:1.0,isDelayed:false,delayPercent:0,coldWarning:null};
+  const tF=thermal.factor||1.0;
+
+  const adj=n=>Math.round((n*tF)/Math.max(.85,Math.min(1.2,(eb||100)/100)));
+
   // Especies sensibles a bajas temperaturas: fructifican mal o no fructifican bajo el
-  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico
-  // activo. p_djamor_rosa es cálida-estricta (28–30°C ideal).
+  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico activo.
   const COLD_SENSITIVE={p_djamor_rosa:'28–30°C'};
-  const coldWarn=COLD_SENSITIVE[sKey]?` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`:'';
+  const coldWarn=COLD_SENSITIVE[sKey]
+    ? ` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
+    : (thermal.coldWarning ? ` ⚠️ ${thermal.coldWarning}` : '');
+
+  // Matriz biológica diferencial de oleadas por especie
+  const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(sKey))
+    ||(typeof SPECIES_FLUSH_PROFILES!=='undefined'&&SPECIES_FLUSH_PROFILES[sKey]);
+  const f1Pct=Math.round((profile?.flushes[0]?.pct??0.55)*100);
+  const f2Pct=Math.round((profile?.flushes[1]?.pct??0.30)*100);
+  const f3Pct=Math.round((profile?.flushes[2]?.pct??0.15)*100);
+
   const evts=[
-    {key:'in',type:'inoculation',day:0,title:'Inoculación',detail:`Empacar bolsas. Spawn ${sp.spawn_rate}%.`},
+    {key:'in',type:'inoculation',day:0,title:'Inoculación',detail:`Empacar bolsas. Spawn ${sp.spawn_rate}%. Temp: ${ambientTemp}°C.`},
     {key:'c5',type:'normal',day:adj(d.c50),title:'Colonización 50%',detail:'Micelio blanco visible en la bolsa.'},
     {key:'c1',type:coldWarn?'warning':'normal',day:adj(d.c100),title:'Colonización completa',detail:`Pasar a cámara de fructificación. ${sp.temp_fruit}.${coldWarn}`},
     {key:'pr',type:'normal',day:adj(d.pr),title:'Primordios',detail:'HR 90–95%. Abrir bolsa o cortar.'},
-    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*.55).toFixed(0):'?'}% EB.`},
-    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*.35).toFixed(0):'?'}% EB.`},
-    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:'Evaluar si compostar el bloque.'}
+    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*(f1Pct/100)).toFixed(0):'?'}% EB (${f1Pct}% del total).`},
+    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*(f2Pct/100)).toFixed(0):'?'}% EB (${f2Pct}% del total).`},
+    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:`~${eb?(eb*(f3Pct/100)).toFixed(0):'?'}% EB (${f3Pct}% del total). Evaluar si compostar el bloque.`}
   ];
-  return{evts:evts.map(e=>({...e,ds:fmt(add(base,e.day))})),tot:adj(d.f3),first:fmt(add(base,adj(d.f1))),inc:adj(d.c100)};
+  return{
+    evts:evts.map(e=>({...e,ds:fmt(add(base,e.day))})),
+    tot:adj(d.f3),
+    first:fmt(add(base,adj(d.f1))),
+    inc:adj(d.c100),
+    thermalFactor:tF,
+    thermalDelayPct:thermal.delayPercent||0,
+    ambientTemp,
+    coldWarn,
+    f1Pct,f2Pct,f3Pct
+  };
 };
 
 const PasteGuide=({tr,recipe,numBags,kgBag})=>{
@@ -1670,22 +1744,35 @@ const NitrogenChart=({recipe})=>{
 };
 
 // ── v3: FlushChart — projected yield per flush ──
-const FlushChart=({an})=>{
+const FlushChart=({an,sKey})=>{
   if(!an||!an.eb||an.eb<10) return null;
   const eb=an.eb;
   const ebLow=an.ebLow??Math.round(eb*0.82);
   const ebHigh=an.ebHigh??Math.round(eb*1.18);
-  const flushes=[
-    {label:'1ª',sub:'Cosecha',pct:0.55,days:'35–45 d',color:'var(--coral-500)',bg:'rgba(184,97,77,.08)'},
-    {label:'2ª',sub:'Cosecha',pct:0.30,days:'55–70 d',color:'var(--accent-olive)',bg:'rgba(77,98,53,.07)'},
-    {label:'3ª',sub:'Cosecha',pct:0.15,days:'75–95 d',color:'var(--ochre-500,#A07828)',bg:'rgba(160,120,40,.07)'},
+  const speciesKey=sKey||an?.sp?.id||an?.speciesKey||'p_ostreatus_gris';
+  const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(speciesKey))
+    ||(typeof SPECIES_FLUSH_PROFILES!=='undefined'&&SPECIES_FLUSH_PROFILES[speciesKey]);
+  const fProfile=profile?.flushes||[
+    {flushNumber:1,pct:0.55,daysAfterInoc:35,label:'1ª Cosecha'},
+    {flushNumber:2,pct:0.30,daysAfterInoc:55,label:'2ª Cosecha'},
+    {flushNumber:3,pct:0.15,daysAfterInoc:75,label:'3ª Cosecha'}
   ];
-  const maxPct=flushes[0].pct;
+  const colors=['var(--coral-500)','var(--accent-olive)','var(--ochre-500,#A07828)'];
+  const bgs=['rgba(184,97,77,.08)','rgba(77,98,53,.07)','rgba(160,120,40,.07)'];
+  const flushes=fProfile.map((f,i)=>({
+    label:`${f.flushNumber||i+1}ª`,
+    sub:'Cosecha',
+    pct:f.pct,
+    days:f.daysAfterInoc?`~${f.daysAfterInoc} d`:`${35+i*20} d`,
+    color:colors[i%colors.length],
+    bg:bgs[i%bgs.length],
+  }));
+  const maxPct=Math.max(...flushes.map(f=>f.pct),0.01);
   return(
     <div style={{marginBottom:16,background:'var(--paper-50,var(--paper-100))',border:'1px solid var(--border-soft)',overflow:'hidden'}}>
       {/* Header */}
       <div style={{padding:'10px 14px 8px',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas</span>
+        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas · {profile?.name||'Biomasa'}</span>
         <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:700}}>EB {ebLow}–{ebHigh}%</span>
       </div>
       {/* Flush columns */}
@@ -1694,7 +1781,7 @@ const FlushChart=({an})=>{
           const val=(eb*f.pct);
           const barH=Math.round((f.pct/maxPct)*72);
           return(
-            <div key={i} style={{flex:1,borderRight:i<2?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
+            <div key={i} style={{flex:1,borderRight:i<flushes.length-1?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
               {/* ordinal label */}
               <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
               {/* big number */}
@@ -1713,7 +1800,7 @@ const FlushChart=({an})=>{
       </div>
       {/* Footer */}
       <div style={{padding:'6px 14px',borderTop:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',background:'var(--paper-100)'}}>
-        Distribución 55/30/15% · ±{Math.round((ebHigh-ebLow)/2/eb*100)}% incertidumbre · por kg sustrato seco
+        Distribución {flushes.map(f=>Math.round(f.pct*100)).join('/')}% · ±{Math.round((ebHigh-ebLow)/2/eb*100)}% incertidumbre · por kg sustrato seco
       </div>
     </div>
   );
@@ -3892,20 +3979,20 @@ function SimuladorShell(props){
       return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
     }catch(e){return'home';}
   });
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
-  const RECETA_TABS=['catalogo','formular','dashboard'];
+  const RECETA_TABS=['catalogo','formular'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
-  const TAB_ALIASES={optimizar:'formular'};
+  const TAB_ALIASES={optimizar:'formular',dashboard:'catalogo'};
   const applyTab=t=>{
     t=TAB_ALIASES[t]||t;
     try{t=window.SetasOSNavigation?.normalizeView(t,'home')||'home';}catch(e){}
@@ -3957,34 +4044,57 @@ function SimuladorShell(props){
   const [dashFilter,setDashFilter]=useState('all');
 
 // --------------------------------------------------------------------------
-// Flush Forecast & B2B Sales Forecast Helpers (placeholder implementation)
+// Flush Forecast & B2B Sales Forecast Engine Integration
 // --------------------------------------------------------------------------
 // Identifier used by UI to reference the schedule tab.
 const schTab = 'schedule';
 
-// Placeholder flush percentages (mock values for tests)
+// Default / fallback flush percentages (0.6, 0.3, 0.1)
 const flush1 = 0.6;
 const flush2 = 0.3;
 const flush3 = 0.1;
 
-// Simple lot‑level flush projection (mock implementation)
-function calculateLotFlushProjection(lot) {
-  // lot: { bags, kgPerBag, eb }
-  const totalKg = (lot.bags || 0) * (lot.kgPerBag || 1.5) * ((lot.eb || 90) / 100);
+// Rigorous lot‑level flush projection using dry mass balance and species profiles
+function calculateLotFlushProjection(lot, options = {}) {
+  if (typeof calculateLotYieldAndFlushes === 'function') {
+    return calculateLotYieldAndFlushes(lot, options);
+  }
+  const bags = (lot?.bags || 0);
+  const kgPerBag = (lot?.kgPerBag || 1.5);
+  const moisture = (lot?.moisture || 65);
+  const dryKg = bags * kgPerBag * (1 - moisture / 100);
+  const eb = (lot?.eb || 90);
+  const totalKg = dryKg * (eb / 100);
   return {
     totalKg,
+    totalDryKg: dryKg,
     flush1: { pct: 0.6, kg: totalKg * 0.6 },
     flush2: { pct: 0.3, kg: totalKg * 0.3 },
     flush3: { pct: 0.1, kg: totalKg * 0.1 },
   };
 }
 
-// B2B commitments placeholder (array of weekly promises)
-const b2bCommitments = [];
+// B2B commitments (array of weekly promises)
+const b2bCommitments = [
+  { semana: 'Semana 1', cliente: 'Restaurante Local Tenjo', speciesKey: 'p_ostreatus_gris', kgComprometidos: 15 },
+  { semana: 'Semana 2', cliente: 'Bistró Sabana Norte', speciesKey: 'p_ostreatus_gris', kgComprometidos: 20 },
+  { semana: 'Semana 3', cliente: 'Mercado Gourmet Chía', speciesKey: 'shiitake', kgComprometidos: 10 },
+];
 
-// Match weekly harvest projection against B2B commitments (mock stub)
-function matchWeeklyCoverage(projection, commitments) {
-  return { superavit: 0, deficit: 0, cobertura: 0 };
+// Match weekly harvest projection against B2B commitments
+function matchWeeklyCoverage(projection, commitments = b2bCommitments) {
+  if (typeof SetasFlushForecast !== 'undefined' && typeof SetasFlushForecast.matchWeeklyCoverage === 'function') {
+    return SetasFlushForecast.matchWeeklyCoverage(projection, commitments);
+  }
+  const totalProyectado = Array.isArray(projection)
+    ? projection.reduce((acc, p) => acc + (p.totalKg || 0), 0)
+    : (projection?.totalKg || 0);
+  const totalComprometido = (commitments || []).reduce((acc, c) => acc + (c.kgComprometidos || 0), 0);
+  const balance = totalProyectado - totalComprometido;
+  const superavit = Math.max(0, balance);
+  const deficit = Math.max(0, -balance);
+  const cobertura = totalComprometido > 0 ? Math.min(100, Math.round((totalProyectado / totalComprometido) * 100)) : 100;
+  return { superavit, deficit, cobertura, totalProyectado, totalComprometido };
 }
 
 // Badges for UI coverage status
@@ -3992,11 +4102,22 @@ const superavit = '🟢';
 const deficit = '🔴';
 const cobertura = '🟡';
 
-// Recommendation when deficit detected
-function sowingRecommendation(deficitKg) {
-  const bagsNeeded = Math.ceil(deficitKg / 1.5);
-  return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
+// Recommendation when deficit detected with substrate and spawn weights
+function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', options = {}) {
+  if (typeof SetasFlushForecast !== 'undefined' && typeof SetasFlushForecast.calculateSowingRequirement === 'function') {
+    const req = SetasFlushForecast.calculateSowingRequirement(deficitKg, speciesKey, options);
+    return req.message || `Inocular ${req.bagsNeeded} bolsas adicionales para cubrir el déficit`;
+  }
+  const bagsNeeded = Math.ceil((deficitKg || 0) / (1.5 * 0.35 * 0.9));
+  return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit de ${deficitKg} kg`;
 }
+
+  const [schSubTab,setSchSubTab]=useState('cronograma');
+  const [schTemp,setSchTemp]=useState(16);
+  const [fcBags,setFcBags]=useState(100);
+  const [fcKgBag,setFcKgBag]=useState(1.5);
+  const [fcMoisture,setFcMoisture]=useState(65);
+  const [fcDeficitTarget,setFcDeficitTarget]=useState(25);
 
   const [lockedIds,setLockedIds]=useState(()=>initialFormDraft?.lockedIds||[]);
   const [balanceMode,setBalanceMode]=useState('proportional');
@@ -4018,8 +4139,22 @@ function sowingRecommendation(deficitKg) {
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
-  const [cameraError,setCameraError]=useState('');
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
+  const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
+  const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
+  const [autoclaveGaugePsi, setAutoclaveGaugePsi] = useState(19.04);
+  const [autoclaveBagKg, setAutoclaveBagKg] = useState(2.0);
+  const [autoclaveMoisturePct, setAutoclaveMoisturePct] = useState(65);
+
+  const [showCoCultivationModal, setShowCoCultivationModal] = useState(false);
+  const [coCultSelectedSpecies, setCoCultSelectedSpecies] = useState(['orellana_gris', 'seta_cardo']);
+
+  const [showPostHarvestModal, setShowPostHarvestModal] = useState(false);
+  const [postHarvestSelectedSpecies, setPostHarvestSelectedSpecies] = useState('orellana_gris');
+  const [postHarvestTemp, setPostHarvestTemp] = useState(4.0);
+  const [postHarvestRh, setPostHarvestRh] = useState(92);
+  const [postHarvestBatchKg, setPostHarvestBatchKg] = useState(15.0);
+  const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
 
@@ -4098,8 +4233,12 @@ function sowingRecommendation(deficitKg) {
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
-  const [diagError,setDiagError]=useState('');
-  const [diagNotes,setDiagNotes]=useState('');
+  const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [showAIFormModal,setShowAIFormModal]=useState(false);
+  const [aiFormGoal,setAiFormGoal]=useState('');
+  const [aiFormLoading,setAiFormLoading]=useState(false);
+  const [aiFormResult,setAiFormResult]=useState(null);
+  const [aiFormError,setAiFormError]=useState('');
   const ROOMS_CONFIG = {
     martha_01: {
       id: 'martha_01',
@@ -4338,12 +4477,12 @@ function sowingRecommendation(deficitKg) {
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -4800,7 +4939,7 @@ function sowingRecommendation(deficitKg) {
     return bestSim>=0.5?{...best,similarity:bestSim}:null;
   },[recipe,trialsWithReal]);
   const cAn=useMemo(()=>analyze(cmpRecipe,cmpKey,effectiveINGS),[cmpRecipe,cmpKey,effectiveINGS]);
-  const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb),[schKey,schDate,an]);
+  const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb,schTemp),[schKey,schDate,an,schTemp]);
   // Score de una receta guardada (Recetario/Dashboard), recalculado en vivo con
   // la matriz actual en vez de confiar en el número persistido al guardarla —
   // así una receta guardada antes de una recalibración de pesos no queda con
@@ -5671,19 +5810,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button key={k} className={`inv-subtab${invTab===k?' on':''}`} onClick={()=>setInvTab(k)}>{l}</button>
                 ))}
               </div>
-
               {/* ── STOCK ACTUAL ─────────────────────────────────────────── */}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
+                    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
+                    const aggregatedStock = {};
+                    invLotes.filter(l=>l.activo).forEach(l=>{
+                      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
+                    });
+                    const criticalStockItems = INGS.map(ing=>{
+                      const stockKg = aggregatedStock[ing.id]||0;
+                      const threshold = lowStockThresholds[ing.type]||5;
+                      return { ing, stockKg, threshold, isLow: stockKg < threshold };
+                    }).filter(item=>item.isLow);
+
                     // Las bolsas viven en invLotes con el mismo modelo FIFO, pero se
                     // cuentan en unidades, no kg — se excluyen de esta tabla (kg) y se
                     // gestionan en el selector "Tipo de contenedor" de la pestaña Producción.
                     const ingIds=[...new Set(invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).map(l=>l.ingredienteId))];
                     if(!ingIds.length) return(
-                      <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
-                        Sin inventario.
-                        <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
+                      <div>
+                        {criticalStockItems.length > 0 && (
+                          <div className="stock-critical-card" style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                              </span>
+                              <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                                Registrar Compra +
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                                <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                          Sin inventario.
+                          <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
+                        </div>
                       </div>
                     );
                     const rows=ingIds.map(id=>{
@@ -5699,118 +5869,139 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }).sort((a,b)=>b.stock-a.stock);
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
-                      <div className="inv-section">
-                        <table className="inv-table inventory-stock-table">
-                          <thead>
-                            <tr>
-                              <th>Ingrediente</th>
-                              <th>Stock (kg)</th>
-                              <th>Precio / kg</th>
-                              <th>Proveedor</th>
-                              <th>Alerta mín. (kg)</th>
-                              <th>Estado</th>
-                              <th style={{width:80}}><span className="sr-only">Acciones</span></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map(r=>{
-                              const isEditing=editingRowId===r.id;
-                              return(
-                                <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
-                                  {/* INGREDIENTE */}
-                                  <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
-                                    {isEditing?(
-                                      <select name={`stockIngredient-${r.id}`} aria-label={`Ingrediente de la fila ${r.name}`} value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
-                                        {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
-                                      </select>
-                                    ):(
-                                      <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
-                                    )}
-                                  </td>
-                                  {/* STOCK */}
-                                  <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
-                                    {isEditing?(
-                                      <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
-                                        value={editingRowData.stock}
-                                        onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
-                                        onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
-                                        style={{...INP,width:80,fontWeight:600}}
-                                      />
-                                    ):(
-                                      <span>{r.stock.toFixed(1)} kg</span>
-                                    )}
-                                  </td>
-                                  {/* PRECIO */}
-                                  <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
-                                    {isEditing?(
-                                      <input name={`stockPrice-${r.id}`} aria-label={`Precio de ${r.name} por kg`} type="number" min="0" step="100"
-                                        value={editingRowData.precio}
-                                        onChange={e=>setEditingRowData(p=>({...p,precio:e.target.value}))}
-                                        style={INP}
-                                        placeholder="$/kg"
-                                      />
-                                    ):(
-                                      r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
-                                    )}
-                                  </td>
-                                  {/* PROVEEDOR */}
-                                  <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
-                                    {isEditing?(
-                                      <select name={`stockProvider-${r.id}`} aria-label={`Proveedor de ${r.name}`} value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
-                                        <option value="">Sin especificar</option>
-                                        {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
-                                      </select>
-                                    ):(
-                                      r.prov?.nombre||'—'
-                                    )}
-                                  </td>
-                                  {/* ALERTA MÍN */}
-                                  <td data-label="Alerta mínima" style={{minWidth:90}}>
-                                    {isEditing?(
-                                      <input name={`stockAlert-${r.id}`} aria-label={`Alerta mínima de ${r.name} en kg`} type="number" min="0" step="0.5"
-                                        value={editingRowData.alertaMin}
-                                        onChange={e=>setEditingRowData(p=>({...p,alertaMin:e.target.value}))}
-                                        style={INP}
-                                        placeholder="kg"
-                                      />
-                                    ):(
-                                      <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
-                                    )}
-                                  </td>
-                                  {/* ESTADO */}
-                                  <td data-label="Estado">
-                                    {r.stock<r.alertaMin
-                                      ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
-                                      :r.stock<r.alertaMin*2.5
-                                        ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
-                                        :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
-                                  </td>
-                                  {/* ACCIONES */}
-                                  <td data-label="Acciones">
-                                    {isEditing?(
-                                      <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
-                                      </div>
-                                    ):(
-                                      <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
-                                          onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
-                                          ✎ Editar
-                                        </button>
-                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
-                                          style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
-                                          onClick={()=>eliminarIngrediente(r.id,r.name)}>
-                                          ×
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                      <div>
+                        {criticalStockItems.length > 0 && (
+                          <div className="stock-critical-card" style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                              </span>
+                              <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                                Registrar Compra +
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                                <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="inv-section">
+                          <table className="inv-table inventory-stock-table">
+                            <thead>
+                              <tr>
+                                <th>Ingrediente</th>
+                                <th>Stock (kg)</th>
+                                <th>Precio / kg</th>
+                                <th>Proveedor</th>
+                                <th>Alerta mín. (kg)</th>
+                                <th>Estado</th>
+                                <th style={{width:80}}><span className="sr-only">Acciones</span></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map(r=>{
+                                const isEditing=editingRowId===r.id;
+                                return(
+                                  <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
+                                    {/* INGREDIENTE */}
+                                    <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
+                                      {isEditing?(
+                                        <select name={`stockIngredient-${r.id}`} aria-label={`Ingrediente de la fila ${r.name}`} value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                          {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+                                        </select>
+                                      ):(
+                                        <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
+                                      )}
+                                    </td>
+                                    {/* STOCK */}
+                                    <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                      {isEditing?(
+                                        <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
+                                          value={editingRowData.stock}
+                                          onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
+                                          onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
+                                          style={{...INP,width:80,fontWeight:600}}
+                                        />
+                                      ):(
+                                        <span>{r.stock.toFixed(1)} kg</span>
+                                      )}
+                                    </td>
+                                    {/* PRECIO */}
+                                    <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
+                                      {isEditing?(
+                                        <input name={`stockPrice-${r.id}`} aria-label={`Precio de ${r.name} por kg`} type="number" min="0" step="100"
+                                          value={editingRowData.precio}
+                                          onChange={e=>setEditingRowData(p=>({...p,precio:e.target.value}))}
+                                          style={INP}
+                                          placeholder="$/kg"
+                                        />
+                                      ):(
+                                        r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
+                                      )}
+                                    </td>
+                                    {/* PROVEEDOR */}
+                                    <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
+                                      {isEditing?(
+                                        <select name={`stockProvider-${r.id}`} aria-label={`Proveedor de ${r.name}`} value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                          <option value="">Sin especificar</option>
+                                          {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
+                                        </select>
+                                      ):(
+                                        r.prov?.nombre||'—'
+                                      )}
+                                    </td>
+                                    {/* ALERTA MÍN */}
+                                    <td data-label="Alerta mínima" style={{minWidth:90}}>
+                                      {isEditing?(
+                                        <input name={`stockAlert-${r.id}`} aria-label={`Alerta mínima de ${r.name} en kg`} type="number" min="0" step="0.5"
+                                          value={editingRowData.alertaMin}
+                                          onChange={e=>setEditingRowData(p=>({...p,alertaMin:e.target.value}))}
+                                          style={INP}
+                                          placeholder="kg"
+                                        />
+                                      ):(
+                                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
+                                      )}
+                                    </td>
+                                    {/* ESTADO */}
+                                    <td data-label="Estado">
+                                      {r.stock<r.alertaMin
+                                        ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
+                                        :r.stock<r.alertaMin*2.5
+                                          ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
+                                          :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
+                                    </td>
+                                    {/* ACCIONES */}
+                                    <td data-label="Acciones">
+                                      {isEditing?(
+                                        <div style={{display:'flex',gap:4}}>
+                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
+                                        </div>
+                                      ):(
+                                        <div style={{display:'flex',gap:4}}>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
+                                            onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
+                                            ✎ Editar
+                                          </button>
+                                          <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
+                                            style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
+                                            onClick={()=>eliminarIngrediente(r.id,r.name)}>
+                                            ×
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     );
                   })()}
@@ -6792,9 +6983,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {selectedCamera&&<button type="button" className="climate-detail-btn" onClick={()=>props.onOpenCamara&&props.onOpenCamara(selectedCamera.id)}>Abrir ficha del módulo →</button>}
             <button
               type="button"
+              onClick={() => setShowCoCultivationModal(true)}
+              className="inv-btn inv-btn-sec"
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-olive, #5B6B44)', color: 'var(--accent-olive, #5B6B44)', fontWeight: 700 }}
+              title="Analizar compatibilidad de especies e intersección de setpoints en la misma carpa"
+            >
+              🌿 Co-Cultivo Multiespecie
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAutoclaveModal(true)}
+              className="inv-btn inv-btn-sec"
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-terracotta, #C46238)', color: 'var(--accent-terracotta, #C46238)', fontWeight: 700 }}
+              title="Simulador de ciclo de autoclave All American a 2.600 msnm (19.04 PSI / F0)"
+            >
+              🔥 Autoclave Tenjo (F₀)
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPostHarvestModal(true)}
+              className="inv-btn inv-btn-sec"
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
+              title="Predicción de vida útil, transpiración y empaque en frío"
+            >
+              ❄ Poscosecha & Frío
+            </button>
+            <button
+              type="button"
               onClick={() => setShowEsp32ConfigModal(true)}
               className="inv-btn inv-btn-sec"
-              style={{ minHeight: 34, padding: '4px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6, borderColor: 'var(--accent-olive, #5B6B44)', color: 'var(--accent-olive, #5B6B44)', fontWeight: 700 }}
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--line-0)', color: 'var(--ink-1)', fontWeight: 700 }}
               title="Generar y descargar firmware ESPHome YAML para este cuarto de cultivo"
             >
               ⚡ Exportar ESPHome YAML
@@ -6820,17 +7038,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {climateHealth.alerts.map((al, idx) => (
               <div key={idx} style={{
                 padding:'8px 12px',
-                background: al.level === 'alert' ? '#FEE2E2' : '#FEF3C7',
-                color: al.level === 'alert' ? '#991B1B' : '#92400E',
-                borderLeft: `4px solid ${al.level === 'alert' ? '#DC2626' : '#D97706'}`,
                 borderRadius:'var(--radius-sm)',
-                fontSize:12,
-                fontFamily:'var(--font-sans)',
-                display:'flex',
-                alignItems:'center',
-                gap:8
+                background: al.level === 'alert' ? 'var(--accent-terracotta-dim)' : 'var(--paper-2)',
+                color: al.level === 'alert' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--ink-1)',
+                border: `1px solid ${al.level === 'alert' ? 'var(--accent-terracotta)' : 'var(--line-0)'}`,
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
               }}>
-                <span>{al.level === 'alert' ? '🚨' : '⚠️'}</span>
+                <span>{al.level === 'alert' ? '🚨' : '⚠'}</span>
                 <span>{al.msg}</span>
               </div>
             ))}
@@ -6869,20 +7086,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
 
-          {/* 3. CO2 NDIR */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
-              <span>Dióxido de Carbono</span>
-              <span>Max: {defaultTargets.co2_ppm.max} ppm</span>
-            </div>
-            <div className="climate-kpi-value">
-              <span>{currentMetrics.co2}</span>
-              <span style={{fontSize:13,color:'var(--ink-2)'}}>ppm</span>
-            </div>
-            <div className="climate-kpi-sub">
-              <span>SCD30 NDIR · Comp. 2.600m · {climateTimeRange}: {co2Min} – {co2Max} ppm</span>
-            </div>
-          </div>
+          {/* 3. CO2 NDIR con compensación barométrica a 745 hPa (Tenjo) */}
+          {(() => {
+            const ndirCorr = climateMath && typeof climateMath.calcBarometricCO2Correction === 'function'
+              ? climateMath.calcBarometricCO2Correction(currentMetrics.co2, 745.0, currentMetrics.temp)
+              : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36) };
+            return (
+              <div className="climate-kpi-card">
+                <div className="climate-kpi-header">
+                  <span>Dióxido de Carbono (NDIR)</span>
+                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                </div>
+                <div className="climate-kpi-value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span>{ndirCorr.correctedPpm}</span>
+                  <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
+                  <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({currentMetrics.co2} raw)</small>
+                </div>
+                <div className="climate-kpi-sub">
+                  <span>Beer-Lambert 745 hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* 4. VPD & Punto de Rocío */}
           <div className="climate-kpi-card">
@@ -6900,6 +7125,53 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span>Punto de Rocío (Tdp): {dewPoint}°C · ΔT anti-rocío: {(currentMetrics.temp - dewPoint).toFixed(1)}°C</span>
             </div>
           </div>
+
+          {/* 5. Ventilación Dinámica FAE & AC Infinity Extractor */}
+          {(() => {
+            const activeBiomassKg = mainLote?.pesoLote ? (mainLote.pesoLote * 0.22) : 25.0;
+            const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === 'function'
+              ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || 'orellana_gris', {
+                  targetPpm: defaultTargets.co2_ppm.target || 800,
+                  outdoorPpm: 420,
+                  roomVolumeM3: selectedClimateRoom === 'martha_01' ? 11.5 : 8.0,
+                  fanRatedCfm: 140
+                })
+              : null;
+            return (
+              <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
+                <div className="climate-kpi-header">
+                  <span>💨 Ventilación Dinámica FAE (Extracción)</span>
+                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                      {faeCalc ? `${faeCalc.requiredCfm} CFM` : '24.5 CFM'}
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', marginLeft: 6 }}>
+                        ({faeCalc ? faeCalc.requiredM3h : '41.6'} m³/h · {faeCalc ? faeCalc.effectiveAch : '3.6'} ACH)
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)', marginTop: 2 }}>
+                      {faeCalc?.schedule.recommendation || 'Encender 2.5 min cada 10 min'}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{
+                      padding: '3px 8px',
+                      borderRadius: 4,
+                      background: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+                      color: (faeCalc?.dutyCyclePct || 20) > 85 ? 'var(--accent-rust)' : 'var(--moss-800)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      fontWeight: 700
+                    }}>
+                      Duty Cycle: {faeCalc ? faeCalc.dutyCyclePct : 18}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Panel de Sintonizador Culinario & Vector de Balance de la Trinidad */}
@@ -7766,461 +8038,144 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   </div>
                 )}
-              </div>
-
-              {/* SECCIÓN A: ACCIONES RÁPIDAS + ESPACIOS DE TRABAJO lado a lado — ambas
-                  son accesos a los mismos módulos, así que comparten fila en vez de
-                  competir por el scroll en secciones separadas. */}
-              {(()=>{
-                return (
-                  <div className="home-acciones-espacios-row">
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                        <div>
-                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                            SECCIÓN A · OPERACIÓN INMEDIATA
+                {criticalStockItems.length > 0 && (
+                  <div className="stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                        ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                      </span>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--coral-300)',borderRadius:2,color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                            {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                           </span>
-                          <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                            Acciones Rápidas
-                          </h2>
-                        </div>
-                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
-                      </div>
-                      <div style={{
-                        display:'grid',
-                        gridTemplateColumns:'1fr',
-                        gap:12
-                      }}>
-                        {/* Una sola columna, los 5 botones del mismo ancho: le cede el resto
-                            del ancho de la fila a Espacios de Trabajo para que sus 3 tarjetas
-                            quepan lado a lado. Lotes/Módulos de cultivo se quedan fuera: llevan
-                            a la misma pestaña que "Ver Bitácora"/"Ficha de Mezclado" en Espacios
-                            de Trabajo y no agregan nada nuevo. */}
-                        {[
-                          {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
-                            const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
-                            if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
-                            else props.onStartSession&&props.onStartSession();
-                          },jornada:true},
-                          {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
-                          {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                          {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                          {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
-                        ].map(btn=>{
-                          const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
-                          return (
-                          <button
-                            key={btn.label}
-                            onClick={btn.onClick}
-                            className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
-                            style={{
-                              display:'flex',
-                              alignItems:'center',
-                              gap:12,
-                              padding:'14px 16px',
-                              borderRadius:'var(--r-sm)',
-                              textAlign:'left',
-                              cursor:'pointer',
-                              position:'relative'
-                            }}
-                          >
-                            <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={20}/></span>
-                            <div style={{minWidth:0,flex:1}}>
-                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                {btn.label}
-                              </div>
-                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                {btn.sub}
-                              </div>
-                            </div>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
-                          </button>
-                          );
-                        })}
+                        ))}
+                        {criticalStockItems.length > 3 && (
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)',padding:'2px 4px'}}>
+                            +{criticalStockItems.length - 3} más
+                          </span>
+                        )}
                       </div>
                     </div>
-              {/* Espacios de Trabajo — se movió acá (columna derecha de Sección A, donde
-                  antes vivía Tareas de hoy) porque su contenido y el de Acciones Rápidas
-                  (columna izquierda) son ambos accesos a los mismos módulos: quedan uno al
-                  lado del otro en vez de en secciones separadas del scroll. */}
-              <div>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'color-mix(in oklab, var(--coral-700) 70%, black)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                      Registrar Compra +
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN A: OPERACIÓN INMEDIATA — Acciones Rápidas (izquierda) y Tareas de Hoy (derecha) */}
+              <div className="home-acciones-tareas-row">
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                        SECCIÓN A · OPERACIÓN INMEDIATA
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                        Acciones Rápidas
+                      </h2>
+                    </div>
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                  </div>
+                  <div style={{
+                    display:'grid',
+                    gridTemplateColumns:'1fr',
+                    gap:10
+                  }}>
+                    {[
+                      {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                        const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                        if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                        else props.onStartSession&&props.onStartSession();
+                      },jornada:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                      {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
+                    ].map(btn=>{
+                      const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
+                      return (
+                      <button
+                        key={btn.label}
+                        onClick={btn.onClick}
+                        className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                        style={{
+                          display:'flex',
+                          alignItems:'center',
+                          gap:12,
+                          padding:'12px 14px',
+                          borderRadius:'var(--r-sm)',
+                          textAlign:'left',
+                          cursor:'pointer',
+                          position:'relative'
+                        }}
+                      >
+                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={18}/></span>
+                        <div style={{minWidth:0,flex:1}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                            {btn.label}
+                          </div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                            {btn.sub}
+                          </div>
+                        </div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
+                      </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      MÓDULOS DE CAMPO
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Espacios de Trabajo
-                    </h2>
-                  </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>Flujos principales</span>
-                </div>
-
-                <div className="home-workspaces-grid" style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(2, minmax(0, 1fr))',
-                  gap:20
-                }}>
-                  {/* WORKSPACE 1: FORMULACIÓN & I+D */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--coral-500)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Formulación & Recetario
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Balance estequiométrico de carbono y nitrógeno (C:N), suplementación y cálculo predictivo de Eficiencia Biológica (EB).
-                      </p>
-
-                      {/* Métricas en vivo del workspace */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Score Perito</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:activeScore>=80?'var(--moss-700)':activeScore>=60?'var(--ochre-500)':'var(--coral-700)'}}>
-                            {activeScore!==null ? `${activeScore}/100` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>C:N Activo</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {an?.cn ? `${an.cn.toFixed(1)}:1` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
-                            {an?.eb ? `~${an.eb}%` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ingredientes</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {recipe.length} insumos
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--coral-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        Ir al Formulador
-                      </button>
-                      <button onClick={()=>goTab('catalogo')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Catálogo
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 2: PRODUCCIÓN & BODEGA */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--moss-700)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          <IconBox size={11}/> PLANTA & INSUMOS
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Producción & Bodega
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores.
-                      </p>
-
-                      {/* Métricas en vivo */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Stock Disponible</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalStockKg.toFixed(1)} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>kg</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Lotes de Insumos</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).length}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Proveedores</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invProveedores.length} activos
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Compras Reg.</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invCompras.length} facturas
-                          </div>
-                        </div>
-                      </div>
-
-                      {criticalStockItems.length > 0 ? (
-                        <div style={{ background: 'color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))', border: '1px solid var(--coral-500)', borderLeft: '4px solid var(--coral-700)', borderRadius: 'var(--r-xs)', padding: '10px 12px', marginBottom: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                              ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
-                            </span>
-                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
-                              Registrar Compra +
-                            </button>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
-                              </span>
-                            ))}
-                            {criticalStockItems.length > 3 && (
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-400)', padding: '2px 4px' }}>
-                                +{criticalStockItems.length - 3} más
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-xs)', padding: '6px 10px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: 'var(--moss-700)', fontSize: 12 }}>✓</span>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-600)' }}>Todos los insumos con stock operativo adecuado</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('produccion')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        Ficha de Mezclado
-                      </button>
-                      <button onClick={()=>goTab('inventario')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Bodega
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 3: BITÁCORA & COSECHAS */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--slate-500)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Bitácora & Cosechas
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Seguimiento individual de bolsas, registro de colonización, alertas fitosanitarias y pesaje de cosechas.
-                      </p>
-
-                      {/* Métricas en vivo */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsas Monitoreadas</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalBolsasCount}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Contaminación</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:bolsasContaminadas===0?'var(--moss-700)':'var(--coral-700)'}}>
-                            {totalBolsasCount>0 ? `${((bolsasContaminadas/totalBolsasCount)*100).toFixed(0)}%` : '0%'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Eventos Corte</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalCosechasCount} flushes
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--slate-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        + Registrar Cosecha
-                      </button>
-                      <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Ver Bitácora
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 4: FINANZAS & DASHBOARD (Solo visible para Administradores / Roles no-operario) */}
-                  {props.isAdmin!==false && (
-                    <div className="home-workspace-card" style={{
-                      background:'var(--paper-0)',
-                      border:'1px solid var(--border-soft)',
-                      borderTop:'3px solid var(--ink-700)',
-                      borderRadius:'var(--r-md)',
-                      padding:'24px',
-                      display:'flex',
-                      flexDirection:'column',
-                      justifyContent:'space-between',
-                      gap:18,
-                      boxShadow:'var(--shadow-card-rest)'
-                    }}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                       <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
-                          </span>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
-                        </div>
-                        <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                          Finanzas & Rendimiento
-                        </h3>
-                        <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                          Análisis de costo unitario por kilo seco y por bolsa comercial, balance de proveedores y simulación de márgenes.
-                        </p>
-
-                        {/* Métricas en vivo */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                              ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                              ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Recetas Evaluadas</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                              {saved.length} fórmulas
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ciclo Planificado</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                              {sch?.totDays || 45} días
-                            </div>
-                          </div>
-                        </div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                          SECCIÓN A · TRABAJO DEL DÍA
+                        </span>
+                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                          Tareas de Hoy
+                        </h2>
                       </div>
-
-                      <div style={{display:'flex',gap:8}}>
-                        <button onClick={()=>goTab('dashboard')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                          Dashboard
-                        </button>
-                        <button onClick={()=>goTab('schedule')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                          Cronograma
-                        </button>
-                      </div>
+                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount} pendientes</span>}
                     </div>
-                  )}
+                    {tasksHoy.length===0 ? (
+                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
+                        Sin tareas pendientes por ahora.
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                        {tasksHoy.slice(0,5).map(t=>(
+                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                            <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                              style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                              <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                            </button>
+                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                            </button>
+                            <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                          </div>
+                        ))}
+                        {tasksHoy.length>5 && (
+                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
+                            +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-                  </div>
-                );
-              })()}
 
-              {/* SECCIÓN B: TAREAS DE HOY + SEGUIMIENTO DE LOTES POR FASE lado a lado —
-                  el trabajo del día (tareas puntuales) y el estado de los lotes activos
-                  son ambos "qué hacer/qué está pasando ahora", así que van juntos. */}
-              <div className="home-tareas-lotes-row">
-                <div style={{height:'100%'}}>
-                    {/* height:100% en el wrapper y en la tarjeta: la fila usa
-                        align-items:stretch para que esta columna iguale la altura de
-                        Seguimiento de Lotes por Fase (a la derecha), que normalmente es
-                        más alta por su kanban de 4 fases. */}
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
-                        {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
-                      </div>
-                      {tasksHoy.length===0 ? (
-                        <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
-                          Sin tareas pendientes por ahora.
-                        </div>
-                      ) : (
-                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                          {/* Se muestran máx. 5: tasksHoy no tiene tope propio (puede crecer con
-                              cada contenedor activo + alerta de clima) y sin este límite la
-                              columna de tareas desbalanceaba la fila frente a Acciones Rápidas,
-                              de altura fija. El total real ya está en el contador de arriba. */}
-                          {tasksHoy.slice(0,5).map(t=>(
-                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                              </button>
-                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                              </button>
-                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                            </div>
-                          ))}
-                          {tasksHoy.length>5 && (
-                            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
-                              +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más — ver contador arriba
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                </div>
-              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — movida arriba, justo después de
-                  Acciones Rápidas: es el trabajo operativo real (qué lote está en qué fase),
-                  no debe quedar por debajo de tarjetas de navegación como Espacios de Trabajo.
-                  kanban de lotes activos agrupado
-                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
-                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
-                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
-                  en la Bitácora, así que no hay lote que ubicar ahí. */}
+              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
                 borderRadius:'var(--r-md)',
-                padding:'28px',
+                padding:'24px',
                 boxShadow:'var(--shadow-card-rest)'
               }}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
@@ -8242,7 +8197,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
                     {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
                     {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
-                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'catalogo'}
                   ];
                   const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
                     const stats = calcLoteStats(lote.id);
@@ -8254,10 +8209,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
                     return {lote,stats,columna,age};
                   });
-                  const descartados = bitLotes.length-clasificados.length;
                   return (
                     <div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:14}}>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:14}}>
                         {columnas.map(col=>{
                           const items = clasificados.filter(c=>c.columna===col.key);
                           return (
@@ -8338,9 +8292,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
               </div>
-              </div>
 
-              {/* SECCIÓN C: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
+              {/* SECCIÓN C: AMBIENTES & SENSORES — Tira compacta de cámaras */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
@@ -8351,105 +8304,56 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Cámaras de Cultivo
                     </h2>
                   </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● {camaras.length} {camaras.length===1?'cámara monitoreada':'cámaras monitoreadas'}</span>
+                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>
+                    Ver Cámaras & IoT ({camaras.length}) →
+                  </button>
                 </div>
 
-                {/* 3 columnas fijas (3 cámaras reales), responsive: 2 columnas <960px, 1 columna <640px */}
                 {camaras.length===0 ? (
-                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'20px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'16px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                     Sin datos de cámaras disponibles.
                   </div>
                 ) : (
-                <div className="home-salas-grid">
-                  {camaras.map(c=>{
-                    const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
-                    return (
-                    <div
-                      key={c.id}
-                      style={{
-                        background:'var(--paper-0)',
-                        border:'1px solid var(--border-soft)',
-                        borderTop:`3px solid ${c.estadoAccent||'var(--ink-500)'}`,
-                        borderRadius:'var(--r-md)',
-                        padding:'20px',
-                        display:'flex',
-                        flexDirection:'column',
-                        justifyContent:'space-between',
-                        gap:16,
-                        boxShadow:'var(--shadow-card-rest)'
-                      }}
-                    >
-                      <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <div style={{display:'flex',alignItems:'center',gap:7}}>
-                            <span style={{display:'inline-flex',flexShrink:0,color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={14}/></span>
-                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                              {c.name}
+                  <div className="home-ambient-strip">
+                    {camaras.map(c=>(
+                      <div key={c.id} className="ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-500)'}`}}>
+                        <div style={{minWidth:0,flex:1}}>
+                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                            <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={13}/></span>
+                            <strong style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:'var(--ink-900)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</strong>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase'}}>
+                              {c.estadoLabel}
+                            </span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>
+                            Zona {c.zona} · {c.sppName} · {c.occupancy}% cap.
+                          </div>
+                          {c.hasLiveAlert && (
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-700)',marginTop:2,fontWeight:700}}>
+                              ⚠ {c.liveAlertNote}
                             </div>
-                          </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                            {c.estadoLabel}
-                          </span>
-                        </div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
-                          Zona {c.zona} · {c.sppName}
+                          )}
                         </div>
 
-                        {/* Indicadores climáticos en vivo */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveTemp}°C</div>
+                        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                          <div style={{display:'flex',gap:6,textAlign:'center',fontFamily:'var(--font-mono)'}}>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveTemp}°C
+                            </span>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveHum}%
+                            </span>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveCo2} <span style={{fontSize:'var(--text-micro)',color:'var(--ink-500)'}}>ppm</span>
+                            </span>
                           </div>
-                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveHum}%</div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveCo2} <span style={{fontSize:'var(--text-micro)'}}>ppm</span></div>
-                          </div>
+                          <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-400)',display:'grid',placeItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--coral-600)'}}>→</span>
+                          </button>
                         </div>
-                        {c.hasLiveAlert && (
-                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--coral-700)',marginTop:8}}>{c.liveAlertNote}</div>
-                        )}
                       </div>
-
-                      {/* Footer con ocupación real (contenedores activos / capacidad kg) */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                        <span>Ocupación / Carga:</span>
-                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{c.occupancy}% <span style={{fontWeight:400,color:'var(--ink-500)'}}>· {c.capKg} kg cap.</span></b>
-                      </div>
-
-                      {/* Gráfica de tendencia real (temp/hum/CO₂) — mismos datos y mismo lenguaje
-                          visual que el módulo Cámaras: trazo 2px redondeado, punto "ahora", leyenda. */}
-                      {hasSpark && (
-                        <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:12}}>
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Tendencia</span>
-                            <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
-                              <IconCamera size={11}/> Ver detalle →
-                            </button>
-                          </div>
-                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
-                            <polyline points={c.tempSpark} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={c.humSpark} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={c.co2Spark} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx={280} cy={c.tempSparkEndY} r="3" fill="var(--coral-500)"/>
-                            <circle cx={280} cy={c.humSparkEndY} r="3" fill="var(--slate-500)"/>
-                            <circle cx={280} cy={c.co2SparkEndY} r="3" fill="var(--moss-500)"/>
-                          </svg>
-                          <div style={{display:'flex',gap:10,marginTop:6}}>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--coral-500)',display:'inline-block'}}/>Temp.</span>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--slate-500)',display:'inline-block'}}/>Humedad</span>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--moss-500)',display:'inline-block'}}/>CO₂</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -8494,27 +8398,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           );
         })()}
-        {tab==='catalogo'&&(
+        {tab==='catalogo'&&(()=>{
+          // Catálogo de especies + Recetario fusionados en una sola vista (2026-09).
+          // La clave de unión es `sKey`: cada receta guardada pertenece a una especie,
+          // así que la especie seleccionada en la rejilla es también el filtro del
+          // recetario, y `dashFilter==='all'` muestra el recetario completo.
+          const recipesBySpp={};
+          saved.forEach(e=>{(recipesBySpp[e.sKey]=recipesBySpp[e.sKey]||[]).push(e);});
+          const focusKey=dashFilter==='all'?null:dashFilter;
+          const focusSpp=focusKey?SPP[focusKey]:null;
+          const shown=[...(focusKey?(recipesBySpp[focusKey]||[]):saved)].sort((a,b)=>(parseFloat(b.eb)||0)-(parseFloat(a.eb)||0));
+          // La rejilla es alta: al elegir una especie desde una tarjeta hay que
+          // llevar al operador hasta el recetario filtrado, o el clic parece no
+          // hacer nada. Desde los chips (ya dentro de la sección) no se desplaza.
+          const pickSpecies=(k,scroll)=>{
+            setSKey(k);setDashFilter(k);
+            if(!scroll) return;
+            try{
+              const el=document.getElementById('recetario-panel');
+              if(!el) return;
+              const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+            }catch(e){}
+          };
+          return(
           <div className="spp-sect spp-sect-catalog">
             <div className="catalog-hdr">
               <div>
                 <span className="catalog-eyebrow">Receta</span>
-                <h1 className="catalog-title">Catálogo de especies</h1>
+                <h1 className="catalog-title">Catálogo de especies &amp; Recetario</h1>
               </div>
-
+              <div className="catalog-hdr-stats">
+                <span><b>{Object.keys(SPP).length}</b> especies</span>
+                <span aria-hidden="true">·</span>
+                <span><b>{saved.length}</b> receta{saved.length!==1?'s':''} guardada{saved.length!==1?'s':''}</span>
+              </div>
             </div>
             <div className="spp-grid">
               {Object.entries(SPP).map(([k,d],idx)=>{
                 const hasImg=!!IMG[k];
                 const isOn=sKey===k;
                 const num=String(idx+1).padStart(2,'0');
+                const nRec=(recipesBySpp[k]||[]).length;
                 return(
-                  <button key={k} className={`spp-card${(isOn&&hasPickedSpecies)?' on':''}`} aria-pressed={isOn&&hasPickedSpecies} onClick={()=>{setSKey(k);setCatalogModalOpen(true);}}>
+                  <button key={k} className={`spp-card${(isOn&&hasPickedSpecies)?' on':''}${dashFilter===k?' is-filtering':''}`} aria-pressed={isOn&&hasPickedSpecies} onClick={()=>pickSpecies(k,true)}>
                     <div style={{position:'relative',display:'flex',flexDirection:'column',flex:1,overflow:'hidden',borderRadius:'var(--r-xs)'}}>
                     <div className="p-family-strip"><span>{SPP_FAMILY[k]||''}</span></div>
                     <div className="p-arch-head">
                       <div className="p-arch-left"><span className="p-arch-num">{num}</span><span className="p-arch-code">{SPP_CODE[k]}</span></div>
-                      <span className="p-activa">Activa</span>
+                      <span className={`p-rec-badge${nRec===0?' is-empty':''}`} aria-label={`${nRec} receta${nRec===1?'':'s'} guardada${nRec===1?'':'s'}`}><b>{nRec}</b><span aria-hidden="true">rec</span></span>
                     </div>
                     {hasImg
                       ?<div className="p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
@@ -8541,6 +8473,186 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 );
               })}
             </div>
+
+            {/* ---- RECETARIO: recetas guardadas de la especie seleccionada ---- */}
+            <section className="recetario-sect" id="recetario-panel" aria-labelledby="recetario-title">
+              <div className="recetario-hdr">
+                <div>
+                  <span className="catalog-eyebrow">Recetario</span>
+                  <h2 className="recetario-title" id="recetario-title">
+                    {focusSpp?`Recetas de ${focusSpp.name}`:'Todas las recetas guardadas'}
+                    <span className="recetario-count">{shown.length}</span>
+                  </h2>
+                </div>
+                {focusSpp&&(
+                  <div className="recetario-hdr-actions">
+                    <button type="button" className="recetario-act" onClick={()=>{setSKey(focusKey);setCatalogModalOpen(true);}}>Ver ficha completa →</button>
+                    <button type="button" className="recetario-act is-primary" onClick={()=>{setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular con {focusSpp.name}</button>
+                  </div>
+                )}
+              </div>
+
+              {saved.length > 0 && (() => {
+                const costs = saved.map(e => {
+                  const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
+                  const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
+                  const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
+                  const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
+                    const tr2 = a2 ? calcTreatment(a2, e.sKey, SPP) : null;
+                    const col = tr2?.col || (['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                    return energyCostPerKgSeco(col, e.sKey);
+                  })();
+                  return costIngKg + eDash;
+                }).filter(c => c > 0);
+                const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
+                const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
+                const avgCycleDays = sch?.totDays || 45;
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="recetario-filters" role="group" aria-label="Filtrar recetas por especie">
+                {['all',...Object.keys(SPP)].map(k=>{
+                  const n=k==='all'?saved.length:(recipesBySpp[k]||[]).length;
+                  return(
+                    <button key={k} className={`cat${dashFilter===k?' on':''}`} aria-pressed={dashFilter===k} onClick={()=>{k==='all'?setDashFilter('all'):pickSpecies(k,false);}}>
+                      {k==='all'?'Todas':SPP[k]?.name}<span className="cat-n">{n}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {focusSpp&&(
+                <div className="recetario-ficha">
+                  {IMG[focusKey]&&<div className="recetario-ficha-img"><img src={IMG[focusKey]} alt={focusSpp.name} width="200" height="150" loading="lazy" decoding="async"/></div>}
+                  <div className="recetario-ficha-body">
+                    <div className="recetario-ficha-sci">{focusSpp.scientific}</div>
+                    <p className="recetario-ficha-note">{focusSpp.notes.split('.')[0]+'.'}</p>
+                    <div className="recetario-ficha-params">
+                      {[
+                        {l:'Temp',v:focusSpp.temp_fruit},
+                        {l:'HR',v:SPP_HR[focusKey]},
+                        {l:'C:N',v:`${focusSpp.cn_optimal.min}–${focusSpp.cn_optimal.max}`},
+                        {l:'pH',v:`${focusSpp.ph_optimal.min}–${focusSpp.ph_optimal.max}`},
+                        {l:'EB',v:`${focusSpp.eb_baseline}–${focusSpp.eb_optimal}%`},
+                        {l:'Dificultad',v:SPP_DIFFICULTY[focusKey]||'Media'},
+                      ].map(x=>(
+                        <div key={x.l} className="recetario-ficha-param"><span>{x.l}</span><b>{x.v}</b></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {saved.length===0
+                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
+                :shown.length===0
+                ?<div className="rec-empty"><div className="rec-empty-hed">Sin recetas para {focusSpp?focusSpp.name:'esta especie'}.</div><div className="rec-empty-sub">Formula una mezcla para esta especie y guárdala para verla aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>{if(focusKey)setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular ahora</button></div>
+                :(
+                    <div className="dash-grid">
+                      {shown.map(e=>{
+                        const s2=SPP[e.sKey];
+                        const band=BANDS[e.sKey]||'var(--ink-700)';
+                        const eb=parseFloat(e.eb)||0;
+                        const sc=liveScoreFor(e);
+                        // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
+                        const needsA2=!(e.cost>0)||e.energyCopKg==null;
+                        const a2=needsA2?analyze(e.recipe,e.sKey,effectiveINGS):null;
+                        const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
+                        // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
+                        const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
+                          const tr2=a2?calcTreatment(a2, e.sKey, SPP):null;
+                          const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                          return energyCostPerKgSeco(col,e.sKey);
+                        })();
+                        const costKg=costIngKg+eDash;
+                        const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
+                        return(
+                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
+                            <div className="dash-card-top">
+                              <div className="dash-card-name">{e.name}</div>
+                              <div className="dash-card-spp">{s2?.name} · {e.date}</div>
+                            </div>
+                            <div className="dash-card-body">
+                              <div className="dash-kv">
+                                <span className="dk">EB estimada</span>
+                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{e.eb}%</span>
+                              </div>
+                              {sc>0&&<div className="dash-kv">
+                                <span className="dk">Score</span>
+                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
+                              </div>}
+                              <div className="dash-kv">
+                                <span className="dk">C:N</span>
+                                <span className="dv">{e.cn}:1</span>
+                              </div>
+                              <div className="dash-kv">
+                                <span className="dk">Ingredientes</span>
+                                <span className="dv">{e.recipe.length}</span>
+                              </div>
+                              {costKg>0&&(
+                                <div className="dash-kv">
+                                  <span className="dk">Costo total/kg</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                </div>
+                              )}
+                            </div>
+                            {costKg>0&&(
+                              <div style={{display:'flex',gap:0,borderTop:'1px solid var(--paper-300)'}}>
+                                {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
+                                  <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
+                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
+                              <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
+                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
+                              </div>
+                            </div>
+                            <div className="dash-card-foot" style={{display:'flex',gap:6}}>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
+                              <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
+                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+              }
+            </section>
+
             {catalogModalOpen&&sp&&(()=>{
               const det=SPP_DETAILS[sKey]||{};
               const IcoAp=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><circle cx="6" cy="5" r="3"/><path d="M2 10c0-2 1.5-3 4-3s4 1 4 3"/></svg>;
@@ -8632,7 +8744,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
-        )}
+          );
+        })()}
 
         {tab==='formular'&&(
           <div className="formular-mode-wrapper">
@@ -9439,6 +9552,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
+                          <span aria-hidden="true">🤖</span> Asistente IA (Gemini)
+                        </button>
                         {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
@@ -9488,14 +9604,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── PERITO: INDICADORES + ITEMS ── */}
                   {hasPer&&(
                     <>
-                      {/* ── barra resumen live: score + EB + costo ── */}
+                      {/* ── barra resumen live: score + EB + costo seco + costo hongo (Funcionalidad 2) ── */}
                       <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
                         {[
                           {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
                           {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                          {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                          {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
                         ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
+                          <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
                             <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
                             <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
@@ -10289,30 +10406,292 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='schedule'&&(
+        {tab===schTab&&(
           <div className="panel panel-accent">
-            <div className="schctrl">
-              <div className="schctl"><label htmlFor="sch-date">Fecha de inoculación</label><input id="sch-date" type="date" value={schDate} onChange={e=>setSchDate(e.target.value)}/></div>
-              <div className="schctl"><label htmlFor="sch-key">Especie</label><select id="sch-key" value={schKey} onChange={e=>setSchKey(e.target.value)}>{Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</select></div>
-              {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
+            {/* Subtab navigation */}
+            <div style={{display:'flex',gap:6,borderBottom:'1.5px solid var(--border-soft)',paddingBottom:10,marginBottom:16}}>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('cronograma')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='cronograma'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='cronograma'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='cronograma'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                📅 Cronograma & Cinética
+              </button>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('forecast')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='forecast'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='forecast'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='forecast'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                🍄 Pronóstico de Cosecha & Oleadas
+              </button>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('b2b')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='b2b'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='b2b'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='b2b'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                🤝 Matriz B2B & Cobertura
+              </button>
             </div>
-            {sch&&(<>
-              <div className="schsum">
-                <div className="ssc"><div className="ssv">{sch.inc} días</div><div className="ssl">Incubación</div></div>
-                <div className="ssc"><div className="ssv" style={{fontSize:20,fontWeight:400,paddingTop:5}}>{sch.first}</div><div className="ssl">Primera cosecha</div></div>
-                <div className="ssc"><div className="ssv">{sch.tot} días</div><div className="ssl">Ciclo completo</div></div>
-              </div>
-              <div className="tl">
-                {sch.evts.map(e=>(
-                  <div key={e.key} className={`tle ${e.type}`}>
-                    <div className="tle-dt">Día {e.day} · {e.ds}</div>
-                    <div className="tle-t">{e.title}</div>
-                    <div className="tle-d">{e.detail}</div>
+
+            {/* Subtab 1: Cronograma con Cinética Térmica Tenjo */}
+            {schSubTab==='cronograma'&&(
+              <div>
+                <div className="schctrl">
+                  <div className="schctl"><label htmlFor="sch-date">Fecha de inoculación</label><input id="sch-date" type="date" value={schDate} onChange={e=>setSchDate(e.target.value)}/></div>
+                  <div className="schctl"><label htmlFor="sch-key">Especie</label><select id="sch-key" value={schKey} onChange={e=>setSchKey(e.target.value)}>{Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</select></div>
+                  <div className="schctl">
+                    <label htmlFor="sch-temp">Temp. Incubación (°C)</label>
+                    <div style={{display:'flex',gap:4}}>
+                      <input id="sch-temp" type="number" min="8" max="32" step="1" value={schTemp} onChange={e=>setSchTemp(parseFloat(e.target.value)||16)} style={{width:65}}/>
+                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
+                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
+                    </div>
                   </div>
-                ))}
+                  {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
+                </div>
+
+                {/* Badge cinético térmico Q10 */}
+                {sch&&(
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700,#9B2C2C)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                    <span>🌡️ <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
+                    {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
+                  </div>
+                )}
+
+                {sch&&(<>
+                  <div className="schsum">
+                    <div className="ssc"><div className="ssv">{sch.inc} días</div><div className="ssl">Incubación {sch.thermalDelayPct>20?`(+${sch.thermalDelayPct}% Tenjo)`:''}</div></div>
+                    <div className="ssc"><div className="ssv" style={{fontSize:20,fontWeight:400,paddingTop:5}}>{sch.first}</div><div className="ssl">Primera cosecha (1ª Oleada {sch.f1Pct}%)</div></div>
+                    <div className="ssc"><div className="ssv">{sch.tot} días</div><div className="ssl">Ciclo completo (3 Oleadas)</div></div>
+                  </div>
+                  <div className="tl">
+                    {sch.evts.map(e=>(
+                      <div key={e.key} className={`tle ${e.type}`}>
+                        <div className="tle-dt">Día {e.day} · {e.ds}</div>
+                        <div className="tle-t">{e.title}</div>
+                        <div className="tle-d">{e.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="lnote">Tiempos calibrados para Tenjo, Cundinamarca (2.600 m.s.n.m., ambiente sin calefacción: 14–16°C vs cámara 22–24°C). Ajustados por cinética Arrhenius Q10 y EB estimada.</div>
+                </>)}
               </div>
-              <div className="lnote">Tiempos para Tenjo, Cundinamarca (2600 m.s.n.m., 12–18°C ambiente). Ajustados por EB estimada de la receta activa.</div>
-            </>)}
+            )}
+
+            {/* Subtab 2: Pronóstico de Cosecha & Oleadas */}
+            {schSubTab==='forecast'&&(()=>{
+              const curEb = an?.eb || 90;
+              const proj = calculateLotFlushProjection({
+                bags: fcBags,
+                kgPerBag: fcKgBag,
+                moisture: fcMoisture,
+                sKey: schKey,
+                eb: curEb,
+                ambientTemp: schTemp
+              });
+              const dryMixCost = an?.cost || 1200;
+              const costPerFreshKg = curEb > 0 ? (dryMixCost / (curEb / 100)) : 0;
+              const sowReq = (typeof calculateSowingRequirement === 'function')
+                ? calculateSowingRequirement(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })
+                : null;
+
+              return(
+                <div>
+                  <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700,marginBottom:12}}>
+                    Calculadora de Producción por Oleada (Balance de Materia Seca Estricto)
+                  </div>
+                  <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:16,padding:12,background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Número de bolsas</label>
+                      <input type="number" min="1" max="10000" value={fcBags} onChange={e=>setFcBags(parseInt(e.target.value,10)||1)} style={{width:90,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Peso húmedo / bolsa (kg)</label>
+                      <input type="number" min="0.5" max="10" step="0.1" value={fcKgBag} onChange={e=>setFcKgBag(parseFloat(e.target.value)||1.5)} style={{width:90,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Humedad sustrato (%)</label>
+                      <input type="number" min="40" max="85" step="1" value={fcMoisture} onChange={e=>setFcMoisture(parseFloat(e.target.value)||65)} style={{width:80,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Especie</label>
+                      <select value={schKey} onChange={e=>setSchKey(e.target.value)} style={{padding:'5px 8px'}}>
+                        {Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4,justifyContent:'flex-end'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>
+                        EB objetivo: <b>{curEb.toFixed(0)}%</b> · Materia seca/bolsa: <b>{(fcKgBag * (1 - fcMoisture / 100)).toFixed(2)} kg</b>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Resultados del lote */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:16}}>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Sustrato Total</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{(fcBags * fcKgBag).toFixed(1)} <span style={{fontSize:14}}>kg húmedo</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>{proj.totalDryKg} kg materia seca (base real de EB)</div>
+                    </div>
+                    <div style={{padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--moss-800)',textTransform:'uppercase',fontWeight:700}}>Cosecha Total Proyectada</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--moss-800)',marginTop:4}}>{proj.totalKg} <span style={{fontSize:14}}>kg fresco</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginTop:2}}>~{(proj.totalKg / fcBags).toFixed(2)} kg fresco / bolsa</div>
+                    </div>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Costo Sustrato / kg Hongo</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--coral-600)',marginTop:4}}>${Math.round(costPerFreshKg).toLocaleString('es-CO')} <span style={{fontSize:12}}>COP/kg</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>Mezcla seca: ${Math.round(dryMixCost).toLocaleString('es-CO')}/kg ÷ ({curEb.toFixed(0)}% EB)</div>
+                    </div>
+                  </div>
+
+                  {/* Desglose de oleadas */}
+                  <div style={{marginBottom:18}}>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginBottom:8}}>Desglose de Oleadas (Matriz Biológica Específica)</div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(184,97,77,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--coral-500)',fontSize:"var(--text-sm)"}}>1ª Oleada (Fl. 1)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--coral-500)',marginTop:4}}>{proj.flush1.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush1.pct * 100)}% de la cosecha</div>
+                      </div>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--accent-olive)',fontSize:"var(--text-sm)"}}>2ª Oleada (Fl. 2)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--accent-olive)',marginTop:4}}>{proj.flush2.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush2.pct * 100)}% de la cosecha</div>
+                      </div>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500,#A07828)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--ochre-500,#A07828)',fontSize:"var(--text-sm)"}}>3ª Oleada (Fl. 3)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--ochre-500,#A07828)',marginTop:4}}>{proj.flush3.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush3.pct * 100)}% de la cosecha</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculadora Inversa: Requerimiento de Siembra */}
+                  <div style={{padding:14,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontWeight:700,marginBottom:6}}>Recomendación de Siembra para Déficit Comercial</div>
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:8}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Meta de cosecha requerida (kg):</label>
+                      <input type="number" min="1" max="5000" value={fcDeficitTarget} onChange={e=>setFcDeficitTarget(parseFloat(e.target.value)||25)} style={{width:90,padding:'4px 8px'}}/>
+                    </div>
+                    {sowReq&&(
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                        💡 <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Subtab 3: Matriz B2B & Cobertura */}
+            {schSubTab==='b2b'&&(()=>{
+              const curEb = an?.eb || 90;
+              const currentLotProj = calculateLotFlushProjection({
+                bags: fcBags,
+                kgPerBag: fcKgBag,
+                moisture: fcMoisture,
+                sKey: schKey,
+                eb: curEb
+              });
+              const coverage = matchWeeklyCoverage(currentLotProj, b2bCommitments);
+              const statusIcon = coverage.superavit > 0 ? superavit : coverage.deficit > 0 ? deficit : cobertura;
+
+              return(
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700}}>
+                      Matriz B2B: Oferta Semanal Proyectada vs Compromisos Comerciales
+                    </div>
+                    <div style={{padding:'6px 12px',borderRadius:'var(--r-sm)',background:'var(--paper-100)',border:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
+                      Estado general: {statusIcon} <b>{coverage.cobertura}% de cobertura</b>
+                    </div>
+                  </div>
+
+                  {/* Resumen numérico */}
+                  <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Cosecha Disponible Proyectada</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalProyectado} kg</div>
+                    </div>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Compromisos B2B Restaurantes</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalComprometido} kg</div>
+                    </div>
+                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'rgba(197,48,48,.08)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',textTransform:'uppercase',fontWeight:700}}>
+                        {coverage.superavit>0?'Superávit Comercial':'Déficit Comercial'}
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',marginTop:4}}>
+                        {coverage.superavit>0?`+${coverage.superavit} kg`:`-${coverage.deficit} kg`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabla de pedidos B2B */}
+                  <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:16}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>
+                      <thead>
+                        <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
+                          <th style={{padding:'8px 12px'}}>Semana</th>
+                          <th style={{padding:'8px 12px'}}>Cliente B2B</th>
+                          <th style={{padding:'8px 12px'}}>Especie</th>
+                          <th style={{padding:'8px 12px',textAlign:'right'}}>Compromiso</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {b2bCommitments.map((c,i)=>(
+                          <tr key={i} style={{borderBottom:i<b2bCommitments.length-1?'1px solid var(--border-soft)':'none'}}>
+                            <td style={{padding:'8px 12px',fontWeight:700}}>{c.semana}</td>
+                            <td style={{padding:'8px 12px'}}>{c.cliente}</td>
+                            <td style={{padding:'8px 12px'}}>{SPP[c.speciesKey]?.name || c.speciesKey}</td>
+                            <td style={{padding:'8px 12px',textAlign:'right',fontWeight:700}}>{c.kgComprometidos} kg</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Alerta de siembra en caso de déficit */}
+                  {coverage.deficit>0&&(
+                    <div style={{padding:14,background:'rgba(197,48,48,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700,#9B2C2C)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
+                        <span>{deficit}</span> Déficit comercial proyectado: {coverage.deficit} kg de hongo fresco
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)'}}>
+                        <b>Acción requerida:</b> {sowingRecommendation(coverage.deficit, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                      </div>
+                    </div>
+                  )}
+                  {coverage.superavit>0&&(
+                    <div style={{padding:12,background:'rgba(77,98,53,.08)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-800)'}}>
+                      <span>{superavit}</span> Cobertura plena ({coverage.cobertura}%). Cuentas con {coverage.superavit} kg de superávit para nuevos clientes o venta directa en granja Tenjo.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -10690,107 +11069,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='inventario'&&BodegaSection()}
-
-        {tab==='dashboard'&&(
-          <div>
-            <div className="panel">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)'}}>{saved.length} receta{saved.length!==1?'s':''}</span>
-                <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                  {['all',...Object.keys(SPP)].map(k=>(
-                    <button key={k} className={`cat${dashFilter===k?' on':''}`} onClick={()=>setDashFilter(k)}>
-                      {k==='all'?'Todas':SPP[k]?.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {saved.length===0
-                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
-                :(()=>{
-                  const filtered=saved.filter(e=>dashFilter==='all'||e.sKey===dashFilter);
-                  if(!filtered.length) return <div className="sempty">Sin recetas para esta especie.</div>;
-                  const sorted=[...filtered].sort((a,b)=>(parseFloat(b.eb)||0)-(parseFloat(a.eb)||0));
-                  return(
-                    <div className="dash-grid">
-                      {sorted.map(e=>{
-                        const s2=SPP[e.sKey];
-                        const band=BANDS[e.sKey]||'var(--ink-700)';
-                        const eb=parseFloat(e.eb)||0;
-                        const sc=liveScoreFor(e);
-                        // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
-                        const needsA2=!(e.cost>0)||e.energyCopKg==null;
-                        const a2=needsA2?analyze(e.recipe,e.sKey,effectiveINGS):null;
-                        const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
-                        // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
-                        const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
-                          const tr2=a2?calcTreatment(a2, e.sKey, SPP):null;
-                          const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
-                          return energyCostPerKgSeco(col,e.sKey);
-                        })();
-                        const costKg=costIngKg+eDash;
-                        const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
-                        return(
-                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
-                            <div className="dash-card-top">
-                              <div className="dash-card-name">{e.name}</div>
-                              <div className="dash-card-spp">{s2?.name} · {e.date}</div>
-                            </div>
-                            <div className="dash-card-body">
-                              <div className="dash-kv">
-                                <span className="dk">EB estimada</span>
-                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{e.eb}%</span>
-                              </div>
-                              {sc>0&&<div className="dash-kv">
-                                <span className="dk">Score</span>
-                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
-                              </div>}
-                              <div className="dash-kv">
-                                <span className="dk">C:N</span>
-                                <span className="dv">{e.cn}:1</span>
-                              </div>
-                              <div className="dash-kv">
-                                <span className="dk">Ingredientes</span>
-                                <span className="dv">{e.recipe.length}</span>
-                              </div>
-                              {costKg>0&&(
-                                <div className="dash-kv">
-                                  <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
-                                </div>
-                              )}
-                            </div>
-                            {costKg>0&&(
-                              <div style={{display:'flex',gap:0,borderTop:'1px solid var(--paper-300)'}}>
-                                {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
-                                  <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
-                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
-                              <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
-                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
-                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
-                              </div>
-                            </div>
-                            <div className="dash-card-foot" style={{display:'flex',gap:6}}>
-                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
-                              <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()
-              }
-            </div>
-          </div>
-        )}
 
         {tab==='clima'&&<ClimateDashboardSection/>}
 
@@ -11880,6 +12158,598 @@ interval:
           );
         })()}
 
+        {/* Modal: Simulador Cinético de Autoclave All American (Altitud Tenjo) */}
+        {showAutoclaveModal && (() => {
+          const cycle = typeof engineValidateAutoclaveCycle === 'function'
+            ? engineValidateAutoclaveCycle({
+                holdTimeMin: autoclaveHoldMin,
+                gaugePressurePsi: autoclaveGaugePsi,
+                bagKg: autoclaveBagKg,
+                moisturePct: autoclaveMoisturePct,
+                ambientPressureKpa: 74.5,
+              })
+            : { f0Total: 15, isSterile: true, verdict: 'ESTERILIZACIÓN ADECUADA', riskLevel: 'seguro', steamTemp: 121.1, peakCoreTemp: 118, logReductionStearothermophilus: 8, recommendations: [] };
+
+          const comp15 = typeof engineCalcTimeCompFactorAt15Psi === 'function'
+            ? engineCalcTimeCompFactorAt15Psi(74.5)
+            : { factor: 2.84, tempAt15Psi: 116.57, lethalityLossPct: 64.8, requiredHoldMinFor60MinEquivalent: 170 };
+
+          return (
+            <AccessibleModal
+              onClose={() => setShowAutoclaveModal(false)}
+              label="Simulador Cinético de Autoclave All American 1941X · Altitud Tenjo"
+              dialogStyle={{ width: 'min(780px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-terracotta, #C46238)' }}>
+                    Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
+                    🔥 Cinética de Autoclave & Integral F₀ de Esterilización
+                  </h2>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
+                    Punto de ebullición local: 91.6°C · Presión requerida: 19.04 psig para vapor a 121.11°C
+                  </div>
+                </div>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar simulador de autoclave" onClick={() => setShowAutoclaveModal(false)}>✕</button>
+              </div>
+
+              {/* Controles de Parámetros del Ciclo */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Presión Manómetro (psig)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="10"
+                    max="22"
+                    value={autoclaveGaugePsi}
+                    onChange={(e) => setAutoclaveGaugePsi(parseFloat(e.target.value) || 0)}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                  />
+                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Tenjo requiere 19.04 psi</span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Tiempo Meseta (min)
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    min="20"
+                    max="240"
+                    value={autoclaveHoldMin}
+                    onChange={(e) => setAutoclaveHoldMin(parseInt(e.target.value, 10) || 0)}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                  />
+                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>90–120 min según bolsa</span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Peso de Bolsa (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1.0"
+                    max="4.0"
+                    value={autoclaveBagKg}
+                    onChange={(e) => setAutoclaveBagKg(parseFloat(e.target.value) || 2.0)}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                  />
+                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Inercia térmica de núcleo</span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Humedad Sustrato (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="50"
+                    max="75"
+                    value={autoclaveMoisturePct}
+                    onChange={(e) => setAutoclaveMoisturePct(parseInt(e.target.value, 10) || 65)}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                  />
+                  <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Transferencia por vapor</span>
+                </div>
+              </div>
+
+              {/* Botones de Presets */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-sec"
+                  style={{ fontSize: 11, padding: '4px 10px' }}
+                  onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(120); setAutoclaveBagKg(2.0); }}
+                >
+                  ✓ Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)
+                </button>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-sec"
+                  style={{ fontSize: 11, padding: '4px 10px' }}
+                  onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(90); setAutoclaveBagKg(1.5); }}
+                >
+                  ✓ Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)
+                </button>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-sec"
+                  style={{ fontSize: 11, padding: '4px 10px', borderColor: 'var(--accent-terracotta)', color: 'var(--accent-terracotta)' }}
+                  onClick={() => { setAutoclaveGaugePsi(15.0); setAutoclaveHoldMin(60); setAutoclaveBagKg(2.0); }}
+                >
+                  ⚠ Simular Error Nivel del Mar (15 PSI sin corrección)
+                </button>
+              </div>
+
+              {/* Veredicto y Status */}
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-sm)',
+                background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
+                border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? '#D97706' : 'var(--accent-terracotta)'}`,
+                color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? '#92400E' : 'var(--accent-rust)',
+                marginBottom: 16
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+                    {cycle.badge} {cycle.verdict}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+                    F₀ Acumulado: {cycle.f0Total} min (Target: {cycle.targetF0} min)
+                  </span>
+                </div>
+              </div>
+
+              {/* Grid de Métricas Térmicas */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 16 }}>
+                <div className="climate-kpi-card" style={{ padding: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Vapor Saturado</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                    {cycle.steamTemp}°C
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>P. abs: {((autoclaveGaugePsi * 6.895) + 74.5).toFixed(1)} kPa</div>
+                </div>
+
+                <div className="climate-kpi-card" style={{ padding: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Pico Núcleo</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                    {cycle.peakCoreTemp}°C
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Cold spot tras inercia Ball</div>
+                </div>
+
+                <div className="climate-kpi-card" style={{ padding: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción G. stearo.</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                    {cycle.logReductionStearothermophilus} D
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)</div>
+                </div>
+
+                <div className="climate-kpi-card" style={{ padding: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción B. subtilis</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                    {cycle.logReductionSubtilis} D
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Previene sour rot bacteriano</div>
+                </div>
+              </div>
+
+              {/* Alerta de Desviación Barométrica a 15 PSI */}
+              <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
+                  ⚖ Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
+                  A 2.600 msnm, un manómetro marcando <strong>15.0 psi</strong> solo genera <strong>{comp15.tempAt15Psi}°C</strong> reales. Esto causa una <strong>pérdida del {comp15.lethalityLossPct}%</strong> en la tasa de destrucción de endosporas, requiriendo <strong>{comp15.factor}x más tiempo ({comp15.requiredHoldMinFor60MinEquivalent} min)</strong> para igualar 60 min a 121°C. Calibrar siempre a 19.04 psi manométricos.
+                </div>
+              </div>
+
+              {/* Recomendaciones Operativas */}
+              {cycle.recommendations.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Recomendaciones Agronómicas:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
+                    {cycle.recommendations.map((rec, idx) => (
+                      <li key={idx} style={{ marginBottom: 3 }}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
+                <button type="button" onClick={() => setShowAutoclaveModal(false)} className="inv-btn inv-btn-pri" style={{ minHeight: 38, padding: '6px 16px' }}>
+                  Entendido / Cerrar Simulador
+                </button>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {/* Modal: Matriz de Co-Cultivo e Intersección Climática */}
+        {showCoCultivationModal && (() => {
+          const allProfiles = SPECIES_CLIMATE_PROFILES || {};
+          const speciesList = Object.keys(allProfiles);
+
+          const toggleSpecies = (key) => {
+            setCoCultSelectedSpecies((prev) => {
+              if (prev.includes(key)) {
+                if (prev.length <= 1) return prev; // mínimo una especie
+                return prev.filter((k) => k !== key);
+              }
+              return [...prev, key];
+            });
+          };
+
+          const opt = typeof engineOptimizeChamberSetpoints === 'function'
+            ? engineOptimizeChamberSetpoints(coCultSelectedSpecies)
+            : null;
+
+          return (
+            <AccessibleModal
+              onClose={() => setShowCoCultivationModal(false)}
+              label="Matriz de Co-Cultivo e Intersección Climática · Cámara Multiespecie"
+              dialogStyle={{ width: 'min(820px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                    Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
+                    🌿 Optimizador de Co-Cultivo y Setpoints Pareto
+                  </h2>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
+                    Determina la compatibilidad simultánea en la misma carpa y calcula los setpoints Minimax óptimos
+                  </div>
+                </div>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar optimizador de co-cultivo" onClick={() => setShowCoCultivationModal(false)}>✕</button>
+              </div>
+
+              {/* Selector de Especies para la Carpa */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
+                  Selecciona las especies que compartirán el cuarto / carpa:
+                </label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {speciesList.map((k) => {
+                    const sp = allProfiles[k];
+                    const isSelected = coCultSelectedSpecies.includes(k);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => toggleSpecies(k)}
+                        className={`inv-btn ${isSelected ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                        style={{
+                          fontSize: 11,
+                          padding: '5px 10px',
+                          borderRadius: 20,
+                          background: isSelected ? 'var(--accent-olive, #5B6B44)' : 'var(--paper-1)',
+                          borderColor: isSelected ? 'var(--accent-olive, #5B6B44)' : 'var(--line-0)',
+                          color: isSelected ? '#FFFFFF' : 'var(--ink-0)',
+                        }}
+                      >
+                        {isSelected ? '✓ ' : '+ '}{sp.name.split(' (')[0]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Veredicto de Compatibilidad Grupal */}
+              {opt && (
+                <>
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? '#D97706' : 'var(--accent-terracotta)'}`,
+                    color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? '#92400E' : 'var(--accent-rust)',
+                    marginBottom: 16
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>
+                        {opt.badge} {opt.verdict}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700 }}>
+                        Score de Co-Cultivo: {opt.groupScore}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Setpoints Minimax Pareto Recomendados */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 8 }}>
+                      🎯 Setpoints de Compromiso Minimax para la Carpa:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
+                      <div className="climate-kpi-card" style={{ padding: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temperatura Óptima</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {opt.setpoints.tempC}°C
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.temperatura || 100}%</div>
+                      </div>
+
+                      <div className="climate-kpi-card" style={{ padding: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Humedad Relativa</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {opt.setpoints.rhPct}%
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.humedad || 100}%</div>
+                      </div>
+
+                      <div className="climate-kpi-card" style={{ padding: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>CO₂ Máximo (Ppm)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {opt.setpoints.co2Ppm}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.co2 || 100}%</div>
+                      </div>
+
+                      <div className="climate-kpi-card" style={{ padding: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Iluminación (Lux)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {opt.setpoints.lux} lx
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.luz || 100}%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cuellos de Botella y Alertas Biológicas */}
+                  {(opt.bottlenecks?.length > 0 || opt.biologicalAlerts?.length > 0) && (
+                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent-terracotta)', marginBottom: 6 }}>
+                        ⚠ Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
+                        {opt.bottlenecks?.map((b, idx) => (
+                          <li key={`btn-${idx}`} style={{ marginBottom: 3, fontWeight: 600 }}>{b}</li>
+                        ))}
+                        {opt.biologicalAlerts?.map((a, idx) => (
+                          <li key={`bio-${idx}`} style={{ marginBottom: 3 }}>{a}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
+                <button type="button" onClick={() => setShowCoCultivationModal(false)} className="inv-btn inv-btn-pri" style={{ minHeight: 38, padding: '6px 16px' }}>
+                  Cerrar Optimizador
+                </button>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {/* Modal: Fisiología Poscosecha & Cadena de Frío */}
+        {showPostHarvestModal && (() => {
+          const allPostProfiles = SPECIES_POSTHARVEST_PROFILES || {};
+          const spKeys = Object.keys(allPostProfiles);
+
+          const slResult = typeof enginePredictShelfLife === 'function'
+            ? enginePredictShelfLife(postHarvestSelectedSpecies, postHarvestTemp, postHarvestRh, { isPackaged: postHarvestPackaged })
+            : null;
+
+          const resp = typeof engineCalcPostHarvestRespiration === 'function'
+            ? engineCalcPostHarvestRespiration(postHarvestSelectedSpecies, postHarvestTemp, postHarvestBatchKg)
+            : null;
+
+          return (
+            <AccessibleModal
+              onClose={() => setShowPostHarvestModal(false)}
+              label="Fisiología Poscosecha y Cadena de Frío · Shelf-Life Predictor"
+              dialogStyle={{ width: 'min(800px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1D4ED8' }}>
+                    Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
+                    ❄ Fisiología Poscosecha & Degradación en Cadena de Frío
+                  </h2>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
+                    Predicción de vida útil, pérdida de peso por transpiración cuticular y empaque MAP microperforado
+                  </div>
+                </div>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar poscosecha" onClick={() => setShowPostHarvestModal(false)}>✕</button>
+              </div>
+
+              {/* Controles de Entrada */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Especie Cosechada:
+                  </label>
+                  <select
+                    value={postHarvestSelectedSpecies}
+                    onChange={(e) => setPostHarvestSelectedSpecies(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-sans)', fontSize: 12 }}
+                  >
+                    {spKeys.map((k) => (
+                      <option key={k} value={k}>{allPostProfiles[k].name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Temp. Almacenamiento (°C): {postHarvestTemp}°C
+                  </label>
+                  <input
+                    type="range"
+                    min="2"
+                    max="22"
+                    step="0.5"
+                    value={postHarvestTemp}
+                    onChange={(e) => setPostHarvestTemp(parseFloat(e.target.value))}
+                    style={{ width: '100%' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
+                    <span>2°C Frío</span>
+                    <span>10°C Nevera</span>
+                    <span>18°C Sabana</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Humedad Almacén (%): {postHarvestRh}%
+                  </label>
+                  <input
+                    type="range"
+                    min="65"
+                    max="98"
+                    step="1"
+                    value={postHarvestRh}
+                    onChange={(e) => setPostHarvestRh(parseInt(e.target.value, 10))}
+                    style={{ width: '100%' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)' }}>
+                    <span>70% Seco</span>
+                    <span>90% Óptimo</span>
+                    <span>98% Saturado</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
+                    Masa Lote (kg) / Empaque:
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      step="5"
+                      min="1"
+                      max="500"
+                      value={postHarvestBatchKg}
+                      onChange={(e) => setPostHarvestBatchKg(parseFloat(e.target.value) || 1)}
+                      style={{ width: 80, padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                    />
+                    <label style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={postHarvestPackaged}
+                        onChange={(e) => setPostHarvestPackaged(e.target.checked)}
+                      />
+                      BOPP Microperf.
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resultados de Vida Útil */}
+              {slResult && (
+                <>
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? '#D97706' : 'var(--accent-terracotta)'}`,
+                    color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? '#92400E' : 'var(--accent-rust)',
+                    marginBottom: 16
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700 }}>
+                          {slResult.statusBadge} Vida Útil Comercial Estimada: <strong>{slResult.marketableShelfLifeDays} días</strong>
+                        </span>
+                        <div style={{ fontSize: 11, marginTop: 2 }}>
+                          Factor limitante: <strong>{slResult.limitingFactor.replace(/_/g, ' ')}</strong>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                        <div>Transpiración: {slResult.transpiration.weightLossPctPerDay}% peso/día</div>
+                        <div>VPD almacén: {slResult.transpiration.storageVpdKpa} kPa</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comparativa 3 Escenarios Térmicos */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 6 }}>
+                      📊 Vida Útil según Régimen Térmico:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                      <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--moss-100)', borderColor: 'var(--moss-600)' }}>
+                        <div style={{ fontSize: 11, color: 'var(--moss-800)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Cuarto Frío (4°C)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
+                          {slResult.scenariosComparison.cuartoFrio_4C} días
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--moss-800)' }}>Baseline de cadena ideal</div>
+                      </div>
+
+                      <div className="climate-kpi-card" style={{ padding: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Nevera (10°C)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {slResult.scenariosComparison.neveraDomestica_10C} días
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Refrigeración doméstica</div>
+                      </div>
+
+                      <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--accent-terracotta-dim)', borderColor: 'var(--accent-terracotta)' }}>
+                        <div style={{ fontSize: 11, color: 'var(--accent-rust)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Ambiente Sabana (18°C)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
+                          {slResult.scenariosComparison.ambienteSabana_18C} días
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--accent-rust)' }}>Pérdida: -{slResult.scenariosComparison.lossRatioAmbienteVsFrio}% vida</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Respiración & Calor Vital */}
+                  {resp && (
+                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
+                        ⚡ Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5, flexWrap: 'wrap', gap: 10 }}>
+                        <span>Tasa respiratoria: <strong>{resp.respirationMgKgH} mg CO₂/kg·h</strong> ({resp.accelerationFactor}x vs 4°C)</span>
+                        <span>Calor vital emitido: <strong>{resp.totalVitalHeatWatts} Watts</strong> ({resp.vitalHeatWattsPerKg} W/kg)</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Especificación de Empaque MAP */}
+                  <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#1D4ED8', marginBottom: 4 }}>
+                      📦 Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
+                      <strong>Material:</strong> {slResult.packagingRecommendation.type} · <strong>OTR Objetivo:</strong> {slResult.packagingRecommendation.targetOtr} · <strong>Aditivo:</strong> Anti-fog obligatorio.
+                      <div style={{ marginTop: 4, color: 'var(--ink-2)', fontSize: 11 }}>
+                        {slResult.packagingRecommendation.guidance}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
+                <button type="button" onClick={() => setShowPostHarvestModal(false)} className="inv-btn inv-btn-pri" style={{ minHeight: 38, padding: '6px 16px' }}>
+                  Cerrar Poscosecha
+                </button>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
         {showDiagModal && (() => {
           const currentLote = bitLotes.find(l => l.id === diagLoteId) || bitLotes[0];
           const bolsasDelLote = currentLote ? bitBolsas.filter(b => b.loteId === currentLote.id) : [];
@@ -12148,6 +13018,168 @@ interval:
                           fontWeight:600
                         }}
                         onClick={()=>setShowDiagModal(false)}
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {showAIFormModal && (() => {
+          const handleRunAISuggestions = async () => {
+            setAiFormLoading(true);
+            setAiFormError('');
+            setAiFormResult(null);
+            try {
+              if (window.SetasAI && typeof window.SetasAI.suggestFormulationAdjustments === 'function') {
+                const res = await window.SetasAI.suggestFormulationAdjustments({
+                  currentRecipe: recipe,
+                  analysis: { cn: an?.cn, n: an?.n, be: blendedEB || an?.be, cost: realCostPerKg || an?.cost, risk: an?.trichoderma ? 'critico' : 'normal' },
+                  targetKey: sKey,
+                  anomalyOrGoal: aiFormGoal,
+                  speciesName: sp?.name || sKey,
+                  knownIngredients: effectiveINGS
+                });
+                setAiFormResult(res);
+              } else {
+                throw new Error('Servicio de IA no activo en este navegador.');
+              }
+            } catch (err) {
+              setAiFormError(err?.message || 'Error al comunicarse con la IA de Perito.');
+            } finally {
+              setAiFormLoading(false);
+            }
+          };
+
+          const handleApplyAISuggestions = () => {
+            setShowAIFormModal(false);
+            openBuilderSubTab('generador');
+            if (aiFormResult?.meta_cn_sugerida) {
+              setNoticeDlg({
+                title: '🤖 Recomendación IA de Perito Registrada',
+                msg: `Meta sugerida de C:N: ${aiFormResult.meta_cn_sugerida}. ${aiFormResult.ajuste_suplementacion || ''}`
+              });
+            }
+          };
+
+          return (
+            <div className="inv-modal-bg" style={{zIndex:99999}} onClick={()=>setShowAIFormModal(false)}>
+              <div className="os-diag-modal" data-testid="ai-formulation-advisor-modal" style={{maxWidth:620}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--moss-700)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                      Perito Asistente Gemini · Setas OS
+                    </div>
+                    <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
+                      🤖 Asistente IA de Formulaciones y Diagnóstico Agronómico
+                    </h2>
+                  </div>
+                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal">×</button>
+                </div>
+
+                <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
+                    <b>Estado actual:</b> {sp?.name || sKey} · C:N {an?.cn?.toFixed(1) || '--'} · N {an?.n?.toFixed(2) || '--'}% · EB {((blendedEB || an?.be) || 0).toFixed(0)}%
+                  </div>
+                  <label style={{display:'block',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-0)',fontWeight:600,marginTop:8,marginBottom:4}}>
+                    ¿Cuál es el objetivo o problema observacional en la granja? (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. Elevar C:N a 28, reducir costo por kg, o evitar Trichoderma en Orellana"
+                    value={aiFormGoal}
+                    onChange={e=>setAiFormGoal(e.target.value)}
+                    style={{width:'100%',padding:'8px 10px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                  />
+                </div>
+
+                {!aiFormResult && (
+                  <button
+                    type="button"
+                    disabled={aiFormLoading}
+                    onClick={handleRunAISuggestions}
+                    style={{
+                      width:'100%',
+                      minHeight:42,
+                      background:aiFormLoading?'var(--ink-500)':'var(--moss-700)',
+                      color:'#fff',
+                      border:'none',
+                      borderRadius:'var(--radius-sm)',
+                      fontFamily:'var(--font-sans)',
+                      fontSize:13,
+                      fontWeight:700,
+                      cursor:aiFormLoading?'not-allowed':'pointer'
+                    }}
+                  >
+                    {aiFormLoading ? '⏳ Generando dictamen con Gemini...' : '🤖 Analizar Fórmula & Proponer Ajustes'}
+                  </button>
+                )}
+
+                {aiFormError && (
+                  <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
+                    ⚠️ {aiFormError}
+                  </div>
+                )}
+
+                {aiFormResult && (
+                  <div style={{marginTop:12}}>
+                    <div style={{padding:'12px',background:'rgba(56,89,51,.06)',border:'1px solid rgba(56,89,51,.2)',borderRadius:'var(--radius-sm)',marginBottom:12}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',color:'var(--moss-700)',fontWeight:700,marginBottom:4}}>
+                        Dictamen Agronómico Gemini (Confianza: {(aiFormResult.confianza||'alta').toUpperCase()})
+                      </div>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--ink-0)',lineHeight:1.4,marginBottom:8}}>
+                        {aiFormResult.diagnostico_agronomico}
+                      </div>
+                      {aiFormResult.meta_cn_sugerida && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--moss-700)',fontWeight:700}}>
+                          🎯 Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
+                        </div>
+                      )}
+                      {aiFormResult.ajuste_suplementacion && (
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:4}}>
+                          💡 <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{display:'flex',gap:8}}>
+                      <button
+                        type="button"
+                        onClick={handleApplyAISuggestions}
+                        style={{
+                          flex:1,
+                          minHeight:42,
+                          background:'var(--moss-700)',
+                          color:'#fff',
+                          border:'none',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:700,
+                          cursor:'pointer'
+                        }}
+                      >
+                        ✦ Abrir Generador de Escenarios Perito con este Dictamen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={()=>setShowAIFormModal(false)}
+                        style={{
+                          minHeight:42,
+                          padding:'0 14px',
+                          background:'var(--paper-1)',
+                          color:'var(--ink-0)',
+                          border:'1px solid var(--border-hairline)',
+                          borderRadius:'var(--radius-sm)',
+                          fontFamily:'var(--font-sans)',
+                          fontSize:12,
+                          fontWeight:600,
+                          cursor:'pointer'
+                        }}
                       >
                         Cerrar
                       </button>

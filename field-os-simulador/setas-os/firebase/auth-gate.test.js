@@ -254,6 +254,41 @@ test('auth state gates the protected runtime and publishes a mount signal', () =
   assert.match(app, /return isAuthenticated\?<SimuladorShell \{\.\.\.props\}\/>:null/, 'el simulador no debe montar antes de autenticar');
 });
 
+test('el login estático llega antes de Firebase y el runtime .dc queda íntegramente detrás de Auth', () => {
+  const src = read('auth-gate.js');
+  const shell = read('../Setas OS v5.dc.html');
+  const xdc = shell.indexOf('<x-dc>');
+  const preAuthDocument = shell.slice(0, xdc);
+
+  assert.ok(xdc > 0, 'el shell debe conservar su template .dc');
+  assert.match(preAuthDocument, /<title>Setas OS v5 — Setas de la Peña<\/title>/, 'el documento de login conserva título nativo');
+  assert.match(preAuthDocument, /<meta name="description" content="Cuaderno de campo/, 'el documento de login conserva descripción SEO');
+  assert.match(preAuthDocument, /id="setas-auth-gate" data-setas-auth-prebuilt="true"/, 'el formulario de acceso debe existir antes de que cargue Firebase');
+  assert.match(preAuthDocument, /id="setas-auth-form"/);
+  assert.match(preAuthDocument, /id="setas-auth-email"/);
+  assert.match(preAuthDocument, /id="setas-auth-password"/);
+  assert.match(preAuthDocument, /id="setas-auth-submit"/);
+  assert.match(preAuthDocument, /html\[data-setas-auth-state="pending"\] x-dc/);
+  assert.doesNotMatch(preAuthDocument, /vendor\/react\.production\.min\.js/, 'React no debe descargarse en el login');
+  assert.doesNotMatch(preAuthDocument, /vendor\/react-dom\.production\.min\.js/, 'ReactDOM no debe descargarse en el login');
+  assert.doesNotMatch(preAuthDocument, /<script src="\.\/support\.js"><\/script>/, 'DCLogic no debe arrancar en el login');
+
+  assert.match(shell, /data-auth-rel="stylesheet" data-auth-href="sim\.css"/, 'la hoja operativa se debe declarar para restaurarse tras Auth');
+  assert.match(src, /const AUTH_RUNTIME_SCRIPTS = \[[\s\S]*react\.production\.min\.js[\s\S]*react-dom\.production\.min\.js/);
+  assert.match(src, /const DC_RUNTIME_SCRIPTS = \[[\s\S]*navigation-state\.js[\s\S]*setas-os-workflow\.js[\s\S]*support\.js/);
+  assert.match(src, /function syncAuthDocumentResources\(authenticated\)/);
+  assert.match(src, /function setAuthDocumentResources\(authenticated\)/);
+  assert.match(src, /new MutationObserver\(\(\) => syncAuthDocumentResources\(true\)\)/, 'una actualización tardía del template .dc debe restaurar sus recursos');
+  assert.ok(
+    src.indexOf('node.setAttribute("href", node.dataset.authHref)') < src.indexOf('node.setAttribute("rel", node.dataset.authRel)'),
+    'href debe establecerse antes de rel para no crear un preload transitoriamente inválido',
+  );
+  assert.ok(
+    src.indexOf('await import("../simulador-app.js")') < src.indexOf('await loadDcRuntime()'),
+    'el runtime .dc debe llegar después de datos, motores y SimuladorApp',
+  );
+});
+
 test('los servicios Firestore solo se importan después de confirmar Auth', () => {
   const src = read('auth-gate.js');
   const shell = read('../Setas OS v5.dc.html');
@@ -287,6 +322,7 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     '../scoring.js',
     '../bitacora-model.js',
     '../climate-math.js',
+    '../flush-forecast-engine.js',
     '../historical-calibration.js',
     '../recipe-optimizer.js',
     '../perito-scenarios.js',
@@ -299,7 +335,7 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     src.indexOf('await loadProtectedApplicationScripts()') < src.indexOf('await import("../simulador-app.js")'),
     'el bundle React debe esperar sus globals de producción'
   );
-  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
+  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'flush-forecast-engine.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
     .forEach((script) => assert.doesNotMatch(shell, new RegExp(`<script src="${script.replace('.', '\\.')}"></script>`), `${script} no debe descargar antes del login`));
 });
 
@@ -317,4 +353,24 @@ test('module auto-initializes on DOM ready', () => {
 test('Setas OS v5.dc.html loads auth-gate.js as module', () => {
   const shell = read('../Setas OS v5.dc.html');
   assert.match(shell, /<script[^>]*type="module"[^>]*src="firebase\/auth-gate\.js"/, 'Setas OS v5 debe cargar auth-gate como módulo');
+});
+
+test('all scripts in PROTECTED_APP_SCRIPTS, DC_RUNTIME_SCRIPTS, and AUTH_RUNTIME_SCRIPTS physically exist on disk', () => {
+  const src = read('auth-gate.js');
+  const extract = (name) => {
+    const match = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`));
+    assert.ok(match, `debe definir ${name}`);
+    return match[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  };
+
+  const allScripts = [
+    ...extract('PROTECTED_APP_SCRIPTS'),
+    ...extract('DC_RUNTIME_SCRIPTS'),
+    ...extract('AUTH_RUNTIME_SCRIPTS'),
+  ];
+
+  for (const scriptPath of allScripts) {
+    const resolved = path.resolve(ROOT, scriptPath);
+    assert.ok(fs.existsSync(resolved), `El script "${scriptPath}" debe existir en disco (${resolved})`);
+  }
 });

@@ -3,11 +3,12 @@ title: Spawn en Grano — Producción y Uso
 document_id: DOC-0017
 category: spawn
 load_priority: selective
-last_reviewed: 2026-06-30
+last_reviewed: 2026-09-03
 confidence: high
 primary_sources:
   - Stamets 2000
   - Cotter 2014
+  - Gaitán-Hernández et al. 2014 (paper_023)
   - Zied & Pardo-Giménez 2017
 related_documents:
   - agar.md
@@ -16,6 +17,7 @@ related_documents:
   - batch_tracking.md
   - 02_substrates/sterilization.md
   - laboratory_roadmap.md
+  - ../09_research/active_research_knowledge.md
 ---
 
 # Architectural Context
@@ -88,6 +90,7 @@ Delaying internal grain spawn production until laboratory maturity is establishe
 - Inoculation rate typically 10–20% by dry weight; higher rate accelerates colonization (reduced contamination window).
 - Spawn viability and purity directly determine production success; sourcing discipline is critical quality control measure.
 - Every spawn batch should be traceable to documented source strain and carrier inoculum.
+- **Interacción Cepa × Formulación del Spawn (Gaitán-Hernández et al. 2014 — paper_023; ARK-006):** La formulación de la matriz del inóculo (tipo de grano, aditivos proteicos o preadaptación a lignocelulosa) y la identidad genética de la cepa interactúan fuertemente. Una formulación de spawn enriquecida puede acelerar drásticamente una cepa mientras que apenas impacta a otra. Nunca asumir generalizaciones universales sobre matrices de spawn sin registrar la cepa específica en `batch_tracking.md`.
 
 # Technical Details
 
@@ -217,6 +220,7 @@ See batch_tracking.md for production batch documentation.
 # References
 
 - SETAS_DE_LA_PENA_CANON.md, Sections 5–6 (Laboratory Philosophy, Production Philosophy)
+- Gaitán-Hernández, R., Cortés-Pérez, L. A., & Mata, G. (2014). Improvement of yield of the edible and medicinal mushroom *Lentinula edodes* on wheat straw by using supplemented spawn. *Annals of Forest Science*, 71(8), 917–927. [paper_023]
 - laboratory_roadmap.md
 - batch_tracking.md
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press. pp. 115–148.

@@ -1,3 +1,12 @@
+---
+title: Asset Físico — Marranera Finca Santa Isabel (Tenjo)
+document_id: DOC-0117
+category: facility
+load_priority: selective
+last_reviewed: 2026-09-03
+confidence: high
+---
+
 # ASSET: MARRANERA — CENTRO DE CULTIVO SETAS DE LA PEÑA
 
 **Tags:** `PHYSICAL_ASSET · MARRANERA · FINCA_SANTA_ISABEL · VERIFIED · Jun2026`

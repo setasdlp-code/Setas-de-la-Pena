@@ -1,3 +1,12 @@
+---
+title: Análisis de Completitud — Guía de Adecuación de Espacios
+document_id: DOC-0120
+category: project
+load_priority: on_request
+last_reviewed: 2026-09-03
+confidence: high
+---
+
 # Análisis de Completitud: Compilación de Adecuación de Espacios para Cultivos de Setas
 
 **Fecha:** 2026-07-23  

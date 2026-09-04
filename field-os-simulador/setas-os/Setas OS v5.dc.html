@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f6f4ec">
+<title>Setas OS v5 — Setas de la Peña</title>
+<meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script src="./error-buffer.js"></script>
-<script src="./vendor/react.production.min.js"></script>
-<script src="./vendor/react-dom.production.min.js"></script>
-<script src="./support.js"></script>
 <style>
   /*
    * Firebase resolves after the .dc runtime parses this document. Keep
@@ -18,39 +18,51 @@
     content-visibility: hidden;
     contain-intrinsic-size: 1px 1px;
   }
+  html[data-setas-auth-state="pending"] x-dc,
+  html[data-setas-auth-state="unauthenticated"] x-dc { display:none !important; }
 </style>
 </head>
 <body>
+  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper-1,#efebe0);contain:strict;">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
+        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
+        <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
+        <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink-2,#6b6759);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
+        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--ink-2,#6b6759);">Conectando…</div>
+        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Correo</label>
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Contraseña</label>
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error,#c53030);font-size:12px;font-family:var(--font-mono,monospace);"></div>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-sm,2px);font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+      </div>
+    </form>
+  </div>
 <x-dc>
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#4a5d3a"></rect><text x="40" y="34" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="800" font-size="16" fill="#f5f1e8">SO</text></svg></template>
 <helmet>
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
-<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
-<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
-<link rel="stylesheet" href="fieldos-tokens.css">
-<script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
-<script src="qr-mini.js"></script>
-<script src="bridge-protocol.js"></script>
-<script src="navigation-state.js"></script>
-<script src="setas-os-workflow.js"></script>
-<link rel="stylesheet" href="sim.css">
+<link data-auth-managed="true" data-auth-rel="icon" type="image/svg+xml" data-auth-href="favicon.svg">
+<link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.googleapis.com">
+<link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.gstatic.com" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="fieldos-tokens.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="sim.css">
 <script type="module" src="firebase/auth-gate.js"></script>
 <!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida inicializa
-     firebase-init.js, error-monitor.js, db.js y bitacora-sync.js, y luego
-     carga los motores de formulación; el login no descarga el runtime
-     operativo. -->
+     datos, motores, React y el runtime .dc en ese orden; el login no descarga
+     ni evalúa el workspace operativo. -->
 <meta name="ext-resource-dependency" content="climate-bench.html" data-resource-id="climaBenchHtml">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-rosa.png" data-resource-id="imgOrellanaRosa">
 <meta name="ext-resource-dependency" content="_standalone_imgs/orellana-blanca.png" data-resource-id="imgOrellanaBlanca">
@@ -148,6 +160,21 @@
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
   .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
+  /* Modo guantes: el interruptor va fijado (sticky) al borde izquierdo del
+     subnav para que no se desplace fuera de alcance cuando la fila de pestañas
+     scrollea. Era la única función pensada para este contexto y no tenía
+     ningún control en pantalla. */
+  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s; }
+  .gloves-toggle:hover { color:var(--ink-1); background:var(--paper-2); }
+  .gloves-toggle.on:hover { background:var(--accent-olive); color:var(--paper-0); }
+  .gloves-toggle svg { width:20px; height:20px; flex-shrink:0; }
+  .gloves-toggle.on { background:var(--accent-olive); color:var(--paper-0); }
+  .gloves-toggle:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
+  .workspace-more-panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:4px; padding:8px 26px 10px; background:var(--paper-1); border-bottom:1px solid var(--border-soft); }
+  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s; overflow-wrap:break-word; }
+  .workspace-more-item:hover { background:var(--paper-2); color:var(--ink-0); border-color:var(--border-strong); }
+  .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
+  .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
     .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
     .rail-flyout-title { display:none; }
@@ -188,6 +215,11 @@
     .app-main { margin-left:0; padding-bottom:62px; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     .workspace-tab { min-height:44px; padding:8px 10px; }
+    /* En móvil el interruptor de guantes es solo icono: conserva 48px de área
+       táctil sin robar ancho a las pestañas en 390px. */
+    .gloves-toggle-txt { display:none; }
+    .gloves-toggle { min-width:48px; padding:8px; justify-content:center; }
+    .workspace-more-panel { grid-template-columns:1fr 1fr; padding:8px 10px 10px; }
 
     /* El botón flotante de cerrar sesión (firebase/auth-gate.js) ya no tiene
        alternativa en móvil desde que el picker de operador (que llevaba
@@ -280,19 +312,30 @@
     <span data-testid="breadcrumb" class="sr-only" aria-live="polite">{{ crumb }}</span>
 
     <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
+      <button class="gloves-toggle {{ glovesCls }}" onClick="{{ toggleGloves }}" aria-pressed="{{ glovesPressed }}" aria-label="{{ glovesLabel }}" title="{{ glovesLabel }}" data-testid="gloves-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M15 11V6.5a1.5 1.5 0 0 1 3 0V13"></path><path d="M9 11V9.5a1.5 1.5 0 0 0-3 0V14a7 7 0 0 0 7 7h1a5 5 0 0 0 5-5v-3"></path></svg>
+        <span class="gloves-toggle-txt">Guantes</span>
+      </button>
       <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
         <button class="workspace-tab {{ t.cls }}" onClick="{{ t.go }}" role="tab" aria-selected="{{ t.on }}" tabindex="{{ t.tabIndex }}">{{ t.label }}</button>
       </sc-for>
       <sc-if value="{{ hasWorkspaceMore }}" hint-placeholder-val="{{ false }}">
         <span class="workspace-more-sep" aria-hidden="true"></span>
-        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}">Más</button>
-        <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
-          <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
-            <button class="workspace-tab secondary {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
-          </sc-for>
-        </sc-if>
+        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}" aria-haspopup="true" aria-controls="workspace-more-panel">Más</button>
       </sc-if>
     </nav>
+    <!-- "Más": panel en flujo normal, fuera del scroller horizontal del subnav.
+         Antes los botones se inyectaban dentro del propio .workspace-subnav
+         (overflow-x:auto con la barra de scroll oculta), así que en 390px
+         aterrizaban fuera de pantalla y el toque no producía ningún cambio
+         visible. Aquí no pueden quedar recortados. -->
+    <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="workspace-more-panel" id="workspace-more-panel" role="group" aria-label="Más secciones">
+        <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
+          <button class="workspace-more-item {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
 
     <!-- =================== SESIÓN (Field OS) =================== -->
     <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
@@ -880,17 +923,7 @@
                   <span style="font-family:var(--font-mono);font-size:15px;color:{{ cm.liveAccent }};">{{ cm.liveCo2 }} ppm CO₂</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);align-self:center;">{{ cm.liveStatusLabel }}</span>
                 </div>
-                <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ cm.sparkTrendLabel }}" style="width:100%;height:44px;overflow:visible;">
-                  <polyline points="{{ cm.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <polyline points="{{ cm.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <polyline points="{{ cm.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <circle cx="280" cy="{{ cm.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <circle cx="280" cy="{{ cm.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <circle cx="280" cy="{{ cm.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
-                  <sc-for list="{{ cm.sparkPoints }}" as="sp" hint-placeholder-count="6">
-                    <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
-                  </sc-for>
-                </svg>
+                <x-import component-from-global-scope="SetasClimateSparkline" temp-points="{{ cm.tempSpark }}" hum-points="{{ cm.humSpark }}" co2-points="{{ cm.co2Spark }}" temp-end-y="{{ cm.tempSparkEndY }}" hum-end-y="{{ cm.humSparkEndY }}" co2-end-y="{{ cm.co2SparkEndY }}" spark-points="{{ cm.sparkPoints }}" trend-label="{{ cm.sparkTrendLabel }}" chart-height="44" margin-top="0" hint-size="100%,44px"></x-import>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temp. <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveTemp }}°</b></span>
                   <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ cm.liveHum }}%</b></span>
@@ -962,17 +995,7 @@
               <span style="font-family:var(--font-mono);font-size:20px;color:{{ camDetail.liveAccent }};">{{ camDetail.liveCo2 }} ppm CO₂</span>
               <span style="font:var(--t-caption);color:var(--text-metadata);">{{ camDetail.liveStatusLabel }}</span>
             </div>
-            <svg viewBox="0 0 280 56" preserveAspectRatio="none" role="img" aria-label="{{ camDetail.sparkTrendLabel }}" style="width:100%;height:90px;overflow:visible;margin-top:10px;">
-              <polyline points="{{ camDetail.tempSpark }}" fill="none" stroke="var(--accent-terracotta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <polyline points="{{ camDetail.humSpark }}" fill="none" stroke="var(--accent-blue-grey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <polyline points="{{ camDetail.co2Spark }}" fill="none" stroke="var(--accent-olive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              <circle cx="280" cy="{{ camDetail.tempSparkEndY }}" r="4" fill="var(--accent-terracotta)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <circle cx="280" cy="{{ camDetail.humSparkEndY }}" r="4" fill="var(--accent-blue-grey)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <circle cx="280" cy="{{ camDetail.co2SparkEndY }}" r="4" fill="var(--accent-olive)" stroke="var(--paper-0)" stroke-width="2"></circle>
-              <sc-for list="{{ camDetail.sparkPoints }}" as="sp" hint-placeholder-count="6">
-                <rect x="{{ sp.xStart }}" y="0" width="20" height="56" fill="transparent" style="cursor:crosshair;"><title>Hace {{ sp.hoursAgo }} h — {{ sp.temp }}°C · {{ sp.hum }}% HR · {{ sp.co2 }} ppm CO₂</title></rect>
-              </sc-for>
-            </svg>
+            <x-import component-from-global-scope="SetasClimateSparkline" temp-points="{{ camDetail.tempSpark }}" hum-points="{{ camDetail.humSpark }}" co2-points="{{ camDetail.co2Spark }}" temp-end-y="{{ camDetail.tempSparkEndY }}" hum-end-y="{{ camDetail.humSparkEndY }}" co2-end-y="{{ camDetail.co2SparkEndY }}" spark-points="{{ camDetail.sparkPoints }}" trend-label="{{ camDetail.sparkTrendLabel }}" chart-height="90" margin-top="10" hint-size="100%,90px"></x-import>
             <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-terracotta);display:inline-block;"></span>Temperatura <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveTemp }}°C</b></span>
               <span style="display:flex;align-items:center;gap:4px;font:var(--t-caption);color:var(--text-metadata);"><span style="width:10px;height:2px;background:var(--accent-blue-grey);display:inline-block;"></span>Humedad <b style="font-family:var(--font-mono);font-weight:600;color:var(--ink-1);">{{ camDetail.liveHum }}%</b></span>
@@ -2342,7 +2365,7 @@ class Component extends DCLogic {
       const route=navigation
         ?navigation.readLocation(window.location)
         :{view:new URLSearchParams(window.location.search).get('view')||'home'};
-      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
+      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
       if(!allowed.includes(route.view)) return;
       this.setState(s=>({module:'sim',simTab:route.view,simTabNonce:s.simTabNonce+1}));
     }catch(e){}
@@ -2372,7 +2395,7 @@ class Component extends DCLogic {
   }
   componentDidUpdate(pp, ps){
     if(!ps) return;
-    const k=['containers','ledger','seq','salidas','yields','operator','operatorKey'];
+    const k=['containers','ledger','seq','salidas','yields','operator','operatorKey','gloves'];
     if(k.some(x=>ps[x]!==this.state[x])) this.persist();
     const wasOpen = this.dialogIsOpen(ps);
     const isOpen = this.dialogIsOpen(this.state);
@@ -2393,7 +2416,7 @@ class Component extends DCLogic {
   persist(){
     try {
       const s=this.state;
-      localStorage.setItem('setas_os_state', JSON.stringify({ containers:s.containers, ledger:s.ledger, seq:s.seq, salidas:s.salidas, yields:s.yields, operator:s.operator, operatorKey:s.operatorKey }));
+      localStorage.setItem('setas_os_state', JSON.stringify({ containers:s.containers, ledger:s.ledger, seq:s.seq, salidas:s.salidas, yields:s.yields, operator:s.operator, operatorKey:s.operatorKey, gloves:s.gloves }));
     } catch(e){}
   }
   loadPersisted(){
@@ -3128,7 +3151,7 @@ class Component extends DCLogic {
     const escalatedList = climateAlertList.filter(a=>a.escalated);
     const lowStockRows = INVENTORY_ROWS.filter(r=>r.status==='Reponer');
     const mkTabs = pairs => gated(pairs).map(([m,label])=>({ label, on:s.module===m, style:tabStyle(s.module===m), go:()=>this.setState(Object.assign({module:m,capture:false}, m==='camaras'?{camDetail:null,climaBadge:0}:{})) }));
-    const FORMULAR_SIM_TABS = ['catalogo','formular','dashboard'];
+    const FORMULAR_SIM_TABS = ['catalogo','formular'];
     const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
     const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
     const activeWorkspace = s.module==='sim'
@@ -3149,9 +3172,8 @@ class Component extends DCLogic {
     const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
     let workspaceTabs = [];
     if(activeWorkspace==='formular') workspaceTabs = [
-      contextTab('Catálogo',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
+      contextTab('Catálogo & Recetario',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
       contextTab('Formular',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
-      contextTab('Recetario',s.module==='sim'&&s.simTab==='dashboard',()=>this.goSimTab('dashboard')),
     ];
     if(activeWorkspace==='produccion') workspaceTabs = [
       ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
@@ -3204,7 +3226,7 @@ class Component extends DCLogic {
       curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
       curRevision:s.module==='revision'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
-      navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
+      navRecetarioCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navCatalogoCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curCatalogo:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navFichaCls:(s.module==='sim'&&s.simTab==='produccion')?'on':'', curFicha:(s.module==='sim'&&s.simTab==='produccion')?'page':undefined,
       navBitacoraCls:(s.module==='sim'&&s.simTab==='bitacora')?'on':'', curBitacora:(s.module==='sim'&&s.simTab==='bitacora')?'page':undefined,
@@ -3236,7 +3258,7 @@ class Component extends DCLogic {
       goSimCatalogo:()=>this.goSimTab('catalogo'),
       goSimFormular:()=>this.goSimTab('formular'),
       goSimBitacora:()=>this.goSimTab('bitacora'),
-      goSimDashboard:()=>this.goSimTab('dashboard'),
+      goSimDashboard:()=>this.goSimTab('catalogo'),
       goSimInventario:()=>this.goSimTab('inventario'),
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
@@ -3290,7 +3312,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3736,8 +3758,8 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
+    const SIM_CRUMB = { catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
+    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
       revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
@@ -3749,7 +3771,7 @@ class Component extends DCLogic {
       dashForecast, hasDashForecast:dashForecast.length>0,
       occAvg, occAvgW:occAvg+'%', dashKg7:kg7.toFixed(1)+' kg',
       shellCls: s.gloves?'gloves':'',
-      gloves:s.gloves, glovesLabel:s.gloves?'Modo guantes activo':'Modo guantes',
+      gloves:s.gloves, glovesLabel:s.gloves?'Modo guantes activo':'Modo guantes', glovesCls:s.gloves?'on':'', glovesPressed:s.gloves?'true':'false',
       toggleGloves:()=>this.setState(st=>({gloves:!st.gloves})),
       crumb: crumbMap[s.module]||'Field OS',
       // búsqueda global

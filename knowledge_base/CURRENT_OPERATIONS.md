@@ -3,8 +3,8 @@ title: Estado Operacional Actual — Setas de la Peña
 document_id: DOC-0051
 category: meta
 load_priority: always
-last_updated: 2026-08-03
-last_reviewed: 2026-08-03
+last_updated: 2026-09-03
+last_reviewed: 2026-09-03
 ---
 
 # CURRENT_OPERATIONS
@@ -18,27 +18,35 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 
 ## FASE ACTUAL
 
-**Fase del proyecto:** Pre-producción — Hardware en tránsito / Banco de pruebas
-**Fecha de inicio producción estimada:** Sin fecha; condicionada a spawn de shiitake, receta de sustrato y validación del ciclo de autoclave
-**Lotes activos:** 0
+**Fase del proyecto:** Pre-producción — Equipamiento en sitio en Tenjo / Banco de pruebas y comisionamiento
+**Fecha de inicio producción estimada:** Condicionada a validación de ciclo de autoclave All American 1941X, aprobación de formulación de sustrato y adquisición de spawn de shiitake trazable con clase térmica identificada.
+**Lotes activos:** 0 (Material biológico en refrigeración: ~2.0 kg P. djamor, ~2.0 kg H. erinaceus, ~2.0 kg P. ostreatus mantenidos a 2–4 °C para ensayos preliminares de cámara).
 
 ---
 
-## HARDWARE — ESTADO HOY
+## HARDWARE — ESTADO HOY (Inventario Físico en Tenjo)
 
-| Ítem | Estado | Ubicación |
-|---|---|---|
-| Martha Tent (prototipado) | Operacional | Tenjo |
-| VIVOSUN H05 humidificador | Operacional (sensor HR descartado) | Tenjo |
-| Inkbird IBS-TH2 Plus | Operacional — sensor de referencia | Tenjo |
-| CLOUDLAB 844 grow tent | **En tránsito** (Amazon) | — |
-| AC Infinity T7 fan controller | **En tránsito** (Amazon) | — |
-| ESP32-WROOM-32 ×3 | **En tránsito** (Amazon) | — |
-| Sensirion SCD30 ×2 | **En tránsito** (Amazon) | — |
-| Sensirion SHT3x ×2 (sonda AC Infinity) | **En tránsito** (Amazon) | — |
-| TICONN IP67 enclosure ×2 | **En tránsito** (Amazon) | — |
-| H4 humidifier ×2 | **En tránsito** (Amazon) | — |
-| RPi4 (Home Assistant) | Pendiente de configuración inicial | Tenjo |
+| Ítem | Cantidad | Estado | Ubicación / Rol |
+|---|:---:|---|---|
+| AC Infinity CLOUDLAB 844 (4×4×6.7 ft) | 1 | Operacional | Tenjo — Carpa principal de fructificación Fase 1 |
+| Martha Tent Terra Fungus 63" | 1 | Operacional | Tenjo — Carpa de I+D / prototipado y cuarentena |
+| AC Infinity CloudForge T7 (15 L) | 1 | Operacional | Tenjo — Humidificador principal CLOUDLAB 844 |
+| VIVOSUN AeroStream H05 (5 L) | 1 | Operacional (manual) | Tenjo — Humidificador auxiliar Martha Tent (sensor HR descartado) |
+| AC Infinity Cloudline H4 4" (IP65) | 2 | Operacionales | Tenjo — Extracción y FAE principal |
+| Klanata SHT45 (sonda inox IP67, I²C) | 1 | Disponible | Tenjo — Sensor principal T/HR dentro de CLOUDLAB 844 |
+| Sensirion SHT3x (sondas AC Infinity) | 2 | Operacionales | Tenjo — Sensores secundarios T/HR |
+| Sensirion SHT45 Breakouts | 2 | Disponibles | Tenjo — Monitoreo para incubadora y banco de pruebas |
+| EC Buying MH-Z19C (NDIR CO₂) | 1 | Disponible | Tenjo — Sensor CO₂ con ABC=OFF y factor 1.369 para 2600 m |
+| Sensirion SCD30 (NDIR CO₂) | 2 | Disponibles | Tenjo — Sensores CO₂ referencia (compensación altitud 2600m) |
+| Inkbird IBS-TH2 Plus | 2 | Operacionales | Tenjo — Termohigrómetros Bluetooth para verificación cruzada |
+| ESP32-WROOM-32 ACEIRMC | 3 | Operacionales | Tenjo — Controladores de borde ESPHome |
+| Vilros Raspberry Pi 4 Model B (4GB kit) | 1 | Disponible | Tenjo — Servidor central Home Assistant OS + MQTT |
+| Raspberry Pi Zero 2 W | 1 | Disponible | Tenjo — Nodo auxiliar / gateway de respaldo |
+| Cajas TICONN IP67 | 2 | Operacionales | Tenjo — Gabinetes estancos para electrónica |
+| All American 1941X (41 qt / 39 L) | 1 | En sitio | Tenjo — Esterilizador no eléctrico (autoclave) para comisionamiento |
+| Estufa Industrial a Propano (2 quemadores) | 1 | Operacional | Tenjo — Fuente térmica para esterilización |
+| Malla radiante QuietWarmth (90W, 120V) | 1 | Disponible | Tenjo — Calefacción para incubación |
+| Racks metálicos y Mesón inox 1.50 m | 4 | Operacionales | Tenjo — Almacenamiento vertical y área de trabajo limpio |
 
 ---
 
@@ -107,16 +115,15 @@ Antes de inocular, `06_operations/quality_control.md` exige spawn trazable, form
 
 | Tarea | Responsable | Fecha límite | Estado |
 |---|---|---|---|
-| Confirmar llegada de pedidos Amazon | Sebastián | 2026-07-07 | ⏳ Pendiente |
-| Instalar RPi4 + Home Assistant | Sebastián / cuidador | 2026-07-10 | ⏳ Pendiente |
-| Configurar primer ESP32 en banco de pruebas | Sebastián | 2026-07-14 | ⏳ Pendiente |
-| Validar SHT3x vs Inkbird (calibración cruzada) | Sebastián | 2026-07-14 | ⏳ Pendiente |
-| Conseguir spawn de shiitake con cepa identificada | Sebastián | Por definir | Pendiente |
-| Levantar configuración as-built y validar distribución térmica con carga simulada | Sebastián | Por definir | Pendiente |
-| Comisionar autoclave y documentar ciclo con carga representativa | Sebastián | Por definir | Pendiente |
-| Definir formulación control y plan comparativo de contaminación | Sebastián | Después de comisionar autoclave | Pendiente |
-| Aprobar formulación inicial de sustrato shiitake | Sebastián | Después de revisar piloto | Bloqueado |
-| Esterilizar e inocular primer lote piloto | Cuidador + Sebastián | Después de validaciones previas | Bloqueado |
+| Recepción física de activos de cultivo en Tenjo | Sebastián / cuidador | 2026-08-14 | ✅ Completado |
+| Poner en marcha RPi4 + Home Assistant OS con backup local | Sebastián | 2026-09-10 | ⏳ En curso |
+| Comparación cruzada de sensores SHT45, SHT3x e Inkbird en banco | Sebastián | 2026-09-12 | ⏳ En curso |
+| Calibrar MH-Z19C y SCD30 con ABC=OFF y compensación barométrica de 2600 m | Sebastián | 2026-09-15 | ⏳ Pendiente |
+| Comisionar All American 1941X con estufa a propano y registrar curvas de penetración | Sebastián / cuidador | 2026-09-20 | ⏳ Pendiente |
+| Monitorear viabilidad y refrigeración de spawn en banco (P. djamor, H. erinaceus, P. ostreatus) | Cuidador | Continuo | ⏳ Activo |
+| Adquirir spawn de *Lentinula edodes* con ficha técnica, cepa y clase térmica confirmada | Sebastián | 2026-09-25 | ⏳ Pendiente |
+| Definir formulación piloto de serrín de roble suplementado (base seca estricta) | Sebastián | Post-autoclave | Bloqueado |
+| Ejecutar ciclo de esterilización e inoculación de lote piloto LE-001 | Sebastián / cuidador | Post-validaciones | Bloqueado |
 
 ---
 

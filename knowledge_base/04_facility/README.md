@@ -7,16 +7,16 @@ This directory contains comprehensive documentation for designing, building, and
 ## Core Documents
 
 ### [comprehensive_guide.md](comprehensive_guide.md) — START HERE ⭐
-**Complete operational guide (1,320 lines) covering all facility aspects:**
+**Complete operational guide covering all facility aspects:**
 - Architecture of 5 zones (preparation, inoculation, incubation, fruiting, storage)
 - Pasteurization methods with step-by-step protocols
-- Sterilization (121°C autoclave procedures)
+- Sterilization (121°C autoclave procedures in All American 1941X)
 - Environmental control (ESP32/ESPHome/Home Assistant automation)
 - Laboratory setup (LAF/SAB construction and validation)
 - Contamination identification and prevention (5 pathogens with visual guides)
 - Cleaning and disinfection schedules by zone
 - Biosecurity procedures for operator movement patterns
-- Complete workflow cycle for P. djamor (5–6 weeks)
+- Production workflow cycle for *Lentinula edodes* (shiitake, 90–150 días) and secondary species
 - Troubleshooting across all stages
 
 **Completeness:** 90% | **Operational readiness:** High
@@ -29,8 +29,19 @@ These documents cover specific topics in depth:
 
 ### Zone Design & Layout
 - **[master_blueprint.md](master_blueprint.md)** — General 5-zone model, sequencing, recinto specifications
-- **[home_rnd_lab.md](home_rnd_lab.md)** — House-based R&D lab (garage + hallway + rooftop layout)
+- **[home_rnd_lab.md](home_rnd_lab.md)** — House-based R&D clean lab and terrace setup
 - **[workflow.md](workflow.md)** — Production workflow and batch tracking
+- **[thermal_insulation_guide.md](thermal_insulation_guide.md)** — Thermal envelope design, R-values, vapor barriers, and cold-night mitigation
+
+### Caseta Compacta Suite (Infraestructura Modular Rápida)
+- **[caseta_compacta_build_checklist.md](caseta_compacta_build_checklist.md)** — Protocolo de construcción paso a paso
+- **[caseta_compacta_shopping_list.md](caseta_compacta_shopping_list.md)** — BOM y lista consolidada de compras de materiales
+- **[caseta_compacta_site_visit_checklist.md](caseta_compacta_site_visit_checklist.md)** — Checklist de verificación técnica in situ
+- **[caseta_compacta_structural_handoff.md](caseta_compacta_structural_handoff.md)** — Especificación estructural y entrega de obra
+
+### Instalación de Mediana Escala (Marranera)
+- **[marranera_physical_asset.md](marranera_physical_asset.md)** — Levantamiento físico del activo existente y condiciones base
+- **[marranera_medium_scale_design_basis.md](marranera_medium_scale_design_basis.md)** — Bases de diseño de ingeniería para reconversión a mediana escala
 
 ### Environmental Zones
 - **[incubation.md](incubation.md)** — Spawn run setup, temperature optimization, inspection protocols

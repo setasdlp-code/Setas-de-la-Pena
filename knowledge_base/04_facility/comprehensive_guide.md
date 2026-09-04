@@ -1,3 +1,12 @@
+---
+title: Adecuación de Espacios para Cultivos de Setas — Guía Completa
+document_id: DOC-0121
+category: facility
+load_priority: selective
+last_reviewed: 2026-09-03
+confidence: high
+---
+
 # Adecuación de Espacios para Cultivos de Setas
 ## Guía Completa de Diseño, Equipamiento y Operación
 

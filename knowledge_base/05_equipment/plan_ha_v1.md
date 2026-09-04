@@ -1,3 +1,12 @@
+---
+title: Plan de Automatización — Home Assistant y ESPHome
+document_id: DOC-0118
+category: equipment
+load_priority: selective
+last_reviewed: 2026-09-03
+confidence: high
+---
+
 # Plan de Automatización — Home Assistant
 
 **Estado:** diseño validado con inventario físico (Agosto 2026), pendiente comisionamiento en banco  
