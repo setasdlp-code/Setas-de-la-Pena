@@ -5795,19 +5795,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button key={k} className={`inv-subtab${invTab===k?' on':''}`} onClick={()=>setInvTab(k)}>{l}</button>
                 ))}
               </div>
-
               {/* ── STOCK ACTUAL ─────────────────────────────────────────── */}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
+                    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
+                    const aggregatedStock = {};
+                    invLotes.filter(l=>l.activo).forEach(l=>{
+                      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
+                    });
+                    const criticalStockItems = INGS.map(ing=>{
+                      const stockKg = aggregatedStock[ing.id]||0;
+                      const threshold = lowStockThresholds[ing.type]||5;
+                      return { ing, stockKg, threshold, isLow: stockKg < threshold };
+                    }).filter(item=>item.isLow);
+
                     // Las bolsas viven en invLotes con el mismo modelo FIFO, pero se
                     // cuentan en unidades, no kg — se excluyen de esta tabla (kg) y se
                     // gestionan en el selector "Tipo de contenedor" de la pestaña Producción.
                     const ingIds=[...new Set(invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).map(l=>l.ingredienteId))];
                     if(!ingIds.length) return(
-                      <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
-                        Sin inventario.
-                        <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
+                      <div>
+                        {criticalStockItems.length > 0 && (
+                          <div className="stock-critical-card" style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                              </span>
+                              <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                                Registrar Compra +
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                                <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                          Sin inventario.
+                          <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
+                        </div>
                       </div>
                     );
                     const rows=ingIds.map(id=>{
@@ -5823,118 +5854,139 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }).sort((a,b)=>b.stock-a.stock);
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
-                      <div className="inv-section">
-                        <table className="inv-table inventory-stock-table">
-                          <thead>
-                            <tr>
-                              <th>Ingrediente</th>
-                              <th>Stock (kg)</th>
-                              <th>Precio / kg</th>
-                              <th>Proveedor</th>
-                              <th>Alerta mín. (kg)</th>
-                              <th>Estado</th>
-                              <th style={{width:80}}><span className="sr-only">Acciones</span></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map(r=>{
-                              const isEditing=editingRowId===r.id;
-                              return(
-                                <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
-                                  {/* INGREDIENTE */}
-                                  <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
-                                    {isEditing?(
-                                      <select name={`stockIngredient-${r.id}`} aria-label={`Ingrediente de la fila ${r.name}`} value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
-                                        {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
-                                      </select>
-                                    ):(
-                                      <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
-                                    )}
-                                  </td>
-                                  {/* STOCK */}
-                                  <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
-                                    {isEditing?(
-                                      <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
-                                        value={editingRowData.stock}
-                                        onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
-                                        onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
-                                        style={{...INP,width:80,fontWeight:600}}
-                                      />
-                                    ):(
-                                      <span>{r.stock.toFixed(1)} kg</span>
-                                    )}
-                                  </td>
-                                  {/* PRECIO */}
-                                  <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
-                                    {isEditing?(
-                                      <input name={`stockPrice-${r.id}`} aria-label={`Precio de ${r.name} por kg`} type="number" min="0" step="100"
-                                        value={editingRowData.precio}
-                                        onChange={e=>setEditingRowData(p=>({...p,precio:e.target.value}))}
-                                        style={INP}
-                                        placeholder="$/kg"
-                                      />
-                                    ):(
-                                      r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
-                                    )}
-                                  </td>
-                                  {/* PROVEEDOR */}
-                                  <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
-                                    {isEditing?(
-                                      <select name={`stockProvider-${r.id}`} aria-label={`Proveedor de ${r.name}`} value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
-                                        <option value="">Sin especificar</option>
-                                        {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
-                                      </select>
-                                    ):(
-                                      r.prov?.nombre||'—'
-                                    )}
-                                  </td>
-                                  {/* ALERTA MÍN */}
-                                  <td data-label="Alerta mínima" style={{minWidth:90}}>
-                                    {isEditing?(
-                                      <input name={`stockAlert-${r.id}`} aria-label={`Alerta mínima de ${r.name} en kg`} type="number" min="0" step="0.5"
-                                        value={editingRowData.alertaMin}
-                                        onChange={e=>setEditingRowData(p=>({...p,alertaMin:e.target.value}))}
-                                        style={INP}
-                                        placeholder="kg"
-                                      />
-                                    ):(
-                                      <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
-                                    )}
-                                  </td>
-                                  {/* ESTADO */}
-                                  <td data-label="Estado">
-                                    {r.stock<r.alertaMin
-                                      ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
-                                      :r.stock<r.alertaMin*2.5
-                                        ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
-                                        :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
-                                  </td>
-                                  {/* ACCIONES */}
-                                  <td data-label="Acciones">
-                                    {isEditing?(
-                                      <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
-                                      </div>
-                                    ):(
-                                      <div style={{display:'flex',gap:4}}>
-                                        <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
-                                          onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
-                                          ✎ Editar
-                                        </button>
-                                        <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
-                                          style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
-                                          onClick={()=>eliminarIngrediente(r.id,r.name)}>
-                                          ×
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                      <div>
+                        {criticalStockItems.length > 0 && (
+                          <div className="stock-critical-card" style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                              </span>
+                              <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+                                Registrar Compra +
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                                <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="inv-section">
+                          <table className="inv-table inventory-stock-table">
+                            <thead>
+                              <tr>
+                                <th>Ingrediente</th>
+                                <th>Stock (kg)</th>
+                                <th>Precio / kg</th>
+                                <th>Proveedor</th>
+                                <th>Alerta mín. (kg)</th>
+                                <th>Estado</th>
+                                <th style={{width:80}}><span className="sr-only">Acciones</span></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map(r=>{
+                                const isEditing=editingRowId===r.id;
+                                return(
+                                  <tr key={r.id} style={{background:isEditing?'var(--paper-200)':''}}>
+                                    {/* INGREDIENTE */}
+                                    <td data-label="Ingrediente" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",minWidth:160}}>
+                                      {isEditing?(
+                                        <select name={`stockIngredient-${r.id}`} aria-label={`Ingrediente de la fila ${r.name}`} value={editingRowData.ingredienteNuevoId||r.id} onChange={e=>setEditingRowData(p=>({...p,ingredienteNuevoId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                          {INGS.sort((a,b)=>a.name.localeCompare(b.name,'es')).map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+                                        </select>
+                                      ):(
+                                        <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
+                                      )}
+                                    </td>
+                                    {/* STOCK */}
+                                    <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                      {isEditing?(
+                                        <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
+                                          value={editingRowData.stock}
+                                          onChange={e=>setEditingRowData(p=>({...p,stock:e.target.value}))}
+                                          onKeyDown={e=>{if(e.key==='Enter') saveRowEdit(r.id);if(e.key==='Escape') setEditingRowId(null);}}
+                                          style={{...INP,width:80,fontWeight:600}}
+                                        />
+                                      ):(
+                                        <span>{r.stock.toFixed(1)} kg</span>
+                                      )}
+                                    </td>
+                                    {/* PRECIO */}
+                                    <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
+                                      {isEditing?(
+                                        <input name={`stockPrice-${r.id}`} aria-label={`Precio de ${r.name} por kg`} type="number" min="0" step="100"
+                                          value={editingRowData.precio}
+                                          onChange={e=>setEditingRowData(p=>({...p,precio:e.target.value}))}
+                                          style={INP}
+                                          placeholder="$/kg"
+                                        />
+                                      ):(
+                                        r.pp!=null?`$${Math.round(r.pp).toLocaleString('es-CO')}/kg`:'—'
+                                      )}
+                                    </td>
+                                    {/* PROVEEDOR */}
+                                    <td data-label="Proveedor" style={{color:'var(--ink-500)',fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",minWidth:130}}>
+                                      {isEditing?(
+                                        <select name={`stockProvider-${r.id}`} aria-label={`Proveedor de ${r.name}`} value={editingRowData.proveedorId} onChange={e=>setEditingRowData(p=>({...p,proveedorId:e.target.value}))} style={{...INP,fontSize:"var(--text-sm)"}}>
+                                          <option value="">Sin especificar</option>
+                                          {invProveedores.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
+                                        </select>
+                                      ):(
+                                        r.prov?.nombre||'—'
+                                      )}
+                                    </td>
+                                    {/* ALERTA MÍN */}
+                                    <td data-label="Alerta mínima" style={{minWidth:90}}>
+                                      {isEditing?(
+                                        <input name={`stockAlert-${r.id}`} aria-label={`Alerta mínima de ${r.name} en kg`} type="number" min="0" step="0.5"
+                                          value={editingRowData.alertaMin}
+                                          onChange={e=>setEditingRowData(p=>({...p,alertaMin:e.target.value}))}
+                                          style={INP}
+                                          placeholder="kg"
+                                        />
+                                      ):(
+                                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
+                                      )}
+                                    </td>
+                                    {/* ESTADO */}
+                                    <td data-label="Estado">
+                                      {r.stock<r.alertaMin
+                                        ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
+                                        :r.stock<r.alertaMin*2.5
+                                          ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
+                                          :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
+                                    </td>
+                                    {/* ACCIONES */}
+                                    <td data-label="Acciones">
+                                      {isEditing?(
+                                        <div style={{display:'flex',gap:4}}>
+                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
+                                        </div>
+                                      ):(
+                                        <div style={{display:'flex',gap:4}}>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
+                                            onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
+                                            ✎ Editar
+                                          </button>
+                                          <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
+                                            style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
+                                            onClick={()=>eliminarIngrediente(r.id,r.name)}>
+                                            ×
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     );
                   })()}
@@ -7971,461 +8023,144 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   </div>
                 )}
-              </div>
-
-              {/* SECCIÓN A: ACCIONES RÁPIDAS + ESPACIOS DE TRABAJO lado a lado — ambas
-                  son accesos a los mismos módulos, así que comparten fila en vez de
-                  competir por el scroll en secciones separadas. */}
-              {(()=>{
-                return (
-                  <div className="home-acciones-espacios-row">
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                        <div>
-                          <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                            SECCIÓN A · OPERACIÓN INMEDIATA
+                {criticalStockItems.length > 0 && (
+                  <div className="stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                        ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                      </span>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--coral-300)',borderRadius:2,color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                            {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                           </span>
-                          <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                            Acciones Rápidas
-                          </h2>
-                        </div>
-                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
-                      </div>
-                      <div style={{
-                        display:'grid',
-                        gridTemplateColumns:'1fr',
-                        gap:12
-                      }}>
-                        {/* Una sola columna, los 5 botones del mismo ancho: le cede el resto
-                            del ancho de la fila a Espacios de Trabajo para que sus 3 tarjetas
-                            quepan lado a lado. Lotes/Módulos de cultivo se quedan fuera: llevan
-                            a la misma pestaña que "Ver Bitácora"/"Ficha de Mezclado" en Espacios
-                            de Trabajo y no agregan nada nuevo. */}
-                        {[
-                          {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
-                            const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
-                            if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
-                            else props.onStartSession&&props.onStartSession();
-                          },jornada:true},
-                          {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
-                          {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                          {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                          {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
-                        ].map(btn=>{
-                          const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
-                          return (
-                          <button
-                            key={btn.label}
-                            onClick={btn.onClick}
-                            className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
-                            style={{
-                              display:'flex',
-                              alignItems:'center',
-                              gap:12,
-                              padding:'14px 16px',
-                              borderRadius:'var(--r-sm)',
-                              textAlign:'left',
-                              cursor:'pointer',
-                              position:'relative'
-                            }}
-                          >
-                            <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={20}/></span>
-                            <div style={{minWidth:0,flex:1}}>
-                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                {btn.label}
-                              </div>
-                              <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                                {btn.sub}
-                              </div>
-                            </div>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
-                          </button>
-                          );
-                        })}
+                        ))}
+                        {criticalStockItems.length > 3 && (
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)',padding:'2px 4px'}}>
+                            +{criticalStockItems.length - 3} más
+                          </span>
+                        )}
                       </div>
                     </div>
-              {/* Espacios de Trabajo — se movió acá (columna derecha de Sección A, donde
-                  antes vivía Tareas de hoy) porque su contenido y el de Acciones Rápidas
-                  (columna izquierda) son ambos accesos a los mismos módulos: quedan uno al
-                  lado del otro en vez de en secciones separadas del scroll. */}
-              <div>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'color-mix(in oklab, var(--coral-700) 70%, black)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                      Registrar Compra +
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN A: OPERACIÓN INMEDIATA — Acciones Rápidas (izquierda) y Tareas de Hoy (derecha) */}
+              <div className="home-acciones-tareas-row">
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                        SECCIÓN A · OPERACIÓN INMEDIATA
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                        Acciones Rápidas
+                      </h2>
+                    </div>
+                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                  </div>
+                  <div style={{
+                    display:'grid',
+                    gridTemplateColumns:'1fr',
+                    gap:10
+                  }}>
+                    {[
+                      {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                        const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                        if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                        else props.onStartSession&&props.onStartSession();
+                      },jornada:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                      {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
+                    ].map(btn=>{
+                      const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
+                      return (
+                      <button
+                        key={btn.label}
+                        onClick={btn.onClick}
+                        className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                        style={{
+                          display:'flex',
+                          alignItems:'center',
+                          gap:12,
+                          padding:'12px 14px',
+                          borderRadius:'var(--r-sm)',
+                          textAlign:'left',
+                          cursor:'pointer',
+                          position:'relative'
+                        }}
+                      >
+                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={18}/></span>
+                        <div style={{minWidth:0,flex:1}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                            {btn.label}
+                          </div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                            {btn.sub}
+                          </div>
+                        </div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
+                      </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
-                      MÓDULOS DE CAMPO
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
-                      Espacios de Trabajo
-                    </h2>
-                  </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>Flujos principales</span>
-                </div>
-
-                <div className="home-workspaces-grid" style={{
-                  display:'grid',
-                  gridTemplateColumns:'repeat(2, minmax(0, 1fr))',
-                  gap:20
-                }}>
-                  {/* WORKSPACE 1: FORMULACIÓN & I+D */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--coral-500)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-500)'}}>
-                          <IconMicroscope size={11}/> LABORATORIO & NUTRICIÓN
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{saved.length} guardadas</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Formulación & Recetario
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Balance estequiométrico de carbono y nitrógeno (C:N), suplementación y cálculo predictivo de Eficiencia Biológica (EB).
-                      </p>
-
-                      {/* Métricas en vivo del workspace */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Score Perito</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:activeScore>=80?'var(--moss-700)':activeScore>=60?'var(--ochre-500)':'var(--coral-700)'}}>
-                            {activeScore!==null ? `${activeScore}/100` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>C:N Activo</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {an?.cn ? `${an.cn.toFixed(1)}:1` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>EB Estimada</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:!an?.eb?'var(--ink-900)':(sp?.eb_optimal&&an.eb>=sp.eb_optimal?'var(--moss-700)':sp?.eb_baseline&&an.eb>=sp.eb_baseline?'var(--ochre-500)':'var(--coral-700)')}}>
-                            {an?.eb ? `~${an.eb}%` : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ingredientes</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {recipe.length} insumos
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('formular')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--coral-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        Ir al Formulador
-                      </button>
-                      <button onClick={()=>goTab('catalogo')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Catálogo
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 2: PRODUCCIÓN & BODEGA */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--moss-700)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--moss-700)'}}>
-                          <IconBox size={11}/> PLANTA & INSUMOS
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{stockIds.size} variedades</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Producción & Bodega
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Ficha de mezclado con tolerancia de báscula de campo, gestión FIFO de inventario y trazabilidad de proveedores.
-                      </p>
-
-                      {/* Métricas en vivo */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Stock Disponible</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalStockKg.toFixed(1)} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>kg</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Lotes de Insumos</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).length}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Proveedores</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invProveedores.length} activos
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Compras Reg.</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {invCompras.length} facturas
-                          </div>
-                        </div>
-                      </div>
-
-                      {criticalStockItems.length > 0 ? (
-                        <div style={{ background: 'color-mix(in oklab, var(--coral-500) 8%, var(--paper-0))', border: '1px solid var(--coral-500)', borderLeft: '4px solid var(--coral-700)', borderRadius: 'var(--r-xs)', padding: '10px 12px', marginBottom: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                              ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
-                            </span>
-                            <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
-                              Registrar Compra +
-                            </button>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                              <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '2px 5px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
-                              </span>
-                            ))}
-                            {criticalStockItems.length > 3 && (
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-400)', padding: '2px 4px' }}>
-                                +{criticalStockItems.length - 3} más
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-xs)', padding: '6px 10px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: 'var(--moss-700)', fontSize: 12 }}>✓</span>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-600)' }}>Todos los insumos con stock operativo adecuado</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>goTab('produccion')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        Ficha de Mezclado
-                      </button>
-                      <button onClick={()=>goTab('inventario')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Bodega
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 3: BITÁCORA & COSECHAS */}
-                  <div className="home-workspace-card" style={{
-                    background:'var(--paper-0)',
-                    border:'1px solid var(--border-soft)',
-                    borderTop:'3px solid var(--slate-500)',
-                    borderRadius:'var(--r-md)',
-                    padding:'24px',
-                    display:'flex',
-                    flexDirection:'column',
-                    justifyContent:'space-between',
-                    gap:18,
-                    boxShadow:'var(--shadow-card-rest)'
-                  }}>
-                    <div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--slate-500)'}}>
-                          <IconMushroom size={11}/> TRAZABILIDAD & CAMPO
-                        </span>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{bitLotes.length} lotes</span>
-                      </div>
-                      <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                        Bitácora & Cosechas
-                      </h3>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                        Seguimiento individual de bolsas, registro de colonización, alertas fitosanitarias y pesaje de cosechas.
-                      </p>
-
-                      {/* Métricas en vivo */}
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsas Monitoreadas</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalBolsasCount}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Total Cosechado</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalCosechasKg.toFixed(2)} <span style={{fontSize:'var(--text-xs)'}}>kg</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Contaminación</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:bolsasContaminadas===0?'var(--moss-700)':'var(--coral-700)'}}>
-                            {totalBolsasCount>0 ? `${((bolsasContaminadas/totalBolsasCount)*100).toFixed(0)}%` : '0%'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Eventos Corte</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                            {totalCosechasCount} flushes
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>setShowBitCosecha(true)} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--slate-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                        + Registrar Cosecha
-                      </button>
-                      <button onClick={()=>goTab('bitacora')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                        Ver Bitácora
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE 4: FINANZAS & DASHBOARD (Solo visible para Administradores / Roles no-operario) */}
-                  {props.isAdmin!==false && (
-                    <div className="home-workspace-card" style={{
-                      background:'var(--paper-0)',
-                      border:'1px solid var(--border-soft)',
-                      borderTop:'3px solid var(--ink-700)',
-                      borderRadius:'var(--r-md)',
-                      padding:'24px',
-                      display:'flex',
-                      flexDirection:'column',
-                      justifyContent:'space-between',
-                      gap:18,
-                      boxShadow:'var(--shadow-card-rest)'
-                    }}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                       <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                            <IconScale size={11}/> GESTIÓN & FINANZAS (ADMIN)
-                          </span>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>Activo</span>
-                        </div>
-                        <h3 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--ink-900)',marginBottom:8}}>
-                          Finanzas & Rendimiento
-                        </h3>
-                        <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',lineHeight:1.45,marginBottom:16}}>
-                          Análisis de costo unitario por kilo seco y por bolsa comercial, balance de proveedores y simulación de márgenes.
-                        </p>
-
-                        {/* Métricas en vivo */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'12px',marginBottom:16}}>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Costo/kg Sustrato</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                              ${an?.cost ? Math.round(an.cost).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Bolsa Estándar</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)'}}>
-                              ${an?.cost ? Math.round(an.cost * 1.5 * 0.35).toLocaleString('es-CO') : '0'} <span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>COP</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Recetas Evaluadas</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                              {saved.length} fórmulas
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Ciclo Planificado</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-base)',fontWeight:700,color:'var(--ink-900)'}}>
-                              {sch?.totDays || 45} días
-                            </div>
-                          </div>
-                        </div>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                          SECCIÓN A · TRABAJO DEL DÍA
+                        </span>
+                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                          Tareas de Hoy
+                        </h2>
                       </div>
-
-                      <div style={{display:'flex',gap:8}}>
-                        <button onClick={()=>goTab('dashboard')} className="home-panel-btn is-primary" style={{flex:1,padding:'8px 12px',background:'var(--ink-900)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
-                          Dashboard
-                        </button>
-                        <button onClick={()=>goTab('schedule')} className="home-panel-btn is-secondary" style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',cursor:'pointer'}}>
-                          Cronograma
-                        </button>
-                      </div>
+                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount} pendientes</span>}
                     </div>
-                  )}
+                    {tasksHoy.length===0 ? (
+                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
+                        Sin tareas pendientes por ahora.
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                        {tasksHoy.slice(0,5).map(t=>(
+                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                            <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                              style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                              <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                            </button>
+                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                            </button>
+                            <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                          </div>
+                        ))}
+                        {tasksHoy.length>5 && (
+                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
+                            +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-                  </div>
-                );
-              })()}
 
-              {/* SECCIÓN B: TAREAS DE HOY + SEGUIMIENTO DE LOTES POR FASE lado a lado —
-                  el trabajo del día (tareas puntuales) y el estado de los lotes activos
-                  son ambos "qué hacer/qué está pasando ahora", así que van juntos. */}
-              <div className="home-tareas-lotes-row">
-                <div style={{height:'100%'}}>
-                    {/* height:100% en el wrapper y en la tarjeta: la fila usa
-                        align-items:stretch para que esta columna iguale la altura de
-                        Seguimiento de Lotes por Fase (a la derecha), que normalmente es
-                        más alta por su kanban de 4 fases. */}
-                    <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>Tareas de hoy</span>
-                        {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount}</span>}
-                      </div>
-                      {tasksHoy.length===0 ? (
-                        <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
-                          Sin tareas pendientes por ahora.
-                        </div>
-                      ) : (
-                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                          {/* Se muestran máx. 5: tasksHoy no tiene tope propio (puede crecer con
-                              cada contenedor activo + alerta de clima) y sin este límite la
-                              columna de tareas desbalanceaba la fila frente a Acciones Rápidas,
-                              de altura fija. El total real ya está en el contador de arriba. */}
-                          {tasksHoy.slice(0,5).map(t=>(
-                            <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
-                              <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                                style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                                <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
-                              </button>
-                              <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                                <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                                <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                              </button>
-                              <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
-                            </div>
-                          ))}
-                          {tasksHoy.length>5 && (
-                            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
-                              +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más — ver contador arriba
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                </div>
-              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — movida arriba, justo después de
-                  Acciones Rápidas: es el trabajo operativo real (qué lote está en qué fase),
-                  no debe quedar por debajo de tarjetas de navegación como Espacios de Trabajo.
-                  kanban de lotes activos agrupado
-                  por la fase real del ciclo (derivada de lote.estado + colonización de sus
-                  bolsas), en vez de un stepper genérico separado de una lista de lotes.
-                  La fase "Preparación & Mezcla" no aparece: es previa a la creación del lote
-                  en la Bitácora, así que no hay lote que ubicar ahí. */}
+              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
                 borderRadius:'var(--r-md)',
-                padding:'28px',
+                padding:'24px',
                 boxShadow:'var(--shadow-card-rest)'
               }}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
@@ -8459,10 +8194,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
                     return {lote,stats,columna,age};
                   });
-                  const descartados = bitLotes.length-clasificados.length;
                   return (
                     <div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:14}}>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:14}}>
                         {columnas.map(col=>{
                           const items = clasificados.filter(c=>c.columna===col.key);
                           return (
@@ -8543,9 +8277,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
               </div>
-              </div>
 
-              {/* SECCIÓN C: AMBIENTES & SENSORES — cámaras físicas reales, no salas ilustrativas */}
+              {/* SECCIÓN C: AMBIENTES & SENSORES — Tira compacta de cámaras */}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
@@ -8556,105 +8289,56 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Cámaras de Cultivo
                     </h2>
                   </div>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-700)'}}>● {camaras.length} {camaras.length===1?'cámara monitoreada':'cámaras monitoreadas'}</span>
+                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>
+                    Ver Cámaras & IoT ({camaras.length}) →
+                  </button>
                 </div>
 
-                {/* 3 columnas fijas (3 cámaras reales), responsive: 2 columnas <960px, 1 columna <640px */}
                 {camaras.length===0 ? (
-                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'20px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'16px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
                     Sin datos de cámaras disponibles.
                   </div>
                 ) : (
-                <div className="home-salas-grid">
-                  {camaras.map(c=>{
-                    const hasSpark = c.tempSpark && c.humSpark && c.co2Spark;
-                    return (
-                    <div
-                      key={c.id}
-                      style={{
-                        background:'var(--paper-0)',
-                        border:'1px solid var(--border-soft)',
-                        borderTop:`3px solid ${c.estadoAccent||'var(--ink-500)'}`,
-                        borderRadius:'var(--r-md)',
-                        padding:'20px',
-                        display:'flex',
-                        flexDirection:'column',
-                        justifyContent:'space-between',
-                        gap:16,
-                        boxShadow:'var(--shadow-card-rest)'
-                      }}
-                    >
-                      <div>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <div style={{display:'flex',alignItems:'center',gap:7}}>
-                            <span style={{display:'inline-flex',flexShrink:0,color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={14}/></span>
-                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-base)',color:'var(--ink-900)'}}>
-                              {c.name}
+                  <div className="home-ambient-strip">
+                    {camaras.map(c=>(
+                      <div key={c.id} className="ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-500)'}`}}>
+                        <div style={{minWidth:0,flex:1}}>
+                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                            <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={13}/></span>
+                            <strong style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:'var(--ink-900)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</strong>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase'}}>
+                              {c.estadoLabel}
+                            </span>
+                          </div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>
+                            Zona {c.zona} · {c.sppName} · {c.occupancy}% cap.
+                          </div>
+                          {c.hasLiveAlert && (
+                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-700)',marginTop:2,fontWeight:700}}>
+                              ⚠ {c.liveAlertNote}
                             </div>
-                          </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,padding:'2px 8px',borderRadius:'var(--r-xs)',background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                            {c.estadoLabel}
-                          </span>
-                        </div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginBottom:14}}>
-                          Zona {c.zona} · {c.sppName}
+                          )}
                         </div>
 
-                        {/* Indicadores climáticos en vivo */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8,background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'10px 8px',textAlign:'center'}}>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Temp</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveTemp}°C</div>
+                        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                          <div style={{display:'flex',gap:6,textAlign:'center',fontFamily:'var(--font-mono)'}}>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveTemp}°C
+                            </span>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveHum}%
+                            </span>
+                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                              {c.liveCo2} <span style={{fontSize:'var(--text-micro)',color:'var(--ink-500)'}}>ppm</span>
+                            </span>
                           </div>
-                          <div style={{borderLeft:'1px solid var(--paper-300)',borderRight:'1px solid var(--paper-300)'}}>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>Humedad</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveHum}%</div>
-                          </div>
-                          <div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase'}}>CO₂</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-md)',fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{c.liveCo2} <span style={{fontSize:'var(--text-micro)'}}>ppm</span></div>
-                          </div>
+                          <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-400)',display:'grid',placeItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--coral-600)'}}>→</span>
+                          </button>
                         </div>
-                        {c.hasLiveAlert && (
-                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--coral-700)',marginTop:8}}>{c.liveAlertNote}</div>
-                        )}
                       </div>
-
-                      {/* Footer con ocupación real (contenedores activos / capacidad kg) */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid var(--paper-300)',paddingTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
-                        <span>Ocupación / Carga:</span>
-                        <b style={{color:'var(--ink-900)',fontFamily:'var(--font-body)',fontWeight:700}}>{c.occupancy}% <span style={{fontWeight:400,color:'var(--ink-500)'}}>· {c.capKg} kg cap.</span></b>
-                      </div>
-
-                      {/* Gráfica de tendencia real (temp/hum/CO₂) — mismos datos y mismo lenguaje
-                          visual que el módulo Cámaras: trazo 2px redondeado, punto "ahora", leyenda. */}
-                      {hasSpark && (
-                        <div style={{borderTop:'1px solid var(--paper-300)',paddingTop:12}}>
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Tendencia</span>
-                            <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} style={{display:'flex',alignItems:'center',gap:4,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-600)',fontWeight:700}}>
-                              <IconCamera size={11}/> Ver detalle →
-                            </button>
-                          </div>
-                          <svg viewBox="0 0 280 40" preserveAspectRatio="none" role="img" aria-label={`Tendencia últimas horas en ${c.name}: temperatura, humedad y CO₂`} style={{width:'100%',height:36,overflow:'visible',display:'block'}}>
-                            <polyline points={c.tempSpark} fill="none" stroke="var(--coral-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={c.humSpark} fill="none" stroke="var(--slate-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points={c.co2Spark} fill="none" stroke="var(--moss-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx={280} cy={c.tempSparkEndY} r="3" fill="var(--coral-500)"/>
-                            <circle cx={280} cy={c.humSparkEndY} r="3" fill="var(--slate-500)"/>
-                            <circle cx={280} cy={c.co2SparkEndY} r="3" fill="var(--moss-500)"/>
-                          </svg>
-                          <div style={{display:'flex',gap:10,marginTop:6}}>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--coral-500)',display:'inline-block'}}/>Temp.</span>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--slate-500)',display:'inline-block'}}/>Humedad</span>
-                            <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}><span style={{width:9,height:2,background:'var(--moss-500)',display:'inline-block'}}/>CO₂</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -11165,6 +10849,51 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='dashboard'&&(
           <div>
             <div className="panel">
+              {saved.length > 0 && (() => {
+                const costs = saved.map(e => {
+                  const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
+                  const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
+                  const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
+                  const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
+                    const tr2 = a2 ? calcTreatment(a2, e.sKey, SPP) : null;
+                    const col = tr2?.col || (['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                    return energyCostPerKgSeco(col, e.sKey);
+                  })();
+                  return costIngKg + eDash;
+                }).filter(c => c > 0);
+                const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
+                const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
+                const avgCycleDays = sch?.totDays || 45;
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
                 <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)'}}>{saved.length} receta{saved.length!==1?'s':''}</span>
                 <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
