@@ -1,0 +1,135 @@
+<meta charset="utf-8"><title>Dashboard · escritorio</title>
+<link rel="stylesheet" href="../tokens/tokens.css">
+<link rel="stylesheet" href="../components/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="_shell.css">
+<style>body{background:var(--surface-page);padding:0}</style>
+<body data-mode="control">
+<div class="page" style="padding:24px 32px">
+
+  <nav class="sdp-nav" style="margin-bottom:20px">
+    <div class="sdp-nav__crumbs">
+      <a href="#">Producción</a><span class="sdp-nav__sep">›</span>
+      <a href="#">Salas</a><span class="sdp-nav__sep">›</span>
+      <span aria-current="page">Lote 026</span>
+    </div>
+    <div class="sdp-nav__meta">17 AGO 2026 · 09:42 · Tenjo</div>
+  </nav>
+
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px">
+    <div>
+      <h1 style="font:var(--t-display-02);letter-spacing:var(--tracking-display);margin:0">Setas de la Peña</h1>
+      <div class="t-label" style="margin-top:8px">Panel de producción · 4 salas · 512 bloques</div>
+    </div>
+    <div class="sdp-alert sdp-alert--warn" style="max-width:380px">
+      <div class="sdp-alert__body">
+        <div class="sdp-alert__label">Atención · CO₂</div>
+        <div class="sdp-alert__msg">Sala 03 a 1.240 ppm desde las 08:10.</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid" style="margin-bottom:24px">
+    <div class="col-3"><div class="sdp-tele"><span class="sdp-tele__k">HR · Sala 02</span><span class="sdp-tele__v">91<span class="sdp-tele__u">%</span></span><span class="sdp-tele__meter"><span style="width:82%"></span></span></div></div>
+    <div class="col-3"><div class="sdp-tele"><span class="sdp-tele__k">CO₂ · Sala 02</span><span class="sdp-tele__v">742<span class="sdp-tele__u">ppm</span></span><span class="sdp-tele__meter"><span style="width:47%"></span></span></div></div>
+    <div class="col-3"><div class="sdp-tele sdp-tele--warn"><span class="sdp-tele__k">CO₂ · Sala 03</span><span class="sdp-tele__v">1240<span class="sdp-tele__u">ppm</span></span><span class="sdp-tele__meter"><span style="width:88%"></span></span></div></div>
+    <div class="col-3"><div class="sdp-tele"><span class="sdp-tele__k">Temp · media</span><span class="sdp-tele__v">24,0<span class="sdp-tele__u">°C</span></span><span class="sdp-tele__meter"><span style="width:60%"></span></span></div></div>
+  </div>
+
+  <div class="grid">
+    <section class="col-8">
+      <div class="t-label" style="margin-bottom:10px">CO₂ · últimos 14 días · ppm</div>
+      <div style="border:var(--rule-frame);padding:16px;background:var(--surface-page)">
+        <svg viewBox="0 0 640 200" width="100%" height="200" role="img" aria-label="CO2 por día">
+          <g stroke="#888888" stroke-width="1" opacity=".5">
+            <line x1="40" y1="10"  x2="630" y2="10"/>
+            <line x1="40" y1="55"  x2="630" y2="55"/>
+            <line x1="40" y1="100" x2="630" y2="100"/>
+            <line x1="40" y1="145" x2="630" y2="145"/>
+          </g>
+          <line x1="40" y1="170" x2="630" y2="170" stroke="#222222" stroke-width="1"/>
+          <g font-family="'IBM Plex Mono'" font-size="9" fill="#555555" letter-spacing="1.5">
+            <text x="0" y="14">1600</text><text x="0" y="59">1200</text>
+            <text x="0" y="104">800</text><text x="0" y="149">400</text>
+          </g>
+          <!-- umbral 800 ppm -->
+          <line x1="40" y1="100" x2="630" y2="100" stroke="#C49A4C" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="596" y="95" font-family="'IBM Plex Mono'" font-size="9" fill="#8C6B2E" letter-spacing="1.5">UMBRAL</text>
+          <!-- Sala 02 -->
+          <polyline fill="none" stroke="#4E6B3F" stroke-width="2"
+            points="55,132 96,128 137,134 178,126 219,121 260,124 301,118 342,115 383,120 424,113 465,110 506,116 547,108 588,105"/>
+          <!-- Sala 03 -->
+          <polyline fill="none" stroke="#4A3C31" stroke-width="2" stroke-dasharray="6 3"
+            points="55,126 96,122 137,118 178,112 219,108 260,101 301,96 342,90 383,84 424,79 465,72 506,66 547,60 588,52"/>
+          <g font-family="'IBM Plex Mono'" font-size="9" fill="#555555" letter-spacing="1.5">
+            <text x="48" y="186">D1</text><text x="294" y="186">D7</text><text x="576" y="186">D14</text>
+          </g>
+        </svg>
+        <div style="display:flex;gap:20px;margin-top:12px">
+          <span class="t-micro"><span style="display:inline-block;width:14px;height:2px;background:var(--moss);vertical-align:middle;margin-right:6px"></span>Sala 02</span>
+          <span class="t-micro"><span style="display:inline-block;width:14px;height:2px;background:var(--soil);vertical-align:middle;margin-right:6px"></span>Sala 03</span>
+        </div>
+      </div>
+
+      <div class="t-label" style="margin:24px 0 10px">Lotes activos</div>
+      <table class="sdp-table">
+        <thead><tr><th>Lote</th><th>Especie</th><th>Sala</th><th class="num">Día</th><th class="num">HR</th><th class="num">CO₂</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>026 · HER-01</td><td class="name">Melena de león <i>Hericium erinaceus</i></td><td>02</td><td class="num">12</td><td class="num">91 %</td><td class="num">742</td><td class="is-ok">EN ESPEC.</td></tr>
+          <tr><td>025 · PLE-02</td><td class="name">Orellana <i>Pleurotus ostreatus</i></td><td>01</td><td class="num">08</td><td class="num">89 %</td><td class="num">690</td><td class="is-ok">EN ESPEC.</td></tr>
+          <tr><td>024 · GAN-03</td><td class="name">Reishi <i>Ganoderma lucidum</i></td><td>03</td><td class="num">96</td><td class="num">86 %</td><td class="num">1240</td><td class="is-warn">CO₂ ALTO</td></tr>
+          <tr><td>023 · LEN-01</td><td class="name">Shiitake <i>Lentinula edodes</i></td><td>04</td><td class="num">54</td><td class="num">88 %</td><td class="num">815</td><td class="is-ok">EN ESPEC.</td></tr>
+          <tr><td>022 · HER-04</td><td class="name">Melena de león <i>Hericium erinaceus</i></td><td>02</td><td class="num">31</td><td class="num">90 %</td><td class="num">780</td><td class="is-error">CONTAM.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <aside class="col-4">
+      <div class="t-label" style="margin-bottom:10px">En sala</div>
+      <div style="display:grid;gap:16px">
+        <article class="sdp-lote sdp-lote--ok">
+          <div class="sdp-lote__media sdp-lote__media--plate">
+            <img src="../assets/img/hericium-erinaceus-plate.svg" alt="">
+          </div>
+          <div class="sdp-lote__body">
+            <div class="sdp-species sdp-species--compact">
+              <div class="sdp-species__common" style="font-size:20px">Melena de león</div>
+              <div class="sdp-species__latin" style="font-size:14px">Hericium erinaceus</div>
+            </div>
+            <div class="sdp-lote__id">LOTE 026 · HER-01</div>
+            <div class="sdp-lote__status">
+              <span class="sdp-lote__state">Incubación</span>
+              <span class="sdp-lote__bar"><span style="width:64%"></span></span>
+            </div>
+            <div class="sdp-lote__meta">
+              <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">02</span></div>
+              <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">91 %</span></div>
+              <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">742</span></div>
+            </div>
+          </div>
+        </article>
+        <article class="sdp-lote sdp-lote--warn">
+          <div class="sdp-lote__media sdp-lote__media--plate">
+            <img src="../assets/img/reishi-botanical-engraving.png" alt="">
+          </div>
+          <div class="sdp-lote__body">
+            <div class="sdp-species sdp-species--compact">
+              <div class="sdp-species__common" style="font-size:20px">Reishi</div>
+              <div class="sdp-species__latin" style="font-size:14px">Ganoderma lucidum</div>
+            </div>
+            <div class="sdp-lote__id">LOTE 024 · GAN-03</div>
+            <div class="sdp-lote__status">
+              <span class="sdp-lote__state">CO₂ alto</span>
+              <span class="sdp-lote__bar"><span style="width:88%"></span></span>
+            </div>
+            <div class="sdp-lote__meta">
+              <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">03</span></div>
+              <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">86 %</span></div>
+              <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">1240</span></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </aside>
+  </div>
+</div>

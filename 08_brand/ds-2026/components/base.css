@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════════════════
+   DS-2026 — Base layer: reset, grid, type classes.
+   Import after tokens.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--t-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures everywhere a number can appear. */
+table, td, th, .t-data, .t-label, .t-micro, [data-numeric] { font-variant-numeric: tabular-nums; }
+
+/* Links are always underlined — the only signal that survives a photocopy. */
+a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--moss); }
+
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+img { max-width: 100%; display: block; }
+
+/* ── Type classes — one per scale role ─────────────────────────── */
+.t-display-01 { font: var(--t-display-01); letter-spacing: var(--tracking-display); }
+.t-display-02 { font: var(--t-display-02); letter-spacing: var(--tracking-display); }
+.t-heading-01 { font: var(--t-heading-01); letter-spacing: var(--tracking-tight); }
+.t-heading-02 { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); }
+.t-heading-03 { font: var(--t-heading-03); }
+.t-species    { font: var(--t-species);    letter-spacing: var(--tracking-tight); }
+.t-latin      { font: var(--t-latin); }
+.t-body       { font: var(--t-body);  max-width: var(--measure-prose); }
+.t-small      { font: var(--t-small); color: var(--text-secondary); }
+.t-data       { font: var(--t-data); }
+.t-label      { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.t-micro      { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+h1 { font: var(--t-heading-01); letter-spacing: var(--tracking-tight); margin: 0 0 var(--space-3); }
+h2 { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); margin: 0 0 var(--space-2); }
+h3 { font: var(--t-heading-03); margin: 0 0 var(--space-1); }
+p  { margin: 0 0 var(--space-2); max-width: var(--measure-prose); text-wrap: pretty; }
+
+/* ── 12-column grid. Density comes from [data-mode] on an ancestor. ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--gutter);
+}
+.col-1{grid-column:span 1}   .col-2{grid-column:span 2}   .col-3{grid-column:span 3}
+.col-4{grid-column:span 4}   .col-5{grid-column:span 5}   .col-6{grid-column:span 6}
+.col-7{grid-column:span 7}   .col-8{grid-column:span 8}   .col-9{grid-column:span 9}
+.col-10{grid-column:span 10} .col-11{grid-column:span 11} .col-12{grid-column:span 12}
+
+.page { padding: var(--page-margin); }
+
+@media (max-width: 900px) {
+  /* Below the tablet breakpoint every column collapses to full width;
+     FIELD and CONTROL keep their gutters so density is preserved. */
+  [class*="col-"] { grid-column: span 12; }
+}
+
+/* ── Rules ───────────────────────────────────────────────────────── */
+.rule      { border: 0; border-top: var(--rule-hairline); margin: var(--space-3) 0; }
+.rule--heavy { border: 0; border-top: var(--rule-heavy); margin: var(--space-3) 0; }

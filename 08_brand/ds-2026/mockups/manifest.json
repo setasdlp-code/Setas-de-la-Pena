@@ -1,0 +1,10 @@
+[
+  { "name": "01-packaging",         "file": "mockups/packaging.html",         "width": 980,  "height": 760,  "scale": 2 },
+  { "name": "02-ficha",             "file": "mockups/ficha.html",             "width": 860,  "height": 800,  "scale": 2, "fullPage": true },
+  { "name": "03-lote-card",         "file": "mockups/lote-card.html",         "width": 1140, "height": 600,  "scale": 2, "fullPage": true },
+  { "name": "04-receta",            "file": "mockups/receta.html",            "width": 740,  "height": 800,  "scale": 2, "fullPage": true },
+  { "name": "05-dashboard-desktop", "file": "mockups/dashboard-desktop.html", "width": 1600, "height": 1000, "scale": 2, "fullPage": true },
+  { "name": "06-dashboard-mobile",  "file": "mockups/dashboard-mobile.html",  "width": 430,  "height": 932,  "scale": 3, "fullPage": true },
+  { "name": "07-signage",           "file": "mockups/signage.html",           "width": 940,  "height": 460,  "scale": 2, "fullPage": true },
+  { "name": "08-sop",               "file": "mockups/sop.html",               "width": 820,  "height": 900,  "scale": 2, "fullPage": true }
+]
