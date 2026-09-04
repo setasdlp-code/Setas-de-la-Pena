@@ -5,12 +5,18 @@
   "scripts": {
     "build": "node build.js",
     "test": "node --test *.test.js",
+    "test:rules": "firebase emulators:exec --only firestore --project setas-os-rules-test \"mocha test/firestore.rules.test.js\"",
+    "test:rules:only": "mocha test/firestore.rules.test.js",
     "preview": "python3 -m http.server 4173",
     "lhci": "lhci autorun --config=./lighthouserc.cjs"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.62.1",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "firebase": "^12.18.0",
+    "firebase-tools": "^15.29.0",
+    "mocha": "^12.0.0"
   }
 }

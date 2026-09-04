@@ -116,6 +116,76 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Ficha pública de trazabilidad (QR en etiquetas térmicas, ver
+    // firebase/public-trace-sync.js) — lectura sin autenticar para
+    // cualquiera que escanee el código impreso en una bolsa/lote.
+    // Solo guarda un subconjunto saneado del lote: nunca costos, proveedores,
+    // ni la fórmula/receta completa (eso vive en lotes_produccion, protegido).
+    //
+    // Escritura: no basta con signedIn() — eso deja que cualquier sesión
+    // autenticada (incluida una robada) escriba lo que quiera en una
+    // colección de lectura pública. Se restringe a:
+    //   - isAdmin(): reutiliza el rol que ya existe en usuarios/{uid}.rol
+    //     (cero infraestructura nueva, funciona hoy mismo).
+    //   - isSyncService(): custom claim sync_service==true en el token de
+    //     Auth. Es el mecanismo pensado para las cuentas operativas que
+    //     ejecutan public-trace-sync.js — hay que asignarlo antes de
+    //     desplegar estas reglas (ver firebase/scripts/asignar-sync-claim.js)
+    //     o esas cuentas dejarán de poder sincronizar la ficha pública.
+    function isSyncService() {
+      return signedIn() && request.auth.token.sync_service == true;
+    }
+
+    function puedeEscribirPublico() {
+      return isAdmin() || isSyncService();
+    }
+
+    function camposPublicosSeguros(data) {
+      let prohibidos = ['costo', 'cost', 'costoIngKg', 'proveedor', 'recetaSnapshot', 'receta', 'operador', 'notas'];
+      return !(data.keys().hasAny(prohibidos));
+    }
+
+    // true si el campo no viene en el documento, o si viene y cumple el tipo/tamaño.
+    function esStringOpcional(data, campo, maxLen) {
+      return !(campo in data) || (data[campo] is string && data[campo].size() <= maxLen);
+    }
+    function esEnteroOpcionalEnRango(data, campo, minVal, maxVal) {
+      return !(campo in data)
+        || (data[campo] is int && data[campo] >= minVal && data[campo] <= maxVal);
+    }
+    function esNumeroOpcionalEnRango(data, campo, minVal, maxVal) {
+      return !(campo in data)
+        || (data[campo] is number && data[campo] >= minVal && data[campo] <= maxVal);
+    }
+
+    match /public_lotes/{codigo} {
+      allow read: if true;
+
+      allow create, update: if puedeEscribirPublico()
+        && camposPublicosSeguros(request.resource.data)
+        && esStringOpcional(request.resource.data, 'codigo', 64)
+        && esStringOpcional(request.resource.data, 'especie', 128)
+        && esStringOpcional(request.resource.data, 'especieCientifico', 128)
+        && esStringOpcional(request.resource.data, 'fechaInoculacion', 32)
+        && esStringOpcional(request.resource.data, 'estado', 32)
+        && esEnteroOpcionalEnRango(request.resource.data, 'numBolsas', 0, 100000);
+
+      allow delete: if puedeEscribirPublico();
+
+      match /cosechas/{cosechaId} {
+        allow read: if true;
+
+        allow create, update: if puedeEscribirPublico()
+          && camposPublicosSeguros(request.resource.data)
+          && esStringOpcional(request.resource.data, 'fecha', 32)
+          && esNumeroOpcionalEnRango(request.resource.data, 'pesoFresco', 0, 10000000)
+          && esEnteroOpcionalEnRango(request.resource.data, 'calidad', 0, 5)
+          && esEnteroOpcionalEnRango(request.resource.data, 'flush', 1, 1000);
+
+        allow delete: if puedeEscribirPublico();
+      }
+    }
+
     // Monitoreo de errores del cliente (ver firebase/error-monitor.js) — cada
     // operador puede reportar sus propios errores, pero no leer los de otros
     // ni modificar/borrar el historial (evita que un error mal-intencionado
