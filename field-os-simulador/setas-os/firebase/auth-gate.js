@@ -44,7 +44,6 @@ const PROTECTED_APP_SCRIPTS = [
   "../bitacora-model.js",
   "../climate-math.js",
   "../flush-forecast-engine.js",
-  "../crop-prediction-engine.js",
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
   "../post-harvest-engine.js",

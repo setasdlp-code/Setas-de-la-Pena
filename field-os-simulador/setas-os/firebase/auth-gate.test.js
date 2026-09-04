@@ -354,3 +354,23 @@ test('Setas OS v5.dc.html loads auth-gate.js as module', () => {
   const shell = read('../Setas OS v5.dc.html');
   assert.match(shell, /<script[^>]*type="module"[^>]*src="firebase\/auth-gate\.js"/, 'Setas OS v5 debe cargar auth-gate como módulo');
 });
+
+test('all scripts in PROTECTED_APP_SCRIPTS, DC_RUNTIME_SCRIPTS, and AUTH_RUNTIME_SCRIPTS physically exist on disk', () => {
+  const src = read('auth-gate.js');
+  const extract = (name) => {
+    const match = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`));
+    assert.ok(match, `debe definir ${name}`);
+    return match[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  };
+
+  const allScripts = [
+    ...extract('PROTECTED_APP_SCRIPTS'),
+    ...extract('DC_RUNTIME_SCRIPTS'),
+    ...extract('AUTH_RUNTIME_SCRIPTS'),
+  ];
+
+  for (const scriptPath of allScripts) {
+    const resolved = path.resolve(ROOT, scriptPath);
+    assert.ok(fs.existsSync(resolved), `El script "${scriptPath}" debe existir en disco (${resolved})`);
+  }
+});
