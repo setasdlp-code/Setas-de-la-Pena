@@ -3,16 +3,20 @@ title: Trazabilidad y Seguimiento de Lotes
 document_id: DOC-0030
 category: operations
 load_priority: selective
-last_reviewed: 2026-07-14
+last_reviewed: 2026-09-03
 confidence: high
 primary_sources:
   - Internal protocols
+  - Rocha 2025 (paper_022 — ARK-002..004)
+  - Gaitán-Hernández et al. 2014 (paper_023 — ARK-005..007)
+  - Shi et al. 2026 (paper_026 — ARK-012)
 related_documents:
   - production_schedule.md
   - quality_control.md
   - LESSONS_LEARNED.md
   - DECISIONS.md
   - 04_facility/workflow.md
+  - ../09_research/active_research_knowledge.md
 ---
 
 # Architectural Context
@@ -29,6 +33,7 @@ Traceability system for batches from inoculation through sale or disposal. Enabl
 - Record observations in real time or immediately after observation, not from memory at end of day.
 - Batch log data are the most operationally valuable assets of the cultivation system. A production batch that generates no documented learning represents an irreversible opportunity cost.
 - Batches generate three categories of recorded information: biological data (yield, timing, contamination), operational observations (process deviations, unexpected responses), and validated knowledge (new SOP findings or decision triggers).
+- **Parámetros experimentales mínimos obligatorios (ARK-007):** Toda ficha de lote debe registrar el modelo de bolsa y tamaño de poro de filtro, masa húmeda por bloque, contenido de humedad inicial (% FC), geometría del bloque, absorción hídrica neta en inducción y pico de temperatura en el núcleo.
 
 # Technical Details
 
@@ -37,9 +42,9 @@ Traceability system for batches from inoculation through sale or disposal. Enabl
 ```
 Formato: [AÑO]-[MES]-[ESPECIE]-[NÚMERO]
 Ejemplos:
-  2026-07-LE-001  → Julio 2026, L. edodes, lote 1 (especie prioritaria)
-  2026-08-DJ-001  → Agosto 2026, P. djamor, lote 1 futuro
-  2026-07-HE-001  → Julio 2026, H. erinaceus, lote 1
+  2026-09-LE-001  → Septiembre 2026, L. edodes, lote 1 (especie prioritaria)
+  2026-09-HE-001  → Septiembre 2026, H. erinaceus, lote 1
+  2026-09-PO-001  → Septiembre 2026, P. ostreatus, lote 1
 ```
 
 ## Batch Log Template
@@ -48,38 +53,62 @@ Ejemplos:
 ═══════════════════════════════════════════════════════════
 LOT ID: ________________  MODULE: ______  DATE LOGGED: _______
 ═══════════════════════════════════════════════════════════
-SPECIES: ________________________________
-SUBSTRATE: ______________________________
-DRY SUBSTRATE WEIGHT: ___________ kg
-SPAWN SOURCE & WEIGHT: _____________ kg  (____%)
-BLOCKS PRODUCED: ___
+SPECIES: ________________________________  STRAIN / CLASS: _______________
+SPAWN SUPPLIER & LOT: ___________________  SPAWN MATRIX: [Rye/Wheat/Millet/Supp]
+SPAWN INOCULATION RATE: _____ kg (____% dry weight)
+
+SUBSTRATE FORMULATION: __________________________________
+BASE DRY WEIGHT: _____ kg  |  SUPPLEMENT DRY WEIGHT: _____ kg
+MINERAL BUFFER (Gypsum/CaCO3): _____ g (___%)
+TARGET MOISTURE (FC): ____%  |  MEASURED MOISTURE: ____%
+TOTAL WET WEIGHT PRE-STERILIZATION: _____ kg
+
+CONTAINER & GEOMETRY (ARK-007):
+  Bag Model / Brand: ___________________  Filter Pore Size: _____ µm
+  Wet Fill Mass per Unit: _____ kg/block  Total Blocks: _____
+  Block Dimensions (L × W × H): ____ × ____ × ____ cm
+
+STERILIZATION CYCLE RECORD:
+  Equipment: All American 1941X  |  Target: 121 °C (15 psi) × _____ min
+  Autoclave Exhaust & Dwell Profile: ______________________
+  Sterilization Date: ____________  Operator: _____________
 
 INOCULATION DATE: __________________  INOCULATED BY: _______
 
---- COLONIZATION PHASE ---
-Day  3: Colonization ____%  Contamination _____ T°___°C  Observations:
-Day  7: Colonization ____%  Contamination _____ T°___°C  Observations:
-Day 14: Colonization ____%  Contamination _____ T°___°C  Observations:
-Day 21: Colonization ____%  Contamination _____ T°___°C  Observations:
+--- COLONIZATION PHASE (Shi et al. 2026 / ARK-012) ---
+Day  3: Colonization ____% | Core T°: ___°C | Room T°: ___°C | Obs:
+Day  7: Colonization ____% | Core T°: ___°C | Room T°: ___°C | Obs:
+Day 14: Colonization ____% | Core T°: ___°C | Room T°: ___°C | Obs:
+Day 21: Colonization ____% | Core T°: ___°C | Room T°: ___°C | Obs:
+Day 28: Colonization ____% | Core T°: ___°C | Room T°: ___°C | Obs:
+Popcorning / Browning Date (Shiitake): _____________________
+Peak Core Temp Observed: _____ °C on Day ____ (ΔT core-air: _____ °C)
 Blocks Discarded (Contaminated): ___
-Contaminant Type/Appearance (if any — see contamination.md, Guía de Identificación Visual): _______________
-Day Detected (days since inoculation — see contamination.md, Momentos de Contaminación): ___
-Actual Colonization Timeline vs. Projected: ________________
+Contaminant Type/Appearance: _______________________________
+Day Detected: ___ | Probable Root Cause: ___________________
 
---- FRUITING PHASE ---
-Fruiting Induction Date: __________________
+--- INDUCTION & FRUITING PHASE (Rocha 2025 / ARK-002..004) ---
+Induction Date: __________________
+Induction Method: [Immersion / Cold Room / Injection]
+  Pre-Induction Block Mass (M_pre avg): ________ g
+  Post-Induction Block Mass (M_post avg): _______ g
+  Net Water Absorbed (ΔM): _______ g  (______% mass increase)
+  If Injection Used: Needle Thermal Sterilization Verified? [YES / NO]
+  Water Temp: _____ °C | Duration: _____ hours
+
 First Pins Observed Date: ___________
 Fruiting Module/Chamber: _________________
-Initial Parameters: HR___% T°___°C CO₂___ppm FAE Cycles/hr:___
+Target Environment: HR: ___% | T°: ___°C | CO₂: ___ ppm | FAE: ___ CFM
 
 FLUSH 1:
   Harvest Date: ____________
   Fresh Weight: ____________ g
-  Quality Grade: Premium___ Standard___ Discard___
+  Cap Diam / Stem Ratio: Premium___ Standard___ Discard___
   Observations: 
   
 FLUSH 2:
-  Rehydration Date: _____________
+  Rehydration Date: _____________  Method: _________________
+  Pre-Mass: _____ g  |  Post-Mass: _____ g  |  ΔM: _____ g
   Harvest Date: ____________
   Fresh Weight: ____________ g
   Observations:
@@ -95,12 +124,13 @@ Biological Efficiency (BE): _______ %  [Calculation: Total fresh / dry substrate
 Contamination Rate: _______ %  [Calculation: Contaminated blocks / total blocks × 100]
 Flushes Completed: ___
 Days from Inoculation to First Harvest: ___
+Days Total Cycle: ___
 
 --- KNOWLEDGE GENERATION ---
-Unexpected Observations (Describe any anomalies, deviations from expected parameters, or novel responses):
+Unexpected Observations (Describe any anomalies, deviations, or novel responses):
 _________________________________________________________________________
 
-Decision Triggered (Did this batch reveal a process gap, suggest an SOP change, or generate a new hypothesis?):
+Decision Triggered (Did this batch reveal a process gap, suggest an SOP change?):
 _________________________________________________________________________
 
 Lessons Learned (Validated finding or confirmed practice):

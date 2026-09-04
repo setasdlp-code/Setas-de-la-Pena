@@ -3,11 +3,12 @@ title: Hericium erinaceus — Lion's Mane / Melena de León
 document_id: DOC-0006
 category: species
 load_priority: selective
-last_reviewed: 2026-08-05
+last_reviewed: 2026-09-03
 confidence: medium
 primary_sources:
   - Friedman 2015 (paper_003)
   - Mori et al. 2009 (paper_002)
+  - Atila 2019 (paper_024)
   - Tabi et al. 2021
   - Lu et al. 2024
   - Stamets 2000
@@ -17,13 +18,14 @@ related_documents:
   - ../02_substrates/substrate_library.md
   - ../04_facility/fruiting.md
   - ../05_equipment/environmental_control.md
+  - ../09_research/active_research_knowledge.md
   - ../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md
   - ../09_research/unresolved_questions.md
 ---
 
 # Executive Summary
 
-*Hericium erinaceus* es una especie futura de alto valor para Setas de la Peña. El proyecto no dispone todavía de una cepa caracterizada, lotes trazables ni una curva local de temperatura, HR, CO₂ y velocidad de aire. Por ello, este perfil describe evidencia y requisitos de validación; no fija setpoints operativos.
+*Hericium erinaceus* es una especie de alto valor culinario y nutracéutico para Setas de la Peña (Fase de I+D / preproducción; stock de ~2.0 kg de spawn en refrigeración en Tenjo para ensayos de cámara). El proyecto no dispone todavía de una cepa comercial caracterizada a nivel de lote de producción ni de una curva local de temperatura, HR, CO₂ y velocidad de aire. Por ello, este perfil describe evidencia y requisitos de validación; no fija setpoints operativos rígidos.
 
 La literatura primaria confirma variación entre aislamientos. Un estudio comparó fructificación a 15, 20 y 25°C y encontró respuestas diferentes incluso entre cepas de *H. erinaceus*. La evidencia revisada no justifica presentar **CO₂ <1.000 ppm** como umbral universal, ni una única banda térmica, duración, número de flushes o eficiencia biológica.
 
@@ -38,6 +40,16 @@ Friedman (2015) revisa hericenonas, erinacinas, polisacáridos y otros compuesto
 **Uso permitido:** contexto de investigación y desarrollo futuro.  
 **Límite:** estos estudios no autorizan claims terapéuticos del hongo fresco, polvo o extracto producido por Setas de la Peña. Cualquier claim requiere evidencia del producto, dosis, proceso y revisión regulatoria vigente.
 
+## Región de Referencia Ambiental Experimental (Atila 2019 — paper_024; ARK-001)
+
+Atila (2019) evaluó el cultivo controlado de *H. erinaceus* bajo un régimen experimental caracterizado por:
+- **CO₂:** < 1.200 ppm
+- **Temperatura de fructificación:** 18 ± 2 °C
+- **Humedad Relativa:** 85–90%
+- **Fotoperiodo:** 1.000 lux durante 8 h/día
+
+**Conclusión para el proyecto:** La región `< 1.200 ppm` y `18 ± 2 °C` representa una referencia experimental acotada y defendible, no un umbral fisiológico universal ni un techo estricto de 1.000 ppm. Sirve como punto de partida para los ensayos preliminares de caracterización en la carpa CLOUDLAB 844.
+
 ## Temperatura de fructificación
 
 Tabi et al. (2021) evaluó aislamientos silvestres e híbridos de *Hericium* a 15, 20 y 25°C. La respuesta de rendimiento y composición dependió del aislamiento; incluso cepas de la misma especie no compartieron una temperatura única de mejor desempeño.
@@ -50,11 +62,14 @@ La literatura técnica y la práctica comercial coinciden en que *H. erinaceus* 
 
 **Conclusión:** controlar simultáneamente temperatura, HR, CO₂, condensación y velocidad de aire. Evaluar morfología, pérdida de masa y longitud de dientes por posición.
 
-## Sustratos
+## Sustratos y respuesta a suplementos (Lu et al. 2024; Atila 2019 — paper_024; ARK-008)
 
 La base más estudiada es aserrín de madera dura suplementado. Lu et al. (2024) demostró que la sustitución parcial de madera por paja puede producir formulaciones viables y modificar actividad enzimática. Por tanto, queda retirada la afirmación de que la especie no tolera materiales de gramíneas.
 
-**Conclusión:** una formulación local puede incluir madera y materiales alternativos, pero debe evaluarse con base seca explícita, proceso térmico validado, réplicas y medición de contaminación y BE.
+Por su parte, Atila (2019) evidenció una fuerte interacción entre la química del suplemento y la respuesta biológica de *H. erinaceus*:
+- Respondió vigorosamente a la suplementación con orujo de uva (*grape pomace*).
+- Fracasó marcadamente con orujo de nuez verde (*green walnut hull* al 20%), evidenciando una alta sensibilidad a taninos y polifenoles específicos.
+- Demuestra que la relación C:N no puede usarse de forma aislada para formular sustratos; la composición química específica de los residuos agroindustriales locales condiciona la colonización y fructificación.
 
 # Core Principles
 
@@ -207,8 +222,7 @@ Solo después de obtener un primer ciclo estable. Comparar bandas definidas por 
 - ¿Qué vida útil real se alcanza a 4–5°C con el empaque y transporte disponibles?
 - ¿Qué requisitos vigentes de INVIMA aplican a producto fresco, polvo, extracto y claims?
 
-# References
-
+- Atila, F. (2019). Cultivation of *Hericium erinaceus* and *Lentinula edodes* on agro-industrial wastes and effect of environmental factors on yield and morphology. *Scientia Horticulturae*, 254, 185–194. [paper_024]
 - Friedman, M. (2015). Chemistry, Nutrition, and Health-Promoting Properties of *Hericium erinaceus*. *Journal of Agricultural and Food Chemistry*, 63(32), 7108–7123. https://doi.org/10.1021/acs.jafc.5b02914
 - Mori, K. et al. (2009). Improving effects of Yamabushitake on mild cognitive impairment: a double-blind placebo-controlled clinical trial. *Phytotherapy Research*, 23(3), 367–372. https://doi.org/10.1002/ptr.2634
 - Tabi, A. N. M. et al. (2021). The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid *Hericium* isolates. *Scientia Horticulturae*, 280, 109915. https://doi.org/10.1016/j.scienta.2021.109915

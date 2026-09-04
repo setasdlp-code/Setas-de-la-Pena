@@ -3,18 +3,22 @@ title: Control Ambiental — ESP32 / ESPHome / Home Assistant
 document_id: DOC-0026
 category: equipment
 load_priority: selective
-last_reviewed: 2026-08-05
+last_reviewed: 2026-09-03
 confidence: high
 primary_sources:
   - ESPHome documentation
   - Home Assistant documentation
   - Sensirion SHT4x and SCD30 documentation
+  - EC Buying MH-Z19C NDIR documentation
   - Analog Devices DS18B20 documentation
+  - Shi et al. 2026 (paper_026)
   - Internal design Setas de la Peña
 related_documents:
   - martha.md
+  - hardware_inventory_august_2026.md
   - ../04_facility/fruiting.md
   - ../04_facility/incubation.md
+  - ../09_research/active_research_knowledge.md
   - ../09_research/incubation_module_engineering_review_2026-08-05.md
   - ../10_ai_workflows/OAP-0001-modular-incubation-validation.md
   - ../00_project/current_state.md
@@ -58,66 +62,59 @@ Home Assistant no debe cerrar el lazo de control térmico primario. Una pérdida
 - Verificar pinout antes de conectar.
 - Mantener como sensor disponible si ya fue comprado y pasa comparación de banco.
 
-### SHT45 / familia SHT4x — referencia para incubación
+### SHT45 / familia SHT4x — referencia para fructificación e incubación
 
-- Precisión típica publicada para SHT45: ±1,0% RH y ±0,1 °C.
-- Interfaz I²C; dirección ESPHome predeterminada 0x44.
+- **Sonda Klanata SHT45 (Inox IP67):** Sonda con cuerpo cilíndrico de acero inoxidable microporoso y cable apantallado de 1,0 m. Sensor de referencia dentro de la carpa de fructificación CLOUDLAB 844. Interfaz I²C (0x44).
+- **Sensirion SHT45 Breakouts (I²C):** Para monitoreo de aire en el módulo de incubación y banco de pruebas.
+- Precisión de fábrica: ±1,0% RH y ±0,1 °C.
 - Componente ESPHome: `sht4x`.
-- Usar versión con membrana PTFE integrada o capuchón protector equivalente; una placa expuesta no es configuración aprobada.
-- El calentador interno del sensor se usa solo para recuperación documentada tras condensación o exposición prolongada a HR extrema; no calienta el módulo.
-- Instalar protegido de goteo, partículas, radiación directa del PTC y contacto con paredes frías.
-- La HR es diagnóstica durante incubación de bolsas selladas.
-- Después de condensación o exposición prolongada por encima de aproximadamente 90% RH, ejecutar el procedimiento de recuperación y comparación antes de devolverlo a control.
+- Usar versión con membrana PTFE integrada o cuerpo inox poroso; una placa electrónica desnuda expuesta no es admisible en zona húmeda.
+- El calentador interno del sensor se usa únicamente para ciclos documentados de secado/desorción tras condensación; no como calefacción del recinto.
+- La HR dentro de las cajas de incubación con bolsas selladas es diagnóstica; no activa actuadores.
 
-### DS18B20 — mapa térmico de incubación
+### DS18B20 — mapa térmico y telemetría de núcleo (Shi et al. 2026 — paper_026; ARK-012)
 
 - Componente ESPHome: `dallas_temp` sobre bus `one_wire`.
-- Resistencia pull-up externa aproximada de 4,7 kΩ entre 3,3 V y datos.
-- Usar dirección física, no índice, cuando haya varios sensores.
-- Instalar tres unidades durante calificación: base, centro y parte superior/carga.
-- Comparar las tres sondas juntas durante 48–72 h antes del ensayo; registrar offset individual y no interpretar diferencias próximas a la tolerancia publicada sin esa comparación.
-- Etiquetar físicamente cada dirección y conservarla en configuración y registro de equipo.
+- Resistencia pull-up de 4,7 kΩ entre 3,3 V y pin de datos.
+- Usar dirección hexadecimal fija de cada sonda en el YAML (no indexación por orden de escaneo).
+- **Mapa térmico:** Tres sondas para monitorear gradiente vertical (base, centro, superior).
+- **Sonda de núcleo:** Una sonda inox de 100 mm insertada en el centro geométrico de un bloque representativo (lote indicador). Monitorea el calor metabólico acumulado; el firmware debe aplicar un filtro de media móvil ponderada (`exponential_moving_average` con $\alpha \approx 0,1$) para alertar si $T_{núcleo} > 28\ ^\circ\text{C}$ o si $\Delta T (núcleo - aire) > 5\ ^\circ\text{C}$.
 
-### Sensirion SCD30 — CO₂
+### Sensores de CO₂ NDIR — Sensirion SCD30 y EC Buying MH-Z19C
 
+#### Sensirion SCD30
 - Interfaz I²C; dirección 0x61.
 - Componente ESPHome: `scd30`.
-- Seleccionar una estrategia de compensación:
-  - `altitude_compensation: 2600` cuando no se suministre presión ambiente; o
-  - compensación por presión ambiente cuando exista medición válida.
-- No aplicar simultáneamente altitud fija y presión ambiente como correcciones acumulativas.
-- En incubación se usa temporalmente para calificar ventilación del módulo y del recinto; no se aprueba un umbral universal.
-- Proteger el trayecto de muestreo contra condensación y verificar respuesta en aire exterior antes y después del ensayo.
+- Estrategia de altitud: `altitude_compensation: 2600` (o corrección barométrica en tiempo real; nunca ambas sumadas).
+
+#### EC Buying MH-Z19C
+- Interfaz UART serial (pines hardware UART2: GPIO16 RX, GPIO17 TX).
+- Componente ESPHome: `mhz19`.
+- **Regla crítica CANON §7:** Desactivar calibración automática de línea base (`automatic_baseline_calibration: false`). El ciclo de cultivo fúngico nunca expone el sensor a 400 ppm exterior sostenido; el ABC activo corrompe la escala.
+- **Factor de altitud para Tenjo:** A 2.600 m s.n.m. (~75 kPa vs 101,3 kPa al nivel del mar), la densidad molecular de gas es menor. La lectura de ppm óptico debe multiplicarse en ESPHome por un factor de calibración barométrica:
+  $$f_{altitud} = \frac{1013,25\ \text{hPa}}{740\ \text{hPa}} \approx 1,369$$
+- Trayecto de muestreo protegido de condensación directa mediante tubo desecante o cámara de mezcla.
 
 ### Inkbird IBS-TH2 Plus — redundancia
-
-- Lectura BLE/app como comparación independiente.
-- Comparar contra sensor principal durante banco y después de intervenciones.
-- Cualquier tolerancia de aceptación debe quedar en el protocolo de calibración, no inferirse de la ficha comercial.
+- Lectura Bluetooth independiente en campo. Comparación periódica contra SHT45 e informe de deriva.
 
 ## Actuadores de Fructificación
 
-### AC Infinity T7 — humidificación
+### AC Infinity CloudForge T7 — humidificación
+- Control por relé o señal digital ON/OFF cuando el lote tenga banda y ciclo aprobados.
+- Capacidad de 15 L con manguera de distribución flexible hacia la parte superior de la carpa.
+- No usar la lectura del sensor integrado del H05 para lazo cerrado.
 
-- Control por relé simple ON/OFF cuando el lote tenga banda aprobada.
-- No usar la lectura integrada del H05 como sensor de control.
-- No aplicar a incubación de bolsas selladas.
-
-### AC Infinity H4 — extracción / FAE
-
-- Control por relé simple ON/OFF cuando exista especificación de lote.
-- Antes de automatizar, medir volumen efectivo, caudal bajo resistencia real y respuesta de CO₂.
+### AC Infinity Cloudline H4 IP65 — extracción / FAE
+- Control ON/OFF o PWM. Caudal calibrado considerando contrapresión de ducto y menor densidad de aire en altitud.
+- Sincronizado con lectura compensada de CO₂ y control de humedad.
 
 ## Actuadores de Incubación
 
-### Calefactor PTC externo
-
-- Instalar en plenum externo con ventilador y trayectoria de aire verificable.
-- No ubicar elemento calefactor expuesto dentro de una caja plástica con bolsas.
-- Dimensionar potencia después del perfil de Tenjo y ensayos vacío/cargado.
-- Incorporar termostato físico de límite alto y fusible térmico independientes del relé.
-- El relé o contactor debe quedar desenergizado al iniciar y ante fallo del controlador.
-- Verificar materiales próximos, reacción al fuego, separación del aislamiento combustible y temperatura de superficies.
+### Malla Radiante QuietWarmth (90W, 120V) / PTC en Plenum
+- Elemento de calentamiento de baja densidad de potencia superficial para evitar puntos calientes.
+- Conectado a través de relé con aislamiento galvánico (módulo Hosyond).
+- Interbloqueo obligatorio: termostato bimetálico de corte físico a 35 °C y fusible térmico independiente del microcontrolador.
 
 ### Ventilador de circulación
 
@@ -373,23 +370,25 @@ En preproducción, Home Assistant registra sensores, muestra alarmas y permite p
 
 # References
 
-- ESPHome Documentation: `sht4x`, `sht3xd`, `one_wire`, `dallas_temp`, `scd30`, `thermostat` and GPIO switch components.
+- Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
+- ESPHome Documentation: `sht4x`, `sht3xd`, `mhz19`, `one_wire`, `dallas_temp`, `scd30`, `thermostat` and GPIO switch components.
 - Sensirion. SHT4x datasheet, revision 04/2025; SHT45 product specification; SCD30 documentation.
+- Winsen Electronics / EC Buying. MH-Z19C NDIR CO2 module user's manual (v1.6).
 - Analog Devices. DS18B20 product documentation.
 - Home Assistant Documentation.
-- AC Infinity T7 and H4 manuals.
+- AC Infinity CloudForge T7 and Cloudline H4 manuals.
 - RETIE vigente, Resolución 40284 del 23 de junio de 2026.
 - `../09_research/incubation_module_engineering_review_2026-08-05.md` — límites y justificación de ingeniería.
 
-Con operación intermitente:
+## Cálculo de Renovaciones de Aire con Operación Cíclica
 
+Para ventilación intermitente en carpa o cámara:
 
+$$\text{ACH}_{\text{estimado}} = \frac{Q_{\text{efectivo medido}} \times \text{duty\_cycle} \times 60}{V_{\text{cámara}}}$$
 
-donde . El caudal efectivo requerido es de 8,5 CFM a 13,6 CFM según especie y densidad de carga.
+Fórmula operacional directa:
+`ACH estimado = Q efectivo medido * duty_cycle * 60 / volumen`
 
-
-Con operacion intermitente:
-
-ACH estimado = Q efectivo medido * duty_cycle * 60 / volumen
-
-donde duty_cycle = tiempo ON / (tiempo ON + tiempo OFF). El caudal efectivo requerido es de 8,5 CFM a 13,6 CFM segun especie y densidad de carga.
+donde:
+- $\text{duty\_cycle} = \frac{t_{\text{ON}}}{t_{\text{ON}} + t_{\text{OFF}}}$.
+- El caudal efectivo requerido oscila entre 8,5 CFM y 13,6 CFM según especie, biomasa activa y densidad de carga, verificado siempre mediante lectura de CO₂ compensada barométricamente.
