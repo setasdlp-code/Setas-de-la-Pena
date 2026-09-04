@@ -1225,7 +1225,7 @@ const SppSvg=({sKey,c})=>{
 const analyze=(recipe,sKey,ings=INGS)=>{
   if(!recipe.length) return null;
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
-  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
+  let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
   const DENSOS=['aserrin_roble','aserrin_eucalipto','aserrin_pino','aserrin_pino_compostado','borra_cafe','afrecho_cerveceria','chips_poda_urbana','guadua','carton_corrugado','pulpa_papel'];
   recipe.forEach(r=>{
     const g=ings.find(i=>i.id===r.id);if(!g) return;
@@ -1241,6 +1241,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     if(g.cn>0&&!esAditivoSeco){wC+=g.c*dryFrac;wN+=g.n*dryFrac;nP+=dryFrac;}
     wPh+=g.ph*p; wDig+=g.dig*p; wCra+=g.cra*p;
     if(g.role==='suplemento_n') suppP+=p;
+    if(g.role==='suplemento_medio') suppMedP+=p;
     if(g.role==='base_carbono') baseP+=p;
     if(['aditivo_ph','aditivo_estructura','aditivo_micronutriente'].includes(g.role)) addP+=p;
     if(g.role==='aireador') airP+=p;
@@ -1253,13 +1254,15 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   const avgPh=tot?wPh/tot:7;
   const avgDig=tot?wDig/tot:5;
   const avgCra=tot?wCra/tot:3;
+  const suppTotalP=suppP+suppMedP;
+  const suppEffectiveP=suppP+(suppMedP*0.6);
   const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);return g?s+(g.cost*(parseFloat(r.p)||0)/100):s;},0);
   const sp=SPP[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
     const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
     const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
     eb=sp.eb_baseline+(sp.eb_optimal-sp.eb_baseline)*(cF*.6+nF*.4);
-    const needsAutoclave=suppP>sp.supplementation_max;
+    const needsAutoclave=suppEffectiveP>sp.supplementation_max;
     const nThresh=needsAutoclave?sp.n_optimal.max*1.2:sp.n_optimal.max*1.15;
     if(avgN>nThresh&&!needsAutoclave){trichoderma=true;eb*=.45;}
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
@@ -1289,15 +1292,15 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     if(ebMods.aerF<0.95) ebCvVal+=0.05;
     if(ebMods.digF<0.95) ebCvVal+=0.04;
     if(incompat.length) ebCvVal+=0.08;
-    if(suppP>sp.supplementation_max) ebCvVal+=0.10;
+    if(suppEffectiveP>sp.supplementation_max) ebCvVal+=0.10;
     if(trichoderma) ebCvVal=0.50;
     ebCvVal=Math.min(trichoderma?0.50:0.40,ebCvVal);
     var ebLow=Math.round(eb*(1-ebCvVal));
     var ebHigh=Math.round(eb*(1+ebCvVal));
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
-    dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppP/5));
+    dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
@@ -1397,6 +1400,21 @@ const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 
   ? SetasHistoricalCalibration
   : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
 
+// ── Pronóstico biológico de cosechas y oleadas — puente hacia flush-forecast-engine.js ──
+const {
+  SPECIES_FLUSH_PROFILES,
+  calcThermalDelayFactor,
+  calculateLotYieldAndFlushes,
+  calculateSowingRequirement,
+  sowingRecommendation: engineSowingRecommendation,
+  matchWeeklyCoverage: engineMatchWeeklyCoverage,
+  calibrateFlushProfileFromHarvests,
+  predictSubstrateCostPerFreshKg,
+  getSpeciesFlushProfile,
+} = (typeof SetasFlushForecast !== 'undefined'
+  ? SetasFlushForecast
+  : (typeof require !== 'undefined' ? require('./flush-forecast-engine.js') : {}));
+
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
 
@@ -1490,29 +1508,56 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
   };
 };
 
-const calcSchedule=(sKey,dateStr,eb)=>{
+const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
   const d=T[sKey]||T.p_ostreatus_gris;
-  const adj=n=>Math.round(n/Math.max(.85,Math.min(1.2,(eb||100)/100)));
+
+  // Cinética térmica Q10 = 2.0 (Efecto Tenjo 2.600 msnm vs cámara térmica controlada)
+  const thermal=(typeof calcThermalDelayFactor==='function')
+    ? calcThermalDelayFactor(ambientTemp,sKey,'colonization')
+    : {factor:1.0,isDelayed:false,delayPercent:0,coldWarning:null};
+  const tF=thermal.factor||1.0;
+
+  const adj=n=>Math.round((n*tF)/Math.max(.85,Math.min(1.2,(eb||100)/100)));
+
   // Especies sensibles a bajas temperaturas: fructifican mal o no fructifican bajo el
-  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico
-  // activo. p_djamor_rosa es cálida-estricta (28–30°C ideal).
+  // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico activo.
   const COLD_SENSITIVE={p_djamor_rosa:'28–30°C'};
-  const coldWarn=COLD_SENSITIVE[sKey]?` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`:'';
+  const coldWarn=COLD_SENSITIVE[sKey]
+    ? ` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
+    : (thermal.coldWarning ? ` ⚠️ ${thermal.coldWarning}` : '');
+
+  // Matriz biológica diferencial de oleadas por especie
+  const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(sKey))
+    ||(typeof SPECIES_FLUSH_PROFILES!=='undefined'&&SPECIES_FLUSH_PROFILES[sKey]);
+  const f1Pct=Math.round((profile?.flushes[0]?.pct??0.55)*100);
+  const f2Pct=Math.round((profile?.flushes[1]?.pct??0.30)*100);
+  const f3Pct=Math.round((profile?.flushes[2]?.pct??0.15)*100);
+
   const evts=[
-    {key:'in',type:'inoculation',day:0,title:'Inoculación',detail:`Empacar bolsas. Spawn ${sp.spawn_rate}%.`},
+    {key:'in',type:'inoculation',day:0,title:'Inoculación',detail:`Empacar bolsas. Spawn ${sp.spawn_rate}%. Temp: ${ambientTemp}°C.`},
     {key:'c5',type:'normal',day:adj(d.c50),title:'Colonización 50%',detail:'Micelio blanco visible en la bolsa.'},
     {key:'c1',type:coldWarn?'warning':'normal',day:adj(d.c100),title:'Colonización completa',detail:`Pasar a cámara de fructificación. ${sp.temp_fruit}.${coldWarn}`},
     {key:'pr',type:'normal',day:adj(d.pr),title:'Primordios',detail:'HR 90–95%. Abrir bolsa o cortar.'},
-    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*.55).toFixed(0):'?'}% EB.`},
-    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*.35).toFixed(0):'?'}% EB.`},
-    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:'Evaluar si compostar el bloque.'}
+    {key:'f1',type:'harvest',day:adj(d.f1),title:'Primera cosecha',detail:`~${eb?(eb*(f1Pct/100)).toFixed(0):'?'}% EB (${f1Pct}% del total).`},
+    {key:'f2',type:'harvest',day:adj(d.f2),title:'Segunda cosecha',detail:`~${eb?(eb*(f2Pct/100)).toFixed(0):'?'}% EB (${f2Pct}% del total).`},
+    {key:'f3',type:'harvest',day:adj(d.f3),title:'Tercera cosecha',detail:`~${eb?(eb*(f3Pct/100)).toFixed(0):'?'}% EB (${f3Pct}% del total). Evaluar si compostar el bloque.`}
   ];
-  return{evts:evts.map(e=>({...e,ds:fmt(add(base,e.day))})),tot:adj(d.f3),first:fmt(add(base,adj(d.f1))),inc:adj(d.c100)};
+  return{
+    evts:evts.map(e=>({...e,ds:fmt(add(base,e.day))})),
+    tot:adj(d.f3),
+    first:fmt(add(base,adj(d.f1))),
+    inc:adj(d.c100),
+    thermalFactor:tF,
+    thermalDelayPct:thermal.delayPercent||0,
+    ambientTemp,
+    coldWarn,
+    f1Pct,f2Pct,f3Pct
+  };
 };
 
 const PasteGuide=({tr,recipe,numBags,kgBag})=>{
@@ -1665,22 +1710,35 @@ const NitrogenChart=({recipe})=>{
 };
 
 // ── v3: FlushChart — projected yield per flush ──
-const FlushChart=({an})=>{
+const FlushChart=({an,sKey})=>{
   if(!an||!an.eb||an.eb<10) return null;
   const eb=an.eb;
   const ebLow=an.ebLow??Math.round(eb*0.82);
   const ebHigh=an.ebHigh??Math.round(eb*1.18);
-  const flushes=[
-    {label:'1ª',sub:'Cosecha',pct:0.55,days:'35–45 d',color:'var(--coral-500)',bg:'rgba(184,97,77,.08)'},
-    {label:'2ª',sub:'Cosecha',pct:0.30,days:'55–70 d',color:'var(--accent-olive)',bg:'rgba(77,98,53,.07)'},
-    {label:'3ª',sub:'Cosecha',pct:0.15,days:'75–95 d',color:'var(--ochre-500,#A07828)',bg:'rgba(160,120,40,.07)'},
+  const speciesKey=sKey||an?.sp?.id||an?.speciesKey||'p_ostreatus_gris';
+  const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(speciesKey))
+    ||(typeof SPECIES_FLUSH_PROFILES!=='undefined'&&SPECIES_FLUSH_PROFILES[speciesKey]);
+  const fProfile=profile?.flushes||[
+    {flushNumber:1,pct:0.55,daysAfterInoc:35,label:'1ª Cosecha'},
+    {flushNumber:2,pct:0.30,daysAfterInoc:55,label:'2ª Cosecha'},
+    {flushNumber:3,pct:0.15,daysAfterInoc:75,label:'3ª Cosecha'}
   ];
-  const maxPct=flushes[0].pct;
+  const colors=['var(--coral-500)','var(--accent-olive)','var(--ochre-500,#A07828)'];
+  const bgs=['rgba(184,97,77,.08)','rgba(77,98,53,.07)','rgba(160,120,40,.07)'];
+  const flushes=fProfile.map((f,i)=>({
+    label:`${f.flushNumber||i+1}ª`,
+    sub:'Cosecha',
+    pct:f.pct,
+    days:f.daysAfterInoc?`~${f.daysAfterInoc} d`:`${35+i*20} d`,
+    color:colors[i%colors.length],
+    bg:bgs[i%bgs.length],
+  }));
+  const maxPct=Math.max(...flushes.map(f=>f.pct),0.01);
   return(
     <div style={{marginBottom:16,background:'var(--paper-50,var(--paper-100))',border:'1px solid var(--border-soft)',overflow:'hidden'}}>
       {/* Header */}
       <div style={{padding:'10px 14px 8px',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas</span>
+        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas · {profile?.name||'Biomasa'}</span>
         <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:700}}>EB {ebLow}–{ebHigh}%</span>
       </div>
       {/* Flush columns */}
@@ -1689,7 +1747,7 @@ const FlushChart=({an})=>{
           const val=(eb*f.pct);
           const barH=Math.round((f.pct/maxPct)*72);
           return(
-            <div key={i} style={{flex:1,borderRight:i<2?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
+            <div key={i} style={{flex:1,borderRight:i<flushes.length-1?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
               {/* ordinal label */}
               <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
               {/* big number */}
@@ -1708,7 +1766,7 @@ const FlushChart=({an})=>{
       </div>
       {/* Footer */}
       <div style={{padding:'6px 14px',borderTop:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',background:'var(--paper-100)'}}>
-        Distribución 55/30/15% · ±{Math.round((ebHigh-ebLow)/2/eb*100)}% incertidumbre · por kg sustrato seco
+        Distribución {flushes.map(f=>Math.round(f.pct*100)).join('/')}% · ±{Math.round((ebHigh-ebLow)/2/eb*100)}% incertidumbre · por kg sustrato seco
       </div>
     </div>
   );
@@ -3952,34 +4010,57 @@ function SimuladorShell(props){
   const [dashFilter,setDashFilter]=useState('all');
 
 // --------------------------------------------------------------------------
-// Flush Forecast & B2B Sales Forecast Helpers (placeholder implementation)
+// Flush Forecast & B2B Sales Forecast Engine Integration
 // --------------------------------------------------------------------------
 // Identifier used by UI to reference the schedule tab.
 const schTab = 'schedule';
 
-// Placeholder flush percentages (mock values for tests)
+// Default / fallback flush percentages (0.6, 0.3, 0.1)
 const flush1 = 0.6;
 const flush2 = 0.3;
 const flush3 = 0.1;
 
-// Simple lot‑level flush projection (mock implementation)
-function calculateLotFlushProjection(lot) {
-  // lot: { bags, kgPerBag, eb }
-  const totalKg = (lot.bags || 0) * (lot.kgPerBag || 1.5) * ((lot.eb || 90) / 100);
+// Rigorous lot‑level flush projection using dry mass balance and species profiles
+function calculateLotFlushProjection(lot, options = {}) {
+  if (typeof calculateLotYieldAndFlushes === 'function') {
+    return calculateLotYieldAndFlushes(lot, options);
+  }
+  const bags = (lot?.bags || 0);
+  const kgPerBag = (lot?.kgPerBag || 1.5);
+  const moisture = (lot?.moisture || 65);
+  const dryKg = bags * kgPerBag * (1 - moisture / 100);
+  const eb = (lot?.eb || 90);
+  const totalKg = dryKg * (eb / 100);
   return {
     totalKg,
+    totalDryKg: dryKg,
     flush1: { pct: 0.6, kg: totalKg * 0.6 },
     flush2: { pct: 0.3, kg: totalKg * 0.3 },
     flush3: { pct: 0.1, kg: totalKg * 0.1 },
   };
 }
 
-// B2B commitments placeholder (array of weekly promises)
-const b2bCommitments = [];
+// B2B commitments (array of weekly promises)
+const b2bCommitments = [
+  { semana: 'Semana 1', cliente: 'Restaurante Local Tenjo', speciesKey: 'p_ostreatus_gris', kgComprometidos: 15 },
+  { semana: 'Semana 2', cliente: 'Bistró Sabana Norte', speciesKey: 'p_ostreatus_gris', kgComprometidos: 20 },
+  { semana: 'Semana 3', cliente: 'Mercado Gourmet Chía', speciesKey: 'shiitake', kgComprometidos: 10 },
+];
 
-// Match weekly harvest projection against B2B commitments (mock stub)
-function matchWeeklyCoverage(projection, commitments) {
-  return { superavit: 0, deficit: 0, cobertura: 0 };
+// Match weekly harvest projection against B2B commitments
+function matchWeeklyCoverage(projection, commitments = b2bCommitments) {
+  if (typeof SetasFlushForecast !== 'undefined' && typeof SetasFlushForecast.matchWeeklyCoverage === 'function') {
+    return SetasFlushForecast.matchWeeklyCoverage(projection, commitments);
+  }
+  const totalProyectado = Array.isArray(projection)
+    ? projection.reduce((acc, p) => acc + (p.totalKg || 0), 0)
+    : (projection?.totalKg || 0);
+  const totalComprometido = (commitments || []).reduce((acc, c) => acc + (c.kgComprometidos || 0), 0);
+  const balance = totalProyectado - totalComprometido;
+  const superavit = Math.max(0, balance);
+  const deficit = Math.max(0, -balance);
+  const cobertura = totalComprometido > 0 ? Math.min(100, Math.round((totalProyectado / totalComprometido) * 100)) : 100;
+  return { superavit, deficit, cobertura, totalProyectado, totalComprometido };
 }
 
 // Badges for UI coverage status
@@ -3987,11 +4068,22 @@ const superavit = '🟢';
 const deficit = '🔴';
 const cobertura = '🟡';
 
-// Recommendation when deficit detected
-function sowingRecommendation(deficitKg) {
-  const bagsNeeded = Math.ceil(deficitKg / 1.5);
-  return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit`;
+// Recommendation when deficit detected with substrate and spawn weights
+function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', options = {}) {
+  if (typeof SetasFlushForecast !== 'undefined' && typeof SetasFlushForecast.calculateSowingRequirement === 'function') {
+    const req = SetasFlushForecast.calculateSowingRequirement(deficitKg, speciesKey, options);
+    return req.message || `Inocular ${req.bagsNeeded} bolsas adicionales para cubrir el déficit`;
+  }
+  const bagsNeeded = Math.ceil((deficitKg || 0) / (1.5 * 0.35 * 0.9));
+  return `Inocular ${bagsNeeded} bolsas adicionales para cubrir el déficit de ${deficitKg} kg`;
 }
+
+  const [schSubTab,setSchSubTab]=useState('cronograma');
+  const [schTemp,setSchTemp]=useState(16);
+  const [fcBags,setFcBags]=useState(100);
+  const [fcKgBag,setFcKgBag]=useState(1.5);
+  const [fcMoisture,setFcMoisture]=useState(65);
+  const [fcDeficitTarget,setFcDeficitTarget]=useState(25);
 
   const [lockedIds,setLockedIds]=useState(()=>initialFormDraft?.lockedIds||[]);
   const [balanceMode,setBalanceMode]=useState('proportional');
@@ -4799,7 +4891,7 @@ function sowingRecommendation(deficitKg) {
     return bestSim>=0.5?{...best,similarity:bestSim}:null;
   },[recipe,trialsWithReal]);
   const cAn=useMemo(()=>analyze(cmpRecipe,cmpKey,effectiveINGS),[cmpRecipe,cmpKey,effectiveINGS]);
-  const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb),[schKey,schDate,an]);
+  const sch=useMemo(()=>calcSchedule(schKey,schDate,an?.eb,schTemp),[schKey,schDate,an,schTemp]);
   // Score de una receta guardada (Recetario/Dashboard), recalculado en vivo con
   // la matriz actual en vez de confiar en el número persistido al guardarla —
   // así una receta guardada antes de una recalibración de pesos no queda con
@@ -9480,14 +9572,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── PERITO: INDICADORES + ITEMS ── */}
                   {hasPer&&(
                     <>
-                      {/* ── barra resumen live: score + EB + costo ── */}
+                      {/* ── barra resumen live: score + EB + costo seco + costo hongo (Funcionalidad 2) ── */}
                       <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
                         {[
                           {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
                           {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                          {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                          {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
                         ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 10px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
+                          <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
                             <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
                             <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
@@ -10281,30 +10374,292 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='schedule'&&(
+        {tab===schTab&&(
           <div className="panel panel-accent">
-            <div className="schctrl">
-              <div className="schctl"><label htmlFor="sch-date">Fecha de inoculación</label><input id="sch-date" type="date" value={schDate} onChange={e=>setSchDate(e.target.value)}/></div>
-              <div className="schctl"><label htmlFor="sch-key">Especie</label><select id="sch-key" value={schKey} onChange={e=>setSchKey(e.target.value)}>{Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</select></div>
-              {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
+            {/* Subtab navigation */}
+            <div style={{display:'flex',gap:6,borderBottom:'1.5px solid var(--border-soft)',paddingBottom:10,marginBottom:16}}>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('cronograma')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='cronograma'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='cronograma'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='cronograma'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                📅 Cronograma & Cinética
+              </button>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('forecast')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='forecast'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='forecast'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='forecast'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                🍄 Pronóstico de Cosecha & Oleadas
+              </button>
+              <button
+                type="button"
+                onClick={()=>setSchSubTab('b2b')}
+                style={{
+                  fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
+                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  background:schSubTab==='b2b'?'var(--paper-100)':'transparent',
+                  color:schSubTab==='b2b'?'var(--ink-900)':'var(--ink-500)',
+                  border:schSubTab==='b2b'?'1.5px solid var(--accent-olive)':'1px solid transparent',
+                  cursor:'pointer'
+                }}
+              >
+                🤝 Matriz B2B & Cobertura
+              </button>
             </div>
-            {sch&&(<>
-              <div className="schsum">
-                <div className="ssc"><div className="ssv">{sch.inc} días</div><div className="ssl">Incubación</div></div>
-                <div className="ssc"><div className="ssv" style={{fontSize:20,fontWeight:400,paddingTop:5}}>{sch.first}</div><div className="ssl">Primera cosecha</div></div>
-                <div className="ssc"><div className="ssv">{sch.tot} días</div><div className="ssl">Ciclo completo</div></div>
-              </div>
-              <div className="tl">
-                {sch.evts.map(e=>(
-                  <div key={e.key} className={`tle ${e.type}`}>
-                    <div className="tle-dt">Día {e.day} · {e.ds}</div>
-                    <div className="tle-t">{e.title}</div>
-                    <div className="tle-d">{e.detail}</div>
+
+            {/* Subtab 1: Cronograma con Cinética Térmica Tenjo */}
+            {schSubTab==='cronograma'&&(
+              <div>
+                <div className="schctrl">
+                  <div className="schctl"><label htmlFor="sch-date">Fecha de inoculación</label><input id="sch-date" type="date" value={schDate} onChange={e=>setSchDate(e.target.value)}/></div>
+                  <div className="schctl"><label htmlFor="sch-key">Especie</label><select id="sch-key" value={schKey} onChange={e=>setSchKey(e.target.value)}>{Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}</select></div>
+                  <div className="schctl">
+                    <label htmlFor="sch-temp">Temp. Incubación (°C)</label>
+                    <div style={{display:'flex',gap:4}}>
+                      <input id="sch-temp" type="number" min="8" max="32" step="1" value={schTemp} onChange={e=>setSchTemp(parseFloat(e.target.value)||16)} style={{width:65}}/>
+                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
+                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
+                    </div>
                   </div>
-                ))}
+                  {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
+                </div>
+
+                {/* Badge cinético térmico Q10 */}
+                {sch&&(
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700,#9B2C2C)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                    <span>🌡️ <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
+                    {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
+                  </div>
+                )}
+
+                {sch&&(<>
+                  <div className="schsum">
+                    <div className="ssc"><div className="ssv">{sch.inc} días</div><div className="ssl">Incubación {sch.thermalDelayPct>20?`(+${sch.thermalDelayPct}% Tenjo)`:''}</div></div>
+                    <div className="ssc"><div className="ssv" style={{fontSize:20,fontWeight:400,paddingTop:5}}>{sch.first}</div><div className="ssl">Primera cosecha (1ª Oleada {sch.f1Pct}%)</div></div>
+                    <div className="ssc"><div className="ssv">{sch.tot} días</div><div className="ssl">Ciclo completo (3 Oleadas)</div></div>
+                  </div>
+                  <div className="tl">
+                    {sch.evts.map(e=>(
+                      <div key={e.key} className={`tle ${e.type}`}>
+                        <div className="tle-dt">Día {e.day} · {e.ds}</div>
+                        <div className="tle-t">{e.title}</div>
+                        <div className="tle-d">{e.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="lnote">Tiempos calibrados para Tenjo, Cundinamarca (2.600 m.s.n.m., ambiente sin calefacción: 14–16°C vs cámara 22–24°C). Ajustados por cinética Arrhenius Q10 y EB estimada.</div>
+                </>)}
               </div>
-              <div className="lnote">Tiempos para Tenjo, Cundinamarca (2600 m.s.n.m., 12–18°C ambiente). Ajustados por EB estimada de la receta activa.</div>
-            </>)}
+            )}
+
+            {/* Subtab 2: Pronóstico de Cosecha & Oleadas */}
+            {schSubTab==='forecast'&&(()=>{
+              const curEb = an?.eb || 90;
+              const proj = calculateLotFlushProjection({
+                bags: fcBags,
+                kgPerBag: fcKgBag,
+                moisture: fcMoisture,
+                sKey: schKey,
+                eb: curEb,
+                ambientTemp: schTemp
+              });
+              const dryMixCost = an?.cost || 1200;
+              const costPerFreshKg = curEb > 0 ? (dryMixCost / (curEb / 100)) : 0;
+              const sowReq = (typeof calculateSowingRequirement === 'function')
+                ? calculateSowingRequirement(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })
+                : null;
+
+              return(
+                <div>
+                  <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700,marginBottom:12}}>
+                    Calculadora de Producción por Oleada (Balance de Materia Seca Estricto)
+                  </div>
+                  <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:16,padding:12,background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Número de bolsas</label>
+                      <input type="number" min="1" max="10000" value={fcBags} onChange={e=>setFcBags(parseInt(e.target.value,10)||1)} style={{width:90,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Peso húmedo / bolsa (kg)</label>
+                      <input type="number" min="0.5" max="10" step="0.1" value={fcKgBag} onChange={e=>setFcKgBag(parseFloat(e.target.value)||1.5)} style={{width:90,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Humedad sustrato (%)</label>
+                      <input type="number" min="40" max="85" step="1" value={fcMoisture} onChange={e=>setFcMoisture(parseFloat(e.target.value)||65)} style={{width:80,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Especie</label>
+                      <select value={schKey} onChange={e=>setSchKey(e.target.value)} style={{padding:'5px 8px'}}>
+                        {Object.entries(SPP).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:4,justifyContent:'flex-end'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>
+                        EB objetivo: <b>{curEb.toFixed(0)}%</b> · Materia seca/bolsa: <b>{(fcKgBag * (1 - fcMoisture / 100)).toFixed(2)} kg</b>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Resultados del lote */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:16}}>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Sustrato Total</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{(fcBags * fcKgBag).toFixed(1)} <span style={{fontSize:14}}>kg húmedo</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>{proj.totalDryKg} kg materia seca (base real de EB)</div>
+                    </div>
+                    <div style={{padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--moss-800)',textTransform:'uppercase',fontWeight:700}}>Cosecha Total Proyectada</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--moss-800)',marginTop:4}}>{proj.totalKg} <span style={{fontSize:14}}>kg fresco</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginTop:2}}>~{(proj.totalKg / fcBags).toFixed(2)} kg fresco / bolsa</div>
+                    </div>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Costo Sustrato / kg Hongo</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--coral-600)',marginTop:4}}>${Math.round(costPerFreshKg).toLocaleString('es-CO')} <span style={{fontSize:12}}>COP/kg</span></div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>Mezcla seca: ${Math.round(dryMixCost).toLocaleString('es-CO')}/kg ÷ ({curEb.toFixed(0)}% EB)</div>
+                    </div>
+                  </div>
+
+                  {/* Desglose de oleadas */}
+                  <div style={{marginBottom:18}}>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginBottom:8}}>Desglose de Oleadas (Matriz Biológica Específica)</div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(184,97,77,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--coral-500)',fontSize:"var(--text-sm)"}}>1ª Oleada (Fl. 1)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--coral-500)',marginTop:4}}>{proj.flush1.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush1.pct * 100)}% de la cosecha</div>
+                      </div>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--accent-olive)',fontSize:"var(--text-sm)"}}>2ª Oleada (Fl. 2)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--accent-olive)',marginTop:4}}>{proj.flush2.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush2.pct * 100)}% de la cosecha</div>
+                      </div>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500,#A07828)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--ochre-500,#A07828)',fontSize:"var(--text-sm)"}}>3ª Oleada (Fl. 3)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--ochre-500,#A07828)',marginTop:4}}>{proj.flush3.kg} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush3.pct * 100)}% de la cosecha</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculadora Inversa: Requerimiento de Siembra */}
+                  <div style={{padding:14,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontWeight:700,marginBottom:6}}>Recomendación de Siembra para Déficit Comercial</div>
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:8}}>
+                      <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Meta de cosecha requerida (kg):</label>
+                      <input type="number" min="1" max="5000" value={fcDeficitTarget} onChange={e=>setFcDeficitTarget(parseFloat(e.target.value)||25)} style={{width:90,padding:'4px 8px'}}/>
+                    </div>
+                    {sowReq&&(
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                        💡 <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Subtab 3: Matriz B2B & Cobertura */}
+            {schSubTab==='b2b'&&(()=>{
+              const curEb = an?.eb || 90;
+              const currentLotProj = calculateLotFlushProjection({
+                bags: fcBags,
+                kgPerBag: fcKgBag,
+                moisture: fcMoisture,
+                sKey: schKey,
+                eb: curEb
+              });
+              const coverage = matchWeeklyCoverage(currentLotProj, b2bCommitments);
+              const statusIcon = coverage.superavit > 0 ? superavit : coverage.deficit > 0 ? deficit : cobertura;
+
+              return(
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700}}>
+                      Matriz B2B: Oferta Semanal Proyectada vs Compromisos Comerciales
+                    </div>
+                    <div style={{padding:'6px 12px',borderRadius:'var(--r-sm)',background:'var(--paper-100)',border:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
+                      Estado general: {statusIcon} <b>{coverage.cobertura}% de cobertura</b>
+                    </div>
+                  </div>
+
+                  {/* Resumen numérico */}
+                  <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Cosecha Disponible Proyectada</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalProyectado} kg</div>
+                    </div>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Compromisos B2B Restaurantes</div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalComprometido} kg</div>
+                    </div>
+                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'rgba(197,48,48,.08)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',textTransform:'uppercase',fontWeight:700}}>
+                        {coverage.superavit>0?'Superávit Comercial':'Déficit Comercial'}
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',marginTop:4}}>
+                        {coverage.superavit>0?`+${coverage.superavit} kg`:`-${coverage.deficit} kg`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabla de pedidos B2B */}
+                  <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:16}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>
+                      <thead>
+                        <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
+                          <th style={{padding:'8px 12px'}}>Semana</th>
+                          <th style={{padding:'8px 12px'}}>Cliente B2B</th>
+                          <th style={{padding:'8px 12px'}}>Especie</th>
+                          <th style={{padding:'8px 12px',textAlign:'right'}}>Compromiso</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {b2bCommitments.map((c,i)=>(
+                          <tr key={i} style={{borderBottom:i<b2bCommitments.length-1?'1px solid var(--border-soft)':'none'}}>
+                            <td style={{padding:'8px 12px',fontWeight:700}}>{c.semana}</td>
+                            <td style={{padding:'8px 12px'}}>{c.cliente}</td>
+                            <td style={{padding:'8px 12px'}}>{SPP[c.speciesKey]?.name || c.speciesKey}</td>
+                            <td style={{padding:'8px 12px',textAlign:'right',fontWeight:700}}>{c.kgComprometidos} kg</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Alerta de siembra en caso de déficit */}
+                  {coverage.deficit>0&&(
+                    <div style={{padding:14,background:'rgba(197,48,48,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700,#9B2C2C)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
+                        <span>{deficit}</span> Déficit comercial proyectado: {coverage.deficit} kg de hongo fresco
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)'}}>
+                        <b>Acción requerida:</b> {sowingRecommendation(coverage.deficit, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                      </div>
+                    </div>
+                  )}
+                  {coverage.superavit>0&&(
+                    <div style={{padding:12,background:'rgba(77,98,53,.08)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-800)'}}>
+                      <span>{superavit}</span> Cobertura plena ({coverage.cobertura}%). Cuentas con {coverage.superavit} kg de superávit para nuevos clientes o venta directa en granja Tenjo.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 

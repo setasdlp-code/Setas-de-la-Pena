@@ -43,6 +43,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../scoring.js",
   "../bitacora-model.js",
   "../climate-math.js",
+  "../flush-forecast-engine.js",
   "../historical-calibration.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",

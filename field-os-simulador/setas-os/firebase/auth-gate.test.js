@@ -322,6 +322,7 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     '../scoring.js',
     '../bitacora-model.js',
     '../climate-math.js',
+    '../flush-forecast-engine.js',
     '../historical-calibration.js',
     '../recipe-optimizer.js',
     '../perito-scenarios.js',
@@ -334,7 +335,7 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     src.indexOf('await loadProtectedApplicationScripts()') < src.indexOf('await import("../simulador-app.js")'),
     'el bundle React debe esperar sus globals de producción'
   );
-  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
+  ['recipe-recommender.js', 'scoring.js', 'bitacora-model.js', 'climate-math.js', 'flush-forecast-engine.js', 'historical-calibration.js', 'recipe-optimizer.js', 'perito-scenarios.js']
     .forEach((script) => assert.doesNotMatch(shell, new RegExp(`<script src="${script.replace('.', '\\.')}"></script>`), `${script} no debe descargar antes del login`));
 });
 
