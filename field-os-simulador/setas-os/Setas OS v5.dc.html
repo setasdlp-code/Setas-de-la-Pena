@@ -160,6 +160,21 @@
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
   .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
+  /* Modo guantes: el interruptor va fijado (sticky) al borde izquierdo del
+     subnav para que no se desplace fuera de alcance cuando la fila de pestañas
+     scrollea. Era la única función pensada para este contexto y no tenía
+     ningún control en pantalla. */
+  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s; }
+  .gloves-toggle:hover { color:var(--ink-1); background:var(--paper-2); }
+  .gloves-toggle.on:hover { background:var(--accent-olive); color:var(--paper-0); }
+  .gloves-toggle svg { width:20px; height:20px; flex-shrink:0; }
+  .gloves-toggle.on { background:var(--accent-olive); color:var(--paper-0); }
+  .gloves-toggle:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
+  .workspace-more-panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:4px; padding:8px 26px 10px; background:var(--paper-1); border-bottom:1px solid var(--border-soft); }
+  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s; overflow-wrap:break-word; }
+  .workspace-more-item:hover { background:var(--paper-2); color:var(--ink-0); border-color:var(--border-strong); }
+  .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
+  .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
     .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
     .rail-flyout-title { display:none; }
@@ -200,6 +215,11 @@
     .app-main { margin-left:0; padding-bottom:62px; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     .workspace-tab { min-height:44px; padding:8px 10px; }
+    /* En móvil el interruptor de guantes es solo icono: conserva 48px de área
+       táctil sin robar ancho a las pestañas en 390px. */
+    .gloves-toggle-txt { display:none; }
+    .gloves-toggle { min-width:48px; padding:8px; justify-content:center; }
+    .workspace-more-panel { grid-template-columns:1fr 1fr; padding:8px 10px 10px; }
 
     /* El botón flotante de cerrar sesión (firebase/auth-gate.js) ya no tiene
        alternativa en móvil desde que el picker de operador (que llevaba
@@ -292,19 +312,30 @@
     <span data-testid="breadcrumb" class="sr-only" aria-live="polite">{{ crumb }}</span>
 
     <nav class="workspace-subnav" role="tablist" aria-label="{{ workspaceLabel }}" onKeyDown="{{ onWorkspaceKeyDown }}">
+      <button class="gloves-toggle {{ glovesCls }}" onClick="{{ toggleGloves }}" aria-pressed="{{ glovesPressed }}" aria-label="{{ glovesLabel }}" title="{{ glovesLabel }}" data-testid="gloves-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M15 11V6.5a1.5 1.5 0 0 1 3 0V13"></path><path d="M9 11V9.5a1.5 1.5 0 0 0-3 0V14a7 7 0 0 0 7 7h1a5 5 0 0 0 5-5v-3"></path></svg>
+        <span class="gloves-toggle-txt">Guantes</span>
+      </button>
       <sc-for list="{{ workspaceTabs }}" as="t" hint-placeholder-count="3">
         <button class="workspace-tab {{ t.cls }}" onClick="{{ t.go }}" role="tab" aria-selected="{{ t.on }}" tabindex="{{ t.tabIndex }}">{{ t.label }}</button>
       </sc-for>
       <sc-if value="{{ hasWorkspaceMore }}" hint-placeholder-val="{{ false }}">
         <span class="workspace-more-sep" aria-hidden="true"></span>
-        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}">Más</button>
-        <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
-          <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
-            <button class="workspace-tab secondary {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
-          </sc-for>
-        </sc-if>
+        <button class="workspace-tab secondary {{ workspaceMoreCls }}" onClick="{{ toggleWorkspaceMore }}" aria-expanded="{{ workspaceMoreOpen }}" aria-haspopup="true" aria-controls="workspace-more-panel">Más</button>
       </sc-if>
     </nav>
+    <!-- "Más": panel en flujo normal, fuera del scroller horizontal del subnav.
+         Antes los botones se inyectaban dentro del propio .workspace-subnav
+         (overflow-x:auto con la barra de scroll oculta), así que en 390px
+         aterrizaban fuera de pantalla y el toque no producía ningún cambio
+         visible. Aquí no pueden quedar recortados. -->
+    <sc-if value="{{ workspaceMoreOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="workspace-more-panel" id="workspace-more-panel" role="group" aria-label="Más secciones">
+        <sc-for list="{{ workspaceMoreItems }}" as="t" hint-placeholder-count="4">
+          <button class="workspace-more-item {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
 
     <!-- =================== SESIÓN (Field OS) =================== -->
     <sc-if value="{{ isSesion }}" hint-placeholder-val="{{ false }}">
@@ -2364,7 +2395,7 @@ class Component extends DCLogic {
   }
   componentDidUpdate(pp, ps){
     if(!ps) return;
-    const k=['containers','ledger','seq','salidas','yields','operator','operatorKey'];
+    const k=['containers','ledger','seq','salidas','yields','operator','operatorKey','gloves'];
     if(k.some(x=>ps[x]!==this.state[x])) this.persist();
     const wasOpen = this.dialogIsOpen(ps);
     const isOpen = this.dialogIsOpen(this.state);
@@ -2385,7 +2416,7 @@ class Component extends DCLogic {
   persist(){
     try {
       const s=this.state;
-      localStorage.setItem('setas_os_state', JSON.stringify({ containers:s.containers, ledger:s.ledger, seq:s.seq, salidas:s.salidas, yields:s.yields, operator:s.operator, operatorKey:s.operatorKey }));
+      localStorage.setItem('setas_os_state', JSON.stringify({ containers:s.containers, ledger:s.ledger, seq:s.seq, salidas:s.salidas, yields:s.yields, operator:s.operator, operatorKey:s.operatorKey, gloves:s.gloves }));
     } catch(e){}
   }
   loadPersisted(){
@@ -3741,7 +3772,7 @@ class Component extends DCLogic {
       dashForecast, hasDashForecast:dashForecast.length>0,
       occAvg, occAvgW:occAvg+'%', dashKg7:kg7.toFixed(1)+' kg',
       shellCls: s.gloves?'gloves':'',
-      gloves:s.gloves, glovesLabel:s.gloves?'Modo guantes activo':'Modo guantes',
+      gloves:s.gloves, glovesLabel:s.gloves?'Modo guantes activo':'Modo guantes', glovesCls:s.gloves?'on':'', glovesPressed:s.gloves?'true':'false',
       toggleGloves:()=>this.setState(st=>({gloves:!st.gloves})),
       crumb: crumbMap[s.module]||'Field OS',
       // búsqueda global

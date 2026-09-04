@@ -1159,7 +1159,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Search & filters ── */
   .sim-root .search{ font-size:16px; padding:10px 12px; margin-bottom:10px; }
   .sim-root .cats{ gap:3px; margin-bottom:10px; }
-  .sim-root .cat{ font-size:8px; padding:4px 8px; min-height:44px; }
+  .sim-root .cat{ font-size:11px; padding:4px 8px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:none; }
@@ -1291,7 +1291,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Search ── */
   .sim-root .search{ font-size:16px; padding:9px 10px; margin-bottom:8px; }
   .sim-root .cats{ gap:2px; margin-bottom:8px; }
-  .sim-root .cat{ font-size:7px; padding:3px 7px; min-height:44px; }
+  .sim-root .cat{ font-size:11px; padding:3px 7px; min-height:44px; }
   
   /* ── Ingredient list ── */
   .sim-root .ing-list{ max-height:none; }
@@ -1417,11 +1417,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:rgba(255,255,255,.08); color:var(--paper-0); cursor:pointer; outline:2px solid transparent; outline-offset:2px;
   max-width:180px;
 }
+/* item 5 (MOBILE_A11Y_REVIEW_2026-08-30): .bridge-cambiar no tenía min-height
+   en ningún sitio — su altura era padding 6px + caja de línea de 11.5px (~26px),
+   muy por debajo de los 44px que .cat y .workspace-tab ya imponen, y justo al
+   lado de otro control pequeño. El padding va en estilo inline en el JSX, así
+   que la altura se fija aquí. */
+.sim-root .bridge-cambiar{ min-height:44px; display:inline-flex; align-items:center; justify-content:center; touch-action:manipulation; }
+/* El JSX fija fontSize:var(--text-xs) en estilo inline, que resuelve a 9.5px —
+   por debajo del piso legible. Sólo !important gana a un estilo inline. */
+.sim-root .bridge-cambiar{ font-size:11px!important; }
+.sim-root .bridge-select{ touch-action:manipulation; }
 .sim-root .bridge-select:hover{ background:rgba(255,255,255,.16); }
 .sim-root .bridge-select:focus{ border-color:var(--paper-0); }
 .sim-root .bridge-select option{ color:var(--ink-900); }
 @media(max-width:600px){
-  .sim-root .bridge-select{ font-size:10px; padding:5px 7px; max-width:120px; }
+  /* Era 10px/5px: por debajo del piso legible y sin altura táctil. */
+  .sim-root .bridge-select{ font-size:11px; padding:8px 7px; max-width:120px; min-height:44px; }
 }
 .sim-root .species-bridge{
   background: var(--paper-0);
@@ -1835,14 +1846,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
-.sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
+.sim-root .species-bridge .bridge-activo{font-size:11px!important;padding:3px 7px!important;letter-spacing:.12em!important;}
 
 .sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:10.35px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:4px 8px;border-radius:0;flex-shrink:0;}
 .sim-root .bridge-dot{font-size:10.35px;color:var(--text-on-dark)!important;}
 .sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:22.25px!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
 .sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--paper-2)!important;opacity:var(--opacity-strong);flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:8.35px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
+.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
 .sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:14.95px;font-weight:700;color:var(--paper-0)!important;}
 
 /* Species grid — fixed 2 columns, generous gap, larger cards */
@@ -1956,12 +1967,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* Bridge: stack on mobile (unified) */
   .sim-root .bridge-inner{flex-wrap:wrap!important;padding:10px 16px!important;gap:8px 14px!important;align-items:center!important;overflow-x:visible!important;}
-  .sim-root .bridge-activo{font-size:8px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.1em!important;}
   .sim-root .bridge-name{font-size:15px!important;}
   .sim-root .bridge-sci{font-size:11px!important;}
   .sim-root .bridge-stats-group{margin-left:0!important;width:100%!important;flex-wrap:wrap!important;gap:14px!important;}
-  .sim-root .bridge-stat-val{font-size:11px!important;}
-  .sim-root .bridge-stat-lbl{font-size:6.5px!important;}
+  .sim-root .bridge-stat-val{font-size:13px!important;}
+  .sim-root .bridge-stat-lbl{font-size:11px!important;}
   .sim-root .bridge-cambiar{flex-shrink:0!important;}
 }
 
@@ -1972,7 +1983,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* Bridge sticky + compact en móvil */
   .sim-root .species-bridge{position:sticky!important;bottom:0!important;top:auto!important;z-index:50!important;}
   .sim-root .bridge-inner{padding:8px 14px!important;gap:8px 10px!important;}
-  .sim-root .bridge-activo{font-size:7px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.08em!important;}
   /* Bridge stats: hide on very small screens, keep button always visible */
   .sim-root .bridge-stats-group{display:none!important;}
   .sim-root .bridge-cambiar{display:inline-flex!important;margin-left:auto!important;}

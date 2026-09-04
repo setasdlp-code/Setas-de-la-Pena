@@ -31,9 +31,45 @@ const AUDITED_URLS = [`http://localhost:${PORT}/Setas%20OS%20v5.dc.html`];
  * Core Web Vitals budgets on mobile — Google's "good" thresholds.
  * These are the values that earn the best Lighthouse scores.
  */
-const LCP_BUDGET_MS = 2500; // good
+const LCP_BUDGET_MS = 2500; // good — aspirational target, asserted as "warn"
 const INP_BUDGET_MS = 200; // good (TBT lab proxy)
 const CLS_BUDGET = 0.1; // good
+
+/**
+ * Regression ceiling for LCP, asserted as "error".
+ *
+ * LCP does not yet meet LCP_BUDGET_MS, so gating on 2500 ms would block every
+ * PR and teach the team to ignore the gate. Instead the aspirational budget
+ * stays a warning and this ceiling — set just above the measured median — is
+ * the hard gate. It only ever ratchets DOWN: when a change improves LCP,
+ * lower this to the new median plus a small margin so the improvement cannot
+ * silently regress. Never raise it to make a red build green.
+ *
+ * Measured 2026-09-03, local (Apple silicon), median of 3: LCP 3307 ms.
+ * 4500 ms leaves ~35% headroom for slower CI runners.
+ */
+const LCP_CEILING_MS = 4500;
+
+/**
+ * 2026-09-03 re-measurement (the CI evidence the note below asked for).
+ * `npm run lhci`, median of 3 runs, local Apple silicon, login screen:
+ *
+ *   performance 0.87 · LCP 3307 ms · TBT 16 ms · CLS 0.067
+ *   seo 1.00 · accessibility 0.95 · best-practices 0.96
+ *
+ * The 2026-09-02 auth-gate change (simulador-app.js imported only after a
+ * valid session) did land the improvement it predicted: LCP went ~10.2 s →
+ * 3.3 s and TBT ~2.0 s → 16 ms. TBT now passes the 200 ms budget by two
+ * orders of magnitude, so it is promoted from "warn" to "error" — it is a
+ * real contract again, not a permanently-ignored number. LCP is not there
+ * yet, so it gates on LCP_CEILING_MS (see above) instead.
+ *
+ * PERF_FLOOR moves 0.35 → 0.70. At 0.35 against a measured 0.87 the floor
+ * protected nothing: performance could have halved without failing CI.
+ * 0.70 is deliberately below the 0.87 median because CI runners are slower
+ * than the machine this was measured on — tighten it once CI publishes its
+ * own median.
+ */
 
 /**
  * Category floors — measured against the real first run (2026-08-07), after
@@ -62,7 +98,7 @@ const CLS_BUDGET = 0.1; // good
  * ready; the login screen therefore does not fetch or evaluate it. CI—not
  * this comment—remains the evidence for changing the budget.
  */
-const PERF_FLOOR = 0.35;
+const PERF_FLOOR = 0.7;
 const SEO_FLOOR = 0.95;
 const A11Y_FLOOR = 0.95;
 const BEST_PRACTICES_FLOOR = 0.9;
@@ -87,15 +123,20 @@ module.exports = {
       aggregationMethod: "median-run",
       assertions: {
         // --- Core Web Vitals budgets (the contract) ---------------------
-        // LCP is "warn" not "error" — see the PERF_FLOOR comment above.
-        // Real value is ~10.2s against a 2500ms budget; this is a known,
-        // diagnosed, unfixed issue, not something a new PR should get
-        // blocked on. Every run still prints the number in the report.
-        "largest-contentful-paint": ["warn", { maxNumericValue: LCP_BUDGET_MS }],
+        // LCP gates on the regression ceiling, not on LCP_BUDGET_MS: at a
+        // measured 3307 ms the "good" 2500 ms target is real but unmet, and
+        // erroring on it would block every PR on a pre-existing condition.
+        // lhci takes one assertion per audit id, so the ceiling is the one
+        // that ships; LCP_BUDGET_MS stays the documented target to ratchet
+        // toward (see LCP_CEILING_MS above).
+        "largest-contentful-paint": [
+          "error",
+          { maxNumericValue: LCP_CEILING_MS },
+        ],
         "cumulative-layout-shift": ["error", { maxNumericValue: CLS_BUDGET }],
-        // TBT is "warn" too, same known issue as LCP (see PERF_FLOOR comment) —
-        // real value is ~2.0s against a 200ms budget after the PR #11/#12 merge.
-        "total-blocking-time": ["warn", { maxNumericValue: INP_BUDGET_MS }],
+        // Promoted warn → error on 2026-09-03: measured 16 ms against a 200 ms
+        // budget, so this is an enforceable contract now.
+        "total-blocking-time": ["error", { maxNumericValue: INP_BUDGET_MS }],
         "interaction-to-next-paint": [
           "warn",
           { maxNumericValue: INP_BUDGET_MS },
