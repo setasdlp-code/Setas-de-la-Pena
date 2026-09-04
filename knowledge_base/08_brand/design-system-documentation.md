@@ -3,13 +3,16 @@ title: Setas de la Peña — Design System Documentation (FOS)
 document_id: DOC-0119
 category: brand
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-09-04
 confidence: high
 ---
 
 # Setas de la Peña — Design System Documentation
 
-**Sistema vigente: Field Operating System (FOS).** Este documento reemplaza por completo la versión anterior (moss/coral, PP Object Sans, esquinas redondeadas, sombras). FOS es ahora la única fuente de verdad para color, tipografía, geometría y componentes — tanto para operación de campo (fichas, lotes, dashboards) como para la capa de cara al cliente (empaque, venta, mercado).
+**Sistema vigente: Field Operating System (FOS) — Arquitectura de Doble Capa.** Este documento reemplaza por completo la versión anterior (moss/coral, PP Object Sans, esquinas redondeadas, sombras). FOS es ahora la única fuente de verdad para color, tipografía, geometría y componentes, articulado en dos capas funcionales que comparten el mismo rigor biológico y territorial:
+
+1. **FOS Core (Operación de Campo y Laboratorio):** Diseñado para la realidad física del cultivo en Tenjo (2.600 msnm). Plano (`radius-none`), de alto contraste, sin sombras y con mínimos táctiles normativos (48px) para operarios con guantes en salas de inoculación/fructificación y bajo deslumbramiento solar. Gobierna fichas de lote, bitácoras, autoclave, telemetría y dashboards operativos.
+2. **FOS Editorial (Capa de Cliente / Mesa, Mercado y Gastronomía):** Extensión editorial que traslada el rigor científico y la trazabilidad andina al lenguaje de la alta cocina, las publicaciones gastronómicas de referencia y la venta especializada. Gobierna fichas de cata para chefs, empaque kraft táctil, venta mayorista, retail gourmet y el pasaporte digital de origen vía QR.
 
 Fuente canónica: [`08_brand/field-os-identity/`](08_brand/field-os-identity) — tokens CSS reales, páginas de referencia HTML (`guidelines/`) y plantillas funcionales (`templates/`). Este documento es un resumen legible; ante cualquier discrepancia, los archivos `tokens/*.css` mandan.
 
@@ -46,7 +49,7 @@ Filosofía: **cada color es funcional (clasificación o estado), nunca decorativ
 
 **Nota de accesibilidad (`ink-3`)**: #96907C da 2.90:1 sobre `paper-0`, por debajo del WCAG 4.5:1. Auditado 2026 y aceptable únicamente porque todo uso actual (`.fos-annot__blank`, placeholder de `.fos-market__img`, guías de llenado manual en fichas) es contenido no esencial/placeholder, nunca información que el usuario deba leer. Si un nuevo uso lleva información requerida, no reusar `ink-3` — usar `ink-2`.
 
-#### Accents — solo clasificación y estado
+#### Accents — Operación (clasificación y estado funcional)
 | Token | Hex | Hover/pressed | Uso |
 |-------|-----|-----|-----|
 | `accent-olive` | #5B6B44 | #4A5737 | Activo / positivo |
@@ -55,9 +58,22 @@ Filosofía: **cada color es funcional (clasificación o estado), nunca decorativ
 | `accent-mushroom` | #7A6A52 | #645643 | Archivado |
 | `accent-rust` | #8C3223 | #72291C | **Reservado exclusivamente para error / contaminación** |
 
-Cada accent tiene su variante `-dim` (tinte suave para fondos/chips) y su variante `-hover` (FOS-09, auditado 2026: ~18% más oscuro, mismo pigmento — sin tonos nuevos, sin degradados — para estados hover/pressed de cualquier control interactivo construido sobre un fill de accent).
+Cada accent operativo tiene su variante `-dim` (tinte suave para fondos/chips) y su variante `-hover` (FOS-09, auditado 2026: ~18% más oscuro, mismo pigmento — sin tonos nuevos, sin degradados — para estados hover/pressed de cualquier control interactivo construido sobre un fill de accent).
 
 **Regla de contraste sobre fill sólido (FOS-07, auditado 2026)**: sobre un fill sólido de accent, texto o logo deben usar `paper-0`, nunca `ink-0` (`ink-0` sobre `accent-olive` = 2.92:1, falla WCAG incluso en texto grande; `paper-0` sobre `accent-olive` = 5.26:1, pasa).
+
+#### Accents — Capa Editorial y Terroir Gastronómico (FOS Editorial)
+Pigmentos de acento destinados a superficies de cara al cliente (empaque, fichas de cata para chefs, pasaporte digital y hojas de venta mayorista). **Prohibido su uso en interfaces de control de cultivo**, donde los estados funcionales de máquina no admiten ambigüedad.
+
+| Token | Hex | Rol Gastronómico | Aplicación de Cara al Cliente |
+|-------|-----|------------------|-------------------------------|
+| `accent-forest-moss` | #2D3D24 | Musgo de bosque andino de niebla | Sello de marca primario, origen geográfico en Tenjo, sello botánico |
+| `accent-tenjo-terracotta` | #A44C27 | Arcilla mineral de la Sabana | Altitud (2.600 msnm), hora de corte matutina, notas de tostado |
+| `accent-shiitake-umber` | #4F4339 | Umbra terrosa de sustrato maduro | Notas organolépticas, densidad cárnica, perfil de umami profundo |
+| `accent-spore-blush` | #D99C8D | Rosa tenue de espora (*P. djamor*) | Destacados de cosecha estacional, maridajes delicados |
+| `paper-linen` | #ECE6D8 | Fibra de lino crudo / cardstock | Fondos recesados en empaque, tarjetas sensoriales, fajillas |
+
+**Regla de separación de color (FOS-08)**: En pantallas operativas (telemetría, autoclave, cuartos fríos), rigen exclusivamente los accents funcionales (`accent-rust` reservado para contaminación/error). En la capa editorial de cliente, rige la paleta botánica y gastronómica sin degradados artificiales ni brillos sintéticos.
 
 ### Semantic aliases
 - `surface-page` / `surface-panel` / `surface-recessed` / `surface-pressed` → escala paper
@@ -115,6 +131,17 @@ Cada accent tiene su variante `-dim` (tinte suave para fondos/chips) y su varian
 - Nombres científicos siempre en *itálica*.
 - Sin signos de exclamación en cuerpo de texto.
 
+### Jerarquía y emparejamiento editorial (FOS Editorial)
+
+Para materiales de cara al cliente (dossiers de chefs, empaque, pasaporte digital y monografías), las tres familias normativas se emparejan con cadencia editorial:
+
+| Rol | Familia | Tratamiento | Función |
+|---|---|---|---|
+| **Masthead / Títulos** | **Gaya Display** | Sentence case o mayúsculas con espaciado amplio, peso 500–700 | Porte clásico, alto contraste visual, solemnidad botánica |
+| **Especie / Sensorial** | **Gaya Italic** | Siempre en *itálica*, espaciado natural | Nombres científicos (*L. edodes*, *H. erinaceus*) y notas de cata |
+| **Cuerpo / Prosa** | **IBM Plex Sans Display** | 16px mínimo (`text-prose`), leading 1.5–1.6 | Guías de cocción, historia de origen, notas del recolector |
+| **Terroir / Provenance** | **IBM Plex Mono** | 11–13px, tracking amplio (`0.06em`) | Altitud (`2.600 msnm`), hora de cosecha (`06:15 AM`), lote en QR |
+
 ---
 
 ## Spacing & Layout
@@ -151,6 +178,15 @@ Geometría específica de campo (FOS-01/02/03):
 
 **Reglas duras heredadas de la versión anterior que ya NO aplican**: border-radius 12–14px, sombras "paper resting on itself", nav con `backdrop-filter: blur(12px)`. Cualquier CSS que aún use estos valores debe migrarse.
 
+### Materialidad física y empaque editorial (FOS Editorial)
+
+En piezas impresas y empaques de cara al cliente, la ausencia de ornamentos digitales se traduce en calidad táctil de materiales reales:
+
+- **Sustrato principal:** Cartón kraft rígido sin blanquear, fibra virgen o reciclada con certificación FSC (mínimo 350 g/m²).
+- **Tratamiento del logo en empaque:** Golpe seco / bajo relieve ciego (`blind deboss`, sin tinta ni foil brillante) estampado en la tapa de cartón.
+- **Fajilla perimetral (`.fos-sleeve`):** Papel vegetal o papel de lino sin laminar (`paper-canvas` / `paper-linen`) impreso a 1 tinta plana al agua (forest-moss o soot-ink).
+- **Sellado de frescura:** Tira de papel perforado con sello fechador manual (hora y fecha de corte matutino).
+
 ---
 
 ## Componentes normativos (FOS-EXT-001)
@@ -163,10 +199,30 @@ Clases CSS reales en [`08_brand/field-os-identity/tokens/components.css`](08_bra
 | **FOS-02 · Ficha de campo** | `.fos-ficha`, `.fos-field`, `.fos-annot` | Grid de campos con altura mínima táctil (48px), líneas de anotación manuscritas. Mínimo dos líneas de anotación vacías; las fichas nunca se recopian. |
 | **FOS-03 · Pictogramas** | `.fos-pic` (+ `--lg`) | Monocromo `ink-0`, stroke 3, sin relleno. Un acento puede acompañar al glifo, nunca ir dentro de él. |
 | **FOS-05 · Estado como texto** | `.fos-status` (+ `--active/--attention/--info/--archived/--error`) | **Prohibido**: badges rellenos, redondeados o con sombra; degradados; rust fuera de error/contaminación; más de un acento por vista. |
-| **FOS-06 · Capa de cliente** | `.fos-market` | Mismos tokens, voz más cálida, **sin códigos operativos visibles**. La foto o el QR van dentro de `.fos-market__img`; nunca un pictograma (que es un glifo operativo). |
+| **FOS-06 · Capa de cliente (FOS Editorial)** | `.fos-market` (+ `.fos-dossier`, `.fos-passport`, `.fos-sleeve`) | Mismos tokens, voz más cálida, **sin códigos operativos visibles**. La foto o el QR van dentro de `.fos-market__img`; nunca un pictograma (que es un glifo operativo). |
 
 ### Reglas de superficie cliente vs. operación (FOS-06.1)
 Lote, sala u operador **nunca** se exponen en la vista de cliente — el puente es el QR (`market-qr-bridge.html`).
+
+### Componentes de la extensión FOS Editorial (FOS-06.6 a FOS-06.8)
+
+#### FOS-06.6 · The Chef Tasting Dossier (`.fos-dossier`)
+Ficha técnica gastronómica orientada a cocinas profesionales, chefs y brigadas de servicio:
+- **Matriz organoléptica:** Diagrama radar o barras de 4 ejes: densidad cárnica, nivel de umami, retención de humedad al saltear y aroma en crudo.
+- **Comportamiento térmico:** Instrucción técnica de cocción (ej. "dorar en seco a fuego medio-alto antes de incorporar grasa; no salar hasta sellar para conservar turgencia celular").
+- **Maridajes de terroir:** Combinaciones sugeridas con ingredientes andinos y clásicos (mantequilla avellanada, tomillo limonero, panela reducida, ajo negro).
+
+#### FOS-06.7 · The Terroir & Provenance Passport (`.fos-passport`)
+Superficie web responsiva que se abre al escanear el QR del empaque o menú:
+- **Cabezal de terroir:** Silueta vectorial minimalista de la Peña de Juaica (Tenjo, Cundinamarca · 2.600 msnm).
+- **Métricas de cosecha:** "Cortadas hoy a las 06:15 AM · 0 aditivos químicos · Sustrato orgánico certificado".
+- **Ilustración botánica:** Grabado botánico de alta definición del espécimen cosechado (estilo naturalista DOC-0039).
+
+#### FOS-06.8 · Tactile Packaging Sleeve (`.fos-sleeve`)
+Fajilla perimetral de empaque para cajas de 250g, 500g y 1kg:
+- Ventana de papel glassine translúcido vegetal (cero plástico de un solo uso).
+- Identificación de especie con nombre común en gran formato y nombre binomial en *Gaya Italic*.
+- Sello de papel perforado con lote codificado en QR y fecha/hora estampada a mano.
 
 ---
 
@@ -228,9 +284,9 @@ Archivos que aún referencian el sistema anterior (moss/coral/PP Object Sans) di
 3. Los pictogramas se construyen sobre el grid de 48 (`pictogram-grid`/`pictogram-safe`/`pictogram-stroke`), no se importan de una librería externa.
 
 ### Para partners y proveedores
-- **Empaque**: compartir capa `.fos-market` + regla FOS-06.1 (sin códigos operativos visibles al cliente).
-- **Fotografía**: mismo criterio anterior — grano cálido, profundidad de campo corta, superficies de madera/kraft, luz natural.
-- **Contenido**: compartir las 6 reglas de voz FOS-06.5 + regla de "sin exclamaciones".
+- **Empaque**: compartir capa `.fos-market` / `.fos-sleeve` + regla FOS-06.1 (sin códigos operativos visibles al cliente, ventana de glassine vegetal sin plástico, sustrato kraft FSC sin blanquear, bajo relieve ciego).
+- **Fotografía**: mismo criterio anterior — grano cálido, profundidad de campo corta, superficies de madera/kraft/lino, luz natural rasante, contexto gastronómico real.
+- **Contenido y Restaurantes Aliados**: compartir las 6 reglas de voz FOS-06.5 + regla de "sin exclamaciones" + especificación del dossier gastronómico FOS-06.6.
 
 ---
 
