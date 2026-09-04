@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d8eb2adb3539dd3071170bbdec7f059d9f4754c396aedb1ae9114974b810d566
+// source-hash: cf3a18f33389c386481976781d64bc65e831098ca45d6c7ad9406a2ffab4b541
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1149,6 +1149,23 @@ const {
   predictSubstrateCostPerFreshKg,
   getSpeciesFlushProfile
 } = typeof SetasFlushForecast !== "undefined" ? SetasFlushForecast : typeof require !== "undefined" ? require("./flush-forecast-engine.js") : {};
+const {
+  validateAutoclaveCycle: engineValidateAutoclaveCycle,
+  calcRequiredGaugePressurePsi: engineCalcRequiredGaugePressurePsi,
+  calcTimeCompFactorAt15Psi: engineCalcTimeCompFactorAt15Psi,
+  simulateCorePenetration: engineSimulateCorePenetration
+} = typeof SetasSterilization !== "undefined" ? SetasSterilization : typeof require !== "undefined" ? require("./sterilization-kinetics.js") : {};
+const {
+  calcPairwiseCompatibility: engineCalcPairwiseCompatibility,
+  optimizeChamberSetpoints: engineOptimizeChamberSetpoints,
+  SPECIES_CLIMATE_PROFILES
+} = typeof SetasCoCultivation !== "undefined" ? SetasCoCultivation : typeof require !== "undefined" ? require("./co-cultivation-matrix.js") : {};
+const {
+  predictShelfLife: enginePredictShelfLife,
+  calcPostHarvestRespiration: engineCalcPostHarvestRespiration,
+  calcTranspirationLoss: engineCalcTranspirationLoss,
+  SPECIES_POSTHARVEST_PROFILES
+} = typeof SetasPostHarvest !== "undefined" ? SetasPostHarvest : typeof require !== "undefined" ? require("./post-harvest-engine.js") : {};
 const METRIC_LABEL = { cn: "C:N", n: "N", ph: "pH" };
 const fmtMetric = (metric, v) => metric === "cn" ? `${v.toFixed(1)}:1` : metric === "n" ? `${v.toFixed(2)}%` : v.toFixed(1);
 const scoreAn = (an, extraCtx = {}) => {
@@ -2898,8 +2915,20 @@ function SimuladorShell(props) {
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [qrSelectedLoteId, setQrSelectedLoteId] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState("");
   const [showEsp32ConfigModal, setShowEsp32ConfigModal] = useState(false);
+  const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
+  const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
+  const [autoclaveGaugePsi, setAutoclaveGaugePsi] = useState(19.04);
+  const [autoclaveBagKg, setAutoclaveBagKg] = useState(2);
+  const [autoclaveMoisturePct, setAutoclaveMoisturePct] = useState(65);
+  const [showCoCultivationModal, setShowCoCultivationModal] = useState(false);
+  const [coCultSelectedSpecies, setCoCultSelectedSpecies] = useState(["orellana_gris", "seta_cardo"]);
+  const [showPostHarvestModal, setShowPostHarvestModal] = useState(false);
+  const [postHarvestSelectedSpecies, setPostHarvestSelectedSpecies] = useState("orellana_gris");
+  const [postHarvestTemp, setPostHarvestTemp] = useState(4);
+  const [postHarvestRh, setPostHarvestRh] = useState(92);
+  const [postHarvestBatchKg, setPostHarvestBatchKg] = useState(15);
+  const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
   const stopCameraScanner = () => {
@@ -5430,9 +5459,39 @@ BATCH (${numBags}×${kgBag} kg):
       "button",
       {
         type: "button",
+        onClick: () => setShowCoCultivationModal(true),
+        className: "inv-btn inv-btn-sec",
+        style: { minHeight: 34, padding: "4px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 5, borderColor: "var(--accent-olive, #5B6B44)", color: "var(--accent-olive, #5B6B44)", fontWeight: 700 },
+        title: "Analizar compatibilidad de especies e intersección de setpoints en la misma carpa"
+      },
+      "🌿 Co-Cultivo Multiespecie"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setShowAutoclaveModal(true),
+        className: "inv-btn inv-btn-sec",
+        style: { minHeight: 34, padding: "4px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 5, borderColor: "var(--accent-terracotta, #C46238)", color: "var(--accent-terracotta, #C46238)", fontWeight: 700 },
+        title: "Simulador de ciclo de autoclave All American a 2.600 msnm (19.04 PSI / F0)"
+      },
+      "🔥 Autoclave Tenjo (F₀)"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => setShowPostHarvestModal(true),
+        className: "inv-btn inv-btn-sec",
+        style: { minHeight: 34, padding: "4px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 5, borderColor: "#3B82F6", color: "#1D4ED8", fontWeight: 700 },
+        title: "Predicción de vida útil, transpiración y empaque en frío"
+      },
+      "❄ Poscosecha & Frío"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
         onClick: () => setShowEsp32ConfigModal(true),
         className: "inv-btn inv-btn-sec",
-        style: { minHeight: 34, padding: "4px 12px", fontSize: 11, display: "flex", alignItems: "center", gap: 6, borderColor: "var(--accent-olive, #5B6B44)", color: "var(--accent-olive, #5B6B44)", fontWeight: 700 },
+        style: { minHeight: 34, padding: "4px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 5, borderColor: "var(--line-0)", color: "var(--ink-1)", fontWeight: 700 },
         title: "Generar y descargar firmware ESPHome YAML para este cuarto de cultivo"
       },
       "⚡ Exportar ESPHome YAML"
@@ -5447,16 +5506,35 @@ BATCH (${numBags}×${kgBag} kg):
       fontWeight: 700
     } }, climateHealth.severity === "critical" ? "⚠ ALERTA AMBIENTAL" : "● CONDICIONES NOMINALES"))), climateHealth.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, climateHealth.alerts.map((al, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: {
       padding: "8px 12px",
-      background: al.level === "alert" ? "#FEE2E2" : "#FEF3C7",
-      color: al.level === "alert" ? "#991B1B" : "#92400E",
-      borderLeft: `4px solid ${al.level === "alert" ? "#DC2626" : "#D97706"}`,
       borderRadius: "var(--radius-sm)",
+      background: al.level === "alert" ? "var(--accent-terracotta-dim)" : "var(--paper-2)",
+      color: al.level === "alert" ? "color-mix(in oklab, var(--accent-terracotta) 80%, black)" : "var(--ink-1)",
+      border: `1px solid ${al.level === "alert" ? "var(--accent-terracotta)" : "var(--line-0)"}`,
       fontSize: 12,
-      fontFamily: "var(--font-sans)",
       display: "flex",
       alignItems: "center",
       gap: 8
-    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? "🚨" : "⚠️"), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono"), /* @__PURE__ */ React.createElement("span", null, "Max: ", defaultTargets.co2_ppm.max, " ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.co2), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "SCD30 NDIR · Comp. 2.600m · ", climateTimeRange, ": ", co2Min, " – ", co2Max, " ppm"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "🎯 Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? "🚨" : "⚠"), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
+      const ndirCorr = climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? climateMath.calcBarometricCO2Correction(currentMetrics.co2, 745, currentMetrics.temp) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36) };
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value", style: { display: "flex", alignItems: "baseline", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm real"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", currentMetrics.co2, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert 745 hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
+    })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
+      const activeBiomassKg = mainLote?.pesoLote ? mainLote.pesoLote * 0.22 : 25;
+      const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === "function" ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || "orellana_gris", {
+        targetPpm: defaultTargets.co2_ppm.target || 800,
+        outdoorPpm: 420,
+        roomVolumeM3: selectedClimateRoom === "martha_01" ? 11.5 : 8,
+        fanRatedCfm: 140
+      }) : null;
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "💨 Ventilación Dinámica FAE (Extracción)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink-1)" } }, "Biomasa activa: ", activeBiomassKg.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, faeCalc ? `${faeCalc.requiredCfm} CFM` : "24.5 CFM", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)", marginLeft: 6 } }, "(", faeCalc ? faeCalc.requiredM3h : "41.6", " m³/h · ", faeCalc ? faeCalc.effectiveAch : "3.6", " ACH)")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--accent-olive)", marginTop: 2 } }, faeCalc?.schedule.recommendation || "Encender 2.5 min cada 10 min")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("span", { style: {
+        padding: "3px 8px",
+        borderRadius: 4,
+        background: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
+        color: (faeCalc?.dutyCyclePct || 20) > 85 ? "var(--accent-rust)" : "var(--moss-800)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+        fontWeight: 700
+      } }, "Duty Cycle: ", faeCalc ? faeCalc.dutyCyclePct : 18, "%"))));
+    })()), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "🎯 Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
       "select",
       {
         id: "active-culinary-profile",
@@ -7804,6 +7882,247 @@ interval:
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-hairline)", paddingBottom: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent-olive, #5B6B44)" } }, "Firmware de Microcontrolador · ESPHome / ESP32"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-0)", margin: "4px 0 2px 0" } }, room.name, " · ", room.device), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Compensación barométrica a 2.600 msnm (Tenjo) · SHT3x (0x44) + SCD30 (0x61)")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar modal de configuración ESP32", onClick: () => setShowEsp32ConfigModal(false) }, "✕")),
       /* @__PURE__ */ React.createElement("div", { className: "esp32-code-preview", style: { marginBottom: 16 } }, yamlCode),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--ink-2)" } }, "Listo para flashear con ESPHome Dashboard o CLI"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowEsp32ConfigModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 40, padding: "6px 14px" } }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: copyYaml, className: "inv-btn inv-btn-sec", style: { minHeight: 40, padding: "6px 14px" } }, "📋 Copiar YAML"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: downloadYaml, className: "inv-btn inv-btn-pri", style: { minHeight: 40, padding: "6px 16px", background: "var(--accent-olive, #5B6B44)", borderColor: "var(--accent-olive, #5B6B44)" } }, "📥 Descargar .yaml")))
+    );
+  })(), showAutoclaveModal && (() => {
+    const cycle = typeof engineValidateAutoclaveCycle === "function" ? engineValidateAutoclaveCycle({
+      holdTimeMin: autoclaveHoldMin,
+      gaugePressurePsi: autoclaveGaugePsi,
+      bagKg: autoclaveBagKg,
+      moisturePct: autoclaveMoisturePct,
+      ambientPressureKpa: 74.5
+    }) : { f0Total: 15, isSterile: true, verdict: "ESTERILIZACIÓN ADECUADA", riskLevel: "seguro", steamTemp: 121.1, peakCoreTemp: 118, logReductionStearothermophilus: 8, recommendations: [] };
+    const comp15 = typeof engineCalcTimeCompFactorAt15Psi === "function" ? engineCalcTimeCompFactorAt15Psi(74.5) : { factor: 2.84, tempAt15Psi: 116.57, lethalityLossPct: 64.8, requiredHoldMinFor60MinEquivalent: 170 };
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowAutoclaveModal(false),
+        label: "Simulador Cinético de Autoclave All American 1941X · Altitud Tenjo",
+        dialogStyle: { width: "min(780px, 95vw)", padding: "22px 20px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-hairline)", paddingBottom: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent-terracotta, #C46238)" } }, "Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-0)", margin: "4px 0 2px 0" } }, "🔥 Cinética de Autoclave & Integral F₀ de Esterilización"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Punto de ebullición local: 91.6°C · Presión requerida: 19.04 psig para vapor a 121.11°C")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar simulador de autoclave", onClick: () => setShowAutoclaveModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Presión Manómetro (psig)"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          step: "0.1",
+          min: "10",
+          max: "22",
+          value: autoclaveGaugePsi,
+          onChange: (e) => setAutoclaveGaugePsi(parseFloat(e.target.value) || 0),
+          style: { width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-mono)", fontSize: 13 }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Tenjo requiere 19.04 psi")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Tiempo Meseta (min)"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          step: "5",
+          min: "20",
+          max: "240",
+          value: autoclaveHoldMin,
+          onChange: (e) => setAutoclaveHoldMin(parseInt(e.target.value, 10) || 0),
+          style: { width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-mono)", fontSize: 13 }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--ink-2)" } }, "90–120 min según bolsa")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Peso de Bolsa (kg)"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          step: "0.5",
+          min: "1.0",
+          max: "4.0",
+          value: autoclaveBagKg,
+          onChange: (e) => setAutoclaveBagKg(parseFloat(e.target.value) || 2),
+          style: { width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-mono)", fontSize: 13 }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Inercia térmica de núcleo")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Humedad Sustrato (%)"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          step: "1",
+          min: "50",
+          max: "75",
+          value: autoclaveMoisturePct,
+          onChange: (e) => setAutoclaveMoisturePct(parseInt(e.target.value, 10) || 65),
+          style: { width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-mono)", fontSize: 13 }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Transferencia por vapor"))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { fontSize: 11, padding: "4px 10px" },
+          onClick: () => {
+            setAutoclaveGaugePsi(19.04);
+            setAutoclaveHoldMin(120);
+            setAutoclaveBagKg(2);
+          }
+        },
+        "✓ Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { fontSize: 11, padding: "4px 10px" },
+          onClick: () => {
+            setAutoclaveGaugePsi(19.04);
+            setAutoclaveHoldMin(90);
+            setAutoclaveBagKg(1.5);
+          }
+        },
+        "✓ Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { fontSize: 11, padding: "4px 10px", borderColor: "var(--accent-terracotta)", color: "var(--accent-terracotta)" },
+          onClick: () => {
+            setAutoclaveGaugePsi(15);
+            setAutoclaveHoldMin(60);
+            setAutoclaveBagKg(2);
+          }
+        },
+        "⚠ Simular Error Nivel del Mar (15 PSI sin corrección)"
+      )),
+      /* @__PURE__ */ React.createElement("div", { style: {
+        padding: "12px 14px",
+        borderRadius: "var(--radius-sm)",
+        background: cycle.riskLevel === "seguro" ? "var(--moss-100)" : cycle.riskLevel === "moderado" ? "#FEF3C7" : "var(--accent-terracotta-dim)",
+        border: `1px solid ${cycle.riskLevel === "seguro" ? "var(--moss-600)" : cycle.riskLevel === "moderado" ? "#D97706" : "var(--accent-terracotta)"}`,
+        color: cycle.riskLevel === "seguro" ? "var(--moss-800)" : cycle.riskLevel === "moderado" ? "#92400E" : "var(--accent-rust)",
+        marginBottom: 16
+      } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 } }, cycle.badge, " ", cycle.verdict), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 } }, "F₀ Acumulado: ", cycle.f0Total, " min (Target: ", cycle.targetF0, " min)"))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Temp. Vapor Saturado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, cycle.steamTemp, "°C"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "P. abs: ", (autoclaveGaugePsi * 6.895 + 74.5).toFixed(1), " kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Temp. Pico Núcleo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--ink-0)" } }, cycle.peakCoreTemp, "°C"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Cold spot tras inercia Ball")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Reducción G. stearo."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? "var(--moss-800)" : "var(--accent-rust)" } }, cycle.logReductionStearothermophilus, " D"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Reducción B. subtilis"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? "var(--moss-800)" : "var(--accent-rust)" } }, cycle.logReductionSubtilis, " D"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Previene sour rot bacteriano"))),
+      /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-2)", border: "1px solid var(--line-0)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)", marginBottom: 4 } }, "⚖ Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5 } }, "A 2.600 msnm, un manómetro marcando ", /* @__PURE__ */ React.createElement("strong", null, "15.0 psi"), " solo genera ", /* @__PURE__ */ React.createElement("strong", null, comp15.tempAt15Psi, "°C"), " reales. Esto causa una ", /* @__PURE__ */ React.createElement("strong", null, "pérdida del ", comp15.lethalityLossPct, "%"), " en la tasa de destrucción de endosporas, requiriendo ", /* @__PURE__ */ React.createElement("strong", null, comp15.factor, "x más tiempo (", comp15.requiredHoldMinFor60MinEquivalent, " min)"), " para igualar 60 min a 121°C. Calibrar siempre a 19.04 psi manométricos.")),
+      cycle.recommendations.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-1)", marginBottom: 6 } }, "Recomendaciones Agronómicas:"), /* @__PURE__ */ React.createElement("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5 } }, cycle.recommendations.map((rec, idx) => /* @__PURE__ */ React.createElement("li", { key: idx, style: { marginBottom: 3 } }, rec)))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowAutoclaveModal(false), className: "inv-btn inv-btn-pri", style: { minHeight: 38, padding: "6px 16px" } }, "Entendido / Cerrar Simulador"))
+    );
+  })(), showCoCultivationModal && (() => {
+    const allProfiles = SPECIES_CLIMATE_PROFILES || {};
+    const speciesList = Object.keys(allProfiles);
+    const toggleSpecies = (key) => {
+      setCoCultSelectedSpecies((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length <= 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    };
+    const opt2 = typeof engineOptimizeChamberSetpoints === "function" ? engineOptimizeChamberSetpoints(coCultSelectedSpecies) : null;
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowCoCultivationModal(false),
+        label: "Matriz de Co-Cultivo e Intersección Climática · Cámara Multiespecie",
+        dialogStyle: { width: "min(820px, 95vw)", padding: "22px 20px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-hairline)", paddingBottom: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent-olive, #5B6B44)" } }, "Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-0)", margin: "4px 0 2px 0" } }, "🌿 Optimizador de Co-Cultivo y Setpoints Pareto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Determina la compatibilidad simultánea en la misma carpa y calcula los setpoints Minimax óptimos")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar optimizador de co-cultivo", onClick: () => setShowCoCultivationModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-1)", marginBottom: 6 } }, "Selecciona las especies que compartirán el cuarto / carpa:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, speciesList.map((k) => {
+        const sp2 = allProfiles[k];
+        const isSelected = coCultSelectedSpecies.includes(k);
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: k,
+            type: "button",
+            onClick: () => toggleSpecies(k),
+            className: `inv-btn ${isSelected ? "inv-btn-pri" : "inv-btn-sec"}`,
+            style: {
+              fontSize: 11,
+              padding: "5px 10px",
+              borderRadius: 20,
+              background: isSelected ? "var(--accent-olive, #5B6B44)" : "var(--paper-1)",
+              borderColor: isSelected ? "var(--accent-olive, #5B6B44)" : "var(--line-0)",
+              color: isSelected ? "#FFFFFF" : "var(--ink-0)"
+            }
+          },
+          isSelected ? "✓ " : "+ ",
+          sp2.name.split(" (")[0]
+        );
+      }))),
+      opt2 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+        padding: "12px 14px",
+        borderRadius: "var(--radius-sm)",
+        background: opt2.groupScore >= 70 ? "var(--moss-100)" : opt2.groupScore >= 50 ? "#FEF3C7" : "var(--accent-terracotta-dim)",
+        border: `1px solid ${opt2.groupScore >= 70 ? "var(--moss-600)" : opt2.groupScore >= 50 ? "#D97706" : "var(--accent-terracotta)"}`,
+        color: opt2.groupScore >= 70 ? "var(--moss-800)" : opt2.groupScore >= 50 ? "#92400E" : "var(--accent-rust)",
+        marginBottom: 16
+      } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 } }, opt2.badge, " ", opt2.verdict), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700 } }, "Score de Co-Cultivo: ", opt2.groupScore, "%"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-0)", marginBottom: 8 } }, "🎯 Setpoints de Compromiso Minimax para la Carpa:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Temperatura Óptima"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, opt2.setpoints.tempC, "°C"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Satisfacción: ", opt2.satisfaction?.temperatura || 100, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, opt2.setpoints.rhPct, "%"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Satisfacción: ", opt2.satisfaction?.humedad || 100, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "CO₂ Máximo (Ppm)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, opt2.setpoints.co2Ppm), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Satisfacción: ", opt2.satisfaction?.co2 || 100, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Iluminación (Lux)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, opt2.setpoints.lux, " lx"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Satisfacción: ", opt2.satisfaction?.luz || 100, "%")))), (opt2.bottlenecks?.length > 0 || opt2.biologicalAlerts?.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-2)", border: "1px solid var(--line-0)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--accent-terracotta)", marginBottom: 6 } }, "⚠ Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:"), /* @__PURE__ */ React.createElement("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5 } }, opt2.bottlenecks?.map((b, idx) => /* @__PURE__ */ React.createElement("li", { key: `btn-${idx}`, style: { marginBottom: 3, fontWeight: 600 } }, b)), opt2.biologicalAlerts?.map((a, idx) => /* @__PURE__ */ React.createElement("li", { key: `bio-${idx}`, style: { marginBottom: 3 } }, a))))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowCoCultivationModal(false), className: "inv-btn inv-btn-pri", style: { minHeight: 38, padding: "6px 16px" } }, "Cerrar Optimizador"))
+    );
+  })(), showPostHarvestModal && (() => {
+    const allPostProfiles = SPECIES_POSTHARVEST_PROFILES || {};
+    const spKeys = Object.keys(allPostProfiles);
+    const slResult = typeof enginePredictShelfLife === "function" ? enginePredictShelfLife(postHarvestSelectedSpecies, postHarvestTemp, postHarvestRh, { isPackaged: postHarvestPackaged }) : null;
+    const resp = typeof engineCalcPostHarvestRespiration === "function" ? engineCalcPostHarvestRespiration(postHarvestSelectedSpecies, postHarvestTemp, postHarvestBatchKg) : null;
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        onClose: () => setShowPostHarvestModal(false),
+        label: "Fisiología Poscosecha y Cadena de Frío · Shelf-Life Predictor",
+        dialogStyle: { width: "min(800px, 95vw)", padding: "22px 20px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-md, 3px)" }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-hairline)", paddingBottom: 12, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#1D4ED8" } }, "Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-0)", margin: "4px 0 2px 0" } }, "❄ Fisiología Poscosecha & Degradación en Cadena de Frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Predicción de vida útil, pérdida de peso por transpiración cuticular y empaque MAP microperforado")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar poscosecha", onClick: () => setShowPostHarvestModal(false) }, "✕")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Especie Cosechada:"), /* @__PURE__ */ React.createElement(
+        "select",
+        {
+          value: postHarvestSelectedSpecies,
+          onChange: (e) => setPostHarvestSelectedSpecies(e.target.value),
+          style: { width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-sans)", fontSize: 12 }
+        },
+        spKeys.map((k) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, allPostProfiles[k].name))
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Temp. Almacenamiento (°C): ", postHarvestTemp, "°C"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "range",
+          min: "2",
+          max: "22",
+          step: "0.5",
+          value: postHarvestTemp,
+          onChange: (e) => setPostHarvestTemp(parseFloat(e.target.value)),
+          style: { width: "100%" }
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 9.5, fontFamily: "var(--font-mono)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", null, "2°C Frío"), /* @__PURE__ */ React.createElement("span", null, "10°C Nevera"), /* @__PURE__ */ React.createElement("span", null, "18°C Sabana"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Humedad Almacén (%): ", postHarvestRh, "%"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "range",
+          min: "65",
+          max: "98",
+          step: "1",
+          value: postHarvestRh,
+          onChange: (e) => setPostHarvestRh(parseInt(e.target.value, 10)),
+          style: { width: "100%" }
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 9.5, fontFamily: "var(--font-mono)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", null, "70% Seco"), /* @__PURE__ */ React.createElement("span", null, "90% Óptimo"), /* @__PURE__ */ React.createElement("span", null, "98% Saturado"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, marginBottom: 4 } }, "Masa Lote (kg) / Empaque:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          step: "5",
+          min: "1",
+          max: "500",
+          value: postHarvestBatchKg,
+          onChange: (e) => setPostHarvestBatchKg(parseFloat(e.target.value) || 1),
+          style: { width: 80, padding: "4px 8px", borderRadius: "var(--radius-sm)", border: "1px solid var(--line-0)", fontFamily: "var(--font-mono)", fontSize: 12 }
+        }
+      ), /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, display: "flex", alignItems: "center", gap: 4, cursor: "pointer" } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "checkbox",
+          checked: postHarvestPackaged,
+          onChange: (e) => setPostHarvestPackaged(e.target.checked)
+        }
+      ), "BOPP Microperf.")))),
+      slResult && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+        padding: "12px 14px",
+        borderRadius: "var(--radius-sm)",
+        background: slResult.marketableShelfLifeDays >= 6 ? "var(--moss-100)" : slResult.marketableShelfLifeDays >= 3 ? "#FEF3C7" : "var(--accent-terracotta-dim)",
+        border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? "var(--moss-600)" : slResult.marketableShelfLifeDays >= 3 ? "#D97706" : "var(--accent-terracotta)"}`,
+        color: slResult.marketableShelfLifeDays >= 6 ? "var(--moss-800)" : slResult.marketableShelfLifeDays >= 3 ? "#92400E" : "var(--accent-rust)",
+        marginBottom: 16
+      } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700 } }, slResult.statusBadge, " Vida Útil Comercial Estimada: ", /* @__PURE__ */ React.createElement("strong", null, slResult.marketableShelfLifeDays, " días")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 2 } }, "Factor limitante: ", /* @__PURE__ */ React.createElement("strong", null, slResult.limitingFactor.replace(/_/g, " ")))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 11 } }, /* @__PURE__ */ React.createElement("div", null, "Transpiración: ", slResult.transpiration.weightLossPctPerDay, "% peso/día"), /* @__PURE__ */ React.createElement("div", null, "VPD almacén: ", slResult.transpiration.storageVpdKpa, " kPa")))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-0)", marginBottom: 6 } }, "📊 Vida Útil según Régimen Térmico:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10, background: "var(--moss-100)", borderColor: "var(--moss-600)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--moss-800)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, "Cuarto Frío (4°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--moss-800)" } }, slResult.scenariosComparison.cuartoFrio_4C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--moss-800)" } }, "Baseline de cadena ideal")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Nevera (10°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, slResult.scenariosComparison.neveraDomestica_10C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Refrigeración doméstica")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10, background: "var(--accent-terracotta-dim)", borderColor: "var(--accent-terracotta)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--accent-rust)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, "Ambiente Sabana (18°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--accent-rust)" } }, slResult.scenariosComparison.ambienteSabana_18C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--accent-rust)" } }, "Pérdida: -", slResult.scenariosComparison.lossRatioAmbienteVsFrio, "% vida")))), resp && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-2)", border: "1px solid var(--line-0)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)", marginBottom: 4 } }, "⚡ Fisiología Respiratoria & Carga Térmica (Lote ", postHarvestBatchKg, " kg):"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5, flexWrap: "wrap", gap: 10 } }, /* @__PURE__ */ React.createElement("span", null, "Tasa respiratoria: ", /* @__PURE__ */ React.createElement("strong", null, resp.respirationMgKgH, " mg CO₂/kg·h"), " (", resp.accelerationFactor, "x vs 4°C)"), /* @__PURE__ */ React.createElement("span", null, "Calor vital emitido: ", /* @__PURE__ */ React.createElement("strong", null, resp.totalVitalHeatWatts, " Watts"), " (", resp.vitalHeatWattsPerKg, " W/kg)"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "#1D4ED8", marginBottom: 4 } }, "📦 Especificación Técnica de Empaque en Atmósfera Modificada (MAP):"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("strong", null, "Material:"), " ", slResult.packagingRecommendation.type, " · ", /* @__PURE__ */ React.createElement("strong", null, "OTR Objetivo:"), " ", slResult.packagingRecommendation.targetOtr, " · ", /* @__PURE__ */ React.createElement("strong", null, "Aditivo:"), " Anti-fog obligatorio.", /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, color: "var(--ink-2)", fontSize: 11 } }, slResult.packagingRecommendation.guidance)))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowPostHarvestModal(false), className: "inv-btn inv-btn-pri", style: { minHeight: 38, padding: "6px 16px" } }, "Cerrar Poscosecha"))
     );
   })(), showDiagModal && (() => {
     const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];
