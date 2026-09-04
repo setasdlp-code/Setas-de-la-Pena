@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 380f26db3532ac03ed218d6e152eee24b229d8dc665cbfcaaf7ac2b2fab92bb4
+// source-hash: 0d4e46b67262ef3f3bc7f201110c06b765a8d27ca13c17e993f337bc580cf1e5
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -742,6 +742,7 @@ const SPP_SUBSTRATE_GUIDE = {
 const SPP_FAMILY = { p_ostreatus_gris: "Pleurotaceae", p_ostreatus_blanco: "Pleurotaceae", p_djamor_rosa: "Pleurotaceae", p_eryngii: "Pleurotaceae", shiitake: "Omphalotaceae", lions_mane: "Hericiaceae", reishi: "Polyporaceae", enoki: "Physalacriaceae", nameko: "Strophariaceae" };
 const SPP_HR = { p_ostreatus_gris: "88–95%", p_ostreatus_blanco: "88–95%", p_djamor_rosa: "85–95%", p_eryngii: "85–95%", shiitake: "80–95%", lions_mane: "85–95%", reishi: "85–95%", enoki: "80–90%", nameko: "85–95%" };
 const SPP_CODE = { p_ostreatus_gris: "SDP-001", p_ostreatus_blanco: "SDP-002", p_djamor_rosa: "SDP-003", p_eryngii: "SDP-004", shiitake: "SDP-005", lions_mane: "SDP-006", reishi: "SDP-007", enoki: "SDP-008", nameko: "SDP-009" };
+const PUBLIC_TRACE_BASE_URL = "https://setasdlp-code.github.io/Setas-de-la-Pena/public/trace.html";
 const BANDS = { p_ostreatus_gris: "oklch(50% 0.12 25)", p_ostreatus_blanco: "oklch(55% 0.10 28)", p_djamor_rosa: "oklch(48% 0.13 20)", p_eryngii: "oklch(45% 0.09 265)", shiitake: "var(--accent-olive)", lions_mane: "oklch(52% 0.11 35)", reishi: "oklch(42% 0.10 10)", enoki: "oklch(43% 0.08 260)", nameko: "oklch(46% 0.09 95)" };
 const SPP = {
   p_ostreatus_gris: { name: "Orellana Gris", scientific: "Pleurotus ostreatus", cn_optimal: { min: 25, max: 50, ideal: 35 }, n_optimal: { min: 0.8, max: 2, ideal: 1.4 }, ph_optimal: { min: 6, max: 7.5 }, moisture: { ideal: 65 }, eb_baseline: 90, eb_optimal: 130, supplementation_max: 20, spawn_rate: 8, notes: "La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.", temp_fruit: "12–22°C" },
@@ -1647,7 +1648,7 @@ const PublicTraceabilityModal = ({ loteId, loteCode, lotes = [], cosechas = [], 
   const totalKg = harvests.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
   const spImg = lote?.especieKey ? IMG[lote.especieKey] || IMG.p_ostreatus_gris : IMG.p_ostreatus_gris;
   const [copied, setCopied] = useState(false);
-  const traceUrl = lote?.codigo ? `https://setasdelapena.co/trace/${lote.codigo}` : typeof window !== "undefined" ? window.location.href : "https://setasdelapena.co";
+  const traceUrl = lote?.codigo ? `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}` : typeof window !== "undefined" ? window.location.href : PUBLIC_TRACE_BASE_URL;
   const qrDataUrl = generateQrSvgDataUrl(traceUrl);
   const diasIncubacion = (() => {
     if (!lote?.fechaInoculacion) return null;
@@ -7239,7 +7240,7 @@ Click para ver análisis completo`
         date: c.fecha || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
         recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1e3).toFixed(2)} kg) · Calidad ${"★".repeat(c.calidad || 4)}`,
         bagsText: `Lote ${lote.codigo} · Bolsa ${c.codigo || "General"}`,
-        qrUrl: `https://setasdelapena.co/trace/${lote.codigo}?flush=${c.flush || 1}`
+        qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}&flush=${c.flush || 1}`
       });
     } else if (thermalScope === "lote") {
       items.push({
@@ -7249,7 +7250,7 @@ Click para ver análisis completo`
         date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
         recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || "Receta Estándar",
         bagsText: `${totalBags} bolsas`,
-        qrUrl: `https://setasdelapena.co/l/${lote.codigo}`
+        qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
       });
     } else {
       const start = thermalScope === "custom" ? Math.max(1, Math.min(thermalBagStart, totalBags)) : 1;
@@ -7264,7 +7265,7 @@ Click para ver análisis completo`
           date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
           recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || "Receta Estándar",
           bagsText: `Bolsa ${i}/${totalBags}`,
-          qrUrl: `https://setasdelapena.co/c/${bagId}`
+          qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
         });
       }
     }

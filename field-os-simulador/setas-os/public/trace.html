@@ -52,15 +52,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Acepta /trace/SDP-..., /l/SDP-..., /c/SDP-...-B01 (el sufijo -Bxx de
-    // una bolsa individual se recorta: la ficha pública es por lote, no
-    // por bolsa) y también ?codigo=SDP-... como respaldo.
+    // GitHub Pages sirve solo archivos estáticos (sin rewrites de servidor),
+    // así que el código de lote llega como query string: ?codigo=SDP-...
     function extraerCodigo() {
-      const params = new URLSearchParams(location.search);
-      if (params.get('codigo')) return params.get('codigo');
-      const parts = location.pathname.split('/').filter(Boolean);
-      const raw = parts[parts.length - 1] || '';
-      return raw.replace(/-B\d+$/i, '');
+      return new URLSearchParams(location.search).get('codigo') || '';
     }
 
     function esc(s) {
