@@ -44,7 +44,7 @@ test('auth-gate.js registra los nuevos motores en PROTECTED_APP_SCRIPTS', () => 
   assert.match(authGate, /"(\.\.\/)?sterilization-kinetics\.js"/);
   assert.match(authGate, /"(\.\.\/)?co-cultivation-matrix\.js"/);
   assert.match(authGate, /"(\.\.\/)?post-harvest-engine\.js"/);
-  assert.match(authGate, /"(\.\.\/)?crop-prediction-engine\.js"/);
+  assert.match(authGate, /"(\.\.\/)?flush-forecast-engine\.js"/);
 });
 
 test('simulador-app.jsx integra puentes de importación para los nuevos motores', () => {
