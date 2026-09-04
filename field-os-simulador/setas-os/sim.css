@@ -2928,6 +2928,41 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 @media(max-width:900px){ .sim-root .home-tareas-lotes-row{ grid-template-columns:1fr!important; } }
 
+/* "Hoy" · Sección A consolidada: Acciones Rápidas y Tareas de Hoy lado a lado */
+.sim-root .home-acciones-tareas-row {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 20px;
+  align-items: stretch;
+}
+.sim-root .home-acciones-tareas-row > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media(max-width:960px){ .sim-root .home-acciones-tareas-row{ grid-template-columns:minmax(0,1fr)!important; } }
+
+/* "Hoy" · Sección C: Ambientes & Sensores - Tira compacta de cámaras */
+.sim-root .home-ambient-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media(max-width:840px){ .sim-root .home-ambient-strip{ grid-template-columns: 1fr; } }
+.sim-root .ambient-chamber-card {
+  background: var(--paper-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color .15s ease;
+}
+.sim-root .ambient-chamber-card:hover {
+  border-color: var(--paper-400);
+}
+
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
    Intentionally scoped to the two containers rendered only when
    tab === 'formular'. The Control cockpit, shell and other workspaces
