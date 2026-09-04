@@ -1,0 +1,43 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "system": "Setas de la Peña · DS-2026",
+  "description": "Eight pigment roles. Colour is classification or state, never decoration.",
+  "color": {
+    "primitive": {
+      "paper":     { "value": "#FAF5E9", "type": "color", "role": "Warm ivory. Every page ground, every printed substrate." },
+      "ink":       { "value": "#222222", "type": "color", "role": "Charcoal. Primary text, heavy rules, pictogram stroke." },
+      "inkMuted":  { "value": "#555555", "type": "color", "role": "Warm gray. Secondary text, captions, metadata values." },
+      "rule":      { "value": "#888888", "type": "color", "role": "Mineral gray. Hairlines, specimen frames, table borders." },
+      "soil":      { "value": "#4A3C31", "type": "color", "role": "Dark earth. Infill blocks, inverted panels, signage ground." },
+      "moss":      { "value": "#4E6B3F", "type": "color", "role": "Restrained forest green. OK / active / in-spec." },
+      "rust":      { "value": "#8E2C14", "type": "color", "role": "Oxidised red-brown. Error and contamination ONLY." },
+      "warning":   { "value": "#C49A4C", "type": "color", "role": "Muted ochre. Caution. Non-text use only — see audit." }
+    },
+    "derived": {
+      "paperPanel":    { "value": "#F3EEE2", "type": "color", "role": "paper + 4% soil. Panels, table stripe." },
+      "paperRecessed": { "value": "#EAE4D8", "type": "color", "role": "paper + 9% soil. Wells, image placeholders." },
+      "mossTint":      { "value": "#E5E4D5", "type": "color", "role": "12% moss on paper. OK banner ground." },
+      "rustTint":      { "value": "#EDDDCF", "type": "color", "role": "12% rust on paper. Error banner ground." },
+      "warningTint":   { "value": "#F4EAD6", "type": "color", "role": "12% warning on paper. Caution banner ground." },
+      "soilTint":      { "value": "#E5DFD3", "type": "color", "role": "12% soil on paper. Neutral infill." },
+      "warningText":   { "value": "#8C6B2E", "type": "color", "role": "Same hue/sat as warning, darkened to 4.53:1 on paper. The ONLY legal ochre text colour." }
+    },
+    "semantic": {
+      "surfacePage":    { "value": "{color.primitive.paper}" },
+      "surfacePanel":   { "value": "{color.derived.paperPanel}" },
+      "surfaceRecessed":{ "value": "{color.derived.paperRecessed}" },
+      "surfaceInverse": { "value": "{color.primitive.soil}" },
+      "textPrimary":    { "value": "{color.primitive.ink}" },
+      "textSecondary":  { "value": "{color.primitive.inkMuted}" },
+      "textMetadata":   { "value": "{color.primitive.inkMuted}" },
+      "textInverse":    { "value": "{color.primitive.paper}" },
+      "borderHairline": { "value": "{color.primitive.rule}" },
+      "borderHeavy":    { "value": "{color.primitive.ink}" },
+      "statusOk":       { "value": "{color.primitive.moss}" },
+      "statusWarn":     { "value": "{color.primitive.warning}", "usage": "Solid fills and bars only, with textPrimary on top (6.12:1). Never text: 2.39:1 on paper." },
+      "statusWarnText": { "value": "{color.derived.warningText}" },
+      "statusError":    { "value": "{color.primitive.rust}" },
+      "focusRing":      { "value": "{color.primitive.moss}" }
+    }
+  }
+}

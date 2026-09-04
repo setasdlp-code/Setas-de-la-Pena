@@ -1,0 +1,92 @@
+<meta charset="utf-8"><title>Dashboard · móvil</title>
+<link rel="stylesheet" href="../tokens/tokens.css">
+<link rel="stylesheet" href="../components/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="_shell.css">
+<style>body{background:var(--surface-page);padding:0}</style>
+<body data-mode="field">
+<div style="padding:16px">
+
+  <header style="display:flex;justify-content:space-between;align-items:center;border-bottom:var(--rule-heavy);padding-bottom:12px">
+    <div>
+      <div style="font:var(--t-heading-02);letter-spacing:var(--tracking-tight)">Setas de la Peña</div>
+      <div class="t-micro" style="margin-top:4px">17 AGO 2026 · 09:42</div>
+    </div>
+    <button aria-label="Menú" style="background:none;border:0;padding:10px;min-width:44px;min-height:44px;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 48 48" fill="none" stroke="#222222" stroke-width="1.5">
+        <path d="M8 15h32M8 24h32M8 33h32"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="sdp-alert sdp-alert--warn" style="margin-top:16px">
+    <div class="sdp-alert__body">
+      <div class="sdp-alert__label">Atención · CO₂</div>
+      <div class="sdp-alert__msg">Sala 03 a 1.240 ppm.</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+    <div class="sdp-tele"><span class="sdp-tele__k">HR · S02</span><span class="sdp-tele__v" style="font-size:24px">91<span class="sdp-tele__u">%</span></span><span class="sdp-tele__meter"><span style="width:82%"></span></span></div>
+    <div class="sdp-tele"><span class="sdp-tele__k">CO₂ · S02</span><span class="sdp-tele__v" style="font-size:24px">742<span class="sdp-tele__u">ppm</span></span><span class="sdp-tele__meter"><span style="width:47%"></span></span></div>
+  </div>
+
+  <div class="t-label" style="margin:20px 0 8px">CO₂ · Sala 02 · 14 días</div>
+  <div style="border:var(--rule-frame);padding:12px;background:var(--surface-page)">
+    <svg viewBox="0 0 340 110" width="100%" height="110" role="img" aria-label="CO2 Sala 02">
+      <line x1="0" y1="95" x2="340" y2="95" stroke="#222222" stroke-width="1"/>
+      <line x1="0" y1="42" x2="340" y2="42" stroke="#C49A4C" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <polyline fill="none" stroke="#4E6B3F" stroke-width="2"
+        points="8,78 33,75 58,80 83,72 108,68 133,71 158,64 183,61 208,66 233,58 258,55 283,61 308,52 332,49"/>
+    </svg>
+  </div>
+
+  <div class="t-label" style="margin:20px 0 8px">Lotes en sala</div>
+  <div style="display:grid;gap:12px">
+
+    <article class="sdp-lote sdp-lote--ok" style="display:grid;grid-template-columns:88px 1fr">
+      <div style="border-right:var(--rule-frame);display:flex;align-items:center;justify-content:center;background:var(--paper);padding:8px">
+        <img src="../assets/img/hericium-erinaceus-plate.svg" alt="" style="width:100%;height:auto">
+      </div>
+      <div class="sdp-lote__body">
+        <div class="sdp-species sdp-species--compact">
+          <div class="sdp-species__common" style="font-size:18px">Melena de león</div>
+          <div class="sdp-species__latin" style="font-size:13px">Hericium erinaceus</div>
+        </div>
+        <div class="sdp-lote__id" style="font-size:14px">LOTE 026 · HER-01</div>
+        <div class="sdp-lote__status">
+          <span class="sdp-lote__state">Incubación</span>
+          <span class="sdp-lote__bar"><span style="width:64%"></span></span>
+        </div>
+        <div class="sdp-lote__meta">
+          <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">02</span></div>
+          <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">91 %</span></div>
+          <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">742</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="sdp-lote sdp-lote--warn" style="display:grid;grid-template-columns:88px 1fr">
+      <div style="border-right:var(--rule-frame);display:flex;align-items:center;justify-content:center;background:var(--paper);padding:8px">
+        <img src="../assets/img/reishi-botanical-engraving.png" alt="" style="width:100%;height:auto">
+      </div>
+      <div class="sdp-lote__body">
+        <div class="sdp-species sdp-species--compact">
+          <div class="sdp-species__common" style="font-size:18px">Reishi</div>
+          <div class="sdp-species__latin" style="font-size:13px">Ganoderma lucidum</div>
+        </div>
+        <div class="sdp-lote__id" style="font-size:14px">LOTE 024 · GAN-03</div>
+        <div class="sdp-lote__status">
+          <span class="sdp-lote__state">CO₂ alto</span>
+          <span class="sdp-lote__bar"><span style="width:88%"></span></span>
+        </div>
+        <div class="sdp-lote__meta">
+          <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">03</span></div>
+          <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">86 %</span></div>
+          <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">1240</span></div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</div>

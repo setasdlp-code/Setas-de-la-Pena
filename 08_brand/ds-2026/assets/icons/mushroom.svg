@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
+     fill="none" stroke="currentColor" stroke-width="1.5"
+     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="mushroom">
+  <path d="M7 25c0-11 7-18 17-18s17 7 17 18Z"/>
+  <path d="M19 25v13c0 2 2 3 5 3s5-1 5-3V25"/>
+  <path d="M14 25v4M24 25v5M34 25v4"/>
+</svg>
