@@ -1,0 +1,47 @@
+/* Field OS Identity — GayaPatched editorial system
+   Canonical supplement to fonts.css for editorial/technical documents.
+   Uses the GayaPatched files already present in assets/fonts.
+   Do not redistribute font binaries outside the project. */
+
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+
+:root {
+  --font-gaya-patched: 'GayaPatched', Georgia, serif;
+
+  /* Editorial hierarchy */
+  --gaya-hero-weight: 900;
+  --gaya-hero-style: normal;
+  --gaya-hero-accent-weight: 900;
+  --gaya-hero-accent-style: italic;
+  --gaya-section-weight: 700;
+  --gaya-section-style: normal;
+  --gaya-section-accent-weight: 500;
+  --gaya-section-accent-style: italic;
+  --gaya-subhead-weight: 500;
+  --gaya-subhead-style: normal;
+  --gaya-annotation-weight: 500;
+  --gaya-annotation-style: italic;
+  --gaya-quiet-weight: 300;
+  --gaya-quiet-style: normal;
+  --gaya-quiet-italic-weight: 300;
+  --gaya-quiet-italic-style: italic;
+}
+
+/* Suggested reusable roles. Keep long prose and dense tables in the support sans. */
+.fos-type-hero { font-family: var(--font-gaya-patched); font-weight: 900; font-style: normal; }
+.fos-type-hero-em { font-family: var(--font-gaya-patched); font-weight: 900; font-style: italic; }
+.fos-type-section { font-family: var(--font-gaya-patched); font-weight: 700; font-style: normal; }
+.fos-type-section-em { font-family: var(--font-gaya-patched); font-weight: 500; font-style: italic; }
+.fos-type-subhead { font-family: var(--font-gaya-patched); font-weight: 500; font-style: normal; }
+.fos-type-annotation { font-family: var(--font-gaya-patched); font-weight: 500; font-style: italic; }
+.fos-type-quiet { font-family: var(--font-gaya-patched); font-weight: 300; font-style: normal; }
+.fos-type-quiet-em { font-family: var(--font-gaya-patched); font-weight: 300; font-style: italic; }
