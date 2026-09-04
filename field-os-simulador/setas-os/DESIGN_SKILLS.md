@@ -31,7 +31,7 @@ win.
 | `web-interface-guidelines` | Reviewing UI code you just wrote | Mechanical catch-net: focus states, hover states, `aria-label` on icon-only buttons, `touch-action`, contrast. Run it *after* a change, on the changed surfaces. |
 | `frontend-lighthouse` | The CWV gate in `lighthouserc.cjs` | Turns performance from a comment into a contract. Owns item 4 of the review. |
 | `ui-ux-pro-max:design-system` | Token layer work | Three-layer tokens (primitive → semantic → component); the natural next step for `DESIGN_TOKENS.md`'s "Future Work". |
-| `dataviz` | **Mandatory** before any chart code or chart colors | `climate-dashboard`, `climate-bench.html`, `climate-math.js`, `recipe-optimizer.js`. Also carries the accessible-palette validator — relevant given the two categories already failing contrast (review item 6). |
+| `dataviz` | **Mandatory** before any chart code or chart colors | `climate-dashboard`, `climate-bench.html`, `climate-math.js`, `recipe-optimizer.js`. Also carries the accessible-palette validator — use it for any *new* palette, and re-check with the canvas method below rather than trusting a table. |
 
 ## Situational
 
@@ -96,3 +96,20 @@ the affected component against `sim.css` is far cheaper than booting the app.
   **stale**: actual median is LCP 3307ms, TBT 16ms, performance 0.87. The
   2026-09-02 auth-gate change had already fixed it. TBT promoted warn → error,
   `PERF_FLOOR` 0.35 → 0.70, LCP gated on a ratcheting ceiling.
+
+2026-09-03, branch `fix/mobile-field-tier2` — review items 5 and 6:
+
+- **5** `.bridge-cambiar` had no `min-height` anywhere and rendered ~26px tall next
+  to a similarly small `<select>`. Both now 44px; the button's inline
+  `var(--text-xs)` (9.5px) overridden to 11px.
+- **6** *The review was stale.* The v3 fix for `trop`/`circ` had already landed in
+  `colors.css` and measures 5.03:1 / 5.04:1 — both pass. But `adit`, the row the
+  audit skipped as "design-system token, assumed pre-validated", fails at 3.98:1:
+  its `-text` was an alias to the base hue. Fixed to `#505F6D` (5.10:1). All 8
+  categories now pass both pairings. `.cat` badge text also raised 7–8px → 11px,
+  which is the actual reason workers were reading badge colour instead of label.
+
+**Method note.** `getComputedStyle` returns `oklab(…)` for `color-mix()` values;
+parsing those numbers as RGB produces confident nonsense (it briefly showed all 8
+categories failing). Paint the value to a canvas and read the pixel back instead —
+let the browser do the conversion.

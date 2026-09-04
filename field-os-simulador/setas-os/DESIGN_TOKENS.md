@@ -70,7 +70,7 @@ Chip/badge text in this UI runs 9.5–13px, below the WCAG "large text" exemptio
 | local | 5.68:1 | ✅ Pass | 6.03:1 | ✅ Pass |
 | **trop** | **4.44:1** (first-pass fix) | ❌ **Fail** | **3.70:1** (unfixed base hue) | ❌ **Fail** |
 | **circ** | **4.44:1** (first-pass fix) | ❌ **Fail** | **4.09:1** (unfixed base hue) | ❌ **Fail** |
-| adit | design-system token, assumed pre-validated | — | — | — |
+| **adit** | 4.65:1 | ✅ Pass | **3.98:1** (was an alias to the base hue) | ❌ **Fail** — see v4 |
 
 **v2 fix (superseded — see v3)** — darkened `trop`/`circ` against untinted `--paper-0` as a stand-in for the hover background: sup #8B641F (4.85:1 vs `#F7F4EC`), trop #9C5940, circ #607056.
 
@@ -81,6 +81,19 @@ Chip/badge text in this UI runs 9.5–13px, below the WCAG "large text" exemptio
 | sup (`-on` only) | #C68F2C | 30% | #8B641F | — | 4.85:1 |
 | trop (`-text` + `-on`) | #B8694B | 24% | #8C5039 | 5.03:1 (bg ≈ #F1E3D8) | 5.75:1 |
 | circ (`-text` + `-on`) | #6B7C5F | 20% | #56634C | 5.04:1 (bg ≈ #E5E5DA) | 5.82:1 |
+
+**v4 — the "assumed pre-validated" row was not validated.** Re-measured 2026-09-03 in Chrome, resolving every `var()` chain and every `color-mix(in oklab, …)` by painting the computed value to a canvas and reading the pixel back (the browser returns `oklab(…)` from `getComputedStyle`, so parsing its numbers as RGB silently produces nonsense — that mistake produced a false "all 8 categories fail" on the first pass of this re-audit).
+
+The seven hex-valued categories all pass both pairings, confirming the v3 fix landed correctly (trop 5.03:1, circ 5.04:1 against their real `color-mix()` backgrounds). `adit` did not, and it was the one row the v2/v3 audits skipped:
+
+| Category | Pairing | Before | After | Result |
+|----------|---------|--------|-------|--------|
+| adit (`-text`) | `--cat-adit-text` on `--cat-adit-hover` (#E3E3DF) | 3.70–3.98:1 | **5.10:1** | ✅ Fixed |
+| adit (`.on`) | `--text-on-dark` on `--cat-adit` | 4.65:1 | 4.65:1 | ✅ Unchanged, passes |
+
+Cause: `--cat-adit-text` was `var(--accent-blue-grey)` — the base hue used as its own text colour. Every other category has a *darkened* `-text` variant; `adit` never got one, because the audit treated "it's a design-system token" as evidence. It isn't: `--accent-blue-grey` passing AA somewhere else says nothing about it on a 12%-tinted background of itself. Darkened 15% → `#505F6D`.
+
+**Lesson for the next audit**: "design-system token, assumed pre-validated" is not an audit result. Measure every row, including the ones you did not choose.
 
 **When adding a new ingredient category**: compute contrast against the *actual resolved* foreground/background — trace `var()` chains all the way down (`--text-on-dark` is not white here), and if a background comes from `color-mix(in oklab, ...)`, resolve the real mixed hex rather than assuming it lands between the two input colors' luminances. Darken by the minimum percentage needed (5% increments), aiming a point or two past 4.5:1 for rounding margin, rather than stopping exactly at the threshold — this audit failed twice at exactly that margin.
 

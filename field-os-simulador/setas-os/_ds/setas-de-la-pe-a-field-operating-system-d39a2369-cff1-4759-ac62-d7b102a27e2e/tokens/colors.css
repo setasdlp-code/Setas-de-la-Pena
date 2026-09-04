@@ -141,7 +141,17 @@
 
   --cat-adit: var(--accent-blue-grey);
   --cat-adit-hover: color-mix(in oklab, var(--accent-blue-grey) 12%, var(--paper-0));
-  --cat-adit-text: var(--accent-blue-grey);
+  --cat-adit-text: #505F6D;            /* WCAG FIX v4: this was an alias to
+                                           --accent-blue-grey (#5E7080), i.e. the base
+                                           hue used as its own text colour — the one
+                                           category that never got a darkened -text
+                                           variant. Measured 3.98:1 against the real
+                                           --cat-adit-hover (#E3E3DF): a fail. The v2/v3
+                                           audits skipped it as "design-system token,
+                                           assumed pre-validated"; the assumption was
+                                           wrong for the hover pairing. Darkened 15%
+                                           -> 5.09:1, the same margin trop/circ carry.
+                                           .on is unaffected and still passes (4.65:1). */
   /* --cat-adit-on intentionally omitted: .on rule uses --cat-adit directly
      (design-system --accent-blue-grey already passes AA at its own value) */
 }
