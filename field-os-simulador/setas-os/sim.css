@@ -1835,14 +1835,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:14px!important;}
-.sim-root .species-bridge .bridge-activo{font-size:8px!important;padding:2px 6px!important;}
+.sim-root .species-bridge .bridge-activo{font-size:11px!important;padding:3px 7px!important;letter-spacing:.12em!important;}
 
 .sim-root .bridge-activo{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:800;font-size:10.35px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:var(--accent-olive);border:1px solid var(--accent-olive);padding:4px 8px;border-radius:0;flex-shrink:0;}
 .sim-root .bridge-dot{font-size:10.35px;color:var(--text-on-dark)!important;}
 .sim-root .bridge-name{font-family:var(--font-display)!important;font-weight:400!important;font-size:22.25px!important;color:var(--paper-0)!important;flex-shrink:0;line-height:1!important;}
 .sim-root .bridge-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--paper-2)!important;opacity:var(--opacity-strong);flex-shrink:0;}
 .sim-root .bridge-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:8.35px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
+.sim-root .bridge-stat-lbl{font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-2)!important;opacity:var(--opacity-muted);}
 .sim-root .bridge-stat-val{font-family:var(--font-mono);font-size:14.95px;font-weight:700;color:var(--paper-0)!important;}
 
 /* Species grid — fixed 2 columns, generous gap, larger cards */
@@ -1956,12 +1956,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* Bridge: stack on mobile (unified) */
   .sim-root .bridge-inner{flex-wrap:wrap!important;padding:10px 16px!important;gap:8px 14px!important;align-items:center!important;overflow-x:visible!important;}
-  .sim-root .bridge-activo{font-size:8px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.1em!important;}
   .sim-root .bridge-name{font-size:15px!important;}
   .sim-root .bridge-sci{font-size:11px!important;}
   .sim-root .bridge-stats-group{margin-left:0!important;width:100%!important;flex-wrap:wrap!important;gap:14px!important;}
-  .sim-root .bridge-stat-val{font-size:11px!important;}
-  .sim-root .bridge-stat-lbl{font-size:6.5px!important;}
+  .sim-root .bridge-stat-val{font-size:13px!important;}
+  .sim-root .bridge-stat-lbl{font-size:11px!important;}
   .sim-root .bridge-cambiar{flex-shrink:0!important;}
 }
 
@@ -1972,7 +1972,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* Bridge sticky + compact en móvil */
   .sim-root .species-bridge{position:sticky!important;bottom:0!important;top:auto!important;z-index:50!important;}
   .sim-root .bridge-inner{padding:8px 14px!important;gap:8px 10px!important;}
-  .sim-root .bridge-activo{font-size:7px!important;}
+  .sim-root .bridge-activo{font-size:11px!important;letter-spacing:.08em!important;}
   /* Bridge stats: hide on very small screens, keep button always visible */
   .sim-root .bridge-stats-group{display:none!important;}
   .sim-root .bridge-cambiar{display:inline-flex!important;margin-left:auto!important;}
