@@ -2365,7 +2365,7 @@ class Component extends DCLogic {
       const route=navigation
         ?navigation.readLocation(window.location)
         :{view:new URLSearchParams(window.location.search).get('view')||'home'};
-      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
+      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
       if(!allowed.includes(route.view)) return;
       this.setState(s=>({module:'sim',simTab:route.view,simTabNonce:s.simTabNonce+1}));
     }catch(e){}
@@ -3151,7 +3151,7 @@ class Component extends DCLogic {
     const escalatedList = climateAlertList.filter(a=>a.escalated);
     const lowStockRows = INVENTORY_ROWS.filter(r=>r.status==='Reponer');
     const mkTabs = pairs => gated(pairs).map(([m,label])=>({ label, on:s.module===m, style:tabStyle(s.module===m), go:()=>this.setState(Object.assign({module:m,capture:false}, m==='camaras'?{camDetail:null,climaBadge:0}:{})) }));
-    const FORMULAR_SIM_TABS = ['catalogo','formular','dashboard'];
+    const FORMULAR_SIM_TABS = ['catalogo','formular'];
     const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
     const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
     const activeWorkspace = s.module==='sim'
@@ -3172,9 +3172,8 @@ class Component extends DCLogic {
     const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
     let workspaceTabs = [];
     if(activeWorkspace==='formular') workspaceTabs = [
-      contextTab('Catálogo',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
+      contextTab('Catálogo & Recetario',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
       contextTab('Formular',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
-      contextTab('Recetario',s.module==='sim'&&s.simTab==='dashboard',()=>this.goSimTab('dashboard')),
     ];
     if(activeWorkspace==='produccion') workspaceTabs = [
       ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
@@ -3227,7 +3226,7 @@ class Component extends DCLogic {
       curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
       curRevision:s.module==='revision'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
-      navRecetarioCls:(s.module==='sim'&&s.simTab==='dashboard')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='dashboard')?'page':undefined,
+      navRecetarioCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navCatalogoCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curCatalogo:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navFichaCls:(s.module==='sim'&&s.simTab==='produccion')?'on':'', curFicha:(s.module==='sim'&&s.simTab==='produccion')?'page':undefined,
       navBitacoraCls:(s.module==='sim'&&s.simTab==='bitacora')?'on':'', curBitacora:(s.module==='sim'&&s.simTab==='bitacora')?'page':undefined,
@@ -3259,7 +3258,7 @@ class Component extends DCLogic {
       goSimCatalogo:()=>this.goSimTab('catalogo'),
       goSimFormular:()=>this.goSimTab('formular'),
       goSimBitacora:()=>this.goSimTab('bitacora'),
-      goSimDashboard:()=>this.goSimTab('dashboard'),
+      goSimDashboard:()=>this.goSimTab('catalogo'),
       goSimInventario:()=>this.goSimTab('inventario'),
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
@@ -3313,7 +3312,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','dashboard','clima','bitacora','labExtraction','bioCheck'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3759,8 +3758,8 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', dashboard:'Recetario', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',dashboard:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
+    const SIM_CRUMB = { catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
+    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
       revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };

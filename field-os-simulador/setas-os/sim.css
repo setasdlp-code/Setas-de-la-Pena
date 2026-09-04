@@ -1895,8 +1895,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
 .sim-root .p-common{font-family:var(--font-display);font-weight:400;font-size:28px;color:var(--ink-900);line-height:1.1;}
 /* ACTIVA badge */
-.sim-root .p-activa{display:none;font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:transparent;color:var(--status-active);padding:2px 8px;border:1px solid var(--status-active);border-radius:0;}
-.sim-root .spp-card.on .p-activa{display:inline-block;}
 /* Archival header */
 .sim-root .p-arch-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px 9px 14px;border-bottom:1px solid rgba(26,20,16,0.07);}
 .sim-root .p-arch-left{display:flex;align-items:baseline;gap:6px;}
@@ -5195,4 +5193,88 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .iot-copy-btn:hover {
   background: var(--paper-100);
+}
+
+/* ==========================================================================
+   CATÁLOGO & RECETARIO (vista fusionada, 2026-09)
+   La rejilla de especies es el filtro maestro del recetario: la especie
+   seleccionada define qué recetas guardadas se listan debajo.
+   ========================================================================== */
+
+.sim-root .catalog-hdr-stats{display:flex;align-items:baseline;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--ink-500);white-space:nowrap;}
+.sim-root .catalog-hdr-stats b{font-family:var(--font-num);font-size:15px;font-weight:700;color:var(--ink-900);}
+
+/* Contador de recetas guardadas en la cabecera de cada tarjeta de especie */
+.sim-root .p-rec-badge{
+  height:20px;padding:0 8px;border-radius:10px;gap:4px;
+  display:inline-flex;align-items:baseline;justify-content:center;
+  background:var(--accent-blue-grey);color:var(--paper-0);
+  border:1px solid var(--accent-blue-grey);
+}
+.sim-root .p-rec-badge b{font-family:var(--font-num);font-weight:700;font-size:11px;line-height:20px;}
+.sim-root .p-rec-badge span{font-family:var(--font-body);font-weight:800;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;line-height:20px;}
+.sim-root .p-rec-badge.is-empty{background:transparent;color:var(--ink-400);border-color:var(--paper-300);}
+
+/* Tarjeta cuya especie filtra el recetario en este momento */
+.sim-root .spp-card.is-filtering{box-shadow:var(--shadow-ring-accent)!important;}
+
+.sim-root .recetario-sect{
+  margin-top:40px;padding-top:28px;
+  border-top:1px solid color-mix(in oklab,var(--ink-900) 14%,transparent);
+}
+.sim-root .recetario-hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.sim-root .recetario-title{
+  font-family:var(--font-display);font-size:28px;font-weight:400;line-height:1.1;
+  color:var(--ink-0);margin:0;display:flex;align-items:baseline;gap:10px;
+}
+.sim-root .recetario-count{
+  font-family:var(--font-num);font-size:13px;font-weight:700;color:var(--ink-500);
+  background:var(--paper-100);border:1px solid var(--paper-300);border-radius:10px;padding:1px 9px;
+}
+.sim-root .recetario-hdr-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.sim-root .recetario-act{
+  font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:var(--tracking-button);
+  text-transform:uppercase;padding:9px 14px;min-height:44px;cursor:pointer;
+  background:var(--paper-0);color:var(--ink-700);border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-sm);
+  transition:background-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease);
+}
+.sim-root .recetario-act:hover{background:var(--paper-100);}
+.sim-root .recetario-act.is-primary{background:var(--accent-terracotta);color:#fff;border-color:var(--accent-terracotta);}
+.sim-root .recetario-act.is-primary:hover{background:color-mix(in oklab,var(--accent-terracotta) 85%,black);}
+
+.sim-root .recetario-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.sim-root .cat-n{
+  font-family:var(--font-num);font-size:11px;font-weight:700;margin-left:7px;
+  opacity:.7;font-variant-numeric:tabular-nums;
+}
+
+/* Resumen de ficha de la especie seleccionada — la información del catálogo
+   visible en la página, sin tener que abrir el modal. */
+.sim-root .recetario-ficha{
+  display:flex;gap:18px;align-items:flex-start;margin-bottom:22px;padding:16px;
+  background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));
+  border:1px solid color-mix(in oklab,var(--moss-300) 25%,var(--paper-300));
+  border-radius:var(--radius-sm);
+}
+.sim-root .recetario-ficha-img{flex-shrink:0;width:120px;height:90px;overflow:hidden;border-radius:var(--radius-sm);background:var(--paper-100);}
+.sim-root .recetario-ficha-img img{width:100%;height:100%;object-fit:cover;object-position:center 65%;display:block;}
+.sim-root .recetario-ficha-body{flex:1;min-width:0;}
+.sim-root .recetario-ficha-sci{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--moss-700);margin-bottom:4px;}
+.sim-root .recetario-ficha-note{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--ink-800);margin:0 0 12px;text-wrap:pretty;}
+.sim-root .recetario-ficha-params{display:flex;flex-wrap:wrap;gap:6px;}
+.sim-root .recetario-ficha-param{
+  display:flex;align-items:baseline;gap:6px;padding:4px 10px;
+  background:var(--paper-0);border:1px solid var(--paper-300);border-radius:var(--radius-sm);
+}
+.sim-root .recetario-ficha-param span{font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);}
+.sim-root .recetario-ficha-param b{font-family:var(--font-num);font-size:13px;font-weight:700;color:var(--ink-900);font-variant-numeric:tabular-nums;}
+
+@media(max-width:768px){
+  .sim-root .catalog-hdr-stats{width:100%;margin-top:8px;}
+  .sim-root .recetario-sect{margin-top:28px;padding-top:20px;}
+  .sim-root .recetario-title{font-size:22px;}
+  .sim-root .recetario-hdr-actions{width:100%;}
+  .sim-root .recetario-act{flex:1;justify-content:center;text-align:center;}
+  .sim-root .recetario-ficha{flex-direction:column;gap:12px;}
+  .sim-root .recetario-ficha-img{width:100%;height:140px;}
 }
