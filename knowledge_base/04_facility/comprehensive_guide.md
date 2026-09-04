@@ -1,6 +1,6 @@
 ---
 title: Adecuación de Espacios para Cultivos de Setas — Guía Completa
-document_id: DOC-0099
+document_id: DOC-0121
 category: facility
 load_priority: selective
 last_reviewed: 2026-09-03

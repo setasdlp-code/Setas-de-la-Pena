@@ -386,6 +386,9 @@ Para ventilación intermitente en carpa o cámara:
 
 $$\text{ACH}_{\text{estimado}} = \frac{Q_{\text{efectivo medido}} \times \text{duty\_cycle} \times 60}{V_{\text{cámara}}}$$
 
+Fórmula operacional directa:
+`ACH estimado = Q efectivo medido * duty_cycle * 60 / volumen`
+
 donde:
 - $\text{duty\_cycle} = \frac{t_{\text{ON}}}{t_{\text{ON}} + t_{\text{OFF}}}$.
 - El caudal efectivo requerido oscila entre 8,5 CFM y 13,6 CFM según especie, biomasa activa y densidad de carga, verificado siempre mediante lectura de CO₂ compensada barométricamente.
