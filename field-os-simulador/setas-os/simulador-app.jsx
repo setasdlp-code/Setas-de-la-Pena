@@ -3974,20 +3974,20 @@ function SimuladorShell(props){
       return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
     }catch(e){return'home';}
   });
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',dashboard:'Recetario',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Formular',tabs:['catalogo','formular','dashboard'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
     {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',dashboard:'Recetario',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
-  const RECETA_TABS=['catalogo','formular','dashboard'];
+  const RECETA_TABS=['catalogo','formular'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
-  const TAB_ALIASES={optimizar:'formular'};
+  const TAB_ALIASES={optimizar:'formular',dashboard:'catalogo'};
   const applyTab=t=>{
     t=TAB_ALIASES[t]||t;
     try{t=window.SetasOSNavigation?.normalizeView(t,'home')||'home';}catch(e){}
@@ -8182,7 +8182,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
                     {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
                     {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
-                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'dashboard'}
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'catalogo'}
                   ];
                   const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
                     const stats = calcLoteStats(lote.id);
@@ -8383,27 +8383,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           );
         })()}
-        {tab==='catalogo'&&(
+        {tab==='catalogo'&&(()=>{
+          // Catálogo de especies + Recetario fusionados en una sola vista (2026-09).
+          // La clave de unión es `sKey`: cada receta guardada pertenece a una especie,
+          // así que la especie seleccionada en la rejilla es también el filtro del
+          // recetario, y `dashFilter==='all'` muestra el recetario completo.
+          const recipesBySpp={};
+          saved.forEach(e=>{(recipesBySpp[e.sKey]=recipesBySpp[e.sKey]||[]).push(e);});
+          const focusKey=dashFilter==='all'?null:dashFilter;
+          const focusSpp=focusKey?SPP[focusKey]:null;
+          const shown=[...(focusKey?(recipesBySpp[focusKey]||[]):saved)].sort((a,b)=>(parseFloat(b.eb)||0)-(parseFloat(a.eb)||0));
+          // La rejilla es alta: al elegir una especie desde una tarjeta hay que
+          // llevar al operador hasta el recetario filtrado, o el clic parece no
+          // hacer nada. Desde los chips (ya dentro de la sección) no se desplaza.
+          const pickSpecies=(k,scroll)=>{
+            setSKey(k);setDashFilter(k);
+            if(!scroll) return;
+            try{
+              const el=document.getElementById('recetario-panel');
+              if(!el) return;
+              const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+            }catch(e){}
+          };
+          return(
           <div className="spp-sect spp-sect-catalog">
             <div className="catalog-hdr">
               <div>
                 <span className="catalog-eyebrow">Receta</span>
-                <h1 className="catalog-title">Catálogo de especies</h1>
+                <h1 className="catalog-title">Catálogo de especies &amp; Recetario</h1>
               </div>
-
+              <div className="catalog-hdr-stats">
+                <span><b>{Object.keys(SPP).length}</b> especies</span>
+                <span aria-hidden="true">·</span>
+                <span><b>{saved.length}</b> receta{saved.length!==1?'s':''} guardada{saved.length!==1?'s':''}</span>
+              </div>
             </div>
             <div className="spp-grid">
               {Object.entries(SPP).map(([k,d],idx)=>{
                 const hasImg=!!IMG[k];
                 const isOn=sKey===k;
                 const num=String(idx+1).padStart(2,'0');
+                const nRec=(recipesBySpp[k]||[]).length;
                 return(
-                  <button key={k} className={`spp-card${(isOn&&hasPickedSpecies)?' on':''}`} aria-pressed={isOn&&hasPickedSpecies} onClick={()=>{setSKey(k);setCatalogModalOpen(true);}}>
+                  <button key={k} className={`spp-card${(isOn&&hasPickedSpecies)?' on':''}${dashFilter===k?' is-filtering':''}`} aria-pressed={isOn&&hasPickedSpecies} onClick={()=>pickSpecies(k,true)}>
                     <div style={{position:'relative',display:'flex',flexDirection:'column',flex:1,overflow:'hidden',borderRadius:'var(--r-xs)'}}>
                     <div className="p-family-strip"><span>{SPP_FAMILY[k]||''}</span></div>
                     <div className="p-arch-head">
                       <div className="p-arch-left"><span className="p-arch-num">{num}</span><span className="p-arch-code">{SPP_CODE[k]}</span></div>
-                      <span className="p-activa">Activa</span>
+                      <span className={`p-rec-badge${nRec===0?' is-empty':''}`} aria-label={`${nRec} receta${nRec===1?'':'s'} guardada${nRec===1?'':'s'}`}><b>{nRec}</b><span aria-hidden="true">rec</span></span>
                     </div>
                     {hasImg
                       ?<div className="p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
@@ -8430,6 +8458,186 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 );
               })}
             </div>
+
+            {/* ---- RECETARIO: recetas guardadas de la especie seleccionada ---- */}
+            <section className="recetario-sect" id="recetario-panel" aria-labelledby="recetario-title">
+              <div className="recetario-hdr">
+                <div>
+                  <span className="catalog-eyebrow">Recetario</span>
+                  <h2 className="recetario-title" id="recetario-title">
+                    {focusSpp?`Recetas de ${focusSpp.name}`:'Todas las recetas guardadas'}
+                    <span className="recetario-count">{shown.length}</span>
+                  </h2>
+                </div>
+                {focusSpp&&(
+                  <div className="recetario-hdr-actions">
+                    <button type="button" className="recetario-act" onClick={()=>{setSKey(focusKey);setCatalogModalOpen(true);}}>Ver ficha completa →</button>
+                    <button type="button" className="recetario-act is-primary" onClick={()=>{setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular con {focusSpp.name}</button>
+                  </div>
+                )}
+              </div>
+
+              {saved.length > 0 && (() => {
+                const costs = saved.map(e => {
+                  const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
+                  const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
+                  const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
+                  const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
+                    const tr2 = a2 ? calcTreatment(a2, e.sKey, SPP) : null;
+                    const col = tr2?.col || (['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                    return energyCostPerKgSeco(col, e.sKey);
+                  })();
+                  return costIngKg + eDash;
+                }).filter(c => c > 0);
+                const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
+                const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
+                const avgCycleDays = sch?.totDays || 45;
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
+                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="recetario-filters" role="group" aria-label="Filtrar recetas por especie">
+                {['all',...Object.keys(SPP)].map(k=>{
+                  const n=k==='all'?saved.length:(recipesBySpp[k]||[]).length;
+                  return(
+                    <button key={k} className={`cat${dashFilter===k?' on':''}`} aria-pressed={dashFilter===k} onClick={()=>{k==='all'?setDashFilter('all'):pickSpecies(k,false);}}>
+                      {k==='all'?'Todas':SPP[k]?.name}<span className="cat-n">{n}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {focusSpp&&(
+                <div className="recetario-ficha">
+                  {IMG[focusKey]&&<div className="recetario-ficha-img"><img src={IMG[focusKey]} alt={focusSpp.name} width="200" height="150" loading="lazy" decoding="async"/></div>}
+                  <div className="recetario-ficha-body">
+                    <div className="recetario-ficha-sci">{focusSpp.scientific}</div>
+                    <p className="recetario-ficha-note">{focusSpp.notes.split('.')[0]+'.'}</p>
+                    <div className="recetario-ficha-params">
+                      {[
+                        {l:'Temp',v:focusSpp.temp_fruit},
+                        {l:'HR',v:SPP_HR[focusKey]},
+                        {l:'C:N',v:`${focusSpp.cn_optimal.min}–${focusSpp.cn_optimal.max}`},
+                        {l:'pH',v:`${focusSpp.ph_optimal.min}–${focusSpp.ph_optimal.max}`},
+                        {l:'EB',v:`${focusSpp.eb_baseline}–${focusSpp.eb_optimal}%`},
+                        {l:'Dificultad',v:SPP_DIFFICULTY[focusKey]||'Media'},
+                      ].map(x=>(
+                        <div key={x.l} className="recetario-ficha-param"><span>{x.l}</span><b>{x.v}</b></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {saved.length===0
+                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
+                :shown.length===0
+                ?<div className="rec-empty"><div className="rec-empty-hed">Sin recetas para {focusSpp?focusSpp.name:'esta especie'}.</div><div className="rec-empty-sub">Formula una mezcla para esta especie y guárdala para verla aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>{if(focusKey)setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular ahora</button></div>
+                :(
+                    <div className="dash-grid">
+                      {shown.map(e=>{
+                        const s2=SPP[e.sKey];
+                        const band=BANDS[e.sKey]||'var(--ink-700)';
+                        const eb=parseFloat(e.eb)||0;
+                        const sc=liveScoreFor(e);
+                        // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
+                        const needsA2=!(e.cost>0)||e.energyCopKg==null;
+                        const a2=needsA2?analyze(e.recipe,e.sKey,effectiveINGS):null;
+                        const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
+                        // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
+                        const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
+                          const tr2=a2?calcTreatment(a2, e.sKey, SPP):null;
+                          const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
+                          return energyCostPerKgSeco(col,e.sKey);
+                        })();
+                        const costKg=costIngKg+eDash;
+                        const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
+                        return(
+                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
+                            <div className="dash-card-top">
+                              <div className="dash-card-name">{e.name}</div>
+                              <div className="dash-card-spp">{s2?.name} · {e.date}</div>
+                            </div>
+                            <div className="dash-card-body">
+                              <div className="dash-kv">
+                                <span className="dk">EB estimada</span>
+                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{e.eb}%</span>
+                              </div>
+                              {sc>0&&<div className="dash-kv">
+                                <span className="dk">Score</span>
+                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
+                              </div>}
+                              <div className="dash-kv">
+                                <span className="dk">C:N</span>
+                                <span className="dv">{e.cn}:1</span>
+                              </div>
+                              <div className="dash-kv">
+                                <span className="dk">Ingredientes</span>
+                                <span className="dv">{e.recipe.length}</span>
+                              </div>
+                              {costKg>0&&(
+                                <div className="dash-kv">
+                                  <span className="dk">Costo total/kg</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                </div>
+                              )}
+                            </div>
+                            {costKg>0&&(
+                              <div style={{display:'flex',gap:0,borderTop:'1px solid var(--paper-300)'}}>
+                                {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
+                                  <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
+                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
+                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
+                              <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
+                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
+                              </div>
+                            </div>
+                            <div className="dash-card-foot" style={{display:'flex',gap:6}}>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
+                              <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
+                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+              }
+            </section>
+
             {catalogModalOpen&&sp&&(()=>{
               const det=SPP_DETAILS[sKey]||{};
               const IcoAp=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><circle cx="6" cy="5" r="3"/><path d="M2 10c0-2 1.5-3 4-3s4 1 4 3"/></svg>;
@@ -8521,7 +8729,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
-        )}
+          );
+        })()}
 
         {tab==='formular'&&(
           <div className="formular-mode-wrapper">
@@ -10845,152 +11054,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
 
         {tab==='inventario'&&BodegaSection()}
-
-        {tab==='dashboard'&&(
-          <div>
-            <div className="panel">
-              {saved.length > 0 && (() => {
-                const costs = saved.map(e => {
-                  const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
-                  const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
-                  const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
-                  const eDash = e.energyCopKg != null ? e.energyCopKg : (() => {
-                    const tr2 = a2 ? calcTreatment(a2, e.sKey, SPP) : null;
-                    const col = tr2?.col || (['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
-                    return energyCostPerKgSeco(col, e.sKey);
-                  })();
-                  return costIngKg + eDash;
-                }).filter(c => c > 0);
-                const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
-                const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-                const avgCycleDays = sch?.totDays || 45;
-
-                return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)'}}>{saved.length} receta{saved.length!==1?'s':''}</span>
-                <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                  {['all',...Object.keys(SPP)].map(k=>(
-                    <button key={k} className={`cat${dashFilter===k?' on':''}`} onClick={()=>setDashFilter(k)}>
-                      {k==='all'?'Todas':SPP[k]?.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {saved.length===0
-                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
-                :(()=>{
-                  const filtered=saved.filter(e=>dashFilter==='all'||e.sKey===dashFilter);
-                  if(!filtered.length) return <div className="sempty">Sin recetas para esta especie.</div>;
-                  const sorted=[...filtered].sort((a,b)=>(parseFloat(b.eb)||0)-(parseFloat(a.eb)||0));
-                  return(
-                    <div className="dash-grid">
-                      {sorted.map(e=>{
-                        const s2=SPP[e.sKey];
-                        const band=BANDS[e.sKey]||'var(--ink-700)';
-                        const eb=parseFloat(e.eb)||0;
-                        const sc=liveScoreFor(e);
-                        // Costo ingredientes + tratamiento: guardado, o recalculado al vuelo con el mismo motor (analyze/calcTreatment) para recetas antiguas
-                        const needsA2=!(e.cost>0)||e.energyCopKg==null;
-                        const a2=needsA2?analyze(e.recipe,e.sKey,effectiveINGS):null;
-                        const costIngKg=e.cost>0?e.cost:(a2?Math.round(a2.cost):0);
-                        // Costo energético: guardado (recetas nuevas) o derivado del tratamiento real de la receta (recetas antiguas)
-                        const eDash=e.energyCopKg!=null?e.energyCopKg:(()=>{
-                          const tr2=a2?calcTreatment(a2, e.sKey, SPP):null;
-                          const col=tr2?.col||(['shiitake','lions_mane','reishi','nameko'].includes(e.sKey)?'autoclave':'thermal');
-                          return energyCostPerKgSeco(col,e.sKey);
-                        })();
-                        const costKg=costIngKg+eDash;
-                        const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
-                        return(
-                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
-                            <div className="dash-card-top">
-                              <div className="dash-card-name">{e.name}</div>
-                              <div className="dash-card-spp">{s2?.name} · {e.date}</div>
-                            </div>
-                            <div className="dash-card-body">
-                              <div className="dash-kv">
-                                <span className="dk">EB estimada</span>
-                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{e.eb}%</span>
-                              </div>
-                              {sc>0&&<div className="dash-kv">
-                                <span className="dk">Score</span>
-                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
-                              </div>}
-                              <div className="dash-kv">
-                                <span className="dk">C:N</span>
-                                <span className="dv">{e.cn}:1</span>
-                              </div>
-                              <div className="dash-kv">
-                                <span className="dk">Ingredientes</span>
-                                <span className="dv">{e.recipe.length}</span>
-                              </div>
-                              {costKg>0&&(
-                                <div className="dash-kv">
-                                  <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
-                                </div>
-                              )}
-                            </div>
-                            {costKg>0&&(
-                              <div style={{display:'flex',gap:0,borderTop:'1px solid var(--paper-300)'}}>
-                                {[{nom:'20×50',kgH:1.8},{nom:'18×35',kgH:1.0},{nom:'Punch',kgH:3.5}].map(b=>(
-                                  <div key={b.nom} style={{flex:1,padding:'4px 6px',borderRight:'1px solid var(--paper-300)',textAlign:'center',background:'var(--paper-50)'}}>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)',marginBottom:1}}>{b.nom}</div>
-                                    <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-sm)",color:'var(--ink-900)',fontWeight:700}}>${Math.round(costKg*b.kgH*hFactor).toLocaleString('es-CO')}</div>
-                                    <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-micro)",color:'var(--ink-500)'}}>COP/bolsa</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
-                              <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
-                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
-                                {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
-                              </div>
-                            </div>
-                            <div className="dash-card-foot" style={{display:'flex',gap:6}}>
-                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
-                              <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()
-              }
-            </div>
-          </div>
-        )}
 
         {tab==='clima'&&<ClimateDashboardSection/>}
 

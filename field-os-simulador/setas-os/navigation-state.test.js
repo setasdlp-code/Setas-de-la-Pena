@@ -62,3 +62,12 @@ test('supports replace semantics for state normalization only', () => {
   navigation.navigate(win, 'dashboard', { replace: true });
   assert.equal(calls[0][0], 'replaceState');
 });
+
+test('the merged Catálogo & Recetario view keeps ?view=dashboard working', () => {
+  // El Recetario dejó de ser una vista propia (2026-09) y vive dentro del
+  // Catálogo de especies. Los enlaces y marcadores antiguos deben seguir
+  // resolviendo a la vista fusionada en vez de caer al fallback 'home'.
+  assert.equal(navigation.normalizeView('dashboard'), 'catalogo');
+  assert.equal(navigation.VIEWS.includes('dashboard'), false);
+  assert.equal(navigation.readLocation('?view=dashboard').view, 'catalogo');
+});

@@ -35,8 +35,8 @@ test('cambiar de pestaña contextual dentro de Formular actualiza el shell (Reac
   await openApp(page);
   await goWorkspace(page, 'formular');
 
-  await page.getByRole('tab', { name: 'Recetario' }).click();
-  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  await page.getByRole('tab', { name: 'Catálogo & Recetario' }).click();
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Catálogo & Recetario');
   await expect(page.locator('[data-testid="breadcrumb"]')).toContainText(/recetario/i);
   expect(await activeWorkspace(page)).toBe('formular');
 
@@ -55,9 +55,9 @@ test('atrás y adelante restauran el workspace y la pestaña contextual', async 
   await expect(page).toHaveURL(/view=formular/);
   await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Formular');
 
-  await page.getByRole('tab', { name: 'Recetario' }).click();
-  await expect(page).toHaveURL(/view=dashboard/);
-  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  await page.getByRole('tab', { name: 'Catálogo & Recetario' }).click();
+  await expect(page).toHaveURL(/view=catalogo/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Catálogo & Recetario');
   expect(await activeWorkspace(page)).toBe('formular');
 
   await page.goBack();
@@ -66,7 +66,7 @@ test('atrás y adelante restauran el workspace y la pestaña contextual', async 
   expect(await activeWorkspace(page)).toBe('formular');
 
   await page.goForward();
-  await expect(page).toHaveURL(/view=dashboard/);
-  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Recetario');
+  await expect(page).toHaveURL(/view=catalogo/);
+  await expect(page.locator('.workspace-subnav [role="tab"][aria-selected="true"]')).toHaveText('Catálogo & Recetario');
   expect(await activeWorkspace(page)).toBe('formular');
 });
