@@ -162,6 +162,133 @@
     };
   };
 
+  // Constantes para ventilación y corrección barométrica NDIR
+  const SEA_LEVEL_PRESSURE_HPA = 1013.25;
+  const TENJO_NOMINAL_PRESSURE_HPA = 745.0; // 74.5 kPa a 2.600 msnm
+
+  // Tasas de respiración fúngica en fructificación activa (mg CO2 / kg hongo fresco / h)
+  const SPECIES_RESPIRATION_RATES = {
+    orellana_gris: 1400,
+    orellana_blanca: 1300,
+    orellana_rosa: 1600,
+    seta_cardo: 800,
+    shiitake: 650,
+    melena_leon: 750,
+    nameko: 600,
+    enoki: 500,
+    reishi: 400,
+    default: 1000
+  };
+
+  /**
+   * Corrección barométrica para sensores de CO2 tipo NDIR (MH-Z19C, SCD30, Senseair S8) en altitud.
+   * La ley de Beer-Lambert depende de la densidad molar del gas; a 745 hPa (Tenjo) el sensor no compensado
+   * subestima la concentración de CO2 en ~26.5% (factor 1.360x).
+   *
+   * @param {number} rawPpm Lectura directa del sensor NDIR sin calibrar en ppm
+   * @param {number} [pressureHpa=745.0] Presión barométrica local en hPa
+   * @param {number} [tempC=18.0] Temperatura actual de la carpa en °C
+   * @returns {object} Concentración corregida y factor multiplicador
+   */
+  const calcBarometricCO2Correction = (rawPpm, pressureHpa = TENJO_NOMINAL_PRESSURE_HPA, tempC = 18.0) => {
+    const raw = Math.max(0, parseFloat(rawPpm) || 0);
+    const pLocal = Math.max(500, Math.min(1100, parseFloat(pressureHpa) || TENJO_NOMINAL_PRESSURE_HPA));
+    const tLocal = parseFloat(tempC) || 18.0;
+
+    // Factor barométrico primario: P0 / P_local
+    const baroFactor = SEA_LEVEL_PRESSURE_HPA / pLocal;
+
+    // Corrección secundaria por temperatura de calibración (estándar NDIR calibrado a 20°C / 293.15 K)
+    const tFactor = (tLocal + 273.15) / (20.0 + 273.15);
+
+    const totalFactor = baroFactor * tFactor;
+    const correctedPpm = Math.round(raw * totalFactor);
+
+    return {
+      rawPpm: raw,
+      correctedPpm,
+      pressureHpa: pLocal,
+      tempC: tLocal,
+      baroFactor: Math.round(baroFactor * 1000) / 1000,
+      totalCorrectionFactor: Math.round(totalFactor * 1000) / 1000,
+      deltaPpm: correctedPpm - raw
+    };
+  };
+
+  /**
+   * Cálculo dinámico de renovación de aire fresco (FAE - Fresh Air Exchange) por biomasa fúngica activa.
+   * Balance de masas de CO2 en cámara cerrada:
+   * Q_CFM = (0.43754 * M_bio * R_CO2) / (C_target - C_outdoor)
+   *
+   * @param {number} biomassKg Biomasa fúngica fresca en fructificación activa (kg)
+   * @param {string} [speciesKey='orellana_gris'] Clave de la especie cultivada
+   * @param {object} [options={}] Parámetros de la cámara y extractor
+   * @param {number} [options.targetPpm=800] Concentración objetivo de CO2 en la carpa (ppm)
+   * @param {number} [options.outdoorPpm=420] Concentración exterior de aire fresco (ppm)
+   * @param {number} [options.roomVolumeM3=10.0] Volumen físico de la carpa o cuarto (m³)
+   * @param {number} [options.fanRatedCfm=140.0] Caudal efectivo del extractor (ej. AC Infinity 4" ~140 CFM)
+   * @param {number} [options.cyclePeriodMin=10.0] Duración del ciclo de temporizador (minutos)
+   * @param {number} [options.minAch=4.0] Renovaciones por hora mínimas por convección / capa límite
+   * @returns {object} Caudales requeridos, renovaciones y temporización recomendada del extractor
+   */
+  const calcDynamicFAE = (biomassKg, speciesKey = 'orellana_gris', options = {}) => {
+    const mass = Math.max(0, parseFloat(biomassKg) || 0);
+    const rCo2 = SPECIES_RESPIRATION_RATES[speciesKey] || SPECIES_RESPIRATION_RATES.default;
+    const targetPpm = Math.max(500, parseFloat(options.targetPpm || 800));
+    const outdoorPpm = Math.max(380, parseFloat(options.outdoorPpm || 420));
+    const roomVolumeM3 = Math.max(0.5, parseFloat(options.roomVolumeM3 || 10.0));
+    const fanRatedCfm = Math.max(10, parseFloat(options.fanRatedCfm || 140.0));
+    const cyclePeriodMin = Math.max(1, parseFloat(options.cyclePeriodMin || 10.0));
+    const minAch = Math.max(1, parseFloat(options.minAch || 4.0));
+
+    const deltaPpm = Math.max(50, targetPpm - outdoorPpm);
+
+    // 1. Caudal FAE por remoción de CO2 metabólico (CFM)
+    // 0.43754 convierte (kg * mg/kg*h) / ppm a CFM a presión de altitud (~74.5 kPa)
+    const qCfmCo2 = (0.43754 * mass * rCo2) / deltaPpm;
+
+    // 2. Caudal mínimo por renovación de volumen de aire (ACH convección / anti-estancamiento)
+    // 1 m3/h = 0.5886 CFM
+    const qCfmM3hToCfm = 0.588578;
+    const qCfmMinAch = (roomVolumeM3 * minAch) * qCfmM3hToCfm / 60;
+
+    // Caudal requerido gobernante
+    const requiredCfm = Math.max(qCfmCo2, qCfmMinAch);
+    const requiredM3h = requiredCfm * 1.69901;
+
+    // ACH resultante
+    const effectiveAch = Math.round((requiredM3h / roomVolumeM3) * 10) / 10;
+
+    // Ciclo de trabajo del extractor
+    const dutyCyclePct = Math.min(100, Math.round((requiredCfm / fanRatedCfm) * 1000) / 10);
+    const onTimeSec = Math.round((dutyCyclePct / 100) * cyclePeriodMin * 60);
+    const offTimeSec = Math.max(0, Math.round(cyclePeriodMin * 60 - onTimeSec));
+
+    return {
+      biomassKg: mass,
+      speciesKey,
+      respirationRateMgKgH: rCo2,
+      targetPpm,
+      outdoorPpm,
+      roomVolumeM3,
+      requiredCfm: Math.round(requiredCfm * 10) / 10,
+      requiredM3h: Math.round(requiredM3h * 10) / 10,
+      effectiveAch,
+      fanRatedCfm,
+      dutyCyclePct,
+      schedule: {
+        cyclePeriodMin,
+        onTimeSec,
+        offTimeSec,
+        onTimeMin: Math.round((onTimeSec / 60) * 10) / 10,
+        offTimeMin: Math.round((offTimeSec / 60) * 10) / 10,
+        recommendation: dutyCyclePct >= 95
+          ? 'Extractor al 100% continuo o adicionar segundo extractor'
+          : `Encender ${Math.round(onTimeSec / 60 * 10)/10} min cada ${cyclePeriodMin} min`
+      }
+    };
+  };
+
   /**
    * Genera coordenadas de trazado SVG para una serie temporal.
    */
@@ -195,9 +322,15 @@
     calcVPD,
     calcDewPoint,
     evalClimateHealth,
-    generateSvgPolyline
+    generateSvgPolyline,
+    calcBarometricCO2Correction,
+    calcDynamicFAE,
+    SPECIES_RESPIRATION_RATES,
+    SEA_LEVEL_PRESSURE_HPA,
+    TENJO_NOMINAL_PRESSURE_HPA
   };
 
   if (isNode) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasClimate = api;
+  if (typeof window !== 'undefined') window.SetasClimate = api;
 })();

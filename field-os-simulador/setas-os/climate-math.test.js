@@ -84,3 +84,49 @@ test('generateSvgPolyline produce string de puntos escalado', () => {
   assert.ok(points.length > 0);
   assert.match(points, /^0\.0,50\.0 33\.3,25\.0 66\.7,0\.0 100\.0,12\.5$/);
 });
+
+test('calcBarometricCO2Correction corrige sub-lectura de sensores NDIR en altitud', () => {
+  const { calcBarometricCO2Correction, TENJO_NOMINAL_PRESSURE_HPA } = require('./climate-math.js');
+
+  // Lectura de 700 ppm en sensor NDIR no compensado en Tenjo (745 hPa) a 18°C
+  const corr = calcBarometricCO2Correction(700, TENJO_NOMINAL_PRESSURE_HPA, 18.0);
+  assert.equal(corr.rawPpm, 700);
+  assert.ok(corr.baroFactor >= 1.35 && corr.baroFactor <= 1.37, `Factor barométrico ~1.36x, obtenido ${corr.baroFactor}`);
+  assert.ok(corr.correctedPpm >= 940 && corr.correctedPpm <= 960, `Esperado ~950 ppm, obtenido ${corr.correctedPpm}`);
+  assert.ok(corr.deltaPpm > 240);
+
+  // A nivel del mar (1013.25 hPa) y 20°C el factor es exactamente 1.0
+  const seaCorr = calcBarometricCO2Correction(800, 1013.25, 20.0);
+  assert.equal(seaCorr.correctedPpm, 800);
+  assert.equal(seaCorr.totalCorrectionFactor, 1.0);
+});
+
+test('calcDynamicFAE calcula caudales CFM y ciclo de trabajo de extractores según biomasa', () => {
+  const { calcDynamicFAE } = require('./climate-math.js');
+
+  // 15 kg de Orellana Gris en carpa 2.4x2.4x2.0 (11.5 m3), target 800 ppm, extractor 140 CFM
+  const fae = calcDynamicFAE(15.0, 'orellana_gris', {
+    targetPpm: 800,
+    outdoorPpm: 420,
+    roomVolumeM3: 11.52,
+    fanRatedCfm: 140,
+    cyclePeriodMin: 10
+  });
+
+  assert.equal(fae.biomassKg, 15.0);
+  assert.equal(fae.respirationRateMgKgH, 1400); // Tasa orellana gris
+  assert.ok(fae.requiredCfm > 20 && fae.requiredCfm < 30, `Esperado ~24 CFM, obtenido ${fae.requiredCfm}`);
+  assert.ok(fae.effectiveAch >= 3.0);
+  assert.ok(fae.dutyCyclePct >= 15 && fae.dutyCyclePct <= 22);
+  assert.ok(fae.schedule.onTimeSec > 60 && fae.schedule.onTimeSec < 150);
+  assert.ok(fae.schedule.recommendation.includes('Encender'));
+
+  // Carga pesada (80 kg) que satura extractor
+  const heavyFae = calcDynamicFAE(80.0, 'orellana_gris', {
+    targetPpm: 700,
+    outdoorPpm: 420,
+    fanRatedCfm: 140
+  });
+  assert.ok(heavyFae.dutyCyclePct >= 95);
+  assert.ok(heavyFae.schedule.recommendation.includes('continuo') || heavyFae.schedule.recommendation.includes('100%'));
+});
