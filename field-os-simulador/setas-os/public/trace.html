@@ -83,11 +83,14 @@
       const dias = diasEntre(lote.fechaInoculacion);
       const totalKg = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const cosechasHtml = cosechas.length
-        ? cosechas.map(c => `
+        ? cosechas.map(c => {
+            const calidad = Math.max(0, Math.min(5, Math.floor(Number(c.calidad)) || 0));
+            return `
             <div class="cosecha-item">
               <span>Flush #${esc(c.flush || 1)} · ${esc(c.fecha || '—')}</span>
-              <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g${c.calidad ? ' · ' + '★'.repeat(c.calidad) : ''}</strong>
-            </div>`).join('')
+              <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g${calidad ? ' · ' + '★'.repeat(calidad) : ''}</strong>
+            </div>`;
+          }).join('')
         : '<div class="cosecha-item">Aún sin cosechas registradas</div>';
 
       app.innerHTML = `

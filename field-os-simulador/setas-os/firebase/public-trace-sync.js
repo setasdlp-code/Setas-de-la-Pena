@@ -14,21 +14,31 @@ import {
 } from "../vendor/firebase/firebase-firestore.js";
 
 // Solo estos campos del lote son seguros para mostrar a cualquiera que
-// escanee el código impreso — nada de costos, proveedores ni receta.
+// escanee el código impreso — nada de costos, proveedores ni receta. Los
+// valores se coercionan y acotan aquí porque firestore.rules valida el
+// mismo esquema (tipos y rangos) — dos capas, no solo el servidor.
 const sanearLote = (lote) => ({
-  codigo: lote.codigo,
-  especie: lote.especie || '',
-  especieCientifico: lote.especieCientifico || '',
-  fechaInoculacion: lote.fechaInoculacion || '',
-  numBolsas: lote.numBolsas || null,
-  estado: lote.estado || 'incubacion',
+  codigo: String(lote.codigo || '').slice(0, 64),
+  especie: String(lote.especie || '').slice(0, 128),
+  especieCientifico: String(lote.especieCientifico || '').slice(0, 128),
+  fechaInoculacion: String(lote.fechaInoculacion || '').slice(0, 32),
+  numBolsas: Number.isFinite(Number(lote.numBolsas))
+    ? Math.max(0, Math.min(100000, Math.floor(Number(lote.numBolsas))))
+    : null,
+  estado: String(lote.estado || 'incubacion').slice(0, 32),
 });
 
 const sanearCosecha = (cosecha) => ({
-  fecha: cosecha.fecha || '',
-  pesoFresco: parseFloat(cosecha.pesoFresco) || 0,
-  calidad: cosecha.calidad || null,
-  flush: cosecha.flush || 1,
+  fecha: String(cosecha.fecha || '').slice(0, 32),
+  pesoFresco: Number.isFinite(Number(cosecha.pesoFresco))
+    ? Math.max(0, Math.min(10000000, Number(cosecha.pesoFresco)))
+    : 0,
+  calidad: Number.isFinite(Number(cosecha.calidad))
+    ? Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))
+    : null,
+  flush: Number.isFinite(Number(cosecha.flush))
+    ? Math.max(1, Math.floor(Number(cosecha.flush)))
+    : 1,
 });
 
 export async function publicarLote(lote) {
