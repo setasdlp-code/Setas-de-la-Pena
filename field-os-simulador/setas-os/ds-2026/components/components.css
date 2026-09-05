@@ -1,0 +1,232 @@
+/* ═══════════════════════════════════════════════════════════════
+   DS-2026 — Components. Prefix: .sdp-
+   Rules of the system, enforced here:
+     · No shadows. Depth is a rule, never a blur.
+     · No gradient, no glass, no floating panel.
+     · One accent per view. Colour is state, never garnish.
+     · Mono is always uppercase and always tracked ≥ 0.15em.
+     · Biological imagery is evidence, not decoration: every image
+       carries a frame and a caption, or it does not ship.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────
+   A · METADATA GRAMMAR — the taxonomic and production label set.
+   These are the atoms every component composes.
+   ───────────────────────────────────────────────────────────── */
+
+/* Species block: common name → latin → taxon code line. Never reorder. */
+.sdp-species { display: grid; gap: var(--space-half); }
+.sdp-species__common { font: var(--t-species); letter-spacing: var(--tracking-tight); color: var(--text-primary); }
+.sdp-species__latin  { font: var(--t-latin); color: var(--text-secondary); }
+.sdp-species__code   { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-species--compact .sdp-species__common { font: var(--t-heading-02); }
+.sdp-species--compact .sdp-species__latin  { font-size: var(--size-small); }
+
+/* Plate line: "LÁM. IV · Tenjo · Cundinamarca · 2.600 M" */
+.sdp-plateline { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+
+/* Status line: "SALA 02 · HR 91% · CO₂ 742 PPM" */
+.sdp-statusline { font: var(--t-data); text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--text-secondary); }
+
+/* Separator between metadata atoms. Always a middot with hair spacing. */
+.sdp-sep { color: var(--rule); padding: 0 0.35em; }
+
+/* ─────────────────────────────────────────────────────────────
+   B · IMAGERY — five classes. Biological imagery is evidence.
+   Every figure = frame + image + caption. No exceptions.
+   ───────────────────────────────────────────────────────────── */
+.sdp-fig { margin: 0; display: grid; gap: var(--space-1); }
+.sdp-fig__frame {
+  border: var(--rule-frame);
+  background: var(--surface-recessed);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.sdp-fig__frame img { width: 100%; height: 100%; object-fit: cover; }
+.sdp-fig__cap { font: var(--t-small); color: var(--text-secondary); }
+.sdp-fig__cap b { font-weight: var(--weight-medium); font-style: italic; font-family: var(--font-editorial); }
+.sdp-fig__ref { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+/* B.1 Botanical plate — full specimen, portrait, hairline specimen frame */
+.sdp-fig--plate       .sdp-fig__frame { aspect-ratio: 4 / 5;  padding: var(--space-3); background: var(--surface-page); }
+.sdp-fig--plate       .sdp-fig__frame img { object-fit: contain; }
+/* B.2 Specimen photo — detail, square */
+.sdp-fig--specimen    .sdp-fig__frame { aspect-ratio: 1 / 1; }
+/* B.3 Cultivation photo — context, 3:2 landscape */
+.sdp-fig--cultivation .sdp-fig__frame { aspect-ratio: 3 / 2; }
+/* B.4 Ingredient photo — small cropped square, used inline in recipes */
+.sdp-fig--ingredient  .sdp-fig__frame { aspect-ratio: 1 / 1; width: 64px; }
+.sdp-fig--ingredient  .sdp-fig__cap   { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; }
+/* B.5 Diagram — technical drawing, 16:9, ink on paper, never photographic */
+.sdp-fig--diagram     .sdp-fig__frame { aspect-ratio: 16 / 9; background: var(--surface-page); padding: var(--space-2); }
+
+/* Specimen frame: the hairline double-rule reserved for plates. */
+.frame-specimen { border: var(--rule-frame); outline: 1px solid var(--rule); outline-offset: 3px; }
+
+/* ─────────────────────────────────────────────────────────────
+   C · FICHA / LÁMINA — botanical info sheet. ARCHIVE mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-ficha { border: var(--rule-heavy); background: var(--surface-page); display: grid; }
+.sdp-ficha__hd {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3);
+  padding: var(--space-3); border-bottom: var(--rule-heavy);
+}
+.sdp-ficha__body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); padding: var(--space-4) var(--space-3); }
+.sdp-ficha__prose > p:last-child { margin-bottom: 0; }
+.sdp-ficha__ft {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border-top: var(--rule-hairline);
+}
+.sdp-ficha__cell { padding: var(--space-2) var(--space-3); border-right: var(--rule-hairline); }
+.sdp-ficha__cell:last-child { border-right: 0; }
+.sdp-ficha__k { display: block; font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half); }
+.sdp-ficha__v { font: var(--t-body); }
+.sdp-ficha__v--price { font: var(--t-data); font-size: var(--size-body); }
+@media (max-width: 700px) { .sdp-ficha__body { grid-template-columns: 1fr; } .sdp-ficha__ft { grid-template-columns: 1fr; } .sdp-ficha__cell { border-right: 0; border-bottom: var(--rule-hairline); } }
+
+/* ─────────────────────────────────────────────────────────────
+   D · LOTE CARD — production lot summary. FIELD mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-lote { border: var(--rule-frame); background: var(--surface-page); display: grid; }
+.sdp-lote__media { aspect-ratio: 3 / 2; background: var(--surface-recessed); border-bottom: var(--rule-frame); overflow: hidden; }
+.sdp-lote__media img { width: 100%; height: 100%; object-fit: cover; }
+/* Plate variant: ink line-art is drawn on paper, not cropped like a photo. */
+.sdp-lote__media--plate { aspect-ratio: auto; height: 148px; background: var(--surface-page);
+  display: flex; align-items: center; justify-content: center; padding: var(--space-1); }
+.sdp-lote__media--plate img { width: auto; height: 100%; object-fit: contain; }
+.sdp-lote__body { padding: var(--space-2); display: grid; gap: var(--space-1); }
+.sdp-lote__id { font: var(--t-data); font-size: var(--size-body); letter-spacing: 0.04em; color: var(--text-primary); }
+/* Status bar: a 4px rule, not a pill. Colour + word, never colour alone. */
+.sdp-lote__status { display: flex; align-items: center; gap: var(--space-1); }
+.sdp-lote__bar { height: 4px; flex: 1; background: var(--surface-recessed); }
+.sdp-lote__bar span { display: block; height: 100%; background: var(--status-ok); }
+.sdp-lote__state { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-lote--ok    .sdp-lote__state { color: var(--status-ok); }
+.sdp-lote--ok    .sdp-lote__bar span { background: var(--status-ok); }
+.sdp-lote--warn  .sdp-lote__state { color: var(--status-warn-text); }
+.sdp-lote--warn  .sdp-lote__bar span { background: var(--status-warn); }
+.sdp-lote--error .sdp-lote__state { color: var(--status-error); }
+.sdp-lote--error .sdp-lote__bar span { background: var(--status-error); }
+.sdp-lote__meta {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1);
+  border-top: var(--rule-hairline); padding-top: var(--space-1); margin-top: var(--space-half);
+}
+.sdp-lote__mk { display: block; font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-lote__mv { font: var(--t-data); color: var(--text-primary); }
+
+/* ─────────────────────────────────────────────────────────────
+   E · RECETA CARD — substrate recipe. FIELD mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-receta { border: var(--rule-frame); background: var(--surface-page); padding: var(--space-3); display: grid; gap: var(--space-2); }
+.sdp-receta__hd { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); border-bottom: var(--rule-hairline); padding-bottom: var(--space-1); }
+.sdp-receta__ing { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.sdp-receta__row { display: grid; grid-template-columns: 64px 1fr auto; gap: var(--space-2); align-items: center; }
+.sdp-receta__name { font: var(--t-body); }
+.sdp-receta__pct  { font: var(--t-data); font-size: var(--size-body); color: var(--text-primary); }
+/* Proportion rule: a hairline bar under each ingredient, width = share. */
+.sdp-receta__prop { grid-column: 2 / -1; height: 2px; background: var(--surface-recessed); }
+.sdp-receta__prop span { display: block; height: 100%; background: var(--soil); }
+.sdp-receta__steps { counter-reset: step; display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; border-top: var(--rule-hairline); padding-top: var(--space-2); }
+.sdp-receta__step { display: grid; grid-template-columns: 28px 1fr; gap: var(--space-1); font: var(--t-small); color: var(--text-primary); }
+.sdp-receta__step::before { counter-increment: step; content: counter(step, decimal-leading-zero); font: var(--t-label); letter-spacing: var(--tracking-label); color: var(--text-metadata); }
+
+/* ─────────────────────────────────────────────────────────────
+   F · METRIC TABLE — dashboard table. CONTROL mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-table { width: 100%; border-collapse: collapse; }
+.sdp-table th {
+  text-align: left; font: var(--t-label); letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--text-metadata);
+  padding: var(--space-1); border-bottom: var(--rule-heavy); white-space: nowrap;
+}
+.sdp-table td { font: var(--t-data); color: var(--text-primary); padding: var(--space-1); border-bottom: var(--rule-hairline); }
+.sdp-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sdp-table td.name { font: var(--t-small); }
+.sdp-table td.name i { font-family: var(--font-editorial); font-size: var(--size-small); }
+.sdp-table tbody tr:nth-child(even) { background: var(--surface-panel); }
+.sdp-table .is-ok    { color: var(--status-ok); }
+.sdp-table .is-warn  { color: var(--status-warn-text); }
+.sdp-table .is-error { color: var(--status-error); }
+
+/* ─────────────────────────────────────────────────────────────
+   G · ALERT BANNER — colour bar + uppercase label + optional icon.
+   The 4px leading bar carries the pigment; text always sits on a
+   tint or on paper, never on the raw ochre.
+   ───────────────────────────────────────────────────────────── */
+.sdp-alert {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  border-left: 4px solid var(--status-ok);
+  background: var(--status-ok-bg);
+  padding: var(--space-2);
+}
+.sdp-alert__icon { flex: none; width: 20px; height: 20px; }
+.sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); }
+.sdp-alert__body { display: grid; gap: var(--space-half); }
+.sdp-alert__label { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-alert__msg { font: var(--t-small); color: var(--text-primary); }
+.sdp-alert--ok    { border-left-color: var(--status-ok);    background: var(--status-ok-bg); }
+.sdp-alert--ok    .sdp-alert__label, .sdp-alert--ok .sdp-alert__icon { color: var(--status-ok); }
+.sdp-alert--warn  { border-left-color: var(--status-warn);  background: var(--status-warn-bg); }
+.sdp-alert--warn  .sdp-alert__label, .sdp-alert--warn .sdp-alert__icon { color: var(--status-warn-text); }
+.sdp-alert--error { border-left-color: var(--status-error); background: var(--status-error-bg); }
+.sdp-alert--error .sdp-alert__label, .sdp-alert--error .sdp-alert__icon { color: var(--status-error); }
+
+/* ─────────────────────────────────────────────────────────────
+   H · NAVIGATION BAR — breadcrumb. Sans, never mono.
+   ───────────────────────────────────────────────────────────── */
+.sdp-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: var(--rule-heavy); padding-bottom: var(--space-1); }
+.sdp-nav__crumbs { display: flex; align-items: baseline; gap: var(--space-1); font: var(--t-small); color: var(--text-secondary); flex-wrap: wrap; }
+.sdp-nav__crumbs a { text-decoration: none; color: var(--text-secondary); }
+.sdp-nav__crumbs a:hover { color: var(--text-primary); text-decoration: underline; }
+.sdp-nav__crumbs [aria-current="page"] { color: var(--text-primary); font-weight: var(--weight-medium); }
+.sdp-nav__sep { color: var(--rule); }
+.sdp-nav__meta { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+
+/* ─────────────────────────────────────────────────────────────
+   I · TELEMETRY TILE — a single instrument readout. CONTROL mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-tele { border: var(--rule-frame); background: var(--surface-page); padding: var(--space-2); display: grid; gap: var(--space-1); }
+.sdp-tele__k { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-tele__v { font: var(--t-data); font-size: 28px; font-weight: var(--weight-semibold); line-height: 1; color: var(--text-primary); }
+.sdp-tele__u { font-size: var(--size-label); font-weight: var(--weight-regular); color: var(--text-metadata); margin-left: 2px; }
+.sdp-tele__meter { height: 4px; background: var(--surface-recessed); }
+.sdp-tele__meter span { display: block; height: 100%; background: var(--status-ok); }
+.sdp-tele--warn  .sdp-tele__meter span { background: var(--status-warn); }
+.sdp-tele--error .sdp-tele__meter span { background: var(--status-error); }
+
+/* ─────────────────────────────────────────────────────────────
+   J · SIGNAGE — room identity. Industrial label, soil ground.
+   ───────────────────────────────────────────────────────────── */
+.sdp-sign { border: 3px solid var(--ink); background: var(--surface-page); display: grid; }
+.sdp-sign__hd { background: var(--soil); color: var(--text-inverse); padding: var(--space-3); display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.sdp-sign__room { font: var(--t-display-02); letter-spacing: var(--tracking-display); }
+.sdp-sign__fn { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-sign__stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+.sdp-sign__stat { padding: var(--space-3); border-right: var(--rule-frame); }
+.sdp-sign__stat:last-child { border-right: 0; }
+.sdp-sign__sk { display: block; font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half); }
+.sdp-sign__sv { font: var(--t-data); font-size: 36px; font-weight: var(--weight-semibold); line-height: 1; }
+.sdp-sign__ft { border-top: var(--rule-frame); padding: var(--space-2) var(--space-3); }
+
+/* ─────────────────────────────────────────────────────────────
+   K · PACKAGING — front and back faces.
+   ───────────────────────────────────────────────────────────── */
+.sdp-pack { border: var(--rule-frame); background: var(--surface-page); display: grid; }
+.sdp-pack__brand { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-pack--front { padding: var(--space-4) var(--space-3); grid-template-rows: auto 1fr auto; gap: var(--space-3); text-align: center; justify-items: center; }
+.sdp-pack__illo { width: 100%; max-width: 260px; }
+.sdp-pack__net { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; border-top: var(--rule-hairline); padding-top: var(--space-1); width: 100%; }
+.sdp-pack--back { display: flex; flex-direction: column; padding: var(--space-3); gap: var(--space-2); }
+.sdp-pack__sect { border-top: var(--rule-hairline); padding-top: var(--space-1); }
+.sdp-pack__sk { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); display: block; margin-bottom: var(--space-half); }
+.sdp-pack__sv { font: var(--t-small); }
+
+/* ─────────────────────────────────────────────────────────────
+   L · SOP DOCUMENT — procedure sheet. FIELD mode.
+   ───────────────────────────────────────────────────────────── */
+.sdp-sop { background: var(--surface-page); display: grid; gap: var(--space-3); }
+.sdp-sop__hd { border-bottom: var(--rule-heavy); padding-bottom: var(--space-2); display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3); }
+.sdp-sop__step { border: var(--rule-frame); padding: var(--space-2); display: grid; grid-template-columns: 40px 1fr; gap: var(--space-2); }
+.sdp-sop__n { font: var(--t-data); font-size: var(--size-heading-02); color: var(--text-metadata); line-height: 1; }
+.sdp-sop__st { font: var(--t-heading-03); margin-bottom: var(--space-half); }
+.sdp-sop__sb { font: var(--t-small); color: var(--text-primary); }

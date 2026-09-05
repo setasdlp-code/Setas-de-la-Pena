@@ -9,12 +9,38 @@
    ──────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── PAPER / INK — alias old 4-step naming to real paper-0..3 / ink-0..3 ── */
+  /* ── DS-2026 STANDALONE SYSTEM PALETTE ── */
+  --paper:          #FAF5E9;  /* warm ivory — every page ground        */
+  --ink:            #222222;  /* charcoal — primary text               */
+  --ink-muted:      #555555;  /* warm gray — secondary text, captions  */
+  --rule:           #888888;  /* mineral gray — hairlines, frames      */
+  --soil:           #4A3C31;  /* dark earth — infill, inverted blocks  */
+  --moss:           #4E6B3F;  /* forest green — OK / active / success  */
+  --rust:           #8E2C14;  /* oxidised red-brown — error only       */
+  --warning:        #C49A4C;  /* muted ochre — caution                 */
+  --warning-text:   #8C6B2E;  /* accessible ochre text on paper        */
+
+  --paper-panel:    #F3EEE2;  /* paper +4% soil — panels, table stripe */
+  --paper-recessed: #EAE4D8;  /* paper +9% soil — wells, placeholders  */
+  --moss-tint:      #E5E4D5;  /* 12% moss on paper — status field ground */
+  --rust-tint:      #EDDDCF;  /* 12% rust on paper */
+  --warning-tint:   #F4EAD6;  /* 12% warning on paper */
+  --soil-tint:      #E5DFD3;  /* 12% soil on paper */
+
+  /* ── PAPER / INK — alias old 4-step naming to DS-2026 ── */
+  --paper-0:   var(--paper, #FAF5E9);
+  --paper-1:   var(--paper-panel, #F3EEE2);
+  --paper-2:   var(--paper-recessed, #EAE4D8);
+  --paper-3:   var(--soil-tint, #E5DFD3);
   --paper-50:  var(--paper-0);
   --paper-100: var(--paper-0);
   --paper-200: var(--paper-1);
   --paper-300: var(--paper-2);
 
+  --ink-0:   var(--ink, #222222);
+  --ink-1:   var(--ink-muted, #555555);
+  --ink-2:   var(--ink-muted, #555555);
+  --ink-3:   var(--rule, #888888);
   --ink-900: var(--ink-0);
   --ink-800: var(--ink-0);
   --ink-700: var(--ink-1);
@@ -23,35 +49,48 @@
   --ink-400: var(--ink-2);
   --ink-300: var(--ink-3);
 
-  --accent-terracotta-dark: color-mix(in oklab, var(--accent-terracotta) 80%, black);
-  --accent-blue-grey-dark: color-mix(in oklab, var(--accent-blue-grey) 85%, black);
+  --line-0: var(--rule, #888888);
+  --line-1: var(--rule, #888888);
+  --line-2: var(--ink, #222222);
+  --border-hairline: var(--rule, #888888);
+  --border-strong:   var(--rule, #888888);
+  --border-heavy:    var(--ink, #222222);
 
-  /* ── EARTH PIGMENTS — consolidated onto the DS's 5 real accents ──
-     moss (brand green) -> olive · coral (rust/mushroom) -> terracotta
-     sand & bark (warm neutrals) -> mushroom · slate (cool neutral) -> blue-grey
-     ochre (caution) -> terracotta (DS's single attention hue)          */
-  --moss-900: var(--accent-olive);
-  --moss-700: var(--accent-olive);
-  --moss-600: var(--accent-olive);
-  --moss-500: var(--accent-olive);
-  --moss-300: var(--accent-olive-dim);
-  --moss-200: var(--accent-olive-dim);
+  --accent-terracotta:      var(--warning-text, #8C6B2E);
+  --accent-terracotta-dark: color-mix(in oklab, var(--warning-text, #8C6B2E) 80%, black);
+  --accent-terracotta-dim:  var(--warning-tint, #F4EAD6);
+  --accent-blue-grey:       #5E7080;
+  --accent-blue-grey-dark:  color-mix(in oklab, #5E7080 85%, black);
+  --accent-blue-grey-dim:   #DFE6EB;
+  --accent-olive:           var(--moss, #4E6B3F);
+  --accent-olive-dim:       var(--moss-tint, #E5E4D5);
+  --accent-mushroom:        var(--soil, #4A3C31);
+  --accent-mushroom-dim:    var(--soil-tint, #E5DFD3);
+  --accent-rust:            var(--rust, #8E2C14);
 
-  --coral-900: var(--accent-terracotta);
-  --coral-700: var(--accent-terracotta);
-  --coral-600: var(--accent-terracotta);
-  --coral-500: var(--accent-terracotta);
-  --coral-300: var(--accent-terracotta-dim);
-  --coral-200: var(--accent-terracotta-dim);
-  --coral-100: var(--accent-terracotta-dim);
+  /* ── EARTH PIGMENTS — DS-2026 roles ── */
+  --moss-900: var(--moss);
+  --moss-700: var(--moss);
+  --moss-600: var(--moss);
+  --moss-500: var(--moss);
+  --moss-300: var(--moss-tint);
+  --moss-200: var(--moss-tint);
 
-  --sand-500: var(--accent-mushroom);
-  --sand-300: var(--accent-mushroom-dim);
-  --sand-200: var(--accent-mushroom-dim);
+  --coral-900: var(--warning-text);
+  --coral-700: var(--warning-text);
+  --coral-600: var(--warning-text);
+  --coral-500: var(--warning-text);
+  --coral-300: var(--warning-tint);
+  --coral-200: var(--warning-tint);
+  --coral-100: var(--warning-tint);
 
-  --bark-700: var(--ink-0);
-  --bark-500: var(--accent-mushroom);
-  --bark-300: var(--accent-mushroom-dim);
+  --sand-500: var(--soil);
+  --sand-300: var(--soil-tint);
+  --sand-200: var(--soil-tint);
+
+  --bark-700: var(--ink);
+  --bark-500: var(--soil);
+  --bark-300: var(--soil-tint);
 
   --slate-900: var(--accent-blue-grey);
   --slate-700: var(--accent-blue-grey);
@@ -59,34 +98,58 @@
   --slate-300: var(--accent-blue-grey-dim);
   --slate-200: var(--accent-blue-grey-dim);
 
-  --ochre-900: var(--accent-terracotta);
-  --ochre-700: var(--accent-terracotta);
-  --ochre-500: var(--accent-terracotta);
-  --ochre-200: var(--accent-terracotta-dim);
+  --ochre-900: var(--warning-text);
+  --ochre-700: var(--warning-text);
+  --ochre-500: var(--warning);
+  --ochre-200: var(--warning-tint);
 
-  /* Back-compat aliases used elsewhere in the deck */
-  --rust-700: var(--status-error);
-  --rust-500: var(--status-error);
-  --rust-200: var(--status-error-bg);
+  --rust-700: var(--rust);
+  --rust-500: var(--rust);
+  --rust-200: var(--rust-tint);
   --sky-500:  var(--accent-blue-grey);
   --sky-200:  var(--accent-blue-grey-dim);
+
+  --status-ok:             var(--moss);
+  --status-ok-bg:          var(--moss-tint);
+  --status-warn:           var(--warning);
+  --status-warn-bg:        var(--warning-tint);
+  --status-warn-text:      var(--warning-text);
+  --status-error:          var(--rust);
+  --status-error-bg:       var(--rust-tint);
+
+  --status-active:         var(--moss);
+  --status-active-bg:      var(--moss-tint);
+  --status-attention:      var(--warning);
+  --status-attention-bg:   var(--warning-tint);
+  --status-attention-text: var(--warning-text);
 
   --success: var(--status-active);
   --warning: var(--status-attention);
   --danger:  var(--status-error);
 
-  /* ── SEMANTIC SURFACES / TEXT — alias to DS semantic names ── */
+  /* ── SEMANTIC SURFACES / TEXT — alias to DS-2026 semantic names ── */
+  --surface-page:     var(--paper);
+  --surface-panel:    var(--paper-panel);
+  --surface-recessed: var(--paper-recessed);
+  --surface-inverse:  var(--soil);
+
   --bg-page:     var(--surface-page);
   --bg-elevated: var(--surface-panel);
   --bg-sunken:   var(--surface-recessed);
   --bg-card:     var(--surface-panel);
   --bg-inverse:  var(--ink-0);
 
+  --text-primary:   var(--ink);
+  --text-secondary: var(--ink-muted);
+  --text-metadata:  var(--ink-muted);
+  --text-disabled:  var(--rule);
+  --text-inverse:   var(--paper);
+
   --fg-primary:   var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --fg-muted:     var(--text-metadata);
   --fg-faint:     var(--text-disabled);
-  --fg-inverse:   var(--paper-0);
+  --fg-inverse:   var(--paper);
 
   --accent:        var(--status-active);
   --accent-hover:  color-mix(in oklab, var(--status-active) 78%, black);
@@ -99,10 +162,13 @@
   --border-soft:   var(--border-hairline);
   --border-ink:    var(--ink-0);
 
-  /* ── TYPE FAMILIES — Swiss-Botanical FOS v3 ── */
-  --font-serif:   'Gaya', 'Newsreader', Georgia, serif;
-  --font-display: var(--font-serif);
-  --font-body:    var(--font-sans);
+  /* ── TYPE FAMILIES — DS-2026 ── */
+  --font-editorial: 'Gaya Patched', 'Iowan Old Style', Georgia, serif;
+  --font-serif:     'Gaya Patched', 'Iowan Old Style', Georgia, serif;
+  --font-display:   var(--font-editorial);
+  --font-sans:      'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:      'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-body:      var(--font-sans);
   /* --font-mono is defined by the DS's fonts.css (IBM Plex Mono) — not redeclared here */
 
   /* ── TYPE SCALE (semantic shorthands) — composed from DS primitives ── */
@@ -141,14 +207,15 @@
   /* ── SPACING — DS tops out at space-9 (96px); old space-10 folds into it ── */
   --space-10: var(--space-9);
 
-  /* ── SWISS-BOTANICAL: RADII ZERO & FONT SERIF ── */
-  --font-serif: 'Gaya', 'Newsreader', Georgia, serif;
-  --r-none: 0px;
-  --r-xs: 0px;
-  --r-sm: 0px;
-  --r-md: 0px;
-  --r-lg: 0px;
-  --r-pill: 0px;
+  /* ── DS-2026: RADII & SERIF DISPLAY ── */
+  --font-serif: var(--font-editorial);
+  --font-display: var(--font-editorial);
+  --r-none: var(--radius-none, 0px);
+  --r-xs: var(--radius-none, 0px);
+  --r-sm: var(--radius-sm, 2px);
+  --r-md: var(--radius-none, 0px);
+  --r-lg: var(--radius-none, 0px);
+  --r-pill: var(--radius-none, 0px);
 
   /* ── SHADOWS — DS explicitly uses none for decoration ── */
   --shadow-soft:  var(--shadow-none);
