@@ -8209,7 +8209,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
                     const inoculated = Date.parse(lote.fechaInoculacion||'');
                     const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
-                    return {lote,stats,columna,age};
+                    return {lote,stats,columna,age,colonizado};
                   });
                   return (
                     <div>
@@ -8230,7 +8230,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                                 {items.length===0 && <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',fontStyle:'italic'}}>Sin lotes</div>}
-                                {items.map(({lote:lt,stats,age})=>{
+                                {items.map(({lote:lt,stats,age,colonizado})=>{
                                   const critical = stats && stats.contPct>=20;
                                   const contaminated = stats && stats.contPct>0;
                                   return (
