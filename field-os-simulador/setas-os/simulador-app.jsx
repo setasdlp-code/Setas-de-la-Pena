@@ -7577,19 +7577,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
-                        <div key={lote.id} data-lote-id={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'box-shadow .18s,transform .18s'}}
+                        <div key={lote.id} data-lote-id={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
                           onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
-                          onMouseEnter={e=>{e.currentTarget.style.boxShadow='var(--shadow-lift)';e.currentTarget.style.transform='translateY(-2px)';}}
-                          onMouseLeave={e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform='';}}
+                          onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--ink-900)';e.currentTarget.style.transform='translateY(-2px)';}}
+                          onMouseLeave={e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.transform='';}}
                         >
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
                               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
-                              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-base)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
+                              <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
                             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
                               {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>/100</span></span>}
                             </div>
                           </div>
@@ -7599,7 +7599,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)',gap:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.fechaInoculacion}</span>
                             <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:10,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>sin veredicto</span>}
+                              {lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:'var(--moss-200)',color:'var(--moss-700)',fontWeight:700}}>{lote.veredicto}</span>:<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>sin veredicto</span>}
                               <button
                                 type="button"
                                 className="inv-btn inv-btn-sec inv-btn-sm"
@@ -7973,13 +7973,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
                   <div style={{minWidth:240}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:operationStatus.color,display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:operationStatus.color}}>
+                      <span style={{width:8,height:8,borderRadius:0,background:operationStatus.color,display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:operationStatus.color}}>
                         CONTROL · TURNO ACTUAL
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>· Tenjo · 2.592 msnm</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2, #6B6759)'}}>· Tenjo · 2.592 msnm</span>
                     </div>
-                    <h1 style={{fontFamily:'var(--font-display)',fontWeight:400,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.02em',color:'var(--ink-900)',margin:0}}>
+                    <h1 style={{fontFamily:'var(--font-serif, "Gaya", serif)',fontWeight:700,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.01em',color:'var(--ink-0, #1E1D19)',margin:0}}>
                       Tablero de Control
                     </h1>
                   </div>
@@ -7990,24 +7990,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {value:incidentCount,label:'Incidencias',icon:IconAlert,tone:incidentCount>0?'critical':'neutral'}
                     ].map(kpi=>{
                       const tones={
-                        neutral:{bg:'var(--paper-100)',border:'var(--paper-300)',ink:'var(--ink-700)',weight:700},
-                        attention:{bg:'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))',border:'var(--ochre-500)',ink:'color-mix(in oklab,var(--ochre-700) 70%,black)',weight:800},
-                        critical:{bg:'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))',border:'var(--coral-700)',ink:'color-mix(in oklab,var(--coral-700) 70%,black)',weight:800}
+                        neutral:{bg:'var(--paper-1)',border:'var(--border-hairline)',ink:'var(--ink-0)',weight:600},
+                        attention:{bg:'color-mix(in oklab,var(--accent-terracotta) 10%,var(--paper-0))',border:'var(--accent-terracotta)',ink:'var(--accent-terracotta)',weight:700},
+                        critical:{bg:'color-mix(in oklab,var(--accent-rust) 12%,var(--paper-0))',border:'var(--accent-rust)',ink:'var(--accent-rust)',weight:700}
                       };
                       const t=tones[kpi.tone];
-                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:'var(--r-xs)',color:t.ink,fontWeight:t.weight}}>
+                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:0,color:t.ink,fontWeight:t.weight}}>
                         <kpi.icon size={12}/>
                         <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:t.ink}}>{kpi.value}</strong> {kpi.label}
                       </span>;
                     })}
-                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-50)',border:`1px solid ${operationStatus.color}`,borderRadius:'var(--r-xs)',color:operationStatus.color}}>
+                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-0)',border:`1px solid ${operationStatus.color}`,borderRadius:0,color:operationStatus.color}}>
                       {operationStatus.label}
                     </span>
                   </div>
                 </div>
 
-                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',flexShrink:0}}>
+                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2, #6B6759)',flexShrink:0}}>
                     Registro de cultivo · vista previa
                   </span>
                   <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
@@ -8018,46 +8018,46 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
                       {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
                     ].map(m=>(
-                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'5px 10px'}}>
-                        <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{m.label}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-900)'}}>{m.value}</span>
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'5px 10px'}}>
+                        <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
                       </button>
                     ))}
                   </div>
-                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--coral-600)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
                 </div>
 
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
-                  <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--paper-300)'}}>
-                  <div style={{border:'1px solid var(--slate-500)',borderRadius:'var(--r-sm)',padding:'10px 14px',background:'var(--paper-50)'}}>
+                  <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border-hairline)'}}>
+                  <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
-                      <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--slate-700)'}}>Traspaso del turno anterior</span>
-                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>Leído</button>
+                      <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'0.08em',color:'var(--accent-blue-grey)'}}>Traspaso del turno anterior</span>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>Leído [×]</button>
                     </div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-700)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
+                    <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
                   </div>
                 )}
                 {criticalStockItems.length > 0 && (
-                  <div className="stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
+                  <div className="stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,border:'1px solid var(--accent-terracotta)',borderRadius:0,padding:'8px 12px',background:'color-mix(in oklab, var(--accent-terracotta) 6%, var(--paper-0))'}}>
                     <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--accent-terracotta)'}}>
                         ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
                       </span>
                       <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                         {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--coral-300)',borderRadius:2,color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--accent-terracotta)',borderRadius:0,color:'var(--accent-terracotta)'}}>
                             {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                           </span>
                         ))}
                         {criticalStockItems.length > 3 && (
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)',padding:'2px 4px'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',padding:'2px 4px'}}>
                             +{criticalStockItems.length - 3} más
                           </span>
                         )}
                       </div>
                     </div>
-                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'color-mix(in oklab, var(--coral-700) 70%, black)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--accent-terracotta)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
                       Registrar Compra +
                     </button>
                   </div>
@@ -8066,17 +8066,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               {/* SECCIÓN A: OPERACIÓN INMEDIATA — Acciones Rápidas (izquierda) y Tareas de Hoy (derecha) */}
               <div className="home-acciones-tareas-row">
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%'}}>
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',boxShadow:'none'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                     <div>
-                      <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:800,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         SECCIÓN A · OPERACIÓN INMEDIATA
                       </span>
-                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                         Acciones Rápidas
                       </h2>
                     </div>
-                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>Acceso a 1 clic</span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>Acceso a 1 clic</span>
                   </div>
                   <div style={{
                     display:'grid',
@@ -8094,7 +8094,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
-                      const accent=btn.jornada?'color-mix(in oklab, var(--coral-600) 75%, black)':(btn.pri?'var(--moss-700)':null);
+                      const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
                       return (
                       <button
                         key={btn.label}
@@ -8105,62 +8105,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           alignItems:'center',
                           gap:12,
                           padding:'12px 14px',
-                          borderRadius:'var(--r-sm)',
+                          borderRadius:0,
                           textAlign:'left',
                           cursor:'pointer',
                           position:'relative'
                         }}
                       >
-                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-700)'}}><btn.icon size={18}/></span>
+                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
                         <div style={{minWidth:0,flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:accent||'var(--ink-900)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                             {btn.label}
                           </div>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                             {btn.sub}
                           </div>
                         </div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-400)',fontWeight:700}}>→</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
                       </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'none'}}>
                   <div>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                       <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                           SECCIÓN A · TRABAJO DEL DÍA
                         </span>
-                        <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                        <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                           Tareas de Hoy
                         </h2>
                       </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)'}}>{props.tasksOpenCount} pendientes</span>}
+                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{props.tasksOpenCount} pendientes</span>}
                     </div>
                     {tasksHoy.length===0 ? (
-                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-500)',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',border:'1px dashed var(--paper-300)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
                         Sin tareas pendientes por ahora.
                       </div>
                     ) : (
                       <div style={{display:'flex',flexDirection:'column',gap:8}}>
                         {tasksHoy.slice(0,5).map(t=>(
-                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--paper-300)',borderRadius:'var(--r-sm)',opacity:t.done?0.5:1}}>
+                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
                             <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
                               style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                              <span style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${t.done?'var(--moss-600)':'var(--paper-300)'}`,background:t.done?'var(--moss-600)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
                             </button>
                             <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                              <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              <span style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
                             </button>
-                            <span style={{flexShrink:0,fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:3}}>{t.prio}</span>
+                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
                         {tasksHoy.length>5 && (
-                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-400)',paddingTop:2}}>
+                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',paddingTop:2}}>
                             +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más
                           </div>
                         )}
@@ -8174,30 +8174,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{
                 background:'var(--paper-0)',
                 border:'1px solid var(--border-soft)',
-                borderRadius:'var(--r-md)',
+                borderRadius:0,
                 padding:'24px',
-                boxShadow:'var(--shadow-card-rest)'
+                boxShadow:'none'
               }}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                       SECCIÓN B · CICLO BIOLÓGICO TENJO
                     </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                       Seguimiento de Lotes por Fase
                     </h2>
                   </div>
-                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>
+                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                     Ciclo total promedio: ~42–48 días
                   </div>
                 </div>
 
                 {bitLotes.length>0 ? (()=>{
                   const columnas = [
-                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--slate-500)',icon:IconSprout,linkTab:'bitacora'},
-                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--sand-500)',icon:IconSnowflake,linkTab:'schedule'},
-                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--moss-700)',icon:IconMushroom,linkTab:'bitacora'},
-                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-700)',icon:IconScale,linkTab:'catalogo'}
+                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--ink-2)',icon:IconSprout,linkTab:'bitacora'},
+                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--accent-terracotta)',icon:IconSnowflake,linkTab:'schedule'},
+                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--accent-olive)',icon:IconMushroom,linkTab:'bitacora'},
+                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-0)',icon:IconScale,linkTab:'catalogo'}
                   ];
                   const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
                     const stats = calcLoteStats(lote.id);
@@ -8215,19 +8215,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {columnas.map(col=>{
                           const items = clasificados.filter(c=>c.columna===col.key);
                           return (
-                            <div key={col.key} style={{background:'var(--paper-50)',border:'1px solid var(--paper-300)',borderTop:`3px solid ${col.accent}`,borderRadius:'var(--r-sm)',padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
+                            <div key={col.key} style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderTop:`3px solid ${col.accent}`,borderRadius:0,padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
                               <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
                                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
                                   <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
                                     <col.icon size={13}/>
-                                    <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{col.title}</span>
+                                    <span style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{col.title}</span>
                                   </span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-600)'}}>{items.length}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-1)'}}>{items.length}</span>
                                 </div>
-                                <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)',lineHeight:1.3}}>{col.sub}</div>
+                                <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',lineHeight:1.3}}>{col.sub}</div>
                               </button>
                               <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                                {items.length===0 && <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-400)',fontStyle:'italic'}}>Sin lotes</div>}
+                                {items.length===0 && <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',fontStyle:'italic'}}>Sin lotes</div>}
                                 {items.map(({lote:lt,stats,age})=>{
                                   const critical = stats && stats.contPct>=20;
                                   const contaminated = stats && stats.contPct>0;
@@ -8242,8 +8242,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         display:'flex',flexDirection:'column',gap:4,
                                         padding:'9px 10px',
                                         background:'var(--paper-0)',
-                                        border:`1px solid ${critical?'var(--coral-500)':'var(--paper-300)'}`,
-                                        borderRadius:'var(--r-xs)',
+                                        border:`1px solid ${critical?'var(--accent-terracotta)':'var(--line-0)'}`,
+                                        borderRadius:0,
                                         cursor:'pointer',
                                         textAlign:'left',
                                         fontFamily:'inherit',
@@ -8251,21 +8251,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       }}
                                     >
                                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-900)'}}>{lt.codigo}</span>
-                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>día {age}</span>}
+                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{lt.codigo}</span>
+                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>día {age}</span>}
                                       </div>
-                                      <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-600)'}}>
+                                      <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-1)'}}>
                                         {lt.especie} · {lt.numBolsas || 1} bolsas
                                       </div>
                                       {(contaminated||stats?.totalFresco>0) && (
                                         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
                                           {contaminated && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,color:critical?'var(--coral-700)':'var(--ochre-700)',background:critical?'color-mix(in oklab,var(--coral-500) 14%,var(--paper-0))':'color-mix(in oklab,var(--ochre-500) 12%,var(--paper-0))'}}>
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:0,color:critical?'var(--accent-terracotta)':'var(--ink-1)',background:critical?'color-mix(in oklab,var(--accent-terracotta) 14%,var(--paper-0))':'color-mix(in oklab,var(--ink-2) 12%,var(--paper-0))'}}>
                                               {stats.contPct.toFixed(0)}% contam.
                                             </span>
                                           )}
                                           {stats?.totalFresco>0 && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--moss-700)',fontWeight:700}}>
+                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--accent-olive)',fontWeight:700}}>
                                               {stats.totalFresco.toFixed(2)} kg
                                             </span>
                                           )}
@@ -8283,10 +8283,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   );
                 })() : (
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-                    <span style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                    <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -8297,39 +8297,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                       SECCIÓN C · AMBIENTES & SENSORES
                     </span>
-                    <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                       Cámaras de Cultivo
                     </h2>
                   </div>
-                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-600)',fontWeight:700}}>
+                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
                     Ver Cámaras & IoT ({camaras.length}) →
                   </button>
                 </div>
 
                 {camaras.length===0 ? (
-                  <div style={{border:'1px dashed var(--paper-300)',borderRadius:'var(--r-md)',padding:'16px',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                  <div style={{border:'1px dashed var(--line-0)',borderRadius:0,padding:'16px',textAlign:'center',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                     Sin datos de cámaras disponibles.
                   </div>
                 ) : (
                   <div className="home-ambient-strip">
                     {camaras.map(c=>(
-                      <div key={c.id} className="ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-500)'}`}}>
+                      <div key={c.id} className="ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
                         <div style={{minWidth:0,flex:1}}>
                           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
-                            <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-500)'}}><IconCamera size={13}/></span>
-                            <strong style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-sm)',color:'var(--ink-900)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</strong>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:2,background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--moss-700) 75%, black)',textTransform:'uppercase'}}>
+                            <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-2)'}}><IconCamera size={13}/></span>
+                            <strong style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</strong>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:0,background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--accent-olive) 75%, black)',textTransform:'uppercase'}}>
                               {c.estadoLabel}
                             </span>
                           </div>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--ink-500)'}}>
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>
                             Zona {c.zona} · {c.sppName} · {c.occupancy}% cap.
                           </div>
                           {c.hasLiveAlert && (
-                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-2xs)',color:'var(--coral-700)',marginTop:2,fontWeight:700}}>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--accent-terracotta)',marginTop:2,fontWeight:700}}>
                               ⚠ {c.liveAlertNote}
                             </div>
                           )}
@@ -8337,18 +8337,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
                           <div style={{display:'flex',gap:6,textAlign:'center',fontFamily:'var(--font-mono)'}}>
-                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
                               {c.liveTemp}°C
                             </span>
-                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
+                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
                               {c.liveHum}%
                             </span>
-                            <span style={{background:'var(--paper-100)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-900)'}}>
-                              {c.liveCo2} <span style={{fontSize:'var(--text-micro)',color:'var(--ink-500)'}}>ppm</span>
+                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
+                              {c.liveCo2} <span style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>ppm</span>
                             </span>
                           </div>
-                          <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-400)',display:'grid',placeItems:'center'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--coral-600)'}}>→</span>
+                          <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-2)',display:'grid',placeItems:'center'}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--accent-terracotta)'}}>→</span>
                           </button>
                         </div>
                       </div>
@@ -8367,27 +8367,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                     <div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         SECCIÓN D · SEGUIMIENTO DEL DÍA
                       </span>
-                      <h2 style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-lg)',letterSpacing:'-0.01em',color:'var(--ink-900)',marginTop:2,marginBottom:0}}>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                         Actividad Reciente
                       </h2>
                     </div>
                   </div>
-                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md)',padding:'18px 20px'}}>
+                  <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',boxShadow:'none'}}>
                     <div style={{display:'flex',flexDirection:'column'}}>
                       {recentActivity.map((ev,i)=>(
-                        <button key={i} onClick={()=>props.onActivityGo&&props.onActivityGo(ev.container,ev.type)} className="home-activity-row" style={{cursor:'pointer',display:'flex',gap:12,padding:'11px 4px',borderTop:'none',borderLeft:'none',borderRight:'none',borderBottom:i<recentActivity.length-1?'1px solid var(--paper-300)':'none',background:'none',width:'100%',textAlign:'left',borderRadius:'var(--r-xs)'}}>
-                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:ev.accent,marginTop:6}}></span>
+                        <button key={i} onClick={()=>props.onActivityGo&&props.onActivityGo(ev.container,ev.type)} className="home-activity-row" style={{cursor:'pointer',display:'flex',gap:12,padding:'11px 4px',borderTop:'none',borderLeft:'none',borderRight:'none',borderBottom:i<recentActivity.length-1?'1px solid var(--line-0)':'none',background:'none',width:'100%',textAlign:'left',borderRadius:0}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:0,background:ev.accent,marginTop:6}}></span>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-                              <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>{ev.typeLabel}</span>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--slate-600)'}}>{ev.container}</span>
+                              <span style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{ev.typeLabel}</span>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{ev.container}</span>
                             </div>
-                            <div style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-600)',marginTop:1}}>{ev.note}</div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:1}}>{ev.note}</div>
                           </div>
-                          <span style={{flexShrink:0,alignSelf:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-400)',fontWeight:700}}>→</span>
+                          <span style={{flexShrink:0,alignSelf:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-2)',fontWeight:700}}>→</span>
                         </button>
                       ))}
                     </div>
@@ -10875,8 +10875,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
                   <div>
                     <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
-                    <div style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:700,color:'var(--ink-900,#222)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i>{an.sp?.scientific}</i></div>
+                    <div style={{fontFamily:'var(--font-serif)',fontSize:28,fontWeight:700,color:'var(--ink-900,#222)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
+                    <div style={{fontFamily:'var(--font-serif)',fontSize:"var(--text-lg)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i style={{fontFamily:'var(--font-serif)'}}>{an.sp?.scientific}</i></div>
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>

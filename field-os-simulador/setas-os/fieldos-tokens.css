@@ -99,16 +99,17 @@
   --border-soft:   var(--border-hairline);
   --border-ink:    var(--ink-0);
 
-  /* ── TYPE FAMILIES — DS provides one sans (Gaya) + one mono ── */
-  --font-display: var(--font-sans);
+  /* ── TYPE FAMILIES — Swiss-Botanical FOS v3 ── */
+  --font-serif:   'Gaya', 'Newsreader', Georgia, serif;
+  --font-display: var(--font-serif);
   --font-body:    var(--font-sans);
   /* --font-mono is defined by the DS's fonts.css (IBM Plex Mono) — not redeclared here */
 
   /* ── TYPE SCALE (semantic shorthands) — composed from DS primitives ── */
-  --t-display-1:  var(--weight-black)  var(--text-3xl)/var(--leading-tight) var(--font-sans);
-  --t-display-2:  var(--weight-bold)   var(--text-3xl)/1.0 var(--font-sans);
-  --t-h1:         var(--weight-medium) var(--text-2xl)/var(--leading-tight) var(--font-sans);
-  --t-h2:         var(--weight-light)  var(--text-xl)/var(--leading-snug) var(--font-sans);
+  --t-display-1:  var(--weight-black)  var(--text-3xl)/var(--leading-tight) var(--font-serif);
+  --t-display-2:  var(--weight-bold)   var(--text-3xl)/1.0 var(--font-serif);
+  --t-h1:         var(--weight-medium) var(--text-2xl)/var(--leading-tight) var(--font-serif);
+  --t-h2:         var(--weight-light)  var(--text-xl)/var(--leading-snug) var(--font-serif);
   --t-h3:         var(--weight-black)  var(--text-lg)/var(--leading-snug) var(--font-sans);
   --t-h4:         var(--weight-black)  var(--text-md)/var(--leading-snug) var(--font-sans);
   --t-lede:       var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
@@ -140,8 +141,14 @@
   /* ── SPACING — DS tops out at space-9 (96px); old space-10 folds into it ── */
   --space-10: var(--space-9);
 
-  /* ── RADII — migrated to DS naming (--radius-sm, --radius-md, --radius-none).
-     Old aliases (--r-xs/sm/md/lg/pill) removed 2026-08. ── */
+  /* ── SWISS-BOTANICAL: RADII ZERO & FONT SERIF ── */
+  --font-serif: 'Gaya', 'Newsreader', Georgia, serif;
+  --r-none: 0px;
+  --r-xs: 0px;
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-pill: 0px;
 
   /* ── SHADOWS — DS explicitly uses none for decoration ── */
   --shadow-soft:  var(--shadow-none);

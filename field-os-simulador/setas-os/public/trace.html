@@ -3,45 +3,369 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Trazabilidad · Setas de la Peña</title>
+<title>Pase Gastronómico & Trazabilidad · Setas de la Peña</title>
 <meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink-900:#1B1A17;--ink-600:#5A564C;--ink-500:#7A756A;
-    --paper-50:#FDFCF7;--paper-100:#F5F2E9;--paper-0:#FFFFFF;
-    --border-soft:#D8D3C5;--moss-700:#3B5A24;--moss-100:#E8F0E0;--moss-800:#3B5A24;
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../fonts/GayaPatched-Regular.woff2') format('woff2'),
+         url('../../fonts/GayaPatched-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;min-height:100vh;background:var(--paper-100);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    color:var(--ink-900);display:flex;justify-content:center;padding:0 0 40px;
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../fonts/GayaPatched-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
   }
-  .card{width:100%;max-width:520px;background:var(--paper-50);min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.08);}
-  header{background:var(--ink-900);color:var(--paper-50);padding:28px 22px 20px;}
-  .eyebrow{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#C8C3B5;display:flex;align-items:center;gap:6px;}
-  header h1{font-size:24px;font-weight:900;margin:6px 0 2px;letter-spacing:-.01em;}
-  header .sci{font-style:italic;font-size:13px;color:#E5E0D3;}
-  main{padding:20px 22px;display:flex;flex-direction:column;gap:16px;}
-  .row{display:flex;gap:16px;align-items:center;background:var(--paper-100);padding:12px 14px;border-radius:4px;border:1px solid var(--border-soft);}
-  .codigo{font-family:ui-monospace,Menlo,monospace;font-size:13px;}
-  .badge{font-size:10px;font-weight:700;padding:2px 6px;background:var(--moss-100);color:var(--moss-800);border-radius:3px;text-transform:uppercase;}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .stat{background:var(--paper-0);border:1px solid var(--border-soft);border-radius:4px;padding:10px 12px;}
-  .stat .lbl{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-500);}
-  .stat .val{font-size:13px;font-weight:700;margin-top:2px;}
-  .cosechas{background:var(--paper-0);border:1px solid var(--border-soft);border-radius:4px;padding:12px 14px;}
-  .cosechas .lbl{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-500);margin-bottom:8px;}
-  .cosecha-item{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border-soft);}
-  .cosecha-item:first-child{border-top:none;}
-  .brand{background:var(--moss-100);border:1px solid #A8C090;border-radius:4px;padding:12px 14px;font-size:11.5px;color:var(--moss-800);line-height:1.5;}
-  .state{padding:60px 24px;text-align:center;color:var(--ink-500);font-size:13px;}
-  footer{padding:16px 22px 0;text-align:center;font-size:11px;color:var(--ink-500);}
+  @font-face {
+    font-family: 'Gaya';
+    src: url('../../fonts/GayaPatched-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  :root {
+    /* FOS v3 Canonical Palette (Swiss-Botanical) */
+    --paper-0: #F7F4EC;
+    --paper-1: #EFEBE0;
+    --paper-2: #E5DFD0;
+    --paper-3: #DCD5C2;
+
+    --ink-0: #1E1D19;
+    --ink-1: #3C392F;
+    --ink-2: #6B6759;
+    --ink-3: #96907C;
+
+    --line-0: #988C6C;
+    --line-1: #8C7F5B;
+    --line-2: #1E1D19;
+
+    --accent-terracotta: #A85C32;
+    --accent-terracotta-dim: #EFE0D3;
+    --accent-olive: #5B6B44;
+    --accent-olive-dim: #DCE1D1;
+    --accent-blue-grey: #5E7080;
+
+    --font-serif: 'Gaya', 'Newsreader', Georgia, serif;
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--paper-1);
+    font-family: var(--font-sans);
+    color: var(--ink-0);
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cartouche-outer {
+    width: 100%;
+    max-width: 540px;
+    background: var(--paper-0);
+    border: 2px solid var(--line-2);
+    padding: 4px;
+    box-shadow: none;
+    border-radius: 0px;
+  }
+
+  .cartouche-inner {
+    border: 1px solid var(--line-0);
+    padding: 0;
+    background: var(--paper-0);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header Editorial */
+  header {
+    background: var(--ink-0);
+    color: var(--paper-0);
+    padding: 24px 20px 20px;
+    border-bottom: 2px solid var(--accent-terracotta);
+    position: relative;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--paper-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .eyebrow::before {
+    content: "■";
+    font-size: 8px;
+    color: var(--accent-terracotta);
+  }
+
+  header h1 {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--paper-0);
+    margin: 4px 0 2px;
+  }
+
+  header .sci {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--paper-2);
+    opacity: 0.95;
+  }
+
+  .badge-stamp {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border: 1px solid var(--accent-terracotta);
+    padding: 3px 7px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-terracotta);
+    background: rgba(168, 92, 50, 0.1);
+  }
+
+  main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Secciones con cartela */
+  .section-box {
+    border: 1px solid var(--line-1);
+    background: var(--paper-0);
+    border-radius: 0px;
+  }
+
+  .section-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    background: var(--paper-1);
+    border-bottom: 1px solid var(--line-1);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-1);
+  }
+
+  .section-hd .tag {
+    color: var(--accent-terracotta);
+    font-weight: 700;
+  }
+
+  .section-body {
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Ficha de Cata */
+  .tasting-lead {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-0);
+  }
+
+  .tasting-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--line-0);
+    padding-top: 12px;
+  }
+
+  @media (min-width: 480px) {
+    .tasting-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .tasting-item {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 12px;
+  }
+
+  .tasting-item .lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .tasting-item .val {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--ink-0);
+  }
+
+  /* Trazabilidad Agronómica */
+  .lot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 12px;
+  }
+
+  .codigo-mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-0);
+  }
+
+  .state-chip {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    background: var(--accent-olive-dim);
+    color: var(--accent-olive);
+    border: 1px solid var(--accent-olive);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .metric-cell {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 10px;
+  }
+
+  .metric-cell .lbl {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .metric-cell .val {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-0);
+    margin-top: 4px;
+  }
+
+  .cosechas-list {
+    border-top: 1px solid var(--line-0);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cosecha-item {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 6px 8px;
+    background: var(--paper-1);
+    border-left: 2px solid var(--accent-olive);
+  }
+
+  .stars {
+    color: var(--accent-terracotta);
+    font-size: 11px;
+    margin-left: 4px;
+  }
+
+  .guarantee-box {
+    background: var(--paper-1);
+    border: 1px solid var(--line-1);
+    padding: 12px 14px;
+    font-size: 11.5px;
+    color: var(--ink-1);
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .guarantee-box strong {
+    color: var(--accent-olive);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .06em;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line-0);
+    padding: 14px 20px 18px;
+    background: var(--paper-1);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    color: var(--ink-2);
+  }
+
+  footer a {
+    color: var(--ink-0);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .state-msg {
+    padding: 60px 24px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
 </style>
 </head>
 <body>
-  <div class="card" id="app">
-    <div class="state" id="loading">Cargando ficha de trazabilidad…</div>
+  <div class="cartouche-outer">
+    <div class="cartouche-inner" id="app">
+      <div class="state-msg" id="loading">Recuperando certificado y pase gastronómico…</div>
+    </div>
   </div>
 
   <script type="module">
@@ -52,8 +376,37 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // GitHub Pages sirve solo archivos estáticos (sin rewrites de servidor),
-    // así que el código de lote llega como query string: ?codigo=SDP-...
+    const PERFILES_GASTRONOMICOS = {
+      'Pleurotus ostreatus': {
+        comun: 'Orellana / Pleurotus',
+        textura: 'Carnosa, elástica y aterciopelada al dente.',
+        perfil: 'Umami sutil, notas de bosque húmedo, avellana tostada y final mineral limpio.',
+        maridaje: 'Salteado vivo a fuego alto en mantequilla clarificada o hierro fundido, risottos, fondos reducidos y vino blanco seco.',
+        conservacion: '3°C a 5°C en empaque respirable. No lavar antes de guardar; limpiar con brocha suave antes de cocción.'
+      },
+      'Lentinula edodes': {
+        comun: 'Shiitake',
+        textura: 'Densa, elástica y consistente, gran resistencia a cocciones prolongadas.',
+        perfil: 'Profundo umami concentrado, ahumado natural, notas terrosas y sotobosque andino.',
+        maridaje: 'Caldos ramen, reducciones de soja añeja, glaseados de miso, brasas directas o fondos madre.',
+        conservacion: '3°C a 5°C. Desarrolla mayor profundidad aromática tras 24–48h en frío ventilado.'
+      },
+      'Hericium erinaceus': {
+        comun: 'Melena de León',
+        textura: 'Tierna y deshilachable, textura análoga a langosta o vieiras de mar.',
+        perfil: 'Dulce y delicado, sutil recuerdo marino, notas de mantequilla dorada.',
+        maridaje: 'Sellado en medallones a la plancha con ghee y tomillo, o crudo en carpaccio fino con AOVE.',
+        conservacion: '2°C a 4°C. Manipular con extrema delicadeza para proteger las espinas fértiles.'
+      },
+      'default': {
+        comun: 'Seta Gourmet de Altura',
+        textura: 'Firme, carnosa y de alta absorción aromática.',
+        perfil: 'Umami fresco, limpio y fragante, característico de la altitud de Tenjo (2.592 msnm).',
+        maridaje: 'Cocción corta a temperatura media-alta con hierbas frescas, pastas artesanales o guarniciones de autor.',
+        conservacion: '3°C a 5°C en refrigeración ventilada.'
+      }
+    };
+
     function extraerCodigo() {
       return new URLSearchParams(location.search).get('codigo') || '';
     }
@@ -69,6 +422,10 @@
       return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
     }
 
+    function obtenerPerfil(especie, cientifico) {
+      return PERFILES_GASTRONOMICOS[cientifico] || PERFILES_GASTRONOMICOS[especie] || PERFILES_GASTRONOMICOS['default'];
+    }
+
     function render(lote, cosechas, codigo) {
       const app = document.getElementById('app');
       if (!lote) {
@@ -77,49 +434,113 @@
             <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
             <h1>Código no encontrado</h1>
           </header>
-          <div class="state">No hay una ficha pública registrada para <strong>${esc(codigo)}</strong>. Verifica el código o contacta a Setas de la Peña.</div>`;
+          <div class="state-msg">
+            No hay una ficha pública registrada para <strong>${esc(codigo)}</strong>.<br>
+            Verifica el código impreso en la etiqueta térmica o contacta al equipo de Setas de la Peña.
+          </div>
+          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
         return;
       }
+
+      const perfil = obtenerPerfil(lote.especie, lote.especieCientifico);
       const dias = diasEntre(lote.fechaInoculacion);
       const totalKg = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
+
       const cosechasHtml = cosechas.length
         ? cosechas.map(c => {
             const calidad = Math.max(0, Math.min(5, Math.floor(Number(c.calidad)) || 0));
+            const stars = calidad > 0 ? `<span class="stars">${'★'.repeat(calidad)}</span>` : '';
             return `
             <div class="cosecha-item">
               <span>Flush #${esc(c.flush || 1)} · ${esc(c.fecha || '—')}</span>
-              <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g${calidad ? ' · ' + '★'.repeat(calidad) : ''}</strong>
+              <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g ${stars}</strong>
             </div>`;
           }).join('')
-        : '<div class="cosecha-item">Aún sin cosechas registradas</div>';
+        : '<div class="cosecha-item" style="color:var(--ink-2);">Cosecha en desarrollo en sala de fructificación</div>';
 
       app.innerHTML = `
         <header>
-          <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
+          <div class="badge-stamp">Cosecha de Autor</div>
+          <div class="eyebrow">Tenjo, Colombia · 2.592 msnm · Sabana Centro</div>
           <h1>${esc(lote.especie || 'Seta Cultivada')}</h1>
-          <div class="sci">${esc(lote.especieCientifico || '')}</div>
+          <div class="sci">${esc(lote.especieCientifico || perfil.comun)}</div>
         </header>
+
         <main>
-          <div class="row">
-            <div>
-              <div><span class="codigo"><strong>Lote #${esc(lote.codigo)}</strong></span> <span class="badge">${esc(lote.estado || 'activo')}</span></div>
-              <div style="font-size:11.5px;color:var(--ink-600);margin-top:3px;">Finca Santa Isabel · Tenjo, Cundinamarca · 2.587 msnm</div>
+          <!-- BLOQUE 1: PASE GASTRONÓMICO / FICHA PARA CHEF -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Pase Gastronómico</span>
+              <span class="tag">Perfil de Cocina</span>
+            </div>
+            <div class="section-body">
+              <p class="tasting-lead">
+                <strong>Textura & Carácter:</strong> ${esc(perfil.textura)}
+              </p>
+              <div class="tasting-grid">
+                <div class="tasting-item">
+                  <span class="lbl">Perfil Organoléptico</span>
+                  <div class="val">${esc(perfil.perfil)}</div>
+                </div>
+                <div class="tasting-item">
+                  <span class="lbl">Técnica & Maridaje</span>
+                  <div class="val">${esc(perfil.maridaje)}</div>
+                </div>
+              </div>
+              <div class="tasting-item" style="background:var(--paper-0);border:1px dashed var(--line-0);">
+                <span class="lbl">Conservación en Cocina</span>
+                <div class="val" style="font-size:12px;color:var(--ink-1);">${esc(perfil.conservacion)}</div>
+              </div>
             </div>
           </div>
-          <div class="stats">
-            <div class="stat"><div class="lbl">Inoculación</div><div class="val">${esc(lote.fechaInoculacion || '—')}</div></div>
-            <div class="stat"><div class="lbl">Días en Proceso</div><div class="val">${dias != null ? dias + ' días' : '—'}</div></div>
-            <div class="stat"><div class="lbl">Cosecha Total</div><div class="val">${totalKg > 0 ? (totalKg / 1000).toFixed(2) + ' kg' : 'En sala'}</div></div>
-          </div>
-          <div class="cosechas">
-            <div class="lbl">Cosechas registradas</div>
-            ${cosechasHtml}
-          </div>
-          <div class="brand">
-            ✓ Sustrato 100% Botánico Limpio — cultivado a 2.587 msnm sin pesticidas químicos ni fertilizantes sintéticos, hidratado con agua pura de montaña y pasteurizado térmicamente.
+
+          <!-- BLOQUE 2: TRAZABILIDAD AGRONÓMICA -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Ficha Técnica de Origen</span>
+              <span>Lote #${esc(lote.codigo)}</span>
+            </div>
+            <div class="section-body">
+              <div class="lot-row">
+                <div>
+                  <div class="codigo-mono">${esc(lote.codigo)}</div>
+                  <div style="font-size:11px;color:var(--ink-2);margin-top:2px;">Finca Santa Isabel · Serranía de Juaica</div>
+                </div>
+                <div class="state-chip">${esc(lote.estado || 'activo')}</div>
+              </div>
+
+              <div class="metrics-grid">
+                <div class="metric-cell">
+                  <div class="lbl">Inoculación</div>
+                  <div class="val">${esc(lote.fechaInoculacion || '—')}</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="lbl">Días de Ciclo</div>
+                  <div class="val">${dias != null ? dias + ' d' : '—'}</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="lbl">Cosecha Total</div>
+                  <div class="val">${totalKg > 0 ? (totalKg / 1000).toFixed(2) + ' kg' : 'En sala'}</div>
+                </div>
+              </div>
+
+              <div class="cosechas-list">
+                <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px;">Registro de Cosechas por Flush</div>
+                ${cosechasHtml}
+              </div>
+
+              <div class="guarantee-box">
+                <strong>Garantía Botánica Limpia</strong>
+                Cultivado en ambiente de alta montaña a 2.592 msnm, sin pesticidas químicos ni fertilizantes sintéticos. Hidratado con agua de niebla y pasteurizado térmicamente con balance de altitud.
+              </div>
+            </div>
           </div>
         </main>
-        <footer>Setas de la Peña · setasdelapena.co</footer>`;
+
+        <footer>
+          Setas de la Peña · Sabana Centro, Colombia<br>
+          <a href="https://setasdelapena.co">setasdelapena.co</a> · <span style="font-family:var(--font-mono);">FOS v3.0</span>
+        </footer>`;
     }
 
     (async () => {
@@ -134,7 +555,10 @@
         const cosechas = cosechasSnap.docs.map(d => d.data());
         render(loteSnap.exists() ? loteSnap.data() : null, cosechas, codigo);
       } catch (err) {
-        document.getElementById('app').innerHTML = `<div class="state">No se pudo cargar la ficha (${esc(err.message || err.code || 'error de red')}). Intenta de nuevo.</div>`;
+        document.getElementById('app').innerHTML = `
+          <div class="state-msg">
+            Error cargando ficha técnica (${esc(err.message || err.code || 'error de red')}).<br>Por favor reintenta.
+          </div>`;
       }
     })();
   </script>
