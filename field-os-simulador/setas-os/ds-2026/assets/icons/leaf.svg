@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
+     fill="none" stroke="currentColor" stroke-width="1.5"
+     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="leaf">
+  <path d="M10 38C10 20 22 8 38 8c0 16-12 30-28 30Z"/>
+  <path d="M10 38 38 10"/>
+  <path d="M20 30h9M17 24h13"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
+     fill="none" stroke="currentColor" stroke-width="1.5"
+     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="package">
+  <path d="M24 6l18 9v18l-18 9-18-9V15Z"/>
+  <path d="M6 15l18 9 18-9"/>
+  <path d="M24 24v18"/>
+</svg>

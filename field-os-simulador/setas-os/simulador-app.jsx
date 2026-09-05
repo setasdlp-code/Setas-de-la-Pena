@@ -8039,14 +8039,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
                 {criticalStockItems.length > 0 && (
-                  <div className="stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,border:'1px solid var(--accent-terracotta)',borderRadius:0,padding:'8px 12px',background:'color-mix(in oklab, var(--accent-terracotta) 6%, var(--paper-0))'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--accent-terracotta)'}}>
+                  <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
+                    <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                      <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
                         ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
                       </span>
                       <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                         {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--accent-terracotta)',borderRadius:0,color:'var(--accent-terracotta)'}}>
+                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
                             {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                           </span>
                         ))}
@@ -8057,7 +8057,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         )}
                       </div>
                     </div>
-                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--accent-terracotta)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
                       Registrar Compra +
                     </button>
                   </div>
@@ -8237,7 +8237,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       data-lote-id={lt.id}
                                       aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
                                       onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
-                                      className="home-lote-card"
+                                      className={`sdp-lote home-lote-card ${critical?'sdp-lote--error':contaminated?'sdp-lote--warn':'sdp-lote--ok'}`}
                                       style={{
                                         display:'flex',flexDirection:'column',gap:4,
                                         padding:'9px 10px',
@@ -8251,14 +8251,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       }}
                                     >
                                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-                                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{lt.codigo}</span>
-                                        {age!=null && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>día {age}</span>}
+                                        <span className="sdp-lote__id" style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{lt.codigo}</span>
+                                        {age!=null && <span className="sdp-plateline" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>día {age}</span>}
                                       </div>
-                                      <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-1)'}}>
-                                        {lt.especie} · {lt.numBolsas || 1} bolsas
+                                      <div className="sdp-species sdp-species--compact" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-1)'}}>
+                                        <span className="sdp-species__common" style={{fontSize:'var(--text-xs)'}}>{lt.especie}</span>
+                                        <span className="sdp-statusline" style={{fontSize:'var(--text-2xs)'}}> · {lt.numBolsas || 1} bolsas</span>
+                                      </div>
+                                      <div className="sdp-lote__status" style={{marginTop:2}}>
+                                        <span className="sdp-lote__state" style={{fontSize:'var(--text-micro)'}}>{col.title}</span>
+                                        <span className="sdp-lote__bar"><span style={{width: colonizado ? '100%' : '65%'}}></span></span>
                                       </div>
                                       {(contaminated||stats?.totalFresco>0) && (
-                                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                                        <div className="sdp-lote__meta" style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
                                           {contaminated && (
                                             <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:0,color:critical?'var(--accent-terracotta)':'var(--ink-1)',background:critical?'color-mix(in oklab,var(--accent-terracotta) 14%,var(--paper-0))':'color-mix(in oklab,var(--ink-2) 12%,var(--paper-0))'}}>
                                               {stats.contPct.toFixed(0)}% contam.
@@ -8316,7 +8321,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 ) : (
                   <div className="home-ambient-strip">
                     {camaras.map(c=>(
-                      <div key={c.id} className="ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
+                      <div key={c.id} className="sdp-tele ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
                         <div style={{minWidth:0,flex:1}}>
                           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
                             <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-2)'}}><IconCamera size={13}/></span>
@@ -8344,7 +8349,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {c.liveHum}%
                             </span>
                             <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveCo2} <span style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>ppm</span>
+                              {c.liveCo2} <span className="chem" style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>CO₂ ppm</span>
                             </span>
                           </div>
                           <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-2)',display:'grid',placeItems:'center'}}>
@@ -8449,12 +8454,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className={`p-rec-badge${nRec===0?' is-empty':''}`} aria-label={`${nRec} receta${nRec===1?'':'s'} guardada${nRec===1?'':'s'}`}><b>{nRec}</b><span aria-hidden="true">rec</span></span>
                     </div>
                     {hasImg
-                      ?<div className="p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
-                      :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--accent-blue-grey)':'var(--accent-mushroom)'}/></div>
+                      ?<div className="sdp-fig__frame p-img"><img src={IMG[k]} alt={d.name} width="320" height="240" loading="lazy" decoding="async"/></div>
+                      :<div className="p-svg" style={{marginLeft:16}}><SppSvg sKey={k} c={isOn?'var(--moss)':'var(--soil)'}/></div>
                     }
-                    <div className="p-body">
-                      <div className="p-sci">{d.scientific}</div>
-                      <div className="p-common">{d.name}</div>
+                    <div className="sdp-species p-body">
+                      <div className="sdp-species__common p-common">{d.name}</div>
+                      <div className="sdp-species__latin p-sci">{d.scientific}</div>
                     </div>
                     <div className="p-chips">
                       <div className="p-chips-row p-chips-row1">
@@ -8549,23 +8554,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
 
               {focusSpp&&(
-                <div className="recetario-ficha">
-                  {IMG[focusKey]&&<div className="recetario-ficha-img"><img src={IMG[focusKey]} alt={focusSpp.name} width="200" height="150" loading="lazy" decoding="async"/></div>}
-                  <div className="recetario-ficha-body">
-                    <div className="recetario-ficha-sci">{focusSpp.scientific}</div>
-                    <p className="recetario-ficha-note">{focusSpp.notes.split('.')[0]+'.'}</p>
-                    <div className="recetario-ficha-params">
-                      {[
-                        {l:'Temp',v:focusSpp.temp_fruit},
-                        {l:'HR',v:SPP_HR[focusKey]},
-                        {l:'C:N',v:`${focusSpp.cn_optimal.min}–${focusSpp.cn_optimal.max}`},
-                        {l:'pH',v:`${focusSpp.ph_optimal.min}–${focusSpp.ph_optimal.max}`},
-                        {l:'EB',v:`${focusSpp.eb_baseline}–${focusSpp.eb_optimal}%`},
-                        {l:'Dificultad',v:SPP_DIFFICULTY[focusKey]||'Media'},
-                      ].map(x=>(
-                        <div key={x.l} className="recetario-ficha-param"><span>{x.l}</span><b>{x.v}</b></div>
-                      ))}
+                <div className="sdp-ficha recetario-ficha">
+                  <div className="sdp-ficha__hd" style={{background:'var(--paper-0)',padding:'12px 16px',borderBottom:'1px solid var(--border-hairline)'}}>
+                    <div className="sdp-species">
+                      <div className="sdp-species__common" style={{fontFamily:'var(--font-editorial)',fontWeight:700,fontSize:'22px'}}>{focusSpp.name}</div>
+                      <div className="sdp-species__latin" style={{fontFamily:'var(--font-editorial)',fontStyle:'italic'}}>{focusSpp.scientific}</div>
                     </div>
+                    <div className="sdp-plateline">{SPP_CODE[focusKey]} · Tenjo · 2.600 m</div>
+                  </div>
+                  <div style={{display:'flex',gap:16,padding:'12px 16px',alignItems:'center',flexWrap:'wrap'}}>
+                    {IMG[focusKey]&&<div className="sdp-fig__frame recetario-ficha-img" style={{width:100,height:75}}><img src={IMG[focusKey]} alt={focusSpp.name} width="100" height="75" loading="lazy" decoding="async"/></div>}
+                    <div className="recetario-ficha-body" style={{flex:1,minWidth:200}}>
+                      <p className="ed-prose recetario-ficha-note" style={{margin:0}}>{focusSpp.notes.split('.')[0]+'.'}</p>
+                    </div>
+                  </div>
+                  <div className="sdp-ficha__ft recetario-ficha-params">
+                    {[
+                      {l:'Temp',v:focusSpp.temp_fruit},
+                      {l:'HR',v:SPP_HR[focusKey]},
+                      {l:'C:N',v:`${focusSpp.cn_optimal.min}–${focusSpp.cn_optimal.max}`},
+                      {l:'pH',v:`${focusSpp.ph_optimal.min}–${focusSpp.ph_optimal.max}`},
+                      {l:'EB',v:`${focusSpp.eb_baseline}–${focusSpp.eb_optimal}%`},
+                      {l:'Dificultad',v:SPP_DIFFICULTY[focusKey]||'Media'},
+                    ].map(x=>(
+                      <div key={x.l} className="sdp-ficha__cell recetario-ficha-param"><span className="sdp-ficha__k">{x.l}</span><b className="sdp-ficha__v">{x.v}</b></div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -8594,10 +8607,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const costKg=costIngKg+eDash;
                         const hFactor=e.sKey==='shiitake'||e.sKey==='lions_mane'||e.sKey==='reishi'?0.40:0.35;
                         return(
-                          <div key={e.id} data-recipe-id={e.id} className="dash-card" style={{borderTopColor:band}}>
-                            <div className="dash-card-top">
-                              <div className="dash-card-name">{e.name}</div>
-                              <div className="dash-card-spp">{s2?.name} · {e.date}</div>
+                          <div key={e.id} data-recipe-id={e.id} className="sdp-receta dash-card" style={{borderTopColor:band}}>
+                            <div className="dash-card-top sdp-receta__hd">
+                              <div className="dash-card-name" style={{fontFamily:'var(--font-editorial)',fontWeight:700}}>{e.name}</div>
+                              <div className="dash-card-spp sdp-plateline">{s2?.name} · {e.date}</div>
                             </div>
                             <div className="dash-card-body">
                               <div className="dash-kv">
@@ -8634,9 +8647,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ))}
                               </div>
                             )}
-                            <div style={{padding:'4px 16px 10px',background:'var(--paper-50)'}}>
-                              <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
-                                {e.recipe.slice(0,4).map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)'}}>{g.name.length>15?g.name.slice(0,15)+'…':g.name} {r.p}%</span>:null;})}
+                            <div style={{padding:'6px 16px 10px',background:'var(--paper-50)'}}>
+                              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                                {e.recipe.slice(0,4).map(r=>{
+                                  const g=INGS.find(i=>i.id===r.id);
+                                  return g?(
+                                    <div key={r.id} style={{display:'grid',gridTemplateColumns:'1fr auto',gap:2,alignItems:'center'}}>
+                                      <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-700)'}}>
+                                        <span>{g.name.length>18?g.name.slice(0,18)+'…':g.name}</span>
+                                        <span style={{fontWeight:700}}>{r.p}%</span>
+                                      </div>
+                                      <div className="sdp-receta__prop" style={{gridColumn:'1 / -1'}}><span style={{width:`${r.p}%`}}></span></div>
+                                    </div>
+                                  ):null;
+                                })}
                                 {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
