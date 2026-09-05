@@ -1,0 +1,43 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Lote card" subtitle="Estado como color Y palabra; barra de 4px, nunca pastilla" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="height:300px;background:var(--surface-panel);padding:18px 20px;display:flex;gap:18px;overflow:hidden" data-mode="field">
+  <article class="sdp-lote sdp-lote--ok" style="width:250px;flex:none">
+    <div class="sdp-lote__media sdp-lote__media--plate" style="height:110px"><img src="../assets/img/hericium-erinaceus-plate.svg" alt=""></div>
+    <div class="sdp-lote__body">
+      <div class="sdp-species sdp-species--compact">
+        <div class="sdp-species__common" style="font-size:19px">Melena de león</div>
+        <div class="sdp-species__latin" style="font-size:13px">Hericium erinaceus</div>
+      </div>
+      <div class="sdp-lote__id" style="font-size:14px">LOTE 026 · HER-01</div>
+      <div class="sdp-lote__status"><span class="sdp-lote__state">Incubación</span><span class="sdp-lote__bar"><span style="width:64%"></span></span></div>
+      <div class="sdp-lote__meta">
+        <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">02</span></div>
+        <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">91 %</span></div>
+        <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">742</span></div>
+      </div>
+    </div>
+  </article>
+  <article class="sdp-lote sdp-lote--warn" style="width:250px;flex:none">
+    <div class="sdp-lote__media sdp-lote__media--plate" style="height:110px"><img src="../assets/img/reishi-botanical-engraving.png" alt=""></div>
+    <div class="sdp-lote__body">
+      <div class="sdp-species sdp-species--compact">
+        <div class="sdp-species__common" style="font-size:19px">Reishi</div>
+        <div class="sdp-species__latin" style="font-size:13px">Ganoderma lucidum</div>
+      </div>
+      <div class="sdp-lote__id" style="font-size:14px">LOTE 024 · GAN-03</div>
+      <div class="sdp-lote__status"><span class="sdp-lote__state">CO₂ alto</span><span class="sdp-lote__bar"><span style="width:88%"></span></span></div>
+      <div class="sdp-lote__meta">
+        <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">03</span></div>
+        <div><span class="sdp-lote__mk">HR</span><span class="sdp-lote__mv">86 %</span></div>
+        <div><span class="sdp-lote__mk">CO₂</span><span class="sdp-lote__mv">1240</span></div>
+      </div>
+    </div>
+  </article>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px">
+    <span class="t-label">ESTADOS</span>
+    <div class="t-micro">--ok · moss</div>
+    <div class="t-micro">--warn · barra ocre + palabra WARNING_TEXT</div>
+    <div class="t-micro">--error · rust</div>
+    <div class="t-micro" style="margin-top:8px">--plate para línea; 3:2 para foto</div>
+  </div>
+</div>

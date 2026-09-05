@@ -1,0 +1,11 @@
+<!-- @dsCard group="Components" viewport="700x180" name="Telemetry tile" subtitle="El estado recolorea el medidor, nunca la cifra" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="height:180px;background:var(--surface-page);padding:20px;display:flex;flex-direction:column;gap:12px;justify-content:center;overflow:hidden" data-mode="control">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="sdp-tele"><span class="sdp-tele__k">HR · Sala 02</span><span class="sdp-tele__v">91<span class="sdp-tele__u">%</span></span><span class="sdp-tele__meter"><span style="width:82%"></span></span></div>
+    <div class="sdp-tele"><span class="sdp-tele__k">CO₂ · Sala 02</span><span class="sdp-tele__v">742<span class="sdp-tele__u">ppm</span></span><span class="sdp-tele__meter"><span style="width:47%"></span></span></div>
+    <div class="sdp-tele sdp-tele--warn"><span class="sdp-tele__k">CO₂ · Sala 03</span><span class="sdp-tele__v">1240<span class="sdp-tele__u">ppm</span></span><span class="sdp-tele__meter"><span style="width:88%"></span></span></div>
+    <div class="sdp-tele"><span class="sdp-tele__k">Temp · media</span><span class="sdp-tele__v">24,0<span class="sdp-tele__u">°C</span></span><span class="sdp-tele__meter"><span style="width:60%"></span></span></div>
+  </div>
+  <div class="t-micro" style="letter-spacing:var(--tracking-micro)">Una lectura fuera de rango no debe volverse más difícil de leer que una correcta</div>
+</div>
