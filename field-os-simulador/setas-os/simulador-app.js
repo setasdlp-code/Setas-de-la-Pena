@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 2e59fca49a5624c2ec61e06dcb91cfe92f864bfbc99efa655b6760ad102fef53
+// source-hash: a482636702632de3cd984c82a8205c958c4a73ebcdd2eaa24aeb5153fe2b30fc
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6048,15 +6048,15 @@ BATCH (${numBags}×${kgBag} kg):
         const stats = calcLoteStats(lote.id);
         const bolsasLote = bitBolsas.filter((b) => b.loteId === lote.id);
         const sanas = bolsasLote.filter((b) => b.estado === "sana");
-        const colonizado2 = sanas.length > 0 && sanas.every((b) => !!b.col100);
-        const columna = lote.estado === "completado" ? "post" : lote.estado === "fructificacion" ? "fruta" : colonizado2 ? "primordios" : "incubacion";
+        const colonizado = sanas.length > 0 && sanas.every((b) => !!b.col100);
+        const columna = lote.estado === "completado" ? "post" : lote.estado === "fructificacion" ? "fruta" : colonizado ? "primordios" : "incubacion";
         const inoculated = Date.parse(lote.fechaInoculacion || "");
         const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((operationalNow - inoculated) / 864e5)) : null;
-        return { lote, stats, columna, age };
+        return { lote, stats, columna, age, colonizado };
       });
       return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 } }, columnas.map((col) => {
         const items = clasificados.filter((c) => c.columna === col.key);
-        return /* @__PURE__ */ React.createElement("div", { key: col.key, style: { background: "var(--paper-1)", border: "1px solid var(--line-0)", borderTop: `3px solid ${col.accent}`, borderRadius: 0, padding: "14px", display: "flex", flexDirection: "column", gap: 10, minHeight: 120 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab(col.linkTab), style: { background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, color: col.accent } }, /* @__PURE__ */ React.createElement(col.icon, { size: 13 }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-xs)", color: "var(--ink-0)" } }, col.title)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-1)" } }, items.length)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", lineHeight: 1.3 } }, col.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", fontStyle: "italic" } }, "Sin lotes"), items.map(({ lote: lt, stats, age }) => {
+        return /* @__PURE__ */ React.createElement("div", { key: col.key, style: { background: "var(--paper-1)", border: "1px solid var(--line-0)", borderTop: `3px solid ${col.accent}`, borderRadius: 0, padding: "14px", display: "flex", flexDirection: "column", gap: 10, minHeight: 120 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab(col.linkTab), style: { background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, color: col.accent } }, /* @__PURE__ */ React.createElement(col.icon, { size: 13 }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-xs)", color: "var(--ink-0)" } }, col.title)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-1)" } }, items.length)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", lineHeight: 1.3 } }, col.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", fontStyle: "italic" } }, "Sin lotes"), items.map(({ lote: lt, stats, age, colonizado }) => {
           const critical = stats && stats.contPct >= 20;
           const contaminated = stats && stats.contPct > 0;
           return /* @__PURE__ */ React.createElement(
