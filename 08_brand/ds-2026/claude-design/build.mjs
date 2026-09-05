@@ -50,7 +50,7 @@ await writeFile(path.join(OUT, 'styles.css'), `/* ──────────
 
 // ── assets ───────────────────────────────────────────────────────────────
 await cp(path.join(SRC, 'assets/fonts'), path.join(OUT, 'fonts'), { recursive: true });
-await cp(path.join(SRC, 'assets/img'), path.join(OUT, 'assets/img'), { recursive: true });
+await cp(path.join(SRC, 'assets/img'), path.join(OUT, 'assets/img'), { recursive: true });  // includes species/
 await cp(path.join(SRC, 'assets/icons'), path.join(OUT, 'assets/icons'), { recursive: true });
 await cp(path.join(SRC, 'assets/textures'), path.join(OUT, 'assets/textures'), { recursive: true });
 

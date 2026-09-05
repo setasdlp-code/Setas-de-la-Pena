@@ -63,9 +63,8 @@ Other generators — all deterministic, all re-runnable:
 
 | Script | Output |
 |---|---|
-| `scripts/gen-hericium.py` | `assets/img/hericium-erinaceus-plate.svg` — seeded botanical plate |
 | `scripts/gen-textures.py` | `assets/textures/*.png` — tileable paper grain, no image library |
-| `scripts/make-cutout.mjs` | `assets/img/*-engraving.png` — scan → transparent PNG |
+| `scripts/make-cutout.mjs` | `assets/img/species/*.png` — studio ground → transparent PNG, by edge flood fill |
 
 ## Fonts
 

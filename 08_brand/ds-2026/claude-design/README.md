@@ -113,7 +113,7 @@ draws U+2082 at full size, so an unwrapped `CO₂` in editorial prose reads as
 <div data-mode="field">
   <article class="sdp-lote sdp-lote--warn" style="width: 300px">
     <div class="sdp-lote__media sdp-lote__media--plate">
-      <img src="assets/img/hericium-erinaceus-plate.svg" alt="">
+      <img src="assets/img/species/lions-mane.png" alt="">
     </div>
     <div class="sdp-lote__body">
       <div class="sdp-species sdp-species--compact">

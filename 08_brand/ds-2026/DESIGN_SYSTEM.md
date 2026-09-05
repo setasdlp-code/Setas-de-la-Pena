@@ -202,6 +202,15 @@ binomial in Gaya italic and the plate reference in mono micro.
 **Cropping.** Plates are `object-fit: contain` — a specimen is never cropped,
 because the silhouette is the identifying information. Photos are `cover`.
 
+**The species plates.** `assets/img/species/` holds nine specimen plates — one
+per species the farm grows: *Hericium erinaceus* (melena de león), *Ganoderma
+lucidum* (reishi), *Lentinula edodes* (shiitake), *Pleurotus ostreatus* in rosa,
+blanca and grey, *P. eryngii* (cardo), *Flammulina* (enoki), *Pholiota* (nameko).
+
+They share one composition — **whole fruiting body on its substrate, a
+cross-section, an underside, and spores** — which is exactly the evidence a
+plate is supposed to carry. Use these wherever a species is identified.
+
 **Ground.** Engravings and line art sit directly on `PAPER`. Scans arriving on
 white stock are cut to transparency once
 (`scripts/make-cutout.mjs`) rather than composited with `multiply` at every
@@ -478,7 +487,8 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
 ├── assets/
 │   ├── fonts/                    ← Gaya ×12, IBM Plex Sans ×5, IBM Plex Mono ×3
 │   ├── icons/                    ← 12 SVG pictograms, 48-grid, 1.5px stroke
-│   ├── img/                      ← reishi engraving (jpg + alpha cutout), hericium plate, logo
+│   ├── img/                      ← reishi engraving (jpg + alpha cutout)
+│   │   └── species/              ← nine specimen plates, alpha cut
 │   └── textures/                 ← paper-grain.png, paper-fibre.png (tileable RGBA)
 ├── mockups/
 │   ├── *.html                    ← eight mockups on the real tokens
@@ -488,9 +498,8 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
     ├── validate.py               ← structural gate: tokens, fonts, assets, parity
     ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation
     ├── render.mjs                ← mockups → PNG, with font-load verification
-    ├── gen-hericium.py           ← botanical plate generator (seeded)
     ├── gen-textures.py           ← tileable paper textures, no image library
-    └── make-cutout.mjs           ← scan → transparent PNG
+    └── make-cutout.mjs           ← studio ground → transparent PNG (edge flood fill)
 ```
 
 ### Icon set
@@ -511,9 +520,8 @@ cd 08_brand/ds-2026
 
 python3 scripts/validate.py             # structural gate — exit 0 required
 python3 scripts/contrast-audit.py       # WCAG gate — exit 0 required
-python3 scripts/gen-hericium.py         # regenerate the plate (deterministic)
 python3 scripts/gen-textures.py         # regenerate paper textures (~1s)
-node     scripts/make-cutout.mjs        # re-cut the engraving
+node     scripts/make-cutout.mjs <out> <files…>   # re-cut a specimen's ground
 node     scripts/render.mjs             # all eight mockups → mockups/out/
 node     scripts/render.mjs 05          # just one
 ```
