@@ -63,6 +63,11 @@ p  { margin: 0 0 var(--space-2); max-width: var(--measure-prose); text-wrap: pre
   [class*="col-"] { grid-column: span 12; }
 }
 
+/* Chemical formulae. Gaya draws U+2082 at full size, so CO₂ set in the
+   editorial face reads as "CO2". Route the formula — and only the formula —
+   to the sans, which has a true subscript. Use on any CO₂ / H₂O in prose. */
+.chem { font-family: var(--font-sans); font-size: 0.94em; letter-spacing: 0; }
+
 /* ── Rules ───────────────────────────────────────────────────────── */
 .rule      { border: 0; border-top: var(--rule-hairline); margin: var(--space-3) 0; }
 .rule--heavy { border: 0; border-top: var(--rule-heavy); margin: var(--space-3) 0; }
