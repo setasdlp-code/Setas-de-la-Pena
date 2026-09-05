@@ -24,7 +24,35 @@
 // escribe directo a Firestore) — evita este paso de aprovisionamiento por
 // completo, a costa de desplegar y mantener una función. Ver PR para el
 // detalle de esta alternativa.
-const admin = require('firebase-admin');
+let initializeApp, applicationDefault, getAuth;
+try {
+  ({ initializeApp, applicationDefault } = require('firebase-admin/app'));
+  ({ getAuth } = require('firebase-admin/auth'));
+} catch (e) {
+  const admin = require('firebase-admin');
+  initializeApp = admin.initializeApp.bind(admin);
+  applicationDefault = admin.credential ? admin.credential.applicationDefault.bind(admin.credential) : admin.applicationDefault?.bind(admin);
+  getAuth = admin.auth ? admin.auth.bind(admin) : null;
+}
+
+function getCliCredential() {
+  try {
+    const Configstore = require('configstore');
+    const cs = new Configstore('firebase-tools');
+    const tokens = cs.get('tokens');
+    if (tokens && tokens.access_token) {
+      return {
+        getAccessToken: async () => ({
+          access_token: tokens.access_token,
+          expires_in: 3600,
+        }),
+      };
+    }
+  } catch (_) {
+    // Configstore no disponible o sin tokens
+  }
+  return null;
+}
 
 async function main() {
   const target = process.argv[2];
@@ -33,13 +61,25 @@ async function main() {
     process.exit(1);
   }
 
-  admin.initializeApp({ credential: admin.credential.applicationDefault() });
+  let app;
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    app = initializeApp({ credential: applicationDefault(), projectId: 'sdlp-os' });
+  } else {
+    const cliCred = getCliCredential();
+    if (cliCred) {
+      app = initializeApp({ credential: cliCred, projectId: 'sdlp-os' });
+    } else {
+      app = initializeApp({ credential: applicationDefault(), projectId: 'sdlp-os' });
+    }
+  }
+
+  const auth = getAuth ? getAuth(app) : app.auth();
 
   const user = target.includes('@')
-    ? await admin.auth().getUserByEmail(target)
-    : await admin.auth().getUser(target);
+    ? await auth.getUserByEmail(target)
+    : await auth.getUser(target);
 
-  await admin.auth().setCustomUserClaims(user.uid, {
+  await auth.setCustomUserClaims(user.uid, {
     ...user.customClaims,
     sync_service: true,
   });
