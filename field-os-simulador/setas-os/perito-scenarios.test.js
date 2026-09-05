@@ -15,6 +15,7 @@ const {
   selectRecommended,
   dominantBaseKey,
   objectiveVector,
+  classifyEvidence,
 } = require('./perito-scenarios.js');
 
 const ingredients = [
@@ -466,4 +467,50 @@ test('diff Perito incluye antes/después, bajas y códigos de razón sin inflar 
   assert.ok(candidate.addedIngredients.every(change => Number.isFinite(change.beforeP) && Number.isFinite(change.afterP)));
   assert.equal(candidate.evaluation.evidenceClassification.tier, 'tier_3');
   assert.ok(candidate.evaluation.evidenceClassification.assessedConfidenceScore <= 35);
+});
+
+
+test('evidencia respalda campos específicos sin promover hipótesis agronómicas', () => {
+  const catalog = { claims: [{ fields: ['cost'], method: 'reported' }] };
+  assert.deepEqual(classifyEvidence({ provenance: { catalog } }).supportingEvidence, []);
+  const provenance = {
+    eb: { type: 'model+field-data', sampleSize: 4 },
+    risk: { type: 'rule-inference', observed: false },
+    catalog: {
+      sources: { paper: { type: 'literature', doi: '10.1234/example' } },
+      claims: [{ fields: ['cn'], sourceIds: ['paper'] }],
+    },
+  };
+  const classified = classifyEvidence({ provenance });
+  assert.equal(classified.tier, 'tier_3');
+  assert.deepEqual(classified.supportingEvidence.map(x => [x.tier, x.fields]),
+    [['tier_2', ['eb']], ['tier_1', ['cn']]]);
+  assert.deepEqual(classifyEvidence({ provenance: { eb: { type: 'model+field-data', sampleSize: 0 } } }).supportingEvidence, []);
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients: ingredients.map(g => ({ ...g, role: g.id === 'sawdust' ? 'base_carbono' : g.id === 'bran' ? 'suplemento_n' : 'aireador' })),
+    analyze, score: an => ({ ...score(an), provenance }), generations: 1,
+  });
+  assert.ok(out.ranked.some(c => c.agronomicInsights.length));
+  assert.ok(out.ranked.flatMap(c => c.agronomicInsights).every(x => x.evidenceTier === 'tier_3'));
+});
+
+
+test('Pareto no sustituye humedad ausente por agronomía ni descarta seguridad', () => {
+  const make = (id, agronomy, safety, cost, moisture) => ({ id, evaluation: {
+    analysis: { cn: 35, eb: 90, cost, moisture,
+      sp: { cn_optimal: { min: 25, ideal: 35, max: 50 }, moisture: { ideal: 65 }, eb_optimal: 120 } },
+    dimensions: { safety: { score: safety }, agronomy: { score: agronomy }, economy: { score: 80 } },
+  } });
+  const cheaper = make('cheaper', 60, 90, 500);
+  const expensive = make('expensive', 95, 90, 1000);
+  assert.equal(objectiveVector(cheaper.evaluation).moisture, null);
+  assert.deepEqual(paretoFront([expensive, cheaper]).map(c => c.id), ['cheaper']);
+  expensive.evaluation.analysis.moisture = 65;
+  assert.deepEqual(paretoFront([expensive, cheaper]).map(c => c.id), ['cheaper']);
+  const safer = make('safer', 60, 95, 1000, 65);
+  assert.deepEqual(paretoFront([safer, cheaper]).map(c => c.id), ['safer', 'cheaper']);
+  for (const moisture of [undefined, null, NaN, Infinity]) {
+    assert.equal(objectiveVector(make('missing', 80, 90, 1000, moisture).evaluation).moistureMeasured, false);
+  }
 });

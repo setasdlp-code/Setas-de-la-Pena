@@ -898,8 +898,8 @@
         : Math.max(1e-6, Number(range.max ?? range.ideal) - range.ideal);
       return round1(clamp(100 - (Math.abs(value - range.ideal) / side) * 10, 0, 100));
     };
-    const cn = closeness(Number(an.cn), sp.cn_optimal);
-    const moistureValue = Number(an.moisture ?? an.humidity);
+    const cn = closeness(an.cn, sp.cn_optimal);
+    const moistureValue = an.moisture ?? an.humidity;
     const moistureRange = sp.moisture && Number.isFinite(sp.moisture.ideal)
       ? { min: sp.moisture.min ?? sp.moisture.ideal - 5, max: sp.moisture.max ?? sp.moisture.ideal + 5, ideal: sp.moisture.ideal }
       : null;
@@ -912,7 +912,7 @@
       : null;
     return {
       cn: cn ?? fallback.agronomy,
-      moisture: moisture ?? fallback.agronomy,
+      moisture,
       eb: eb ?? fallback.agronomy,
       cost: cost ?? fallback.economy,
       safety: fallback.safety,
@@ -924,8 +924,9 @@
     const explicit = objectives.some(k => ['cn', 'moisture', 'eb', 'cost'].includes(k));
     const av = explicit ? objectiveVector(a) : dimensionVector(a);
     const bv = explicit ? objectiveVector(b) : dimensionVector(b);
-    const neverWorse = objectives.every(k => av[k] >= bv[k]);
-    const strictlyBetter = objectives.some(k => av[k] > bv[k]);
+    const comparable = objectives.filter(k => Number.isFinite(av[k]) && Number.isFinite(bv[k]));
+    const neverWorse = comparable.every(k => av[k] >= bv[k]);
+    const strictlyBetter = comparable.some(k => av[k] > bv[k]);
     return neverWorse && strictlyBetter;
   };
 
@@ -934,10 +935,14 @@
   // de invocarla — si alguno de esos límites sube, revisar el costo aquí primero.
   const paretoFront = (candidates = [], objectives) => {
     const resolvedObjectives = objectives || (candidates.some(c => c.evaluation?.analysis)
-      ? ['cn', 'moisture', 'eb', 'cost']
+      ? ['safety', 'cn', 'moisture', 'eb', 'cost']
       : ['safety', 'agronomy', 'economy']);
+    // Use a common set for the entire front so missing data cannot create
+    // inconsistent pairwise comparisons. No moisture measurement is inferred.
+    const commonObjectives = resolvedObjectives.filter(k => k !== 'moisture' ||
+      candidates.every(c => objectiveVector(c.evaluation).moistureMeasured));
     return candidates.filter((c, i) =>
-      !candidates.some((other, j) => j !== i && dominates(other.evaluation, c.evaluation, resolvedObjectives))
+      !candidates.some((other, j) => j !== i && dominates(other.evaluation, c.evaluation, commonObjectives))
     );
   };
 
@@ -993,15 +998,27 @@
 
   const classifyEvidence = (scored = {}) => {
     const provenance = scored.provenance || {};
-    const serialized = JSON.stringify(provenance).toLowerCase();
-    const historical = /histor|batch|lote|field/.test(serialized);
-    const literature = /literature|doi|journal|paper|tier.?1/.test(serialized);
-    const tier = historical ? 'tier_2' : literature ? 'tier_1' : 'tier_3';
-    const label = historical ? 'Tier 2 · lotes históricos de finca'
-      : literature ? 'Tier 1 · literatura trazable'
-        : 'Tier 3 · hipótesis/modelo';
-    const ceiling = historical ? 65 : literature ? 90 : 35;
-    return { tier, label, confidenceCeiling: ceiling, provenance };
+    // Supporting evidence is scoped to the quantity it describes. Neither
+    // catalog citations nor EB observations validate the whole recommendation.
+    const supportingEvidence = [];
+    if (provenance.eb?.type === 'model+field-data' &&
+        Number.isFinite(provenance.eb.sampleSize) && provenance.eb.sampleSize > 0) {
+      supportingEvidence.push({ tier: 'tier_2', fields: ['eb'], sampleSize: provenance.eb.sampleSize });
+    }
+    const catalog = provenance.catalog || {};
+    for (const claim of Array.isArray(catalog.claims) ? catalog.claims : []) {
+      const sourceIds = (Array.isArray(claim.sourceIds) ? claim.sourceIds : []).filter(id => {
+        const source = catalog.sources?.[id];
+        return source?.type === 'literature' &&
+          (typeof source.url === 'string' && /^https?:\/\//.test(source.url) ||
+           typeof source.doi === 'string' && /^10\.\d{4,9}\//.test(source.doi));
+      });
+      if (sourceIds.length && Array.isArray(claim.fields) && claim.fields.length) {
+        supportingEvidence.push({ tier: 'tier_1', fields: [...claim.fields], sourceIds });
+      }
+    }
+    return { tier: 'tier_3', label: 'Tier 3 · hipótesis/modelo',
+      confidenceCeiling: 35, provenance, supportingEvidence };
   };
 
   const roleTotals = (recipe, ingredients) => {
@@ -1631,7 +1648,7 @@
           TRICHODERMA_RISK: 'Riesgo modelado de Trichoderma: revisar carga nitrogenada, higiene y tratamiento antes de producir.',
           AERATION_REVIEW: 'Matriz densa con poco aireador: revisar compactación y porosidad del bloque.',
         })[code],
-        evidenceTier: c.evaluation?.evidenceClassification?.tier || 'tier_3',
+        evidenceTier: 'tier_3',
       }));
     };
     all.forEach(attachDiff);
