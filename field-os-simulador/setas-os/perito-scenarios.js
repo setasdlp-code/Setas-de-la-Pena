@@ -885,9 +885,45 @@
     };
   };
 
+  // Explicit optimization objectives. Missing measurements remain neutral
+  // instead of being silently treated as good (or bad) agronomy.
+  const objectiveVector = (evaluation = {}) => {
+    const an = evaluation.analysis || {};
+    const sp = an.sp || {};
+    const fallback = dimensionVector(evaluation);
+    const closeness = (value, range) => {
+      if (!Number.isFinite(value) || !Number.isFinite(range?.ideal)) return null;
+      const side = value < range.ideal
+        ? Math.max(1e-6, range.ideal - Number(range.min ?? range.ideal))
+        : Math.max(1e-6, Number(range.max ?? range.ideal) - range.ideal);
+      return round1(clamp(100 - (Math.abs(value - range.ideal) / side) * 10, 0, 100));
+    };
+    const cn = closeness(Number(an.cn), sp.cn_optimal);
+    const moistureValue = Number(an.moisture ?? an.humidity);
+    const moistureRange = sp.moisture && Number.isFinite(sp.moisture.ideal)
+      ? { min: sp.moisture.min ?? sp.moisture.ideal - 5, max: sp.moisture.max ?? sp.moisture.ideal + 5, ideal: sp.moisture.ideal }
+      : null;
+    const moisture = closeness(moistureValue, moistureRange);
+    const eb = Number.isFinite(an.eb) && Number.isFinite(sp.eb_optimal) && sp.eb_optimal > 0
+      ? round1(clamp(an.eb / sp.eb_optimal * 100, 0, 100))
+      : null;
+    const cost = Number.isFinite(an.cost) && an.cost >= 0
+      ? round1(clamp(100 / (1 + an.cost / 1000), 0, 100))
+      : null;
+    return {
+      cn: cn ?? fallback.agronomy,
+      moisture: moisture ?? fallback.agronomy,
+      eb: eb ?? fallback.agronomy,
+      cost: cost ?? fallback.economy,
+      safety: fallback.safety,
+      moistureMeasured: moisture != null,
+    };
+  };
+
   const dominates = (a, b, objectives = ['safety', 'agronomy', 'economy']) => {
-    const av = dimensionVector(a);
-    const bv = dimensionVector(b);
+    const explicit = objectives.some(k => ['cn', 'moisture', 'eb', 'cost'].includes(k));
+    const av = explicit ? objectiveVector(a) : dimensionVector(a);
+    const bv = explicit ? objectiveVector(b) : dimensionVector(b);
     const neverWorse = objectives.every(k => av[k] >= bv[k]);
     const strictlyBetter = objectives.some(k => av[k] > bv[k]);
     return neverWorse && strictlyBetter;
@@ -896,9 +932,14 @@
   // O(n²) por diseño: compara cada candidato contra todos los demás. Hoy es seguro porque
   // los llamadores acotan `candidates` con structuralSeedCap/RANKED_LIMIT/beamWidth antes
   // de invocarla — si alguno de esos límites sube, revisar el costo aquí primero.
-  const paretoFront = (candidates = [], objectives) => candidates.filter((c, i) =>
-    !candidates.some((other, j) => j !== i && dominates(other.evaluation, c.evaluation, objectives))
-  );
+  const paretoFront = (candidates = [], objectives) => {
+    const resolvedObjectives = objectives || (candidates.some(c => c.evaluation?.analysis)
+      ? ['cn', 'moisture', 'eb', 'cost']
+      : ['safety', 'agronomy', 'economy']);
+    return candidates.filter((c, i) =>
+      !candidates.some((other, j) => j !== i && dominates(other.evaluation, c.evaluation, resolvedObjectives))
+    );
+  };
 
   const weightedUtility = (evaluation, weights = {}) => {
     const v = dimensionVector(evaluation);
@@ -950,6 +991,19 @@
     );
   };
 
+  const classifyEvidence = (scored = {}) => {
+    const provenance = scored.provenance || {};
+    const serialized = JSON.stringify(provenance).toLowerCase();
+    const historical = /histor|batch|lote|field/.test(serialized);
+    const literature = /literature|doi|journal|paper|tier.?1/.test(serialized);
+    const tier = historical ? 'tier_2' : literature ? 'tier_1' : 'tier_3';
+    const label = historical ? 'Tier 2 · lotes históricos de finca'
+      : literature ? 'Tier 1 · literatura trazable'
+        : 'Tier 3 · hipótesis/modelo';
+    const ceiling = historical ? 65 : literature ? 90 : 35;
+    return { tier, label, confidenceCeiling: ceiling, provenance };
+  };
+
   const roleTotals = (recipe, ingredients) => {
     const byId = new Map((ingredients || []).map(g => [g.id, g]));
     const totals = {};
@@ -961,15 +1015,16 @@
     return totals;
   };
 
-  const lockedCompositionMatches = (candidate, baseline, lockedIds, isPartial = false) => {
+  const lockedCompositionMatches = (candidate, baseline, lockedIds, isPartial = false, strictPartialLocks = false) => {
     const locked = lockedIds instanceof Set ? lockedIds : new Set(lockedIds || []);
     if (!locked.size) return true;
     const a = recipeMap(candidate);
-    if (isPartial) {
-      const b = Object.fromEntries((baseline || []).map(r => [r.id, Number(r.p ?? r.pct) || 0]));
+    const b = isPartial
+      ? Object.fromEntries((baseline || []).map(r => [r.id, Number(r.p ?? r.pct) || 0]))
+      : recipeMap(baseline);
+    if (isPartial && !strictPartialLocks) {
       return [...locked].every(id => (a[id] || 0) >= (b[id] || 0) - 0.011);
     }
-    const b = recipeMap(baseline);
     return [...locked].every(id => Math.abs((a[id] || 0) - (b[id] || 0)) < 0.011);
   };
 
@@ -987,11 +1042,14 @@
     lockedIds,
     baselineRecipe,
     isPartial = false,
+    strictPartialLocks = false,
   }) => {
     const failures = [];
     const stock = stockIds instanceof Set ? stockIds : new Set(stockIds || []);
     const map = recipeMap(recipe);
     const ingredientById = new Map((ingredients || []).map(g => [g?.id, g]));
+    const total = Object.values(map).reduce((sum, p) => sum + Number(p || 0), 0);
+    if (total <= 0 || Math.abs(total - 100) > 0.05) failures.push('mass_balance');
 
     if (useStock && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
 
@@ -1023,7 +1081,7 @@
     if (Number(analysis?.cafeP || 0) > Number(profile.maxCafe) + 0.011) failures.push('maxCafe');
     if (Number(maxCost || 0) > 0 && Number(analysis?.cost || 0) > Number(maxCost)) failures.push('maxCost');
 
-    if (!lockedCompositionMatches(recipe, baselineRecipe, lockedIds, isPartial)) failures.push('locked');
+    if (!lockedCompositionMatches(recipe, baselineRecipe, lockedIds, isPartial, strictPartialLocks)) failures.push('locked');
 
     return [...new Set(failures)];
   };
@@ -1045,6 +1103,7 @@
     lockedIds = new Set(),
     baselineRecipe = [],
     isPartial = false,
+    strictPartialLocks = false,
   }) => {
     if (typeof analyze !== 'function' || typeof score !== 'function') {
       throw new Error('evaluateScenario requiere analyze(recipe, context) y score(analysis, context).');
@@ -1084,17 +1143,25 @@
       lockedIds,
       baselineRecipe,
       isPartial,
+      strictPartialLocks,
     });
 
     const scored = score(analysis, { ...context, recipe: normalized });
     const novelty = noveltyScore(normalized, history);
     const evidence = scored?.provenance || {};
+    const evidenceClassification = classifyEvidence(scored);
+    const rawConfidence = confidenceScoreFor(scored);
+    evidenceClassification.assessedConfidenceScore = Math.min(rawConfidence, evidenceClassification.confidenceCeiling);
     return {
       ...scored,
       novelty,
-      confidenceScore: confidenceScoreFor(scored),
+      // Ranking confidence remains the canonical scoring-engine value. Evidence
+      // tiers are explanatory context only (ADR-0004) and never rerank recipes.
+      confidenceScore: rawConfidence,
       analysis,
       provenance: evidence,
+      evidenceClassification,
+      objectives: objectiveVector({ ...scored, analysis }),
       riskScore: Number(scored?.breakdown?.risk ?? scored?.dimensions?.safety?.score ?? 50),
       constraintFailures: failures,
       allowed: failures.length === 0,
@@ -1296,6 +1363,7 @@
     const partialRecipe = isPartial ? (recipe || []).filter(r => (Number(r.p ?? r.pct) || 0) > 0) : [];
 
     const baseRecipe = isPartial && partialRecipe.length ? normalizeRecipe(partialRecipe) : normalizeRecipe(recipe);
+    const hasExplicitLocks = lockedIds instanceof Set ? lockedIds.size > 0 : !!lockedIds?.length;
     const locked = lockedIds instanceof Set
       ? (lockedIds.size ? lockedIds : new Set(isPartial && partialRecipe.length ? partialRecipe.map(r => r.id) : []))
       : new Set(lockedIds?.length ? lockedIds : (isPartial && partialRecipe.length ? partialRecipe.map(r => r.id) : []));
@@ -1331,6 +1399,7 @@
         lockedIds: locked,
         baselineRecipe: baselineAnchorRecipe,
         isPartial,
+        strictPartialLocks: hasExplicitLocks,
       });
     };
 
@@ -1515,22 +1584,55 @@
     const viable = allowed.filter(c => dimensionVector(c.evaluation).safety >= 60);
     const pareto = paretoFront(viable).sort(utilitySort);
 
-    // Compute added ingredients diff against partial/baseline recipe
+    // Structured before/after explanation. Reason codes describe model
+    // objectives and warnings; they are not claims of measured field effects.
     const baseMap = isPartial
       ? Object.fromEntries(partialRecipe.map(r => [r.id, Number(r.p ?? r.pct) || 0]))
       : recipeMap(baseRecipe);
     const attachDiff = c => {
       if (!c) return;
-      c.addedIngredients = (c.recipe || []).map(r => {
-        const baseP = baseMap[r.id] || 0;
-        const delta = round1(r.p - baseP);
+      const afterMap = recipeMap(c.recipe || []);
+      const ids = [...new Set([...Object.keys(baseMap), ...Object.keys(afterMap)])].sort();
+      c.addedIngredients = ids.map(id => {
+        const baseP = baseMap[id] || 0;
+        const afterP = afterMap[id] || 0;
+        const delta = round1(afterP - baseP);
+        const role = roleByIdForRanking.get(id);
+        const reasonCodes = [];
+        if (delta > 0 && role === 'aireador') reasonCodes.push('AERATION_SUPPORT');
+        if (delta > 0 && (role === 'suplemento_n' || role === 'suplemento_medio')) reasonCodes.push('CN_NUTRITION_ADJUSTMENT');
+        if (delta !== 0 && role === 'base_carbono') reasonCodes.push('CARBON_BASE_REBALANCE');
         return {
-          id: r.id,
-          p: r.p,
+          id,
+          beforeP: round1(baseP),
+          afterP: round1(afterP),
+          p: round1(afterP),
           delta,
           isNew: baseP === 0,
+          change: afterP === 0 ? 'removed' : baseP === 0 ? 'added' : delta > 0 ? 'increased' : 'decreased',
+          reasonCodes,
         };
       }).filter(x => Math.abs(x.delta) >= 0.5);
+      const an = c.evaluation?.analysis || {};
+      const before = baseline.evaluation?.analysis || {};
+      const reasonCodes = [...new Set(c.addedIngredients.flatMap(x => x.reasonCodes))];
+      if (Number.isFinite(an.cn) && Number.isFinite(before.cn) && Number.isFinite(an.sp?.cn_optimal?.ideal) &&
+          Math.abs(an.cn - an.sp.cn_optimal.ideal) < Math.abs(before.cn - an.sp.cn_optimal.ideal)) reasonCodes.push('CN_CLOSER_TO_TARGET');
+      if (an.trichoderma) reasonCodes.push('TRICHODERMA_RISK');
+      if (Number(an.densaP) > 60 && Number(an.airP) < 10) reasonCodes.push('AERATION_REVIEW');
+      c.reasonCodes = [...new Set(reasonCodes)];
+      c.agronomicInsights = c.reasonCodes.map(code => ({
+        code,
+        message: ({
+          AERATION_SUPPORT: 'Aporte estructural añadido; verificar porosidad y distribución de humedad antes de inocular.',
+          CN_NUTRITION_ADJUSTMENT: 'Ajuste nutricional propuesto para acercar C:N; no exceder el límite de suplementación de la especie.',
+          CARBON_BASE_REBALANCE: 'Base de carbono rebalanceada para conservar masa y diversificar la matriz.',
+          CN_CLOSER_TO_TARGET: 'La C:N calculada queda más cerca del objetivo de la especie.',
+          TRICHODERMA_RISK: 'Riesgo modelado de Trichoderma: revisar carga nitrogenada, higiene y tratamiento antes de producir.',
+          AERATION_REVIEW: 'Matriz densa con poco aireador: revisar compactación y porosidad del bloque.',
+        })[code],
+        evidenceTier: c.evaluation?.evidenceClassification?.tier || 'tier_3',
+      }));
     };
     all.forEach(attachDiff);
     attachDiff(baseline);
@@ -1603,6 +1705,7 @@
     applyMutation,
     makeMutations,
     dimensionVector,
+    objectiveVector,
     dominates,
     paretoFront,
     weightedUtility,
@@ -1611,6 +1714,7 @@
     selectRecommended,
     dominantBaseKey,
     searchScenarios,
+    classifyEvidence,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

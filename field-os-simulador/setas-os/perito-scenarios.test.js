@@ -14,6 +14,7 @@ const {
   searchScenarios,
   selectRecommended,
   dominantBaseKey,
+  objectiveVector,
 } = require('./perito-scenarios.js');
 
 const ingredients = [
@@ -402,4 +403,67 @@ test('searchScenarios con receta parcial retorna isPartial=true y añade diffs e
     const tot = rec.recipe.reduce((s, r) => s + r.p, 0);
     assert.ok(Math.abs(tot - 100) < 0.2, `receta completada debe sumar 100%, dio ${tot}`);
   });
+});
+
+test('inventario cero corta la búsqueda sin recurrir silenciosamente al catálogo', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients, analyze, score, useStock: true, stockIds: new Set(),
+  });
+  assert.equal(out.noStock, true);
+  assert.equal(out.explored, 0);
+  assert.deepEqual(out.recommended, []);
+});
+
+test('receta 100% fijada no genera una falsa alternativa', () => {
+  const recipe = [{ id: 'sawdust', p: 80 }, { id: 'bran', p: 20 }];
+  const out = searchScenarios({
+    recipe, ingredients, analyze, score, generations: 2,
+    lockedIds: new Set(['sawdust', 'bran']),
+  });
+  assert.equal(out.recommended.length, 0);
+  assert.equal(out.best.id, 'baseline');
+});
+
+test('un ancla parcial explícitamente fijada conserva su porcentaje exacto', () => {
+  const catalog = [
+    { id: 'carbon', role: 'base_carbono', c: 50, n: 0.1, cn: 500, moisture: 10, cs: ['high'] },
+    { id: 'other', role: 'base_carbono', c: 45, n: 0.5, cn: 90, moisture: 10, cs: ['high'] },
+    { id: 'supp', role: 'suplemento_n', c: 42, n: 3, cn: 14, moisture: 10, cs: ['high'] },
+  ];
+  const spp = { high: { cn_optimal: { min: 40, ideal: 50, max: 70 }, supplementation_max: 20, eb_optimal: 100 } };
+  const out = searchScenarios({
+    recipe: [{ id: 'carbon', p: 40 }], targetKey: 'high', spp,
+    context: { sKey: 'high' }, ingredients: catalog, searchMode: 'hybrid',
+    lockedIds: new Set(['carbon']),
+    analyze: recipe => ({ tot: 100, cn: 50, eb: 80, cost: 400, sp: spp.high }),
+    score: () => ({ score: 80, dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 80 } } }),
+  });
+  assert.ok(out.recommended.length > 0);
+  out.recommended.forEach(candidate => {
+    assert.equal(candidate.recipe.find(row => row.id === 'carbon')?.p, 40);
+  });
+});
+
+test('Pareto explícito conserva empate y orden determinista por clave canónica', () => {
+  const mk = (id, recipe) => ({ id, recipe, utility: 80, evaluation: {
+    score: 80,
+    analysis: { cn: 35, moisture: 65, eb: 90, cost: 1000, sp: { cn_optimal: { min: 25, ideal: 35, max: 50 }, moisture: { ideal: 65 }, eb_optimal: 120 } },
+    dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 80 } },
+  } });
+  const candidates = [mk('b', [{ id: 'z', p: 100 }]), mk('a', [{ id: 'a', p: 100 }])];
+  assert.deepEqual(paretoFront(candidates).map(c => c.id), ['b', 'a']);
+  assert.deepEqual(objectiveVector(candidates[0].evaluation), objectiveVector(candidates[1].evaluation));
+});
+
+test('diff Perito incluye antes/después, bajas y códigos de razón sin inflar evidencia', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients, analyze, score, generations: 1, stepPct: 10,
+  });
+  const candidate = out.ranked.find(c => c.addedIngredients.some(change => change.change === 'removed' || change.change === 'decreased'));
+  assert.ok(candidate);
+  assert.ok(candidate.addedIngredients.every(change => Number.isFinite(change.beforeP) && Number.isFinite(change.afterP)));
+  assert.equal(candidate.evaluation.evidenceClassification.tier, 'tier_3');
+  assert.ok(candidate.evaluation.evidenceClassification.assessedConfidenceScore <= 35);
 });

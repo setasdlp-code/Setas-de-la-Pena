@@ -3809,6 +3809,8 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     suppPct,
     suppOverLimit:suppPct>suppLimit,
     realCostKnown:!!an?.realCostKnown,
+    evidenceClassification:candidate?.evaluation?.evidenceClassification||null,
+    agronomicInsights:candidate?.agronomicInsights||[],
     scenario:candidate,
   };
 };
@@ -10169,6 +10171,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           </div>
                                         ))}
                                       </div>
+                                      {r.agronomicInsights?.length>0&&<div style={{marginTop:8,padding:'7px 10px',borderLeft:'3px solid var(--moss-500,var(--accent-olive))',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
+                                        <b>Lectura agronómica · {r.evidenceClassification?.label||'Tier 3 · hipótesis/modelo'}:</b> {r.agronomicInsights.slice(0,2).map(x=>x.message).join(' ')}
+                                      </div>}
                                       {/* Riesgo + bodega produce */}
                                       <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
                                         <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
