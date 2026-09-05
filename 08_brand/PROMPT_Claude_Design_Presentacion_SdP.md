@@ -18,7 +18,7 @@ Crea una presentación institucional de **12 slides** sobre **Setas de la Peña*
 Monocromía Terracota como primera opción; máximo dos colores por slide con jerarquía clara. Nunca los cinco al mismo peso visual.
 
 **Tipografía:**
-- Títulos/display: serif humanista contemporánea (Gaya Patched; si no está disponible, usar un serif editorial cálido equivalente)
+- Títulos/display: serif humanista contemporánea (Gaya; si no está disponible, usar un serif editorial cálido equivalente)
 - Cuerpo: Open Sans (Regular para corrido, Semibold para subtítulos)
 - Nombres de producto en mayúsculas con tracking abierto (+200 a +300)
 
