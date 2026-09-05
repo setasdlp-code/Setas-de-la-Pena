@@ -89,12 +89,26 @@
   --sp-16: 32px;
   --sp-20: 40px;
 
+  /* ── SWISS-BOTANICAL TOKENS ── */
+  --font-serif: 'Gaya', 'Newsreader', Georgia, serif;
+  --font-display: var(--font-serif);
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --r-none: 0px;
+  --r-xs: 0px;
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-pill: 0px;
+
   /* ── BUTTON STATE SCALE ── */
   --btn-bg: var(--paper-0);
   --btn-border: var(--ink-900);
   --btn-text: var(--ink-900);
   --btn-hover-bg: var(--paper-200);
-  --btn-hover-shadow: var(--shadow-card-hover);
+  --btn-hover-shadow: none;
   --btn-active-transform: translateY(-1px);
 
   --btn-pri-bg: var(--moss-700);
@@ -321,12 +335,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── SECTION LABELS (handwritten field notes) ─────────────────────── */
 .sim-root .sec{
-  font-family:var(--font-display); font-weight:400; font-size:32px; letter-spacing:-0.01em;
+  font-family:var(--font-serif, 'Gaya', serif); font-weight:700; font-size:28px; letter-spacing:-0.01em;
   color:var(--ink-0); padding:0 0 12px; margin-bottom:20px;
-  border-bottom:1px solid var(--line-1); display:flex; align-items:center; gap:12px;
-  font-style:italic; position:relative;
+  border-bottom:1px solid var(--border-soft); display:flex; align-items:center; gap:12px;
+  font-style:normal; position:relative;
 }
-.sim-root .sec::after{ content:attr(data-tag); position:absolute; right:0; top:50%; transform:translateY(-50%); font-family:var(--font-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--line-1); font-weight:400; }
+.sim-root .sec::after{ content:attr(data-tag); position:absolute; right:0; top:50%; transform:translateY(-50%); font-family:var(--font-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2); font-weight:700; }
 .sim-root .sec::before{ display:none; }
 
 /* ── SPECIES CARDS (botanical specimens) ──────────────────────────── */
@@ -1887,13 +1901,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .spp-grid > *:nth-child(n+4):nth-child(-n+6){background:var(--paper-100)!important;}
 .sim-root .spp-grid > *:nth-child(n+7){background:var(--paper-100)!important;}
 @media(max-width:768px){.sim-root .spp-grid > *{background:var(--paper-50)!important;}.sim-root .spp-grid > *:nth-child(even){background:var(--paper-100)!important;}}
-.sim-root .spp-card{transition:background var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:var(--radius-sm)!important;border:1px solid rgba(26,20,16,0.11)!important;box-shadow:var(--shadow-card-rest)!important;contain:paint;isolation:isolate;}
-.sim-root .spp-card:hover{box-shadow:var(--shadow-card-hover)!important;transform:translateY(-1px);}
-.sim-root .spp-card.on{background:var(--surface-selected)!important;box-shadow:var(--shadow-ring-accent)!important;transform:translateY(-2px);position:relative;}
-.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent-blue-grey);color:var(--text-on-dark);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:var(--shadow-badge-accent);}
+.sim-root .spp-card{transition:background var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:0!important;border:1px solid var(--border-soft)!important;box-shadow:none!important;contain:paint;isolation:isolate;}
+.sim-root .spp-card:hover{box-shadow:none!important;border-color:var(--border-strong)!important;transform:translateY(-1px);}
+.sim-root .spp-card.on{background:var(--surface-selected)!important;border:2px solid var(--accent-olive)!important;box-shadow:none!important;transform:translateY(-1px);position:relative;}
+.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:0;background:var(--accent-olive);color:var(--text-on-dark);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:none;}
 /* Scientific name — smaller italic, warm grey for editorial contrast */
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:14px!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
-.sim-root .p-common{font-family:var(--font-display);font-weight:400;font-size:28px;color:var(--ink-900);line-height:1.1;}
+.sim-root .p-common{font-family:var(--font-serif, 'Gaya', serif);font-weight:700;font-size:24px;color:var(--ink-0);line-height:1.1;letter-spacing:-0.01em;}
 /* ACTIVA badge */
 /* Archival header */
 .sim-root .p-arch-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px 9px 14px;border-bottom:1px solid rgba(26,20,16,0.07);}
@@ -2214,12 +2228,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 /* ── PAGE TITLE BAR ──────────────────────────────────────────── */
-.sim-root .page-title-bar{padding:12px 24px 0;max-width:1280px;margin:0 auto;}
-.sim-root .page-title-eyebrow{font-family:var(--font-body);font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-700);display:block;margin-bottom:6px;}
-.sim-root .page-title-h{font-family:var(--font-display);font-size:38px;color:var(--ink-0);margin:0;font-weight:400;line-height:1;}
-.sim-root .page-title-rule{height:1.5px;width:36px;background:var(--coral-500);opacity:var(--opacity-subtle);margin:10px 0 18px;}
+.sim-root .page-title-bar{padding:16px 24px 0;max-width:1280px;margin:0 auto;}
+.sim-root .page-title-eyebrow{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:6px;}
+.sim-root .page-title-h{font-family:var(--font-serif, 'Gaya', serif);font-size:36px;color:var(--ink-0);margin:0;font-weight:700;line-height:1.05;letter-spacing:-0.01em;}
+.sim-root .page-title-rule{height:2px;width:44px;background:var(--accent-terracotta);margin:10px 0 20px;}
 /* ── v6.0: BODEGA BAR ─────────────────────────────────────── */
-.sim-root .bodega-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--paper-100);border:1px solid var(--border-soft);border-radius:var(--radius-sm);margin-bottom:8px;}
+.sim-root .bodega-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--paper-100);border:1px solid var(--border-soft);border-radius:0;margin-bottom:8px;}
 .sim-root .bodega-bar-icon{font-size:14px;flex-shrink:0;line-height:1;}
 .sim-root .bodega-bar-title{font-family:var(--font-body);font-size:12px;font-weight:700;color:var(--ink-800);line-height:1.2;}
 .sim-root .bodega-bar-sub{font-family:var(--font-mono);font-size:10px;color:var(--ink-700);margin-top:3px;font-weight:600;}
@@ -2768,11 +2782,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    JS (didn't reach keyboard focus, never fired on touch, and there was no
    :active feedback anywhere). Moved to CSS so :hover, :active and
    :focus-visible (global rule above) all come for free. ── */
-.sim-root .home-quick-action{background:var(--paper-0);border:1px solid var(--border-soft);box-shadow:var(--shadow-card-rest);transition:box-shadow var(--duration-standard) var(--ease-spring, var(--ease)),border-color var(--duration-standard) var(--ease-spring, var(--ease)),transform var(--duration-quick) var(--ease-spring, var(--ease))}
-.sim-root .home-quick-action.is-primary{border:1.5px solid var(--moss-700)}
-.sim-root .home-quick-action.is-jornada{border:1.5px solid var(--coral-500)}
-.sim-root .home-quick-action:hover{box-shadow:var(--shadow-card-hover);transform:translateY(-1px)}
-.sim-root .home-quick-action:active{box-shadow:var(--shadow-card-rest);transform:translateY(0) scale(.97)}
+/* .sim-root .home-quick-action styles are declared below in the FOS v3 section (0px radius, no box-shadow) */
 
 .sim-root .home-stage-card{background:var(--paper-100);border:1px solid var(--paper-300);transition:background-color var(--duration-standard) var(--ease-spring, var(--ease)),border-color var(--duration-standard) var(--ease-spring, var(--ease)),transform var(--duration-quick) var(--ease-spring, var(--ease))}
 .sim-root .home-stage-card.is-active{background:var(--paper-50);border-color:var(--stage-accent,var(--moss-300))}
@@ -2813,64 +2823,66 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .home-header-cockpit {
   background: var(--paper-0);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--accent-terracotta);
+  border-radius: var(--radius-none, 0px);
   padding: 20px 24px;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-card-rest);
+  box-shadow: var(--shadow-none);
 }
 
 .sim-root .home-quick-action {
-  transition: transform var(--duration-quick) cubic-bezier(.32,.72,.36,1),
-              box-shadow var(--duration-quick) ease,
-              border-color var(--duration-standard) ease,
-              background-color var(--duration-standard) ease;
+  transition: border-color var(--duration-standard) ease,
+              background-color var(--duration-standard) ease,
+              transform var(--duration-quick) ease;
   border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-none, 0px);
   background: var(--paper-0);
 }
 .sim-root .home-quick-action:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-none);
   border-color: var(--border-strong);
-  background: var(--paper-50);
+  background: var(--paper-1);
 }
 .sim-root .home-quick-action:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 .sim-root .home-quick-action.is-jornada {
-  border-left: 3px solid var(--coral-600);
-  background: color-mix(in oklab, var(--coral-500) 4%, var(--paper-0));
+  border-left: 3px solid var(--accent-terracotta);
+  background: color-mix(in oklab, var(--accent-terracotta) 4%, var(--paper-0));
 }
 .sim-root .home-quick-action.is-primary {
-  border-left: 3px solid var(--moss-700);
+  border-left: 3px solid var(--accent-olive);
 }
 
 .sim-root .home-workspace-card {
   transition: transform var(--duration-quick) cubic-bezier(.32,.72,.36,1),
               box-shadow var(--duration-quick) ease,
               border-color var(--duration-standard) ease;
+  border-radius: var(--radius-none, 0px);
 }
 .sim-root .home-workspace-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-none); /* border-color below is the hover cue */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-none);
   border-color: var(--border-strong);
 }
 
 .sim-root .home-lote-card {
-  transition: transform var(--duration-quick) ease,
-              box-shadow var(--duration-quick) ease,
-              border-color var(--duration-standard) ease,
-              background-color var(--duration-standard) ease;
+  transition: border-color var(--duration-standard) ease,
+              background-color var(--duration-standard) ease,
+              transform var(--duration-quick) ease;
+  border-radius: var(--radius-none, 0px);
 }
 .sim-root .home-lote-card:hover {
-  transform: translateY(-1.5px);
-  box-shadow: var(--shadow-none); /* border-color below is the hover cue */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-none);
   border-color: var(--border-strong);
-  background: var(--paper-50);
+  background: var(--paper-1);
 }
 .sim-root .home-lote-card:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .sim-root .home-activity-row {
@@ -2948,17 +2960,18 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:840px){ .sim-root .home-ambient-strip{ grid-template-columns: 1fr; } }
 .sim-root .ambient-chamber-card {
   background: var(--paper-0);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--r-sm);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-none, 0px);
   padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  transition: border-color .15s ease;
+  transition: border-color .15s ease, background-color .15s ease;
 }
 .sim-root .ambient-chamber-card:hover {
-  border-color: var(--paper-400);
+  border-color: var(--border-strong);
+  background: var(--paper-1);
 }
 
 /* ── FORMULAR · VISUAL PARITY WITH CONTROL ───────────────────────
@@ -3700,7 +3713,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .formular-mode-btn:hover,
 .sim-root .formular-mode-btn:focus-visible{border-color:var(--border-strong);background:var(--paper-100);color:var(--ink-900)}
-.sim-root .formular-mode-btn.is-active{border-color:var(--ink-900);background:var(--paper-0);color:var(--ink-900);box-shadow:3px 3px 0 var(--ink-900)}
+.sim-root .formular-mode-btn.is-active{border-color:var(--ink-900);background:var(--paper-0);color:var(--ink-900);box-shadow:none;border-bottom:2px solid var(--accent-terracotta);}
 .sim-root .formular-mode-badge{
   min-width:20px;
   padding:2px 6px;
@@ -5229,7 +5242,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .recetario-count{
   font-family:var(--font-num);font-size:13px;font-weight:700;color:var(--ink-500);
-  background:var(--paper-100);border:1px solid var(--paper-300);border-radius:10px;padding:1px 9px;
+  background:var(--paper-100);border:1px solid var(--paper-300);border-radius:0;padding:1px 9px;
 }
 .sim-root .recetario-hdr-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .sim-root .recetario-act{
@@ -5277,4 +5290,68 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .recetario-act{flex:1;justify-content:center;text-align:center;}
   .sim-root .recetario-ficha{flex-direction:column;gap:12px;}
   .sim-root .recetario-ficha-img{width:100%;height:140px;}
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FOS v3 SWISS-BOTANICAL CANONICAL ENFORCEMENT
+   Strict 0px geometry, zero floating box-shadows, hairline borders
+   ════════════════════════════════════════════════════════════════ */
+.sim-root .panel,
+.sim-root .card,
+.sim-root .badge,
+.sim-root .btn,
+.sim-root .inv-btn,
+.sim-root .inv-modal,
+.sim-root .dash-card,
+.sim-root .spp-card,
+.sim-root .p-chip,
+.sim-root .pantry-chip,
+.sim-root .stock-critical-card,
+.sim-root .climate-module-card,
+.sim-root .climate-detail-btn,
+.sim-root .recetario-ficha,
+.sim-root .rec-empty,
+.sim-root .sempty,
+.sim-root .economic-summary-card,
+.sim-root .econ-metric-box,
+.sim-root .ps-kpi,
+.sim-root .co-form-panel,
+.sim-root .co-form-species,
+.sim-root .builder-wrap,
+.sim-root button,
+.sim-root input,
+.sim-root select,
+.sim-root textarea,
+.sim-root table,
+.sim-root th,
+.sim-root td {
+  border-radius: 0 !important;
+}
+
+.sim-root .panel,
+.sim-root .card,
+.sim-root .btn,
+.sim-root .inv-btn,
+.sim-root .inv-modal,
+.sim-root .dash-card,
+.sim-root .spp-card,
+.sim-root .climate-module-card,
+.sim-root .ing-list > div,
+.sim-root .ing-item,
+.sim-root .economic-summary-card,
+.sim-root .co-form-panel,
+.sim-root .spp-info-2col {
+  box-shadow: none !important;
+}
+
+.sim-root .panel:hover,
+.sim-root .card:hover,
+.sim-root .btn:hover,
+.sim-root .inv-btn:hover,
+.sim-root .dash-card:hover,
+.sim-root .spp-card:hover,
+.sim-root .climate-module-card:hover,
+.sim-root .ing-list > div:hover,
+.sim-root .economic-summary-card:hover {
+  box-shadow: none !important;
 }

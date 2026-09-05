@@ -24,18 +24,18 @@
 </head>
 <body>
   <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper-1,#efebe0);contain:strict;">
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:0;box-shadow:none;font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
         <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
+        <h1 style="margin:2px 0 0;font-family:var(--font-serif,'Gaya',Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
         <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink-2,#6b6759);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
         <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--ink-2,#6b6759);">Conectando…</div>
         <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Correo</label>
-        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:0;background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
         <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Contraseña</label>
-        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:0;background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
         <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error,#c53030);font-size:12px;font-family:var(--font-mono,monospace);"></div>
-        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-sm,2px);font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
       </div>
     </form>
   </div>
@@ -130,6 +130,17 @@
   @keyframes fos-toast-undo { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 92%{opacity:1;transform:translateY(0);} 100%{opacity:0;} }
 
   .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
+  .app-shell h1, h1 { font-family:var(--font-serif, 'Gaya', Georgia, serif) !important; font-weight:700 !important; }
+  .app-shell button,
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea,
+  .app-shell .rail-btn,
+  .app-shell .rail-flyout-item,
+  .app-shell .workspace-more-item {
+    border-radius:0 !important;
+    box-shadow:none !important;
+  }
   .app-rail { position:fixed; z-index:var(--z-rail); background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
   .rail-peek { display:none; }
   .rail-btn { display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:9px 4px; transition:color .15s, background-color .15s; border-radius:var(--radius-sm); }
@@ -137,7 +148,7 @@
   .rail-btn.on { color:var(--ink-0); }
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { display:flex; align-items:center; justify-content:center; padding:12px 2px 8px; border:0; background:none; cursor:pointer; width:100%; }
@@ -146,7 +157,7 @@
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
-  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
+  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border:1px solid var(--border-strong); box-shadow:none; width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
   .rail-flyout-title { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
   .rail-flyout-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; background:none; border:none; cursor:pointer; padding:9px 4px; border-radius:var(--radius-sm); color:var(--ink-2); position:relative; }
   .rail-flyout-item svg { width:22px; height:22px; flex-shrink:0; }
@@ -176,7 +187,7 @@
   .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
   .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
-    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
+    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:none; padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
     .rail-flyout-title { display:none; }
     .rail-flyout-item { flex:0 0 auto; min-width:54px; padding:8px 6px; gap:3px; }
     .rail-flyout-item svg { width:20px; height:20px; }
@@ -198,11 +209,11 @@
       background:linear-gradient(to right, var(--paper-2), transparent);
     }
     .app-shell.sim-collapsed .rail-peek::before {
-      content:''; width:3px; height:44px; border-radius:2px; background:var(--accent-terracotta); opacity:var(--opacity-subtle);
+      content:''; width:3px; height:44px; border-radius:0; background:var(--accent-terracotta); opacity:var(--opacity-subtle);
     }
     .app-shell.sim-collapsed .rail-peek:hover::before { opacity:1; }
     .app-shell.sim-collapsed .rail-peek:hover ~ .app-rail,
-    .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:2px 0 24px rgba(0,0,0,.12); }
+    .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:none; }
   }
   @media (max-width:859px){
     .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow:visible; }

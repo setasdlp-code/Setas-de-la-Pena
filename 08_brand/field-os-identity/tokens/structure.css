@@ -1,8 +1,9 @@
 /* Structure: rules, radii, focus — no shadows, no glass, no floating panels. */
 :root {
+  /* Swiss-Botanical: bordes 100% rectos sin radios decorativos (corte limpio de prensa) */
   --radius-none: 0px;
-  --radius-sm: 2px;   /* tags, inputs only */
-  --radius-md: 3px;   /* rare — small controls */
+  --radius-sm: 0px;
+  --radius-md: 0px;
 
   --rule-hairline: 1px solid var(--border-hairline);
   --rule-strong: 1px solid var(--border-strong);
