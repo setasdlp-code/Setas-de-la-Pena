@@ -18,7 +18,7 @@ fails = []
 
 # 1 · token references
 defined = set()
-for f in ['tokens/tokens.css', 'tokens/fonts.css', 'components/base.css', 'components/components.css']:
+for f in ['tokens/tokens.css', 'tokens/fonts.css', 'components/base.css', 'components/components.css', 'components/editorial.css']:
     defined |= set(DECL.findall((ROOT / f).read_text()))
 used = {}
 for f in list(ROOT.glob('components/*.css')) + list(ROOT.glob('mockups/*.html')) + [ROOT / 'mockups/_shell.css']:

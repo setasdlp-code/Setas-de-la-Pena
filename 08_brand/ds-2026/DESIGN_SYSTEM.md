@@ -328,6 +328,55 @@ line and QR. A customer never sees a room name or an operator name.
 
 ---
 
+## 5B · The editorial layer
+
+`components/editorial.css` adds the devices that make an **Archive** surface read
+as a botanical journal rather than a form. Everything in it is scoped: it is
+inert unless an ancestor carries `data-mode="archive"` or an `.ed-*` class is
+applied deliberately. **Field and Control stay instrument-like** — that contrast
+is the point of the system, not an inconsistency in it.
+
+### The prose face changes in Archive
+
+| Mode | Running text |
+|---|---|
+| `archive` | **Gaya Patched Light, 17.5px/1.62**, measure 58ch |
+| `field`, `control` | IBM Plex Sans Regular, 16px/1.55, measure 68ch |
+
+Setting the running text in the same voice as the species name is what makes a
+page read as a plate. Gaya *Regular* is too dark for a three-paragraph column —
+Light is normative here, and the lede differs by **size, not weight**.
+
+### Devices
+
+| Class | What it is |
+|---|---|
+| `.ed-prose` | Marks a block as archive prose; switches the face and measure. |
+| `.ed-lede` | Opening paragraph, Gaya Light 22px. Never carries a drop cap. |
+| `.ed-drop` | Three-line drop cap on the paragraph's first letter, Gaya Black. |
+| `.ed-eyebrow` | Gaya in letterspaced caps — the archive counterpart to the mono `.t-label`, which stays the operational register. |
+| `.ed-sec` | Section head: rule above, `__k` eyebrow, `__h` heading. |
+| `.ed-folio` / `--foot` | Running head and folio foot, as on a printed sheet. |
+| `.ed-div` | Centred plate mark between rules, instead of a full-width rule. |
+| `.ed-cartouche` | Caption block under a plate: `__n` reference, `__l` binomial, `__d` description. |
+| `.ed-note` | Margin note, 22ch — the apparatus of a scientific plate. |
+| `.ed-cols` | Two-column text with a hairline column rule. |
+
+### `.chem` — a real fix, not a flourish
+
+Gaya draws **U+2082 at full size**, so `CO₂` set in the editorial face reads as
+"CO2". Since this operation writes CO₂ on nearly every surface, `.chem` routes
+the formula — and only the formula — to the sans, which has a true subscript:
+
+```html
+el <span class="chem">CO₂</span> baja de 800 ppm
+```
+
+`.chem` lives in `base.css`, not the editorial layer: the problem is the face,
+not the mode, so it applies anywhere Gaya meets a chemical formula.
+
+---
+
 ## 6 · Compositions
 
 Three page types. The mode is the page's contract with the reader.
@@ -400,6 +449,7 @@ every brand face and **fails the build** if one silently falls back.
 | 5 | `05-dashboard-desktop.png` | **Dashboard escritorio**, 1600px Control | Masthead "Setas de la Peña" `display-02` 44px Gaya Bold. Four telemetry tiles, 14-day CO₂ chart (moss = Sala 02, soil dashed = Sala 03, ochre dashed = umbral), 5-row metric table, aside with two lote cards. |
 | 6 | `06-dashboard-mobile.png` | **Dashboard móvil**, 430 × 932 @3× | `heading-02` masthead, hamburger at 44px tap target, 2-up tiles, compact chart, horizontal lote cards (88px media ‖ body). |
 | 7 | `07-signage.png` | **Señalética Sala 02**, 840 × 520, A2 | `SOIL` band, "Sala 02 — Incubación" `display-02` 44px Gaya Bold in `PAPER`. Stats 36px Mono SemiBold: HR 91 %, CO₂ 742 ppm, 24,0 °C. |
+| 9 | `09-ficha-editorial.png` | **Lámina editorial**, Reishi, 860px Archive — the flagship of the editorial layer | Folio running head, `.ed-eyebrow` for the taxon, `display-02` 44px Gaya Bold, `.ed-lede` 22px Gaya Light, `.ed-drop` three-line cap, `.ed-cartouche` under the plate, three `.ed-note` blocks in the outer column, folio foot. |
 | 8 | `08-sop.png` | **SOP-04 Procedimiento Shiitake**, 720px A4 | `heading-01` 32px Gaya Medium title, *Lentinula edodes* in `latin`, 4-row conditions table, five step boxes with 24px Mono numerals, rust stop banner. |
 
 Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
@@ -422,8 +472,9 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
 │   ├── typography.json           ← families, weights, 12-role scale, minimums
 │   └── spacing.json              ← scale, 12-col grid, three modes, structure
 ├── components/
-│   ├── base.css                  ← reset, type classes, grid, rules
-│   └── components.css            ← all eleven components
+│   ├── base.css                  ← reset, type classes, grid, rules, .chem
+│   ├── components.css            ← all eleven components
+│   └── editorial.css             ← archive-only editorial devices
 ├── assets/
 │   ├── fonts/                    ← Gaya ×12, IBM Plex Sans ×5, IBM Plex Mono ×3
 │   ├── icons/                    ← 12 SVG pictograms, 48-grid, 1.5px stroke

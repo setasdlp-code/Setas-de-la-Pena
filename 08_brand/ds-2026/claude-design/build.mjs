@@ -29,6 +29,7 @@ await mkdir(path.join(OUT, 'components'), { recursive: true });
 await cp(path.join(SRC, 'tokens/tokens.css'), path.join(OUT, 'tokens/tokens.css'));
 await cp(path.join(SRC, 'components/base.css'), path.join(OUT, 'components/base.css'));
 await cp(path.join(SRC, 'components/components.css'), path.join(OUT, 'components/components.css'));
+await cp(path.join(SRC, 'components/editorial.css'), path.join(OUT, 'components/editorial.css'));
 
 // fonts move from assets/fonts/ to fonts/, so the @font-face srcs must follow
 const fonts = await readFile(path.join(SRC, 'tokens/fonts.css'), 'utf8');
@@ -44,6 +45,7 @@ await writeFile(path.join(OUT, 'styles.css'), `/* ──────────
 @import url('./tokens/tokens.css');
 @import url('./components/base.css');
 @import url('./components/components.css');
+@import url('./components/editorial.css');
 `);
 
 // ── assets ───────────────────────────────────────────────────────────────

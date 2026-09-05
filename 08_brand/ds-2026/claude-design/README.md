@@ -80,6 +80,22 @@ State modifiers are `--ok`, `--warn`, `--error` on `.sdp-lote`, `.sdp-alert`
 and `.sdp-tele`. Figure variants are `.sdp-fig--plate` (4:5, `contain`),
 `--specimen` (1:1), `--cultivation` (3:2), `--ingredient` (64px), `--diagram` (16:9).
 
+## The editorial layer (Archive only)
+
+On `data-mode="archive"` surfaces — fichas, plates, packaging inserts, printed
+SOP covers — running text set inside `.ed-prose` switches to **Gaya Patched
+Light 17.5px**, measure 58ch. Field and Control keep IBM Plex Sans. That
+contrast is deliberate: the archive reads like a journal, the field reads like
+an instrument.
+
+`.ed-prose` · `.ed-lede` · `.ed-drop` (three-line cap) · `.ed-eyebrow` ·
+`.ed-sec` (`__k` `__h`) · `.ed-folio` (`__t` `__n`, `--foot`) · `.ed-div`
+(`__m`) · `.ed-cartouche` (`__n` `__l` `__d`) · `.ed-note` (`__k`) · `.ed-cols`
+
+**Always write chemical formulae as `<span class="chem">CO₂</span>`.** Gaya
+draws U+2082 at full size, so an unwrapped `CO₂` in editorial prose reads as
+"CO2". `.chem` routes just the formula to the sans, which has a true subscript.
+
 ## Rules that are not negotiable
 
 - **No shadows, no gradients, no glass.** Depth is a rule, never a blur.
