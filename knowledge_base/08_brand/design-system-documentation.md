@@ -93,13 +93,13 @@ Pigmentos de acento destinados a superficies de cara al cliente (empaque, fichas
 
 | Familia | Uso | Pesos |
 |---------|-----|-------|
-| **Gaya** | Display, títulos | 100–900, con itálicas |
+| **Gaya Patched** | Display, títulos | 100–900, con itálicas |
 | **IBM Plex Sans Display** | Cuerpo, UI, labels (reemplaza a PP Object Sans) | 300–700 |
 | **IBM Plex Mono** | Códigos de lote, datos tabulares, metadata técnica | 400/500/600, vía Google Fonts CDN |
 
 ```css
---font-sans: 'Gaya', 'Helvetica Neue', Arial, sans-serif;
---font-display: 'IBM Plex Sans Display', 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+--font-sans: 'Gaya Patched', 'Helvetica Neue', Arial, sans-serif;
+--font-display: 'IBM Plex Sans Display', 'Gaya Patched', 'Helvetica Neue', Arial, sans-serif;
 --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
 ```
 
@@ -137,8 +137,8 @@ Para materiales de cara al cliente (dossiers de chefs, empaque, pasaporte digita
 
 | Rol | Familia | Tratamiento | Función |
 |---|---|---|---|
-| **Masthead / Títulos** | **Gaya Display** | Sentence case o mayúsculas con espaciado amplio, peso 500–700 | Porte clásico, alto contraste visual, solemnidad botánica |
-| **Especie / Sensorial** | **Gaya Italic** | Siempre en *itálica*, espaciado natural | Nombres científicos (*L. edodes*, *H. erinaceus*) y notas de cata |
+| **Masthead / Títulos** | **Gaya Patched Display** | Sentence case o mayúsculas con espaciado amplio, peso 500–700 | Porte clásico, alto contraste visual, solemnidad botánica |
+| **Especie / Sensorial** | **Gaya Patched Italic** | Siempre en *itálica*, espaciado natural | Nombres científicos (*L. edodes*, *H. erinaceus*) y notas de cata |
 | **Cuerpo / Prosa** | **IBM Plex Sans Display** | 16px mínimo (`text-prose`), leading 1.5–1.6 | Guías de cocción, historia de origen, notas del recolector |
 | **Terroir / Provenance** | **IBM Plex Mono** | 11–13px, tracking amplio (`0.06em`) | Altitud (`2.600 msnm`), hora de cosecha (`06:15 AM`), lote en QR |
 
@@ -221,7 +221,7 @@ Superficie web responsiva que se abre al escanear el QR del empaque o menú:
 #### FOS-06.8 · Tactile Packaging Sleeve (`.fos-sleeve`)
 Fajilla perimetral de empaque para cajas de 250g, 500g y 1kg:
 - Ventana de papel glassine translúcido vegetal (cero plástico de un solo uso).
-- Identificación de especie con nombre común en gran formato y nombre binomial en *Gaya Italic*.
+- Identificación de especie con nombre común en gran formato y nombre binomial en *Gaya Patched Italic*.
 - Sello de papel perforado con lote codificado en QR y fecha/hora estampada a mano.
 
 ---
