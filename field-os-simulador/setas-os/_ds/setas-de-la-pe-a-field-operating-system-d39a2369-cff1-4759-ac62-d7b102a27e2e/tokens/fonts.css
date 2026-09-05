@@ -1,9 +1,20 @@
 /* Gaya Patched — primary identity face, packaged with Setas OS.
    Consolidated for fast cold-start in field operations (offline / rural 3G). */
 @font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+
 @font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+
 @font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+
 @font-face { font-family: 'Gaya Patched'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Gaya'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GayaPatched'; src: url('../assets/fonts/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
 
 
 /* IBM Plex — display and operational-data faces, packaged for the same
@@ -21,7 +32,9 @@
 @font-face { font-family: 'IBM Plex Mono'; src: url('../assets/fonts/IBMPlexMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
 
 :root {
-  --font-sans: 'Gaya Patched', 'Helvetica Neue', Arial, sans-serif;
+  --font-editorial: 'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif;
+  --font-serif: 'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-display: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
 }

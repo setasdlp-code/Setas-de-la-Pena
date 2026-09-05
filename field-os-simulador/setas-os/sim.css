@@ -90,7 +90,8 @@
   --sp-20: 40px;
 
   /* ── SWISS-BOTANICAL TOKENS ── */
-  --font-serif: 'Gaya', 'Newsreader', Georgia, serif;
+  --font-editorial: 'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif;
+  --font-serif: var(--font-editorial, 'Gaya Patched', 'Gaya', Georgia, serif);
   --font-display: var(--font-serif);
   --radius-none: 0px;
   --radius-sm: 0px;

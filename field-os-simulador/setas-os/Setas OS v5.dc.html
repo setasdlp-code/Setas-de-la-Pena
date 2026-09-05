@@ -7,6 +7,11 @@
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="ds-2026/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
 <style>
   /*
@@ -27,7 +32,7 @@
     <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
         <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--warning-text,#8C6B2E);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo · 2.600 m</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-editorial,'Gaya Patched',Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink,#222222);">Setas de la Peña</h1>
+        <h1 style="margin:2px 0 0;font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif));font-size:30px;line-height:1.05;font-weight:700;color:var(--ink,#222222);">Setas de la Peña</h1>
         <p style="margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--ink-muted,#555555);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
         <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted,#555555);">Conectando…</div>
         <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Correo</label>
@@ -136,7 +141,7 @@
   @keyframes fos-toast-undo { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 92%{opacity:1;transform:translateY(0);} 100%{opacity:0;} }
 
   .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
-  .app-shell h1, h1 { font-family:var(--font-serif, 'Gaya', Georgia, serif) !important; font-weight:700 !important; }
+  .app-shell h1, h1 { font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif)) !important; font-weight:700 !important; }
   .app-shell button,
   .app-shell input,
   .app-shell select,
