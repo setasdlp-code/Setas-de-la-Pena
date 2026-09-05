@@ -163,9 +163,9 @@
   --border-ink:    var(--ink-0);
 
   /* ── TYPE FAMILIES — DS-2026 ── */
-  --font-editorial: 'Gaya Patched', 'Iowan Old Style', Georgia, serif;
-  --font-serif:     'Gaya Patched', 'Iowan Old Style', Georgia, serif;
-  --font-display:   var(--font-editorial);
+  --font-editorial: 'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif;
+  --font-serif:     var(--font-editorial, 'Gaya Patched', 'Gaya', Georgia, serif);
+  --font-display:   var(--font-editorial, 'Gaya Patched', 'Gaya', Georgia, serif);
   --font-sans:      'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-mono:      'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --font-body:      var(--font-sans);

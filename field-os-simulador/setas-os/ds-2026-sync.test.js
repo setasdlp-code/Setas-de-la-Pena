@@ -50,3 +50,19 @@ test('packaged DS-2026 font and icon assets exist and are non-empty', () => {
     assert.ok(fs.existsSync(fullPath), `Species img missing: ${imgPath}`);
   }
 });
+
+test('fonts.css provides Gaya, Gaya Patched, and GayaPatched @font-face declarations', () => {
+  const fontsCss = read(PACKAGED_DS, 'tokens/fonts.css');
+  assert.match(fontsCss, /font-family:\s*'Gaya Patched'/);
+  assert.match(fontsCss, /font-family:\s*'Gaya'/);
+  assert.match(fontsCss, /font-family:\s*'GayaPatched'/);
+  assert.match(fontsCss, /--font-editorial:\s*'Gaya Patched',\s*'Gaya'/);
+  assert.match(fontsCss, /--font-serif:\s*'Gaya Patched',\s*'Gaya'/);
+});
+
+test('production shell preloads Gaya and links ds-2026/tokens/fonts.css in head', () => {
+  const html = fs.readFileSync(path.join(APP_ROOT, 'Setas OS v5.dc.html'), 'utf8');
+  assert.match(html, /<link rel="stylesheet" href="ds-2026\/tokens\/fonts\.css">/);
+  assert.match(html, /<link rel="preload" href="ds-2026\/assets\/fonts\/GayaPatched-Bold\.otf"/);
+  assert.match(html, /font-family:var\(--font-editorial,\s*var\(--font-serif,\s*'Gaya Patched',\s*'Gaya'/);
+});
