@@ -49,11 +49,14 @@ El sistema es 100% autocontenido e independiente de las hojas de estilo de produ
 │   ├── product.html           # Ficha de shiitake y selección local de formato
 │   ├── editorial.html         # Cuaderno: "El placer de mirar de cerca"
 │   ├── traceability.html      # Estructura de origen con campos pendientes
+│   ├── components.html        # Pliego interactivo de componentes, estados y gobernanza epistémica
 │   ├── manifest.json          # Configuración de resoluciones (Desktop + Mobile)
 │   └── out/                   # Directorio para capturas de renderizado
 └── scripts/
     ├── validate.py            # Validador estructural (tokens, fuentes, assets, paridad JSON)
     ├── contrast-audit.py      # Auditoría matemática de contraste WCAG 2.1 AA
+    ├── check-browser.mjs      # Verificación Playwright de vistas de usuario
+    ├── check-components.mjs   # Verificación Playwright específica para components.html
     └── render.mjs             # Renderizador headless con servidor local
 ```
 
@@ -73,7 +76,10 @@ python3 scripts/validate.py
 # 2. Auditoría de 18 pares semánticos seleccionados para contraste WCAG AA:
 python3 scripts/contrast-audit.py
 
-# 3. Renderizador de mockups a imágenes PNG:
+# 3. Verificación Playwright específica del pliego components.html:
+node scripts/check-components.mjs
+
+# 4. Renderizador de mockups a imágenes PNG:
 node scripts/render.mjs
 ```
 
