@@ -617,3 +617,68 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Distinción Epistémica: Editorial vs. Perfil Validado vs. Pendiente
+   Evita que una metáfora visual se convierta en promesa culinaria.
+   ═══════════════════════════════════════════════════════════════ */
+
+.sb-badge--editorial {
+  border-color: var(--sb-line-strong);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-1);
+  font-style: normal;
+}
+
+.sb-badge--validated {
+  border-color: var(--sb-status-active);
+  background-color: var(--sb-status-active-tint);
+  color: var(--sb-status-active);
+}
+
+.sb-badge--pending {
+  border-color: var(--sb-line-hairline);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-2);
+  font-style: italic;
+}
+
+/* Fila Epistémica de Especificación */
+.sb-epistemic-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-2);
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-3) var(--sb-space-4);
+  border-radius: var(--sb-radius-xs);
+  margin-top: var(--sb-space-3);
+}
+
+.sb-epistemic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--sb-text-xs);
+  border-bottom: 1px solid var(--sb-paper-2);
+  padding-bottom: 4px;
+}
+
+.sb-epistemic-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sb-epistemic-label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+.sb-epistemic-val {
+  font-family: var(--sb-font-sans);
+  color: var(--sb-ink-0);
+  font-weight: 500;
+}

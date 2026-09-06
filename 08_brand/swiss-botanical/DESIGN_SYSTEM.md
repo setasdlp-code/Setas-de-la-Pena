@@ -101,6 +101,34 @@ Para evitar la confusión del cliente con grabados abstractos, las imágenes se 
 
 ---
 
+## 1.7. Distinción Epistémica: Nombre Editorial vs. Perfil Sensorial Validado
+
+Para preservar la honestidad científica y agronómica de Setas de la Peña, el sistema impone una **separación conceptual estricta** entre la metáfora de diseño y la promesa organoléptica:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       DISTINCIÓN EPISTÉMICA NORMATIVA                       │
+├─────────────────────────┬─────────────────────────┬─────────────────────────┤
+│ 1. NOMBRE EDITORIAL     │ 2. PERFIL SENSORIAL     │ 3. USO RECOMENDADO      │
+│    (Metáfora de Serie)  │    VALIDADO (Cata Real) │    COMPROBADO (Técnica) │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ • Umami Roble           │ • Comprobado o          │ • Comprobado o          │
+│ • Pizarra Bruma         │   Por confirmar         │   Por confirmar         │
+│ • Ocre Dorado           │ • Exige testeo empírico │ • Exige validación en   │
+│ • Arcilla Coral         │   en cocina             │   sartén/fuego real     │
+└─────────────────────────┴─────────────────────────┴─────────────────────────┘
+```
+
+### Reglas de Aplicación
+1. **Nombres como «Umami Roble» o «Pizarra Bruma» son nombres de colección editorial:** Funcionan como identificadores de serie o paleta cromática, pero **nunca** como afirmaciones automáticas de sabor.
+2. **La Ficha de Producto debe desglosar explícitamente:**
+   - *Nombre editorial:* «Umami Roble» (etiqueta visual de serie).
+   - *Perfil sensorial validado:* Notas comprobadas (ej. *textura firme y notas tostadas*) o explícitamente marcado como `[Por confirmar]`.
+   - *Uso recomendado:* Técnica contrastada (ej. *salteado en sartén a fuego vivo*) o marcado como `[Por confirmar]` para otras preparaciones.
+3. **Cero promesas no respaldadas:** Queda terminantemente prohibido convertir una metáfora estética en un compromiso biológico o culinario sin pruebas agronómicas o culinarias directas.
+
+---
+
 ## 2. Tipografía: La Trinidad Tipográfica
 
 El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fonts/`):
