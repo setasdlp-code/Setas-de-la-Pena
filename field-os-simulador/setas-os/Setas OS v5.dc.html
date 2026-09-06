@@ -7,11 +7,9 @@
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
-<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
-<link rel="preload" href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="ds-2026/tokens/fonts.css">
+<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
 <style>
   /*
@@ -27,20 +25,20 @@
   html[data-setas-auth-state="unauthenticated"] x-dc { display:none !important; }
 </style>
 </head>
-<body data-mode="control">
-  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper,#FAF5E9);contain:strict;">
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
-      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
-        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--warning-text,#8C6B2E);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo · 2.600 m</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif));font-size:30px;line-height:1.05;font-weight:700;color:var(--ink,#222222);">Setas de la Peña</h1>
-        <p style="margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--ink-muted,#555555);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
-        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted,#555555);">Conectando…</div>
-        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Correo</label>
-        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
-        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Contraseña</label>
-        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
-        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--rust,#8E2C14);font-size:12px;font-family:var(--font-mono,'IBM Plex Mono',monospace);"></div>
-        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink,#222222);color:var(--paper,#FAF5E9);border:1px solid var(--ink,#222222);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+<body>
+  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper-1,#efebe0);contain:strict;">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:0;box-shadow:none;font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
+        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
+        <h1 style="margin:2px 0 0;font-family:var(--font-serif,'Gaya',Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
+        <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink-2,#6b6759);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
+        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--ink-2,#6b6759);">Conectando…</div>
+        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Correo</label>
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:0;background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Contraseña</label>
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:0;background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
+        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error,#c53030);font-size:12px;font-family:var(--font-mono,monospace);"></div>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
       </div>
     </form>
   </div>
@@ -52,14 +50,8 @@
 <link data-auth-managed="true" data-auth-rel="icon" type="image/svg+xml" data-auth-href="favicon.svg">
 <link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.googleapis.com">
 <link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.gstatic.com" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -141,7 +133,7 @@
   @keyframes fos-toast-undo { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 92%{opacity:1;transform:translateY(0);} 100%{opacity:0;} }
 
   .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
-  .app-shell h1, h1 { font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif)) !important; font-weight:700 !important; }
+  .app-shell h1, h1 { font-family:var(--font-serif, 'Gaya', Georgia, serif) !important; font-weight:700 !important; }
   .app-shell button,
   .app-shell input,
   .app-shell select,

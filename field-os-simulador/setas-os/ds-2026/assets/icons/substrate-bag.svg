@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
-     fill="none" stroke="currentColor" stroke-width="1.5"
-     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="substrate-bag">
-  <path d="M18 14V8h12v6"/>
-  <path d="M14 14h20l2 28H12Z"/>
-  <circle cx="24" cy="30" r="5"/>
-</svg>
