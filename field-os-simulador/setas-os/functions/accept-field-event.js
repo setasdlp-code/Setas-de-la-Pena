@@ -14,13 +14,7 @@
 // módulos compartidos por su ruta original. La fuente de verdad sigue siendo la
 // raíz; shared/ es generado y está en .gitignore.
 const { contentEquals, validateTransition } = require('./shared/field-events-model.js');
-const { validateReceipt } = require('./shared/field-event-contracts.js');
-
-// Los lotes creados antes del cuaderno de campo no llevan workflowState.
-// El estado inicial lo decide el servidor: si lo tomara del `from` del evento,
-// un cliente podría declarar `fruiting` en un lote recién creado y saltarse
-// las etapas intermedias.
-const DEFAULT_INITIAL_STATE = 'inoculated';
+const { validateReceipt, DEFAULT_INITIAL_STATE } = require('./shared/field-event-contracts.js');
 
 const BATCHES = 'lotes_produccion';
 const EVENTS = 'field_events';

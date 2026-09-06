@@ -14,11 +14,12 @@
   const getModel = () => (isNode ? require('./field-events-model.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEvents : null));
   const getQueue = () => (isNode ? require('./field-event-queue.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEventQueue : null));
   const getWorkflow = () => (isNode ? require('./setas-os-workflow.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasOSWorkflow : null));
+  const getContracts = () => (isNode ? require('./field-event-contracts.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEventContracts : null));
 
-  // Espejo de DEFAULT_INITIAL_STATE en functions/accept-field-event.js:
+  // Fuente única compartida de estado inicial (definida en field-event-contracts.js):
   // los lotes creados antes del cuaderno de campo no llevan workflowState y
-  // su jornada operativa siempre arranca en Inoculación.
-  const DEFAULT_INITIAL_STATE = 'inoculated';
+  // su jornada operativa arranca autoritativamente en Inoculación.
+  const DEFAULT_INITIAL_STATE = (getContracts() && getContracts().DEFAULT_INITIAL_STATE) || 'inoculated';
 
   const STATE_LABELS = Object.freeze({
     planned: 'Planificado',
@@ -44,13 +45,6 @@
     confirmed: 'Confirmado por el servidor',
     conflict: 'Conflicto de revisión',
     rejected: 'Rechazado por el servidor',
-  });
-
-  const legacyLifecycle = Object.freeze({
-    incubacion: 'incubation',
-    fructificacion: 'fruiting',
-    completado: 'closed',
-    descartado: 'discarded',
   });
 
   const resolveTransitionClass = (to) => {
@@ -88,14 +82,10 @@
   } = {}) => {
     const resolvedBatchId = batchId || batch?.id || batch?.codigo || '';
 
-    // Resolver estado: workflowState -> state -> legacyLifecycle(estado) -> DEFAULT_INITIAL_STATE
-    let resolvedState = state || batch?.workflowState || batch?.state || null;
-    if (!resolvedState && batch?.estado) {
-      resolvedState = legacyLifecycle[batch.estado] || null;
-    }
-    if (!resolvedState) {
-      resolvedState = DEFAULT_INITIAL_STATE;
-    }
+    // Resolver estado: el servidor (accept-field-event.js) lee workflowState o
+    // asume DEFAULT_INITIAL_STATE ('inoculated'). Nunca lee 'estado' para evitar
+    // divergencias entre cliente y servidor.
+    const resolvedState = state || batch?.workflowState || batch?.state || DEFAULT_INITIAL_STATE;
 
     const title = resolvedBatchId
       ? `Lote ${batch?.codigo || resolvedBatchId}`
@@ -188,7 +178,7 @@
     // Asegurar que el lote tiene una propiedad state consistente para validateTransition
     const batchWithState = batch ? {
       ...batch,
-      state: batch.state || batch.workflowState || (batch.estado && legacyLifecycle[batch.estado]) || DEFAULT_INITIAL_STATE,
+      state: batch.state || batch.workflowState || DEFAULT_INITIAL_STATE,
     } : null;
 
     // Validar transición contra la máquina de estados y el rol antes de tocar la base de datos

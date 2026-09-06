@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7825be6088c869a67d721d80709cd27fd6f72e0d1616691ce35f9d9e95936516
+// source-hash: 12e78e77a0a29a66503d14b8df514cc200589fc792a72f391697666294f3d0ad
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2299,7 +2299,7 @@ const FieldActionModal = ({
   onClose,
   lote,
   db,
-  operatorRole = "operario",
+  operatorRole = "produccion",
   operatorId = "operario_local",
   accountId = "setas_default_account",
   onTransitionConfirmed
@@ -7838,7 +7838,7 @@ Click para ver análisis completo`
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     const isAdmin = props.isAdmin === true || props.isAdmin === "true";
-    const operatorRole = isAdmin ? "direccion" : "operario";
+    const operatorRole = props.operatorRole || (isAdmin ? "direccion" : "produccion");
     const operatorId = props.operatorKey || typeof window !== "undefined" && window.__setasOperatorKey || "operario_local";
     const accountId = props.accountId || typeof window !== "undefined" && window.__setasAccountId || typeof window !== "undefined" && window.firebaseAuth?.currentUser?.uid || "setas_default_account";
     return /* @__PURE__ */ React.createElement(

@@ -7,6 +7,7 @@ const fs = require('node:fs');
 
 const {
   ERROR_CODES,
+  DEFAULT_INITIAL_STATE,
   RECEIPT_FIELDS,
   isRetryable,
   buildRequestEnvelope,
@@ -103,4 +104,8 @@ test('contracts load with neither indexedDB nor firebase present', () => {
 
   assert.ok(sandbox.SetasFieldEventContracts, 'debería publicar su global');
   assert.equal(sandbox.SetasFieldEventContracts.isRetryable('network_error'), true);
+});
+
+test('exports DEFAULT_INITIAL_STATE as inoculated', () => {
+  assert.equal(DEFAULT_INITIAL_STATE, 'inoculated');
 });

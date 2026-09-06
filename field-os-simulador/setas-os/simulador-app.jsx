@@ -3293,7 +3293,7 @@ const FieldActionModal = ({
   onClose,
   lote,
   db,
-  operatorRole = 'operario',
+  operatorRole = 'produccion',
   operatorId = 'operario_local',
   accountId = 'setas_default_account',
   onTransitionConfirmed,
@@ -12062,7 +12062,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
           const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
           const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
-          const operatorRole = isAdmin ? 'direccion' : 'operario';
+          const operatorRole = props.operatorRole || (isAdmin ? 'direccion' : 'produccion');
           const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
           const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
 

@@ -256,3 +256,15 @@ test('abrir la hoja de acción y computar el modelo no escribe en IndexedDB (G10
 
   db.close();
 });
+
+// 14. Alineación estricta cliente-servidor: no leer 'estado' para evitar divergencia con el servidor
+test('un lote con estado heredado no diverge del servidor y resuelve a DEFAULT_INITIAL_STATE', () => {
+  const m = buildActionSheetModel({
+    batch: { id: 'L-legacy-incubacion', estado: 'incubacion' }, // sin workflowState
+    operatorRole: 'operario',
+  });
+  // El servidor asume batch.workflowState || DEFAULT_INITIAL_STATE ('inoculated').
+  // El cliente no debe inventar 'incubation', pues provocaría invalid_state_transition en el servidor.
+  assert.equal(m.state, DEFAULT_INITIAL_STATE);
+  assert.deepEqual(m.options.map(o => o.to), ['incubation']);
+});

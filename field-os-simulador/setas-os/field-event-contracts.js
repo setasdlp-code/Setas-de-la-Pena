@@ -34,6 +34,7 @@
   const RECEIPT_FIELDS = Object.freeze(['eventId', 'acceptedAt', 'batchRevisionAfter', 'serverEventPath']);
 
   const SCHEMA_VERSION = 1;
+  const DEFAULT_INITIAL_STATE = 'inoculated';
 
   const isRetryable = (code) => {
     if (!ERROR_CODES[code]) {
@@ -57,7 +58,8 @@
     if (!Array.isArray(event.attachmentIds) || event.attachmentIds.length !== 0) {
       throw new Error('invalid_envelope: attachmentIds debe estar vacío en v1');
     }
-    return Object.freeze({ schemaVersion: SCHEMA_VERSION, accountId, event });
+    return Object.freeze({ schemaVersion: SCHEMA_VERSION,
+    DEFAULT_INITIAL_STATE, accountId, event });
   };
 
   /**
@@ -83,6 +85,7 @@
 
   const api = {
     SCHEMA_VERSION,
+    DEFAULT_INITIAL_STATE,
     ERROR_CODES,
     RETRYABLE_CODES,
     RECEIPT_FIELDS,
