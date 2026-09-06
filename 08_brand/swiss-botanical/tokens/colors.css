@@ -1,0 +1,63 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Color Tokens
+   Calibración bi-sustrato (Papel Marfil + Tinta Carbón)
+   Auditoría de contraste WCAG 2.1 AA estricta.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ---- Sustratos de Papel y Fondo ---- */
+  --sb-paper-0: #F7F4EC;   /* Fondo general de página, marfil cálido */
+  --sb-paper-1: #EFEBE0;   /* Superficie de paneles, tarjetas y cabeceras */
+  --sb-paper-2: #E5DFD0;   /* Módulos rehundidos, bandas alternas */
+  --sb-paper-3: #DCD5C2;   /* Estados prensados, cápsulas sutiles */
+
+  /* ---- Tintas Minerales y de Carbón ---- */
+  --sb-ink-0: #1E1D19;     /* Texto primario de alta lectura (14.8:1 en paper-0) */
+  --sb-ink-1: #3C392F;     /* Texto secundario y etiquetas de campo (9.4:1 en paper-0) */
+  --sb-ink-2: #6B6759;     /* Metadatos, notas, referencias y leyendas (4.6:1 en paper-0, AA) */
+  --sb-ink-3: #96907C;     /* Guías tipográficas y elementos no críticos */
+  --sb-ink-inverse: #F7F4EC; /* Texto en bloques invertidos sobre tinta sólida */
+
+  /* ---- Filetes y Reglas Suizas ---- */
+  --sb-line-hairline: #988C6C; /* Filete fino de 1px (WCAG 1.4.11 no-texto 3.03:1) */
+  --sb-line-strong: #8C7F5B;   /* Borde de contenedor y tabla (3.6:1 en paper-0) */
+  --sb-line-heavy: #1E1D19;    /* Marco de pliego editorial y acento tipográfico */
+
+  /* ---- Acentos Botánico-Organolépticos (Por Especie) ---- */
+  /* Shiitake (Lentinula edodes) · Roble tostado y umami de leña */
+  --sb-accent-shiitake: #6E472D;
+  --sb-accent-shiitake-deep: #5A3725;
+  --sb-accent-shiitake-tint: #EFE4DA;
+
+  /* Orellana Perla (Pleurotus ostreatus) · Pizarra y bruma de Tenjo */
+  --sb-accent-orellana: #5E7080;
+  --sb-accent-orellana-tint: #E2E7EA;
+
+  /* Melena de León (Hericium erinaceus) · Ocre dorado y miel silvestre */
+  --sb-accent-melena: #9D6F28;
+  --sb-accent-melena-tint: #F5EEDD;
+
+  /* Orellana Rosa (Pleurotus djamor) · Arcilla y espora coralina */
+  --sb-accent-rosa: #A85C32;
+  --sb-accent-rosa-tint: #F4E7DF;
+
+  /* ---- Estados Operativos y de Cosecha ---- */
+  --sb-status-active: #5B6B44;      /* Cosecha viva, parámetro conforme */
+  --sb-status-active-tint: #E2E7D7;
+  --sb-status-warn: #C49A4C;        /* Lote limitado, rotación estacional */
+  --sb-status-warn-tint: #F6EEDA;
+  --sb-status-error: #8C3223;       /* Alerta biológica o lote no disponible */
+  --sb-status-error-tint: #F4DFDA;
+
+  /* ---- Alias Semánticos de Superficie y Texto ---- */
+  --sb-surface-page: var(--sb-paper-0);
+  --sb-surface-card: var(--sb-paper-1);
+  --sb-surface-sunken: var(--sb-paper-2);
+  --sb-surface-pressed: var(--sb-paper-3);
+  --sb-surface-inverse: var(--sb-ink-0);
+
+  --sb-text-title: var(--sb-ink-0);
+  --sb-text-body: var(--sb-ink-1);
+  --sb-text-meta: var(--sb-ink-2);
+  --sb-text-light: var(--sb-ink-inverse);
+}

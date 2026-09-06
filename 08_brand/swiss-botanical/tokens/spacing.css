@@ -1,0 +1,38 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Spacing & Layout Tokens
+   Retícula proporcional suiza de base 4px/8px
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Espaciado modular */
+  --sb-space-1: 4px;
+  --sb-space-2: 8px;
+  --sb-space-3: 12px;
+  --sb-space-4: 16px;
+  --sb-space-5: 20px;
+  --sb-space-6: 24px;
+  --sb-space-8: 32px;
+  --sb-space-10: 40px;
+  --sb-space-12: 48px;
+  --sb-space-16: 64px;
+  --sb-space-20: 80px;
+  --sb-space-24: 96px;
+  --sb-space-32: 128px;
+
+  /* Contenedores y pliegos */
+  --sb-container-max: 1320px;
+  --sb-container-wide: 1140px;
+  --sb-container-reading: 760px;
+  --sb-container-compact: 560px;
+
+  /* Radios de borde (sobrios y de imprenta) */
+  --sb-radius-none: 0px;
+  --sb-radius-xs: 2px;
+  --sb-radius-sm: 4px;
+  --sb-radius-md: 6px;
+  --sb-radius-pill: 9999px;
+
+  /* Sombras funcionales (estrictamente controladas, nunca flotantes genéricas) */
+  --sb-shadow-pressed: inset 0 1px 2px rgba(30, 29, 25, 0.12);
+  --sb-shadow-card: 0 1px 3px rgba(30, 29, 25, 0.04);
+}

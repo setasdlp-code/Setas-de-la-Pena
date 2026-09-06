@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuaderno de Trazabilidad · Lote SDP-26-SH-04 — Setas de la Peña</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    .sb-trace-timeline {
+      border-left: 2px solid var(--sb-line-strong);
+      padding-left: var(--sb-space-6);
+      margin-top: var(--sb-space-6);
+      margin-bottom: var(--sb-space-8);
+      position: relative;
+    }
+    .sb-trace-event {
+      margin-bottom: var(--sb-space-6);
+      position: relative;
+    }
+    .sb-trace-event::before {
+      content: '';
+      position: absolute;
+      left: calc(-1 * var(--sb-space-6) - 5px);
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--sb-ink-0);
+      border: 2px solid var(--sb-paper-0);
+    }
+    .sb-trace-event--active::before {
+      background-color: var(--sb-status-active);
+    }
+    .sb-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--sb-space-4);
+      margin-bottom: var(--sb-space-8);
+    }
+    .sb-metric-card {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-hairline);
+      padding: var(--sb-space-4);
+      border-radius: var(--sb-radius-xs);
+    }
+    @media (max-width: 800px) {
+      .sb-metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Común -->
+  <header class="sb-header">
+    <div class="sb-container sb-header__inner">
+      <a href="home.html" class="sb-brand-mark">
+        Setas de la Peña
+        <span class="sb-brand-mark__sub">Tenjo · 2.592 msnm</span>
+      </a>
+      <nav class="sb-nav">
+        <a href="home.html" class="sb-nav__link">Cosecha</a>
+        <a href="product.html" class="sb-nav__link">Ficha Shiitake</a>
+        <a href="editorial.html" class="sb-nav__link">Cuaderno Editorial</a>
+        <a href="traceability.html" class="sb-nav__link sb-nav__link--active">Trazabilidad</a>
+      </nav>
+      <div>
+        <a href="product.html" class="sb-btn sb-btn--primary sb-btn--sm">Pedir Cosecha</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Cuaderno de Trazabilidad -->
+  <main class="sb-container sb-container--reading" style="padding-top: var(--sb-space-10); padding-bottom: var(--sb-space-16);">
+
+    <!-- Encabezado de Lote -->
+    <div style="border-bottom: 2px solid var(--sb-line-heavy); padding-bottom: var(--sb-space-6); margin-bottom: var(--sb-space-8);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--sb-space-3);">
+        <span class="sb-badge sb-badge--status">Lote Verificado Conforme</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Finca La Peña · Sala 02</span>
+      </div>
+      <h1 style="font-size: var(--sb-text-3xl); margin-bottom: var(--sb-space-2);">
+        Pasaporte de Cultivo: Lote SDP-26-SH-04
+      </h1>
+      <p style="font-size: var(--sb-text-base); color: var(--sb-ink-1); margin-bottom: 0;">
+        Registro integral de sustrato, incubación, microclima y corte al alba para <em>Lentinula edodes</em> (Shiitake de Montaña). Trazabilidad abierta sin jerga opaca.
+      </p>
+    </div>
+
+    <!-- Panel de Métricas Operativas Clave -->
+    <section class="sb-metric-grid">
+      <div class="sb-metric-card">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; color: var(--sb-ink-2); display: block; margin-bottom: 4px;">Altitud Parcela</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xl); font-weight: 700; color: var(--sb-ink-0);">2.592 m</span>
+        <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: block; margin-top: 2px;">Peña de Juaica</span>
+      </div>
+      <div class="sb-metric-card">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; color: var(--sb-ink-2); display: block; margin-bottom: 4px;">Incubación</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xl); font-weight: 700; color: var(--sb-ink-0);">92 Días</span>
+        <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: block; margin-top: 2px;">Maduración lenta</span>
+      </div>
+      <div class="sb-metric-card">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; color: var(--sb-ink-2); display: block; margin-bottom: 4px;">Velo al Corte</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xl); font-weight: 700; color: var(--sb-status-active);">70%</span>
+        <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: block; margin-top: 2px;">Punto óptimo chef</span>
+      </div>
+      <div class="sb-metric-card">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; color: var(--sb-ink-2); display: block; margin-bottom: 4px;">Eficiencia Bio</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xl); font-weight: 700; color: var(--sb-ink-0);">84.2%</span>
+        <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: block; margin-top: 2px;">Rendimiento superior</span>
+      </div>
+    </section>
+
+    <!-- Explicación de Métricas sin Jerga -->
+    <section style="background-color: var(--sb-paper-1); border: 1px solid var(--sb-line-hairline); padding: var(--sb-space-6); margin-bottom: var(--sb-space-8);">
+      <h3 style="font-size: var(--sb-text-sm); font-family: var(--sb-font-mono); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-4);">
+        ¿Qué significan estos datos en tu plato?
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: var(--sb-space-4); font-size: var(--sb-text-sm);">
+        <div>
+          <strong style="color: var(--sb-ink-0);">¿Por qué importa el 70% de apertura del velo?</strong>
+          <p style="color: var(--sb-ink-1); margin-top: 2px; margin-bottom: 0;">
+            Si el hongo se corta demasiado joven, el sabor aún no ha desarrollado sus azúcares aromáticos. Si se corta completamente abierto (100%), ya ha liberado esporas y su carne pierde consistencia. Al 70%, el carpóforo tiene la máxima firmeza y frescura para sellar en sartén.
+          </p>
+        </div>
+        <div>
+          <strong style="color: var(--sb-ink-0);">¿Qué significa sustrato de roble andino?</strong>
+          <p style="color: var(--sb-ink-1); margin-top: 2px; margin-bottom: 0;">
+            El Shiitake es un descomponedor de madera dura. En lugar de usar pajas agrícolas de bajo contenido energético, utilizamos madera de roble que el micelio digiere lentamente, transformando la lignina en complejos aminoácidos de umami.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ficha Detallada de Parámetros -->
+    <section style="margin-bottom: var(--sb-space-8);">
+      <h3 style="font-size: var(--sb-text-sm); font-family: var(--sb-font-mono); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">
+        Especificaciones Técnicas del Lote
+      </h3>
+      <table class="sb-specs-table">
+        <tbody>
+          <tr>
+            <th>Identificador de Lote</th>
+            <td class="sb-mono">SDP-26-SH-04</td>
+          </tr>
+          <tr>
+            <th>Cepa Micológica</th>
+            <td><em>Lentinula edodes</em> · Selección L12 (Clima Frío Andino)</td>
+          </tr>
+          <tr>
+            <th>Composición Sustrato</th>
+            <td>82% Roble andino (viruta), 17% Salvado de trigo no-OGM, 1% Carbonato de calcio</td>
+          </tr>
+          <tr>
+            <th>Esterilización de Bloque</th>
+            <td>Autoclave a 121°C / 15 psi durante 4.5 horas (Registro conforme)</td>
+          </tr>
+          <tr>
+            <th>Fecha Inoculación</th>
+            <td class="sb-mono">12 de Junio de 2026 (Sala de Incubación N° 01)</td>
+          </tr>
+          <tr>
+            <th>Fecha de Corte</th>
+            <td class="sb-mono">Hoy, 05:45 AM (Cosecha del Alba)</td>
+          </tr>
+          <tr>
+            <th>Humedad de Sala</th>
+            <td class="sb-mono">88% HR constante (Agua de niebla filtrada)</td>
+          </tr>
+          <tr>
+            <th>Tratamientos Químicos</th>
+            <td>Ninguno (100% libre de fungicidas, insecticidas o metales pesados)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Cronología del Lote -->
+    <section style="margin-bottom: var(--sb-space-12);">
+      <h3 style="font-size: var(--sb-text-sm); font-family: var(--sb-font-mono); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">
+        Cronología de Crecimiento
+      </h3>
+      <div class="sb-trace-timeline">
+        <div class="sb-trace-event">
+          <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">12 JUNIO 2026</span>
+          <h4 style="font-size: var(--sb-text-base); margin-top: 2px;">Inoculación en Cámara Estéril</h4>
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            Siembra de grano madre en bloques de 2.5 kg. Sellado con filtro microbiano de 0.2 micras.
+          </p>
+        </div>
+        <div class="sb-trace-event">
+          <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">15 JULIO 2026</span>
+          <h4 style="font-size: var(--sb-text-base); margin-top: 2px;">Pardeamiento Estromático</h4>
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            El micelio coloniza la totalidad del roble y forma la corteza protectora marrón oscuro.
+          </p>
+        </div>
+        <div class="sb-trace-event">
+          <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">28 AGOSTO 2026</span>
+          <h4 style="font-size: var(--sb-text-base); margin-top: 2px;">Choque Térmico e Inducción</h4>
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            Inmersión en agua de montaña a 8°C. Activación de primordios florales en Sala 02.
+          </p>
+        </div>
+        <div class="sb-trace-event sb-trace-event--active">
+          <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-status-active); font-weight: 600;">HOY · 05:45 AM</span>
+          <h4 style="font-size: var(--sb-text-base); margin-top: 2px;">Corte Manual y Embalaje</h4>
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            Corte individual con cuchilla desinfectada. Pesaje y empaque en cajas de papel kraft transpirable.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Botón de Retorno -->
+    <div style="display: flex; gap: var(--sb-space-4); justify-content: space-between; align-items: center; border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-6);">
+      <a href="product.html" class="sb-btn sb-btn--primary">&larr; Volver a Ficha de Producto</a>
+      <a href="home.html" class="sb-btn sb-btn--secondary">Ir a Portada Comercial</a>
+    </div>
+
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="sb-footer">
+    <div class="sb-container sb-footer__grid">
+      <div>
+        <span class="sb-brand-mark" style="font-size: var(--sb-text-lg);">Setas de la Peña</span>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); max-width: 32ch;">
+          Sistema de trazabilidad biológica verificado en Tenjo, Cundinamarca.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Enlaces</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="home.html">Portada</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="product.html">Ficha Producto</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Ensayo Editorial</a></p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Seguridad</h4>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">
+          Todo lote cuenta con registro digital inmutable generado durante el ciclo de incubación en Setas OS.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Identificador</h4>
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">HASH-SDP-26-SH-04-FOS</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
