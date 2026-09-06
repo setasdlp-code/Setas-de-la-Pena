@@ -78,6 +78,16 @@
   text-underline-offset: 4px;
 }
 
+.sb-btn:disabled,
+.sb-btn[aria-disabled="true"] {
+  background-color: var(--sb-paper-2);
+  border-color: var(--sb-line-hairline);
+  color: var(--sb-ink-2);
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
+}
+
 .sb-btn--sm {
   font-size: var(--sb-text-xs);
   padding: var(--sb-space-2) var(--sb-space-3);
@@ -153,7 +163,8 @@
   gap: 2px;
 }
 
-.sb-segment-option {
+.sb-segment-option,
+.sb-segment-btn {
   font-family: var(--sb-font-sans);
   font-size: var(--sb-text-xs);
   font-weight: 600;
@@ -167,7 +178,8 @@
   transition: all var(--sb-duration-fast) var(--sb-ease-editorial);
 }
 
-.sb-segment-option--active {
+.sb-segment-option--active,
+.sb-segment-btn[aria-pressed="true"] {
   background-color: var(--sb-paper-0);
   color: var(--sb-ink-0);
   box-shadow: 0 1px 2px rgba(30, 29, 25, 0.08);
@@ -619,28 +631,42 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Distinción Epistémica: Editorial vs. Perfil Validado vs. Pendiente
-   Evita que una metáfora visual se convierta en promesa culinaria.
+   Estados Canónicos de Estatus y Validación Epistémica
    ═══════════════════════════════════════════════════════════════ */
 
-.sb-badge--editorial {
-  border-color: var(--sb-line-strong);
-  background-color: var(--sb-paper-2);
-  color: var(--sb-ink-1);
-  font-style: normal;
-}
-
+.sb-status--verified,
+.sb-status--available,
 .sb-badge--validated {
   border-color: var(--sb-status-active);
   background-color: var(--sb-status-active-tint);
   color: var(--sb-status-active);
 }
 
+.sb-status--pending,
 .sb-badge--pending {
   border-color: var(--sb-line-hairline);
   background-color: var(--sb-paper-2);
   color: var(--sb-ink-2);
   font-style: italic;
+}
+
+.sb-status--unavailable {
+  border-color: var(--sb-status-error);
+  background-color: var(--sb-status-error-tint);
+  color: var(--sb-status-error);
+}
+
+.sb-status--development {
+  border-color: var(--sb-status-warn);
+  background-color: var(--sb-status-warn-tint);
+  color: var(--sb-status-warn);
+}
+
+.sb-badge--editorial {
+  border-color: var(--sb-line-strong);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-1);
+  font-style: normal;
 }
 
 /* Fila Epistémica de Especificación */

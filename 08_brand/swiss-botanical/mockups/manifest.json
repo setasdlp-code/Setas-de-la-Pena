@@ -54,5 +54,19 @@
     "width": 390,
     "height": 844,
     "scale": 2
+  },
+  {
+    "name": "components-desktop",
+    "url": "mockups/components.html",
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  {
+    "name": "components-mobile",
+    "url": "mockups/components.html",
+    "width": 390,
+    "height": 844,
+    "scale": 2
   }
 ]

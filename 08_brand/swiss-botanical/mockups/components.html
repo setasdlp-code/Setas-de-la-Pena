@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pliego de Componentes · Swiss Botanical — Setas de la Peña</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    .sb-pliego-header {
+      padding-top: var(--sb-space-12);
+      padding-bottom: var(--sb-space-8);
+      border-bottom: 2px solid var(--sb-line-heavy);
+      margin-bottom: var(--sb-space-12);
+    }
+
+    .sb-section-block {
+      padding-top: var(--sb-space-10);
+      padding-bottom: var(--sb-space-12);
+      border-bottom: 1px solid var(--sb-line-hairline);
+    }
+
+    .sb-section-block:last-of-type {
+      border-bottom: none;
+    }
+
+    .sb-section-eyebrow {
+      font-family: var(--sb-font-mono);
+      font-size: var(--sb-text-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--sb-tracking-caps);
+      color: var(--sb-accent-shiitake);
+      margin-bottom: var(--sb-space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sb-space-2);
+    }
+
+    .sb-demo-row {
+      display: flex;
+      gap: var(--sb-space-4);
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: var(--sb-space-4);
+      margin-bottom: var(--sb-space-4);
+    }
+
+    .sb-demo-box {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-strong);
+      padding: var(--sb-space-6);
+      border-radius: var(--sb-radius-xs);
+      margin-top: var(--sb-space-4);
+    }
+
+    .sb-code-label {
+      font-family: var(--sb-font-mono);
+      font-size: var(--sb-text-2xs);
+      color: var(--sb-ink-2);
+      background-color: var(--sb-paper-2);
+      padding: 2px 6px;
+      border-radius: 2px;
+      display: inline-block;
+      margin-bottom: var(--sb-space-2);
+    }
+
+    .sb-quick-nav {
+      display: flex;
+      gap: var(--sb-space-2);
+      flex-wrap: wrap;
+      margin-top: var(--sb-space-6);
+      padding-top: var(--sb-space-4);
+      border-top: 1px solid var(--sb-line-hairline);
+    }
+
+    .sb-quick-link {
+      font-family: var(--sb-font-mono);
+      font-size: var(--sb-text-xs);
+      color: var(--sb-ink-1);
+      padding: 4px 8px;
+      border: 1px solid var(--sb-line-hairline);
+      border-radius: var(--sb-radius-xs);
+      background-color: var(--sb-paper-0);
+      transition: all var(--sb-duration-fast) ease;
+    }
+
+    .sb-quick-link:hover {
+      border-color: var(--sb-accent-shiitake);
+      color: var(--sb-accent-shiitake);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación Superior Canónica -->
+  <header class="sb-nav-wrap">
+    <div class="sb-container sb-nav">
+      <a href="home.html" class="sb-brand-mark">
+        <span>Setas de la Peña</span>
+      </a>
+      <nav class="sb-nav__links" aria-label="Navegación principal">
+        <a href="home.html" class="sb-nav__link">Mercado</a>
+        <a href="product.html" class="sb-nav__link">Ficha Producto</a>
+        <a href="editorial.html" class="sb-nav__link">Cuaderno Editorial</a>
+        <a href="traceability.html" class="sb-nav__link">Trazabilidad</a>
+        <a href="components.html" class="sb-nav__link sb-nav__link--active" aria-current="page" style="font-family: var(--sb-font-mono); font-size: var(--sb-text-xs);">[Componentes]</a>
+      </nav>
+      <div style="display: flex; gap: var(--sb-space-3); align-items: center;">
+        <span class="sb-badge sb-badge--status">Sistema V3</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="sb-container" style="padding-bottom: var(--sb-space-24);">
+
+    <!-- Cabecera de Pliego -->
+    <section class="sb-pliego-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--sb-space-4);">
+        <div>
+          <span class="sb-section-eyebrow">Pliego Técnico · FOSV3 / DS-2026 / FOS</span>
+          <h1 style="font-size: var(--sb-text-3xl); line-height: 1.1; margin-bottom: var(--sb-space-2);">
+            Catálogo Vivo de Componentes UI
+          </h1>
+          <p style="font-size: var(--sb-text-base); color: var(--sb-ink-1); max-width: 65ch; margin-bottom: 0;">
+            Exhibición interactiva de estados, variantes, accesibilidad y gobernanza del sistema <strong>Swiss Botanical</strong>. Todos los componentes operan bajo la trinidad tipográfica (Gaya Patched, IBM Plex Sans, IBM Plex Mono) y contrastes auditados WCAG 2.1 AA.
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); display: block;">Tenjo, Cundinamarca</span>
+          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); display: block;">2.592 msnm · Sabana Fría</span>
+          <span class="sb-badge sb-status--verified" style="margin-top: var(--sb-space-2);">Validado WCAG AA</span>
+        </div>
+      </div>
+
+      <!-- Barra de Salto Rápido -->
+      <nav class="sb-quick-nav" aria-label="Índice del pliego">
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); align-self: center; margin-right: var(--sb-space-2);">Secciones:</span>
+        <a href="#botones" class="sb-quick-link">01. Botones & Acciones</a>
+        <a href="#badges" class="sb-quick-link">02. Badges & Estatus</a>
+        <a href="#selector" class="sb-quick-link">03. Selector Hogar/Chef</a>
+        <a href="#tarjetas" class="sb-quick-link">04. Tarjetas de Especie</a>
+        <a href="#tablas" class="sb-quick-link">05. Tablas Técnicas</a>
+        <a href="#epistemica" class="sb-quick-link">06. Caja Epistémica & Cocina</a>
+      </nav>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 01. BOTONES & ACCIONES                                      -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="botones" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>01</span>
+        <span>Botones & Estados Táctiles</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Botones de Imprenta (.sb-btn)</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        Diseñados con desplazamiento físico táctil (<code>transform: translateY(1px)</code>) para simular el golpe mecánico de tipos de plomo. Incluyen soporte nativo para <code>:disabled</code> y enlaces inaccesibles mediante <code>[aria-disabled="true"]</code> conservando contraste superior a 4.0:1.
+      </p>
+
+      <!-- Variantes -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Variantes Principales</span>
+        <div class="sb-demo-row">
+          <button type="button" class="sb-btn sb-btn--primary">Explorar ficha (.sb-btn--primary)</button>
+          <button type="button" class="sb-btn sb-btn--accent">Ver Shiitake (.sb-btn--accent)</button>
+          <button type="button" class="sb-btn sb-btn--secondary">Consultar disponibilidad (.sb-btn--secondary)</button>
+          <button type="button" class="sb-btn sb-btn--subtle">Ver especificaciones &rarr; (.sb-btn--subtle)</button>
+        </div>
+      </div>
+
+      <!-- Escala de Tamaños -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Escala de Tamaños</span>
+        <div class="sb-demo-row">
+          <button type="button" class="sb-btn sb-btn--primary sb-btn--sm">Pequeño (.sb-btn--sm)</button>
+          <button type="button" class="sb-btn sb-btn--primary">Tamaño Base</button>
+          <button type="button" class="sb-btn sb-btn--primary sb-btn--lg">Grande (.sb-btn--lg)</button>
+        </div>
+      </div>
+
+      <!-- Estados Inactivos (Disabled) -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Estados Deshabilitados (Contraste 4.1:1 en fondo papel, sin opacidad degradada)</span>
+        <div class="sb-demo-row">
+          <button type="button" class="sb-btn sb-btn--primary" disabled aria-label="Acción no disponible en este momento">Botón nativo :disabled</button>
+          <a href="#" class="sb-btn sb-btn--secondary" aria-disabled="true" tabindex="-1" role="link" aria-label="Enlace temporalmente inactivo">Enlace [aria-disabled="true"]</a>
+          <button type="button" class="sb-btn sb-btn--accent" disabled>Cosecha agotada (inactivo)</button>
+        </div>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); margin-bottom: 0;">
+          Los elementos inactivos utilizan <code>cursor: not-allowed</code> y deshabilitan eventos de puntero sin provocar pérdida visual de los bordes estructurales.
+        </p>
+      </div>
+
+      <!-- Verificación de Foco Visible -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Gobernanza de Foco Accesible (:focus-visible)</span>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin-bottom: var(--sb-space-3);">
+          Prueba de foco del sistema: presione la tecla <kbd style="background: var(--sb-paper-2); padding: 2px 6px; border: 1px solid var(--sb-line-hairline); border-radius: 2px; font-family: var(--sb-font-mono);">Tab</kbd> para comprobar el anillo <code>outline: 2px solid var(--sb-accent-shiitake); outline-offset: 3px;</code>.
+        </p>
+        <div class="sb-demo-row">
+          <button type="button" class="sb-btn sb-btn--secondary">Probar foco con Tab (1)</button>
+          <button type="button" class="sb-btn sb-btn--secondary">Probar foco con Tab (2)</button>
+          <a href="#selector" class="sb-btn sb-btn--subtle">Saltar a selector &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 02. BADGES & ESTATUS                                        -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="badges" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>02</span>
+        <span>Badges, Etiquetas Semánticas & Validación</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Estados Canónicos y Especies</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        El sistema estandariza 5 estados operativos mediante <code>.sb-status--*</code> y reserva los badges de especie para nombres botánicos sencillos sin epítetos poéticos.
+      </p>
+
+      <!-- Los 5 Estados Canónicos -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Los Cinco Estados Canónicos del Sistema (.sb-status--*)</span>
+        <div class="sb-demo-row">
+          <span class="sb-badge sb-status--verified">[Comprobado] (.sb-status--verified)</span>
+          <span class="sb-badge sb-status--available">Disponible (.sb-status--available)</span>
+          <span class="sb-badge sb-status--pending">[Por confirmar] (.sb-status--pending)</span>
+          <span class="sb-badge sb-status--unavailable">No disponible (.sb-status--unavailable)</span>
+          <span class="sb-badge sb-status--development">En desarrollo (.sb-status--development)</span>
+        </div>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); margin-bottom: 0;">
+          Equivalencia lingüística: Los corchetes <code>[Comprobado]</code> y <code>[Por confirmar]</code> son variantes de contenido que aplican directamente sobre las clases canónicas de estatus.
+        </p>
+      </div>
+
+      <!-- Badges de Especie (Nombres Sencillos) -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Acentos Botánicos por Especie (Nombres Comunes Directos)</span>
+        <div class="sb-demo-row">
+          <span class="sb-badge sb-badge--shiitake">Shiitake (.sb-badge--shiitake)</span>
+          <span class="sb-badge sb-badge--orellana">Orellana (.sb-badge--orellana)</span>
+          <span class="sb-badge sb-badge--melena">Melena de León (.sb-badge--melena)</span>
+          <span class="sb-badge sb-badge--rosa">Orellana Rosada (.sb-badge--rosa)</span>
+        </div>
+      </div>
+
+      <!-- Píldoras de los Cuatro Modos del Sistema -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Píldoras de los Cuatro Modos de Setas de la Peña (.sb-mode-pill)</span>
+        <div class="sb-demo-row">
+          <span class="sb-mode-pill">Modo I · Archive (Taxonomía & Memoria)</span>
+          <span class="sb-mode-pill">Modo II · Field (Cultivo & Sustratos)</span>
+          <span class="sb-mode-pill">Modo III · Control (Lotes & Telemetría)</span>
+          <span class="sb-mode-pill sb-mode-pill--active">Modo IV · Culinary Market (Decisión & Compra)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 03. SELECTOR HOGAR / CHEF                                   -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="selector" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>03</span>
+        <span>Selector Bimodal Accesible</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Interruptor de Audiencia (.sb-segment-switch)</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        Permite alternar entre la experiencia orientada a cocina doméstica (Hogar) y la ficha técnica mayorista para restaurantes (Chef / HORECA). Implementa <code>role="group"</code>, botones con <code>aria-pressed</code> y retroalimentación mediante <code>aria-live="polite"</code>.
+      </p>
+
+      <div class="sb-demo-box">
+        <!-- Control Accesible -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sb-space-4); margin-bottom: var(--sb-space-6);">
+          <div>
+            <span class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; color: var(--sb-ink-2); display: block; margin-bottom: 4px;">Seleccione perspectiva de datos:</span>
+            <div class="sb-segment-switch" role="group" aria-label="Perspectiva de información: Hogar o Chef">
+              <button type="button" class="sb-segment-btn" id="btnHogar" aria-pressed="true" onclick="setPerspective('hogar')">
+                Hogar & Cocineros
+              </button>
+              <button type="button" class="sb-segment-btn" id="btnChef" aria-pressed="false" onclick="setPerspective('chef')">
+                Chef & Restaurantes
+              </button>
+            </div>
+          </div>
+          <span id="perspectiveAnnouncement" class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-status-active);" aria-live="polite">
+            Vista activa: Hogar
+          </span>
+        </div>
+
+        <!-- Panel 1: Hogar -->
+        <div id="panelHogarDemo" style="display: block; background: var(--sb-paper-0); padding: var(--sb-space-6); border: 1px solid var(--sb-line-hairline); border-radius: var(--sb-radius-xs);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sb-space-2);">
+            <h3 style="font-size: var(--sb-text-lg); margin: 0;">Perspectiva Hogar: Alimento Fresco en Cocina</h3>
+            <span class="sb-badge sb-status--available">Consumo Semanal</span>
+          </div>
+          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); margin-bottom: var(--sb-space-4);">
+            Información centrada en la experiencia diaria: porciones prácticas (250g cata / 500g cesta familiar), instrucciones de limpieza en seco y conservación a 2-4°C en bolsa kraft transpirable.
+          </p>
+          <div style="display: flex; gap: var(--sb-space-3); flex-wrap: wrap;">
+            <button type="button" class="sb-btn sb-btn--primary sb-btn--sm">Consultar disponibilidad 500g</button>
+            <button type="button" class="sb-btn sb-btn--secondary sb-btn--sm">Ver guía de conservación</button>
+          </div>
+        </div>
+
+        <!-- Panel 2: Chef / HORECA -->
+        <div id="panelChefDemo" style="display: none; background: var(--sb-paper-0); padding: var(--sb-space-6); border: 1px solid var(--sb-line-hairline); border-radius: var(--sb-radius-xs);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sb-space-2);">
+            <h3 style="font-size: var(--sb-text-lg); margin: 0;">Perspectiva Chef: Ficha Técnica & Reserva Mayorista</h3>
+            <span class="sb-badge sb-status--verified">Parámetros Auditados</span>
+          </div>
+          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); margin-bottom: var(--sb-space-4);">
+            Datos profesionales de rendimiento: calibre de sombrero 4-6 cm, humedad 86-88%, merma en cocción &lt;12%, cajas gastronómicas de 1.5kg a 5kg con entrega directa en 24 horas tras corte matutino.
+          </p>
+          <div style="display: flex; gap: var(--sb-space-3); flex-wrap: wrap;">
+            <button type="button" class="sb-btn sb-btn--accent sb-btn--sm">Solicitar ficha técnica HORECA</button>
+            <button type="button" class="sb-btn sb-btn--secondary sb-btn--sm">Coordinar despacho de prueba</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 04. TARJETAS DE ESPECIE                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="tarjetas" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>04</span>
+        <span>Tarjetas de Especie & Grid Modular</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Estructura de Tarjetas (.sb-species-card)</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        Modelos de tarjetas para catálogos comerciales. Se utiliza la variante Hero asimétrica y la variante compacta estándar, ambas con nombres directos y llamadas de acción reales.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--sb-space-6); margin-top: var(--sb-space-6);">
+
+        <!-- Tarjeta Hero -->
+        <div class="sb-species-card sb-species-card--hero" style="margin: 0;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
+              <span class="sb-badge sb-badge--shiitake">Shiitake</span>
+              <span class="sb-badge sb-status--available">Cosecha Diaria</span>
+            </div>
+            <div class="sb-species-card__img-wrap">
+              <img src="../assets/img/species/shiitake.png" alt="Shiitake fresco" class="sb-species-card__img">
+            </div>
+            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Shiitake</h3>
+            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Lentinula edodes</p>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
+              Sombrero carnoso y denso. Fructificación controlada en la sabana de Tenjo. Ideal para sellados a fuego vivo.
+            </p>
+          </div>
+          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
+            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$24.000 / 500g</span>
+            <a href="product.html" class="sb-btn sb-btn--primary sb-btn--sm">Explorar ficha</a>
+          </div>
+        </div>
+
+        <!-- Tarjeta Compacta -->
+        <div class="sb-species-card" style="margin: 0;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
+              <span class="sb-badge sb-badge--melena">Melena de León</span>
+              <span class="sb-badge sb-status--development">Lote Limitado</span>
+            </div>
+            <div class="sb-species-card__img-wrap">
+              <img src="../assets/img/species/lions-mane.png" alt="Melena de León" class="sb-species-card__img">
+            </div>
+            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Melena de León</h3>
+            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Hericium erinaceus</p>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
+              Estructura de espinas globosas que absorbe caldos. Excelente en rodajas doradas con mantequilla.
+            </p>
+          </div>
+          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
+            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$28.000 / 350g</span>
+            <a href="product.html" class="sb-btn sb-btn--secondary sb-btn--sm">Consultar disponibilidad</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 05. TABLAS TÉCNICAS                                         -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="tablas" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>05</span>
+        <span>Tablas Técnicas & Rendimiento</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Especificaciones Profesionales de Cosecha</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        Tablas con números tabulares monoespaciados (<code>font-feature-settings: 'tnum' 1</code>), líneas de separación milimétricas y alineación decimal de parámetros agronómicos y culinarios.
+      </p>
+
+      <div class="sb-demo-box" style="overflow-x: auto;">
+        <span class="sb-code-label">Tabla de Calibres, Humedad y Merma por Cocción (HORECA)</span>
+        <table class="sb-chef-specs-table" style="margin-top: var(--sb-space-3);">
+          <thead>
+            <tr>
+              <th>Especie</th>
+              <th>Calibre Sombrero</th>
+              <th>Humedad Cosecha</th>
+              <th>Merma Estimada en Salteado</th>
+              <th>Formatos HORECA</th>
+              <th>Frecuencia Despacho</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Shiitake</strong> (<em>L. edodes</em>)</td>
+              <td class="sb-mono">4.0 – 6.0 cm</td>
+              <td class="sb-mono">86% – 88%</td>
+              <td class="sb-mono">&lt; 12% (fuego vivo)</td>
+              <td>Caja 1.5 kg / 3.0 kg</td>
+              <td>Martes a Sábado</td>
+            </tr>
+            <tr>
+              <td><strong>Orellana</strong> (<em>P. ostreatus</em>)</td>
+              <td class="sb-mono">6.0 – 10.0 cm</td>
+              <td class="sb-mono">89% – 91%</td>
+              <td class="sb-mono">&lt; 15% (salteado rápido)</td>
+              <td>Caja 2.0 kg / 4.0 kg</td>
+              <td>Diario al alba</td>
+            </tr>
+            <tr>
+              <td><strong>Melena de León</strong> (<em>H. erinaceus</em>)</td>
+              <td class="sb-mono">8.0 – 12.0 cm</td>
+              <td class="sb-mono">87% – 89%</td>
+              <td class="sb-mono">&lt; 10% (sellado en seco)</td>
+              <td>Caja 1.0 kg / 2.5 kg</td>
+              <td>Semanal programado</td>
+            </tr>
+            <tr>
+              <td><strong>Orellana Rosada</strong> (<em>P. djamor</em>)</td>
+              <td class="sb-mono">5.0 – 8.0 cm</td>
+              <td class="sb-mono">90% – 92%</td>
+              <td class="sb-mono">&lt; 16% (golpe de calor)</td>
+              <td>Caja 1.0 kg</td>
+              <td>Jueves y Viernes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 06. CAJA EPISTÉMICA & GUÍA CULINARIA                       -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <section id="epistemica" class="sb-section-block">
+      <div class="sb-section-eyebrow">
+        <span>06</span>
+        <span>Caja Epistémica & Guía Demostrativa</span>
+      </div>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Separación de Evidencia e Interpretación</h2>
+      <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
+        El componente <code>.sb-epistemic-box</code> desglosa cada afirmación con su estatus epistemológico real, mientras que <code>.sb-cooking-guide</code> provee la estructura modular de pasos de cocina advirtiendo su naturaleza demostrativa hasta contar con protocolos de laboratorio.
+      </p>
+
+      <!-- Caja Epistémica -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Caja Epistémica (.sb-epistemic-box)</span>
+        <div class="sb-epistemic-box" style="max-width: 620px;">
+          <div class="sb-epistemic-item">
+            <span class="sb-epistemic-label">Nombre común:</span>
+            <span class="sb-epistemic-val">Shiitake <span style="font-size: 11px; color: var(--sb-ink-2);">(Lentinula edodes)</span></span>
+          </div>
+          <div class="sb-epistemic-item">
+            <span class="sb-epistemic-label">Perfil sensorial validado:</span>
+            <span class="sb-epistemic-val">
+              Textura firme y notas tostadas en sartén
+              <span class="sb-badge sb-status--verified">[Comprobado]</span>
+            </span>
+          </div>
+          <div class="sb-epistemic-item">
+            <span class="sb-epistemic-label">Interpretación editorial:</span>
+            <span class="sb-epistemic-val">
+              Acento cromático castaño <span class="sb-badge sb-badge--editorial">Metáfora de Serie</span>
+            </span>
+          </div>
+          <div class="sb-epistemic-item">
+            <span class="sb-epistemic-label">Técnica recomendada:</span>
+            <span class="sb-epistemic-val">
+              Sartén de hierro a fuego vivo <span class="sb-badge sb-status--verified">[Comprobado]</span>
+            </span>
+          </div>
+          <div class="sb-epistemic-item">
+            <span class="sb-epistemic-label">Otras técnicas en prueba:</span>
+            <span class="sb-epistemic-val">
+              Infusión y fondos celulares <span class="sb-badge sb-status--pending">[Por confirmar]</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guía Culinaria Demostrativa -->
+      <div class="sb-demo-box">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: var(--sb-space-2);">
+          <span class="sb-code-label">Guía Culinaria Modular (.sb-cooking-guide)</span>
+          <span class="sb-badge sb-status--development" style="font-size: 10px;">Estructura de Ejemplo · No Normativa</span>
+        </div>
+
+        <div style="background-color: var(--sb-paper-2); border-left: 3px solid var(--sb-status-warn); padding: var(--sb-space-3) var(--sb-space-4); margin-top: var(--sb-space-2); margin-bottom: var(--sb-space-4);">
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            <strong>Aviso de integridad:</strong> Este componente ilustra la retícula visual de pasos; no sustituye una instrucción técnica validada. El contenido específico de cada técnica exige validación organoléptica antes de publicarse como pauta normativa.
+          </p>
+        </div>
+
+        <div class="sb-cooking-guide">
+          <div class="sb-cooking-step">
+            <span class="sb-cooking-step__num">Paso 01</span>
+            <div class="sb-cooking-step__title">Preparación en Seco</div>
+            <p class="sb-cooking-step__desc">
+              Pauta de estructura: limpieza de láminas sin inmersión en agua para resguardar la pared celular.
+            </p>
+          </div>
+          <div class="sb-cooking-step">
+            <span class="sb-cooking-step__num">Paso 02</span>
+            <div class="sb-cooking-step__title">Sellado a Fuego Vivo</div>
+            <p class="sb-cooking-step__desc">
+              Pauta de estructura: contacto sobre superficie caliente para caramelización sin acumulación de vapor.
+            </p>
+          </div>
+          <div class="sb-cooking-step">
+            <span class="sb-cooking-step__num">Paso 03</span>
+            <div class="sb-cooking-step__title">Sazón al Emplatar</div>
+            <p class="sb-cooking-step__desc">
+              Pauta de estructura: incorporación de sal y materia grasa al concluir para evitar deshidratación prematura.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nota Sensorial Acotada -->
+      <div class="sb-demo-box">
+        <span class="sb-code-label">Nota Sensorial Acotada (.sb-sensory-note · Gaya Italic acotada a 3 líneas)</span>
+        <div style="max-width: 480px; margin-top: var(--sb-space-2);">
+          <div class="sb-sensory-note" style="font-size: var(--sb-text-lg);">
+            Profundo, terroso, limpio. Notas amaderadas que emergen al contacto con calor directo.
+          </div>
+          <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: block; margin-top: 4px;">
+            Gobernanza: Uso limitado a cata verificada, nunca para prosa larga ni simulación estética.
+          </span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Pie Técnico del Pliego -->
+  <footer class="sb-footer">
+    <div class="sb-container sb-footer__grid">
+      <div>
+        <span class="sb-brand-mark" style="font-size: var(--sb-text-lg);">Setas de la Peña</span>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); max-width: 32ch;">
+          Pliego técnico de componentes. FOSV3 / DS-2026 / FOS. Operación agrícola en Tenjo, Cundinamarca.
+        </p>
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-3);">
+          Lat 4.872° N · Long 74.148° W · 2.592 msnm
+        </span>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Pliegos del Sistema</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="home.html">Mercado Comercial</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="product.html">Ficha de Producto</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Cuaderno Editorial</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Trazabilidad</a></p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Validación</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);">WCAG 2.1 Nivel AA</p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);">DTCG Design Tokens</p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);">Fuentes Locales Vendorizadas</p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Contacto</h4>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-bottom: var(--sb-space-2);">
+          Despachos y alianzas culinarias directas desde la granja en Tenjo.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script Ligero para Interactividad Accesible del Selector -->
+  <script>
+    function setPerspective(type) {
+      const btnHogar = document.getElementById('btnHogar');
+      const btnChef = document.getElementById('btnChef');
+      const panelHogar = document.getElementById('panelHogarDemo');
+      const panelChef = document.getElementById('panelChefDemo');
+      const announcement = document.getElementById('perspectiveAnnouncement');
+
+      if (type === 'hogar') {
+        btnHogar.setAttribute('aria-pressed', 'true');
+        btnChef.setAttribute('aria-pressed', 'false');
+        panelHogar.style.display = 'block';
+        panelChef.style.display = 'none';
+        announcement.textContent = 'Vista activa: Hogar';
+      } else if (type === 'chef') {
+        btnHogar.setAttribute('aria-pressed', 'false');
+        btnChef.setAttribute('aria-pressed', 'true');
+        panelHogar.style.display = 'none';
+        panelChef.style.display = 'block';
+        announcement.textContent = 'Vista activa: Chef / HORECA';
+      }
+    }
+  </script>
+
+</body>
+</html>

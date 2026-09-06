@@ -84,7 +84,7 @@ a:hover {
 /* Accesibilidad y Foco */
 :focus-visible {
   outline: 2px solid var(--sb-accent-shiitake);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 /* Contenedores */
