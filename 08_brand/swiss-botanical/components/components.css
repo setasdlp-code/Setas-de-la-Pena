@@ -78,6 +78,16 @@
   text-underline-offset: 4px;
 }
 
+.sb-btn:disabled,
+.sb-btn[aria-disabled="true"] {
+  background-color: var(--sb-paper-2);
+  border-color: var(--sb-line-hairline);
+  color: var(--sb-ink-2);
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
+}
+
 .sb-btn--sm {
   font-size: var(--sb-text-xs);
   padding: var(--sb-space-2) var(--sb-space-3);
@@ -166,7 +176,8 @@
   gap: 2px;
 }
 
-.sb-segment-option {
+.sb-segment-option,
+.sb-segment-btn {
   font-family: var(--sb-font-sans);
   font-size: var(--sb-text-xs);
   font-weight: 600;
@@ -180,7 +191,8 @@
   transition: all var(--sb-duration-fast) var(--sb-ease-editorial);
 }
 
-.sb-segment-option--active {
+.sb-segment-option--active,
+.sb-segment-btn[aria-pressed="true"] {
   background-color: var(--sb-paper-0);
   color: var(--sb-ink-0);
   border-bottom: 2px solid var(--sb-ink-0);
@@ -427,6 +439,139 @@ main > header, main > section { margin-block: 32px; }
   .sb-specs-table th, .sb-specs-table td { overflow-wrap: anywhere; }
   .sb-editorial-title { font-size: clamp(36px, 10vw, 52px); }
 }
+/* Módulo HORECA / Chef Profesional */
+.sb-chef-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sb-space-3);
+  margin-top: var(--sb-space-3);
+}
+
+.sb-chef-spec-card {
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-3);
+  border-radius: var(--sb-radius-xs);
+}
+
+.sb-chef-spec-card__label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.sb-chef-spec-card__value {
+  font-family: var(--sb-font-sans);
+  font-size: var(--sb-text-sm);
+  font-weight: 600;
+  color: var(--sb-ink-0);
+}
+
+.sb-chef-spec-card__detail {
+  font-size: var(--sb-text-2xs);
+  color: var(--sb-ink-1);
+  margin-top: 2px;
+}
+
+/* Nota Sensorial en Gaya Italic (Norma: máx 3 líneas, perfil validado) */
+.sb-sensory-note {
+  font-family: var(--sb-font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--sb-text-lg);
+  line-height: var(--sb-leading-snug);
+  color: var(--sb-accent-shiitake);
+  margin-top: var(--sb-space-1);
+  margin-bottom: var(--sb-space-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Estados Canónicos de Estatus y Validación Epistémica
+   ═══════════════════════════════════════════════════════════════ */
+
+.sb-status--verified,
+.sb-status--available,
+.sb-badge--validated {
+  border-color: var(--sb-status-active);
+  background-color: var(--sb-status-active-tint);
+  color: var(--sb-status-active);
+}
+
+.sb-status--pending,
+.sb-badge--pending {
+  border-color: var(--sb-line-hairline);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-2);
+  font-style: italic;
+}
+
+.sb-status--unavailable {
+  border-color: var(--sb-status-error);
+  background-color: var(--sb-status-error-tint);
+  color: var(--sb-status-error);
+}
+
+.sb-status--development {
+  border-color: var(--sb-status-warn);
+  background-color: var(--sb-status-warn-tint);
+  color: var(--sb-status-warn);
+}
+
+.sb-badge--editorial {
+  border-color: var(--sb-line-strong);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-1);
+  font-style: normal;
+}
+
+/* Fila Epistémica de Especificación */
+.sb-epistemic-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-2);
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-3) var(--sb-space-4);
+  border-radius: var(--sb-radius-xs);
+  margin-top: var(--sb-space-3);
+}
+
+.sb-epistemic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--sb-text-xs);
+  border-bottom: 1px solid var(--sb-paper-2);
+  padding-bottom: 4px;
+}
+
+.sb-epistemic-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sb-epistemic-label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+.sb-epistemic-val {
+  font-family: var(--sb-font-sans);
+  color: var(--sb-ink-0);
+  font-weight: 500;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
