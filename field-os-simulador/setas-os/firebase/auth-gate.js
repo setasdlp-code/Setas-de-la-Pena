@@ -66,6 +66,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../field-event-sync.js",
   "../field-event-account.js",
   "../field-qr-resolve.js",
+  "../field-action-sheet.js",
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;
