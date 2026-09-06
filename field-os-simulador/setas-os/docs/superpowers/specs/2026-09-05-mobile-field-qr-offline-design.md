@@ -326,15 +326,18 @@ async function releaseReservation(accountId, batchId) {
 ```
 
 **Cross-Tab & Cross-Account Enforcement:**
-The `pending_batch_transitions` store is indexed by `[accountId, batchId]` and checked on every action-sheet confirmation. If another tab (same browser, **same account**) already has a pending transition for this batch, the new confirmation is rejected with "Another action is pending for this batch." Different accounts have separate reservations and do not block each other.
+The `pending_batch_transitions` store is indexed by `[accountId, batchId]` and checked on every action-sheet confirmation. 
+- **Within same account:** If another tab (same browser, same IndexedDB, same account) has a pending transition for batch X, new confirmation is rejected with "Another action is pending for this batch."
+- **Across accounts:** Different accounts have separate reservations (keyed by accountId) and do not block each other within the same shared IndexedDB.
+- **Per device:** The reservation scope is per account + batch within the device's IndexedDB; different devices (different browsers/IndexedDBs) maintain independent reservations.
 
 **Reservation Lifecycle:**
 1. Created: when operator confirms action (atomically with FieldEvent & QueueEntry)
 2. Held: while QueueEntry.status ∈ [pending, sending, retry_wait]
-3. Released: when QueueEntry.status ∈ [confirmed, conflict, rejected]
+3. Released atomically: when QueueEntry.status transitions to terminal state:
    - On confirm: event accepted by server, new state + revision applied; release allows next transition
-   - On conflict: operator must resolve (refresh batch state, submit new transition); release allows new attempt
-   - On reject: authorization or validation failed; release allows retry or different action
+   - On conflict: reservation released immediately; operator must refresh (see updated batch state), create new event with new eventId; old event remains immutable for audit
+   - On reject: authorization or validation failed; release allows retry with same or different action
 
 ### 4.2 Sync Trigger & Retry Strategy
 
@@ -370,9 +373,9 @@ The `pending_batch_transitions` store is indexed by `[accountId, batchId]` and c
    - Store receipt in IndexedDB (with QueueEntry or separately)
 7. If failure:
    - If "idempotency: already accepted" → recover receipt from response, set confirmed, release reservation
-   - If "revision conflict" → set status ← conflict, do NOT release reservation (operator must review)
-   - If "authorization denied" or "validation failed" → set status ← rejected, release reservation
-   - If "network/timeout" → set status ← retry_wait, backoff (reservation remains held)
+   - If "revision conflict" → set status ← conflict, release reservation (terminal state; operator must refresh and create new event)
+   - If "authorization denied" or "validation failed" → set status ← rejected, release reservation (terminal state)
+   - If "network/timeout" → set status ← retry_wait, backoff (reservation remains held; will retry)
 8. Persist updated QueueEntry & receipt to IndexedDB
 ```
 
@@ -408,15 +411,20 @@ async function acceptFieldEvent(event, expectedBatchRevision, attachmentIds) {
       const existingEventDoc = await tx.get(db.doc(`field-events/${event.id}`));
       if (existingEventDoc.exists) {
         const storedEvent = existingEventDoc.data();
-        const existingReceipt = storedEvent.receipt;
         
-        if (contentEquals(event, storedEvent)) {
-          // Legitimate retry: return original receipt
-          return existingReceipt;
-        } else {
+        if (!contentEquals(event, storedEvent)) {
           // Same ID, different content: idempotency violation
           throw new Error("idempotency_violation: same eventId, different content");
         }
+        
+        // Content matches; verify receipt exists (acceptance proof)
+        if (!storedEvent.receipt) {
+          // Event written but never completed acceptance (transaction failure or crash)
+          throw new Error("incomplete_event_record: event exists without receipt");
+        }
+        
+        // Legitimate retry: return original receipt
+        return storedEvent.receipt;
       }
 
       // 2. Fetch batch INSIDE transaction (snapshot)
@@ -493,25 +501,43 @@ async function acceptFieldEvent(event, expectedBatchRevision, attachmentIds) {
 
 // Helper: normalized content comparison (canonical representation)
 function contentEquals(submitted, stored) {
-  // Normalize: canonical field order, ISO8601 timestamps (no microseconds beyond ms)
+  // Canonicalize timestamps: parse ISO8601, convert to UTC, truncate to ms
+  const normalizeTimestamp = (ts) => {
+    if (!ts) return null;
+    try {
+      // Parse ISO8601: accept 2026-09-05T14:32:00Z, 2026-09-05T14:32:00.000Z, with/without offset
+      const date = new Date(ts);
+      if (isNaN(date.getTime())) throw new Error("invalid_timestamp");
+      // Return as ISO string truncated to ms precision: YYYY-MM-DDTHH:mm:ss.SSSZ
+      const ms = date.getUTCMilliseconds();
+      const iso = date.toISOString(); // Always UTC, always .SSSZ format
+      return iso;
+    } catch (e) {
+      throw new Error(`canonicalization_failed: invalid timestamp "${ts}": ${e.message}`);
+    }
+  };
+  
   const normalize = (obj) => {
     // Remove receipt before comparison (receipt added by server, not part of event content)
     const eventOnly = { ...obj };
     delete eventOnly.receipt;
     
-    return JSON.stringify({
+    // Canonical object: fields in order, timestamps normalized, metadata included (part of immutable contract)
+    const canonical = {
       id: eventOnly.id,
-      schemaVersion: eventOnly.schemaVersion || 1,
+      schemaVersion: eventOnly.schemaVersion ?? 1,
       type: eventOnly.type,
       batchId: eventOnly.batchId,
       expectedBatchRevision: eventOnly.expectedBatchRevision,
-      occurredAt: (eventOnly.occurredAt || "").replace(/\.\d{3}\d+Z$/, ".000Z"), // Normalize to ms
+      occurredAt: normalizeTimestamp(eventOnly.occurredAt),
       operatorId: eventOnly.operatorId,
       source: eventOnly.source,
       payload: eventOnly.payload,
-      attachmentIds: eventOnly.attachmentIds || [],
-      metadata: eventOnly.metadata || {},
-    });
+      attachmentIds: eventOnly.attachmentIds ?? [],
+      metadata: eventOnly.metadata ?? {},
+    };
+    
+    return JSON.stringify(canonical);
   };
   
   return normalize(submitted) === normalize(stored);
@@ -810,9 +836,13 @@ These tests verify that operator confirmations are trustworthy and that accepted
 - ✓ **Result visibility:** After local commit, UI shows "Saved on this device"; after server commit, shows "Confirmed on server" with new revision
 
 **Idempotency & Duplicate Prevention:**
-- ✓ **Legitimate retry:** Event submitted, server accepts, response lost; client retries same eventId → server returns original receipt, no duplicate transition
+- ✓ **Legitimate retry:** Event submitted, server accepts, response lost; client retries same eventId → server finds existing event with receipt, returns original receipt, no duplicate transition
 - ✓ **Same ID, different payload:** Client submits eventId X with payload {from: A, to: B}; server stores it; client retries with same ID but different payload → server rejects with idempotency_violation
-- ✓ **Two tabs, same batch:** Tab 1 opens action sheet for batch X, confirms → pending_batch_transitions[X] written; Tab 2 opens action sheet for same batch, attempts confirm → rejected "another action pending for this batch"
+- ✓ **Existing event without receipt:** Event document exists but receipt field missing (transaction crash mid-flight); retry → server rejects with incomplete_event_record (does not infer acceptance from document presence)
+- ✓ **Two tabs, same batch, same account:** Tab 1 confirms for batch X, reservation written; Tab 2 attempts confirm for same batch → rejected "another action pending"
+- ✓ **Two tabs, different accounts:** Tab 1 (account A) reserves batch X; Tab 2 (account B) can reserve same batch X (separate reservations by accountId)
+- ✓ **Equivalent timestamp representations:** Client sends `occurredAt: "2026-09-05T14:32:00Z"`, server stored `"2026-09-05T14:32:00.000Z"` → normalized to same canonical form, idempotency succeeds
+- ✓ **Invalid timestamp:** Client sends malformed timestamp → canonical normalization throws error, prevents comparison, request fails
 
 **Revision Conflict Detection:**
 - ✓ **Device A and B, same revision:** Both hold revision 12; A submits Incubation→Fruiting first (accepted, revision becomes 13); B submits Incubation→Fruiting with expectedBatchRevision: 12 → server returns conflict with currentRevision: 13
@@ -833,7 +863,7 @@ These tests verify that operator confirmations are trustworthy and that accepted
 
 **FieldEvent creation & immutability:**
 - ✓ Event persisted to IDB before first transmission attempt
-- ✓ Event ID generated once (UUID) and frozen
+- ✓ Event ID (stable persisted UUID): generated once, persisted before first transmission, reused on all retries (idempotent across retries, not deterministic from content)
 - ✓ Event record is immutable (cannot be edited after creation; new linked event required)
 
 **State machine validation:**
@@ -985,9 +1015,12 @@ These tests verify that operator confirmations are trustworthy and that accepted
 **Idempotency & Conflict:**
 - [ ] Legitimate retry (same eventId, identical content) → original receipt returned, no duplicate transition
 - [ ] Idempotency violation (same eventId, different content) → rejected with error
+- [ ] Existing event without receipt → incomplete_event_record error (never infer acceptance from document alone)
 - [ ] Multi-device: two devices from revision 12, A succeeds (rev→13), B gets 409 with currentRevision: 13
 - [ ] Response lost: server accepts, client timeout/disconnect, retry recovers receipt from server
-- [ ] Conflict does NOT release reservation (operator must resolve and retry)
+- [ ] Conflict releases reservation atomically; operator must refresh and create new event (old event immutable for audit)
+- [ ] Timestamp normalization: "2026-09-05T14:32:00Z" == "2026-09-05T14:32:00.000Z" after canonicalization
+- [ ] Invalid timestamp rejection: malformed ISO8601 rejected before comparison attempt
 
 **Account Safety & Recovery:**
 - [ ] Logout does NOT delete pending events; keeps them isolated by operatorId
