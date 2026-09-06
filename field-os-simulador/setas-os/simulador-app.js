@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6aa7b46960bda285aeb90f7350976deb0adc87ba7fdcbe02bc2f685bb489f26b
+// source-hash: 9b157f4a1ec5332b49402b1c2c61d2bc2ec85b1f0a88302e8e27231ce28ed2bb
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2027,7 +2027,7 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     };
   }
 };
-const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectReading, setSelectedClimateRoom, setNoticeDlg }) => {
+const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectReading, setSelectedClimateRoom, setNoticeDlg, liveTelemetry = null }) => {
   const [tab, setTab] = useState("nodos");
   const [nodes, setNodes] = useState(DEFAULT_IOT_NODES);
   const [fwMcu, setFwMcu] = useState("esp32dev");
@@ -2039,6 +2039,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
   const [fwServerHost, setFwServerHost] = useState("192.168.1.100");
   const [fwServerPort, setFwServerPort] = useState("8080");
   const [fwFormat, setFwFormat] = useState("esphome");
+  const liveCfg = liveTelemetry && liveTelemetry.config || {};
+  const [connWs, setConnWs] = useState(liveCfg.websocketUrl || "");
+  const [connMqtt, setConnMqtt] = useState(liveCfg.mqttUrl || "");
+  const [connTopics, setConnTopics] = useState((liveCfg.mqttTopics || ["setas/+/+/#"]).join(", "));
+  const [connFirestore, setConnFirestore] = useState(liveCfg.firestore !== false);
+  const [connPressure, setConnPressure] = useState(String(liveCfg.pressureHpa || 745));
+  const [connSaved, setConnSaved] = useState(false);
   const [webhookJson, setWebhookJson] = useState(`{
   "room_id": "${selectedRoomId || "martha_01"}",
   "temperature_c": 18.4,
@@ -2068,7 +2075,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
       dialogStyle: { width: "min(860px, 94vw)", padding: 0, background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-sm, 2px)", overflow: "hidden", boxShadow: "0 12px 40px rgba(26,20,16,0.18)" }
     },
     /* @__PURE__ */ React.createElement("div", { style: { background: "var(--ink-0, #1A1410)", color: "#FAF8F5", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 20, color: "var(--accent-olive, #5B6B44)" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 18, margin: 0, fontWeight: 700 } }, "Hub de Integración IoT & Hardware de Bajo Costo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--paper-300, #C8C3B5)", marginTop: 2 } }, "Setas de la Peña · Tenjo (2.587 msnm) · ESP32 / Sonoff / SHT3x / SCD30"))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", style: { color: "#FAF8F5", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer" }, onClick: onClose }, "✕")),
-    /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 0", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { className: "iot-hub-pills" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "nodos" ? "on" : ""}`, onClick: () => setTab("nodos") }, "📡 Nodos en Finca (", nodes.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "firmware" ? "on" : ""}`, onClick: () => setTab("firmware") }, "⚡ Generador de Firmware"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "webhook" ? "on" : ""}`, onClick: () => setTab("webhook") }, "🧪 Consola Webhook / Test"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "reglas" ? "on" : ""}`, onClick: () => setTab("reglas") }, "⚙ Reglas de Automatización"))),
+    /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 0", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { className: "iot-hub-pills" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "nodos" ? "on" : ""}`, onClick: () => setTab("nodos") }, "📡 Nodos en Finca (", nodes.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "firmware" ? "on" : ""}`, onClick: () => setTab("firmware") }, "⚡ Generador de Firmware"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "webhook" ? "on" : ""}`, onClick: () => setTab("webhook") }, "🧪 Consola Webhook / Test"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "conexion" ? "on" : ""}`, onClick: () => setTab("conexion") }, "🔌 Conexión en Vivo"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "reglas" ? "on" : ""}`, onClick: () => setTab("reglas") }, "⚙ Reglas de Automatización"))),
     /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 24px", maxHeight: "68vh", overflowY: "auto" } }, tab === "nodos" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "Nodos ESP32 y microcontroladores transmitiendo telemetría activa en las carpas de Tenjo:"), /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -2168,7 +2175,78 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         }
       },
       "🚀 Inyectar Telemetría de Prueba"
-    ), webhookFeedback && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: webhookFeedback.success ? "var(--moss-800)" : "var(--accent-terracotta)", fontWeight: 700 } }, webhookFeedback.success ? "✓ " : "✕ ", " ", webhookFeedback.msg))), tab === "reglas" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1)", marginBottom: 14 } }, "Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "💧 Humidificación (Bang-Bang con Histéresis)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Mínima de Arranque (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhMin, onChange: (e) => setAutoRhMin(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Target de Reposo (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhTarget, onChange: (e) => setAutoRhTarget(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "💨 Renovación de Aire FAE (Extractor Cloudline)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Límite Máximo CO2 (ppm)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoCo2Max, onChange: (e) => setAutoCo2Max(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Duración Pulso FAE (segundos)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoFaeDuration, onChange: (e) => setAutoFaeDuration(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "🌡 Seguridad Biológica de Sustrato"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Temperatura Crítica de Sustrato (°C)"), /* @__PURE__ */ React.createElement("input", { type: "number", step: "0.5", className: "field-input", value: autoSubTempMax, onChange: (e) => setAutoSubTempMax(Number(e.target.value)), style: { width: "100%", fontSize: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 4 } }, "Si $T_", "{sustrato}", " > 28^\\circ\\text", C, "$ durante incubación, se dispara alerta de riesgo de daño al micelio.")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
+    ), webhookFeedback && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: webhookFeedback.success ? "var(--moss-800)" : "var(--accent-terracotta)", fontWeight: 700 } }, webhookFeedback.success ? "✓ " : "✕ ", " ", webhookFeedback.msg))), tab === "conexion" && /* @__PURE__ */ React.createElement("div", { "data-testid": "iot-hub-conexion" }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginBottom: 14 } }, "El puente ingiere por los tres transportes a la vez y deduplica las lecturas repetidas: si el WebSocket cae, Firestore ya venía llenando el mismo buffer y la curva no queda con un hueco. El de mayor prioridad con datos frescos es el que se reporta como fuente activa."), liveTelemetry && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginBottom: 16 } }, (liveTelemetry.status.transports || []).map((t) => /* @__PURE__ */ React.createElement("div", { key: t.kind, style: { padding: "8px 10px", border: "1px solid var(--border-hairline)", borderRadius: 4, background: "var(--paper-100)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" } }, t.kind), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, t.state, t.fresh ? " · datos frescos" : t.lastDataAt ? " · sin datos recientes" : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, t.readingsIn, " lecturas · ", t.attempts, " reintento", t.attempts === 1 ? "" : "s"), t.lastError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-terracotta)" } }, t.lastError))), (liveTelemetry.status.transports || []).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Ningún transporte configurado todavía.")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "WebSocket del gateway (prioridad 1 · menor latencia)"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        className: "field-input",
+        value: connWs,
+        onChange: (e) => {
+          setConnWs(e.target.value);
+          setConnSaved(false);
+        },
+        placeholder: "wss://gateway.setasdelapena.local/telemetry",
+        style: { width: "100%", fontSize: 12 }
+      }
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Broker MQTT sobre WebSocket (prioridad 2)"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        className: "field-input",
+        value: connMqtt,
+        onChange: (e) => {
+          setConnMqtt(e.target.value);
+          setConnSaved(false);
+        },
+        placeholder: "wss://broker.setasdelapena.local:9001",
+        style: { width: "100%", fontSize: 12 }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 3 } }, "Mosquitto necesita ", /* @__PURE__ */ React.createElement("code", null, "listener 9001"), " + ", /* @__PURE__ */ React.createElement("code", null, "protocol websockets"), ". Topics: ", /* @__PURE__ */ React.createElement("code", null, "setas/<sala>/<nodo>/<métrica>"), ".")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Topics suscritos"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        className: "field-input",
+        value: connTopics,
+        onChange: (e) => {
+          setConnTopics(e.target.value);
+          setConnSaved(false);
+        },
+        style: { width: "100%", fontSize: 12 }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: connFirestore, onChange: () => {
+      setConnFirestore((v) => !v);
+      setConnSaved(false);
+    } }), "Firestore (prioridad 3 · sobrevive a NAT y firewalls)"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Presión barométrica local (hPa)"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "number",
+        className: "field-input",
+        value: connPressure,
+        onChange: (e) => {
+          setConnPressure(e.target.value);
+          setConnSaved(false);
+        },
+        style: { width: 120, fontSize: 12 }
+      }
+    ))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "btn btn--sm btn--primary",
+        disabled: !liveTelemetry,
+        onClick: () => {
+          liveTelemetry.setConfig({
+            websocketUrl: connWs.trim(),
+            mqttUrl: connMqtt.trim(),
+            mqttTopics: connTopics.split(",").map((t) => t.trim()).filter(Boolean),
+            firestore: connFirestore,
+            pressureHpa: Number(connPressure) || 745
+          });
+          setConnSaved(true);
+        }
+      },
+      "Guardar y reconectar"
+    ), connSaved && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--moss-800)", fontWeight: 700 } }, "✓ Puente reiniciado con la configuración nueva")))), tab === "reglas" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1)", marginBottom: 14 } }, "Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "💧 Humidificación (Bang-Bang con Histéresis)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Mínima de Arranque (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhMin, onChange: (e) => setAutoRhMin(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Target de Reposo (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhTarget, onChange: (e) => setAutoRhTarget(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "💨 Renovación de Aire FAE (Extractor Cloudline)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Límite Máximo CO2 (ppm)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoCo2Max, onChange: (e) => setAutoCo2Max(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Duración Pulso FAE (segundos)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoFaeDuration, onChange: (e) => setAutoFaeDuration(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, "🌡 Seguridad Biológica de Sustrato"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Temperatura Crítica de Sustrato (°C)"), /* @__PURE__ */ React.createElement("input", { type: "number", step: "0.5", className: "field-input", value: autoSubTempMax, onChange: (e) => setAutoSubTempMax(Number(e.target.value)), style: { width: "100%", fontSize: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 4 } }, "Si $T_", "{sustrato}", " > 28^\\circ\\text", C, "$ durante incubación, se dispara alerta de riesgo de daño al micelio.")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2671,6 +2749,157 @@ const readFormDraft = () => {
     return null;
   }
 };
+const ROOM_TARGET_BANDS = {
+  martha_01: {
+    temperature_c: { min: 14, max: 20, target: 17, criticalMin: 8, criticalMax: 26 },
+    rh_pct: { min: 85, max: 95, target: 90, criticalMin: 65, criticalMax: 99 },
+    co2_ppm: { min: 400, max: 900, target: 600, criticalMax: 2500 }
+  },
+  cloudlab_844: {
+    temperature_c: { min: 16, max: 22, target: 18.5, criticalMin: 10, criticalMax: 28 },
+    rh_pct: { min: 80, max: 92, target: 86, criticalMin: 60, criticalMax: 99 },
+    co2_ppm: { min: 450, max: 1e3, target: 700, criticalMax: 2500 }
+  },
+  incubacion_01: {
+    temperature_c: { min: 20, max: 24, target: 22, criticalMin: 12, criticalMax: 30 },
+    rh_pct: { min: 65, max: 80, target: 72, criticalMin: 45, criticalMax: 98 },
+    co2_ppm: { min: 400, max: 1500, target: 800, criticalMax: 5e3 }
+  }
+};
+const DEMO_ROOM_METRICS = {
+  martha_01: { temperature_c: 17.2, rh_pct: 91.5, co2_ppm: 680, substrate_temperature_c: 17.8 },
+  cloudlab_844: { temperature_c: 18.4, rh_pct: 88, co2_ppm: 750, substrate_temperature_c: 18.9 },
+  incubacion_01: { temperature_c: 23.4, rh_pct: 72, co2_ppm: 1200, substrate_temperature_c: 24.8 }
+};
+const LIVE_TELEMETRY_STORAGE_KEY = "setas_live_telemetry_config";
+const DEFAULT_LIVE_TELEMETRY_CONFIG = {
+  websocketUrl: "",
+  mqttUrl: "",
+  mqttTopics: ["setas/+/+/#"],
+  firestore: true,
+  pressureHpa: 745
+};
+function loadLiveTelemetryConfig() {
+  const injected = typeof window !== "undefined" && window.SETAS_LIVE_TELEMETRY || {};
+  let stored = {};
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(LIVE_TELEMETRY_STORAGE_KEY) : null;
+    stored = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    stored = {};
+  }
+  return Object.assign({}, DEFAULT_LIVE_TELEMETRY_CONFIG, injected, stored);
+}
+function saveLiveTelemetryConfig(config) {
+  try {
+    localStorage.setItem(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+function buildLiveTransports(config) {
+  const transports = [];
+  if (config.websocketUrl) transports.push({ kind: "websocket", url: config.websocketUrl });
+  if (config.mqttUrl) transports.push({ kind: "mqtt", url: config.mqttUrl, topics: config.mqttTopics });
+  if (config.firestore !== false && typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.subscribeToLiveClimate === "function") {
+    transports.push({ kind: "firestore" });
+  }
+  return transports;
+}
+const LIVE_CONNECTIVITY_LABEL = {
+  en_vivo: "En vivo",
+  degradado: "Sin datos recientes",
+  offline: "Sin conexión",
+  detenido: "Detenido"
+};
+function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = [], tickMs = 2e3 } = {}) {
+  const [config, setConfigState] = useState(loadLiveTelemetryConfig);
+  const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: "offline", transports: [], activeSource: null, altitudeM: 2600 } });
+  const [alerts, setAlerts] = useState([]);
+  const bridgeRef = useRef(null);
+  const engineRef = useRef(null);
+  const signatureRef = useRef("");
+  useEffect(() => {
+    const bridgeLib = typeof window !== "undefined" ? window.SetasLiveBridge : null;
+    const anomalyLib = typeof window !== "undefined" ? window.SetasAnomaly : null;
+    if (!enabled || !bridgeLib || !anomalyLib) return void 0;
+    const engine = anomalyLib.createAnomalyEngine({ bands });
+    const bridge = bridgeLib.createLiveTelemetryBridge({
+      transports: buildLiveTransports(config),
+      factories: bridgeLib.browserFactories,
+      pressureHpa: config.pressureHpa,
+      cycles,
+      // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
+      // agrupa en el tick es el render, no la detección.
+      onSample: (roomId, sample) => {
+        engine.evaluate(roomId, sample);
+      }
+    });
+    engineRef.current = engine;
+    bridgeRef.current = bridge;
+    bridge.start();
+    const pump = () => {
+      engine.checkStale();
+      const next = bridge.getSnapshot({ buckets: 24 });
+      const activeAlerts = engine.activeAlerts();
+      const signature = [
+        next.status.connectivity,
+        next.status.activeSource || "-",
+        Object.values(next.rooms).map((r) => `${r.id}@${r.sample && r.sample.lastUpdateAt}`).join(","),
+        activeAlerts.map((a) => `${a.key}:${a.severity}`).join(",")
+      ].join("|");
+      if (signature === signatureRef.current) return;
+      signatureRef.current = signature;
+      setSnapshot(next);
+      setAlerts(activeAlerts);
+    };
+    pump();
+    const timer = setInterval(pump, tickMs);
+    return () => {
+      clearInterval(timer);
+      bridge.stop();
+      bridgeRef.current = null;
+      engineRef.current = null;
+      signatureRef.current = "";
+    };
+  }, [enabled, config, tickMs]);
+  const ingest = (packet) => {
+    const bridge = bridgeRef.current;
+    if (!bridge) return [];
+    return bridge.ingest(packet, { source: "manual" });
+  };
+  const setConfig = (next) => {
+    const merged = Object.assign({}, config, next || {});
+    saveLiveTelemetryConfig(merged);
+    setConfigState(merged);
+  };
+  const roomsWithData = Object.keys(snapshot.rooms || {});
+  return {
+    snapshot,
+    alerts,
+    config,
+    setConfig,
+    ingest,
+    status: snapshot.status,
+    hasLiveData: roomsWithData.length > 0,
+    roomLive: (roomId) => (snapshot.rooms || {})[roomId] || null,
+    roomAlerts: (roomId) => alerts.filter((a) => a.roomId === roomId),
+    getSeries: (roomId, metric, opts) => bridgeRef.current ? bridgeRef.current.getSeries(roomId, metric, opts) : null
+  };
+}
+function liveSeverityOf(alerts) {
+  if (!alerts || !alerts.length) return "optimal";
+  if (alerts.some((a) => a.severity === "critico")) return "critical";
+  if (alerts.some((a) => a.severity === "alarma")) return "critical";
+  return "warning";
+}
+function liveAgeLabel(ms) {
+  if (!Number.isFinite(ms)) return "sin datos";
+  if (ms < 6e4) return `hace ${Math.max(1, Math.round(ms / 1e3))} s`;
+  if (ms < 36e5) return `hace ${Math.round(ms / 6e4)} min`;
+  return `hace ${Math.round(ms / 36e5)} h`;
+}
 function SimuladorShell(props) {
   const initialFormDraft = useMemo(() => readFormDraft(), []);
   const [bridgeOpen, setBridgeOpen] = useState(true);
@@ -3052,6 +3281,7 @@ function SimuladorShell(props) {
   const [prodLaunchForm, setProdLaunchForm] = useState(null);
   const [showIoTHub, setShowIoTHub] = useState(false);
   const [injectedClimateReadings, setInjectedClimateReadings] = useState({});
+  const liveTelemetry = useLiveTelemetry({ bands: ROOM_TARGET_BANDS });
   const [globalMode, setGlobalMode] = useState(() => {
     try {
       const v = localStorage.getItem("setas_global_workmode");
@@ -5008,6 +5238,57 @@ BATCH (${numBags}×${kgBag} kg):
     }
     setNoticeDlg({ title: actionLabel[action] || "Acción de lote", msg: "Esta captura conserva el flujo operativo existente del lote." });
   };
+  const LiveTelemetryStatusBar = () => /* @__PURE__ */ React.createElement("div", { className: "live-telemetry-status", "data-testid": "live-telemetry-status" }, /* @__PURE__ */ React.createElement("span", { className: `live-telemetry-dot live-telemetry-dot--${liveTelemetry.status.connectivity}`, "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__label" }, "Telemetría · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—"), liveTelemetry.status.activeSource && /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__source" }, "vía ", liveTelemetry.status.activeSource), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__alt", title: "Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla." }, "CO₂ compensado · ", liveTelemetry.status.altitudeM || 2600, " msnm"), /* @__PURE__ */ React.createElement("button", { className: "os-action live-telemetry-status__cfg", type: "button", onClick: () => setShowIoTHub(true) }, "Configurar"));
+  const LiveAlertsSection = () => /* @__PURE__ */ React.createElement(React.Fragment, null, liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "os-live-alerts", "data-testid": "hoy-live-alerts" }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, "Alertas de cámara en vivo"), /* @__PURE__ */ React.createElement("span", null, liveTelemetry.alerts.length)), liveTelemetry.alerts.slice(0, 6).map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, (ROOMS_CONFIG[a.roomId] || {}).name || a.roomId, " · ", a.metricLabel), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__side" }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs)), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "os-action",
+      type: "button",
+      onClick: () => {
+        setSelectedClimateRoom(a.roomId);
+        goTab("clima");
+      }
+    },
+    a.action
+  )))), liveTelemetry.alerts.length > 6 && /* @__PURE__ */ React.createElement("div", { className: "os-live-alerts__more" }, "+", liveTelemetry.alerts.length - 6, " alerta", liveTelemetry.alerts.length - 6 === 1 ? "" : "s", " más en Cámaras")));
+  const LiveClimateStrip = () => /* @__PURE__ */ React.createElement("div", { className: "today-climate-strip", "data-testid": "today-climate-strip" }, Object.values(ROOMS_CONFIG).map((r) => {
+    const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
+    const live = liveTelemetry.roomLive(r.id);
+    const demo = DEMO_ROOM_METRICS[r.id] || DEMO_ROOM_METRICS.martha_01;
+    const sample = live && live.sample || {};
+    const isLive = (metric) => Number.isFinite(sample[metric]);
+    const t = isLive("temperature_c") ? sample.temperature_c : demo.temperature_c;
+    const rh = isLive("rh_pct") ? sample.rh_pct : demo.rh_pct;
+    const co2 = isLive("co2_ppm") ? sample.co2_ppm : demo.co2_ppm;
+    const anyLive = isLive("temperature_c") || isLive("rh_pct") || isLive("co2_ppm");
+    const vpd = climateMath ? climateMath.calcVPD(t, rh) : null;
+    const roomAlerts = liveTelemetry.roomAlerts(r.id);
+    const severity = anyLive ? liveSeverityOf(roomAlerts) : climateMath ? climateMath.evalClimateHealth({ tC: t, rhPct: rh, co2Ppm: co2, targets: ROOM_TARGET_BANDS[r.id] }).severity : "optimal";
+    const badge = severity === "critical" ? "⚠ ALERTA" : severity === "warning" ? "◐ VIGILAR" : "● EN RANGO";
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: r.id,
+        className: `today-climate-card ${severity === "critical" ? "os-alert-row--critical" : ""} ${anyLive ? "today-climate-card--live" : "today-climate-card--demo"}`,
+        onClick: () => {
+          setSelectedClimateRoom(r.id);
+          goTab("clima");
+        },
+        title: anyLive ? "Ver telemetría y curvas en vivo" : "Sin telemetría conectada — valores de referencia"
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 700, color: "var(--ink-0)" } }, "🌱 ", r.name), /* @__PURE__ */ React.createElement("span", { style: {
+        padding: "2px 6px",
+        borderRadius: 2,
+        fontSize: 10,
+        fontWeight: 700,
+        fontFamily: "var(--font-mono)",
+        background: severity === "critical" ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
+        color: severity === "critical" ? "var(--accent-terracotta)" : "var(--moss-800)"
+      } }, badge)),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", fontFamily: "var(--font-num)", fontSize: 14, color: "var(--ink-0)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", null, "🌡 ", Math.round(t * 10) / 10, "°C"), /* @__PURE__ */ React.createElement("span", null, "💧 ", Math.round(rh * 10) / 10, "%"), /* @__PURE__ */ React.createElement("span", null, "💨 ", Math.round(co2), " ppm"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)" } }, "VPD ", vpd != null ? vpd : "—", " kPa")),
+      /* @__PURE__ */ React.createElement("div", { className: "today-climate-card__prov" }, anyLive ? `${liveAgeLabel(live.ageMs)} · ${(sample.sources || []).join(" + ") || "en vivo"}` : "sin telemetría · valores de referencia")
+    );
+  }));
   const TodayV2 = () => {
     const now = Date.now();
     const source = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado)).map((lote, index) => {
@@ -5031,42 +5312,7 @@ BATCH (${numBags}×${kgBag} kg):
       const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
       setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
       setShowQrSheet(true);
-    } }, "Escanear lote o registrar evento"), /* @__PURE__ */ React.createElement("div", { className: "today-climate-strip", "data-testid": "today-climate-strip" }, Object.values(ROOMS_CONFIG).map((r) => {
-      const isMartha = r.id === "martha_01";
-      const t = isMartha ? 17.2 : 18.4;
-      const rh = isMartha ? 91.5 : 88;
-      const co2 = isMartha ? 680 : 750;
-      const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
-      const vpd = climateMath ? climateMath.calcVPD(t, rh) : 0.21;
-      const health = climateMath ? climateMath.evalClimateHealth({
-        tC: t,
-        rhPct: rh,
-        co2Ppm: co2,
-        targets: isMartha ? { temperature_c: { min: 14, max: 20 }, rh_pct: { min: 85, max: 95 }, co2_ppm: { max: 900 } } : { temperature_c: { min: 16, max: 22 }, rh_pct: { min: 80, max: 92 }, co2_ppm: { max: 1e3 } }
-      }) : { severity: "optimal" };
-      return /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: r.id,
-          className: `today-climate-card ${health.severity === "critical" ? "os-alert-row--critical" : ""}`,
-          onClick: () => {
-            setSelectedClimateRoom(r.id);
-            goTab("clima");
-          },
-          title: "Ver telemetría y curvas en vivo"
-        },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 700, color: "var(--ink-0)" } }, "🌱 ", r.name), /* @__PURE__ */ React.createElement("span", { style: {
-          padding: "2px 6px",
-          borderRadius: 2,
-          fontSize: 10,
-          fontWeight: 700,
-          fontFamily: "var(--font-mono)",
-          background: health.severity === "critical" ? "var(--accent-terracotta-dim)" : "var(--moss-100)",
-          color: health.severity === "critical" ? "var(--accent-terracotta)" : "var(--moss-800)"
-        } }, health.severity === "critical" ? "⚠ ALERTA" : "● EN RANGO")),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", fontFamily: "var(--font-num)", fontSize: 14, color: "var(--ink-0)", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", null, "🌡 ", t, "°C"), /* @__PURE__ */ React.createElement("span", null, "💧 ", rh, "%"), /* @__PURE__ */ React.createElement("span", null, "💨 ", co2, " ppm"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-2)" } }, "VPD ", vpd, " kPa"))
-      );
-    })), queue.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado."), groups.map(([bucket, label]) => {
+    } }, "Escanear lote o registrar evento"), /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null), queue.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado."), groups.map(([bucket, label]) => {
       const rows = queue.filter((item) => item.bucket === bucket);
       if (!rows.length) return null;
       return /* @__PURE__ */ React.createElement("section", { className: "os-today-group", key: bucket }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, label), /* @__PURE__ */ React.createElement("span", null, rows.length)), rows.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "os-task-row " + (bucket === "critical" ? "os-alert-row--critical" : "") }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-task-row__title" }, item.title), /* @__PURE__ */ React.createElement("div", { className: "os-task-row__meta" }, item.lote.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openBatchDetail(item.id) }, "Abrir lote"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(item.id) }, "🖨")))));
@@ -5100,28 +5346,28 @@ BATCH (${numBags}×${kgBag} kg):
     const CAMERA_TO_ROOM = { incub: "incubacion_01", martha: "martha_01", cloudlab: "cloudlab_844" };
     const lotesEnSala = bitLotes.filter((l) => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || !l.sala && selectedClimateRoom === "martha_01") && !["completado", "descartado"].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
-    const defaultTargets = selectedClimateRoom === "martha_01" ? {
-      temperature_c: { min: 14, max: 20, target: 17 },
-      rh_pct: { min: 85, max: 95, target: 90 },
-      co2_ppm: { min: 400, max: 900, target: 600 }
-    } : selectedClimateRoom === "incubacion_01" ? {
-      temperature_c: { min: 20, max: 24, target: 22 },
-      rh_pct: { min: 65, max: 80, target: 72 },
-      co2_ppm: { min: 400, max: 1500, target: 800 }
-    } : {
-      temperature_c: { min: 16, max: 22, target: 18.5 },
-      rh_pct: { min: 80, max: 92, target: 86 },
-      co2_ppm: { min: 450, max: 1e3, target: 700 }
-    };
-    const baseMetrics = selectedClimateRoom === "martha_01" ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: "hace 45s" } : selectedClimateRoom === "martha_02" ? { temp: 18.4, rh: 88, co2: 750, subTemp: 18.9, timestamp: "hace 1m" } : { temp: 23.4, rh: 72, co2: 2400, subTemp: 24.8, timestamp: "hace 35s" };
+    const defaultTargets = ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
+    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: "valores de referencia" };
     const physicalMetrics = selectedCamera ? {
       temp: Number(selectedCamera.liveTemp),
       rh: Number(selectedCamera.liveHum),
       co2: Number(selectedCamera.liveCo2),
-      timestamp: "actualizado ahora"
+      timestamp: "monitor de cámara"
     } : {};
     const injected = injectedClimateReadings[selectedClimateRoom];
-    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...injected || {} };
+    const roomLive = liveTelemetry.roomLive(selectedClimateRoom);
+    const liveSample = roomLive && roomLive.sample || {};
+    const liveMetrics = {};
+    if (Number.isFinite(liveSample.temperature_c)) liveMetrics.temp = liveSample.temperature_c;
+    if (Number.isFinite(liveSample.rh_pct)) liveMetrics.rh = liveSample.rh_pct;
+    if (Number.isFinite(liveSample.co2_ppm)) liveMetrics.co2 = liveSample.co2_ppm;
+    if (Number.isFinite(liveSample.substrate_temperature_c)) liveMetrics.subTemp = liveSample.substrate_temperature_c;
+    const hasLiveMetrics = Object.keys(liveMetrics).length > 0;
+    if (hasLiveMetrics) liveMetrics.timestamp = `${liveAgeLabel(roomLive.ageMs)} · ${(liveSample.sources || []).join(" + ") || "en vivo"}`;
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...injected || {}, ...liveMetrics };
+    const liveRoomAlerts = liveTelemetry.roomAlerts(selectedClimateRoom);
+    const co2Correction = liveSample.co2_correction || null;
     const CULINARY_PROFILES = {
       firme: {
         name: "Textura Firme / Carne Densa",
@@ -5453,9 +5699,14 @@ BATCH (${numBags}×${kgBag} kg):
       const values = !injected && Array.isArray(selectedCamera?.[key]) ? selectedCamera[key].slice(-take) : [];
       return values.length > 1 ? values : fallback;
     };
-    const tempSeries = cameraSeries("tempSeries", generatedTempSeries);
-    const rhSeries = cameraSeries("humSeries", generatedRhSeries);
-    const co2Series = cameraSeries("co2Series", generatedCo2Series);
+    const liveSeriesFor = (metric, fallback) => {
+      const values = roomLive && roomLive.series && roomLive.series[metric] || [];
+      return values.length > 1 ? values.slice(-take) : fallback;
+    };
+    const tempSeries = liveSeriesFor("temperature_c", cameraSeries("tempSeries", generatedTempSeries));
+    const rhSeries = liveSeriesFor("rh_pct", cameraSeries("humSeries", generatedRhSeries));
+    const co2Series = liveSeriesFor("co2_ppm", cameraSeries("co2Series", generatedCo2Series));
+    const seriesAreLive = (roomLive && roomLive.series && roomLive.series.temperature_c || []).length > 1;
     const tempMin = Math.min(...tempSeries);
     const tempMax = Math.max(...tempSeries);
     const rhMin = Math.min(...rhSeries);
@@ -5465,7 +5716,7 @@ BATCH (${numBags}×${kgBag} kg):
     const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: 12, yMax: 24 }) : "";
     const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : "";
     const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : "";
-    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · en vivo"), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -5475,10 +5726,10 @@ BATCH (${numBags}×${kgBag} kg):
       },
       /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 13 }),
       /* @__PURE__ */ React.createElement("span", null, "Hub IoT & Firmware")
-    ), /* @__PURE__ */ React.createElement("span", { className: "climate-live-label" }, /* @__PURE__ */ React.createElement("i", null), " ", cameras.length, " nodos · ", currentMetrics.timestamp))), cameras.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "climate-module-grid" }, cameras.map((c) => {
+    ), /* @__PURE__ */ React.createElement("span", { className: "climate-live-label", "data-live": hasLiveMetrics ? "true" : "false" }, /* @__PURE__ */ React.createElement("i", null), " ", cameras.length, " nodos · ", currentMetrics.timestamp))), cameras.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "climate-module-grid" }, cameras.map((c) => {
       const roomId = CAMERA_TO_ROOM[c.id] || selectedClimateRoom;
       return /* @__PURE__ */ React.createElement("button", { key: c.id, type: "button", className: `climate-module-card ${roomId === selectedClimateRoom ? "on" : ""}`, onClick: () => setSelectedClimateRoom(roomId), "aria-pressed": roomId === selectedClimateRoom }, /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { background: c.estadoAccent } }), c.name), /* @__PURE__ */ React.createElement("b", null, c.estadoLabel)), /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, "Zona ", c.zona, " · ", c.sppName, " · ", c.count, " activos"), /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "Temp."), /* @__PURE__ */ React.createElement("strong", null, c.liveTemp, "°")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "HR"), /* @__PURE__ */ React.createElement("strong", null, c.liveHum, "%")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "CO₂"), /* @__PURE__ */ React.createElement("strong", null, c.liveCo2))), /* @__PURE__ */ React.createElement("span", { className: "climate-occupancy" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("i", { style: { width: `${c.occupancy}%`, background: c.estadoAccent } })), /* @__PURE__ */ React.createElement("b", null, c.occupancy, "% ocupado")), c.hasLiveAlert && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert" }, c.liveAlertNote));
-    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
+    })) : /* @__PURE__ */ React.createElement("div", { className: "climate-empty" }, "Sin cámaras configuradas para telemetría.")), liveRoomAlerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-live-alerts", "data-testid": "climate-live-alerts", "aria-label": "Alertas activas de la sala" }, liveRoomAlerts.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, a.metricLabel, " · ", a.action), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs))))), /* @__PURE__ */ React.createElement("div", { className: "climate-cycle-banner" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--accent-terracotta-dark)" } }, room.name, " · ", room.spec), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, mainLote ? `${mainLote.especie} · Lote ${mainLote.codigo}` : "Sala en Acondicionamiento / Standby"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginTop: 2 } }, "Nodo IoT: ", /* @__PURE__ */ React.createElement("code", null, room.device), " · Sensores: ", room.sensors, " · Altitud: ", room.altitude)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, selectedCamera && /* @__PURE__ */ React.createElement("button", { type: "button", className: "climate-detail-btn", onClick: () => props.onOpenCamara && props.onOpenCamara(selectedCamera.id) }, "Abrir ficha del módulo →"), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -5527,7 +5778,7 @@ BATCH (${numBags}×${kgBag} kg):
       fontFamily: "var(--font-mono)",
       fontSize: 11,
       fontWeight: 700
-    } }, climateHealth.severity === "critical" ? "⚠ ALERTA AMBIENTAL" : "● CONDICIONES NOMINALES"))), climateHealth.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, climateHealth.alerts.map((al, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: {
+    } }, climateHealth.severity === "critical" ? "⚠ ALERTA AMBIENTAL" : "● CONDICIONES NOMINALES"))), liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, climateHealth.alerts.map((al, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: {
       padding: "8px 12px",
       borderRadius: "var(--radius-sm)",
       background: al.level === "alert" ? "var(--accent-terracotta-dim)" : "var(--paper-2)",
@@ -5538,8 +5789,8 @@ BATCH (${numBags}×${kgBag} kg):
       alignItems: "center",
       gap: 8
     } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? "🚨" : "⚠"), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
-      const ndirCorr = climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? climateMath.calcBarometricCO2Correction(currentMetrics.co2, 745, currentMetrics.temp) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36) };
-      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value", style: { display: "flex", alignItems: "baseline", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm real"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", currentMetrics.co2, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert 745 hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
+      const ndirCorr = co2Correction ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true } : climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745, currentMetrics.temp), { live: false }) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value", style: { display: "flex", alignItems: "baseline", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--ink-2)" } }, "ppm real"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
     })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, color: "var(--ink-2)" } }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
       const activeBiomassKg = mainLote?.pesoLote ? mainLote.pesoLote * 0.22 : 25;
       const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === "function" ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || "orellana_gris", {
@@ -5657,7 +5908,7 @@ BATCH (${numBags}×${kgBag} kg):
         onTouchStart: handleTouchStart,
         onTouchMove: handleTouchMove
       }
-    ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 9, fontFamily: "var(--font-sans)", color: "var(--ink-2)", textAlign: "center", maxWidth: 240 } }, "Triángulo sólido: Sensores en vivo (Compensados).", /* @__PURE__ */ React.createElement("br", null), "Línea discontinua: Proyección del simulador.")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "📈 Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Lecturas recibidas del ESP32 comparadas con las bandas óptimas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 9, fontFamily: "var(--font-sans)", color: "var(--ink-2)", textAlign: "center", maxWidth: 240 } }, "Triángulo sólido: Sensores en vivo (Compensados).", /* @__PURE__ */ React.createElement("br", null), "Línea discontinua: Proyección del simulador.")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, "📈 Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 }, "data-testid": "climate-series-provenance", "data-series-live": seriesAreLive ? "true" : "false" }, seriesAreLive ? `Serie medida · ${(roomLive && roomLive.series && roomLive.series.temperature_c || []).length} muestras del buffer en vivo, comparadas con las bandas del RoomCycle activo` : "Sin serie medida todavía · curva de referencia comparada con las bandas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: rng,
@@ -5981,7 +6232,7 @@ BATCH (${numBags}×${kgBag} kg):
       { label: "Trabajo", value: `${props.hoyPreviewHoras} h`, onClick: props.onGoRevTrabajo },
       { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
       { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
-    ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "baseline", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "5px 10px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →")), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, "⚠ Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "baseline", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "5px 10px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →")), /* @__PURE__ */ React.createElement("div", { className: "home-live-telemetry", style: { marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null)), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText))), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, "⚠ Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
       setInvTab("compra");
       goTab("inventario");
     }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +"))), /* @__PURE__ */ React.createElement("div", { className: "home-acciones-tareas-row" }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 0, padding: "18px 20px", height: "100%", boxShadow: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-2)" } }, "SECCIÓN A · OPERACIÓN INMEDIATA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", letterSpacing: "-0.01em", color: "var(--ink-0)", marginTop: 2, marginBottom: 0 } }, "Acciones Rápidas")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, "Acceso a 1 clic")), /* @__PURE__ */ React.createElement("div", { style: {
@@ -8453,6 +8704,7 @@ interval:
     {
       isOpen: showIoTHub,
       onClose: () => setShowIoTHub(false),
+      liveTelemetry,
       selectedRoomId: selectedClimateRoom,
       onInjectReading: (r) => {
         setInjectedClimateReadings((prev) => ({

@@ -43,6 +43,12 @@ const PROTECTED_APP_SCRIPTS = [
   "../scoring.js",
   "../bitacora-model.js",
   "../climate-math.js",
+  // El puente de telemetría en vivo depende del contrato y del adaptador ESP32
+  // en ese orden: cada uno lee el global que publica el anterior.
+  "../telemetry-contract.js",
+  "../esp32-telemetry-adapter.js",
+  "../anomaly-thresholds.js",
+  "../live-telemetry-bridge.js",
   "../flush-forecast-engine.js",
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
