@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field OS — Sistema de Diseño</title>
+  <link rel="stylesheet" href="../assets/design-tokens/fos-colors.css" />
+  <link rel="stylesheet" href="../assets/design-tokens/fos-typography.css" />
+  <link rel="stylesheet" href="../assets/design-tokens/fos-spacing.css" />
+  <link rel="stylesheet" href="../assets/design-tokens/fos-structure.css" />
+  <link rel="stylesheet" href="../assets/design-tokens/fos-fonts.css" />
+  <style>
+    body { max-width: 72rem; margin: 0 auto; padding: var(--space-8) var(--space-5) var(--space-9); }
+    h1 { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-2xl); margin: 0 0 var(--space-2); }
+    h2 { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-xl); margin: var(--space-8) 0 var(--space-4); border-bottom: var(--rule-hairline); padding-bottom: var(--space-2); }
+    h3 { font-family: var(--font-display); font-weight: var(--weight-medium); font-size: var(--text-md); margin: var(--space-5) 0 var(--space-3); }
+    p.lede { color: var(--text-secondary); font-size: var(--text-prose); max-width: 46rem; }
+    .eyebrow { font-family: var(--font-mono); font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: var(--tracking-widest); color: var(--status-active); }
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-3); }
+    .swatch { border: var(--rule-hairline); }
+    .swatch__color { height: 64px; }
+    .swatch__meta { padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--text-2xs); }
+    .swatch__meta b { display: block; font-size: var(--text-xs); font-family: var(--font-sans); font-weight: var(--weight-medium); }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--rule-hairline); font-variant-numeric: tabular-nums; }
+    th { font-family: var(--font-mono); font-size: var(--text-2xs); text-transform: uppercase; color: var(--text-metadata); font-weight: var(--weight-medium); }
+    .type-row { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: var(--rule-hairline); }
+    .type-row span.tag { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-metadata); width: 9rem; flex-shrink: 0; }
+    .space-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; }
+    .space-row .bar { background: var(--status-active); height: 12px; }
+    .space-row span { font-family: var(--font-mono); font-size: var(--text-xs); width: 5rem; }
+    .btn-demo { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-target-min); padding: 0 var(--space-5); border-radius: var(--radius-sm); font-family: var(--font-display); font-size: var(--text-sm); margin-right: var(--space-3); margin-bottom: var(--space-3); }
+    .btn-primary { background: var(--status-active); color: var(--paper-0); border: none; }
+    .btn-primary:hover { background: var(--status-active-hover); }
+    .btn-secondary { background: var(--surface-page); color: var(--text-primary); border: var(--rule-strong); }
+    .btn-bad { min-height: 32px; padding: 0 var(--space-3); border-radius: 8px; background: #ddd; border: none; }
+    .note { border-left: 2px solid var(--status-attention); background: var(--status-attention-bg); padding: var(--space-3) var(--space-4); font-size: var(--text-sm); color: var(--text-secondary); }
+    .provenance { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-metadata); }
+  </style>
+</head>
+<body>
+
+  <span class="eyebrow">Field OS · Sistema de diseño canónico</span>
+  <h1>Sistema de Diseño — Setas de la Peña</h1>
+  <p class="lede">
+    Esta página es la única fuente de verdad visual del producto. Los tokens que se ven aquí son los mismos archivos CSS
+    (<code>assets/design-tokens/</code>) que debe consumir cualquier superficie nueva: sitio público, tablero de control,
+    prototipo Field OS. Ninguna otra paleta, tipografía o escala de espaciado es válida — ver nota de procedencia al final.
+  </p>
+
+  <h2>Color</h2>
+  <p class="lede">Paper (superficies) e Ink (texto) forman la base neutra. Los acentos se usan solo para clasificación y estado, nunca como decoración.</p>
+
+  <h3>Paper &amp; Ink</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch__color" style="background:var(--paper-0)"></div><div class="swatch__meta"><b>paper-0</b>#F7F4EC · fondo de página</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--paper-1)"></div><div class="swatch__meta"><b>paper-1</b>#EFEBE0 · panel/sección</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--paper-2)"></div><div class="swatch__meta"><b>paper-2</b>#E5DFD0 · recuadro recesado</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--paper-3)"></div><div class="swatch__meta"><b>paper-3</b>#DCD5C2 · recesado fuerte</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--ink-0)"></div><div class="swatch__meta" style="color:#fff"><b>ink-0</b>#1E1D19 · texto primario</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--ink-1)"></div><div class="swatch__meta" style="color:#fff"><b>ink-1</b>#3C392F · texto secundario</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--ink-2)"></div><div class="swatch__meta" style="color:#fff"><b>ink-2</b>#6B6759 · metadata</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--ink-3)"></div><div class="swatch__meta"><b>ink-3</b>#96907C · solo placeholder (no cumple 4.5:1)</div></div>
+  </div>
+
+  <h3>Acentos de estado</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch__color" style="background:var(--accent-olive)"></div><div class="swatch__meta" style="color:#fff"><b>olive</b>#5B6B44 · activo</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--accent-terracotta)"></div><div class="swatch__meta" style="color:#fff"><b>terracotta</b>#A85C32 · atención</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--accent-blue-grey)"></div><div class="swatch__meta" style="color:#fff"><b>blue-grey</b>#5E7080 · informativo</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--accent-mushroom)"></div><div class="swatch__meta" style="color:#fff"><b>mushroom</b>#7A6A52 · archivado</div></div>
+    <div class="swatch"><div class="swatch__color" style="background:var(--accent-rust)"></div><div class="swatch__meta" style="color:#fff"><b>rust</b>#8C3223 · error / contaminación, exclusivo</div></div>
+  </div>
+  <p class="note" style="margin-top:var(--space-3)">Regla FOS-07: sobre un acento sólido, el texto siempre usa <code>--paper-0</code>, nunca <code>--ink-0</code> (ink-0 sobre olive da 2.92:1 — falla WCAG incluso en texto grande).</p>
+
+  <h2>Tipografía</h2>
+  <p class="lede"><b>Gaya</b> (cuerpo) + <b>IBM Plex Sans Display</b> (títulos/acento) + <b>IBM Plex Mono</b> (datos tabulares, código de lote).</p>
+  <div>
+    <div class="type-row"><span class="tag">text-3xl / 44px</span><span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-3xl);">Portada</span></div>
+    <div class="type-row"><span class="tag">text-2xl / 32px</span><span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-2xl);">Título de documento</span></div>
+    <div class="type-row"><span class="tag">text-xl / 24px</span><span style="font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-xl);">Título de página</span></div>
+    <div class="type-row"><span class="tag">text-lg / 19px</span><span style="font-family:var(--font-display); font-size:var(--text-lg);">Encabezado de sección</span></div>
+    <div class="type-row"><span class="tag">text-prose / 16px</span><span style="font-size:var(--text-prose);">Prosa — piso mínimo, nunca más chico en documentos ni guías.</span></div>
+    <div class="type-row"><span class="tag">text-base / 14.5px</span><span style="font-size:var(--text-base);">Etiqueta / valor de ficha de campo.</span></div>
+    <div class="type-row"><span class="tag">text-sm / 13px</span><span style="font-size:var(--text-sm);">Tabla densa — solo escritorio, nunca en impresión de campo.</span></div>
+    <div class="type-row"><span class="tag">text-xs / 11.5px</span><span style="font-family:var(--font-mono); font-size:var(--text-xs); text-transform:uppercase; letter-spacing:var(--tracking-wide);">Metadata / eyebrow</span></div>
+  </div>
+  <p class="note" style="margin-top:var(--space-3)">FOS-04.2: por debajo de 13px no hay contenido operativo — solo metadata no esencial.</p>
+
+  <h2>Espaciado</h2>
+  <p class="lede">Grilla base de 4px, atada al interlineado tipográfico.</p>
+  <div>
+    <div class="space-row"><span>space-1 · 4px</span><div class="bar" style="width:4px"></div></div>
+    <div class="space-row"><span>space-2 · 8px</span><div class="bar" style="width:8px"></div></div>
+    <div class="space-row"><span>space-3 · 12px</span><div class="bar" style="width:12px"></div></div>
+    <div class="space-row"><span>space-4 · 16px</span><div class="bar" style="width:16px"></div></div>
+    <div class="space-row"><span>space-5 · 24px</span><div class="bar" style="width:24px"></div></div>
+    <div class="space-row"><span>space-6 · 32px</span><div class="bar" style="width:32px"></div></div>
+    <div class="space-row"><span>space-7 · 48px</span><div class="bar" style="width:48px"></div></div>
+    <div class="space-row"><span>space-8 · 64px</span><div class="bar" style="width:64px"></div></div>
+    <div class="space-row"><span>space-9 · 96px</span><div class="bar" style="width:96px"></div></div>
+  </div>
+
+  <h2>Estructura</h2>
+  <table>
+    <tr><th>Token</th><th>Valor</th><th>Uso</th></tr>
+    <tr><td>--radius-none</td><td>0px</td><td>default — el sistema es plano</td></tr>
+    <tr><td>--radius-sm</td><td>2px</td><td>tags, inputs, botones</td></tr>
+    <tr><td>--radius-md</td><td>3px</td><td>controles pequeños, excepcional</td></tr>
+    <tr><td>--shadow-none</td><td>none</td><td>siempre — nunca sombras, glass ni paneles flotantes</td></tr>
+    <tr><td>--tap-target-min</td><td>44px</td><td>mínimo obligatorio en cualquier control tocable (FOS-08)</td></tr>
+  </table>
+
+  <h3>Botones</h3>
+  <button class="btn-demo btn-primary">Acción primaria</button>
+  <button class="btn-demo btn-secondary">Acción secundaria</button>
+  <div>
+    <button class="btn-bad" style="font-family:var(--font-sans); font-size:12px;">✕ altura 32px — ejemplo de lo que NO hacer</button>
+  </div>
+  <p class="note" style="margin-top:var(--space-3)">
+    Cualquier botón por debajo de 44px de alto incumple FOS-08. El componente <code>button.tsx</code> del prototipo Field OS
+    (shadcn por defecto) hoy usa 24–36px — pendiente de corregir, ver auditoría del sistema de diseño.
+  </p>
+
+  <hr style="border:none; border-top:var(--rule-hairline); margin:var(--space-9) 0 var(--space-5)">
+
+  <h2 style="margin-top:0">Procedencia</h2>
+  <p class="provenance">
+    Tokens fuente: <code>field_os/20_product_design/PROTOTYPES/lote-registro-app/src/styles/fos-*.css</code>, copiados verbatim a
+    <code>assets/design-tokens/</code> el 2026-09-04 tras la auditoría de sistema de diseño. Este archivo reemplaza como canon a
+    <code>docs/brand-guidelines.md</code> (paleta Moss/Coral/Sand/Bark/Slate) y a las variables sueltas de <code>styles.css</code> /
+    <code>recipe-sim-v2.css</code> en la raíz del repo — ambos describían un sistema distinto e incompatible con el que
+    realmente se auditó y se usa en Field OS. Actualizar esos documentos, o retirarlos, es la siguiente tarea pendiente.
+  </p>
+
+</body>
+</html>
