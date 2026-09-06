@@ -614,7 +614,7 @@ were found after the task reviews passed. They are remediated in Task 3; Tasks
 | F4 | High | `uuid` undeclared; resolves transitively via `@lhci/cli` devDependency | `grep '"uuid"' package.json` → absent |
 | F5 | High | `auth_receipts` is dead schema — never written or read | grep: only created + asserted |
 | F6 | Blocking | `releaseReservation` has no event guard; a stale response can release a newer event's reservation | Signature deletes unconditionally by `accountId:batchId` |
-| F7 | Info | No QR decoder exists; `qr-mini.js` is a QR *generator* | `window.QRMini.matrix(text)` |
+| F7 | ~~Info~~ **WRONG — corrected 2026-09-06** | I claimed no QR decoder exists. `qr-mini.js` is indeed only a generator, but `simulador-app.jsx` already has a working camera scanner: `startCameraScanner` (~line 4473) uses `BarcodeDetector` and calls `handleScannedValue` (~line 4507), which resolves a batch and creates no transition. Task 10 should have integrated with it rather than assuming a greenfield. | `simulador-app.jsx:4473,4507` |
 
 **Real state vocabulary** (from `setas-os-workflow.js` — use these, not Spanish labels):
 `planned → mix_prepared → thermal_treatment → cooling → inoculated → incubation
@@ -1101,10 +1101,11 @@ generates.**
 
 **Files to create:** `field-qr-resolve.js`, `field-qr-resolve.test.js`.
 
-**Decoder ruling:** use the browser-native `BarcodeDetector` when present;
-otherwise surface `scanner_unavailable` and fall back to **manual batch-code
-entry**. Do **not** add a decoding library — it would need a bundler the repo
-does not have (see F1). Record this as a v1 limitation.
+**Decoder ruling (corrected):** the app **already** scans via `BarcodeDetector`
+in `simulador-app.jsx` (`startCameraScanner` ~4473 → `handleScannedValue` ~4507).
+Task 10 supplies only the *payload parsing and authorization* layer; Task 11 wires
+it into that existing handler and must not regress today's scanning behaviour.
+Do **not** add a decoding library — it would need a bundler the repo lacks (F1).
 
 **Contract:**
 - `parseBatchRef(text)` → `{batchId}` or throws `invalid_qr_payload`.
