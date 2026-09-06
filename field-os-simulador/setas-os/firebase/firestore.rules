@@ -56,17 +56,45 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Cuaderno de campo: `workflowState` y `revision` son campos nuevos que
+    // sólo escribe la aceptación de eventos (Admin SDK, que ignora estas
+    // reglas). El campo `estado` heredado no cambia de significado.
+    //
+    // Si un cliente pudiera moverlos saltaría la aceptación transaccional, y
+    // con ella la idempotencia y el control de concurrencia: dos operarios sin
+    // señal podrían avanzar el mismo lote y ninguna de las dos escrituras
+    // detectaría a la otra.
+    function transicionIntacta() {
+      return request.resource.data.get('workflowState', null) == resource.data.get('workflowState', null)
+          && request.resource.data.get('revision', null) == resource.data.get('revision', null);
+    }
+
     match /lotes_produccion/{id} {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.recetaSnapshot.ingredientes is list
         && masaBalanceada(request.resource.data.recetaSnapshot.ingredientes)
         // recetaSnapshot se escribe una sola vez, al crear el lote — nunca se edita.
+        // El lote nace sin estado de flujo: lo establece la primera transición aceptada.
+        && !('workflowState' in request.resource.data)
+        && !('revision' in request.resource.data)
         ;
       allow update: if signedIn()
         && request.resource.data.recetaSnapshot == resource.data.recetaSnapshot
-        && (!('status' in request.resource.data) || request.resource.data.status is string);
+        && (!('status' in request.resource.data) || request.resource.data.status is string)
+        && transicionIntacta();
       allow delete: if isAdmin();
+    }
+
+    // Eventos de campo — registro inmutable de transiciones de estado.
+    //
+    // El cliente nunca escribe aquí: encola el evento en IndexedDB y lo envía a
+    // la función de aceptación, que valida y confirma dentro de una transacción.
+    // Permitir una escritura directa dejaría entrar eventos sin recibo, que es
+    // justamente el registro incompleto que la aceptación rechaza.
+    match /field_events/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
     }
 
     match /inventario_lotes/{id} {
