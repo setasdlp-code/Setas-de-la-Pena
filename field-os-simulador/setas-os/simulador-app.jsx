@@ -3289,6 +3289,406 @@ const NoticeModal=({dlg,onClose})=>{
   );
 };
 
+const FieldActionModal = ({
+  onClose,
+  lote,
+  db,
+  operatorRole = 'operario',
+  operatorId = 'operario_local',
+  accountId = 'setas_default_account',
+  onTransitionConfirmed,
+}) => {
+  const [selectedTo, setSelectedTo] = React.useState('');
+  const [inFlight, setInFlight] = React.useState(false);
+  const [queueEntry, setQueueEntry] = React.useState(null);
+  const [actionError, setActionError] = React.useState('');
+  const [actionSuccess, setActionSuccess] = React.useState('');
+  const [localBatch, setLocalBatch] = React.useState(lote);
+
+  React.useEffect(() => {
+    setLocalBatch(lote);
+    setSelectedTo('');
+    setActionError('');
+    setActionSuccess('');
+  }, [lote]);
+
+  React.useEffect(() => {
+    if (!localBatch || !db) return;
+    let active = true;
+    const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+    if (queue && typeof queue.getReservation === 'function') {
+      const batchId = localBatch.id || localBatch.codigo;
+      queue.getReservation(db, accountId, batchId).then(reservation => {
+        if (!active) return;
+        if (!reservation) {
+          setQueueEntry(null);
+          return;
+        }
+        try {
+          const tx = db.transaction('queue_entries', 'readonly');
+          const req = tx.objectStore('queue_entries').get(reservation.eventId);
+          req.onsuccess = () => {
+            if (active) setQueueEntry(req.result || null);
+          };
+          req.onerror = () => {
+            if (active) setQueueEntry(null);
+          };
+        } catch (_) {
+          if (active) setQueueEntry(null);
+        }
+      }).catch(() => {
+        if (active) setQueueEntry(null);
+      });
+    }
+    return () => { active = false; };
+  }, [localBatch, db, accountId]);
+
+  const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
+  const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
+    ? actionSheetModule.buildActionSheetModel({
+        batch: localBatch,
+        batchId: localBatch?.id || localBatch?.codigo,
+        state: localBatch?.workflowState || localBatch?.state,
+        operatorRole,
+        queueEntry,
+        inFlight,
+      })
+    : {
+        title: localBatch ? `Lote ${localBatch.codigo || localBatch.id}` : 'Lote',
+        subtitle: localBatch?.especie || '',
+        state: localBatch?.workflowState || localBatch?.estado || 'inoculated',
+        options: [],
+        status: 'idle',
+        statusLabel: 'Listo para registrar',
+        canConfirm: false,
+        canRefresh: false,
+      };
+
+  React.useEffect(() => {
+    if (model.options && model.options.length > 0 && !selectedTo) {
+      setSelectedTo(model.options[0].to);
+    }
+  }, [model.options, selectedTo]);
+
+  const handleConfirm = async () => {
+    if (!selectedTo) return;
+    setActionError('');
+    setActionSuccess('');
+    setInFlight(true);
+
+    try {
+      if (!actionSheetModule || typeof actionSheetModule.confirmTransition !== 'function') {
+        throw new Error('field_action_sheet_unavailable: módulo de hoja de acción no cargado');
+      }
+      if (!db) {
+        throw new Error('db_unavailable: base de datos local no inicializada');
+      }
+
+      const fromState = model.state;
+      const expectedBatchRevision = Number.isInteger(localBatch?.revision) ? localBatch.revision : 0;
+
+      const result = await actionSheetModule.confirmTransition({
+        db,
+        batch: localBatch,
+        from: fromState,
+        to: selectedTo,
+        accountId,
+        operatorId,
+        operatorRole,
+        expectedBatchRevision,
+        confirmed: true,
+      });
+
+      setQueueEntry(result.queueEntry);
+      setInFlight(false);
+      setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+
+      if (typeof onTransitionConfirmed === 'function') {
+        onTransitionConfirmed(localBatch.id, selectedTo, result.event);
+      }
+    } catch (err) {
+      setInFlight(false);
+      setActionError(err.message || 'Error al confirmar transición');
+    }
+  };
+
+  const handleRefresh = () => {
+    setQueueEntry(null);
+    setActionError('');
+    setActionSuccess('');
+  };
+
+  return (
+    <AccessibleModal
+      onClose={onClose}
+      label="Hoja de acción de campo (QR)"
+      dialogStyle={{
+        width: 'min(480px, 94vw)',
+        padding: '20px 18px',
+        background: 'var(--paper-1, #EFEBE0)',
+        border: '1px solid var(--border-hairline, #8C7F5B)',
+        borderRadius: 'var(--radius-md, 3px)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2, #6B7280)', marginBottom: 2 }}>
+            Hoja de Acción de Campo · Transición de Estado
+          </div>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0, #1F2937)', fontWeight: 700 }}>
+            {model.title}
+          </h2>
+          {model.subtitle && (
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #4B5563)', marginTop: 2 }}>
+              {model.subtitle}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="modal-icon-close"
+          aria-label="Cerrar hoja de acción"
+          onClick={onClose}
+          style={{ background: 'transparent', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ink-2)' }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2, #6B7280)', display: 'block' }}>
+            Estado Actual
+          </span>
+          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0, #111827)' }}>
+            {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
+          </strong>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2, #6B7280)', background: 'var(--paper-100, #E5E0D0)', padding: '3px 7px', borderRadius: 2 }}>
+          Rol: {operatorRole}
+        </span>
+      </div>
+
+      {model.status === 'saved_local' && (
+        <div
+          data-testid="status-saved-local"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#FFFBEB',
+            border: '1.5px solid #D97706',
+            borderRadius: 3,
+            color: '#92400E',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <span>📱</span> <span>GUARDADO EN ESTE EQUIPO</span>
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+            {model.statusLabel}
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#B45309' }}>
+            El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.
+          </div>
+        </div>
+      )}
+
+      {model.status === 'confirmed' && (
+        <div
+          data-testid="status-confirmed"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#ECFDF5',
+            border: '1.5px solid #059669',
+            borderRadius: 3,
+            color: '#065F46',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <span>☁️</span> <span>CONFIRMADO POR EL SERVIDOR</span>
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+            {model.statusLabel}
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#047857' }}>
+            Transición registrada y validada en el servidor central con recibo autorizado.
+          </div>
+        </div>
+      )}
+
+      {model.status === 'sending' && (
+        <div
+          data-testid="status-sending"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#EFF6FF',
+            border: '1px solid #3B82F6',
+            borderRadius: 3,
+            color: '#1E40AF',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⏳</span> <span>ENVIANDO AL SERVIDOR...</span>
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>
+            Transmitiendo evento de campo al servidor central...
+          </div>
+        </div>
+      )}
+
+      {model.status === 'conflict' && (
+        <div
+          data-testid="status-conflict"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#FEF2F2',
+            border: '1.5px solid #DC2626',
+            borderRadius: 3,
+            color: '#991B1B',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⚠️</span> <span>CONFLICTO DE REVISIÓN</span>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>
+            El lote cambió de versión en el servidor o fue actualizado desde otro equipo.
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            onClick={handleRefresh}
+          >
+            🔄 Refrescar lote
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ⚠️ {actionError}
+        </div>
+      )}
+      {actionSuccess && (
+        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ✓ {actionSuccess}
+        </div>
+      )}
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1, #374151)', marginBottom: 8 }}>
+          Transiciones Disponibles
+        </div>
+
+        {model.options.length === 0 ? (
+          <div style={{ padding: '12px', background: 'var(--paper-0, #F7F4EC)', border: '1px dashed var(--border-hairline, #8C7F5B)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2, #6B7280)', textAlign: 'center' }}>
+            No hay transiciones disponibles para este lote en su estado actual ({model.state}).
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {model.options.map(opt => {
+              const isSelected = selectedTo === opt.to;
+              const isDiscard = opt.transitionClass === 'discard';
+              const isException = opt.transitionClass === 'exception';
+
+              return (
+                <label
+                  key={opt.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: isSelected ? 'var(--paper-0, #F7F4EC)' : '#fff',
+                    border: isSelected ? '2px solid var(--accent-olive, #5B6B44)' : '1px solid var(--border-hairline, #8C7F5B)',
+                    borderRadius: 3,
+                    cursor: model.canConfirm ? 'pointer' : 'default',
+                    opacity: model.canConfirm ? 1 : 0.7,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="radio"
+                      name="transitionTarget"
+                      value={opt.to}
+                      checked={isSelected}
+                      disabled={!model.canConfirm}
+                      onChange={() => setSelectedTo(opt.to)}
+                    />
+                    <div>
+                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700, #C53030)' : (isException ? 'var(--ochre-700, #B45309)' : 'var(--ink-0, #111827)') }}>
+                        {opt.label}
+                      </strong>
+                      <span style={{ fontSize: 11, color: 'var(--ink-2, #6B7280)', marginLeft: 6 }}>
+                        ({opt.to})
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                    borderRadius: 2,
+                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
+                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                  }}>
+                    {opt.transitionClass}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <button
+          type="button"
+          className="inv-btn inv-btn-sec"
+          onClick={onClose}
+          style={{ minHeight: 40, padding: '0 14px', fontSize: 12 }}
+        >
+          Cerrar
+        </button>
+
+        {model.canRefresh && (
+          <button
+            type="button"
+            className="inv-btn inv-btn-pri"
+            onClick={handleRefresh}
+            style={{ minHeight: 40, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
+          >
+            🔄 Refrescar Lote
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="inv-btn inv-btn-pri"
+          disabled={!model.canConfirm || inFlight || !selectedTo}
+          onClick={handleConfirm}
+          data-testid="btn-confirm-field-transition"
+          style={{
+            minHeight: 40,
+            padding: '0 16px',
+            fontSize: 12,
+            fontWeight: 700,
+            background: model.canConfirm && selectedTo ? 'var(--accent-olive, #5B6B44)' : 'var(--border-soft)',
+            cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {inFlight ? '⏳ Guardando...' : (selectedTo ? `Confirmar: ${model.state} → ${selectedTo}` : 'Confirmar transición')}
+        </button>
+      </div>
+    </AccessibleModal>
+  );
+};
+
+
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
 const CAT_COLORS={
@@ -4206,6 +4606,21 @@ function liveAgeLabel(ms) {
   return `hace ${Math.round(ms / 3600000)} h`;
 }
 
+
+let _fieldDbPromise = null;
+const getFieldDb = () => {
+  if (_fieldDbPromise) return _fieldDbPromise;
+  const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+  if (!queue || typeof queue.initializeQueue !== 'function') {
+    return Promise.reject(new Error('field_event_queue_unavailable: SetasFieldEventQueue no cargado'));
+  }
+  _fieldDbPromise = queue.initializeQueue().catch(err => {
+    _fieldDbPromise = null;
+    throw err;
+  });
+  return _fieldDbPromise;
+};
+
 function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
@@ -4437,6 +4852,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [optProfile,setOptProfile]=useState('produccion');
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
+  const [showFieldActionModal,setShowFieldActionModal]=useState(false);
+  const [fieldDb,setFieldDb]=useState(null);
+  useEffect(()=>{
+    let active=true;
+    getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    return ()=>{active=false;};
+  },[]);
   const [isCameraActive,setIsCameraActive]=useState(false);
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
@@ -4506,12 +4928,24 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
   const handleScannedValue = (raw) => {
     if (!raw) return;
+    let batchId = null;
+    const qrResolve = typeof window !== 'undefined' ? window.SetasFieldQrResolve : null;
+    if (qrResolve && typeof qrResolve.parseBatchRef === 'function') {
+      try {
+        const parsed = qrResolve.parseBatchRef(raw);
+        if (parsed && parsed.batchId) batchId = parsed.batchId;
+      } catch (_) {
+        // Formato ajeno a la etiqueta de campo estándar; fallback al regex existente
+      }
+    }
     const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = match ? match[1] : raw;
-    const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
+    const code = batchId || (match ? match[1] : raw);
+    const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || (batchId && (l.id === batchId || l.codigo === batchId)) || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
     if (foundLote) {
       setQrSelectedLoteId(foundLote.id);
       stopCameraScanner();
+      setShowQrSheet(false);
+      setShowFieldActionModal(true);
       try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
     }
   };
@@ -6789,6 +7223,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="chevron-right" size={13} color="var(--accent-olive,#5B6B44)" /> 📋 Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
           <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
         </div>
@@ -11622,6 +12057,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
           </AccessibleModal>
         )}
+        {/* HOJA DE ACCIÓN DE CAMPO (MODAL DE TRANSICIÓN OFFLINE QR) */}
+        {showFieldActionModal && (()=>{
+          const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
+          const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+          const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
+          const operatorRole = isAdmin ? 'direccion' : 'operario';
+          const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
+          const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
+
+          return (
+            <FieldActionModal
+              onClose={() => setShowFieldActionModal(false)}
+              lote={currentLote}
+              db={fieldDb}
+              operatorRole={operatorRole}
+              operatorId={operatorId}
+              accountId={accountId}
+              onTransitionConfirmed={(batchId, nextState) => {
+                setBitLotes(prev => prev.map(l => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+              }}
+            />
+          );
+        })()}
+
         {/* MODAL / ACTION SHEET QR DE CAMPO (MODO RONDA DE CAMPO) */}
         {showQrSheet&&(()=>{
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));

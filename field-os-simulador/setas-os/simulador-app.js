@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 127e6f1f686f09a12e00d28eee91b1b5c5d0013998e8bf9d65eaab5dd59c1700
+// source-hash: 7825be6088c869a67d721d80709cd27fd6f72e0d1616691ce35f9d9e95936516
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2295,6 +2295,307 @@ const NoticeModal = ({ dlg, onClose }) => {
     if (e.target === e.currentTarget) onClose();
   } }, /* @__PURE__ */ React.createElement("div", { ref: dialogRef, tabIndex: -1, className: "inv-modal", role: "dialog", "aria-modal": "true", "aria-label": dlg.title || "Aviso", style: { width: 420 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, dlg.title || "Aviso"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 18, lineHeight: 1.5 } }, dlg.msg), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "inv-btn inv-btn-pri" }, "Aceptar"))));
 };
+const FieldActionModal = ({
+  onClose,
+  lote,
+  db,
+  operatorRole = "operario",
+  operatorId = "operario_local",
+  accountId = "setas_default_account",
+  onTransitionConfirmed
+}) => {
+  const [selectedTo, setSelectedTo] = React.useState("");
+  const [inFlight, setInFlight] = React.useState(false);
+  const [queueEntry, setQueueEntry] = React.useState(null);
+  const [actionError, setActionError] = React.useState("");
+  const [actionSuccess, setActionSuccess] = React.useState("");
+  const [localBatch, setLocalBatch] = React.useState(lote);
+  React.useEffect(() => {
+    setLocalBatch(lote);
+    setSelectedTo("");
+    setActionError("");
+    setActionSuccess("");
+  }, [lote]);
+  React.useEffect(() => {
+    if (!localBatch || !db) return;
+    let active = true;
+    const queue = typeof window !== "undefined" ? window.SetasFieldEventQueue : null;
+    if (queue && typeof queue.getReservation === "function") {
+      const batchId = localBatch.id || localBatch.codigo;
+      queue.getReservation(db, accountId, batchId).then((reservation) => {
+        if (!active) return;
+        if (!reservation) {
+          setQueueEntry(null);
+          return;
+        }
+        try {
+          const tx = db.transaction("queue_entries", "readonly");
+          const req = tx.objectStore("queue_entries").get(reservation.eventId);
+          req.onsuccess = () => {
+            if (active) setQueueEntry(req.result || null);
+          };
+          req.onerror = () => {
+            if (active) setQueueEntry(null);
+          };
+        } catch (_) {
+          if (active) setQueueEntry(null);
+        }
+      }).catch(() => {
+        if (active) setQueueEntry(null);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [localBatch, db, accountId]);
+  const actionSheetModule = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
+  const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === "function" ? actionSheetModule.buildActionSheetModel({
+    batch: localBatch,
+    batchId: localBatch?.id || localBatch?.codigo,
+    state: localBatch?.workflowState || localBatch?.state,
+    operatorRole,
+    queueEntry,
+    inFlight
+  }) : {
+    title: localBatch ? `Lote ${localBatch.codigo || localBatch.id}` : "Lote",
+    subtitle: localBatch?.especie || "",
+    state: localBatch?.workflowState || localBatch?.estado || "inoculated",
+    options: [],
+    status: "idle",
+    statusLabel: "Listo para registrar",
+    canConfirm: false,
+    canRefresh: false
+  };
+  React.useEffect(() => {
+    if (model.options && model.options.length > 0 && !selectedTo) {
+      setSelectedTo(model.options[0].to);
+    }
+  }, [model.options, selectedTo]);
+  const handleConfirm = async () => {
+    if (!selectedTo) return;
+    setActionError("");
+    setActionSuccess("");
+    setInFlight(true);
+    try {
+      if (!actionSheetModule || typeof actionSheetModule.confirmTransition !== "function") {
+        throw new Error("field_action_sheet_unavailable: módulo de hoja de acción no cargado");
+      }
+      if (!db) {
+        throw new Error("db_unavailable: base de datos local no inicializada");
+      }
+      const fromState = model.state;
+      const expectedBatchRevision = Number.isInteger(localBatch?.revision) ? localBatch.revision : 0;
+      const result = await actionSheetModule.confirmTransition({
+        db,
+        batch: localBatch,
+        from: fromState,
+        to: selectedTo,
+        accountId,
+        operatorId,
+        operatorRole,
+        expectedBatchRevision,
+        confirmed: true
+      });
+      setQueueEntry(result.queueEntry);
+      setInFlight(false);
+      setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+      if (typeof onTransitionConfirmed === "function") {
+        onTransitionConfirmed(localBatch.id, selectedTo, result.event);
+      }
+    } catch (err) {
+      setInFlight(false);
+      setActionError(err.message || "Error al confirmar transición");
+    }
+  };
+  const handleRefresh = () => {
+    setQueueEntry(null);
+    setActionError("");
+    setActionSuccess("");
+  };
+  return /* @__PURE__ */ React.createElement(
+    AccessibleModal,
+    {
+      onClose,
+      label: "Hoja de acción de campo (QR)",
+      dialogStyle: {
+        width: "min(480px, 94vw)",
+        padding: "20px 18px",
+        background: "var(--paper-1, #EFEBE0)",
+        border: "1px solid var(--border-hairline, #8C7F5B)",
+        borderRadius: "var(--radius-md, 3px)"
+      }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2, #6B7280)", marginBottom: 2 } }, "Hoja de Acción de Campo · Transición de Estado"), /* @__PURE__ */ React.createElement("h2", { style: { margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: "var(--ink-0, #1F2937)", fontWeight: 700 } }, model.title), model.subtitle && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #4B5563)", marginTop: 2 } }, model.subtitle)), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "modal-icon-close",
+        "aria-label": "Cerrar hoja de acción",
+        onClick: onClose,
+        style: { background: "transparent", border: "none", fontSize: 16, cursor: "pointer", color: "var(--ink-2)" }
+      },
+      "✕"
+    )),
+    /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-sm, 2px)", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-2, #6B7280)", display: "block" } }, "Estado Actual"), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--ink-0, #111827)" } }, actionSheetModule?.STATE_LABELS?.[model.state] || model.state)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2, #6B7280)", background: "var(--paper-100, #E5E0D0)", padding: "3px 7px", borderRadius: 2 } }, "Rol: ", operatorRole)),
+    model.status === "saved_local" && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-testid": "status-saved-local",
+        style: {
+          padding: "12px 14px",
+          marginBottom: 14,
+          background: "#FFFBEB",
+          border: "1.5px solid #D97706",
+          borderRadius: 3,
+          color: "#92400E"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "📱"), " ", /* @__PURE__ */ React.createElement("span", null, "GUARDADO EN ESTE EQUIPO")),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#B45309" } }, "El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.")
+    ),
+    model.status === "confirmed" && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-testid": "status-confirmed",
+        style: {
+          padding: "12px 14px",
+          marginBottom: 14,
+          background: "#ECFDF5",
+          border: "1.5px solid #059669",
+          borderRadius: 3,
+          color: "#065F46"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "☁️"), " ", /* @__PURE__ */ React.createElement("span", null, "CONFIRMADO POR EL SERVIDOR")),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#047857" } }, "Transición registrada y validada en el servidor central con recibo autorizado.")
+    ),
+    model.status === "sending" && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-testid": "status-sending",
+        style: {
+          padding: "12px 14px",
+          marginBottom: 14,
+          background: "#EFF6FF",
+          border: "1px solid #3B82F6",
+          borderRadius: 3,
+          color: "#1E40AF"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", null, "⏳"), " ", /* @__PURE__ */ React.createElement("span", null, "ENVIANDO AL SERVIDOR...")),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4 } }, "Transmitiendo evento de campo al servidor central...")
+    ),
+    model.status === "conflict" && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-testid": "status-conflict",
+        style: {
+          padding: "12px 14px",
+          marginBottom: 14,
+          background: "#FEF2F2",
+          border: "1.5px solid #DC2626",
+          borderRadius: 3,
+          color: "#991B1B"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", null, "⚠️"), " ", /* @__PURE__ */ React.createElement("span", null, "CONFLICTO DE REVISIÓN")),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, marginTop: 4 } }, "El lote cambió de versión en el servidor o fue actualizado desde otro equipo."),
+      /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { marginTop: 8, padding: "5px 10px", fontSize: 11, background: "#fff" },
+          onClick: handleRefresh
+        },
+        "🔄 Refrescar lote"
+      )
+    ),
+    actionError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12 } }, "⚠️ ", actionError),
+    actionSuccess && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#D1FAE5", color: "#065F46", borderLeft: "3px solid #10B981", borderRadius: 2, fontSize: 11, marginBottom: 12 } }, "✓ ", actionSuccess),
+    /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-1, #374151)", marginBottom: 8 } }, "Transiciones Disponibles"), model.options.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px", background: "var(--paper-0, #F7F4EC)", border: "1px dashed var(--border-hairline, #8C7F5B)", borderRadius: 3, fontSize: 12, color: "var(--ink-2, #6B7280)", textAlign: "center" } }, "No hay transiciones disponibles para este lote en su estado actual (", model.state, ").") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, model.options.map((opt) => {
+      const isSelected = selectedTo === opt.to;
+      const isDiscard = opt.transitionClass === "discard";
+      const isException = opt.transitionClass === "exception";
+      return /* @__PURE__ */ React.createElement(
+        "label",
+        {
+          key: opt.to,
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "10px 12px",
+            background: isSelected ? "var(--paper-0, #F7F4EC)" : "#fff",
+            border: isSelected ? "2px solid var(--accent-olive, #5B6B44)" : "1px solid var(--border-hairline, #8C7F5B)",
+            borderRadius: 3,
+            cursor: model.canConfirm ? "pointer" : "default",
+            opacity: model.canConfirm ? 1 : 0.7
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "radio",
+            name: "transitionTarget",
+            value: opt.to,
+            checked: isSelected,
+            disabled: !model.canConfirm,
+            onChange: () => setSelectedTo(opt.to)
+          }
+        ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { style: { fontSize: 13, color: isDiscard ? "var(--coral-700, #C53030)" : isException ? "var(--ochre-700, #B45309)" : "var(--ink-0, #111827)" } }, opt.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--ink-2, #6B7280)", marginLeft: 6 } }, "(", opt.to, ")"))),
+        /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10,
+          fontFamily: "var(--font-mono)",
+          textTransform: "uppercase",
+          padding: "2px 6px",
+          borderRadius: 2,
+          background: isDiscard ? "#FEE2E2" : isException ? "#FEF3C7" : "#E0E7FF",
+          color: isDiscard ? "#991B1B" : isException ? "#92400E" : "#3730A3"
+        } }, opt.transitionClass)
+      );
+    }))),
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-sec",
+        onClick: onClose,
+        style: { minHeight: 40, padding: "0 14px", fontSize: 12 }
+      },
+      "Cerrar"
+    ), model.canRefresh && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-pri",
+        onClick: handleRefresh,
+        style: { minHeight: 40, padding: "0 16px", fontSize: 12, background: "var(--accent-terracotta, #A85C32)" }
+      },
+      "🔄 Refrescar Lote"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-pri",
+        disabled: !model.canConfirm || inFlight || !selectedTo,
+        onClick: handleConfirm,
+        "data-testid": "btn-confirm-field-transition",
+        style: {
+          minHeight: 40,
+          padding: "0 16px",
+          fontSize: 12,
+          fontWeight: 700,
+          background: model.canConfirm && selectedTo ? "var(--accent-olive, #5B6B44)" : "var(--border-soft)",
+          cursor: model.canConfirm && selectedTo ? "pointer" : "not-allowed"
+        }
+      },
+      inFlight ? "⏳ Guardando..." : selectedTo ? `Confirmar: ${model.state} → ${selectedTo}` : "Confirmar transición"
+    ))
+  );
+};
 const CAT_COLORS = {
   base: "#5A7042",
   // moss (base carbons)
@@ -2897,6 +3198,19 @@ function liveAgeLabel(ms) {
   if (ms < 36e5) return `hace ${Math.round(ms / 6e4)} min`;
   return `hace ${Math.round(ms / 36e5)} h`;
 }
+let _fieldDbPromise = null;
+const getFieldDb = () => {
+  if (_fieldDbPromise) return _fieldDbPromise;
+  const queue = typeof window !== "undefined" ? window.SetasFieldEventQueue : null;
+  if (!queue || typeof queue.initializeQueue !== "function") {
+    return Promise.reject(new Error("field_event_queue_unavailable: SetasFieldEventQueue no cargado"));
+  }
+  _fieldDbPromise = queue.initializeQueue().catch((err) => {
+    _fieldDbPromise = null;
+    throw err;
+  });
+  return _fieldDbPromise;
+};
 function SimuladorShell(props) {
   const initialFormDraft = useMemo(() => readFormDraft(), []);
   const [bridgeOpen, setBridgeOpen] = useState(true);
@@ -3143,6 +3457,18 @@ function SimuladorShell(props) {
   const [optProfile, setOptProfile] = useState("produccion");
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [qrSelectedLoteId, setQrSelectedLoteId] = useState("");
+  const [showFieldActionModal, setShowFieldActionModal] = useState(false);
+  const [fieldDb, setFieldDb] = useState(null);
+  useEffect(() => {
+    let active = true;
+    getFieldDb().then((d) => {
+      if (active) setFieldDb(d);
+    }).catch(() => {
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [showEsp32ConfigModal, setShowEsp32ConfigModal] = useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
@@ -3207,12 +3533,23 @@ function SimuladorShell(props) {
   };
   const handleScannedValue = (raw) => {
     if (!raw) return;
+    let batchId = null;
+    const qrResolve = typeof window !== "undefined" ? window.SetasFieldQrResolve : null;
+    if (qrResolve && typeof qrResolve.parseBatchRef === "function") {
+      try {
+        const parsed = qrResolve.parseBatchRef(raw);
+        if (parsed && parsed.batchId) batchId = parsed.batchId;
+      } catch (_) {
+      }
+    }
     const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = match ? match[1] : raw;
-    const foundLote = bitLotes.find((l) => l.codigo === code || l.id === code || raw.includes(l.codigo) || code && code.startsWith(l.codigo));
+    const code = batchId || (match ? match[1] : raw);
+    const foundLote = bitLotes.find((l) => l.codigo === code || l.id === code || batchId && (l.id === batchId || l.codigo === batchId) || raw.includes(l.codigo) || code && code.startsWith(l.codigo));
     if (foundLote) {
       setQrSelectedLoteId(foundLote.id);
       stopCameraScanner();
+      setShowQrSheet(false);
+      setShowFieldActionModal(true);
       try {
         if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
       } catch (e) {
@@ -5313,7 +5650,10 @@ BATCH (${numBags}×${kgBag} kg):
     const bolsas = bitBolsas.filter((b) => b.loteId === lote.id);
     const cosechas = bitCosechas.filter((c) => c.loteId === lote.id);
     const events = [...cosechas.map((c) => ({ id: c.id, title: `Cosecha · flush ${c.flush}`, meta: `${c.fecha} · ${c.pesoFresco} g`, kind: "measured" })), ...bolsas.filter((b) => b.col100).map((b) => ({ id: b.id, title: `Colonización completa · ${b.codigo}`, meta: b.col100, kind: "manual" }))];
-    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " 🏷 Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie)), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, /* @__PURE__ */ React.createElement("span", null, lote.numBolsas, " bolsas"), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, lote.recipeRef?.name || "Receta sin vincular")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, actionLabel[actions[0]] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.filter((a) => actionLabel[a]).map((action) => /* @__PURE__ */ React.createElement("button", { key: action, className: "os-action", type: "button", onClick: () => runBatchAction(action, lote) }, actionLabel[action])), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
+    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", "data-testid": "btn-field-action-sheet", onClick: () => {
+      setQrSelectedLoteId(lote.id);
+      setShowFieldActionModal(true);
+    }, style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }, title: "Abrir hoja de acción de campo para registrar transiciones de estado" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "chevron-right", size: 13, color: "var(--accent-olive,#5B6B44)" }), " 📋 Hoja de Acción (QR)"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " 🏷 Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie)), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, /* @__PURE__ */ React.createElement("span", null, lote.numBolsas, " bolsas"), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, lote.recipeRef?.name || "Receta sin vincular")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, actionLabel[actions[0]] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.filter((a) => actionLabel[a]).map((action) => /* @__PURE__ */ React.createElement("button", { key: action, className: "os-action", type: "button", onClick: () => runBatchAction(action, lote) }, actionLabel[action])), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
       setThermalLote(lote);
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
@@ -7494,7 +7834,28 @@ Click para ver análisis completo`
       className: "inv-btn inv-btn-pri"
     },
     "Guardar cosecha"
-  ))), showQrSheet && (() => {
+  ))), showFieldActionModal && (() => {
+    const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+    const isAdmin = props.isAdmin === true || props.isAdmin === "true";
+    const operatorRole = isAdmin ? "direccion" : "operario";
+    const operatorId = props.operatorKey || typeof window !== "undefined" && window.__setasOperatorKey || "operario_local";
+    const accountId = props.accountId || typeof window !== "undefined" && window.__setasAccountId || typeof window !== "undefined" && window.firebaseAuth?.currentUser?.uid || "setas_default_account";
+    return /* @__PURE__ */ React.createElement(
+      FieldActionModal,
+      {
+        onClose: () => setShowFieldActionModal(false),
+        lote: currentLote,
+        db: fieldDb,
+        operatorRole,
+        operatorId,
+        accountId,
+        onTransitionConfirmed: (batchId, nextState) => {
+          setBitLotes((prev) => prev.map((l) => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+        }
+      }
+    );
+  })(), showQrSheet && (() => {
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     return /* @__PURE__ */ React.createElement(
