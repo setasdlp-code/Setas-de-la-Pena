@@ -201,8 +201,9 @@ Todo dato comercial, culinario o de trazabilidad debe llevar un estado legible. 
 | `pending` | Dato aún no publicado o por confirmar | `Precio por confirmar` |
 | `unavailable` | Producto o formato no disponible | `Agotado por ahora` |
 | `development` | Módulo editorial o comercial en preparación | `Ficha en desarrollo` |
+| `editorial` | Referencia histórica, crónica o cuaderno de archivo | `Crónica de cosecha` |
 
-Clases: `.sb-badge.sb-status--verified`, `.sb-status--available`, `.sb-status--pending`, `.sb-status--unavailable` y `.sb-status--development`. No se deben usar para afirmar cosecha, conservación, sabor o precio si el dato no está validado.
+Clases: `.sb-badge.sb-status--verified`, `.sb-status--available`, `.sb-status--pending`, `.sb-status--unavailable`, `.sb-status--development` y `.sb-status--editorial`. No se deben usar para afirmar cosecha, conservación, sabor o precio si el dato no está validado.
 
 ### 4.2. Selección de formato
 La ficha ofrece radios nativos con formatos ilustrativos: 250 g, 500 g y 1,5 kg. El botón muestra un resumen local accesible. No hay reserva ni compra conectada. El antiguo selector Hogar/Chef conserva estilos como referencia, pero no se presenta como control operativo.
@@ -215,6 +216,26 @@ Marco editorial con ilustración de especie y cartela. La portada permite filtra
 
 ### 4.5. Botones con Tacto de Prensa (`.sb-btn`)
 Los botones tienen un diseño plano de alta legibilidad y sufren un microdesplazamiento de 1px hacia abajo en `:active` (`--sb-press-shift`), simulando la pulsación de un tipo móvil de imprenta.
+- **Variantes:** Primario (`.sb-btn--primary`), Acento (`.sb-btn--accent`), Secundario (`.sb-btn--secondary`) y Sutil (`.sb-btn--subtle`).
+- **Tamaños:** Pequeño (`.sb-btn--sm`), Regular y Grande (`.sb-btn--lg`).
+- **Estados:** Reposo, `:hover`, `:active` (prensado físico), `:focus-visible` (anillo de foco accesible) y `:disabled` / `[aria-disabled="true"]` / `.sb-btn--disabled` (opacidad al 50%, anulación de pulsación física y cursor inactivo).
+
+### 4.6. Pliego Interactivo de Componentes y Gobernanza de Datos (`components.html`)
+El archivo `mockups/components.html` funciona como catálogo integral y banco de pruebas accesible de todos los componentes y estados del sistema:
+1. **Selector de Audiencia Accesible (`.sb-segment-switch`):**
+   - Implementación semántica con `role="tablist"`, `role="tab"`, `aria-selected` y paneles `role="tabpanel"`.
+   - Soporta navegación por teclado mediante flechas (`ArrowLeft` / `ArrowRight`).
+   - Diferencia la jerarquía informativa para **Hogar** (pautas de sartén en seco, porciones 200g/400g, conservación en frío) y **Chef / HORECA** (calibre uniforme 4-6cm, estipe a ras, humedad 86-88%, merma en sartén <12%).
+2. **Tablas de Merma y Calculadora de Rendimiento:**
+   - Tabla técnica `.sb-specs-table` documentando mermas empíricas observadas según técnica de calor.
+   - Calculadora interactiva con **tasa porcentual editable por el usuario** y campo de entrada en gramos.
+   - **Rótulo obligatorio de transparencia:** Toda salida proyectada incluye la leyenda normativa: *«Estimación ilustrativa calculada; no constituye una especificación garantizada de lote»*.
+3. **Cajas Epistémicas de Procedencia (`.sb-epistemic-card`):**
+   - Estructura visual para distinguir con nitidez los tres niveles de conocimiento:
+     - *Nivel 1 (Hecho Medido):* Datos validados en Tenjo con sensores o balanzas (`.sb-status--verified`).
+     - *Nivel 2 (Parámetro en Desarrollo):* Valores preliminares o en estudio (`.sb-status--pending`).
+     - *Nivel 3 (Memoria Editorial):* Crónica, contexto cultural y grabados históricos (`.sb-status--editorial`).
+   - **Criterio Rector:** El pliego demuestra el sistema y su rigor de datos; no convierte hipótesis culinarias, agronómicas o logísticas en especificaciones de producto.
 
 ---
 
