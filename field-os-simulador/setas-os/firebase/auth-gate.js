@@ -58,6 +58,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../perito-scenarios.js",
   // Cuaderno de campo offline: el modelo lee el global de setas-os-workflow.js,
   // que ya viene cargado en DC_RUNTIME_SCRIPTS.
+  "../field-event-contracts.js",
   "../field-event-queue.js",
   "../field-events-model.js",
 ];
