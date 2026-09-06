@@ -47,6 +47,60 @@ El modo comercial no es un catálogo decorativo, sino una **herramienta estructu
 
 ---
 
+## 1.5. Los Dos Recorridos de Usuario: Hogar vs. Chef / HORECA
+
+Swiss Botanical no divide la marca en dos entidades visuales separadas. En su lugar, organiza **dos entradas y dos jerarquías de información** dentro del mismo Design System, respondiendo a las necesidades probadas de cada segmento:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 DOS RECORRIDOS EN EL MISMO DESIGN SYSTEM                    │
+├──────────────────────────────────────┬──────────────────────────────────────┤
+│    COCINA EN CASA (HOGAR / RETAIL)   │    CHEF / PROFESIONAL (HORECA)       │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ 1. Qué es (Identidad y carpóforo)    │ 1. Ficha técnica (Humedad y merma)   │
+│ 2. Cómo lo cocino (Tres pautas)      │ 2. Calibre (4-6 cm, pie recortado)   │
+│ 3. Cuánto necesito (200g / 400g)     │ 3. Volumen (Cajas 1kg, 3kg, 5kg)     │
+│ 4. Cómo lo conservo (2-4°C en kraft) │ 4. Regularidad (Suministro anual)    │
+│ 5. Está disponible (Cosecha activa)  │ 5. Entrega (Cadena de frío y rutas)  │
+│                                      │ 6. Contacto (Muestras y lista B2B)   │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+### 1.5.1. Recorrido Hogar (Cocina Doméstica)
+- **Foco:** Eliminar el miedo a arruinar el producto o lavarlo mal; evitar el desperdicio por compra excesiva.
+- **Pautas de sartén obligatorias en PDP:**
+  1. *Limpieza en seco:* Nunca lavar con agua; limpiar con paño seco o cepillo suave.
+  2. *Fuego medio-alto:* Dorar 3-4 minutos sin mover para caramelizar y no hervir en su jugo.
+  3. *Terminación:* Sal marina, mantequilla o grasa vegetal y hierbas frescas al final.
+- **Formatos:** 200 g (cena 1-2 personas) y 400 g (familiar 3-4 porciones).
+- **Conservación:** 2°C a 4°C en bolsa transpirable (vida útil real: 5 a 7 días).
+
+### 1.5.2. Recorrido Chef / HORECA (Profesionales)
+- **Foco:** Estandarización de mise en place, cálculo de merma y seguridad de abastecimiento para cartas de temporada.
+- **Parámetros técnicos visibles:**
+  - Diámetro de sombrero (4 a 6 cm uniforme) y pie recortado a ras.
+  - Humedad residual controlada (86%–88%, sin exceso de agua libre).
+  - Merma en cocción a fuego vivo < 12%.
+  - Empaques en cajas ventiladas de 1 kg, 3 kg y 5 kg.
+  - Despachos programados martes y viernes en vehículo refrigerado a Bogotá y Sabana Centro.
+  - Canal de atención técnica directa vía chefs@setasdelapena.co.
+
+---
+
+## 1.6. Matriz de Aplicación de Imagen y Dirección Fotográfica
+
+Para evitar la confusión del cliente con grabados abstractos, las imágenes se clasifican rígidamente por función:
+
+| Estilo de Imagen | Función Principal | Canal Primario en DS |
+| --- | --- | --- |
+| **Fotografía de Producto Fresco (Estudio)** | Verificación de compra, color real, láminas limpias | Ficha comercial (PDP), carrito |
+| **Fotografía Culinaria en Uso** | Generación de apetito, escala en plato, método de sartén | Portada comercial, cuaderno editorial |
+| **Fotografía Documental del Cultivo** | Trazabilidad real, escala humana e infraestructura | Cuaderno de lote, página de origen |
+| **Ilustración Botánica Didáctica** | Identificación morfológica, pedagogía de corte | Empaque, reverso de ficha |
+| **Grabado Científico Histórico** | Sello de rigor identitario, marcas de agua y acento | Folios institucionales, cintas de cierre |
+
+---
+
 ## 2. Tipografía: La Trinidad Tipográfica
 
 El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fonts/`):

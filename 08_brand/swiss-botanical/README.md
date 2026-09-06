@@ -15,6 +15,10 @@ Cada vista y producto responde de inmediato al lector:
 4. **De dónde viene:** Anclaje territorial en Tenjo, Cundinamarca (2.592 msnm, falda de la Peña de Juaica).
 5. **Qué explorar después:** Cuaderno editorial de temporada, maridajes y trazabilidad de lote.
 
+### Dos Recorridos de Usuario en el Mismo Sistema
+- **Cocina en Casa (Hogar):** *Qué es → Cómo lo cocino (pautas en seco) → Cuánto necesito (200g/400g) → Cómo lo conservo (2-4°C) → Disponibilidad.*
+- **Chef / HORECA (Profesional):** *Ficha técnica (humedad y merma) → Calibre (4-6cm) → Volumen (cajas 1-5kg) → Regularidad → Entrega → Contacto.*
+
 ### Los Cuatro Modos de Swiss Botanical
 El sistema organiza la experiencia en cuatro capas operativas:
 - **Archive:** Taxonomía, territorio, archivo histórico y memoria botánica.

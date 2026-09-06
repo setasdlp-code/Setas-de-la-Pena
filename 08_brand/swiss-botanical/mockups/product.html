@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shiitake de Montaña · Culinary Market — Setas de la Peña</title>
+  <title>Shiitake de Montaña · Ficha Culinaria — Setas de la Peña</title>
   <link rel="stylesheet" href="../tokens/tokens.css">
   <link rel="stylesheet" href="../components/base.css">
   <link rel="stylesheet" href="../components/components.css">
@@ -41,8 +41,8 @@
     }
     .sb-gram-selector {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--sb-space-2);
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sb-space-3);
       margin-top: var(--sb-space-2);
     }
     .sb-gram-card {
@@ -71,12 +71,12 @@
 </head>
 <body>
 
-  <!-- Header Común -->
+  <!-- Header Superior -->
   <header class="sb-header">
     <div class="sb-container sb-header__inner">
       <a href="home.html" class="sb-brand-mark">
         Setas de la Peña
-        <span class="sb-brand-mark__sub">Tenjo · 2.592 msnm</span>
+        <span class="sb-brand-mark__sub">Tenjo · Sabana de Bogotá</span>
       </a>
       <nav class="sb-nav">
         <a href="home.html" class="sb-nav__link">Cosecha</a>
@@ -85,21 +85,20 @@
         <a href="traceability.html" class="sb-nav__link">Trazabilidad</a>
       </nav>
       <div style="display: flex; align-items: center; gap: var(--sb-space-3);">
-        <div class="sb-segment-switch">
-          <button class="sb-segment-option sb-segment-option--active">Hogares</button>
-          <button class="sb-segment-option">Chefs</button>
-        </div>
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Despachos: Martes & Viernes</span>
       </div>
     </div>
   </header>
 
-  <!-- Contenido Ficha de Decisión -->
+  <!-- Contenido Principal -->
   <main class="sb-container">
 
-    <!-- Barra de Navegación de los Cuatro Modos del DS -->
-    <div style="margin-top: var(--sb-space-6); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sb-space-3);">
+    <!-- Fila de Navegación de Modos y Selector de Recorrido -->
+    <div style="margin-top: var(--sb-space-6); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sb-space-4);">
+
+      <!-- Modos del Sistema -->
       <div class="sb-modes-nav">
-        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); text-transform: uppercase; padding-right: 4px;">Modos DS:</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); text-transform: uppercase; padding-right: 4px;">Modo:</span>
         <a href="editorial.html" class="sb-mode-pill">
           <span class="sb-mode-pill__dot" style="background-color: var(--sb-mode-archive);"></span>
           Archive
@@ -118,150 +117,289 @@
         </span>
       </div>
 
-      <div class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps);">
-        Herramienta de Decisión Culinaria · Paso 1 al 7
+      <!-- Selector de Audiencia (Hogar vs Chef / HORECA) -->
+      <div style="display: flex; align-items: center; gap: var(--sb-space-2);">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); text-transform: uppercase;">Recorrido de lectura:</span>
+        <div class="sb-journey-toggle" role="tablist">
+          <button id="btnJourneyHogar" class="sb-journey-btn sb-journey-btn--active" role="tab" aria-selected="true" onclick="setJourney('hogar')">
+            Cocina en Casa (Hogar)
+          </button>
+          <button id="btnJourneyChef" class="sb-journey-btn" role="tab" aria-selected="false" onclick="setJourney('chef')">
+            Chef / HORECA (Profesional)
+          </button>
+        </div>
       </div>
+
     </div>
 
     <div class="sb-product-layout">
 
-      <!-- Visor Botánico (Izquierda) -->
+      <!-- Visor de Producto Fresco (Izquierda) -->
       <div class="sb-viewer">
         <div class="sb-viewer__main">
-          <img src="../assets/img/species/shiitake.png" alt="Shiitake fresco en corte óptimo" class="sb-viewer__img">
+          <img src="../assets/img/species/shiitake.png" alt="Fotografía de Shiitake fresco en punto óptimo de corte" class="sb-viewer__img">
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sb-space-4);">
-          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: Velo quebrado al 70%</span>
-          <span class="sb-badge sb-badge--status">Disponible para envío hoy</span>
+          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte manual · Lámina limpia</span>
+          <span class="sb-badge sb-badge--status">Fresco · Envío 24-48h</span>
         </div>
 
-        <!-- Cápsula de Trazabilidad Directa -->
+        <!-- Cápsula de Lote y Trazabilidad -->
         <a href="traceability.html" class="sb-traceability-capsule" style="width: 100%;">
           <div class="sb-traceability-capsule__lead">
-            <span class="sb-traceability-capsule__tag">Registro de Finca & Inoculación</span>
-            <span class="sb-traceability-capsule__lot">Lote SDP-26-SH-04</span>
-            <span class="sb-traceability-capsule__meta">Inoculado: 12 Jun 2026 · Cosechado: Hoy 05:45 AM</span>
+            <span class="sb-traceability-capsule__tag">Inspección de Cosecha</span>
+            <span class="sb-traceability-capsule__lot">Lote SDP-2609-SH</span>
+            <span class="sb-traceability-capsule__meta">Cosecha: Esta semana · Guarda: 2-4°C · Tenjo</span>
           </div>
-          <span class="sb-traceability-capsule__action">Ver Cuaderno &rarr;</span>
+          <span class="sb-traceability-capsule__action">Ver Lote &rarr;</span>
         </a>
       </div>
 
-      <!-- Secuencia de Decisión de 7 Pasos (Derecha) -->
+      <!-- Columna Derecha: Jerarquía según Audiencia -->
       <div class="sb-decision-flow">
 
-        <!-- PASO 1: QUÉ ES -->
-        <div class="sb-step-block">
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">1</span>
-            <span>Qué es · Identidad Botánica</span>
-          </div>
-          <h1 style="font-size: var(--sb-text-2xl); line-height: 1.1; margin-bottom: 2px;">Shiitake de Montaña</h1>
-          <p class="sb-scientific" style="font-size: var(--sb-text-base); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-3);">
-            Lentinula edodes · Cepa L12 de Altura
-          </p>
-          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); line-height: 1.55; margin: 0;">
-            Hongo saprófito de carpóforo carnoso, cutícula agrietada en flor y láminas color marfil. Coloniza madera dura en la vertiente oriental de la Peña de Juaica.
-          </p>
-        </div>
+        <!-- -------------------------------------------------------- -->
+        <!-- RECORRIDO 1: HOGAR (Cocina Doméstica)                     -->
+        <!-- 1. Qué es                                                -->
+        <!-- 2. Cómo lo cocino                                        -->
+        <!-- 3. Cuánto necesito                                       -->
+        <!-- 4. Cómo lo conservo                                      -->
+        <!-- 5. Está disponible                                       -->
+        <!-- -------------------------------------------------------- -->
+        <div id="panelHogar" class="sb-journey-panel">
 
-        <!-- PASO 2: A QUÉ SABE -->
-        <div class="sb-step-block">
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">2</span>
-            <span>A qué sabe · Perfil Organoléptico</span>
-          </div>
-          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); line-height: 1.55; margin-bottom: var(--sb-space-2);">
-            <strong>Umami denso y sostenido</strong> con notas tostadas de roble andino y sotobosque andino. El choque térmico nocturno (8°C) frena el agua libre y condensa ácido glutámico natural y lentinano en el tejido.
-          </p>
-          <div class="sb-taste-chips">
-            <span class="sb-taste-chip">Roble Tostado</span>
-            <span class="sb-taste-chip">Umami Alto</span>
-            <span class="sb-taste-chip">Nuez & Mantequilla</span>
-            <span class="sb-taste-chip">Tierra Húmeda</span>
-          </div>
-        </div>
-
-        <!-- PASO 3: CÓMO SE USA -->
-        <div class="sb-step-block" style="background-color: var(--sb-paper-2); padding: var(--sb-space-4); border-radius: var(--sb-radius-xs); border-left: 3px solid var(--sb-accent-shiitake);">
-          <div class="sb-step-eyebrow" style="color: var(--sb-accent-shiitake-deep);">
-            <span class="sb-step-eyebrow__num">3</span>
-            <span>Cómo se usa · Técnica & Conservación</span>
-          </div>
-          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); margin-bottom: var(--sb-space-2);">
-            <strong>Sartén de hierro bien caliente:</strong> Cortar sombreros en mitades. Calentar mantequilla o aceite neutro a fuego vivo. Sellar 4 minutos con el sombrero hacia abajo <em>sin moverlo</em> hasta caramelizar. Voltear y terminar con sal marina y tomillo. Nunca hervir en su jugo.
-          </p>
-          <div class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: flex; justify-content: space-between;">
-            <span>Conservación: 4°C a 6°C en bolsa kraft</span>
-            <span>Vida útil: 10 a 12 días</span>
-          </div>
-        </div>
-
-        <!-- PASO 4: QUÉ FORMATO EXISTE -->
-        <div class="sb-step-block">
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">4</span>
-            <span>Qué formato existe · Gramaje & Empaque</span>
-          </div>
-          <div class="sb-gram-selector">
-            <div class="sb-gram-card">
-              <span class="sb-mono" style="font-weight: 600; display: block;">250g</span>
-              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cata Hogar</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px;">$14.000</div>
+          <!-- 1. QUÉ ES -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">1</span>
+              <span>Qué es · El Ingrediente en la Despensa</span>
             </div>
-            <div class="sb-gram-card sb-gram-card--active">
-              <span class="sb-mono" style="font-weight: 600; display: block;">500g</span>
-              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cesta Cocina</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 700; color: var(--sb-accent-shiitake-deep);">$24.000</div>
-            </div>
-            <div class="sb-gram-card">
-              <span class="sb-mono" style="font-weight: 600; display: block;">1.5 kg</span>
-              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Caja Chef</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px;">$62.000</div>
+            <h1 style="font-size: var(--sb-text-2xl); line-height: 1.1; margin-bottom: 2px;">Shiitake de Montaña</h1>
+            <p class="sb-scientific" style="font-size: var(--sb-text-base); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-3);">
+              Lentinula edodes · Cultivado en Tenjo
+            </p>
+            <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); line-height: 1.55; margin-bottom: var(--sb-space-3);">
+              Hongo fresco de consistencia densa y sombrero carnoso. Fructificado en ambiente controlado en la sabana fría de Tenjo. Al saltearse a fuego vivo, desarrolla notas tostadas profundas y mantiene una textura firme y jugosa.
+            </p>
+            <div class="sb-taste-chips">
+              <span class="sb-taste-chip">Textura Carnosa</span>
+              <span class="sb-taste-chip">Umami Tostado</span>
+              <span class="sb-taste-chip">Notas Amaderadas</span>
             </div>
           </div>
-        </div>
 
-        <!-- PASO 5: DISPONIBILIDAD -->
-        <div class="sb-step-block">
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">5</span>
-            <span>Disponibilidad · Estado en Finca</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: var(--sb-space-2);">
-              <span class="sb-badge sb-badge--status">Cosecha Activa Hoy</span>
-              <span style="font-size: var(--sb-text-xs); color: var(--sb-ink-1);">Despacho garantizado en menos de 12 horas.</span>
+          <!-- 2. CÓMO LO COCINO -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">2</span>
+              <span>Cómo lo cocino · Tres Pautas en Sartén</span>
             </div>
-            <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: 05:45 AM</span>
+            <div class="sb-cooking-guide">
+              <div class="sb-cooking-step">
+                <span class="sb-cooking-step__num">Paso I</span>
+                <div class="sb-cooking-step__title">Limpieza en Seco</div>
+                <p class="sb-cooking-step__desc">Nunca lavar con agua. Limpiar con paño seco o cepillo suave antes de cortar.</p>
+              </div>
+              <div class="sb-cooking-step">
+                <span class="sb-cooking-step__num">Paso II</span>
+                <div class="sb-cooking-step__title">Fuego Medio-Alto</div>
+                <p class="sb-cooking-step__desc">Sartén bien caliente con mantequilla o aceite. Dorar 3-4 min sin mover para evitar que hierva en su jugo.</p>
+              </div>
+              <div class="sb-cooking-step">
+                <span class="sb-cooking-step__num">Paso III</span>
+                <div class="sb-cooking-step__title">Toque de Cierre</div>
+                <p class="sb-cooking-step__desc">Voltear al lograr costra dorada. Terminar con sal marina gruesa, pimienta y tomillo fresco.</p>
+              </div>
+            </div>
           </div>
+
+          <!-- 3. CUÁNTO NECESITO -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">3</span>
+              <span>Cuánto necesito · Formatos sin Desperdicio</span>
+            </div>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-bottom: var(--sb-space-2);">
+              Bandejas diseñadas para el consumo semanal exacto de una cocina doméstica:
+            </p>
+            <div class="sb-gram-selector">
+              <div class="sb-gram-card sb-gram-card--active">
+                <span class="sb-mono" style="font-weight: 700; font-size: var(--sb-text-base); display: block;">200 g</span>
+                <span style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); font-weight: 500;">Cena para 1 a 2 personas</span>
+                <div class="sb-mono" style="font-size: var(--sb-text-sm); margin-top: 4px; font-weight: 700; color: var(--sb-accent-shiitake-deep);">$14.000 COP</div>
+              </div>
+              <div class="sb-gram-card">
+                <span class="sb-mono" style="font-weight: 700; font-size: var(--sb-text-base); display: block;">400 g</span>
+                <span style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); font-weight: 500;">Cocina familiar (3-4 porciones)</span>
+                <div class="sb-mono" style="font-size: var(--sb-text-sm); margin-top: 4px; font-weight: 700; color: var(--sb-ink-0);">$24.000 COP</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. CÓMO LO CONSERVO -->
+          <div class="sb-step-block" style="background-color: var(--sb-paper-2); padding: var(--sb-space-4); border-radius: var(--sb-radius-xs);">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">4</span>
+              <span>Cómo lo conservo · En el Refrigerador</span>
+            </div>
+            <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); margin-bottom: var(--sb-space-2);">
+              <strong>Mantener en su bolsa transpirable entre 2°C y 4°C.</strong> No guardar en recipientes plásticos herméticos sin ventilación.
+            </p>
+            <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">
+              Vida útil real en despensa: 5 a 7 días conservando textura y aroma íntegros.
+            </span>
+          </div>
+
+          <!-- 5. ESTÁ DISPONIBLE -->
+          <div>
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">5</span>
+              <span>Disponibilidad · Cosecha Activa</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sb-space-4);">
+              <div style="display: flex; align-items: center; gap: var(--sb-space-2);">
+                <span class="sb-badge sb-badge--status">Cosecha Activa</span>
+                <span style="font-size: var(--sb-text-xs); color: var(--sb-ink-1);">Despacho programado: Martes & Viernes</span>
+              </div>
+              <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Tenjo, Cundinamarca</span>
+            </div>
+            <button class="sb-btn sb-btn--accent sb-btn--lg" style="width: 100%;">
+              Añadir al Pedido de la Semana
+            </button>
+            <div style="text-align: center; margin-top: var(--sb-space-3);">
+              <a href="editorial.html" class="sb-btn sb-btn--subtle sb-btn--sm">
+                Notas de sartén: Por qué el agua es el enemigo del shiitake &rarr;
+              </a>
+            </div>
+          </div>
+
         </div>
 
-        <!-- PASO 6: ORIGEN -->
-        <div class="sb-step-block">
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">6</span>
-            <span>Origen · Anclaje Territorial</span>
-          </div>
-          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
-            Cultivado en <strong>Finca La Peña, Tenjo</strong> (2.592 msnm, microclima 74.5 kPa) sobre sustrato de 82% viruta de roble andino (<em>Quercus humboldtii</em>) y 17% salvado de trigo. Lote verificado <code>SDP-26-SH-04</code>.
-          </p>
-        </div>
+        <!-- -------------------------------------------------------- -->
+        <!-- RECORRIDO 2: CHEF / HORECA (Profesional)                 -->
+        <!-- 1. Ficha técnica                                         -->
+        <!-- 2. Calibre                                               -->
+        <!-- 3. Volumen                                               -->
+        <!-- 4. Regularidad                                           -->
+        <!-- 5. Entrega                                               -->
+        <!-- 6. Contacto                                              -->
+        <!-- -------------------------------------------------------- -->
+        <div id="panelChef" class="sb-journey-panel" style="display: none;">
 
-        <!-- PASO 7: PRÓXIMO PASO -->
-        <div>
-          <div class="sb-step-eyebrow">
-            <span class="sb-step-eyebrow__num">7</span>
-            <span>Próximo paso · Acción & Conexión</span>
+          <!-- 1. FICHA TÉCNICA -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">1</span>
+              <span>Ficha Técnica · Especificaciones Gastronómicas</span>
+            </div>
+            <h1 style="font-size: var(--sb-text-2xl); line-height: 1.1; margin-bottom: 2px;">Shiitake Seleccionado HORECA</h1>
+            <p class="sb-scientific" style="font-size: var(--sb-text-base); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-3);">
+              Familia Marasmiaceae · Lentinula edodes
+            </p>
+            <div class="sb-chef-specs-grid">
+              <div class="sb-chef-spec-card">
+                <span class="sb-chef-spec-card__label">Humedad Residual</span>
+                <span class="sb-chef-spec-card__value">86% – 88%</span>
+                <div class="sb-chef-spec-card__detail">Sin exceso de agua libre en celda</div>
+              </div>
+              <div class="sb-chef-spec-card">
+                <span class="sb-chef-spec-card__label">Merma en Cocción</span>
+                <span class="sb-chef-spec-card__value">&lt; 12% a fuego vivo</span>
+                <div class="sb-chef-spec-card__detail">Excelente rendimiento en porción</div>
+              </div>
+              <div class="sb-chef-spec-card">
+                <span class="sb-chef-spec-card__label">Comportamiento Térmico</span>
+                <span class="sb-chef-spec-card__value">Brasa, Salteado & Caldos</span>
+                <div class="sb-chef-spec-card__detail">Conserva estructura celular sin deshacerse</div>
+              </div>
+              <div class="sb-chef-spec-card">
+                <span class="sb-chef-spec-card__label">Inocuidad & Cultivo</span>
+                <span class="sb-chef-spec-card__value">Cero Agroquímicos</span>
+                <div class="sb-chef-spec-card__detail">Ambiente climatizado controlado en Tenjo</div>
+              </div>
+            </div>
           </div>
-          <div style="display: flex; gap: var(--sb-space-3); flex-wrap: wrap;">
-            <button class="sb-btn sb-btn--accent sb-btn--lg" style="flex: 1;">Añadir al Pedido de Hoy</button>
-            <a href="traceability.html" class="sb-btn sb-btn--secondary sb-btn--lg">Inspeccionar Lote</a>
+
+          <!-- 2. CALIBRE -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">2</span>
+              <span>Calibre & Estandarización de Corte</span>
+            </div>
+            <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); margin-bottom: var(--sb-space-2);">
+              <strong>Diámetro de sombrero:</strong> 4 a 6 cm uniforme por lote clasificado para servicio de restaurante.
+            </p>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+              Pie recortado a ras para evitar merma en la mise en place. Apertura de velo al 70% para garantizar máxima consistencia y evitar liberación de esporas en cocina.
+            </p>
           </div>
-          <div style="margin-top: var(--sb-space-3); text-align: center;">
-            <a href="editorial.html" class="sb-btn sb-btn--subtle sb-btn--sm">
-              ¿Quieres profundizar en su alquimia térmica? Leer ensayo editorial &rarr;
-            </a>
+
+          <!-- 3. VOLUMEN -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">3</span>
+              <span>Volumen · Formatos a Granel</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sb-space-2); margin-top: var(--sb-space-2);">
+              <div class="sb-chef-spec-card" style="text-align: center;">
+                <span class="sb-mono" style="font-weight: 700; font-size: var(--sb-text-base);">1 kg</span>
+                <div style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Caja ventilada</div>
+              </div>
+              <div class="sb-chef-spec-card" style="text-align: center; border-color: var(--sb-accent-shiitake);">
+                <span class="sb-mono" style="font-weight: 700; font-size: var(--sb-text-base); color: var(--sb-accent-shiitake-deep);">3 kg</span>
+                <div style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Estándar servicio</div>
+              </div>
+              <div class="sb-chef-spec-card" style="text-align: center;">
+                <span class="sb-mono" style="font-weight: 700; font-size: var(--sb-text-base);">5 kg</span>
+                <div style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Gran volumen</div>
+              </div>
+            </div>
           </div>
+
+          <!-- 4. REGULARIDAD -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">4</span>
+              <span>Regularidad · Estabilidad de Suministro</span>
+            </div>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.5; margin: 0;">
+              Ciclos continuos de floración escalonada en salas climatizadas de Tenjo. Programación de cosecha con 2 semanas de anticipación para asegurar suministro estable en carta durante toda la temporada.
+            </p>
+          </div>
+
+          <!-- 5. ENTREGA -->
+          <div class="sb-step-block">
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">5</span>
+              <span>Entrega · Rutas y Cadena de Frío</span>
+            </div>
+            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-0); margin-bottom: var(--sb-space-2);">
+              <strong>Despachos directos:</strong> Martes y Viernes en la mañana en vehículo con cadena de frío controlada (2°C a 4°C).
+            </p>
+            <div class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">
+              Cobertura: Bogotá (Zona G, Chapinero, Usaquén, Centro), Chía, Cajicá y Sabana Centro. Facturación electrónica disponible.
+            </div>
+          </div>
+
+          <!-- 6. CONTACTO -->
+          <div>
+            <div class="sb-step-eyebrow">
+              <span class="sb-step-eyebrow__num">6</span>
+              <span>Contacto · Canal Exclusivo Profesionales</span>
+            </div>
+            <div style="display: flex; gap: var(--sb-space-3); flex-wrap: wrap;">
+              <button class="sb-btn sb-btn--accent sb-btn--lg" style="flex: 1;">
+                Solicitar Lista HORECA & Muestra
+              </button>
+              <a href="traceability.html" class="sb-btn sb-btn--secondary sb-btn--lg">
+                Ficha Técnica de Inocuidad
+              </a>
+            </div>
+            <div class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-3); text-align: center;">
+              Canal técnico directo: chefs@setasdelapena.co · WhatsApp HORECA prioritario
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -275,28 +413,53 @@
       <div>
         <span class="sb-brand-mark" style="font-size: var(--sb-text-lg);">Setas de la Peña</span>
         <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); max-width: 32ch;">
-          Alimentos botánicos cultivados con rigor agronómico y trazabilidad abierta.
+          Obrador botánico culinario en Tenjo, Cundinamarca. Venta para hogares y suministro profesional para restaurantes.
         </p>
       </div>
       <div>
-        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Modos de Sistema</h4>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Archive (Memoria & Taxonomía)</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Field (Cultivo & Sustratos)</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Control (Lotes & Telemetría)</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="product.html">Market / Culinary (Decisión)</a></p>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Recorridos</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><button type="button" onclick="setJourney('hogar')" class="sb-btn sb-btn--subtle sb-btn--sm" style="padding:0; color:inherit;">Cocina en Casa (Hogar)</button></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><button type="button" onclick="setJourney('chef')" class="sb-btn sb-btn--subtle sb-btn--sm" style="padding:0; color:inherit;">Canal Chef / HORECA</button></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Cuaderno Editorial</a></p>
       </div>
       <div>
         <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Garantía</h4>
         <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">
-          Cosecha realizada bajo pedido para garantizar máxima vida en despensa y cero desperdicio en finca.
+          Cosecha bajo pedido. Entrega en 24 a 48 horas en frío controlado sin intermediarios.
         </p>
       </div>
       <div>
         <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Tenjo · Cundinamarca</h4>
-        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Lote activo: SDP-26-SH-04</span>
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Lote activo: SDP-2609-SH</span>
       </div>
     </div>
   </footer>
+
+  <!-- Script de Toggle Interactivo de Audiencia -->
+  <script>
+    function setJourney(type) {
+      const panelHogar = document.getElementById('panelHogar');
+      const panelChef = document.getElementById('panelChef');
+      const btnHogar = document.getElementById('btnJourneyHogar');
+      const btnChef = document.getElementById('btnJourneyChef');
+
+      if (type === 'chef') {
+        panelHogar.style.display = 'none';
+        panelChef.style.display = 'flex';
+        btnHogar.classList.remove('sb-journey-btn--active');
+        btnHogar.setAttribute('aria-selected', 'false');
+        btnChef.classList.add('sb-journey-btn--active');
+        btnChef.setAttribute('aria-selected', 'true');
+      } else {
+        panelChef.style.display = 'none';
+        panelHogar.style.display = 'flex';
+        btnChef.classList.remove('sb-journey-btn--active');
+        btnChef.setAttribute('aria-selected', 'false');
+        btnHogar.classList.add('sb-journey-btn--active');
+        btnHogar.setAttribute('aria-selected', 'true');
+      }
+    }
+  </script>
 
 </body>
 </html>

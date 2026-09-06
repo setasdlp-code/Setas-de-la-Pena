@@ -62,3 +62,23 @@ Se analizaron diez casos internacionales de diseño editorial, tipografía y pac
    - *Decisión transferible:* Ritmo de maquetación editorial con marginalia, notas técnicas laterales y letras capitulares bien proporcionadas.
 10. **Gaya en Fonts In Use ([Typefaces 167778](https://fontsinuse.com/typefaces/167778/gaya)):**
     - *Decisión transferible:* Tratamiento de Gaya como tipografía de firma y carácter botánico, complementada por la neutralidad precisa de IBM Plex.
+
+---
+
+## 4. Síntesis de la Investigación Externa: El Taller Botánico Culinario
+
+La dirección de Swiss Botanical adopta el concepto del **«Taller Botánico Culinario»**: abandona la retórica de biblioteca mística o de archivo intocable y se comporta como un obrador contemporáneo de alimentos vivos.
+
+### 4.1. Análisis de los 8 Casos Clave de Referencia
+1. **Goldi (Australia, c. 2022-2025):** Uso pionero de Gaya Italic en retail gastronómico cotidiano. Demuestra que Gaya aporta calidez de despensa cuando se combina con envases utilitarios.
+2. **Plant Good Seed (EE. UU., 2024-2026):** Catálogo agrícola con Exchange y Mallory. Disciplina para modular datos biológicos complejos sin sobrecargar al usuario.
+3. **Tempus Olive Oil (Italia/Reino Unido, 2024):** Intersección entre retícula suiza y trazabilidad. El fechado de cosecha como argumento primario de calidad.
+4. **Qatsi Tea (2025-2026):** Fichas técnicas organolépticas en tipografía monoespaciada (altitud, temperatura, notas de cata) integradas al packaging comercial.
+5. **BESIDE Magazine (Canadá, Edición 16, 2026):** Ritmo editorial reposado con silencios, amplios márgenes y citas destacadas para el Cuaderno Editorial.
+6. **Noma Projects (Dinamarca, 2022-2026):** Estructura de ficha de producto pedagógica: *«¿Qué es?», «¿A qué sabe?», «¿Cómo se usa en casa?»*.
+7. **Smallhold (EE. UU., 2020-2025):** Hongos frescos listos para cocinar: educación en empaque sobre almacenamiento en frío y salteado en sartén sin agua.
+8. **Materia / Mucho Colombia (Colombia, 2021-2025):** Expresión territorial sobria de la sabana y montaña andina sin recurrir al folclorismo visual ni al exotismo.
+
+### 4.2. Correcciones Factuales y Ética Agronómica
+- **Eliminación estricta de aserciones no verificadas:** Se descartan menciones a sustratos de roble silvestre de la Peña de Juaica, captación de agua de niebla o supuestos aumentos de umami por altitud.
+- **Veracidad en etiquetado:** Se comunica el clima frío de la Sabana de Bogotá (Tenjo), el control ambiental en salas de fructificación y el uso de subproductos agrícolas locales formulados biológicamente.
