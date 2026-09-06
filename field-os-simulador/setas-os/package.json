@@ -11,6 +11,7 @@
   "devDependencies": {
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.62.1",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.5"
   }
 }
