@@ -139,19 +139,27 @@ When retrying with the same `eventId`, the server compares the submitted event a
 
 ### 2.4 AuthorizationReceipt (Server Acceptance Record)
 
-Proves the server accepted the event and applied the batch change. Returned by server; stored locally to prove idempotency.
+Proves the server accepted the event and applied the batch change. **Embedded in the FieldEvent document on the server** (not a separate sub-document). Returned by server in the response and stored locally to prove idempotency.
 
 ```typescript
 interface AuthorizationReceipt {
   eventId: string;               // Which event this receipt authorizes
-  acceptedAt: ISO8601;           // Server's timestamp
+  acceptedAt: ISO8601;           // Server's UTC timestamp (ms precision)
   batchRevision: number;         // New revision after transition applied
-  
-  // Optional fields for future extensibility
-  appliedAt?: ISO8601;           // If different from acceptedAt
-  proof?: string;                // e.g., Firestore document reference
+}
+
+// On server, the full document looks like:
+interface StoredFieldEvent {
+  // ... all FieldEvent fields ...
+  receipt: AuthorizationReceipt;  // Embedded proof of acceptance
 }
 ```
+
+**Storage:**
+- Client stores received receipt in IndexedDB alongside QueueEntry (status = confirmed)
+- Server stores receipt as field of field-events/{eventId} document
+- Canonical receipt is server-stored; client receipt is recovery copy
+- On idempotency check, compare eventId and content; if match and receipt exists, return that receipt
 
 ---
 
@@ -230,10 +238,9 @@ Before creating FieldEvent, revalidate:
 **If all pass:**
 1. Create immutable FieldEvent with deterministic `id`
 2. Create QueueEntry with `status: "pending"`
-3. Persist both to IndexedDB atomically
-4. Persist attachments with stable `id`, `localBlobKey`
-5. Only then show "Saved on this device" + optimistic UI
-6. Trigger background sync (see §4)
+3. Persist FieldEvent, QueueEntry, and pending-batch-transition reservation to IndexedDB atomically
+4. Only then show "Saved on this device" + optimistic UI
+5. Trigger background sync (see §4)
 
 ---
 
@@ -259,11 +266,11 @@ ObjectStore "queue_entries"
   ]
 
 ObjectStore "pending_batch_transitions"
-  keyPath: "batchId"
-  // Ensures max one pending transition per batch per device
-  // Structure: { batchId, eventId, reservedAt, accountId }
+  keyPath: "reservationId"  // Composite key: `${accountId}:${batchId}`
+  // Ensures max one pending transition per batch per account per device
+  // Structure: { reservationId, accountId, batchId, eventId, reservedAt }
   indexes: [
-    { name: "accountId", keyPath: "accountId" },
+    { name: "accountBatch", keyPath: ["accountId", "batchId"] },
   ]
 
 ObjectStore "auth_receipts"
@@ -277,15 +284,17 @@ ObjectStore "auth_receipts"
 Before showing "Saved on this device," execute a single IDB transaction:
 ```javascript
 async function persistFieldEvent(event, queueEntry, accountId) {
+  const reservationId = `${accountId}:${event.batchId}`;
+  
   const tx = db.transaction(
     ["field_events", "queue_entries", "pending_batch_transitions"],
     "readwrite"
   );
   
-  // Check: no other pending transition for this batch
+  // Check: no other pending transition for this (account, batch) pair
   const existing = await tx.objectStore("pending_batch_transitions")
-    .get(event.batchId);
-  if (existing && existing.accountId === accountId) {
+    .get(reservationId);
+  if (existing) {
     throw new Error("batch_already_has_pending_transition");
   }
   
@@ -293,19 +302,39 @@ async function persistFieldEvent(event, queueEntry, accountId) {
   await tx.objectStore("field_events").add(event);
   await tx.objectStore("queue_entries").add(queueEntry);
   await tx.objectStore("pending_batch_transitions").put({
+    reservationId,
+    accountId,
     batchId: event.batchId,
     eventId: event.id,
     reservedAt: new Date().toISOString(),
-    accountId,
   });
   
   await tx.done;
   // Only now: show "Saved on this device"
 }
+
+// Called when sync completes (confirmed or rejected)
+async function releaseReservation(accountId, batchId) {
+  const reservationId = `${accountId}:${batchId}`;
+  const tx = db.transaction(
+    ["pending_batch_transitions"],
+    "readwrite"
+  );
+  await tx.objectStore("pending_batch_transitions").delete(reservationId);
+  await tx.done;
+}
 ```
 
-**Cross-Tab Enforcement:**
-The `pending_batch_transitions` store is checked on every action-sheet confirmation, across all tabs sharing the same IndexedDB. If another tab (same browser, same account) already has a pending transition for this batch, the new confirmation is rejected with "Another action is pending for this batch."
+**Cross-Tab & Cross-Account Enforcement:**
+The `pending_batch_transitions` store is indexed by `[accountId, batchId]` and checked on every action-sheet confirmation. If another tab (same browser, **same account**) already has a pending transition for this batch, the new confirmation is rejected with "Another action is pending for this batch." Different accounts have separate reservations and do not block each other.
+
+**Reservation Lifecycle:**
+1. Created: when operator confirms action (atomically with FieldEvent & QueueEntry)
+2. Held: while QueueEntry.status ∈ [pending, sending, retry_wait]
+3. Released: when QueueEntry.status ∈ [confirmed, conflict, rejected]
+   - On confirm: event accepted by server, new state + revision applied; release allows next transition
+   - On conflict: operator must resolve (refresh batch state, submit new transition); release allows new attempt
+   - On reject: authorization or validation failed; release allows retry or different action
 
 ### 4.2 Sync Trigger & Retry Strategy
 
@@ -326,24 +355,25 @@ The `pending_batch_transitions` store is checked on every action-sheet confirmat
 1. For each QueueEntry with status ∈ [pending, sending, retry_wait]:
 2. If now < nextAttemptAt: skip
 3. Set status ← sending
-4. Fetch FieldEvent and Attachments
+4. Fetch FieldEvent from IndexedDB
 5. POST /api/field-events (Firestore transaction)
    {
      event: FieldEvent,
      expectedBatchRevision: event.expectedBatchRevision,
-     attachmentIds: event.attachmentIds
+     attachmentIds: []
    }
 6. If success:
-   - Store AuthorizationReceipt
+   - Extract receipt from response
    - Set QueueEntry.status ← confirmed
+   - Release pending-batch-transition reservation
    - Update local batch cache with new revision
-   - Mark attachments as confirmed (or pending if not included in response)
+   - Store receipt in IndexedDB (with QueueEntry or separately)
 7. If failure:
-   - If "idempotency: already accepted" → recover receipt, set confirmed
-   - If "revision conflict" → set status ← conflict, wait for operator review
-   - If "authorization denied" or "validation failed" → set status ← rejected
-   - If "network/timeout" → set status ← retry_wait, backoff
-8. Persist updated QueueEntry & receipts to IndexedDB
+   - If "idempotency: already accepted" → recover receipt from response, set confirmed, release reservation
+   - If "revision conflict" → set status ← conflict, do NOT release reservation (operator must review)
+   - If "authorization denied" or "validation failed" → set status ← rejected, release reservation
+   - If "network/timeout" → set status ← retry_wait, backoff (reservation remains held)
+8. Persist updated QueueEntry & receipt to IndexedDB
 ```
 
 ### 4.3 Idempotency & Conflict Resolution
@@ -354,9 +384,10 @@ The `pending_batch_transitions` store is checked on every action-sheet confirmat
 // Executor: Cloud Function, triggered by POST /api/field-events
 // Input: { event, expectedBatchRevision, attachmentIds }
 // Output: { receipt } or error with specific code
+// CRITICAL: All reads that govern acceptance happen inside the transaction
 
 async function acceptFieldEvent(event, expectedBatchRevision, attachmentIds) {
-  // Validate input
+  // Pre-transaction validation: only input structure & auth
   if (!event.id || event.type !== "batch_state_transition") {
     throw new Error("invalid_event_structure");
   }
@@ -364,107 +395,134 @@ async function acceptFieldEvent(event, expectedBatchRevision, attachmentIds) {
     throw new Error("attachments_not_supported_in_v1");
   }
 
-  // 1. Authenticate: event.operatorId must match authenticated user
+  // Authenticate: event.operatorId must match authenticated user
   const authUser = context.auth.uid;
   if (event.operatorId !== authUser) {
     throw new Error("operator_id_mismatch_with_auth");
   }
 
-  // 2. Look for existing receipt (idempotency check)
-  const existingReceipt = await db.doc(`field-events/${event.id}/receipt`).get();
-  if (existingReceipt.exists) {
-    // Compare content
-    const storedEvent = await db.doc(`field-events/${event.id}`).get();
-    if (contentEquals(event, storedEvent.data())) {
-      return existingReceipt.data();  // Legitimate retry: return original receipt
-    } else {
-      throw new Error("idempotency_violation: same ID, different content");
-    }
-  }
-
-  // 3. Fetch batch, verify revision, and check permissions
-  const batchDoc = await db.doc(`batches/${event.batchId}`).get();
-  const batch = batchDoc.data();
-  
-  if (!batch) {
-    throw new Error("batch_not_found");
-  }
-  if (batch.revision !== expectedBatchRevision) {
-    throw new Error("revision_conflict", {
-      currentRevision: batch.revision,
-      currentState: batch.state,
-    });
-  }
-
-  // 4. Validate state machine transition
-  if (!isValidTransition(batch.state, event.payload.to)) {
-    throw new Error("invalid_state_transition", {
-      from: batch.state,
-      to: event.payload.to,
-    });
-  }
-
-  // 5. Authorize operator for this action
-  const operatorRole = await getOperatorRole(event.operatorId);
-  if (!canPerformAction(operatorRole, event.payload.to)) {
-    throw new Error("unauthorized_action", {
-      action: event.payload.to,
-      role: operatorRole,
-    });
-  }
-
-  // 6. Atomic transaction: apply transition + create receipt
+  // All acceptance logic inside transaction to prevent race conditions
   try {
-    await db.runTransaction(async (tx) => {
-      // Write immutable event record
-      await tx.set(db.doc(`field-events/${event.id}`), event);
+    const receipt = await db.runTransaction(async (tx) => {
+      // 1. Idempotency check INSIDE transaction
+      const existingEventDoc = await tx.get(db.doc(`field-events/${event.id}`));
+      if (existingEventDoc.exists) {
+        const storedEvent = existingEventDoc.data();
+        const existingReceipt = storedEvent.receipt;
+        
+        if (contentEquals(event, storedEvent)) {
+          // Legitimate retry: return original receipt
+          return existingReceipt;
+        } else {
+          // Same ID, different content: idempotency violation
+          throw new Error("idempotency_violation: same eventId, different content");
+        }
+      }
 
-      // Update batch state and revision atomically
+      // 2. Fetch batch INSIDE transaction (snapshot)
+      const batchDoc = await tx.get(db.doc(`batches/${event.batchId}`));
+      if (!batchDoc.exists) {
+        throw new Error("batch_not_found");
+      }
+      const batch = batchDoc.data();
+
+      // 3. Verify revision (against client expectation)
+      if (batch.revision !== expectedBatchRevision) {
+        throw new Error("revision_conflict", {
+          currentRevision: batch.revision,
+          currentState: batch.state,
+        });
+      }
+
+      // 4. Validate state machine transition
+      if (!isValidTransition(batch.state, event.payload.to)) {
+        throw new Error("invalid_state_transition", {
+          from: batch.state,
+          to: event.payload.to,
+        });
+      }
+
+      // 5. Authorize operator for this action
+      // (fetch operator role doc inside transaction if needed)
+      const opRoleDoc = await tx.get(db.doc(`operators/${event.operatorId}`));
+      const operatorRole = opRoleDoc.exists ? opRoleDoc.data().role : "standard";
+      if (!canPerformAction(operatorRole, event.payload.to)) {
+        throw new Error("unauthorized_action", {
+          action: event.payload.to,
+          role: operatorRole,
+        });
+      }
+
+      // 6. All checks passed; apply transition atomically
       const newRevision = batch.revision + 1;
+      const acceptedAt = serverTimestamp();
+
+      // Write event with embedded receipt
+      const receipt = {
+        eventId: event.id,
+        acceptedAt: acceptedAt,
+        batchRevision: newRevision,
+      };
+      await tx.set(db.doc(`field-events/${event.id}`), {
+        ...event,
+        receipt, // Embed receipt in the event document
+      });
+
+      // Update batch state, revision, and history
       await tx.update(db.doc(`batches/${event.batchId}`), {
         state: event.payload.to,
         revision: newRevision,
-        updatedAt: serverTimestamp(),
-        stateHistory: batch.stateHistory || []
-          .concat([{
-            state: event.payload.to,
-            revision: newRevision,
-            acceptedAt: serverTimestamp(),
-            eventId: event.id,
-          }]),
+        updatedAt: acceptedAt,
+        stateHistory: (batch.stateHistory || []).concat([{
+          state: event.payload.to,
+          revision: newRevision,
+          acceptedAt: acceptedAt,
+          eventId: event.id,
+        }]),
       });
 
-      // Create receipt (proof of acceptance)
-      const receipt = {
-        eventId: event.id,
-        acceptedAt: serverTimestamp(),
-        batchRevision: newRevision,
-      };
-      await tx.set(db.doc(`field-events/${event.id}/receipt`), receipt);
+      return receipt;
     });
-  } catch (err) {
-    throw new Error("transaction_failed", { cause: err.message });
-  }
 
-  return { receipt: { eventId, acceptedAt, batchRevision } };
+    return { receipt };
+  } catch (err) {
+    // Transaction rolled back; error message returned to client
+    throw err;
+  }
 }
 
-// Helper: normalized content comparison
+// Helper: normalized content comparison (canonical representation)
 function contentEquals(submitted, stored) {
-  const normalize = (obj) => JSON.stringify({
-    eventId: obj.eventId,
-    type: obj.type,
-    batchId: obj.batchId,
-    expectedBatchRevision: obj.expectedBatchRevision,
-    occurredAt: obj.occurredAt,
-    operatorId: obj.operatorId,
-    source: obj.source,
-    payload: obj.payload,
-    attachmentIds: obj.attachmentIds || [],
-  });
+  // Normalize: canonical field order, ISO8601 timestamps (no microseconds beyond ms)
+  const normalize = (obj) => {
+    // Remove receipt before comparison (receipt added by server, not part of event content)
+    const eventOnly = { ...obj };
+    delete eventOnly.receipt;
+    
+    return JSON.stringify({
+      id: eventOnly.id,
+      schemaVersion: eventOnly.schemaVersion || 1,
+      type: eventOnly.type,
+      batchId: eventOnly.batchId,
+      expectedBatchRevision: eventOnly.expectedBatchRevision,
+      occurredAt: (eventOnly.occurredAt || "").replace(/\.\d{3}\d+Z$/, ".000Z"), // Normalize to ms
+      operatorId: eventOnly.operatorId,
+      source: eventOnly.source,
+      payload: eventOnly.payload,
+      attachmentIds: eventOnly.attachmentIds || [],
+      metadata: eventOnly.metadata || {},
+    });
+  };
+  
   return normalize(submitted) === normalize(stored);
 }
 ```
+
+**Why all reads inside transaction:**
+- Two requests for same batch (revision 12) arrive simultaneously
+- Without transactional reads, both see revision 12, both attempt update
+- With reads inside tx, first request enters tx, sees 12, updates to 13; second request enters tx, sees 13, detects conflict
+- This prevents lost updates and ensures strict serialization
 
 **Client recovery:**
 
@@ -708,24 +766,35 @@ Revision: 12 (local) → will be 13 after sync
 **Scenario A (Local Only):** Operator A queues a transition offline; signs out; Operator B signs in.
 
 **Resolution:**
-1. On sign-out, query `pending_batch_transitions` for accountId = A's UID
-2. Delete those entries and any associated FieldEvents, QueueEntries
-3. On sign-in as Operator B, Operator A's pending events do not appear
-4. Show: "X local events from [account name] discarded" (or offer temporary preservation if A logs back in within session)
+1. On sign-out, keep all FieldEvents, QueueEntries, and pending_batch_transitions **unchanged** in IndexedDB
+2. Flag them by accountId (FieldEvent.operatorId, QueueEntry.accountId, pending_batch_transitions.accountId)
+3. On sign-in as Operator B:
+   - Operator B sees only their own queued events (filtered by accountId)
+   - Operator A's pending events remain in queue, not synced under B's auth
+4. When Operator A signs back in (same session or new session):
+   - Operator A's pending events are recovered from IndexedDB
+   - Sync resumes for A's queued events using A's auth context
+   - Receipts (accepted outcomes) are also recovered; Operator A can see which events were already confirmed
+5. If IndexedDB is cleared (explicit user action or quota cleanup), pending events are lost; this is not automatic logout behavior
 
-**Test:** Account switch with pending local events; no transmission under B's identity.
+**Test:** Account switch with pending local events; pending events remain isolated by operatorId; B signs in and out, A signs back in → A's pending queue recovers intact.
 
 **Scenario B (Request In-Flight):** Operator A submits event (POST in progress); connection is good; during wait for response, A signs out and B signs in.
 
 **Resolution:**
 1. The POST may still succeed on the server (event accepted, receipt created)
-2. Client-side cancellation of pending XHR does not affect server acceptance
-3. On sign-in as Operator B, B must not see or sync Operator A's accepted event
-4. If response finally arrives and is cached (due to Service Worker or retry), it is discarded when the IndexedDB account context changes
-5. Operator A can recover the event by signing back in (if it's still in the queue or if receipt recovery is implemented)
-6. For v1, document this edge case and warn operators not to sign out mid-sync
+2. On server: receipt linked to eventId, which carries operatorId = A's UID
+3. Client-side: XHR in progress when A signs out → response handling deferred (or cached by Service Worker)
+4. On sign-in as Operator B:
+   - Pending queue shows only B's events (filtered by operatorId)
+   - A's in-flight event remains in FieldEvent/QueueEntry with operatorId = A
+5. When A signs back in:
+   - A's pending events recovered
+   - If server already accepted (receipt exists), sync process finds it and marks confirmed
+   - If server rejected or not yet processed, sync attempts again with A's auth
+6. A's event is never attributed to B, never synced under B's credentials
 
-**Test:** Request in-flight, account switches before response arrives; event accepted on server but not attributed to B; A can recover on re-login or event remains orphaned until cleanup.
+**Test:** Request in-flight, account switches before response arrives; event accepted on server under A; B signs in and out; A signs back in → A recovers the event and its receipt/status.
 
 ---
 
@@ -751,8 +820,14 @@ These tests verify that operator confirmations are trustworthy and that accepted
 
 **Authorization & Account Safety:**
 - ✓ **Operator ID from auth:** Server compares event.operatorId (client-submitted) against authenticated UID; mismatch or missing auth context → rejected
-- ✓ **Account switch with pending local events:** Operator A has 3 pending events; signs out; Operator B signs in → Operator A's pending entries deleted from pending_batch_transitions, operatorId A's FieldEvents not synced under B's auth
-- ✓ **Account switch with in-flight request:** Operator A submits event (POST in progress), server accepts during transmission, A signs out and B signs in before response arrives → response is discarded (IDB account context changed), A's event remains accepted on server but not synced under B; A can recover by re-logging in or event is cleaned up after retention period
+- ✓ **Account switch with pending local events:** Operator A has 3 pending events; signs out; Operator B signs in → Operator A's pending entries remain in pending_batch_transitions (isolated by accountId), operatorId A's FieldEvents not shown to B, not synced under B's auth
+- ✓ **Account switch with in-flight request:** Operator A submits event (POST in progress), server accepts during transmission, A signs out and B signs in before response arrives → response handling deferred, A's event remains accepted on server (receipt linked to A's UID), B does not see A's event, A can recover it by re-logging in
+- ✓ **Recovery after logout/login:** Operator A logs out with 3 pending events (1 sending, 2 pending) and 1 in-flight request → signs back in → all 3 local events recovered from IDB, sync resumes for A's auth, in-flight request result recovered from server if available
+
+**Server-Side Transaction Concurrency:**
+- ✓ **All reads inside transaction:** When two requests for same batch (revision 12) arrive simultaneously, both enter runTransaction; first reads revision 12, second waits; first updates to 13; second reads 13, detects conflict, aborts
+- ✓ **No read-before-tx:** All checks (receipt, batch, revision, permissions) happen inside tx snapshot, not before entering tx
+- ✓ **Strict ordering:** Conflicting requests are strictly ordered by Firestore transaction scheduling, preventing lost updates
 
 ### 8.2 Unit Tests
 
@@ -892,14 +967,34 @@ These tests verify that operator confirmations are trustworthy and that accepted
 
 ### 10.3 Atomicity & Reliability (Critical)
 
-- [ ] Local commit: FieldEvent + QueueEntry + pending-batch-transition in single transaction
-- [ ] Server commit: Event + batch state + revision + receipt in single Firestore transaction
-- [ ] No partial acceptance (event record exists but transition not applied, or vice versa)
-- [ ] Idempotency: legitimate retry (same eventId, same content) returns original receipt
-- [ ] Idempotency violation: same eventId, different content → rejected
-- [ ] Multi-device: two devices from same revision, one succeeds, other gets conflict
-- [ ] Response lost: server accepts, client timeout/disconnect, retry recovers receipt
-- [ ] Account switch: in-flight request still accepted on server but not synced under new identity
+**Local Persistence:**
+- [ ] Local commit: FieldEvent + QueueEntry + pending-batch-transition in single IDB transaction
+- [ ] IDB transaction failure (quota, error) → "saved" not shown, draft retained for retry
+- [ ] Reservation ID is composite: `${accountId}:${batchId}` (prevents cross-account overwrites)
+- [ ] Reservation lifecycle: created (on confirm) → released (on confirmed/rejected/conflict resolution)
+- [ ] Cross-tab check: second tab attempting same batch gets "another action pending" error
+
+**Server Acceptance (All Reads Inside Transaction):**
+- [ ] All validation reads (receipt, batch, revision, permissions) happen inside Firestore transaction
+- [ ] Two devices with same revision cannot both succeed (second sees updated revision inside tx)
+- [ ] Idempotency check happens first (inside tx): if eventId exists with matching content, return receipt
+- [ ] Content normalization: JSON field order, ISO8601 ms precision, excludes receipt field
+- [ ] Server commit: Event + batch state + revision + receipt all-or-nothing in single tx
+- [ ] No partial acceptance (event written but transition not applied)
+
+**Idempotency & Conflict:**
+- [ ] Legitimate retry (same eventId, identical content) → original receipt returned, no duplicate transition
+- [ ] Idempotency violation (same eventId, different content) → rejected with error
+- [ ] Multi-device: two devices from revision 12, A succeeds (rev→13), B gets 409 with currentRevision: 13
+- [ ] Response lost: server accepts, client timeout/disconnect, retry recovers receipt from server
+- [ ] Conflict does NOT release reservation (operator must resolve and retry)
+
+**Account Safety & Recovery:**
+- [ ] Logout does NOT delete pending events; keeps them isolated by operatorId
+- [ ] Login as different operator: see only their own events (filtered by operatorId)
+- [ ] Return to original operator: pending events recovered with their status (pending/confirmed/etc.)
+- [ ] In-flight request during logout: event may be accepted on server, recovered on re-login
+- [ ] No cross-account transmission (event with operatorId=A never synced under operatorId=B auth)
 
 ---
 
