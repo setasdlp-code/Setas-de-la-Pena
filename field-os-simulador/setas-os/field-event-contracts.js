@@ -58,8 +58,7 @@
     if (!Array.isArray(event.attachmentIds) || event.attachmentIds.length !== 0) {
       throw new Error('invalid_envelope: attachmentIds debe estar vacío en v1');
     }
-    return Object.freeze({ schemaVersion: SCHEMA_VERSION,
-    DEFAULT_INITIAL_STATE, accountId, event });
+    return Object.freeze({ schemaVersion: SCHEMA_VERSION, accountId, event });
   };
 
   /**

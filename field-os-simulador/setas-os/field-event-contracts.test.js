@@ -42,6 +42,13 @@ test('envelope carries schemaVersion, accountId and the event', () => {
   assert.equal(env.event.id, 'evt_1');
 });
 
+test('el sobre lleva exactamente los campos del contrato, ni uno más', () => {
+  // El sobre es el contrato de cable. Un campo de más entra sin que nada falle
+  // y queda ahí para siempre: la única defensa es fijar la forma exacta.
+  const env = buildRequestEnvelope(validEvent(), 'account_1');
+  assert.deepEqual(Object.keys(env).sort(), ['accountId', 'event', 'schemaVersion']);
+});
+
 test('envelope rejects attachments — v1 defers photos entirely', () => {
   const withAttachment = { ...validEvent(), attachmentIds: ['photo_1'] };
   assert.throws(() => buildRequestEnvelope(withAttachment, 'account_1'), /attachmentIds/);
