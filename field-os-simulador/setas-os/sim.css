@@ -4695,6 +4695,126 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   box-shadow: var(--shadow-none); /* border-color above is the hover cue */
 }
 
+/* ── Telemetría en vivo: estado del puente y alertas de umbral ──────────────── */
+/* La procedencia del dato es parte del dato: una tarjeta alimentada por
+   telemetría real se distingue de una con valores de referencia. */
+.sim-root .today-climate-card--live { border-left: 2px solid var(--moss-700, var(--color-dark-secondary)); }
+.sim-root .today-climate-card--demo { border-left: 2px dashed var(--ink-500, var(--color-species-name)); }
+
+.sim-root .today-climate-card__prov {
+  font: var(--text-2xs, 10px)/1.3 var(--font-mono);
+  color: var(--ink-500, var(--color-species-name));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sim-root .live-telemetry-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
+  border-radius: var(--radius-sm, 2px);
+  font: var(--text-xs)/1.3 var(--font-mono);
+  color: var(--ink-500, var(--color-species-name));
+}
+
+.sim-root .live-telemetry-status__label { color: var(--ink-0); font-weight: 700; }
+.sim-root .live-telemetry-status__source { text-transform: uppercase; letter-spacing: 0.06em; }
+.sim-root .live-telemetry-status__alt { margin-left: auto; }
+.sim-root .live-telemetry-status__cfg { flex-shrink: 0; }
+
+.sim-root .live-telemetry-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-500, var(--color-species-name));
+}
+.sim-root .live-telemetry-dot--en_vivo { background: var(--status-active, var(--moss-700)); }
+.sim-root .live-telemetry-dot--degradado { background: var(--accent-olive, var(--moss-700)); }
+.sim-root .live-telemetry-dot--offline,
+.sim-root .live-telemetry-dot--detenido { background: var(--accent-terracotta, var(--status-error)); }
+
+.sim-root .os-live-alerts { margin-bottom: 16px; }
+.sim-root .os-live-alerts__more {
+  font: var(--text-xs)/1.3 var(--font-mono);
+  color: var(--ink-500, var(--color-species-name));
+  padding: 6px 2px;
+}
+
+.sim-root .climate-live-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.sim-root .os-live-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline, var(--color-species-name));
+  /* La severidad se lee por el borde izquierdo, no solo por el punto: en
+     pantalla al sol el color del punto de 8px se pierde. */
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: var(--radius-sm, 2px);
+}
+
+.sim-root .os-live-alert--aviso { border-left-color: var(--accent-olive, var(--moss-700)); }
+.sim-root .os-live-alert--alarma { border-left-color: var(--accent-terracotta, var(--status-error)); }
+.sim-root .os-live-alert--critico {
+  border-left-color: var(--accent-terracotta, var(--status-error));
+  background: var(--accent-terracotta-dim, var(--paper-0));
+}
+
+.sim-root .os-live-alert__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+  color: var(--ink-500, var(--color-species-name));
+}
+.sim-root .os-live-alert--alarma .os-live-alert__dot,
+.sim-root .os-live-alert--critico .os-live-alert__dot { color: var(--accent-terracotta, var(--status-error)); }
+
+.sim-root .os-live-alert__body { flex: 1; min-width: 0; }
+.sim-root .os-live-alert__title {
+  font: 700 var(--text-sm)/1.3 var(--font-display);
+  color: var(--ink-0);
+}
+.sim-root .os-live-alert__meta {
+  font: var(--text-xs)/1.35 var(--font-sans);
+  color: var(--ink-500, var(--color-species-name));
+  margin-top: 2px;
+}
+.sim-root .os-live-alert__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sim-root .os-live-alert__age {
+  font: var(--text-2xs, 10px)/1.3 var(--font-mono);
+  color: var(--ink-500, var(--color-species-name));
+  white-space: nowrap;
+}
+
+/* En pantalla de campo (celular) la acción baja debajo del texto en vez de
+   comprimir el mensaje a dos palabras por línea. */
+@media (max-width: 640px) {
+  .sim-root .os-live-alert { flex-wrap: wrap; }
+  .sim-root .os-live-alert__side { width: 100%; justify-content: space-between; }
+  .sim-root .live-telemetry-status__alt { margin-left: 0; width: 100%; }
+}
+
 /* ── Panel de Actuadores y Relés de Potencia ─────────────────────────────────── */
 .sim-root .climate-actuators-panel {
   padding: 16px;
