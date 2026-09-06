@@ -45,6 +45,13 @@ export async function pushClimateReading(db, reading) {
     co2_ppm: co2,
     substrate_temperature_c: subTemp,
     dpv_kpa: vpd,
+    // Bandera de procedencia del CO2, no un adorno: el puente en vivo
+    // (live-telemetry-bridge.js) relee estos documentos y compensa por altitud
+    // toda lectura NDIR que no la traiga. Si el firmware ya compensó (un SCD30
+    // al que se le pasa la presion ambiente lo hace) y este campo se pierde al
+    // escribir, el puente aplica el factor ~1.36 encima del valor ya corregido
+    // y el CO2 aparece inflado un 36 % con alertas que no existen.
+    co2_pressure_compensated: reading.co2_pressure_compensated === true,
     source: reading.source || "esp32_hardware",
     device_id: reading.deviceId || `esp32-${roomId}`,
     created_at: serverTimestamp(),

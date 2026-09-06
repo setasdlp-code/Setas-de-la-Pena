@@ -12,6 +12,47 @@
 <style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style></head><body>
 <div id="root" class="sim-root"></div>
 <script>window.__setasAuthState=true;</script>
+<script>
+// Emula window.SetasFirebase.subscribeToLiveClimate para probar el transporte
+// firestore de punta a punta sin red. Los valores de CO₂ son CRUDOS de NDIR:
+// el puente debe compensarlos por altitud antes de mostrarlos.
+//
+// Opt-in con ?live=1 — por defecto el harness se comporta como antes (sin
+// telemetría), para no cambiarle el escenario a quien lo use para otra cosa.
+if (new URLSearchParams(location.search).has('live')) {
+window.SetasFirebase = {
+  subscribeToLiveClimate: function (cb) {
+    var n = 0;
+    function emit() {
+      n++;
+      var t = Date.now();
+      cb({
+        martha_01: {
+          room_id: 'martha_01', device_id: 'esp32-martha-01',
+          temperature_c: 17.1 + Math.sin(n / 3) * 0.4,
+          rh_pct: 90.5 + Math.cos(n / 4) * 1.5,
+          co2_ppm: 520 + n * 2,                       // crudo → ~700 compensado
+          substrate_temperature_c: 17.6,
+          timestamp_local: new Date(t).toISOString()
+        },
+        cloudlab_844: {
+          room_id: 'cloudlab_844', device_id: 'esp32-cloudlab-01',
+          temperature_c: 29.4,                        // > criticalMax (28) → crítico inmediato
+          rh_pct: 74.0,                               // < min (80)
+          co2_ppm: 2100,                              // crudo → ~2840 compensado, > criticalMax
+          timestamp_local: new Date(t).toISOString()
+        }
+      });
+    }
+    emit();
+    var id = setInterval(emit, 1200);
+    window.__harnessEmit = emit;
+    return function () { clearInterval(id); };
+  }
+};
+}
+</script>
+
 <script src="vendor/react.production.min.js"></script>
 <script src="vendor/react-dom.production.min.js"></script>
 <script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
@@ -20,6 +61,8 @@
 <script src="climate-sparkline.js"></script><script src="support.js"></script>
 <script src="recipe-recommender.js"></script><script src="scoring.js"></script>
 <script src="bitacora-model.js"></script><script src="climate-math.js"></script>
+<script src="telemetry-contract.js"></script><script src="esp32-telemetry-adapter.js"></script>
+<script src="anomaly-thresholds.js"></script><script src="live-telemetry-bridge.js"></script>
 <script src="flush-forecast-engine.js"></script><script src="sterilization-kinetics.js"></script>
 <script src="co-cultivation-matrix.js"></script><script src="post-harvest-engine.js"></script>
 <script src="historical-calibration.js"></script><script src="recipe-optimizer.js"></script>
