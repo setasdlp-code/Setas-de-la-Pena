@@ -15,7 +15,19 @@ Cada vista y producto responde de inmediato al lector:
 4. **De dónde viene:** Anclaje territorial en Tenjo, Cundinamarca (2.592 msnm, falda de la Peña de Juaica).
 5. **Qué explorar después:** Cuaderno editorial de temporada, maridajes y trazabilidad de lote.
 
-La especie protagonista de este lanzamiento es el **Shiitake de Montaña** (*Lentinula edodes*), cultivado sobre sustrato biológico de roble andino local (*Quercus humboldtii*).
+### Dos Recorridos de Usuario en el Mismo Sistema
+- **Cocina en Casa (Hogar):** *Qué es → Cómo lo cocino (pautas en seco) → Cuánto necesito (200g/400g) → Cómo lo conservo (2-4°C) → Disponibilidad.*
+- **Chef / HORECA (Profesional):** *Ficha técnica (humedad y merma) → Calibre (4-6cm) → Volumen (cajas 1-5kg) → Regularidad → Entrega → Contacto.*
+
+### Los Cuatro Modos de Swiss Botanical
+El sistema organiza la experiencia en cuatro capas operativas:
+- **Archive:** Taxonomía, territorio, archivo histórico y memoria botánica.
+- **Field:** Cultivo, procesos de inoculación y observación agronómica.
+- **Control:** Lotes, fechas, pesos y trazabilidad criptográfica inmutable.
+- **Culinary Market:** Herramienta de decisión culinaria estructurada en 7 pasos:
+  *Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad → Origen → Próximo paso.*
+
+La especie protagonista de este lanzamiento es el **Shiitake** (*Lentinula edodes*), cultivado sobre sustrato biológico formulado en Tenjo.
 
 ---
 
@@ -46,7 +58,7 @@ El sistema es 100% autocontenido e independiente de las hojas de estilo de produ
 │   └── editorial.css          # Pliegos editoriales, folios, marginalia y citas
 ├── mockups/
 │   ├── home.html              # Portada comercial asimétrica y catálogo de temporada
-│   ├── product.html           # Ficha de producto (Shiitake de Montaña)
+│   ├── product.html           # Ficha de producto (Shiitake)
 │   ├── editorial.html         # Ensayo editorial: "El Dominio del Fuego y el Roble"
 │   ├── traceability.html      # Cuaderno de trazabilidad del Lote SDP-26-SH-04
 │   ├── manifest.json          # Configuración de resoluciones (Desktop + Mobile)

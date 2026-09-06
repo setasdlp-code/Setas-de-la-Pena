@@ -18,6 +18,117 @@ Se prohíben las cuadrículas simétricas monótonas de e-commerce genérico (fi
 
 ---
 
+## 1.4. Arquitectura de Cuatro Modos: El Sistema como Herramienta de Decisión
+
+Swiss Botanical formaliza cuatro modos de interfaz y estructura, preservando el rigor del archivo y agregando la capa comercial y culinaria activa:
+
+```
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────────────┐
+│     ARCHIVE     │      FIELD      │     CONTROL     │     CULINARY MARKET     │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────────────┤
+│ • Taxonomía     │ • Cultivo       │ • Lotes         │ • Elección & Sabor      │
+│ • Territorio    │ • Sustratos     │ • Fechas y corte│ • Técnica de Cocina     │
+│ • Herbario      │ • Inoculación   │ • Pesos         │ • Formato y Gramaje     │
+│ • Memoria       │ • Observación   │ • Telemetría    │ • Disponibilidad        │
+│ • Pliegos print │ • Protocolos SOP│ • Trazabilidad  │ • Acción de Compra      │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────────────┘
+```
+
+### La Secuencia Cognitiva del Modo Culinary Market (7 Pasos)
+El modo comercial no es un catálogo decorativo, sino una **herramienta estructurada de decisión gastronómica**:
+
+1. **Qué es:** Identidad botánica, nombre común y especie taxonómica (*Lentinula edodes*).
+2. **A qué sabe:** Perfil organoléptico contrastado (umami de roble, sotobosque andino, avellana).
+3. **Cómo se usa:** Técnica gastronómica probada (fuego vivo, sartén de hierro, sellado sin hervir en su jugo; conservación en bolsa transpirable).
+4. **Qué formato existe:** Opciones de empaque según usuario (250g Cata Hogar, 500g Cesta Cocina, 1.5kg Caja Chef).
+5. **Disponibilidad:** Estado en tiempo real del ciclo biológico (Cosecha activa del día, corte al alba).
+6. **Origen:** Anclaje territorial objetivo (Tenjo, Cundinamarca, 2.592 msnm, Lote `SDP-26-SH-04`).
+7. **Próximo paso:** Llamada a la acción clara (añadir al pedido, cotizar para hostelería o profundizar en el cuaderno editorial).
+
+---
+
+## 1.5. Los Dos Recorridos de Usuario: Hogar vs. Chef / HORECA
+
+Swiss Botanical no divide la marca en dos entidades visuales separadas. En su lugar, organiza **dos entradas y dos jerarquías de información** dentro del mismo Design System, respondiendo a las necesidades probadas de cada segmento:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 DOS RECORRIDOS EN EL MISMO DESIGN SYSTEM                    │
+├──────────────────────────────────────┬──────────────────────────────────────┤
+│    COCINA EN CASA (HOGAR / RETAIL)   │    CHEF / PROFESIONAL (HORECA)       │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ 1. Qué es (Identidad y carpóforo)    │ 1. Ficha técnica (Humedad y merma)   │
+│ 2. Cómo lo cocino (Tres pautas)      │ 2. Calibre (4-6 cm, pie recortado)   │
+│ 3. Cuánto necesito (200g / 400g)     │ 3. Volumen (Cajas 1kg, 3kg, 5kg)     │
+│ 4. Cómo lo conservo (2-4°C en kraft) │ 4. Regularidad (Suministro anual)    │
+│ 5. Está disponible (Cosecha activa)  │ 5. Entrega (Cadena de frío y rutas)  │
+│                                      │ 6. Contacto (Muestras y lista B2B)   │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+### 1.5.1. Recorrido Hogar (Cocina Doméstica)
+- **Foco:** Eliminar el miedo a arruinar el producto o lavarlo mal; evitar el desperdicio por compra excesiva.
+- **Pautas de sartén obligatorias en PDP:**
+  1. *Limpieza en seco:* Nunca lavar con agua; limpiar con paño seco o cepillo suave.
+  2. *Fuego medio-alto:* Dorar 3-4 minutos sin mover para caramelizar y no hervir en su jugo.
+  3. *Terminación:* Sal marina, mantequilla o grasa vegetal y hierbas frescas al final.
+- **Formatos:** 200 g (cena 1-2 personas) y 400 g (familiar 3-4 porciones).
+- **Conservación:** 2°C a 4°C en bolsa transpirable (vida útil real: 5 a 7 días).
+
+### 1.5.2. Recorrido Chef / HORECA (Profesionales)
+- **Foco:** Estandarización de mise en place, cálculo de merma y seguridad de abastecimiento para cartas de temporada.
+- **Parámetros técnicos visibles:**
+  - Diámetro de sombrero (4 a 6 cm uniforme) y pie recortado a ras.
+  - Humedad residual controlada (86%–88%, sin exceso de agua libre).
+  - Merma en cocción a fuego vivo < 12%.
+  - Empaques en cajas ventiladas de 1 kg, 3 kg y 5 kg.
+  - Despachos programados martes y viernes en vehículo refrigerado a Bogotá y Sabana Centro.
+  - Canal de atención técnica directa vía chefs@setasdelapena.co.
+
+---
+
+## 1.6. Matriz de Aplicación de Imagen y Dirección Fotográfica
+
+Para evitar la confusión del cliente con grabados abstractos, las imágenes se clasifican rígidamente por función:
+
+| Estilo de Imagen | Función Principal | Canal Primario en DS |
+| --- | --- | --- |
+| **Fotografía de Producto Fresco (Estudio)** | Verificación de compra, color real, láminas limpias | Ficha comercial (PDP), carrito |
+| **Fotografía Culinaria en Uso** | Generación de apetito, escala en plato, método de sartén | Portada comercial, cuaderno editorial |
+| **Fotografía Documental del Cultivo** | Trazabilidad real, escala humana e infraestructura | Cuaderno de lote, página de origen |
+| **Ilustración Botánica Didáctica** | Identificación morfológica, pedagogía de corte | Empaque, reverso de ficha |
+| **Grabado Científico Histórico** | Sello de rigor identitario, marcas de agua y acento | Folios institucionales, cintas de cierre |
+
+---
+
+### 1.7. Nombres Sencillos y Verificación Culinaria Honesta
+
+Para preservar la honestidad agronómica y culinaria de Setas de la Peña, el sistema impone el uso **estricto de nombres comunes sencillos y directos**, eliminando por completo nombres poéticos o editoriales (como «Umami Roble», «Pizarra Bruma», «Ocre Dorado», «Arcilla Coral» o «Shiitake de Montaña»).
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   NOMENCLATURA SENCILLA Y VERIFICACIÓN                      │
+├─────────────────────────┬─────────────────────────┬─────────────────────────┤
+│ 1. NOMBRE SENCILLO      │ 2. PERFIL SENSORIAL     │ 3. USO RECOMENDADO      │
+│    (Común + Científico) │    VALIDADO (Cata Real) │    COMPROBADO (Técnica) │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ • Shiitake              │ • Comprobado o          │ • Comprobado o          │
+│ • Orellana              │   Por confirmar         │   Por confirmar         │
+│ • Melena de León        │ • Exige testeo empírico │ • Exige validación en   │
+│ • Orellana Rosada       │   en cocina             │   sartén/fuego real     │
+└─────────────────────────┴─────────────────────────┴─────────────────────────┘
+```
+
+### Reglas de Aplicación
+1. **Nombres directos y comprensibles:** Se utilizan únicamente los nombres comunes reconocidos (*Shiitake*, *Orellana*, *Melena de León*, *Orellana Rosada*) junto a su binomio botánico (*Lentinula edodes*, *Pleurotus ostreatus*, *Hericium erinaceus*, *Pleurotus djamor*). No se usan epítetos líricos, metáforas de madera ni adornos de montaña.
+2. **La Ficha de Producto desglosa con honestidad:**
+   - *Nombre común:* Nombre directo y especie botánica.
+   - *Perfil sensorial validado:* Notas comprobadas empíricamente (ej. *textura firme y notas tostadas en salteado*) o explícitamente marcado como `[Por confirmar]`.
+   - *Uso recomendado comprobado:* Técnica contrastada (ej. *salteado en sartén de hierro a fuego vivo*) o marcado como `[Por confirmar]` para otras preparaciones.
+3. **Cero promesas no respaldadas:** No se inventan notas organolépticas ni se convierten conjeturas en afirmaciones culinarias.
+
+---
+
 ## 2. Tipografía: La Trinidad Tipográfica
 
 El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fonts/`):
@@ -34,7 +145,15 @@ El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fo
 ```
 
 ### Reglas de Corrección Tipográfica
-1. **Gaya Patched Italic:** Se restringe rigurosamente a la nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*) y a citas editoriales breves. Queda terminantemente prohibido su uso en párrafos continuos de instrucciones o lectura.
+1. **Gaya Patched Italic (Uso Controlado y Notas Sensoriales):**
+   - **Usos autorizados:**
+     a) Nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*).
+     b) Citas culinarias y editoriales breves (máx. 3 líneas).
+     c) **Notas sensoriales muy breves** (ej. *profundo, terroso, limpio*).
+   - **Límites normativos estrictos:**
+     - **Máximo tres líneas:** Prohibida para párrafos largos, instrucciones o recetas continuas.
+     - **Perfil sensorial validado:** Solo se aplica cuando la cata y notas organolépticas han sido comprobadas en cocina o laboratorio.
+     - **Cero invención gastronómica:** Queda terminantemente prohibido usar Gaya Italic para simular una voz poética o gastronómica si el dato no existe empíricamente. Se restringe rigurosamente a la nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*) y a citas editoriales breves. Queda terminantemente prohibido su uso en párrafos continuos de instrucciones o lectura.
 2. **Piso de lectura continua:** El texto continuo en IBM Plex Sans tiene un piso de `16px` a `17px` con interlineado generoso (`1.5` a `1.65`) para garantizar confort visual prolongado.
 
 ---
@@ -53,11 +172,11 @@ La paleta se estructura sobre una base bimodal de papel marfil e tinta carbón, 
 - `--sb-ink-2: #6B6759;` (Metadatos y leyendas · Contraste 5.15:1, cumple WCAG AA)
 - `--sb-ink-inverse: #F7F4EC;` (Texto sobre fondos oscuros o acentos sólidos)
 
-### 3.2. Especies y Perfiles Sensoriales
-- **Shiitake (*Lentinula edodes*):** `--sb-accent-shiitake: #6E472D;` y `--sb-accent-shiitake-deep: #5A3725;` (Roble tostado y fuego).
-- **Orellana Perla (*Pleurotus ostreatus*):** `--sb-accent-orellana: #5E7080;` (Pizarra y niebla andina).
-- **Melena de León (*Hericium erinaceus*):** `--sb-accent-melena: #9D6F28;` (Ocre dorado y miel silvestre · Contraste 3.83:1).
-- **Orellana Rosa (*Pleurotus djamor*):** `--sb-accent-rosa: #A85C32;` (Arcilla y coral de espora).
+### 3.2. Especies y Acentos Cromáticos
+- **Shiitake (*Lentinula edodes*):** `--sb-accent-shiitake: #6E472D;` y `--sb-accent-shiitake-deep: #5A3725;` (Marrón castaño de sombrero fresco).
+- **Orellana (*Pleurotus ostreatus*):** `--sb-accent-orellana: #5E7080;` (Gris pizarra de láminas).
+- **Melena de León (*Hericium erinaceus*):** `--sb-accent-melena: #9D6F28;` (Ocre tostado · Contraste 3.83:1).
+- **Orellana Rosada (*Pleurotus djamor*):** `--sb-accent-rosa: #A85C32;` (Coral salmón de cuerpo joven · Contraste 4.09:1).
 
 ### 3.3. Filetes y Bordes
 - `--sb-line-hairline: #988C6C;` (3.03:1 en papel, cumple WCAG 1.4.11 no-textual).
