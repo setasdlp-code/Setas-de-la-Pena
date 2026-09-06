@@ -14,6 +14,9 @@ const {
 } = require('@firebase/rules-unit-testing');
 const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
 const fs = require('node:fs');
+const path = require('node:path');
+
+const RULES_PATH = path.join(__dirname, '..', '..', 'firebase', 'firestore.rules');
 
 let env;
 
@@ -24,7 +27,7 @@ const RECETA_OK = {
 before(async () => {
   env = await initializeTestEnvironment({
     projectId: 'sdlp-os-rules-test',
-    firestore: { rules: fs.readFileSync('firebase/firestore.rules', 'utf8') },
+    firestore: { rules: fs.readFileSync(RULES_PATH, 'utf8') },
   });
 });
 
