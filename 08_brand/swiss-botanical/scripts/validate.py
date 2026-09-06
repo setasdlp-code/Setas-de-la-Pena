@@ -4,8 +4,8 @@ Checks:
   1. Every var(--sb-*) used in CSS and HTML is defined in the token layer.
   2. Every @font-face src resolves to an existing file in assets/fonts/.
   3. Every local asset referenced in mockups exists on disk.
-  4. tokens.json parses and is syntactically valid.
-  5. tokens.json colors match colors.css.
+  4. All token JSON files parse and are syntactically valid.
+  5. colors.json and tokens.json colors match colors.css.
 Exits non-zero on failure.
 """
 import re, json, pathlib, sys
@@ -60,25 +60,28 @@ print(f"3. Assets en Mockups: {n_assets} referenciados · {len(bad_assets)} falt
 for src, fname in bad_assets:
     fails.append(f"Asset no encontrado '{src}' en {fname}")
 
-# 4. tokens.json validity
-try:
-    tj = json.loads((ROOT / "tokens/tokens.json").read_text(encoding="utf-8"))
-    print("4. tokens.json: Válido y estructurado correctamente")
-except Exception as e:
-    fails.append(f"tokens.json error de sintaxis: {e}")
+# 4. Token JSON validity across all json files
+json_files = list(ROOT.glob("tokens/*.json"))
+print(f"4. Token JSON: Auditando {len(json_files)} archivos JSON")
+for jf in json_files:
+    try:
+        json.loads(jf.read_text(encoding="utf-8"))
+    except Exception as e:
+        fails.append(f"{jf.name} error de sintaxis: {e}")
 
 # 5. colors.json vs colors.css parity
 css_colors = (ROOT / "tokens/colors.css").read_text(encoding="utf-8").upper()
-tj_colors = []
-for group in tj.get("color", {}).values():
-    for spec in group.values():
-        if "hex" in spec:
-            tj_colors.append(spec["hex"].upper())
+cj = json.loads((ROOT / "tokens/colors.json").read_text(encoding="utf-8"))
+color_vals = []
+for grp in ("primitive", "species", "status"):
+    for item in cj["color"].get(grp, {}).values():
+        if "value" in item and item["value"].startswith("#"):
+            color_vals.append(item["value"].upper())
 
-missing_hex = [h for h in tj_colors if h not in css_colors]
-print(f"5. Paridad Color (JSON vs CSS): {len(tj_colors)} colores auditados · {len(missing_hex)} desajustes")
+missing_hex = [h for h in color_vals if h not in css_colors]
+print(f"5. Paridad Color (colors.json vs colors.css): {len(color_vals)} colores auditados · {len(missing_hex)} desajustes")
 for h in missing_hex:
-    fails.append(f"Hex {h} declarado en tokens.json pero no encontrado en colors.css")
+    fails.append(f"Hex {h} declarado en colors.json pero no encontrado en colors.css")
 
 print("----------------------------------------------------")
 if fails:

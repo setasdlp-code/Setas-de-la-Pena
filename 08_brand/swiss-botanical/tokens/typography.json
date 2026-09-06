@@ -1,0 +1,132 @@
+{
+  "system": "Swiss Botanical \u2014 FOSV3 / DS-2026 / FOS",
+  "description": "Typographic trinity: Gaya Patched (Identity/Botanical), IBM Plex Sans (Commerce/Reading), IBM Plex Mono (Traceability/Lots).",
+  "families": {
+    "editorial": {
+      "stack": "'Gaya Patched', Georgia, serif",
+      "use": "Titulars, species common names, brand signature, editorial plates."
+    },
+    "sans": {
+      "stack": "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "use": "Body prose, commercial UI, culinary instructions, buttons."
+    },
+    "mono": {
+      "stack": "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+      "use": "Lot codes, telemetry, harvest times, coordinates, tabular data."
+    }
+  },
+  "weights": {
+    "light": 300,
+    "regular": 400,
+    "medium": 500,
+    "semibold": 600,
+    "bold": 700,
+    "black": 900
+  },
+  "scale": {
+    "display": {
+      "size": "clamp(40px, 5.5vw, 76px)",
+      "family": "editorial",
+      "weight": 900,
+      "leading": 1.05,
+      "tracking": "-0.025em",
+      "use": "Editorial hero titles, cover masthead."
+    },
+    "display-02": {
+      "size": "56px",
+      "family": "editorial",
+      "weight": 900,
+      "leading": 1.1,
+      "tracking": "-0.02em",
+      "use": "Major section title."
+    },
+    "heading-01": {
+      "size": "44px",
+      "family": "editorial",
+      "weight": 700,
+      "leading": 1.1,
+      "tracking": "-0.02em",
+      "use": "Page title, packaging front."
+    },
+    "heading-02": {
+      "size": "32px",
+      "family": "editorial",
+      "weight": 700,
+      "leading": 1.15,
+      "tracking": "-0.015em",
+      "use": "Card titles, section headings."
+    },
+    "heading-03": {
+      "size": "24px",
+      "family": "editorial",
+      "weight": 700,
+      "leading": 1.25,
+      "tracking": "-0.01em",
+      "use": "Sub-headings, card titles."
+    },
+    "heading-04": {
+      "size": "19px",
+      "family": "sans",
+      "weight": 600,
+      "leading": 1.3,
+      "tracking": "0",
+      "use": "Module headers inside prose."
+    },
+    "species": {
+      "size": "28px",
+      "family": "editorial",
+      "weight": 700,
+      "leading": 1.15,
+      "tracking": "-0.01em",
+      "use": "Common species name ('Shiitake de Monta\u00f1a')."
+    },
+    "latin": {
+      "size": "18px",
+      "family": "editorial",
+      "weight": 500,
+      "leading": 1.3,
+      "tracking": "0",
+      "style": "italic",
+      "use": "Scientific binomial ('Lentinula edodes')."
+    },
+    "body": {
+      "size": "16px",
+      "family": "sans",
+      "weight": 400,
+      "leading": 1.55,
+      "tracking": "0",
+      "use": "Prose floor. Never below 16px for continuous reading."
+    },
+    "small": {
+      "size": "14px",
+      "family": "sans",
+      "weight": 400,
+      "leading": 1.5,
+      "tracking": "0",
+      "use": "Captions, table body, culinary notes."
+    },
+    "data": {
+      "size": "12.5px",
+      "family": "mono",
+      "weight": 500,
+      "leading": 1.4,
+      "tracking": "0",
+      "numeric": "tabular-nums",
+      "use": "Telemetry numbers, measurements, lot lines."
+    },
+    "label": {
+      "size": "11px",
+      "family": "mono",
+      "weight": 500,
+      "leading": 1.1,
+      "tracking": "0.08em",
+      "case": "uppercase",
+      "use": "Eyebrows, table headers, lot metadata."
+    }
+  },
+  "minimums": {
+    "prose": "16px \u2014 continuous text floor on screen and print",
+    "operative": "12.5px \u2014 below this, metadata only",
+    "tracking": "0.08em \u2014 mono uppercase is always tracked"
+  }
+}
