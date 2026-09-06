@@ -140,27 +140,33 @@ test('should reject if from state does not match batch current state', () => {
   );
 });
 
-// --- Task 3: browser loadability (F1 regression gate) ----------------------
+// --- Task 3: browser loadability, in the ACTUAL deployed order --------------
+//
+// auth-gate.js runs PROTECTED_APP_SCRIPTS (these two files) BEFORE
+// DC_RUNTIME_SCRIPTS (setas-os-workflow.js). Seeding the workflow into the
+// sandbox first would test an ordering that never happens in the browser.
 
-test('both field-event modules load under a classic script tag', () => {
-  for (const file of ['field-event-queue.js', 'field-events-model.js']) {
-    const sandbox = { window: {}, indexedDB: {}, crypto, console };
-    sandbox.globalThis = sandbox;
-    sandbox.SetasOSWorkflow = require('./setas-os-workflow.js');
-    vm.runInNewContext(fs.readFileSync(file, 'utf8'), sandbox, { filename: file });
+const loadInBrowserOrder = (file) => {
+  const sandbox = { window: {}, indexedDB: {}, crypto, console };
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(fs.readFileSync(file, 'utf8'), sandbox, { filename: file });
+  return sandbox;
+};
 
-    const published = Object.keys(sandbox).filter(k => k.startsWith('SetasFieldEvent'));
-    assert.ok(published.length > 0, `${file} debería publicar un global`);
-  }
+test('both modules load before setas-os-workflow.js exists', () => {
+  const queue = loadInBrowserOrder('field-event-queue.js');
+  assert.ok(queue.SetasFieldEventQueue, 'la cola debería publicar su global');
+  assert.equal(typeof queue.SetasFieldEventQueue.initializeQueue, 'function');
 
-  assert.ok(true);
+  const model = loadInBrowserOrder('field-events-model.js');
+  assert.ok(model.SetasFieldEvents, 'el modelo debería publicar su global');
+  assert.equal(typeof model.SetasFieldEvents.validateTransition, 'function');
 });
 
-test('browser-loaded model can create an event without require', () => {
-  const sandbox = { window: {}, crypto, console };
-  sandbox.globalThis = sandbox;
+test('the model works once the workflow arrives later, as the loader does it', () => {
+  const sandbox = loadInBrowserOrder('field-events-model.js');
+  // DC_RUNTIME_SCRIPTS runs after PROTECTED_APP_SCRIPTS
   sandbox.SetasOSWorkflow = require('./setas-os-workflow.js');
-  vm.runInNewContext(fs.readFileSync('field-events-model.js', 'utf8'), sandbox, { filename: 'field-events-model.js' });
 
   const event = sandbox.SetasFieldEvents.createFieldEvent('l1', 'inoculated', 'incubation', 'op', '2026-09-06T14:30:00Z');
   assert.match(event.id, /^evt_/);
@@ -170,4 +176,22 @@ test('browser-loaded model can create an event without require', () => {
     sandbox.SetasFieldEvents.validateTransition({ state: 'inoculated' }, 'inoculated', 'incubation', 'operario'),
     true
   );
+});
+
+test('the model reports a clear error if the workflow never arrives', () => {
+  const sandbox = loadInBrowserOrder('field-events-model.js');
+  assert.throws(
+    () => sandbox.SetasFieldEvents.validateTransition({ state: 'inoculated' }, 'inoculated', 'incubation', 'operario'),
+    /workflow_unavailable/
+  );
+});
+
+test('prototype keys are rejected as unknown roles, not treated as permissions', () => {
+  for (const role of ['constructor', 'toString', '__proto__', 'valueOf']) {
+    assert.throws(
+      () => validateTransition({ state: 'incubation' }, 'incubation', 'fruiting', role),
+      /unknown_role/,
+      `"${role}" no debería resolverse contra Object.prototype`
+    );
+  }
 });

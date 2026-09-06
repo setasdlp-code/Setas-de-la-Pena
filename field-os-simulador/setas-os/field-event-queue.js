@@ -20,6 +20,12 @@
 
   const reservationKey = (accountId, batchId) => `${accountId}:${batchId}`;
 
+  // Distinguir "no era mía" de "ya no existía": un llamador que reintentara
+  // ante un booleano falso no podría diferenciarlos y giraría en vacío.
+  const RELEASE_RELEASED = 'released';
+  const RELEASE_NOT_OWNER = 'not_owner';
+  const RELEASE_ABSENT = 'absent';
+
   const initializeQueue = (dbName = DB_NAME) => new Promise((resolve, reject) => {
     const req = idb().open(dbName, DB_VERSION);
 
@@ -90,6 +96,7 @@
       reject(existingReq.error);
     };
 
+    tx.onabort = () => reject(tx.error || new Error('transaction_aborted: persistFieldEvent'));
     tx.onerror = () => reject(tx.error);
     tx.oncomplete = () => resolve();
   });
@@ -123,18 +130,26 @@
       const store = tx.objectStore('pending_batch_transitions');
       const reservationId = reservationKey(accountId, batchId);
       const getReq = store.get(reservationId);
-      let released = false;
+      let outcome = RELEASE_ABSENT;
 
       getReq.onsuccess = () => {
         const current = getReq.result;
-        if (!current || current.eventId !== expectedEventId) return; // reserva ajena: no tocar
-        released = true;
+        if (!current) return;                                  // ya liberada
+        if (current.eventId !== expectedEventId) {              // reserva de otro evento
+          outcome = RELEASE_NOT_OWNER;
+          return;
+        }
+        outcome = RELEASE_RELEASED;
         store.delete(reservationId);
       };
       getReq.onerror = () => reject(getReq.error);
 
+      // Sin onabort la promesa nunca se asienta si la transacción se aborta sin
+      // error de request (base cerrada, versionchange, excepción en el handler),
+      // y el bucle de sincronización quedaría detenido con la reserva retenida.
+      tx.onabort = () => reject(tx.error || new Error('transaction_aborted: releaseReservation'));
       tx.onerror = () => reject(tx.error);
-      tx.oncomplete = () => resolve(released);
+      tx.oncomplete = () => resolve(outcome);
     });
   };
 
@@ -174,6 +189,9 @@
   });
 
   const api = {
+    RELEASE_RELEASED,
+    RELEASE_NOT_OWNER,
+    RELEASE_ABSENT,
     initializeQueue,
     persistFieldEvent,
     getReservation,

@@ -56,8 +56,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../historical-calibration.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
-  // Cuaderno de campo offline: el modelo lee el global de setas-os-workflow.js,
-  // que ya viene cargado en DC_RUNTIME_SCRIPTS.
+  // Cuaderno de campo offline. setas-os-workflow.js llega después, en
+  // DC_RUNTIME_SCRIPTS, así que field-events-model.js resuelve ese global de
+  // forma perezosa en cada llamada en vez de capturarlo al cargarse.
   "../field-event-contracts.js",
   "../field-event-queue.js",
   "../field-events-model.js",

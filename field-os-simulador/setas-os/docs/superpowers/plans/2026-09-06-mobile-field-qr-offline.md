@@ -679,8 +679,20 @@ reservation.
     silent fallback** — closes F3).
   - Default parameter removed; `operatorRole` is required.
 - `releaseReservation(db, accountId, batchId, expectedEventId)` — deletes **only
-  if** the stored reservation's `eventId === expectedEventId`; otherwise resolves
-  without deleting and returns `false`. Returns `true` when released (closes F6).
+  if** the stored reservation's `eventId === expectedEventId` (closes F6).
+  Resolves to a status, never a boolean: `'released'`, `'not_owner'` (a newer
+  event holds it — do not retry), or `'absent'` (already released — also do not
+  retry). A boolean would conflate the last two and let a caller that retries on
+  falsy spin forever. Missing `expectedEventId` rejects.
+- Every IndexedDB transaction in this module handles `onabort` as well as
+  `onerror`: an abort without a request error (db closed, `versionchange`, a
+  throw inside a handler) otherwise leaves the promise unsettled and stalls the
+  sync loop with the reservation still held.
+- `field-events-model.js` resolves `SetasOSWorkflow` **lazily, per call**.
+  `auth-gate.js` runs `PROTECTED_APP_SCRIPTS` before `DC_RUNTIME_SCRIPTS`, so an
+  eager capture at IIFE time is `undefined` forever and every transition throws
+  `TypeError` in the browser. Loadability tests must load the module **before**
+  seeding the workflow, or they assert an ordering that never occurs.
 
 **Invariants preserved:** event immutability; `attachmentIds === []`; canonical
 timestamp format; atomic 3-store write in `persistFieldEvent`.

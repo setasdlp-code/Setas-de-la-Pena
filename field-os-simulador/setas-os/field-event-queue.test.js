@@ -141,7 +141,7 @@ test('FieldEventQueue', async (t) => {
 
     // Release the reservation, naming the event that owns it
     const released = await releaseReservation(db, 'account_rel', 'lote_rel', 'evt_rel_1');
-    assert.equal(released, true);
+    assert.equal(released, 'released');
 
     // Verify it's gone
     const reservation = await getReservation(db, 'account_rel', 'lote_rel');
@@ -164,11 +164,16 @@ test('FieldEventQueue', async (t) => {
 
     // A delayed response for an older event must not release the newer reservation
     const released = await releaseReservation(db, 'account_guard', 'lote_guard', 'evt_guard_old');
-    assert.equal(released, false);
+    assert.equal(released, 'not_owner', 'debe distinguirse de "no existía"');
 
     const reservation = await getReservation(db, 'account_guard', 'lote_guard');
     assert.ok(reservation, 'la reserva del evento nuevo debe seguir viva');
     assert.equal(reservation.eventId, 'evt_guard_new');
+  });
+
+  await t.test('should report an absent reservation distinctly from a foreign one', async () => {
+    const outcome = await releaseReservation(db, 'account_none', 'lote_none', 'evt_whatever');
+    assert.equal(outcome, 'absent');
   });
 
   await t.test('should require expectedEventId to release', async () => {

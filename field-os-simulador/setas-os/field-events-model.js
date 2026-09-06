@@ -11,19 +11,28 @@
 (function () {
   const isNode = typeof module !== 'undefined' && module.exports;
 
-  const workflow = isNode
-    ? require('./setas-os-workflow.js')
-    : (typeof globalThis !== 'undefined' ? globalThis.SetasOSWorkflow : null);
+  /**
+   * El workflow se resuelve en cada llamada, no al cargar el módulo.
+   * auth-gate.js ejecuta PROTECTED_APP_SCRIPTS (donde vive este archivo) antes
+   * que DC_RUNTIME_SCRIPTS (donde vive setas-os-workflow.js), así que capturar
+   * el global al evaluar el IIFE lo dejaría en undefined para siempre.
+   */
+  const getWorkflow = () => {
+    if (isNode) return require('./setas-os-workflow.js');
+    const w = typeof globalThis !== 'undefined' ? globalThis.SetasOSWorkflow : null;
+    if (!w) throw new Error('workflow_unavailable: setas-os-workflow.js aún no se ha cargado');
+    return w;
+  };
 
   // Clases de transición: quién puede llevar un lote a cada tipo de destino.
   const EXCEPTION_TARGETS = new Set(['quarantine', 'failed']);
   const DISCARD_TARGETS = new Set(['discarded']);
 
-  const ROLE_PERMISSIONS = Object.freeze({
+  const ROLE_PERMISSIONS = Object.freeze(Object.assign(Object.create(null), {
     direccion: Object.freeze(['advance', 'exception', 'discard']),
     produccion: Object.freeze(['advance', 'exception']),
     operario: Object.freeze(['advance']),
-  });
+  }));
 
   const transitionClass = (to) => {
     if (DISCARD_TARGETS.has(to)) return 'discard';
@@ -106,7 +115,7 @@
     if (from !== batch.state) {
       throw new Error(`invalid_state_transition: el lote está en ${batch.state}, no en ${from}`);
     }
-    if (!workflow.canTransition(from, to)) {
+    if (!getWorkflow().canTransition(from, to)) {
       throw new Error(`invalid_state_transition: ${from} → ${to} no está permitido`);
     }
 
