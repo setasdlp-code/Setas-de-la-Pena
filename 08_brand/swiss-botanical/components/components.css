@@ -356,3 +356,115 @@
     gap: var(--sb-space-6);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Modo Culinary Market · Componente de Decisión (7 Pasos)
+   Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad
+   → Origen → Próximo paso
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Barra de los Cuatro Modos del DS */
+.sb-modes-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sb-space-2);
+  padding: var(--sb-space-2) var(--sb-space-3);
+  background-color: var(--sb-paper-2);
+  border: 1px solid var(--sb-line-hairline);
+  border-radius: var(--sb-radius-xs);
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  overflow-x: auto;
+}
+
+.sb-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--sb-radius-xs);
+  color: var(--sb-ink-2);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all var(--sb-duration-fast) ease;
+}
+
+.sb-mode-pill:hover {
+  color: var(--sb-ink-0);
+  background-color: var(--sb-paper-1);
+}
+
+.sb-mode-pill--active {
+  background-color: var(--sb-paper-0);
+  color: var(--sb-ink-0);
+  font-weight: 600;
+  border: 1px solid var(--sb-line-strong);
+}
+
+.sb-mode-pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Ficha de Decisión Culinary Market */
+.sb-decision-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-6);
+  background-color: var(--sb-paper-1);
+  border: 1px solid var(--sb-line-strong);
+  padding: var(--sb-space-8);
+  border-radius: var(--sb-radius-xs);
+}
+
+.sb-step-block {
+  border-bottom: 1px solid var(--sb-line-hairline);
+  padding-bottom: var(--sb-space-5);
+}
+
+.sb-step-block:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sb-step-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sb-space-2);
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+  color: var(--sb-accent-shiitake);
+  margin-bottom: var(--sb-space-2);
+}
+
+.sb-step-eyebrow__num {
+  font-weight: 700;
+  padding: 1px 5px;
+  background-color: var(--sb-paper-3);
+  border-radius: 2px;
+  color: var(--sb-ink-0);
+}
+
+.sb-taste-chips {
+  display: flex;
+  gap: var(--sb-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--sb-space-2);
+}
+
+.sb-taste-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--sb-text-xs);
+  font-family: var(--sb-font-mono);
+  padding: 3px 8px;
+  border-radius: var(--sb-radius-xs);
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  color: var(--sb-ink-1);
+}

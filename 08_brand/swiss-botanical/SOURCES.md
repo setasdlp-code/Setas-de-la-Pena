@@ -20,6 +20,10 @@ Swiss Botanical sintetiza tres esfuerzos previos en el repositorio canónico sin
 - **Aporte:** El catálogo tipográfico local de *Gaya Patched* e *IBM Plex*, tokens CSS ricos y pautas de movimiento.
 - **Limitación superada:** Presentaba inversiones jerárquicas ocasionales (sobreuso de Gaya Italic en bloques de texto largo) y un acoplamiento directo con la interfaz de Setas OS.
 
+### 1.4. El Cuarto Modo: Culinary Market
+FOS v3 y DS-2026 resolvieron el archivo botánico (Archive), el proceso de campo (Field) y la bitácora de telemetría (Control). Swiss Botanical introduce de forma canónica el cuarto modo: **Culinary Market**, transformando el diseño en una herramienta de decisión para cocineros y clientes mediante la secuencia de 7 pasos:
+*Qué es → A qué sabe → Cómo se usa → Qué formato existe → Disponibilidad → Origen → Próximo paso.*
+
 ---
 
 ## 2. Matriz de Decisiones Arquitectónicas

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shiitake de Montaña · Lentinula edodes — Setas de la Peña</title>
+  <title>Shiitake de Montaña · Culinary Market — Setas de la Peña</title>
   <link rel="stylesheet" href="../tokens/tokens.css">
   <link rel="stylesheet" href="../components/base.css">
   <link rel="stylesheet" href="../components/components.css">
@@ -11,9 +11,9 @@
   <style>
     .sb-product-layout {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: 1.05fr 0.95fr;
       gap: var(--sb-space-12);
-      padding-top: var(--sb-space-10);
+      padding-top: var(--sb-space-8);
       padding-bottom: var(--sb-space-16);
     }
     .sb-viewer {
@@ -30,7 +30,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 380px;
+      height: 360px;
       margin-bottom: var(--sb-space-4);
     }
     .sb-viewer__img {
@@ -44,7 +44,6 @@
       grid-template-columns: repeat(3, 1fr);
       gap: var(--sb-space-2);
       margin-top: var(--sb-space-2);
-      margin-bottom: var(--sb-space-6);
     }
     .sb-gram-card {
       border: 1px solid var(--sb-line-strong);
@@ -58,13 +57,6 @@
     .sb-gram-card--active, .sb-gram-card:hover {
       border-color: var(--sb-accent-shiitake);
       background-color: var(--sb-accent-shiitake-tint);
-    }
-    .sb-recipe-box {
-      background-color: var(--sb-paper-2);
-      border-left: 3px solid var(--sb-accent-shiitake);
-      padding: var(--sb-space-5);
-      margin-top: var(--sb-space-6);
-      margin-bottom: var(--sb-space-8);
     }
     @media (max-width: 900px) {
       .sb-product-layout {
@@ -101,12 +93,34 @@
     </div>
   </header>
 
-  <!-- Contenido Ficha de Producto -->
+  <!-- Contenido Ficha de Decisión -->
   <main class="sb-container">
 
-    <!-- Ruta de Migas de Pan -->
-    <div class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); padding-top: var(--sb-space-6); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps);">
-      <a href="home.html">Cosecha</a> &nbsp;/&nbsp; <a href="#">Especies de Montaña</a> &nbsp;/&nbsp; <span style="color: var(--sb-ink-0);">Lentinula edodes</span>
+    <!-- Barra de Navegación de los Cuatro Modos del DS -->
+    <div style="margin-top: var(--sb-space-6); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sb-space-3);">
+      <div class="sb-modes-nav">
+        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); text-transform: uppercase; padding-right: 4px;">Modos DS:</span>
+        <a href="editorial.html" class="sb-mode-pill">
+          <span class="sb-mode-pill__dot" style="background-color: var(--sb-mode-archive);"></span>
+          Archive
+        </a>
+        <a href="traceability.html" class="sb-mode-pill">
+          <span class="sb-mode-pill__dot" style="background-color: var(--sb-mode-field);"></span>
+          Field
+        </a>
+        <a href="traceability.html" class="sb-mode-pill">
+          <span class="sb-mode-pill__dot" style="background-color: var(--sb-mode-control);"></span>
+          Control
+        </a>
+        <span class="sb-mode-pill sb-mode-pill--active">
+          <span class="sb-mode-pill__dot" style="background-color: var(--sb-mode-market);"></span>
+          Market / Culinary
+        </span>
+      </div>
+
+      <div class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps);">
+        Herramienta de Decisión Culinaria · Paso 1 al 7
+      </div>
     </div>
 
     <div class="sb-product-layout">
@@ -116,111 +130,138 @@
         <div class="sb-viewer__main">
           <img src="../assets/img/species/shiitake.png" alt="Shiitake fresco en corte óptimo" class="sb-viewer__img">
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: Velo quebrado 70%</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sb-space-4);">
+          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: Velo quebrado al 70%</span>
           <span class="sb-badge sb-badge--status">Disponible para envío hoy</span>
         </div>
 
         <!-- Cápsula de Trazabilidad Directa -->
-        <div style="margin-top: var(--sb-space-6);">
-          <a href="traceability.html" class="sb-traceability-capsule" style="width: 100%;">
-            <div class="sb-traceability-capsule__lead">
-              <span class="sb-traceability-capsule__tag">Registro de Finca & Inoculación</span>
-              <span class="sb-traceability-capsule__lot">Lote SDP-26-SH-04</span>
-              <span class="sb-traceability-capsule__meta">Inoculado: 12 Jun 2026 · Cosechado: Hoy 05:45 AM</span>
-            </div>
-            <span class="sb-traceability-capsule__action">Ver Cuaderno &rarr;</span>
-          </a>
-        </div>
+        <a href="traceability.html" class="sb-traceability-capsule" style="width: 100%;">
+          <div class="sb-traceability-capsule__lead">
+            <span class="sb-traceability-capsule__tag">Registro de Finca & Inoculación</span>
+            <span class="sb-traceability-capsule__lot">Lote SDP-26-SH-04</span>
+            <span class="sb-traceability-capsule__meta">Inoculado: 12 Jun 2026 · Cosechado: Hoy 05:45 AM</span>
+          </div>
+          <span class="sb-traceability-capsule__action">Ver Cuaderno &rarr;</span>
+        </a>
       </div>
 
-      <!-- Arquitectura de Información y Compra (Derecha) -->
-      <div>
+      <!-- Secuencia de Decisión de 7 Pasos (Derecha) -->
+      <div class="sb-decision-flow">
 
-        <!-- 1. QUÉ ES -->
-        <div style="margin-bottom: var(--sb-space-4);">
-          <div style="display: flex; align-items: center; gap: var(--sb-space-2); margin-bottom: var(--sb-space-2);">
-            <span class="sb-badge sb-badge--shiitake">Umami Roble</span>
-            <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Hongo Saprófito Cultivado</span>
+        <!-- PASO 1: QUÉ ES -->
+        <div class="sb-step-block">
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">1</span>
+            <span>Qué es · Identidad Botánica</span>
           </div>
-          <h1 style="font-size: var(--sb-text-3xl); line-height: 1.1; margin-bottom: 2px;">Shiitake de Montaña</h1>
-          <p class="sb-scientific" style="font-size: var(--sb-text-lg); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-4);">
-            Lentinula edodes
+          <h1 style="font-size: var(--sb-text-2xl); line-height: 1.1; margin-bottom: 2px;">Shiitake de Montaña</h1>
+          <p class="sb-scientific" style="font-size: var(--sb-text-base); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-3);">
+            Lentinula edodes · Cepa L12 de Altura
           </p>
-          <p style="font-size: var(--sb-text-base); color: var(--sb-ink-1); line-height: 1.6;">
-            Hongo de sombrero grueso y carnoso, cultivado sobre un sustrato biológico de viruta de roble andino local y salvado de trigo en la falda oriental de la Peña de Juaica (2.592 msnm).
+          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); line-height: 1.55; margin: 0;">
+            Hongo saprófito de carpóforo carnoso, cutícula agrietada en flor y láminas color marfil. Coloniza madera dura en la vertiente oriental de la Peña de Juaica.
           </p>
         </div>
 
-        <hr class="sb-rule">
-
-        <!-- 2. POR QUÉ ELEGIRLO -->
-        <div style="margin-bottom: var(--sb-space-6);">
-          <h3 style="font-size: var(--sb-text-sm); font-family: var(--sb-font-mono); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">
-            Por qué elegirlo
-          </h3>
-          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sb-space-2); font-size: var(--sb-text-sm); color: var(--sb-ink-1);">
-            <li style="display: flex; gap: var(--sb-space-2);">
-              <strong style="color: var(--sb-ink-0); min-width: 140px;">Perfil Umami:</strong> Concentración natural de lentinano y ácido glutámico potenciada por el choque térmico nocturno de la Sabana.
-            </li>
-            <li style="display: flex; gap: var(--sb-space-2);">
-              <strong style="color: var(--sb-ink-0); min-width: 140px;">Textura en Cocina:</strong> No se desarma ni libera exceso de agua en la sartén; adquiere una costra dorada crujiente con centro jugoso.
-            </li>
-            <li style="display: flex; gap: var(--sb-space-2);">
-              <strong style="color: var(--sb-ink-0); min-width: 140px;">Pureza de Cultivo:</strong> Cero pesticidas, fungicidas o agroquímicos. Irrigado exclusivamente con agua de niebla filtrada.
-            </li>
-          </ul>
+        <!-- PASO 2: A QUÉ SABE -->
+        <div class="sb-step-block">
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">2</span>
+            <span>A qué sabe · Perfil Organoléptico</span>
+          </div>
+          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); line-height: 1.55; margin-bottom: var(--sb-space-2);">
+            <strong>Umami denso y sostenido</strong> con notas tostadas de roble andino y sotobosque andino. El choque térmico nocturno (8°C) frena el agua libre y condensa ácido glutámico natural y lentinano en el tejido.
+          </p>
+          <div class="sb-taste-chips">
+            <span class="sb-taste-chip">Roble Tostado</span>
+            <span class="sb-taste-chip">Umami Alto</span>
+            <span class="sb-taste-chip">Nuez & Mantequilla</span>
+            <span class="sb-taste-chip">Tierra Húmeda</span>
+          </div>
         </div>
 
-        <!-- 3. CÓMO USARLO & CONSERVARLO -->
-        <div class="sb-recipe-box">
-          <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-2); color: var(--sb-accent-shiitake-deep);">
-            Sugerencia de Preparación del Perito Culinario
-          </h4>
-          <p style="font-size: var(--sb-text-sm); margin-bottom: var(--sb-space-3); color: var(--sb-ink-0);">
-            <strong>Sartén de hierro a fuego medio-alto:</strong> Cortar en mitades o cuartos. Calentar 1 cucharada de mantequilla o aceite neutro. Colocar con el sombrero hacia abajo y dorar 3 a 4 minutos sin mover para sellar el umami. Voltear, añadir sal marina y una rama de tomillo fresco.
+        <!-- PASO 3: CÓMO SE USA -->
+        <div class="sb-step-block" style="background-color: var(--sb-paper-2); padding: var(--sb-space-4); border-radius: var(--sb-radius-xs); border-left: 3px solid var(--sb-accent-shiitake);">
+          <div class="sb-step-eyebrow" style="color: var(--sb-accent-shiitake-deep);">
+            <span class="sb-step-eyebrow__num">3</span>
+            <span>Cómo se usa · Técnica & Conservación</span>
+          </div>
+          <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-0); margin-bottom: var(--sb-space-2);">
+            <strong>Sartén de hierro bien caliente:</strong> Cortar sombreros en mitades. Calentar mantequilla o aceite neutro a fuego vivo. Sellar 4 minutos con el sombrero hacia abajo <em>sin moverlo</em> hasta caramelizar. Voltear y terminar con sal marina y tomillo. Nunca hervir en su jugo.
           </p>
           <div class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: flex; justify-content: space-between;">
             <span>Conservación: 4°C a 6°C en bolsa kraft</span>
-            <span>Vida útil óptima: 10 a 12 días</span>
+            <span>Vida útil: 10 a 12 días</span>
           </div>
         </div>
 
-        <!-- 4. SELECCIÓN COMERCIAL & ACCIÓN -->
-        <div style="background-color: var(--sb-paper-1); border: 1px solid var(--sb-line-strong); padding: var(--sb-space-6); margin-bottom: var(--sb-space-8);">
-          <label style="font-family: var(--sb-font-mono); font-size: var(--sb-text-xs); text-transform: uppercase; color: var(--sb-ink-2); letter-spacing: var(--sb-tracking-caps); display: block; margin-bottom: var(--sb-space-2);">
-            Selecciona el Formato de Cosecha
-          </label>
+        <!-- PASO 4: QUÉ FORMATO EXISTE -->
+        <div class="sb-step-block">
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">4</span>
+            <span>Qué formato existe · Gramaje & Empaque</span>
+          </div>
           <div class="sb-gram-selector">
             <div class="sb-gram-card">
               <span class="sb-mono" style="font-weight: 600; display: block;">250g</span>
               <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cata Hogar</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 500;">$14.000</div>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px;">$14.000</div>
             </div>
             <div class="sb-gram-card sb-gram-card--active">
               <span class="sb-mono" style="font-weight: 600; display: block;">500g</span>
               <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cesta Cocina</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 600; color: var(--sb-accent-shiitake-deep);">$24.000</div>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 700; color: var(--sb-accent-shiitake-deep);">$24.000</div>
             </div>
             <div class="sb-gram-card">
               <span class="sb-mono" style="font-weight: 600; display: block;">1.5 kg</span>
               <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Caja Chef</span>
-              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 500;">$62.000</div>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px;">$62.000</div>
             </div>
-          </div>
-
-          <div style="display: flex; gap: var(--sb-space-3);">
-            <button class="sb-btn sb-btn--accent sb-btn--lg" style="flex: 1;">Comprar Cosecha Fresca</button>
-            <a href="traceability.html" class="sb-btn sb-btn--secondary sb-btn--lg">Inspeccionar Lote</a>
           </div>
         </div>
 
-        <!-- 5. QUÉ EXPLORAR DESPUÉS -->
-        <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: var(--sb-text-sm); color: var(--sb-ink-1);">
-            ¿Quieres saber cómo maridarlo con fondos y caldos?
-          </span>
-          <a href="editorial.html" class="sb-btn sb-btn--subtle">Leer ensayo de cocina &rarr;</a>
+        <!-- PASO 5: DISPONIBILIDAD -->
+        <div class="sb-step-block">
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">5</span>
+            <span>Disponibilidad · Estado en Finca</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: var(--sb-space-2);">
+              <span class="sb-badge sb-badge--status">Cosecha Activa Hoy</span>
+              <span style="font-size: var(--sb-text-xs); color: var(--sb-ink-1);">Despacho garantizado en menos de 12 horas.</span>
+            </div>
+            <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: 05:45 AM</span>
+          </div>
+        </div>
+
+        <!-- PASO 6: ORIGEN -->
+        <div class="sb-step-block">
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">6</span>
+            <span>Origen · Anclaje Territorial</span>
+          </div>
+          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin: 0;">
+            Cultivado en <strong>Finca La Peña, Tenjo</strong> (2.592 msnm, microclima 74.5 kPa) sobre sustrato de 82% viruta de roble andino (<em>Quercus humboldtii</em>) y 17% salvado de trigo. Lote verificado <code>SDP-26-SH-04</code>.
+          </p>
+        </div>
+
+        <!-- PASO 7: PRÓXIMO PASO -->
+        <div>
+          <div class="sb-step-eyebrow">
+            <span class="sb-step-eyebrow__num">7</span>
+            <span>Próximo paso · Acción & Conexión</span>
+          </div>
+          <div style="display: flex; gap: var(--sb-space-3); flex-wrap: wrap;">
+            <button class="sb-btn sb-btn--accent sb-btn--lg" style="flex: 1;">Añadir al Pedido de Hoy</button>
+            <a href="traceability.html" class="sb-btn sb-btn--secondary sb-btn--lg">Inspeccionar Lote</a>
+          </div>
+          <div style="margin-top: var(--sb-space-3); text-align: center;">
+            <a href="editorial.html" class="sb-btn sb-btn--subtle sb-btn--sm">
+              ¿Quieres profundizar en su alquimia térmica? Leer ensayo editorial &rarr;
+            </a>
+          </div>
         </div>
 
       </div>
@@ -238,10 +279,11 @@
         </p>
       </div>
       <div>
-        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Enlaces</h4>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="home.html">Inicio Comercial</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Ensayo Editorial</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Trazabilidad de Lote</a></p>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Modos de Sistema</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Archive (Memoria & Taxonomía)</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Field (Cultivo & Sustratos)</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Control (Lotes & Telemetría)</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="product.html">Market / Culinary (Decisión)</a></p>
       </div>
       <div>
         <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Garantía</h4>

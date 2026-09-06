@@ -15,6 +15,14 @@ Cada vista y producto responde de inmediato al lector:
 4. **De dónde viene:** Anclaje territorial en Tenjo, Cundinamarca (2.592 msnm, falda de la Peña de Juaica).
 5. **Qué explorar después:** Cuaderno editorial de temporada, maridajes y trazabilidad de lote.
 
+### Los Cuatro Modos de Swiss Botanical
+El sistema organiza la experiencia en cuatro capas operativas:
+- **Archive:** Taxonomía, territorio, archivo histórico y memoria botánica.
+- **Field:** Cultivo, procesos de inoculación y observación agronómica.
+- **Control:** Lotes, fechas, pesos y trazabilidad criptográfica inmutable.
+- **Culinary Market:** Herramienta de decisión culinaria estructurada en 7 pasos:
+  *Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad → Origen → Próximo paso.*
+
 La especie protagonista de este lanzamiento es el **Shiitake de Montaña** (*Lentinula edodes*), cultivado sobre sustrato biológico de roble andino local (*Quercus humboldtii*).
 
 ---

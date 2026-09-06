@@ -49,6 +49,19 @@
   --sb-status-error: #8C3223;       /* Alerta biológica o lote no disponible */
   --sb-status-error-tint: #F4DFDA;
 
+
+  /* ---- Modos de Sistema (Cuatro Capas del DS) ---- */
+  --sb-mode-archive: #5A3725;  /* Archive: taxonomía, territorio, memoria */
+  --sb-mode-field: #5B6B44;    /* Field: cultivo, sustratos, micelio */
+  --sb-mode-control: #5E7080;  /* Control: telemetría, lotes, trazabilidad */
+  --sb-mode-market: #6E472D;   /* Culinary Market: elección, uso, compra */
+
+  /* ---- Perfiles Organolépticos (A qué sabe) ---- */
+  --sb-taste-umami: #6E472D;   /* Umami tostado y roble */
+  --sb-taste-forest: #4A3C31;  /* Sotobosque y tierra húmeda */
+  --sb-taste-mineral: #5E7080; /* Mineral, bruma y notas marinas */
+  --sb-taste-golden: #9D6F28;  /* Miel de bosque y avellana */
+
   /* ---- Alias Semánticos de Superficie y Texto ---- */
   --sb-surface-page: var(--sb-paper-0);
   --sb-surface-card: var(--sb-paper-1);

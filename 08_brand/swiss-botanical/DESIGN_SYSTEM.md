@@ -18,6 +18,35 @@ Se prohíben las cuadrículas simétricas monótonas de e-commerce genérico (fi
 
 ---
 
+## 1.4. Arquitectura de Cuatro Modos: El Sistema como Herramienta de Decisión
+
+Swiss Botanical formaliza cuatro modos de interfaz y estructura, preservando el rigor del archivo y agregando la capa comercial y culinaria activa:
+
+```
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────────────┐
+│     ARCHIVE     │      FIELD      │     CONTROL     │     CULINARY MARKET     │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────────────┤
+│ • Taxonomía     │ • Cultivo       │ • Lotes         │ • Elección & Sabor      │
+│ • Territorio    │ • Sustratos     │ • Fechas y corte│ • Técnica de Cocina     │
+│ • Herbario      │ • Inoculación   │ • Pesos         │ • Formato y Gramaje     │
+│ • Memoria       │ • Observación   │ • Telemetría    │ • Disponibilidad        │
+│ • Pliegos print │ • Protocolos SOP│ • Trazabilidad  │ • Acción de Compra      │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────────────┘
+```
+
+### La Secuencia Cognitiva del Modo Culinary Market (7 Pasos)
+El modo comercial no es un catálogo decorativo, sino una **herramienta estructurada de decisión gastronómica**:
+
+1. **Qué es:** Identidad botánica, nombre común y especie taxonómica (*Lentinula edodes*).
+2. **A qué sabe:** Perfil organoléptico contrastado (umami de roble, sotobosque andino, avellana).
+3. **Cómo se usa:** Técnica gastronómica probada (fuego vivo, sartén de hierro, sellado sin hervir en su jugo; conservación en bolsa transpirable).
+4. **Qué formato existe:** Opciones de empaque según usuario (250g Cata Hogar, 500g Cesta Cocina, 1.5kg Caja Chef).
+5. **Disponibilidad:** Estado en tiempo real del ciclo biológico (Cosecha activa del día, corte al alba).
+6. **Origen:** Anclaje territorial objetivo (Tenjo, Cundinamarca, 2.592 msnm, Lote `SDP-26-SH-04`).
+7. **Próximo paso:** Llamada a la acción clara (añadir al pedido, cotizar para hostelería o profundizar en el cuaderno editorial).
+
+---
+
 ## 2. Tipografía: La Trinidad Tipográfica
 
 El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fonts/`):

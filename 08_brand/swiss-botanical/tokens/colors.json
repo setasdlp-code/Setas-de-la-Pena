@@ -199,6 +199,50 @@
       "statusOkTint": {
         "value": "{color.status.activeTint}"
       }
+    },
+    "modes": {
+      "archive": {
+        "value": "#5A3725",
+        "type": "color",
+        "role": "Modo Archive: memoria micol\u00f3gica, pliego y taxonom\u00eda."
+      },
+      "field": {
+        "value": "#5B6B44",
+        "type": "color",
+        "role": "Modo Field: cultivo, micelio y procesos biol\u00f3gicos."
+      },
+      "control": {
+        "value": "#5E7080",
+        "type": "color",
+        "role": "Modo Control: telemetr\u00eda, lotes y trazabilidad inmutable."
+      },
+      "market": {
+        "value": "#6E472D",
+        "type": "color",
+        "role": "Modo Culinary Market: elecci\u00f3n, sabor, uso y compra."
+      }
+    },
+    "taste": {
+      "umami": {
+        "value": "#6E472D",
+        "type": "color",
+        "role": "Perfil umami roble y le\u00f1a."
+      },
+      "forest": {
+        "value": "#4A3C31",
+        "type": "color",
+        "role": "Perfil sotobosque y tierra andina."
+      },
+      "mineral": {
+        "value": "#5E7080",
+        "type": "color",
+        "role": "Perfil mineral y niebla fresca."
+      },
+      "golden": {
+        "value": "#9D6F28",
+        "type": "color",
+        "role": "Perfil miel silvestre y notas de nuez."
+      }
     }
   }
 }

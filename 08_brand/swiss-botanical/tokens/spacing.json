@@ -35,5 +35,27 @@
       "pressed": "inset 0 1px 2px rgba(30, 29, 25, 0.12)"
     },
     "tapTargetMin": "44px"
+  },
+  "modes": {
+    "archive": {
+      "gutter": "32px",
+      "pageMargin": "64px",
+      "use": "Editorial, pliegos, herbario y packaging. Contemplaci\u00f3n y aire generoso."
+    },
+    "field": {
+      "gutter": "24px",
+      "pageMargin": "32px",
+      "use": "Observaci\u00f3n agron\u00f3mica, formulaci\u00f3n de sustrato y bit\u00e1cora de cultivo."
+    },
+    "control": {
+      "gutter": "12px",
+      "pageMargin": "16px",
+      "use": "Telemetr\u00eda densa, pasaporte de lote, especificaciones y trazabilidad."
+    },
+    "market": {
+      "gutter": "20px",
+      "pageMargin": "24px",
+      "use": "Culinary Market: secuencia de decisi\u00f3n de 7 pasos, formatos, disponibilidad y compra."
+    }
   }
 }
