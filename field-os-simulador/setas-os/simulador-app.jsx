@@ -6726,15 +6726,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
                   🌱 {r.name}
                 </span>
-                <span style={{
-                  padding:'2px 6px',
-                  borderRadius:2,
-                  fontSize:10,
-                  fontWeight:700,
-                  fontFamily:'var(--font-mono)',
-                  background: severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                  color: severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)'
-                }}>
+                <span className={`fos-status ${severity === 'critical' ? 'fos-status--attention' : 'fos-status--within-target'}`}>
+                  <span className="fos-status__dot" aria-hidden="true"></span>
                   {badge}
                 </span>
               </div>
@@ -9385,64 +9378,164 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
 
-          {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
-              el editor manual como el Perito y el Generador automático. */}
-          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label={recipe.length>0?'Configuración activa de receta':'Flujo de nueva formulación'}>
-            {recipe.length===0?(
-              <>
-                <div className="form-flow-head">
-                  <div>
-                    <span className="form-flow-eyebrow">Nueva formulación</span>
-                    <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
-                  </div>
-                  <span className="form-flow-progress" aria-live="polite">Preparado para comenzar</span>
-                </div>
-                <ol className="form-flow-grid">
-                  <li className="form-step is-ready">
-                    <span className="form-step-num">01</span>
-                    <span className="form-step-label">Especie</span>
-                    <div className="form-step-species-state">
-                      <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
-                      <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
-                    </div>
-                    <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
-                  </li>
-                  <li className="form-step is-ready">
-                    <span className="form-step-num">02</span>
-                    <span className="form-step-label">Origen</span>
-                    <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
-                      <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
-                      <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
-                    </div>
-                    <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
-                  </li>
-                  <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
-                    <span className="form-step-num">03</span>
-                    <span className="form-step-label">Ingredientes</span>
-                    <div className="form-step-actions">
-                      <button type="button" onClick={focusIngredientCatalog}>Elegir manualmente</button>
-                      <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
-                    </div>
-                    <span className="form-step-help">Agrega insumos o calcula una base.</span>
-                  </li>
-                  <li className="form-step">
-                    <span className="form-step-num">04</span>
-                    <span className="form-step-label">Validar y guardar</span>
-                    <button type="button" className="form-step-primary" disabled onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>Agrega ingredientes</button>
-                    <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
-                  </li>
-                </ol>
-              </>
-            ):(
-              <div className="form-flow-complete">
-                <div>
-                  <span className="form-flow-eyebrow">Configuración activa</span>
-                  <strong>{hasPickedSpecies?`${sp.name} · ${globalMode==='produccion'?'Bodega':'Paleta completa'}`:'Falta definir la especie'}</strong>
-                </div>
-                <span className="form-flow-progress" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'} · Perito {Math.round(opt.score)}/100</span>
-                <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>Editar especie y origen</button>
+          {/* 5.1 Encabezado contextual editorial */}
+          <header className="form-editorial-context-header" aria-labelledby="form-editorial-title">
+            <div className="form-editorial-context-head">
+              <span className="os-provenance-line" style={{marginTop:0}}>Setas OS · Swiss Botanical</span>
+              <span className={`fos-status ${recipe.length>0?'fos-status--attention':'fos-status--available'}`}>
+                <span className="fos-status__dot" aria-hidden="true"></span>
+                {recipe.length>0?'Borrador activo':'Listo para formular'}
+              </span>
+            </div>
+            <h1 id="form-editorial-title" className="form-editorial-context-title">
+              Formulador de receta · {hasPickedSpecies?sp.name:'Especie por definir'}
+            </h1>
+            <div className="form-editorial-context-meta">
+              <span>{hasPickedSpecies?<em>{sp.scientific}</em>:'Sin especie asignada'}</span>
+              <span aria-hidden="true">·</span>
+              <span>Objetivo: {globalMode==='produccion'?'Producción comercial (Bodega)':'Investigación (Catálogo)'}</span>
+              <span aria-hidden="true">·</span>
+              <span>{recipe.length} ingrediente{recipe.length===1?'':'s'} en mezcla</span>
+            </div>
+            <p className="form-editorial-context-desc">
+              Diseño agronómico y balance de masa para sustratos de fructificación en Tenjo, Cundinamarca (2.600 msnm).
+            </p>
+          </header>
+
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?sp.name:'—'}</span>
+                <span className="os-provenance-line">Manual</span>
               </div>
-            )}
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad</span>
+                <span className="form-summary-v">{an?`${an.h.toFixed(1)}%`:'—'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line">Hipótesis</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v">{an?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line">Inventario</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt.score)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
+          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
+            <div className="form-flow-head">
+              <div>
+                <span className="form-flow-eyebrow">Recorrido metodológico</span>
+                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
+                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
+                </div>
+              </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=0.5?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+              </span>
+            </div>
+            <ol className="form-flow-grid form-flow-grid--5">
+              {/* Paso 01: Especie */}
+              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
+                <span className="form-step-num">01</span>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                </div>
+                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
+                  {hasPickedSpecies?'Completado':'Activo'}
+                </span>
+                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
+              </li>
+
+              {/* Paso 02: Objetivo */}
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Objetivo</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+                </div>
+                <span className="form-step-state-badge is-completado">Completado</span>
+                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
+              </li>
+
+              {/* Paso 03: Ingredientes */}
+              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
+                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
+                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
+                </span>
+                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
+              </li>
+
+              {/* Paso 04: Balance */}
+              <li className={`form-step ${(an&&Math.abs(an.tot-100)<=0.5)?'is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Balance</span>
+                <div className="form-step-species-state">
+                  <strong>{an?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
+                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':Math.abs((an?.tot||0)-100)<=0.5?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':Math.abs((an?.tot||0)-100)<=0.5?'Completado':'Requiere atención'}
+                </span>
+                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
+              </li>
+
+              {/* Paso 05: Revisión */}
+              <li className={`form-step ${(an&&Math.abs(an.tot-100)<=0.5&&opt.score>=70)?'is-ready':''}`}>
+                <span className="form-step-num">05</span>
+                <span className="form-step-label">Revisión</span>
+                <button
+                  type="button"
+                  className="form-step-primary"
+                  disabled={recipe.length===0}
+                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  Dictamen Perito
+                </button>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':opt.score>=70?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt.score)}/100`}
+                </span>
+                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
+              </li>
+            </ol>
           </section>
 
           <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
@@ -9474,6 +9567,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
             </div>
           </section>
+
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
               Decisión de diseño:
@@ -10091,7 +10185,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         ].map((m,i)=>(
                           <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
                             <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',fontWeight:700,fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
                         ))}
                       </div>
@@ -10120,7 +10214,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
                       {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
                       {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -12793,7 +12887,7 @@ interval:
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 16 }}>
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Vapor Saturado</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.steamTemp}°C
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>P. abs: {((autoclaveGaugePsi * 6.895) + 74.5).toFixed(1)} kPa</div>
@@ -12801,7 +12895,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Pico Núcleo</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.peakCoreTemp}°C
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Cold spot tras inercia Ball</div>
@@ -12809,7 +12903,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción G. stearo.</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionStearothermophilus} D
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)</div>
@@ -12817,7 +12911,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción B. subtilis</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionSubtilis} D
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Previene sour rot bacteriano</div>
@@ -12957,7 +13051,7 @@ interval:
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temperatura Óptima</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.tempC}°C
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.temperatura || 100}%</div>
@@ -12965,7 +13059,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Humedad Relativa</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.rhPct}%
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.humedad || 100}%</div>
@@ -12973,7 +13067,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>CO₂ Máximo (Ppm)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.co2Ppm}
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.co2 || 100}%</div>
@@ -12981,7 +13075,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Iluminación (Lux)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.lux} lx
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.luz || 100}%</div>
@@ -13169,7 +13263,7 @@ interval:
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--moss-100)', borderColor: 'var(--moss-600)' }}>
                         <div style={{ fontSize: 11, color: 'var(--moss-800)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Cuarto Frío (4°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
                           {slResult.scenariosComparison.cuartoFrio_4C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--moss-800)' }}>Baseline de cadena ideal</div>
@@ -13177,7 +13271,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Nevera (10°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {slResult.scenariosComparison.neveraDomestica_10C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Refrigeración doméstica</div>
@@ -13185,7 +13279,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--accent-terracotta-dim)', borderColor: 'var(--accent-terracotta)' }}>
                         <div style={{ fontSize: 11, color: 'var(--accent-rust)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Ambiente Sabana (18°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
                           {slResult.scenariosComparison.ambienteSabana_18C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--accent-rust)' }}>Pérdida: -{slResult.scenariosComparison.lossRatioAmbienteVsFrio}% vida</div>

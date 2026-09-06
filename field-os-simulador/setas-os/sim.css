@@ -2988,7 +2988,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    más abajo para los radios/sombras que no pasan por estos tokens. */
 .sim-root .builder-wrap,
 .sim-root .formular-workspace{
-  --font-body:var(--font-display);
+  --font-body:var(--font-sans);
   --form-control-radius:0;
   --form-control-min-height:44px;
   --form-control-padding:8px 12px;
@@ -2997,7 +2997,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   --form-control-fg:var(--text-metadata);
   --form-control-active-bg:var(--accent-olive);
   --form-control-active-fg:var(--paper-0);
-  font-family:var(--font-display);
+  font-family:var(--font-sans);
 }
 
 /* Flujo guiado del Formulador. Mantiene las cuatro decisiones principales
@@ -3069,7 +3069,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius:0;
   background:var(--paper-0);
   color:var(--ink-900);
-  font:800 var(--text-xs)/1 var(--font-display);
+  font:800 var(--text-xs)/1 var(--font-sans);
   cursor:pointer;
 }
 .sim-root .form-flow-complete button:hover,
@@ -3115,7 +3115,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius:var(--radius-sm);
   background:rgba(255,255,255,.08);
   color:var(--paper-0);
-  font:700 var(--text-xs)/1 var(--font-display);
+  font:700 var(--text-xs)/1 var(--font-sans);
 }
 .sim-root .form-species-targets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));min-width:0;border-left:1px solid rgba(255,255,255,.16)}
 .sim-root .form-species-targets > span{display:grid;gap:2px;min-width:0;padding:2px 10px;border-right:1px solid rgba(255,255,255,.16)}
@@ -3882,7 +3882,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .form-mobile-start select,
   .sim-root .form-mobile-origin-options button,
   .sim-root .form-mobile-start-actions button,
-  .sim-root .form-species-origin-toggle button{min-height:46px;border:1px solid var(--ink-900);border-radius:0;background:var(--paper-0);color:var(--ink-900);font:800 var(--text-xs)/1 var(--font-display)}
+  .sim-root .form-species-origin-toggle button{min-height:46px;border:1px solid var(--ink-900);border-radius:0;background:var(--paper-0);color:var(--ink-900);font:800 var(--text-xs)/1 var(--font-sans)}
   .sim-root .form-mobile-start select{width:100%;padding:8px 10px}
   .sim-root .form-mobile-origin-options,
   .sim-root .form-mobile-start-actions,
@@ -5616,3 +5616,384 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .ed-cartouche__l { font-family: var(--font-editorial); font-style: italic; font-size: 17px; color: var(--text-primary); }
 .sim-root .ed-cartouche__d { font: var(--t-small); color: var(--text-secondary); }
 .sim-root .chem { font-family: var(--font-sans); font-size: 0.94em; letter-spacing: 0; }
+
+/* ════════════════════════════════════════════════════════════════
+   37. SISTEMA EDITORIAL SWISS BOTANICAL × SETAS OS
+   Capa de clases compartidas para reducir estilos inline en:
+   Formulador, Catálogo y Recetario.
+   ════════════════════════════════════════════════════════════════ */
+
+.sim-root .os-editorial-card {
+  background: var(--paper-0, #FAF5E9);
+  border: 1px solid var(--border-hairline, #888888);
+  border-radius: var(--radius-sm, 2px);
+  padding: var(--sp-6, 12px);
+  box-shadow: none;
+}
+
+.sim-root .os-editorial-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4, 8px);
+  border-bottom: 1px solid var(--border-soft, #D3CBBE);
+  padding-bottom: var(--sp-3, 6px);
+  margin-bottom: var(--sp-4, 8px);
+}
+
+.sim-root .os-editorial-card__title {
+  font-family: var(--font-editorial, 'Gaya Patched', Georgia, serif);
+  font-size: var(--text-md, 15px);
+  font-weight: 700;
+  color: var(--ink-900, #222222);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sim-root .os-editorial-card__meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs, 8px);
+  letter-spacing: var(--tracking-label, 0.08em);
+  text-transform: uppercase;
+  color: var(--text-metadata, #555555);
+}
+
+.sim-root .os-editorial-card__body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm, 11.5px);
+  color: var(--ink-800, #333333);
+  line-height: 1.45;
+}
+
+.sim-root .os-editorial-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4, 8px);
+  border-top: 1px solid var(--border-soft, #D3CBBE);
+  padding-top: var(--sp-3, 6px);
+  margin-top: var(--sp-4, 8px);
+}
+
+.sim-root .os-data-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-3, 6px);
+  background: var(--paper-panel, #F3EEE2);
+  border: 1px solid var(--border-soft, #D3CBBE);
+  border-radius: var(--radius-sm, 2px);
+  padding: var(--sp-3, 6px) var(--sp-4, 8px);
+  margin: var(--sp-3, 6px) 0;
+}
+
+.sim-root .os-data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sim-root .os-data-cell__k {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro, 7.5px);
+  letter-spacing: var(--tracking-button, 0.14em);
+  text-transform: uppercase;
+  color: var(--ink-muted, #555555);
+}
+
+.sim-root .os-data-cell__v {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm, 12px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-900, #222222);
+}
+
+.sim-root .os-provenance-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro, 8px);
+  letter-spacing: var(--tracking-label, 0.08em);
+  text-transform: uppercase;
+  color: var(--ink-muted, #666666);
+  margin-top: 2px;
+}
+
+.sim-root .os-provenance-line::before {
+  content: '·';
+  font-weight: bold;
+}
+
+.sim-root .os-action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3, 6px);
+  margin-top: var(--sp-3, 6px);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   38. ESTADOS OPERATIVOS CANÓNICOS (SETAS OS × SWISS BOTANICAL)
+   - Dentro del rango / Verificado (.fos-status--within-target)
+   - Disponible (.fos-status--available)
+   - Atención (.fos-status--attention)
+   - En cuarentena (.fos-status--quarantine)
+   - Falló / No disponible (.fos-status--failed)
+   - Descartado (.fos-status--discarded)
+   ════════════════════════════════════════════════════════════════ */
+
+.sim-root .fos-status,
+.fos-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs, 9.5px);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label, 0.08em);
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 2px);
+  border: 1px solid currentColor;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.sim-root .fos-status__dot,
+.fos-status__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+.sim-root .fos-status__action,
+.fos-status__action {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs, 9.5px);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--ink-700, #444444);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sim-root .fos-status__action:hover,
+.fos-status__action:hover {
+  color: var(--ink-900, #000000);
+}
+
+/* 1. Dentro del rango / Verificado */
+.sim-root .fos-status--within-target,
+.sim-root .fos-status--verified,
+.sim-root .fos-status--verificado,
+.fos-status--within-target,
+.fos-status--verified,
+.fos-status--verificado {
+  background: var(--moss-tint, #E5E4D5);
+  border-color: var(--moss, #4E6B3F);
+  color: var(--moss-700, #385933);
+}
+
+/* 2. Disponible */
+.sim-root .fos-status--available,
+.sim-root .fos-status--disponible,
+.fos-status--available,
+.fos-status--disponible {
+  background: var(--moss-tint, #E5E4D5);
+  border-color: var(--moss, #4E6B3F);
+  color: var(--moss-700, #385933);
+}
+
+/* 3. Atención */
+.sim-root .fos-status--attention,
+.sim-root .fos-status--atencion,
+.fos-status--attention,
+.fos-status--atencion {
+  background: var(--warning-tint, #F4EAD6);
+  border-color: var(--warning, #C49A4C);
+  color: var(--warning-text, #8C6B2E);
+}
+
+/* 4. En cuarentena */
+.sim-root .fos-status--quarantine,
+.sim-root .fos-status--pending,
+.sim-root .fos-status--por-confirmar,
+.fos-status--quarantine,
+.fos-status--pending,
+.fos-status--por-confirmar {
+  background: var(--paper-recessed, #EAE4D8);
+  border-color: var(--rule, #888888);
+  color: var(--ink-muted, #555555);
+}
+
+/* 5. Falló / No disponible */
+.sim-root .fos-status--failed,
+.sim-root .fos-status--unavailable,
+.sim-root .fos-status--no-disponible,
+.fos-status--failed,
+.fos-status--unavailable,
+.fos-status--no-disponible {
+  background: var(--rust-tint, #EDDDCF);
+  border-color: var(--rust, #8E2C14);
+  color: var(--rust, #8E2C14);
+}
+
+/* 6. Descartado */
+.sim-root .fos-status--discarded,
+.sim-root .fos-status--descartado,
+.fos-status--discarded,
+.fos-status--descartado {
+  background: var(--rust-tint, #EDDDCF);
+  border-color: var(--rust, #8E2C14);
+  color: var(--rust, #8E2C14);
+}
+
+/* ── ENCABEZADO EDITORIAL Y RESUMEN DEL FORMULADOR ──────────────── */
+.sim-root .form-editorial-context-header {
+  background: var(--paper-0);
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--accent-olive);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px 12px;
+  margin-bottom: var(--sp-6);
+}
+
+.sim-root .form-editorial-context-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.sim-root .form-editorial-context-title {
+  margin: 2px 0 6px;
+  font-family: var(--font-editorial);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink-900);
+}
+
+.sim-root .form-editorial-context-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-600);
+  margin-bottom: 8px;
+}
+
+.sim-root .form-editorial-context-desc {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--ink-700);
+}
+
+.sim-root .form-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 0 0 var(--sp-6);
+  padding: 10px 14px;
+  background: var(--paper-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.sim-root .form-summary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sim-root .form-summary-k {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  color: var(--ink-600);
+}
+
+.sim-root .form-summary-v {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sim-root .form-step-state-badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.sim-root .form-step-state-badge.is-completado {
+  background: var(--moss-tint);
+  color: var(--moss-700);
+}
+
+.sim-root .form-step-state-badge.is-activo {
+  background: var(--warning-tint);
+  color: var(--warning-text);
+}
+
+.sim-root .form-step-state-badge.is-pendiente {
+  background: var(--paper-recessed);
+  color: var(--ink-muted);
+}
+
+.sim-root .form-step-state-badge.is-atencion {
+  background: var(--rust-tint);
+  color: var(--rust);
+}
+
+.sim-root .form-flow-grid--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media(max-width: 1024px) {
+  .sim-root .form-flow-grid--5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 768px) {
+  .sim-root .form-flow-grid--5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 560px) {
+  .sim-root .form-flow-grid--5 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
