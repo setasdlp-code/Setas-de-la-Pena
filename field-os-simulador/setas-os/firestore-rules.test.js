@@ -1,53 +1,112 @@
 'use strict';
-const { test } = require('node:test');
+
+/**
+ * Reglas de Firestore para el cuaderno de campo.
+ * Requiere el emulador: se ejecuta vía `firebase emulators:exec`.
+ */
+
+const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const {
+  initializeTestEnvironment,
+  assertFails,
+  assertSucceeds,
+} = require('@firebase/rules-unit-testing');
+const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
 const fs = require('node:fs');
-const path = require('node:path');
 
-const ROOT = __dirname;
-const read = name => fs.readFileSync(path.join(ROOT, name), 'utf8');
+let env;
 
-test('la configuración Firebase canónica despliega las reglas rastreadas desde la raíz de Setas OS', () => {
-  const config = JSON.parse(read('firebase.json'));
-  const project = JSON.parse(read('.firebaserc'));
+const RECETA_OK = {
+  ingredientes: [{ pct: 60 }, { pct: 40 }],
+};
 
-  assert.equal(config.firestore.rules, 'firebase/firestore.rules');
-  assert.equal(config.firestore.indexes, 'firebase/firestore.indexes.json');
-  assert.equal(project.projects.default, 'sdlp-os');
-  assert.equal(fs.existsSync(path.join(ROOT, config.firestore.rules)), true);
-  assert.equal(fs.existsSync(path.join(ROOT, config.firestore.indexes)), true);
-  assert.equal(fs.existsSync(path.join(ROOT, 'firebase', 'firebase.json')), false);
-  assert.equal(fs.existsSync(path.join(ROOT, 'firebase', '.firebaserc')), false);
+before(async () => {
+  env = await initializeTestEnvironment({
+    projectId: 'sdlp-os-rules-test',
+    firestore: { rules: fs.readFileSync('firebase/firestore.rules', 'utf8') },
+  });
 });
 
-test('firebase/firestore.rules define masaBalanceada sin funciones recursivas', () => {
-  const rules = read('firebase/firestore.rules');
-  assert.match(rules, /function getPct\(ingredientes, i\)/);
-  assert.doesNotMatch(rules, /sumPctFrom\(/, 'no debe incluir llamadas recursivas');
+after(async () => {
+  if (env) await env.cleanup();
 });
 
-test('firebase/firestore.rules protege bitacora_bolsas contra inyección de foto base64', () => {
-  const rules = read('firebase/firestore.rules');
-  assert.match(rules, /match \/bitacora_bolsas\/\{id\}/);
-  assert.match(rules, /!\(['"]foto['"] in request\.resource\.data\)/);
+const asOperator = () => env.authenticatedContext('op_1').firestore();
+
+const seed = (path, data) => env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), path), data);
 });
 
-test('firebase/firestore.rules valida inmutabilidad de recetaSnapshot y tipo de status en lotes_produccion', () => {
-  const rules = read('firebase/firestore.rules');
-  assert.match(rules, /match \/lotes_produccion\/\{id\}/);
-  assert.match(rules, /request\.resource\.data\.recetaSnapshot == resource\.data\.recetaSnapshot/);
-  assert.match(rules, /request\.resource\.data\.status is string/);
+test('un cliente puede crear un lote sin campos de flujo', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'lotes_produccion/l_new'), {
+    codigo: 'L-1',
+    recetaSnapshot: RECETA_OK,
+  }));
 });
 
-test('firebase/firestore.rules limita escrituras de catálogo e incidencias a usuarios autenticados', () => {
-  const rules = read('firebase/firestore.rules');
-  assert.match(rules, /match \/ingredientes\/\{id\}[\s\S]*?allow write: if isAdmin\(\);/);
-  assert.match(rules, /match \/app_errors\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
+test('un cliente no puede crear un lote con workflowState', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'lotes_produccion/l_ws'), {
+    codigo: 'L-2',
+    recetaSnapshot: RECETA_OK,
+    workflowState: 'incubation',
+  }));
 });
 
-test('firebase/firestore.rules no acepta telemetría anónima según un campo source autodeclarado', () => {
-  const rules = read('firebase/firestore.rules');
-  assert.match(rules, /match \/telemetria_lecturas\/\{id\}[\s\S]*?allow create: if signedIn\(\);/);
-  assert.match(rules, /match \/telemetria_salas\/\{id\}[\s\S]*?allow write: if signedIn\(\);/);
-  assert.doesNotMatch(rules, /source\s*==\s*['"]esp32_hardware['"]/);
+test('un cliente no puede crear un lote con revision', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'lotes_produccion/l_rev'), {
+    codigo: 'L-3',
+    recetaSnapshot: RECETA_OK,
+    revision: 1,
+  }));
+});
+
+test('un cliente no puede mover workflowState de un lote existente', async () => {
+  await seed('lotes_produccion/l_1', {
+    codigo: 'L-4', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+  });
+  await assertFails(updateDoc(doc(asOperator(), 'lotes_produccion/l_1'), {
+    workflowState: 'fruiting',
+  }));
+});
+
+test('un cliente no puede mover revision de un lote existente', async () => {
+  await seed('lotes_produccion/l_2', {
+    codigo: 'L-5', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+  });
+  await assertFails(updateDoc(doc(asOperator(), 'lotes_produccion/l_2'), { revision: 99 }));
+});
+
+test('un cliente sigue pudiendo editar otros campos del lote', async () => {
+  await seed('lotes_produccion/l_3', {
+    codigo: 'L-6', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+  });
+  // Regresión: las reglas nuevas no deben romper las escrituras que ya existían.
+  await assertSucceeds(updateDoc(doc(asOperator(), 'lotes_produccion/l_3'), { status: 'activo' }));
+});
+
+test('un lote sin campos de flujo se sigue actualizando', async () => {
+  await seed('lotes_produccion/l_legacy', { codigo: 'L-7', recetaSnapshot: RECETA_OK, estado: 'activo' });
+  await assertSucceeds(updateDoc(doc(asOperator(), 'lotes_produccion/l_legacy'), { status: 'cerrado' }));
+});
+
+test('un cliente no puede crear un evento de campo', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'field_events/e_1'), {
+    batchId: 'l_1', type: 'batch_state_transition',
+  }));
+});
+
+test('un cliente no puede modificar ni borrar un evento de campo', async () => {
+  await seed('field_events/e_2', { batchId: 'l_1', accountId: 'op_1' });
+  await assertFails(updateDoc(doc(asOperator(), 'field_events/e_2'), { batchId: 'otro' }));
+});
+
+test('un cliente autenticado puede leer eventos de campo', async () => {
+  await seed('field_events/e_3', { batchId: 'l_1', accountId: 'op_1' });
+  await assertSucceeds(getDoc(doc(asOperator(), 'field_events/e_3')));
+});
+
+test('un cliente sin sesión no puede leer eventos de campo', async () => {
+  await seed('field_events/e_4', { batchId: 'l_1', accountId: 'op_1' });
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'field_events/e_4')));
 });

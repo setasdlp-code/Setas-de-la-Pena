@@ -6,12 +6,15 @@
     "build": "node build.js",
     "test": "node --test *.test.js",
     "preview": "python3 -m http.server 4173",
-    "lhci": "lhci autorun --config=./lighthouserc.cjs"
+    "lhci": "lhci autorun --config=./lighthouserc.cjs",
+    "test:rules": "firebase emulators:exec --only firestore \"node --test firestore-rules.test.js\""
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.62.1",
     "esbuild": "^0.28.2",
-    "fake-indexeddb": "^6.2.5"
+    "fake-indexeddb": "^6.2.5",
+    "firebase": "^12.18.0"
   }
 }
