@@ -122,11 +122,23 @@
       "tracking": "0.08em",
       "case": "uppercase",
       "use": "Eyebrows, table headers, lot metadata."
+    },
+    "sensory-note": {
+      "size": "19px",
+      "family": "editorial",
+      "style": "italic",
+      "weight": 500,
+      "leading": 1.25,
+      "tracking": "0",
+      "maxLines": 3,
+      "use": "Notas sensoriales organol\u00e9pticas muy breves ('profundo, terroso, limpio'). Exige perfil validado; nunca p\u00e1rrafos largos."
     }
   },
   "minimums": {
     "prose": "16px \u2014 continuous text floor on screen and print",
     "operative": "12.5px \u2014 below this, metadata only",
-    "tracking": "0.08em \u2014 mono uppercase is always tracked"
+    "tracking": "0.08em \u2014 mono uppercase is always tracked",
+    "gayaItalicMaxLines": "3 l\u00edneas m\u00e1ximo \u2014 solo para taxonom\u00eda binominal, citas y notas sensoriales validadas",
+    "sensoryValidation": "Prohibido usar Gaya Italic para simular voz gastron\u00f3mica si el dato sensorial no est\u00e1 verificado"
   }
 }

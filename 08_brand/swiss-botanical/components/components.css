@@ -601,3 +601,19 @@
   color: var(--sb-ink-1);
   margin-top: 2px;
 }
+
+/* Nota Sensorial en Gaya Italic (Norma: máx 3 líneas, perfil validado) */
+.sb-sensory-note {
+  font-family: var(--sb-font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--sb-text-lg);
+  line-height: var(--sb-leading-snug);
+  color: var(--sb-accent-shiitake);
+  margin-top: var(--sb-space-1);
+  margin-bottom: var(--sb-space-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

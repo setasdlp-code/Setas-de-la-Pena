@@ -117,7 +117,15 @@ El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fo
 ```
 
 ### Reglas de Corrección Tipográfica
-1. **Gaya Patched Italic:** Se restringe rigurosamente a la nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*) y a citas editoriales breves. Queda terminantemente prohibido su uso en párrafos continuos de instrucciones o lectura.
+1. **Gaya Patched Italic (Uso Controlado y Notas Sensoriales):**
+   - **Usos autorizados:**
+     a) Nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*).
+     b) Citas culinarias y editoriales breves (máx. 3 líneas).
+     c) **Notas sensoriales muy breves** (ej. *profundo, terroso, limpio*).
+   - **Límites normativos estrictos:**
+     - **Máximo tres líneas:** Prohibida para párrafos largos, instrucciones o recetas continuas.
+     - **Perfil sensorial validado:** Solo se aplica cuando la cata y notas organolépticas han sido comprobadas en cocina o laboratorio.
+     - **Cero invención gastronómica:** Queda terminantemente prohibido usar Gaya Italic para simular una voz poética o gastronómica si el dato no existe empíricamente. Se restringe rigurosamente a la nomenclatura taxonómica binominal obligatoria (*Lentinula edodes*, *Pleurotus ostreatus*) y a citas editoriales breves. Queda terminantemente prohibido su uso en párrafos continuos de instrucciones o lectura.
 2. **Piso de lectura continua:** El texto continuo en IBM Plex Sans tiene un piso de `16px` a `17px` con interlineado generoso (`1.5` a `1.65`) para garantizar confort visual prolongado.
 
 ---
