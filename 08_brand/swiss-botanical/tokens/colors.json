@@ -1,0 +1,204 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "system": "Swiss Botanical \u2014 FOSV3 / DS-2026 / FOS",
+  "description": "Bimodal substrate calibration (Warm Ivory Paper + Carbon Ink) with species organoleptic codes.",
+  "color": {
+    "primitive": {
+      "paper": {
+        "value": "#F7F4EC",
+        "type": "color",
+        "role": "Warm ivory. Every page ground, every printed substrate."
+      },
+      "paperPanel": {
+        "value": "#EFEBE0",
+        "type": "color",
+        "role": "Panel, card and header surface."
+      },
+      "paperRecessed": {
+        "value": "#E5DFD0",
+        "type": "color",
+        "role": "Recessed wells, alternating rows, muted wells."
+      },
+      "paperPressed": {
+        "value": "#DCD5C2",
+        "type": "color",
+        "role": "Pressed state, deep inset well, tactile feedback."
+      },
+      "ink": {
+        "value": "#1E1D19",
+        "type": "color",
+        "role": "Deep warm carbon. Primary text (15.35:1 on paper)."
+      },
+      "inkSecondary": {
+        "value": "#3C392F",
+        "type": "color",
+        "role": "Secondary warm text and field labels (10.51:1 on paper)."
+      },
+      "inkMuted": {
+        "value": "#6B6759",
+        "type": "color",
+        "role": "Metadata, captions, annotations (5.15:1 on paper, AA pass)."
+      },
+      "inkDisabled": {
+        "value": "#96907C",
+        "type": "color",
+        "role": "Non-essential guidelines and disabled visual hints."
+      },
+      "inkInverse": {
+        "value": "#F7F4EC",
+        "type": "color",
+        "role": "Text on dark solid fills and accent buttons."
+      },
+      "lineHairline": {
+        "value": "#988C6C",
+        "type": "color",
+        "role": "Default dividing hairline, WCAG 1.4.11 3.03:1."
+      },
+      "lineStrong": {
+        "value": "#8C7F5B",
+        "type": "color",
+        "role": "Table frame, card boundary, WCAG 3.60:1."
+      },
+      "lineHeavy": {
+        "value": "#1E1D19",
+        "type": "color",
+        "role": "Structural framing, print baseline, pliego border."
+      }
+    },
+    "species": {
+      "shiitake": {
+        "value": "#6E472D",
+        "type": "color",
+        "role": "Oak chestnut, roasted umami signature (Lentinula edodes)."
+      },
+      "shiitakeDeep": {
+        "value": "#5A3725",
+        "type": "color",
+        "role": "Deep charred wood, rich button contrast."
+      },
+      "shiitakeTint": {
+        "value": "#EFE4DA",
+        "type": "color",
+        "role": "Light chestnut ground tint for cards and chips."
+      },
+      "orellana": {
+        "value": "#5E7080",
+        "type": "color",
+        "role": "Slate mist, Tenjo high-altitude cloud (Pleurotus ostreatus)."
+      },
+      "orellanaTint": {
+        "value": "#E2E7EA",
+        "type": "color",
+        "role": "Light slate mist tint for badges."
+      },
+      "melena": {
+        "value": "#9D6F28",
+        "type": "color",
+        "role": "Golden lichen, forest honey (Hericium erinaceus \u00b7 3.83:1)."
+      },
+      "melenaTint": {
+        "value": "#F5EEDD",
+        "type": "color",
+        "role": "Light honey ground tint."
+      },
+      "rosa": {
+        "value": "#A85C32",
+        "type": "color",
+        "role": "Terracotta clay, coral spore (Pleurotus djamor \u00b7 4.09:1)."
+      },
+      "rosaTint": {
+        "value": "#F4E7DF",
+        "type": "color",
+        "role": "Light terracotta clay tint."
+      }
+    },
+    "status": {
+      "active": {
+        "value": "#5B6B44",
+        "type": "color",
+        "role": "Living crop, verified batch, optimal state."
+      },
+      "activeTint": {
+        "value": "#E2E7D7",
+        "type": "color",
+        "role": "Olive tint for verified badges."
+      },
+      "warn": {
+        "value": "#C49A4C",
+        "type": "color",
+        "role": "Limited harvest, seasonal advisory."
+      },
+      "warnTint": {
+        "value": "#F6EEDA",
+        "type": "color",
+        "role": "Ochre tint for caution banners."
+      },
+      "error": {
+        "value": "#8C3223",
+        "type": "color",
+        "role": "Biological alert, voided lot, contamination."
+      },
+      "errorTint": {
+        "value": "#F4DFDA",
+        "type": "color",
+        "role": "Rust tint for alerts."
+      }
+    },
+    "semantic": {
+      "surfacePage": {
+        "value": "{color.primitive.paper}"
+      },
+      "surfaceCard": {
+        "value": "{color.primitive.paperPanel}"
+      },
+      "surfaceSunken": {
+        "value": "{color.primitive.paperRecessed}"
+      },
+      "surfacePressed": {
+        "value": "{color.primitive.paperPressed}"
+      },
+      "surfaceInverse": {
+        "value": "{color.primitive.ink}"
+      },
+      "textPrimary": {
+        "value": "{color.primitive.ink}"
+      },
+      "textSecondary": {
+        "value": "{color.primitive.inkSecondary}"
+      },
+      "textMetadata": {
+        "value": "{color.primitive.inkMuted}"
+      },
+      "textInverse": {
+        "value": "{color.primitive.inkInverse}"
+      },
+      "borderHairline": {
+        "value": "{color.primitive.lineHairline}"
+      },
+      "borderStrong": {
+        "value": "{color.primitive.lineStrong}"
+      },
+      "borderHeavy": {
+        "value": "{color.primitive.lineHeavy}"
+      },
+      "accentShiitake": {
+        "value": "{color.species.shiitake}"
+      },
+      "accentOrellana": {
+        "value": "{color.species.orellana}"
+      },
+      "accentMelena": {
+        "value": "{color.species.melena}"
+      },
+      "accentRosa": {
+        "value": "{color.species.rosa}"
+      },
+      "statusOk": {
+        "value": "{color.status.active}"
+      },
+      "statusOkTint": {
+        "value": "{color.status.activeTint}"
+      }
+    }
+  }
+}
