@@ -1,6 +1,6 @@
 # Manual del Sistema de Diseño: Swiss Botanical
 **FOSV3 / DS-2026 / FOS · Setas de la Peña**
-*Versión:* 1.0.0 · *Fecha:* Septiembre 2026 · *Estado:* Normativo y Vinculante
+*Versión:* 1.1.0 · *Fecha:* Septiembre 2026 · *Estado:* Prototipo aislado para revisión; no sustituye el canon de producción.
 
 ---
 
@@ -160,7 +160,7 @@ El sistema utiliza tres familias tipográficas vendorizadas en local (`assets/fo
 
 ## 3. Paleta de Color: Código Botánico-Organoléptico
 
-La paleta se estructura sobre una base bimodal de papel marfil e tinta carbón, complementada por tonos organolépticos específicos por especie:
+La paleta combina papel marfil y tinta carbón con acentos que identifican especies. Los nombres cromáticos son referencias visuales, no descripciones sensoriales ni afirmaciones de cultivo.
 
 ### 3.1. Sustratos y Tintas
 - `--sb-paper-0: #F7F4EC;` (Fondo de página, marfil cálido)
@@ -183,20 +183,37 @@ La paleta se estructura sobre una base bimodal de papel marfil e tinta carbón, 
 - `--sb-line-strong: #8C7F5B;` (3.60:1 en papel).
 - `--sb-line-heavy: #1E1D19;` (15.35:1 en papel).
 
+### Texto en etiquetas pequeñas
+Las etiquetas de 12,5 px requieren 4,5:1. Usar `--sb-accent-orellana-text` (#465968), `--sb-accent-melena-text` (#79531C) y `--sb-accent-rosa-text` (#854523) sobre sus tintes correspondientes: 5,83:1, 5,92:1 y 6,04:1. Los acentos originales se conservan para bordes e identidad. El ocre de advertencia y `--sb-ink-3` no deben usarse para texto informativo.
+
 ---
 
 ## 4. Componentes y Pautas de Interacción
 
-### 4.1. Selector Híbrido Hogar / Chef (`.sb-segment-switch`)
-Permite al usuario cambiar entre compras de consumo fresco doméstico (250g / 500g) y cajas gastronómicas para restaurantes (1.5 kg / 3 kg con reserva de lote).
+### 4.1. Estados de confianza y disponibilidad
 
-### 4.2. Cápsula de Trazabilidad Progresiva (`.sb-traceability-capsule`)
-Presenta en una línea el número de lote del día (`SDP-26-SH-04`), altitud de Tenjo (2.592 m) y fecha de recolección al alba. Al hacer clic, navega fluidamente a `traceability.html` sin obstaculizar el flujo de compra.
+Todo dato comercial, culinario o de trazabilidad debe llevar un estado legible. El color es un refuerzo y nunca el único indicador.
 
-### 4.3. Visor Botánico de Producto
-Marco editorial que presenta la fotografía o grabado de la especie con identificación de cartela. Incluye transición suave al cambiar entre especímenes.
+| Estado | Uso | Ejemplo de copy |
+|---|---|---|
+| `verified` | Dato revisado con una fuente o registro | `Origen verificado` |
+| `available` | Producto o formato confirmado para consulta | `Disponible` |
+| `pending` | Dato aún no publicado o por confirmar | `Precio por confirmar` |
+| `unavailable` | Producto o formato no disponible | `Agotado por ahora` |
+| `development` | Módulo editorial o comercial en preparación | `Ficha en desarrollo` |
 
-### 4.4. Botones con Tacto de Prensa (`.sb-btn`)
+Clases: `.sb-badge.sb-status--verified`, `.sb-status--available`, `.sb-status--pending`, `.sb-status--unavailable` y `.sb-status--development`. No se deben usar para afirmar cosecha, conservación, sabor o precio si el dato no está validado.
+
+### 4.2. Selección de formato
+La ficha ofrece radios nativos con formatos ilustrativos: 250 g, 500 g y 1,5 kg. El botón muestra un resumen local accesible. No hay reserva ni compra conectada. El antiguo selector Hogar/Chef conserva estilos como referencia, pero no se presenta como control operativo.
+
+### 4.3. Cápsula de Trazabilidad Progresiva (`.sb-traceability-capsule`)
+Presenta un acceso al registro de origen. Solo muestra identificador, procedencia y fecha cuando existen datos verificables. La muestra navega a `traceability.html`, que declara los campos pendientes y no representa un lote operativo.
+
+### 4.4. Visor Botánico de Producto
+Marco editorial con ilustración de especie y cartela. La portada permite filtrar las especies; el visor de producto contiene una imagen fija. En móvil, el nombre y la selección preceden al visor.
+
+### 4.5. Botones con Tacto de Prensa (`.sb-btn`)
 Los botones tienen un diseño plano de alta legibilidad y sufren un microdesplazamiento de 1px hacia abajo en `:active` (`--sb-press-shift`), simulando la pulsación de un tipo móvil de imprenta.
 
 ---

@@ -4,8 +4,8 @@ Checks:
   1. Every var(--sb-*) used in CSS and HTML is defined in the token layer.
   2. Every @font-face src resolves to an existing file in assets/fonts/.
   3. Every local asset referenced in mockups exists on disk.
-  4. All token JSON files parse and are syntactically valid.
-  5. colors.json and tokens.json colors match colors.css.
+  4. tokens.json parses and is syntactically valid.
+  5. tokens.json colors match colors.css.
 Exits non-zero on failure.
 """
 import re, json, pathlib, sys
@@ -24,7 +24,7 @@ for f in ROOT.glob("components/*.css"):
     defined |= set(DECL.findall(f.read_text(encoding="utf-8")))
 
 used = {}
-css_and_html = list(ROOT.glob("components/*.css")) + list(ROOT.glob("mockups/*.html"))
+css_and_html = list(ROOT.glob("tokens/*.css")) + list(ROOT.glob("components/*.css")) + list(ROOT.glob("mockups/*.html"))
 for f in css_and_html:
     for v in re.findall(r'var\((--sb-[\w-]+)', f.read_text(encoding="utf-8")):
         used.setdefault(v, set()).add(f.name)
@@ -50,38 +50,36 @@ n_assets = 0
 bad_assets = []
 for f in ROOT.glob("mockups/*.html"):
     for src in re.findall(r'(?:src|href)="([^"]+)"', f.read_text(encoding="utf-8")):
-        if src.startswith(('http', '#', 'data:')) or src.endswith('.html'):
+        if src.startswith(('http', '#', 'data:', 'mailto:', 'tel:')):
             continue
         n_assets += 1
-        p = (f.parent / src).resolve()
+        p = (f.parent / src.split('#')[0].split('?')[0]).resolve()
         if not p.exists():
             bad_assets.append((src, f.name))
 print(f"3. Assets en Mockups: {n_assets} referenciados · {len(bad_assets)} faltantes")
 for src, fname in bad_assets:
     fails.append(f"Asset no encontrado '{src}' en {fname}")
 
-# 4. Token JSON validity across all json files
-json_files = list(ROOT.glob("tokens/*.json"))
-print(f"4. Token JSON: Auditando {len(json_files)} archivos JSON")
-for jf in json_files:
-    try:
-        json.loads(jf.read_text(encoding="utf-8"))
-    except Exception as e:
-        fails.append(f"{jf.name} error de sintaxis: {e}")
+# 4. tokens.json validity
+tj = {}
+try:
+    tj = json.loads((ROOT / "tokens/tokens.json").read_text(encoding="utf-8"))
+    print("4. tokens.json: Válido y estructurado correctamente")
+except Exception as e:
+    fails.append(f"tokens.json error de sintaxis: {e}")
 
-# 5. colors.json vs colors.css parity
-css_colors = (ROOT / "tokens/colors.css").read_text(encoding="utf-8").upper()
-cj = json.loads((ROOT / "tokens/colors.json").read_text(encoding="utf-8"))
-color_vals = []
-for grp in ("primitive", "species", "status"):
-    for item in cj["color"].get(grp, {}).values():
-        if "value" in item and item["value"].startswith("#"):
-            color_vals.append(item["value"].upper())
-
-missing_hex = [h for h in color_vals if h not in css_colors]
-print(f"5. Paridad Color (colors.json vs colors.css): {len(color_vals)} colores auditados · {len(missing_hex)} desajustes")
-for h in missing_hex:
-    fails.append(f"Hex {h} declarado en colors.json pero no encontrado en colors.css")
+# 5. Full named-token parity, including aliases, type, spacing and motion.
+css_tokens = {}
+for f in ROOT.glob('tokens/*.css'):
+    raw = re.sub(r'/\*.*?\*/', '', f.read_text(encoding='utf-8'), flags=re.S)
+    # Only the base declaration: reduced-motion overrides are intentional.
+    for name, value in re.findall(r'(--sb-[\w-]+)\s*:\s*([^;]+);', raw):
+        css_tokens.setdefault(name, value.strip())
+json_tokens = tj.get('tokens', {})
+for name in sorted(css_tokens.keys() | json_tokens.keys()):
+    if css_tokens.get(name) != json_tokens.get(name):
+        fails.append(f'Paridad CSS/JSON: {name}')
+print(f'5. Paridad nominal: {len(css_tokens)} tokens CSS / {len(json_tokens)} JSON')
 
 print("----------------------------------------------------")
 if fails:

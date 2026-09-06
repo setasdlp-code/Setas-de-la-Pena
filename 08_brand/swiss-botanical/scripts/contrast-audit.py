@@ -50,9 +50,12 @@ pairings = [
 
     # Especies sobre sus propios tintes
     ('--sb-accent-shiitake-deep', '--sb-accent-shiitake-tint', 4.5, 'Shiitake Deep sobre Shiitake Tint'),
-    ('--sb-accent-orellana', '--sb-accent-orellana-tint', 3.0, 'Orellana sobre Orellana Tint (Large/Badge)'),
-    ('--sb-accent-melena', '--sb-accent-melena-tint', 3.0, 'Melena sobre Melena Tint (Large/Badge)'),
-    ('--sb-accent-rosa', '--sb-accent-rosa-tint', 3.0, 'Rosa sobre Rosa Tint (Large/Badge)'),
+    ('--sb-accent-orellana-text', '--sb-accent-orellana-tint', 4.5, 'Etiqueta Orellana (texto pequeño)'),
+    ('--sb-accent-melena-text', '--sb-accent-melena-tint', 4.5, 'Etiqueta Melena (texto pequeño)'),
+    ('--sb-accent-rosa-text', '--sb-accent-rosa-tint', 4.5, 'Etiqueta Rosa (texto pequeño)'),
+    ('--sb-status-active', '--sb-status-active-tint', 4.5, 'Etiqueta de estado'),
+    ('--sb-ink-2', '--sb-paper-1', 4.5, 'Metadatos en panel'),
+    ('--sb-ink-inverse', '--sb-accent-shiitake', 4.5, 'Botón de acento'),
 ]
 
 fails = 0
@@ -72,7 +75,7 @@ for fg_name, bg_name, target, desc in pairings:
 
 print("------------------------------------------------------------")
 if fails == 0:
-    print("ÉXITO: Todos los contrastes cumplen la norma WCAG 2.1 AA.")
+    print("ÉXITO: Los pares auditados cumplen sus umbrales; no equivale a una certificación integral de accesibilidad.")
 else:
     print(f"ADVERTENCIA: {fails} emparejamientos requieren revisión.")
     sys.exit(1)

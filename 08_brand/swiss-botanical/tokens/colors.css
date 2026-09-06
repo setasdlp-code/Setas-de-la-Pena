@@ -31,14 +31,17 @@
 
   /* Orellana (Pleurotus ostreatus) */
   --sb-accent-orellana: #5E7080;
+  --sb-accent-orellana-text: #465968;
   --sb-accent-orellana-tint: #E2E7EA;
 
   /* Melena de León (Hericium erinaceus) */
   --sb-accent-melena: #9D6F28;
+  --sb-accent-melena-text: #79531C;
   --sb-accent-melena-tint: #F5EEDD;
 
   /* Orellana Rosada (Pleurotus djamor) */
   --sb-accent-rosa: #A85C32;
+  --sb-accent-rosa-text: #854523;
   --sb-accent-rosa-tint: #F4E7DF;
 
   /* ---- Estados Operativos y de Cosecha ---- */
@@ -48,6 +51,10 @@
   --sb-status-warn-tint: #F6EEDA;
   --sb-status-error: #8C3223;       /* Alerta biológica o lote no disponible */
   --sb-status-error-tint: #F4DFDA;
+  --sb-status-neutral: #5C5A52;     /* Dato aún no publicado o por confirmar */
+  --sb-status-neutral-tint: #E9E6DD;
+  --sb-status-info: #465968;        /* Contenido en desarrollo editorial */
+  --sb-status-info-tint: #E2E7EA;
 
 
   /* ---- Modos de Sistema (Cuatro Capas del DS) ---- */
