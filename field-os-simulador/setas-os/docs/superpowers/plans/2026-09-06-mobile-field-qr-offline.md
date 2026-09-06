@@ -961,7 +961,10 @@ revision; transaction abort mid-write.
 2. **Duplicate delivery**: calling twice ⇒ second returns `already_confirmed`; revision unchanged; no throw.
 3. **Stale response**: reservation holds `evt_new`, reconcile `evt_old` ⇒ `stale_response`, reservation intact, cache untouched (G8).
 4. **Revision rollback**: cache at `revision:5`, receipt with `batchRevisionAfter:3` ⇒ cache stays `5` (G8).
-5. **Atomicity**: force the transaction to abort before commit ⇒ no store shows a partial write.
+5. **All-or-nothing on a real path**: the `stale_response` outcome writes to *no*
+   store — no receipt, entry still `pending`, cache untouched, reservation intact.
+   (Crash-injection mid-transaction is not simulable with `fake-indexeddb`; the
+   restart-during-reconciliation case is covered end-to-end by Task 12 test 6.)
 6. v1→v2 upgrade preserves rows written under v1.
 
 **Validation commands:**

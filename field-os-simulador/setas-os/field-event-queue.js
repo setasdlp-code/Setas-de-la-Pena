@@ -14,7 +14,7 @@
   const isNode = typeof module !== 'undefined' && module.exports;
 
   const DB_NAME = 'setas-field-events';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
 
   const idb = () => (typeof globalThis !== 'undefined' ? globalThis.indexedDB : undefined);
 
@@ -53,6 +53,13 @@
 
       if (!db.objectStoreNames.contains('auth_receipts')) {
         db.createObjectStore('auth_receipts', { keyPath: 'eventId' });
+      }
+
+      // v2: caché local del estado del lote. Guarda la revisión confirmada por
+      // el servidor para que una respuesta demorada no pueda retroceder el
+      // estado que ve el operario.
+      if (!db.objectStoreNames.contains('batch_cache')) {
+        db.createObjectStore('batch_cache', { keyPath: 'batchId' });
       }
     };
   });
