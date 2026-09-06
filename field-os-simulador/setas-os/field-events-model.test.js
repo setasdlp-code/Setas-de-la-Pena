@@ -3,7 +3,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { createFieldEvent, contentEquals, canonicalizeTimestamp } = require('./field-events-model.js');
+const { createFieldEvent, contentEquals, canonicalizeTimestamp, validateTransition } = require('./field-events-model.js');
 
 test('should create immutable FieldEvent with stable UUID', () => {
   const event = createFieldEvent(
@@ -62,4 +62,26 @@ test('should detect content mismatch', () => {
   const event1 = { id: 'evt_1', payload: { to: 'fruiting' } };
   const event2 = { id: 'evt_1', payload: { to: 'maturation' } };
   assert.equal(contentEquals(event1, event2), false);
+});
+
+test('should allow valid transition with authorized operator', () => {
+  const batch = { state: 'incubation' };
+  const result = validateTransition(batch, 'incubation', 'fruiting', 'supervisor');
+  assert.equal(result, true);
+});
+
+test('should reject invalid state transition', () => {
+  const batch = { state: 'incubation' };
+  assert.throws(
+    () => validateTransition(batch, 'incubation', 'unknown_state', 'supervisor'),
+    /invalid_state_transition/
+  );
+});
+
+test('should reject if from state does not match batch current state', () => {
+  const batch = { state: 'fruiting' };
+  assert.throws(
+    () => validateTransition(batch, 'incubation', 'resting', 'supervisor'),
+    /invalid_state_transition.*currently.*fruiting/
+  );
 });

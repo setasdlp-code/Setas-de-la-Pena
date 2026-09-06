@@ -81,14 +81,20 @@ function contentEquals(submitted, stored) {
 }
 
 function validateTransition(batch, from, to, operatorRole = 'standard') {
-  if (!SetasOSWorkflow.canTransition(from, to)) {
-    throw new Error(`invalid_state_transition: ${from} → ${to}`);
+  // Validate from state matches batch's current state
+  if (from !== batch.state) {
+    throw new Error(`invalid_state_transition: batch is currently in ${batch.state}, not ${from}`);
   }
 
-  // Validate operator can perform action
+  // Validate transition is allowed by state machine
+  if (!SetasOSWorkflow.canTransition(from, to)) {
+    throw new Error(`invalid_state_transition: ${from} → ${to} is not allowed`);
+  }
+
+  // Validate operator can perform advance_stage action (enables state transitions)
   const validActions = SetasOSWorkflow.validActions(batch.state, operatorRole);
-  if (!validActions.includes(`advance_to_${to}`)) {
-    throw new Error(`unauthorized_action: role ${operatorRole} cannot transition to ${to}`);
+  if (!validActions.includes('advance_stage')) {
+    throw new Error(`unauthorized_action: role ${operatorRole} cannot advance batch state from ${from}`);
   }
 
   return true;
