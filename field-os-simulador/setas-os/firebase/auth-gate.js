@@ -56,6 +56,10 @@ const PROTECTED_APP_SCRIPTS = [
   "../historical-calibration.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Cuaderno de campo offline: el modelo lee el global de setas-os-workflow.js,
+  // que ya viene cargado en DC_RUNTIME_SCRIPTS.
+  "../field-event-queue.js",
+  "../field-events-model.js",
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;

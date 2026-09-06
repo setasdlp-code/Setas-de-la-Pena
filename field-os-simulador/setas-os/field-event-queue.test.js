@@ -139,12 +139,43 @@ test('FieldEventQueue', async (t) => {
 
     await persistFieldEvent(db, event, queueEntry, 'account_rel');
 
-    // Release the reservation
-    await releaseReservation(db, 'account_rel', 'lote_rel');
+    // Release the reservation, naming the event that owns it
+    const released = await releaseReservation(db, 'account_rel', 'lote_rel', 'evt_rel_1');
+    assert.equal(released, true);
 
     // Verify it's gone
     const reservation = await getReservation(db, 'account_rel', 'lote_rel');
     assert.equal(reservation, null);
+  });
+
+  await t.test('should not release a reservation owned by a newer event', async () => {
+    const event = {
+      id: 'evt_guard_new',
+      batchId: 'lote_guard',
+      type: 'batch_state_transition',
+    };
+    const queueEntry = {
+      eventId: 'evt_guard_new',
+      accountId: 'account_guard',
+      status: 'pending',
+    };
+
+    await persistFieldEvent(db, event, queueEntry, 'account_guard');
+
+    // A delayed response for an older event must not release the newer reservation
+    const released = await releaseReservation(db, 'account_guard', 'lote_guard', 'evt_guard_old');
+    assert.equal(released, false);
+
+    const reservation = await getReservation(db, 'account_guard', 'lote_guard');
+    assert.ok(reservation, 'la reserva del evento nuevo debe seguir viva');
+    assert.equal(reservation.eventId, 'evt_guard_new');
+  });
+
+  await t.test('should require expectedEventId to release', async () => {
+    await assert.rejects(
+      () => releaseReservation(db, 'account_guard', 'lote_guard'),
+      /expectedEventId/
+    );
   });
 
   await t.test('should query pending entries by status', async () => {
