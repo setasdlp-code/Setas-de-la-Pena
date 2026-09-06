@@ -1247,9 +1247,25 @@ transition with the correct state and revision displayed.
 **Dependencies:** Task 12. This is the first task that wires the real transport
 to the real Cloud Function.
 
-**Files to create:** `tests/e2e/field-qr-offline.spec.js` (Playwright — already a
-devDependency).
+**Files to create:** `e2e/field-qr-offline.spec.js`.
+**Corrected from the draft:** the plan said `tests/e2e/…`. The repository already
+has an e2e harness at `e2e/` with `global-setup.js`, `helpers.js`, `fixtures.js`
+and an `openApp(page)` helper that waits on `#setas-auth-gate` being hidden —
+reuse it rather than standing up a second harness. Note there are two Playwright
+configs (`playwright.config.js` and `.cjs`) with different `testMatch` patterns;
+confirm which is active before naming the file.
 **Files to modify:** none.
+
+> **BLOCKED — two hard prerequisites, neither satisfiable locally today:**
+> 1. `acceptFieldEvent` is **not deployed**. `firebase functions:list --project
+>    sdlp-os` returns "No functions found". Deploying needs the **Blaze plan**.
+>    Without a server there is nothing to accept an event, so "exactly one
+>    accepted transition" cannot be asserted at all.
+> 2. `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` are unset, so the auth gate cannot
+>    be passed.
+>
+> Do **not** write the spec speculatively. Selectors guessed against a UI nobody
+> has opened produce a test that looks like coverage and is not.
 
 **Scenario (single test):**
 1. Authenticate; open a batch in `inoculated`.
