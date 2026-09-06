@@ -9388,10 +9388,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </span>
             </div>
             <h1 id="form-editorial-title" className="form-editorial-context-title">
-              Formulador de receta · {hasPickedSpecies?sp.name:'Especie por definir'}
+              Formulador de receta · {hasPickedSpecies?(sp?.name||'Especie activa'):'Especie por definir'}
             </h1>
             <div className="form-editorial-context-meta">
-              <span>{hasPickedSpecies?<em>{sp.scientific}</em>:'Sin especie asignada'}</span>
+              <span>{hasPickedSpecies?<em>{sp?.scientific||'Sin clasificación'}</em>:'Sin especie asignada'}</span>
               <span aria-hidden="true">·</span>
               <span>Objetivo: {globalMode==='produccion'?'Producción comercial (Bodega)':'Investigación (Catálogo)'}</span>
               <span aria-hidden="true">·</span>
@@ -9407,7 +9407,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <section className="form-summary-strip" aria-label="Resumen de receta activa">
               <div className="form-summary-cell">
                 <span className="form-summary-k">Especie</span>
-                <span className="form-summary-v">{hasPickedSpecies?sp.name:'—'}</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
                 <span className="os-provenance-line">Manual</span>
               </div>
               <div className="form-summary-cell">
@@ -9417,33 +9417,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
                 <span className="os-provenance-line">Calculado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
                 <span className="os-provenance-line">Calculado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad</span>
-                <span className="form-summary-v">{an?`${an.h.toFixed(1)}%`:'—'}</span>
+                <span className="form-summary-v">{an?.h!=null?`${an.h.toFixed(1)}%`:'—'}</span>
                 <span className="os-provenance-line">Calculado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>
-                <span className="form-summary-v">{an?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
                 <span className="os-provenance-line">Hipótesis</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v">{an?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
                 <span className="os-provenance-line">Inventario</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
                 <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
-                  Perito {Math.round(opt.score)}/100
+                  Perito {Math.round(opt?.score||0)}/100
                 </span>
                 <span className="os-provenance-line">Perito · Requiere revisión</span>
               </div>
@@ -9470,7 +9470,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="form-step-num">01</span>
                 <span className="form-step-label">Especie</span>
                 <div className="form-step-species-state">
-                  <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
+                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
                   <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
                 </div>
                 <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
@@ -9506,21 +9506,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </li>
 
               {/* Paso 04: Balance */}
-              <li className={`form-step ${(an&&Math.abs(an.tot-100)<=0.5)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-ready':''}`}>
                 <span className="form-step-num">04</span>
                 <span className="form-step-label">Balance</span>
                 <div className="form-step-species-state">
-                  <strong>{an?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
+                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
                   <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
                 </div>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':Math.abs((an?.tot||0)-100)<=0.5?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':Math.abs((an?.tot||0)-100)<=0.5?'Completado':'Requiere atención'}
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'Completado':'Requiere atención'}
                 </span>
                 <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
               </li>
 
               {/* Paso 05: Revisión */}
-              <li className={`form-step ${(an&&Math.abs(an.tot-100)<=0.5&&opt.score>=70)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5&&(opt?.score||0)>=70)?'is-ready':''}`}>
                 <span className="form-step-num">05</span>
                 <span className="form-step-label">Revisión</span>
                 <button
@@ -9530,8 +9530,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
                   Dictamen Perito
                 </button>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':opt.score>=70?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt.score)}/100`}
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
                 </span>
                 <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
               </li>
@@ -9542,8 +9542,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
               <div>
-                <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
-                <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
+                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Selecciona una especie'}</strong>
+                <em>{hasPickedSpecies?(sp?.scientific||'Sin clasificar'):'La evaluación se adapta a sus objetivos biológicos.'}</em>
               </div>
             </div>
             <label className="form-species-picker" htmlFor="form-species-context-select">
@@ -9561,9 +9561,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
             <div className="form-species-targets" aria-label="Objetivos de la especie activa">
-              <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
-              <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
-              <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
               <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
             </div>
           </section>
@@ -9606,7 +9606,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
             ) : (()=>{
-              const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
+              const sm2=PERITO_STATUS[opt?.status]||PERITO_STATUS.sin_receta;
               const limiter=peritoMainLimiter(opt,an);
               const ebVal=an?blendEBWithHistory(an,histStats):0;
               const ebOpt=sp?.eb_optimal||100;
@@ -9614,7 +9614,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
               const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
-              const totOk=an?Math.abs(an.tot-100)<=0.5:false;
+              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=0.5:false;
               const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
 
               return(
@@ -9638,10 +9638,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
                         className="live-dash-pill"
                         style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
-                        aria-label={`Score Perito: ${Math.round(opt.score)} de 100, ${sm2.label}. Ver análisis completo`}
-                        title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
+                        aria-label={`Score Perito: ${Math.round(opt?.score||0)} de 100, ${sm2.label}. Ver análisis completo`}
+                        title={`Score Perito: ${Math.round(opt?.score||0)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
                         <IconTarget size={11} color={sm2.badge} />
-                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt?.score||0)}</span>
                       </button>
 
                       {/* EB */}
@@ -9654,9 +9654,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div
                         className="live-dash-pill"
                         style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
-                        title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
+                        title={`Balance de masa: ${an?.tot!=null?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
                         <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
-                          {an?an.tot.toFixed(0):'0'}%
+                          {an?.tot!=null?an.tot.toFixed(0):'0'}%
                           {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
                         </span>
                       </div>
@@ -9665,9 +9665,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* Región viva para lectores de pantalla: anuncia cambios de estado
                         que hoy solo se comunican por color (score/EB/balance de masa). */}
                     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-                      {`Score Perito ${Math.round(opt.score)} de 100, ${sm2.label}. `}
+                      {`Score Perito ${Math.round(opt?.score||0)} de 100, ${sm2.label}. `}
                       {`Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk?', meta alcanzada':(ebMid?', por debajo de la meta':', por debajo de la línea base')}. `}
-                      {`Balance de masa ${an?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
+                      {`Balance de masa ${an?.tot!=null?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
                     </div>
 
                     {/* Acciones compactas */}
@@ -9791,7 +9791,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             if((it.icon==='↑C:N'||it.icon==='↓N')&&isCarbBase) return true;
                             return false;
                           };
-                          const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
+                          const rowFlag=(recipe.length>0&&opt?.items)?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                           return(
                           <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 10px',borderBottom:'1px solid var(--paper-300)',flexWrap:'wrap'}}>
                             <button type="button" className={`lock-btn mix-lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{flexShrink:0}}>
@@ -10402,7 +10402,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
+                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{
@@ -11465,7 +11465,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['C:N',an.cn.toFixed(1)+':1','relaci\u00f3n'],
                     ['Nitr\u00f3geno',an.avgN.toFixed(2)+'%','total'],
                     ['Ef. biol\u00f3gica',(an.ebLow??an.eb.toFixed(0))+'\u2013'+(an.ebHigh??an.eb.toFixed(0))+'%','estimada'],
-                    ['Score',opt.score+'/100','perito'],
+                    ['Score',(opt?.score!=null?opt.score:'0')+'/100','perito'],
                     ['Costo/kg','$'+Math.round(an.cost).toLocaleString('es-CO'),'estimado'],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{background:'var(--paper-50)',padding:'10px 6px',textAlign:'center'}}>
