@@ -1108,9 +1108,12 @@ does not have (see F1). Record this as a v1 limitation.
 
 **Contract:**
 - `parseBatchRef(text)` → `{batchId}` or throws `invalid_qr_payload`.
-  Accepted forms: the bare batch code, and the trace URL already emitted by
-  `batch-traceability.js:260` (`https://setasdelapena.com/trace/<code>`) — reuse
-  that format, do not invent a second one.
+  Accepted forms: the trace URL already emitted by `batch-traceability.js:260`
+  (`https://setasdelapena.com/trace/<code>`), and the short thermal-label scheme
+  `setas:lote:<code>`.
+  **Ruling (changed from the original draft): a bare code is NOT accepted.** It
+  is indistinguishable from any other system's QR, so accepting it would let
+  scanning an unrelated label open the action sheet for an arbitrary batch.
 - `resolveBatch(text, lookup)` → `{batch, allowedTransitions}` where
   `allowedTransitions` comes from `DEFAULT_TRANSITIONS[batch.state]` filtered by
   the operator's role matrix (Task 3). Unknown code ⇒ `batch_not_found`.
