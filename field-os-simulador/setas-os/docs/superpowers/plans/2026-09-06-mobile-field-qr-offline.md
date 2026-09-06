@@ -765,6 +765,46 @@ node --test field-event-contracts.test.js
 
 ## Phase 3: Authoritative Server Acceptance
 
+> ### Verified data-model reality (checked 2026-09-06, before implementing Task 5)
+>
+> The Task 5/6 contracts below were drafted against assumed collection names.
+> The repository says otherwise. **Use these, not the assumed names:**
+>
+> | Assumed | Actual | Evidence |
+> |---------|--------|----------|
+> | `batches/{id}` | `lotes_produccion/{id}` | `firebase/db.js:51` |
+> | `batch.state` | `lote.estado` | `firebase/db.js:53`, `batch-traceability.js:205` |
+> | rules at `firestore.rules` | `firebase/firestore.rules` | `firebase.json` |
+>
+> **Three gaps block a faithful Task 5 implementation. They are schema
+> decisions on a collection that already holds production documents, so they
+> are NOT the implementer's to invent:**
+>
+> 1. **`estado` does not hold workflow states.** `firebase/db.js:53` writes
+>    `estado: "activo"`. The workflow states (`inoculated`, `incubation`, …)
+>    live only in `setas-os-workflow.js` and are not persisted. Accepting a
+>    transition requires deciding how the state machine maps onto `estado`,
+>    and backfilling existing documents.
+> 2. **No `revision` field exists** on `lotes_produccion`. Optimistic
+>    concurrency (`expectedBatchRevision`, `revision_conflict`) has no
+>    substrate. It must be added and backfilled before Task 5 means anything.
+> 3. **Roles are not the workflow's roles.** `firebase/firestore.rules` reads
+>    `usuarios/{uid}.rol` and only distinguishes `'admin'`. The workflow's
+>    `direccion` / `produccion` / `operario` matrix (Task 3) is not connected
+>    to any persisted role.
+>
+> **Also: this project has no Cloud Functions infrastructure.** `firebase.json`
+> declares only `auth`, `firestore` and `hosting` — no `functions` key, and no
+> `functions/` directory. Adding one is an infrastructure change, and deploying
+> it requires a Blaze billing plan. Writing the function and its emulator tests
+> locally is in scope; **creating the Firebase project resources and deploying
+> is not** and needs separate authorization.
+>
+> **Status: Tasks 5 and 6 are `blocked` on items 1–3 above.** They are not
+> "not started" — the contracts are specified; the schema decisions are not
+> the agent's to make unilaterally on production data.
+
+
 ### Task 5: `acceptFieldEvent` Cloud Function
 
 **Observable outcome:** a callable function is the **only** path that mutates
@@ -787,7 +827,7 @@ Order of operations, **all inside one `db.runTransaction`** (G4):
    - Exists **with** receipt → `contentEquals(event, stored)`; equal ⇒ return the
      **stored original receipt** (G5); unequal ⇒ throw `content_mismatch` (G6).
    - Exists **without** receipt → throw `incomplete_event_record`.
-2. Read `batches/{event.batchId}`; missing ⇒ `batch_not_found`.
+2. Read `lotes_produccion/{event.batchId}`; missing ⇒ `batch_not_found`.
 3. `batch.revision !== event.expectedBatchRevision` ⇒ `revision_conflict`.
 4. `validateTransition(batch, payload.from, payload.to, operatorRole)`.
 5. Write batch `{state: payload.to, revision: batch.revision + 1}` and the event
@@ -834,14 +874,12 @@ authoritative state).
 
 **Dependencies:** Task 5.
 
-**Files to modify:** `firestore.rules` (verify with `ls firestore.rules`; if
-absent, create and note it is not deployed).
+**Files to modify:** `firebase/firestore.rules` (exists; deploy is out of scope).
 
 **Contract:**
 - `field_events/{id}`: client `read` allowed when the doc's `accountId` matches
   the caller's; client `create`/`update`/`delete` **denied unconditionally**.
-- `batches/{id}`: client `read` per existing account scoping; client writes to
-  `state` and `revision` **denied**. Other batch fields keep their current rules.
+- `lotes_produccion/{id}`: keep the existing `recetaSnapshot` immutability rule; additionally deny client writes to `estado` and `revision`. Other fields keep their current rules.
 - Admin SDK (the Cloud Function) bypasses rules — that is the only write path.
 
 **Invariants:** no rule grants a client write to `state` or `revision`; denial is
@@ -851,8 +889,8 @@ by default, not by enumeration of bad cases.
 a field event; cross-account read.
 
 **Acceptance tests** (`firestore-rules.test.js`, rules-unit-testing):
-1. Authenticated client `set(batches/b1, {state:'fruiting'})` ⇒ **denied**.
-2. Authenticated client `set(batches/b1, {revision: 99})` ⇒ **denied**.
+1. Authenticated client `set(lotes_produccion/b1, {estado:'fruiting'})` ⇒ **denied**.
+2. Authenticated client `set(lotes_produccion/b1, {revision: 99})` ⇒ **denied**.
 3. Authenticated client `create(field_events/e1, …)` ⇒ **denied**.
 4. Client reads own-account field event ⇒ **allowed**.
 5. Client reads another account's field event ⇒ **denied** (G2 boundary).
@@ -1233,7 +1271,7 @@ print credentials.
 **Review checklist — each item cites file:line evidence, not a report:**
 1. Every guarantee G1–G11 maps to a test that **was executed**, with its output.
 2. No acceptance-governing read occurs outside the server transaction (Task 5).
-3. No client write path to `batches.state` or `batches.revision` exists (Task 6).
+3. No client write path to `lotes_produccion.estado` or `.revision` exists (Task 6).
 4. `attachmentIds` is `[]` on every construction path; no attachment code (G1).
 5. No destructive operation on logout (G2).
 6. `eventId` is never regenerated on retry (G3).
