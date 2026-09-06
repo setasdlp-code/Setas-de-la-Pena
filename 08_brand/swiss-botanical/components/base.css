@@ -19,12 +19,20 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   line-height: var(--sb-leading-normal);
   background-color: var(--sb-paper-0);
   color: var(--sb-ink-0);
-  overflow-x: hidden;
+  overflow-wrap: break-word;
 }
+
+img { max-width: 100%; height: auto; }
+button, input, select { font: inherit; }
+[hidden] { display: none !important; }
+h1, h2, h3 { text-wrap: balance; }
+.sb-skip-link { position: fixed; top: -100px; left: 16px; z-index: 100; padding: 12px; background: var(--sb-paper-0); }
+.sb-skip-link:focus { top: 12px; }
+.sb-demo-note { padding: 12px 24px; background: var(--sb-paper-1); border-bottom: 1px solid var(--sb-line-hairline); font-size: 14px; }
 
 /* Tipografía de Encabezados */
 h1, h2, h3, h4, .sb-font-serif {

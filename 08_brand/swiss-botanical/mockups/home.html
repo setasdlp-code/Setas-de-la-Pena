@@ -41,7 +41,6 @@
     .sb-hero__img {
       max-width: 85%;
       height: auto;
-      filter: drop-shadow(0 4px 12px rgba(30, 29, 25, 0.08));
       transition: transform var(--sb-duration-editorial) var(--sb-ease-editorial);
     }
     .sb-hero__visual:hover .sb-hero__img {
@@ -60,14 +59,13 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: all var(--sb-duration-normal) var(--sb-ease-editorial);
+      transition: border-color var(--sb-duration-normal) var(--sb-ease-editorial), background-color var(--sb-duration-normal) var(--sb-ease-editorial);
       text-decoration: none;
       color: inherit;
     }
     .sb-species-card:hover {
       border-color: var(--sb-accent-shiitake);
       background-color: var(--sb-paper-0);
-      transform: translateY(-2px);
     }
     .sb-species-card--hero {
       border-color: var(--sb-accent-shiitake);
@@ -100,7 +98,7 @@
       font-weight: 500;
       color: var(--sb-ink-1);
       cursor: pointer;
-      transition: all var(--sb-duration-fast) ease;
+      transition: background-color var(--sb-duration-fast) ease, color var(--sb-duration-fast) ease;
     }
     .sb-filter-btn:hover, .sb-filter-btn--active {
       background-color: var(--sb-ink-0);
@@ -124,249 +122,13 @@
   </style>
 </head>
 <body>
-
-  <!-- Header Superior -->
-  <header class="sb-header">
-    <div class="sb-container sb-header__inner">
-      <a href="home.html" class="sb-brand-mark">
-        Setas de la Peña
-        <span class="sb-brand-mark__sub">Tenjo · 2.592 msnm</span>
-      </a>
-      <nav class="sb-nav">
-        <a href="home.html" class="sb-nav__link sb-nav__link--active">Cosecha</a>
-        <a href="product.html" class="sb-nav__link">Ficha Shiitake</a>
-        <a href="editorial.html" class="sb-nav__link">Cuaderno Editorial</a>
-        <a href="traceability.html" class="sb-nav__link">Trazabilidad</a>
-      </nav>
-      <div style="display: flex; align-items: center; gap: var(--sb-space-3);">
-        <div class="sb-segment-switch">
-          <button class="sb-segment-option sb-segment-option--active">Hogares</button>
-          <button class="sb-segment-option">Chefs</button>
-        </div>
-        <a href="product.html" class="sb-btn sb-btn--primary sb-btn--sm">Pedir Cosecha</a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Hero Asimétrico Comercial -->
-  <main class="sb-container">
-    <section class="sb-hero">
-      <div>
-        <div style="display: flex; align-items: center; gap: var(--sb-space-3); margin-bottom: var(--sb-space-4);">
-          <span class="sb-badge sb-badge--status">Cosecha del Alba</span>
-          <span class="sb-badge sb-badge--shiitake">Especie Protagonista</span>
-          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Lote SDP-26-SH-04</span>
-        </div>
-        <h1 class="sb-hero__title">
-          Cultivo fúngico de montaña. Precisión biológica en Tenjo, frescura diaria en su cocina.
-        </h1>
-        <p class="sb-hero__p">
-          Cosechamos en el momento exacto de corte con velo al 70%. Consistencia densa y lámina limpia, entregada fresca en su cocina en menos de 24 horas.
-        </p>
-        <div style="display: flex; gap: var(--sb-space-4); align-items: center; flex-wrap: wrap;">
-          <a href="product.html" class="sb-btn sb-btn--accent sb-btn--lg">Ver Shiitake</a>
-          <a href="#catalogo" class="sb-btn sb-btn--secondary sb-btn--lg">Ver Catálogo</a>
-        </div>
-
-        <!-- Cápsula de Trazabilidad Progresiva -->
-        <div style="margin-top: var(--sb-space-8);">
-          <a href="traceability.html" class="sb-traceability-capsule" style="width: 100%; max-width: 520px;">
-            <div class="sb-traceability-capsule__lead">
-              <span class="sb-traceability-capsule__tag">Registro de Origen Transparente</span>
-              <span class="sb-traceability-capsule__lot">Lote SDP-26-SH-04 · Cosechado 05:45 AM</span>
-              <span class="sb-traceability-capsule__meta">Fructificación controlada en Tenjo · Sabana de Bogotá</span>
-            </div>
-            <span class="sb-traceability-capsule__action">Consultar cuaderno &rarr;</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="sb-hero__visual">
-        <div class="sb-mono" style="font-size: var(--sb-text-2xs); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-ink-2); margin-bottom: var(--sb-space-4); display: flex; justify-content: space-between;">
-          <span>Figura I.1 · Lentinula edodes</span>
-          <span>Pliego de Cosecha 2026</span>
-        </div>
-        <img src="../assets/img/species/shiitake.png" alt="Shiitake fresco cultivado en Tenjo" class="sb-hero__img">
-        <div style="border-top: 1px solid var(--sb-line-hairline); margin-top: var(--sb-space-6); padding-top: var(--sb-space-3); text-align: left;">
-          <span style="font-family: var(--sb-font-serif); font-size: var(--sb-text-lg); font-weight: 700;">Shiitake</span>
-          <div class="sb-sensory-note" style="font-size: var(--sb-text-base); margin-bottom: var(--sb-space-1);">Profundo, terroso, limpio</div>
-          <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin: 2px 0 0 0;">Notas de roble tostado, fondo de sotobosque y textura carnosa firme.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Módulo 'Elige según tu mesa' -->
-    <section id="catalogo" style="padding-top: var(--sb-space-16); padding-bottom: var(--sb-space-16);">
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--sb-space-6); flex-wrap: wrap; gap: var(--sb-space-4);">
-        <div>
-          <span class="sb-mono" style="font-size: var(--sb-text-xs); text-transform: uppercase; color: var(--sb-accent-shiitake); letter-spacing: var(--sb-tracking-caps);">Catálogo de Temporada</span>
-          <h2 style="font-size: var(--sb-text-2xl); margin-top: var(--sb-space-1);">Elige según tu experiencia en cocina</h2>
-        </div>
-        <p style="max-width: 38ch; font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin: 0;">
-          Cada variedad responde a una técnica culinaria distinta: desde dorados a fuego vivo hasta infusiones y sellados delicados.
-        </p>
-      </div>
-
-      <!-- Filtros Funcionales -->
-      <div class="sb-filters-row">
-        <button class="sb-filter-btn sb-filter-btn--active">Todos los ejemplares</button>
-        <button class="sb-filter-btn">Sabor Intenso & Umami</button>
-        <button class="sb-filter-btn">Salteados Rápidos</button>
-        <button class="sb-filter-btn">Textura Suave & Marisco</button>
-        <button class="sb-filter-btn">Uso Funcional & Té</button>
-      </div>
-
-      <!-- Cuadrícula Asimétrica de Especies -->
-      <div class="sb-species-grid">
-
-        <!-- Tarjeta 1: Shiitake (Hero) -->
-        <a href="product.html" class="sb-species-card sb-species-card--hero">
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
-              <span class="sb-badge sb-badge--shiitake">Shiitake</span>
-              <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Disponibilidad: Alta</span>
-            </div>
-            <div class="sb-species-card__img-wrap">
-              <img src="../assets/img/species/shiitake.png" alt="Shiitake" class="sb-species-card__img">
-            </div>
-            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Shiitake</h3>
-            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Lentinula edodes</p>
-            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
-              Sombrero carnoso y denso. Ideal para dorar en sartén de hierro con mantequilla avellanada.
-            </p>
-          </div>
-          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$24.000 / 500g</span>
-            <span class="sb-btn sb-btn--primary sb-btn--sm">Ver Ficha</span>
-          </div>
-        </a>
-
-        <!-- Tarjeta 2: Orellana -->
-        <a href="product.html" class="sb-species-card">
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
-              <span class="sb-badge sb-badge--orellana">Orellana</span>
-              <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cosecha Diaria</span>
-            </div>
-            <div class="sb-species-card__img-wrap">
-              <img src="../assets/img/species/orellana-blanca.png" alt="Orellana" class="sb-species-card__img">
-            </div>
-            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Orellana</h3>
-            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Pleurotus ostreatus</p>
-            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
-              Hojas tiernas y sedosas. Cocción rápida en wok o pastas frescas en menos de tres minutos.
-            </p>
-          </div>
-          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$18.000 / 500g</span>
-            <span class="sb-btn sb-btn--secondary sb-btn--sm">Ver Ficha</span>
-          </div>
-        </a>
-
-        <!-- Tarjeta 3: Melena de León -->
-        <a href="product.html" class="sb-species-card">
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
-              <span class="sb-badge sb-badge--melena">Melena de León</span>
-              <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Especialidad</span>
-            </div>
-            <div class="sb-species-card__img-wrap">
-              <img src="../assets/img/species/lions-mane.png" alt="Melena de León" class="sb-species-card__img">
-            </div>
-            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Melena de León</h3>
-            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Hericium erinaceus</p>
-            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
-              Fibra esponjosa que absorbe caldos. Sellado dorado en láminas tipo vieira marina.
-            </p>
-          </div>
-          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$28.000 / 350g</span>
-            <span class="sb-btn sb-btn--secondary sb-btn--sm">Ver Ficha</span>
-          </div>
-        </a>
-
-        <!-- Tarjeta 4: Orellana Rosada -->
-        <a href="product.html" class="sb-species-card">
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: var(--sb-space-3);">
-              <span class="sb-badge sb-badge--rosa">Orellana Rosada</span>
-              <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Lote Limitado</span>
-            </div>
-            <div class="sb-species-card__img-wrap">
-              <img src="../assets/img/species/orellana-rosa.png" alt="Orellana Rosada" class="sb-species-card__img">
-            </div>
-            <h3 style="font-size: var(--sb-text-xl); margin-bottom: 2px;">Orellana Rosada</h3>
-            <p class="sb-scientific" style="font-size: var(--sb-text-sm); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">Pleurotus djamor</p>
-            <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); line-height: 1.4;">
-              Color vibrante y notas marinas frescas. Excelente en ceviches tibios y tempuras.
-            </p>
-          </div>
-          <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$20.000 / 400g</span>
-            <span class="sb-btn sb-btn--secondary sb-btn--sm">Ver Ficha</span>
-          </div>
-        </a>
-
-      </div>
-    </section>
-
-    <!-- Bloque Editorial de Temporada -->
-    <section style="background-color: var(--sb-paper-1); border: 1px solid var(--sb-line-strong); padding: var(--sb-space-12); margin-bottom: var(--sb-space-16);">
-      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--sb-space-12); align-items: center;">
-        <div>
-          <span class="sb-editorial-eyebrow">Cuaderno de Cocina & Botánica · Publicación III</span>
-          <h2 style="font-size: var(--sb-text-3xl); line-height: 1.1; margin-bottom: var(--sb-space-4);">
-            El Dominio del Fuego y el Roble: La Alquimia del Shiitake de Altura en Tenjo
-          </h2>
-          <p style="font-size: var(--sb-text-base); color: var(--sb-ink-1); line-height: 1.6; margin-bottom: var(--sb-space-6); max-width: 52ch;">
-            A 2.592 metros de altitud, el diferencial térmico entre el mediodía andino y la niebla nocturna ralentiza el crecimiento celular del micelio. El resultado: un sombrero carnoso que retiene azúcares complejos y desprende umami puro en la sartén.
-          </p>
-          <a href="editorial.html" class="sb-btn sb-btn--primary">Leer Ensayo & Receta Completa &rarr;</a>
-        </div>
-        <div style="text-align: center; background-color: var(--sb-paper-0); border: 1px solid var(--sb-line-hairline); padding: var(--sb-space-6);">
-          <img src="../assets/img/reishi-botanical-engraving.png" alt="Grabado Botánico" style="max-width: 80%; height: auto;">
-          <div class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); margin-top: var(--sb-space-3);">
-            Tratado Micológico Tenjo · Grabado N° 04
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Pie de página -->
-  <footer class="sb-footer">
-    <div class="sb-container sb-footer__grid">
-      <div>
-        <span class="sb-brand-mark" style="font-size: var(--sb-text-lg);">Setas de la Peña</span>
-        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); max-width: 32ch;">
-          Cultivo modular, medible y regenerativo en Tenjo, Cundinamarca. Venta directa a hogares y alianzas con cartas de alta gastronomía.
-        </p>
-        <span class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-3);">
-          Lat 4.872° N · Long 74.148° W · 2.592 msnm
-        </span>
-      </div>
-      <div>
-        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Especies</h4>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="product.html">Shiitake</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="#catalogo">Orellana</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="#catalogo">Melena de León</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="#catalogo">Orellana Rosada</a></p>
-      </div>
-      <div>
-        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Transparencia</h4>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Cuaderno de Lote</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Sustratos & Origen</a></p>
-        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Publicaciones</a></p>
-      </div>
-      <div>
-        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Contacto Cocinas</h4>
-        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-bottom: var(--sb-space-2);">
-          Despachos a Bogotá, Chía y Sabana centro de martes a sábado.
-        </p>
-        <span class="sb-mono" style="font-size: var(--sb-text-xs); font-weight: 600;">cosecha@setasdelapena.co</span>
-      </div>
-    </div>
-  </footer>
-
-</body>
-</html>
+<a class="sb-skip-link" href="#contenido">Saltar al contenido</a>
+<header class="sb-header"><div class="sb-container sb-header__inner">
+<a href="home.html" class="sb-brand-mark">Setas de la Peña<span class="sb-brand-mark__sub">Tenjo · Colombia</span></a>
+<nav class="sb-nav" aria-label="Principal"><a href="home.html" class="sb-nav__link sb-nav__link--active" aria-current="page">Colección</a><a href="product.html" class="sb-nav__link">Shiitake</a><a href="editorial.html" class="sb-nav__link">Cuaderno</a><a href="traceability.html" class="sb-nav__link">Origen</a></nav>
+</div></header>
+<div class="sb-container"><p class="sb-demo-note">Muestra de diseño · Datos comerciales y de lote por confirmar. No recibe pedidos.</p></div><main class="sb-container" id="contenido"><section class="sb-hero"><div><span class="sb-badge sb-badge--shiitake">Swiss Botanical · La colección</span><h1 class="sb-hero__title">Descubre el potencial<br>culinario y funcional<br>de las setas.</h1><p class="sb-hero__p">Descubre las setas desde su forma hasta su origen. Una colección para explorar, preguntar y elegir con más información.</p><div class="sb-actions"><a href="product.html" class="sb-btn sb-btn--accent sb-btn--lg">Conoce el shiitake</a><a href="#catalogo" class="sb-btn sb-btn--secondary">Explorar especies</a></div><a href="traceability.html" class="sb-traceability-capsule"><span><span class="sb-traceability-capsule__tag">Detrás de cada producto</span><span class="sb-traceability-capsule__lot">Una historia con origen</span><span class="sb-traceability-capsule__meta">Conoce la información que acompañará cada lote.</span></span><span>Explorar →</span></a></div>
+<figure class="sb-hero__visual"><div class="sb-mono">Figura 01 · Lentinula edodes</div><img src="../assets/img/species/shiitake.png" alt="Ilustración de shiitake" class="sb-hero__img"><figcaption><strong>Shiitake</strong><p>Una primera mirada a la colección.</p></figcaption></figure></section>
+<section id="catalogo"><span class="sb-editorial-eyebrow">Cuatro formas de descubrir</span><h2>Encuentra tu próxima pregunta.</h2><p>Explora las especies de esta muestra. La ficha de shiitake permite probar la selección de formato; las demás presentan la colección visual.</p><div class="sb-filters-row" role="group" aria-label="Filtrar colección"><button type="button" class="sb-filter-btn sb-filter-btn--active" data-filter="todos" aria-pressed="true" aria-controls="especies">Todas</button><button type="button" class="sb-filter-btn" data-filter="shiitake" aria-pressed="false" aria-controls="especies">Shiitake</button><button type="button" class="sb-filter-btn" data-filter="orellana" aria-pressed="false" aria-controls="especies">Orellana perla</button><button type="button" class="sb-filter-btn" data-filter="melena" aria-pressed="false" aria-controls="especies">Melena de león</button><button type="button" class="sb-filter-btn" data-filter="rosa" aria-pressed="false" aria-controls="especies">Orellana rosa</button></div><p id="resultados" class="sb-mono" role="status" aria-live="polite">4 especies en la colección.</p><div class="sb-species-grid" id="especies"><article class="sb-species-card sb-species-card--hero" data-species="shiitake"><span class="sb-badge sb-badge--shiitake">Colección · 01</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/shiitake.png" alt="Ilustración de shiitake" class="sb-species-card__img" loading="lazy"></div><h3>Shiitake</h3><p class="sb-scientific">Lentinula edodes</p><a href="product.html" class="sb-btn sb-btn--primary">Explorar ficha →</a></article><article class="sb-species-card" data-species="orellana"><span class="sb-badge sb-badge--orellana">Colección · 02</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/orellana-blanca.png" alt="Ilustración de orellana perla" class="sb-species-card__img" loading="lazy"></div><h3>Orellana perla</h3><p class="sb-scientific">Pleurotus ostreatus</p><p>Ficha en preparación.</p></article><article class="sb-species-card" data-species="melena"><span class="sb-badge sb-badge--melena">Colección · 03</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/lions-mane.png" alt="Ilustración de melena de león" class="sb-species-card__img" loading="lazy"></div><h3>Melena de león</h3><p class="sb-scientific">Hericium erinaceus</p><p>Ficha en preparación.</p></article><article class="sb-species-card" data-species="rosa"><span class="sb-badge sb-badge--rosa">Colección · 04</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/orellana-rosa.png" alt="Ilustración de orellana rosa" class="sb-species-card__img" loading="lazy"></div><h3>Orellana rosa</h3><p class="sb-scientific">Pleurotus djamor</p><p>Ficha en preparación.</p></article></div></section>
+<section class="sb-editorial-teaser"><div><span class="sb-editorial-eyebrow">El cuaderno · 01</span><h2>El placer de mirar de cerca.</h2><p>Una forma, una textura, una pregunta. Nuestro cuaderno propone conectar la curiosidad botánica con las decisiones de tu cocina.</p><a href="editorial.html" class="sb-btn sb-btn--primary">Abrir el cuaderno →</a></div><img src="../assets/img/species/shiitake.png" alt="" loading="lazy"></section></main>
+<script>var filters=document.querySelectorAll('[data-filter]');filters.forEach(function(button){button.addEventListener('click',function(){var selected=button.dataset.filter;filters.forEach(function(item){var active=item===button;item.setAttribute('aria-pressed',String(active));item.classList.toggle('sb-filter-btn--active',active);});var count=0;document.querySelectorAll('[data-species]').forEach(function(card){card.hidden=selected!=='todos'&&card.dataset.species!==selected;if(!card.hidden)count++;});document.querySelector('#resultados').textContent=count===1?'1 especie en la selección.':count+' especies en la colección.';});});</script><footer class="sb-footer"><div class="sb-container sb-footer__grid"><div><span class="sb-brand-mark">Setas de la Peña</span><p>Botánica, origen y cocina.</p></div><a href="home.html">Explorar la colección</a><a href="editorial.html">Leer el cuaderno</a><a href="traceability.html">Conocer el registro de origen</a></div></footer></body></html>

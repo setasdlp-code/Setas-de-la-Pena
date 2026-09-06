@@ -1,33 +1,21 @@
 # Swiss Botanical — FOSV3 / DS-2026 / FOS
 **Setas de la Peña · Sistema de Diseño Botánico & Comercial Centrado en el Cliente**
-*Versión:* 1.0.0 (2026) · *Dominio:* `08_brand/swiss-botanical` · *Estado:* Activo y Autocontenido
+*Versión:* 1.0.0 (2026) · *Dominio:* `08_brand/swiss-botanical` · *Estado:* Prototipo local para revisión
 
 ---
 
 ## 1. Visión y Objetivo de Experiencia
 
-Swiss Botanical no es un archivo botánico que también vende. Es una **marca de alimentos cultivados con criterio**, cuyo archivo botánico y telemetría de cultivo están disponibles de manera progresiva cuando el cliente quiere saber más.
+Swiss Botanical explora una identidad editorial para descubrir productos, comparar formatos y consultar su origen. Las vistas son muestras locales: no conectan inventario, telemetría ni pedidos.
 
 Cada vista y producto responde de inmediato al lector:
 1. **Qué es:** Identidad botánica y gastronómica clara.
-2. **Por qué elegirlo:** Razones sensoriales, culinarias y biológicas fundamentadas.
-3. **Cómo usarlo:** Pautas inmediatas de cocción, dorado en hierro y conservación en despensa.
-4. **De dónde viene:** Anclaje territorial en Tenjo, Cundinamarca (2.592 msnm, falda de la Peña de Juaica).
+2. **Por qué elegirlo:** Información clara para comparar; perfiles culinarios pendientes de validación.
+3. **Cómo usarlo:** Espacio para futuras instrucciones verificadas de preparación y conservación.
+4. **De dónde viene:** Relación con Tenjo, Colombia; datos específicos de parcela y lote pendientes de registro.
 5. **Qué explorar después:** Cuaderno editorial de temporada, maridajes y trazabilidad de lote.
 
-### Dos Recorridos de Usuario en el Mismo Sistema
-- **Cocina en Casa (Hogar):** *Qué es → Cómo lo cocino (pautas en seco) → Cuánto necesito (200g/400g) → Cómo lo conservo (2-4°C) → Disponibilidad.*
-- **Chef / HORECA (Profesional):** *Ficha técnica (humedad y merma) → Calibre (4-6cm) → Volumen (cajas 1-5kg) → Regularidad → Entrega → Contacto.*
-
-### Los Cuatro Modos de Swiss Botanical
-El sistema organiza la experiencia en cuatro capas operativas:
-- **Archive:** Taxonomía, territorio, archivo histórico y memoria botánica.
-- **Field:** Cultivo, procesos de inoculación y observación agronómica.
-- **Control:** Lotes, fechas, pesos y trazabilidad criptográfica inmutable.
-- **Culinary Market:** Herramienta de decisión culinaria estructurada en 7 pasos:
-  *Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad → Origen → Próximo paso.*
-
-La especie protagonista de este lanzamiento es el **Shiitake** (*Lentinula edodes*), cultivado sobre sustrato biológico formulado en Tenjo.
+La especie protagonista de la muestra es el **shiitake** (*Lentinula edodes*). Las ilustraciones representan especies y no documentan cosechas reales. Los formatos son ejemplos; precio y disponibilidad están por confirmar.
 
 ---
 
@@ -51,16 +39,16 @@ El sistema es 100% autocontenido e independiente de las hojas de estilo de produ
 │   ├── spacing.css            # Retícula proporcional modular de base 4/8px
 │   ├── motion.css             # Cinemática editorial pausada (400-500ms)
 │   ├── tokens.css             # Índice importador de tokens
-│   └── tokens.json            # Fuente única de verdad machine-readable
+│   └── tokens.json            # Exportación generada de los tokens CSS
 ├── components/
 │   ├── base.css               # Reset tipográfico, contenedores y accesibilidad
 │   ├── components.css         # Botones de imprenta, badges, selector híbrido y cápsula de lote
 │   └── editorial.css          # Pliegos editoriales, folios, marginalia y citas
 ├── mockups/
 │   ├── home.html              # Portada comercial asimétrica y catálogo de temporada
-│   ├── product.html           # Ficha de producto (Shiitake)
-│   ├── editorial.html         # Ensayo editorial: "El Dominio del Fuego y el Roble"
-│   ├── traceability.html      # Cuaderno de trazabilidad del Lote SDP-26-SH-04
+│   ├── product.html           # Ficha de shiitake y selección local de formato
+│   ├── editorial.html         # Cuaderno: "El placer de mirar de cerca"
+│   ├── traceability.html      # Estructura de origen con campos pendientes
 │   ├── manifest.json          # Configuración de resoluciones (Desktop + Mobile)
 │   └── out/                   # Directorio para capturas de renderizado
 └── scripts/
@@ -76,15 +64,20 @@ El sistema es 100% autocontenido e independiente de las hojas de estilo de produ
 El sistema incluye una suite de pruebas automatizadas:
 
 ```bash
+# Desde 08_brand/swiss-botanical/, regenerar JSON después de editar tokens CSS:
+node scripts/export-tokens.mjs
+
 # 1. Validación estructural (tokens huérfanos, rutas de fuentes, paridad JSON/CSS):
 python3 scripts/validate.py
 
-# 2. Auditoría matemática de contrastes WCAG 2.1 AA (todas las combinaciones):
+# 2. Auditoría de 18 pares semánticos seleccionados para contraste WCAG AA:
 python3 scripts/contrast-audit.py
 
 # 3. Renderizador de mockups a imágenes PNG:
 node scripts/render.mjs
 ```
+
+Los archivos CSS de tokens son la fuente editable; `tokens.json` se genera con `export-tokens.mjs`. El renderizador necesita Playwright disponible. `SB_PLAYWRIGHT_PATH` permite señalar una instalación existente. La auditoría de contraste cubre los pares declarados y no equivale a una certificación completa de accesibilidad.
 
 ---
 
@@ -92,4 +85,13 @@ node scripts/render.mjs
 
 - No se modifica `field-os-simulador/setas-os/simulador-app.jsx` ni el bundle `simulador-app.js`.
 - No se alteran algoritmos de nutrición, C:N, Perito ni datos de Firestore.
-- Toda afirmación botánica o gastronómica está fundamentada en el conocimiento agronómico y territorial de Tenjo.
+- Las vistas no certifican cultivo, composición, inocuidad ni vida útil. El contenido operativo y culinario se publicará únicamente con fuentes verificadas.
+
+## Interacciones de la muestra
+
+Para comprobar navegación, filtros, radios con teclado, recursos y desbordamiento a 320, 768 y 1440 px, sirve la carpeta por HTTP y ejecuta `SB_PREVIEW_URL=http://127.0.0.1:PUERTO/mockups node scripts/check-browser.mjs`. Admite también `SB_PLAYWRIGHT_PATH`. Los renderizados se generan localmente en `mockups/out/` y no se versionan.
+
+- La colección permite filtrar por especie con botones accesibles. Solo el shiitake dispone de ficha; las otras especies son presentaciones estáticas.
+- La ficha permite elegir un formato y consultar una selección local, sin enviar pedidos.
+- La trazabilidad muestra campos pendientes y no simula certificaciones ni registros existentes.
+- Las cuatro vistas incluyen navegación por teclado, enlace para saltar al contenido y aviso de prototipo.

@@ -113,19 +113,19 @@
 .sb-badge--orellana {
   border-color: var(--sb-accent-orellana);
   background-color: var(--sb-accent-orellana-tint);
-  color: var(--sb-accent-orellana);
+  color: var(--sb-accent-orellana-text);
 }
 
 .sb-badge--melena {
   border-color: var(--sb-accent-melena);
   background-color: var(--sb-accent-melena-tint);
-  color: var(--sb-accent-melena);
+  color: var(--sb-accent-melena-text);
 }
 
 .sb-badge--rosa {
   border-color: var(--sb-accent-rosa);
   background-color: var(--sb-accent-rosa-tint);
-  color: var(--sb-accent-rosa);
+  color: var(--sb-accent-rosa-text);
 }
 
 .sb-badge--status {
@@ -142,6 +142,19 @@
   border-radius: 50%;
   background-color: currentColor;
 }
+
+/* Estados de confianza: siempre llevan texto; el color solo refuerza la lectura. */
+.sb-status--verified,
+.sb-status--available { background-color: var(--sb-status-active-tint); border-color: var(--sb-status-active); color: var(--sb-status-active); }
+.sb-status--pending,
+.sb-status--development { background-color: var(--sb-status-neutral-tint); border-color: var(--sb-status-neutral); color: var(--sb-status-neutral); }
+.sb-status--unavailable { background-color: var(--sb-status-error-tint); border-color: var(--sb-status-error); color: var(--sb-status-error); }
+.sb-status--development { background-color: var(--sb-status-info-tint); border-color: var(--sb-status-info); color: var(--sb-status-info); }
+.sb-status--verified::before,
+.sb-status--available::before,
+.sb-status--pending::before,
+.sb-status--unavailable::before,
+.sb-status--development::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 /* ---- Selector Híbrido Hogar / Chef ---- */
 .sb-segment-switch {
@@ -170,7 +183,7 @@
 .sb-segment-option--active {
   background-color: var(--sb-paper-0);
   color: var(--sb-ink-0);
-  box-shadow: 0 1px 2px rgba(30, 29, 25, 0.08);
+  border-bottom: 2px solid var(--sb-ink-0);
 }
 
 /* ---- Cápsula de Trazabilidad Progresiva ---- */
@@ -357,328 +370,63 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Modo Culinary Market · Componente de Decisión (7 Pasos)
-   Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad
-   → Origen → Próximo paso
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Barra de los Cuatro Modos del DS */
-.sb-modes-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--sb-space-2);
-  padding: var(--sb-space-2) var(--sb-space-3);
-  background-color: var(--sb-paper-2);
-  border: 1px solid var(--sb-line-hairline);
-  border-radius: var(--sb-radius-xs);
-  font-family: var(--sb-font-mono);
-  font-size: var(--sb-text-xs);
-  overflow-x: auto;
+/* Shared layouts keep navigation and actions available on narrow screens. */
+.sb-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-block: 24px; }
+.sb-editorial-teaser { display: grid; grid-template-columns: 1.4fr .6fr; align-items: center; gap: 48px; padding-block: 64px; border-top: 1px solid var(--sb-line-heavy); }
+.sb-editorial-teaser img { max-height: 340px; justify-self: center; object-fit: contain; }
+.sb-editorial-teaser h2 { font-size: clamp(32px, 4vw, 52px); max-width: 20ch; margin-bottom: 24px; }
+#catalogo { padding-block: 64px; }
+#catalogo > p { max-width: 65ch; margin-block: 20px; }
+.sb-traceability-capsule__tag, .sb-traceability-capsule__lot, .sb-traceability-capsule__meta { display: block; }
+.sb-hero figcaption { border-top: 1px solid var(--sb-line-hairline); margin-top: 24px; padding-top: 16px; text-align: left; }
+.sb-hero figcaption strong { font-family: var(--sb-font-serif); font-size: 28px; }
+.sb-product-layout dl { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px 20px; margin-block: 24px; }
+.sb-product-layout dt { font-weight: 600; }
+.sb-product-layout dd { margin: 0; }
+#formatos { margin-block: 24px; }
+#formatos fieldset { border: 0; min-width: 0; }
+#formatos legend { font-size: 24px; font-family: var(--sb-font-serif); font-weight: 700; margin-bottom: 12px; }
+#formatos .sb-gram-card { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 8px; min-height: 96px; }
+#formatos .sb-gram-card span { width: 100%; font-size: 14px; }
+#formatos .sb-gram-card:has(input:checked) { background: var(--sb-accent-shiitake-tint); border-color: var(--sb-accent-shiitake); }
+#formatos input { accent-color: var(--sb-accent-shiitake); }
+#seleccion:not(:empty) { border-left: 3px solid var(--sb-accent-shiitake); padding: 16px; margin-top: 20px; background: var(--sb-paper-1); }
+.sb-metric-card { min-width: 0; }
+.sb-metric-card h2 { font-family: var(--sb-font-sans); font-size: 16px; margin-bottom: 12px; }
+main > header, main > section { margin-block: 32px; }
+.sb-metric-card p { overflow-wrap: anywhere; }
+.sb-header__inner { gap: 20px; flex-wrap: wrap; }
+.sb-brand-mark { flex-wrap: wrap; column-gap: 12px; }
+.sb-nav { flex-wrap: wrap; gap: 8px 24px; }
+.sb-nav__link, .sb-btn, .sb-filter-btn, .sb-segment-option { min-height: 44px; }
+.sb-nav__link { display: inline-flex; align-items: center; }
+.sb-traceability-capsule { flex-wrap: wrap; }
+.sb-traceability-capsule__lead { min-width: 0; }
+.sb-badge { white-space: normal; }
+.sb-header__inner > *, .sb-product-layout > *, .sb-editorial-body > * { min-width: 0; }
+.sb-prose { max-width: 65ch; }
+.sb-editorial-folio, .sb-plate-caption { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 960px) {
+  .sb-header { position: static; }
+  .sb-header__inner { align-items: flex-start; }
+  .sb-nav { width: 100%; order: 3; }
+  .sb-brand-mark__sub { display: block; width: 100%; }
 }
-
-.sb-mode-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--sb-radius-xs);
-  color: var(--sb-ink-2);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all var(--sb-duration-fast) ease;
+@media (max-width: 900px) {
+  .sb-product-info { order: -1; }
+  .sb-product-layout .sb-viewer__main { height: 260px; }
 }
-
-.sb-mode-pill:hover {
-  color: var(--sb-ink-0);
-  background-color: var(--sb-paper-1);
-}
-
-.sb-mode-pill--active {
-  background-color: var(--sb-paper-0);
-  color: var(--sb-ink-0);
-  font-weight: 600;
-  border: 1px solid var(--sb-line-strong);
-}
-
-.sb-mode-pill__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-/* Ficha de Decisión Culinary Market */
-.sb-decision-flow {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sb-space-6);
-  background-color: var(--sb-paper-1);
-  border: 1px solid var(--sb-line-strong);
-  padding: var(--sb-space-8);
-  border-radius: var(--sb-radius-xs);
-}
-
-.sb-step-block {
-  border-bottom: 1px solid var(--sb-line-hairline);
-  padding-bottom: var(--sb-space-5);
-}
-
-.sb-step-block:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.sb-step-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--sb-space-2);
-  font-family: var(--sb-font-mono);
-  font-size: var(--sb-text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--sb-tracking-caps);
-  color: var(--sb-accent-shiitake);
-  margin-bottom: var(--sb-space-2);
-}
-
-.sb-step-eyebrow__num {
-  font-weight: 700;
-  padding: 1px 5px;
-  background-color: var(--sb-paper-3);
-  border-radius: 2px;
-  color: var(--sb-ink-0);
-}
-
-.sb-taste-chips {
-  display: flex;
-  gap: var(--sb-space-2);
-  flex-wrap: wrap;
-  margin-top: var(--sb-space-2);
-}
-
-.sb-taste-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--sb-text-xs);
-  font-family: var(--sb-font-mono);
-  padding: 3px 8px;
-  border-radius: var(--sb-radius-xs);
-  background-color: var(--sb-paper-0);
-  border: 1px solid var(--sb-line-hairline);
-  color: var(--sb-ink-1);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Dos Recorridos de Usuario: Hogar vs. Chef / HORECA
-   Mismo Design System, dos entradas y dos jerarquías de información.
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Toggle de Audiencia */
-.sb-journey-toggle {
-  display: inline-flex;
-  background-color: var(--sb-paper-2);
-  border: 1px solid var(--sb-line-strong);
-  border-radius: var(--sb-radius-xs);
-  padding: 3px;
-  gap: 3px;
-}
-
-.sb-journey-btn {
-  font-family: var(--sb-font-sans);
-  font-size: var(--sb-text-xs);
-  font-weight: 600;
-  letter-spacing: var(--sb-tracking-wide);
-  padding: var(--sb-space-2) var(--sb-space-4);
-  border-radius: var(--sb-radius-xs);
-  border: none;
-  background: transparent;
-  color: var(--sb-ink-2);
-  cursor: pointer;
-  transition: all var(--sb-duration-fast) var(--sb-ease-editorial);
-}
-
-.sb-journey-btn--active {
-  background-color: var(--sb-paper-0);
-  color: var(--sb-ink-0);
-  box-shadow: 0 1px 2px rgba(30, 29, 25, 0.08);
-  border: 1px solid var(--sb-line-hairline);
-}
-
-/* Paneles de Recorrido */
-.sb-journey-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sb-space-6);
-  animation: sbFadeIn var(--sb-duration-normal) var(--sb-ease-editorial);
-}
-
-@keyframes sbFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Módulo Culinario Hogar: Tres Pautas Directas */
-.sb-cooking-guide {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sb-space-3);
-  margin-top: var(--sb-space-3);
-}
-
-.sb-cooking-step {
-  background-color: var(--sb-paper-0);
-  border: 1px solid var(--sb-line-hairline);
-  padding: var(--sb-space-3);
-  border-radius: var(--sb-radius-xs);
-}
-
-.sb-cooking-step__num {
-  font-family: var(--sb-font-mono);
-  font-size: var(--sb-text-2xs);
-  font-weight: 700;
-  color: var(--sb-accent-shiitake);
-  text-transform: uppercase;
-  letter-spacing: var(--sb-tracking-caps);
-  display: block;
-  margin-bottom: 2px;
-}
-
-.sb-cooking-step__title {
-  font-weight: 600;
-  font-size: var(--sb-text-xs);
-  color: var(--sb-ink-0);
-  margin-bottom: 2px;
-}
-
-.sb-cooking-step__desc {
-  font-size: var(--sb-text-2xs);
-  color: var(--sb-ink-1);
-  line-height: 1.4;
-  margin: 0;
-}
-
 @media (max-width: 600px) {
-  .sb-cooking-guide {
-    grid-template-columns: 1fr;
-  }
+  .sb-editorial-teaser { grid-template-columns: 1fr; gap: 24px; padding-block: 40px; }
+  .sb-editorial-teaser img { max-height: 240px; }
+  #formatos .sb-gram-selector { grid-template-columns: 1fr; }
+  .sb-product-layout dl { grid-template-columns: 1fr; gap: 4px; }
+  .sb-product-layout dd { margin-bottom: 12px; }
+  .sb-container { padding-inline: 20px; }
+  .sb-specs-table th { width: 42%; }
+  .sb-specs-table th, .sb-specs-table td { overflow-wrap: anywhere; }
+  .sb-editorial-title { font-size: clamp(36px, 10vw, 52px); }
 }
-
-/* Módulo HORECA / Chef Profesional */
-.sb-chef-specs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sb-space-3);
-  margin-top: var(--sb-space-3);
-}
-
-.sb-chef-spec-card {
-  background-color: var(--sb-paper-0);
-  border: 1px solid var(--sb-line-hairline);
-  padding: var(--sb-space-3);
-  border-radius: var(--sb-radius-xs);
-}
-
-.sb-chef-spec-card__label {
-  font-family: var(--sb-font-mono);
-  font-size: var(--sb-text-2xs);
-  text-transform: uppercase;
-  color: var(--sb-ink-2);
-  letter-spacing: var(--sb-tracking-caps);
-  display: block;
-  margin-bottom: 2px;
-}
-
-.sb-chef-spec-card__value {
-  font-family: var(--sb-font-sans);
-  font-size: var(--sb-text-sm);
-  font-weight: 600;
-  color: var(--sb-ink-0);
-}
-
-.sb-chef-spec-card__detail {
-  font-size: var(--sb-text-2xs);
-  color: var(--sb-ink-1);
-  margin-top: 2px;
-}
-
-/* Nota Sensorial en Gaya Italic (Norma: máx 3 líneas, perfil validado) */
-.sb-sensory-note {
-  font-family: var(--sb-font-serif);
-  font-style: italic;
-  font-weight: 500;
-  font-size: var(--sb-text-lg);
-  line-height: var(--sb-leading-snug);
-  color: var(--sb-accent-shiitake);
-  margin-top: var(--sb-space-1);
-  margin-bottom: var(--sb-space-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Distinción Epistémica: Editorial vs. Perfil Validado vs. Pendiente
-   Evita que una metáfora visual se convierta en promesa culinaria.
-   ═══════════════════════════════════════════════════════════════ */
-
-.sb-badge--editorial {
-  border-color: var(--sb-line-strong);
-  background-color: var(--sb-paper-2);
-  color: var(--sb-ink-1);
-  font-style: normal;
-}
-
-.sb-badge--validated {
-  border-color: var(--sb-status-active);
-  background-color: var(--sb-status-active-tint);
-  color: var(--sb-status-active);
-}
-
-.sb-badge--pending {
-  border-color: var(--sb-line-hairline);
-  background-color: var(--sb-paper-2);
-  color: var(--sb-ink-2);
-  font-style: italic;
-}
-
-/* Fila Epistémica de Especificación */
-.sb-epistemic-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sb-space-2);
-  background-color: var(--sb-paper-0);
-  border: 1px solid var(--sb-line-hairline);
-  padding: var(--sb-space-3) var(--sb-space-4);
-  border-radius: var(--sb-radius-xs);
-  margin-top: var(--sb-space-3);
-}
-
-.sb-epistemic-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--sb-text-xs);
-  border-bottom: 1px solid var(--sb-paper-2);
-  padding-bottom: 4px;
-}
-
-.sb-epistemic-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.sb-epistemic-label {
-  font-family: var(--sb-font-mono);
-  font-size: var(--sb-text-2xs);
-  text-transform: uppercase;
-  color: var(--sb-ink-2);
-  letter-spacing: var(--sb-tracking-caps);
-}
-
-.sb-epistemic-val {
-  font-family: var(--sb-font-sans);
-  color: var(--sb-ink-0);
-  font-weight: 500;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

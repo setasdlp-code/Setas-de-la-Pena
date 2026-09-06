@@ -53,7 +53,7 @@ Se analizaron diez casos internacionales de diseño editorial, tipografía y pac
 5. **Taboocha ([Fonts In Use 76878](https://fontsinuse.com/uses/76878/taboocha-kombucha)):**
    - *Decisión transferible:* Codificación cromática vibrante pero disciplinada para diferenciar perfiles organolépticos entre variedades hermanas.
 6. **Qatsi Tea ([Fonts In Use 76757](https://fontsinuse.com/uses/76757/qatsi-tea)):**
-   - *Decisión transferible:* La información de origen, altitud y cosecha expuesta como un sello notarial sobrio que valida la calidad botánica del lote.
+   - *Decisión transferible:* Presentar la información de origen con claridad y jerarquía. Un recurso gráfico no certifica calidad ni sustituye evidencia del lote.
 7. **Plant Good Seed ([Fonts In Use 74512](https://fontsinuse.com/uses/74512/plant-good-seed)):**
    - *Decisión transferible:* Fichas prácticas que enseñan a conservar, manipular y preparar el producto inmediatamente.
 8. **Tempus Olive Oil ([Fonts In Use 71574](https://fontsinuse.com/uses/71574/tempus-olive-oil)):**
