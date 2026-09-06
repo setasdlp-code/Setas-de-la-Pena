@@ -1,0 +1,58 @@
+[
+  {
+    "name": "home-desktop",
+    "url": "mockups/home.html",
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  {
+    "name": "home-mobile",
+    "url": "mockups/home.html",
+    "width": 390,
+    "height": 844,
+    "scale": 2
+  },
+  {
+    "name": "product-desktop",
+    "url": "mockups/product.html",
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  {
+    "name": "product-mobile",
+    "url": "mockups/product.html",
+    "width": 390,
+    "height": 844,
+    "scale": 2
+  },
+  {
+    "name": "editorial-desktop",
+    "url": "mockups/editorial.html",
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  {
+    "name": "editorial-mobile",
+    "url": "mockups/editorial.html",
+    "width": 390,
+    "height": 844,
+    "scale": 2
+  },
+  {
+    "name": "traceability-desktop",
+    "url": "mockups/traceability.html",
+    "width": 1440,
+    "height": 900,
+    "scale": 2
+  },
+  {
+    "name": "traceability-mobile",
+    "url": "mockups/traceability.html",
+    "width": 390,
+    "height": 844,
+    "scale": 2
+  }
+]

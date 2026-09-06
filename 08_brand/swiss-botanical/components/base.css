@@ -1,0 +1,127 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Base & Global Styles
+   ═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  background-color: var(--sb-paper-0);
+  color: var(--sb-ink-0);
+  font-family: var(--sb-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  line-height: var(--sb-leading-normal);
+  background-color: var(--sb-paper-0);
+  color: var(--sb-ink-0);
+  overflow-x: hidden;
+}
+
+/* Tipografía de Encabezados */
+h1, h2, h3, h4, .sb-font-serif {
+  font-family: var(--sb-font-serif);
+  font-weight: 700;
+  line-height: var(--sb-leading-tight);
+  color: var(--sb-ink-0);
+}
+
+h1 {
+  font-size: var(--sb-text-3xl);
+  letter-spacing: var(--sb-tracking-tight);
+}
+
+h2 {
+  font-size: var(--sb-text-2xl);
+  letter-spacing: var(--sb-tracking-tight);
+}
+
+h3 {
+  font-size: var(--sb-text-xl);
+}
+
+h4 {
+  font-size: var(--sb-text-lg);
+}
+
+p {
+  color: var(--sb-ink-1);
+  font-size: var(--sb-text-base);
+  line-height: var(--sb-leading-normal);
+  margin-bottom: var(--sb-space-4);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Taxonomía Científica */
+em.sb-scientific, .sb-scientific {
+  font-family: var(--sb-font-serif);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Enlaces */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--sb-duration-fast) ease;
+}
+
+a:hover {
+  color: var(--sb-accent-shiitake);
+}
+
+/* Accesibilidad y Foco */
+:focus-visible {
+  outline: 2px solid var(--sb-accent-shiitake);
+  outline-offset: 2px;
+}
+
+/* Contenedores */
+.sb-container {
+  width: 100%;
+  max-width: var(--sb-container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--sb-space-6);
+  padding-right: var(--sb-space-6);
+}
+
+.sb-container--reading {
+  max-width: var(--sb-container-reading);
+}
+
+.sb-container--wide {
+  max-width: var(--sb-container-wide);
+}
+
+/* Elementos Monoespaciados */
+.sb-mono {
+  font-family: var(--sb-font-mono);
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Filetes */
+hr.sb-rule {
+  border: none;
+  border-top: 1px solid var(--sb-line-hairline);
+  margin: var(--sb-space-8) 0;
+}
+
+hr.sb-rule--strong {
+  border-top: 1px solid var(--sb-line-strong);
+}
+
+hr.sb-rule--heavy {
+  border-top: 2px solid var(--sb-line-heavy);
+}

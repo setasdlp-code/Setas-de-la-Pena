@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shiitake de Montaña · Lentinula edodes — Setas de la Peña</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    .sb-product-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--sb-space-12);
+      padding-top: var(--sb-space-10);
+      padding-bottom: var(--sb-space-16);
+    }
+    .sb-viewer {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-strong);
+      padding: var(--sb-space-8);
+      position: sticky;
+      top: 90px;
+    }
+    .sb-viewer__main {
+      background-color: var(--sb-paper-0);
+      border: 1px solid var(--sb-line-hairline);
+      padding: var(--sb-space-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 380px;
+      margin-bottom: var(--sb-space-4);
+    }
+    .sb-viewer__img {
+      max-height: 90%;
+      max-width: 90%;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 16px rgba(30, 29, 25, 0.09));
+    }
+    .sb-gram-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sb-space-2);
+      margin-top: var(--sb-space-2);
+      margin-bottom: var(--sb-space-6);
+    }
+    .sb-gram-card {
+      border: 1px solid var(--sb-line-strong);
+      background-color: var(--sb-paper-0);
+      padding: var(--sb-space-3);
+      text-align: center;
+      cursor: pointer;
+      border-radius: var(--sb-radius-xs);
+      transition: all var(--sb-duration-fast) ease;
+    }
+    .sb-gram-card--active, .sb-gram-card:hover {
+      border-color: var(--sb-accent-shiitake);
+      background-color: var(--sb-accent-shiitake-tint);
+    }
+    .sb-recipe-box {
+      background-color: var(--sb-paper-2);
+      border-left: 3px solid var(--sb-accent-shiitake);
+      padding: var(--sb-space-5);
+      margin-top: var(--sb-space-6);
+      margin-bottom: var(--sb-space-8);
+    }
+    @media (max-width: 900px) {
+      .sb-product-layout {
+        grid-template-columns: 1fr;
+        gap: var(--sb-space-8);
+      }
+      .sb-viewer {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Común -->
+  <header class="sb-header">
+    <div class="sb-container sb-header__inner">
+      <a href="home.html" class="sb-brand-mark">
+        Setas de la Peña
+        <span class="sb-brand-mark__sub">Tenjo · 2.592 msnm</span>
+      </a>
+      <nav class="sb-nav">
+        <a href="home.html" class="sb-nav__link">Cosecha</a>
+        <a href="product.html" class="sb-nav__link sb-nav__link--active">Ficha Shiitake</a>
+        <a href="editorial.html" class="sb-nav__link">Cuaderno Editorial</a>
+        <a href="traceability.html" class="sb-nav__link">Trazabilidad</a>
+      </nav>
+      <div style="display: flex; align-items: center; gap: var(--sb-space-3);">
+        <div class="sb-segment-switch">
+          <button class="sb-segment-option sb-segment-option--active">Hogares</button>
+          <button class="sb-segment-option">Chefs</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Ficha de Producto -->
+  <main class="sb-container">
+
+    <!-- Ruta de Migas de Pan -->
+    <div class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); padding-top: var(--sb-space-6); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps);">
+      <a href="home.html">Cosecha</a> &nbsp;/&nbsp; <a href="#">Especies de Montaña</a> &nbsp;/&nbsp; <span style="color: var(--sb-ink-0);">Lentinula edodes</span>
+    </div>
+
+    <div class="sb-product-layout">
+
+      <!-- Visor Botánico (Izquierda) -->
+      <div class="sb-viewer">
+        <div class="sb-viewer__main">
+          <img src="../assets/img/species/shiitake.png" alt="Shiitake fresco en corte óptimo" class="sb-viewer__img">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Corte: Velo quebrado 70%</span>
+          <span class="sb-badge sb-badge--status">Disponible para envío hoy</span>
+        </div>
+
+        <!-- Cápsula de Trazabilidad Directa -->
+        <div style="margin-top: var(--sb-space-6);">
+          <a href="traceability.html" class="sb-traceability-capsule" style="width: 100%;">
+            <div class="sb-traceability-capsule__lead">
+              <span class="sb-traceability-capsule__tag">Registro de Finca & Inoculación</span>
+              <span class="sb-traceability-capsule__lot">Lote SDP-26-SH-04</span>
+              <span class="sb-traceability-capsule__meta">Inoculado: 12 Jun 2026 · Cosechado: Hoy 05:45 AM</span>
+            </div>
+            <span class="sb-traceability-capsule__action">Ver Cuaderno &rarr;</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Arquitectura de Información y Compra (Derecha) -->
+      <div>
+
+        <!-- 1. QUÉ ES -->
+        <div style="margin-bottom: var(--sb-space-4);">
+          <div style="display: flex; align-items: center; gap: var(--sb-space-2); margin-bottom: var(--sb-space-2);">
+            <span class="sb-badge sb-badge--shiitake">Umami Roble</span>
+            <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Hongo Saprófito Cultivado</span>
+          </div>
+          <h1 style="font-size: var(--sb-text-3xl); line-height: 1.1; margin-bottom: 2px;">Shiitake de Montaña</h1>
+          <p class="sb-scientific" style="font-size: var(--sb-text-lg); color: var(--sb-accent-shiitake); margin-bottom: var(--sb-space-4);">
+            Lentinula edodes
+          </p>
+          <p style="font-size: var(--sb-text-base); color: var(--sb-ink-1); line-height: 1.6;">
+            Hongo de sombrero grueso y carnoso, cultivado sobre un sustrato biológico de viruta de roble andino local y salvado de trigo en la falda oriental de la Peña de Juaica (2.592 msnm).
+          </p>
+        </div>
+
+        <hr class="sb-rule">
+
+        <!-- 2. POR QUÉ ELEGIRLO -->
+        <div style="margin-bottom: var(--sb-space-6);">
+          <h3 style="font-size: var(--sb-text-sm); font-family: var(--sb-font-mono); text-transform: uppercase; letter-spacing: var(--sb-tracking-caps); color: var(--sb-ink-2); margin-bottom: var(--sb-space-3);">
+            Por qué elegirlo
+          </h3>
+          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sb-space-2); font-size: var(--sb-text-sm); color: var(--sb-ink-1);">
+            <li style="display: flex; gap: var(--sb-space-2);">
+              <strong style="color: var(--sb-ink-0); min-width: 140px;">Perfil Umami:</strong> Concentración natural de lentinano y ácido glutámico potenciada por el choque térmico nocturno de la Sabana.
+            </li>
+            <li style="display: flex; gap: var(--sb-space-2);">
+              <strong style="color: var(--sb-ink-0); min-width: 140px;">Textura en Cocina:</strong> No se desarma ni libera exceso de agua en la sartén; adquiere una costra dorada crujiente con centro jugoso.
+            </li>
+            <li style="display: flex; gap: var(--sb-space-2);">
+              <strong style="color: var(--sb-ink-0); min-width: 140px;">Pureza de Cultivo:</strong> Cero pesticidas, fungicidas o agroquímicos. Irrigado exclusivamente con agua de niebla filtrada.
+            </li>
+          </ul>
+        </div>
+
+        <!-- 3. CÓMO USARLO & CONSERVARLO -->
+        <div class="sb-recipe-box">
+          <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-2); color: var(--sb-accent-shiitake-deep);">
+            Sugerencia de Preparación del Perito Culinario
+          </h4>
+          <p style="font-size: var(--sb-text-sm); margin-bottom: var(--sb-space-3); color: var(--sb-ink-0);">
+            <strong>Sartén de hierro a fuego medio-alto:</strong> Cortar en mitades o cuartos. Calentar 1 cucharada de mantequilla o aceite neutro. Colocar con el sombrero hacia abajo y dorar 3 a 4 minutos sin mover para sellar el umami. Voltear, añadir sal marina y una rama de tomillo fresco.
+          </p>
+          <div class="sb-mono" style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2); display: flex; justify-content: space-between;">
+            <span>Conservación: 4°C a 6°C en bolsa kraft</span>
+            <span>Vida útil óptima: 10 a 12 días</span>
+          </div>
+        </div>
+
+        <!-- 4. SELECCIÓN COMERCIAL & ACCIÓN -->
+        <div style="background-color: var(--sb-paper-1); border: 1px solid var(--sb-line-strong); padding: var(--sb-space-6); margin-bottom: var(--sb-space-8);">
+          <label style="font-family: var(--sb-font-mono); font-size: var(--sb-text-xs); text-transform: uppercase; color: var(--sb-ink-2); letter-spacing: var(--sb-tracking-caps); display: block; margin-bottom: var(--sb-space-2);">
+            Selecciona el Formato de Cosecha
+          </label>
+          <div class="sb-gram-selector">
+            <div class="sb-gram-card">
+              <span class="sb-mono" style="font-weight: 600; display: block;">250g</span>
+              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cata Hogar</span>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 500;">$14.000</div>
+            </div>
+            <div class="sb-gram-card sb-gram-card--active">
+              <span class="sb-mono" style="font-weight: 600; display: block;">500g</span>
+              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Cesta Cocina</span>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 600; color: var(--sb-accent-shiitake-deep);">$24.000</div>
+            </div>
+            <div class="sb-gram-card">
+              <span class="sb-mono" style="font-weight: 600; display: block;">1.5 kg</span>
+              <span style="font-size: var(--sb-text-2xs); color: var(--sb-ink-2);">Caja Chef</span>
+              <div class="sb-mono" style="font-size: var(--sb-text-xs); margin-top: 4px; font-weight: 500;">$62.000</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: var(--sb-space-3);">
+            <button class="sb-btn sb-btn--accent sb-btn--lg" style="flex: 1;">Comprar Cosecha Fresca</button>
+            <a href="traceability.html" class="sb-btn sb-btn--secondary sb-btn--lg">Inspeccionar Lote</a>
+          </div>
+        </div>
+
+        <!-- 5. QUÉ EXPLORAR DESPUÉS -->
+        <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: var(--sb-text-sm); color: var(--sb-ink-1);">
+            ¿Quieres saber cómo maridarlo con fondos y caldos?
+          </span>
+          <a href="editorial.html" class="sb-btn sb-btn--subtle">Leer ensayo de cocina &rarr;</a>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="sb-footer">
+    <div class="sb-container sb-footer__grid">
+      <div>
+        <span class="sb-brand-mark" style="font-size: var(--sb-text-lg);">Setas de la Peña</span>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2); margin-top: var(--sb-space-2); max-width: 32ch;">
+          Alimentos botánicos cultivados con rigor agronómico y trazabilidad abierta.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Enlaces</h4>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="home.html">Inicio Comercial</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="editorial.html">Ensayo Editorial</a></p>
+        <p style="font-size: var(--sb-text-xs); margin-bottom: var(--sb-space-1);"><a href="traceability.html">Trazabilidad de Lote</a></p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Garantía</h4>
+        <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">
+          Cosecha realizada bajo pedido para garantizar máxima vida en despensa y cero desperdicio en finca.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: var(--sb-text-sm); text-transform: uppercase; font-family: var(--sb-font-mono); margin-bottom: var(--sb-space-3);">Tenjo · Cundinamarca</h4>
+        <span class="sb-mono" style="font-size: var(--sb-text-xs); color: var(--sb-ink-2);">Lote activo: SDP-26-SH-04</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
