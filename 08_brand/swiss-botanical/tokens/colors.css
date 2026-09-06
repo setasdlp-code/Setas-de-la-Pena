@@ -23,21 +23,21 @@
   --sb-line-strong: #8C7F5B;   /* Borde de contenedor y tabla (3.6:1 en paper-0) */
   --sb-line-heavy: #1E1D19;    /* Marco de pliego editorial y acento tipográfico */
 
-  /* ---- Acentos Botánico-Organolépticos (Por Especie) ---- */
-  /* Shiitake (Lentinula edodes) · Roble tostado y umami de leña */
+  /* ---- Acentos Botánicos por Especie ---- */
+  /* Shiitake (Lentinula edodes) */
   --sb-accent-shiitake: #6E472D;
   --sb-accent-shiitake-deep: #5A3725;
   --sb-accent-shiitake-tint: #EFE4DA;
 
-  /* Orellana Perla (Pleurotus ostreatus) · Pizarra y bruma de Tenjo */
+  /* Orellana (Pleurotus ostreatus) */
   --sb-accent-orellana: #5E7080;
   --sb-accent-orellana-tint: #E2E7EA;
 
-  /* Melena de León (Hericium erinaceus) · Ocre dorado y miel silvestre */
+  /* Melena de León (Hericium erinaceus) */
   --sb-accent-melena: #9D6F28;
   --sb-accent-melena-tint: #F5EEDD;
 
-  /* Orellana Rosa (Pleurotus djamor) · Arcilla y espora coralina */
+  /* Orellana Rosada (Pleurotus djamor) */
   --sb-accent-rosa: #A85C32;
   --sb-accent-rosa-tint: #F4E7DF;
 

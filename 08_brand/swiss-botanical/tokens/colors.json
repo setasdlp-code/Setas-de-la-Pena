@@ -69,47 +69,47 @@
       "shiitake": {
         "value": "#6E472D",
         "type": "color",
-        "role": "Nombre editorial 'Umami Roble' \u00b7 Acento crom\u00e1tico de colecci\u00f3n (Lentinula edodes)."
+        "role": "Acento cromático de Shiitake (Lentinula edodes)."
       },
       "shiitakeDeep": {
         "value": "#5A3725",
         "type": "color",
-        "role": "Deep charred wood, rich button contrast."
+        "role": "Castaño oscuro de Shiitake (Botón primario, alto contraste)."
       },
       "shiitakeTint": {
         "value": "#EFE4DA",
         "type": "color",
-        "role": "Light chestnut ground tint for cards and chips."
+        "role": "Tinte castaño claro para etiquetas y tarjetas."
       },
       "orellana": {
         "value": "#5E7080",
         "type": "color",
-        "role": "Nombre editorial 'Pizarra Bruma' \u00b7 Acento crom\u00e1tico de colecci\u00f3n (Pleurotus ostreatus)."
+        "role": "Acento cromático de Orellana (Pleurotus ostreatus)."
       },
       "orellanaTint": {
         "value": "#E2E7EA",
         "type": "color",
-        "role": "Light slate mist tint for badges."
+        "role": "Tinte gris suave para etiquetas y paneles."
       },
       "melena": {
         "value": "#9D6F28",
         "type": "color",
-        "role": "Nombre editorial 'Ocre Dorado' \u00b7 Acento crom\u00e1tico de colecci\u00f3n (Hericium erinaceus)."
+        "role": "Acento cromático de Melena de León (Hericium erinaceus)."
       },
       "melenaTint": {
         "value": "#F5EEDD",
         "type": "color",
-        "role": "Light honey ground tint."
+        "role": "Tinte ocre claro para etiquetas y tarjetas."
       },
       "rosa": {
         "value": "#A85C32",
         "type": "color",
-        "role": "Nombre editorial 'Arcilla Coral' \u00b7 Acento crom\u00e1tico de colecci\u00f3n (Pleurotus djamor)."
+        "role": "Acento cromático de Orellana Rosada (Pleurotus djamor)."
       },
       "rosaTint": {
         "value": "#F4E7DF",
         "type": "color",
-        "role": "Light terracotta clay tint."
+        "role": "Tinte coral claro para etiquetas."
       }
     },
     "status": {
@@ -226,22 +226,22 @@
       "umami": {
         "value": "#6E472D",
         "type": "color",
-        "role": "Perfil umami roble y le\u00f1a."
+        "role": "Perfil tostado y umami natural."
       },
       "forest": {
         "value": "#4A3C31",
         "type": "color",
-        "role": "Perfil sotobosque y tierra andina."
+        "role": "Perfil sotobosque y tierra húmeda."
       },
       "mineral": {
         "value": "#5E7080",
         "type": "color",
-        "role": "Perfil mineral y niebla fresca."
+        "role": "Perfil suave y fresco."
       },
       "golden": {
         "value": "#9D6F28",
         "type": "color",
-        "role": "Perfil miel silvestre y notas de nuez."
+        "role": "Perfil delicado con notas de frutos secos."
       }
     }
   }

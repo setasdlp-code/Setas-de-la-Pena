@@ -101,31 +101,31 @@ Para evitar la confusión del cliente con grabados abstractos, las imágenes se 
 
 ---
 
-## 1.7. Distinción Epistémica: Nombre Editorial vs. Perfil Sensorial Validado
+### 1.7. Nombres Sencillos y Verificación Culinaria Honesta
 
-Para preservar la honestidad científica y agronómica de Setas de la Peña, el sistema impone una **separación conceptual estricta** entre la metáfora de diseño y la promesa organoléptica:
+Para preservar la honestidad agronómica y culinaria de Setas de la Peña, el sistema impone el uso **estricto de nombres comunes sencillos y directos**, eliminando por completo nombres poéticos o editoriales (como «Umami Roble», «Pizarra Bruma», «Ocre Dorado», «Arcilla Coral» o «Shiitake de Montaña»).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       DISTINCIÓN EPISTÉMICA NORMATIVA                       │
+│                   NOMENCLATURA SENCILLA Y VERIFICACIÓN                      │
 ├─────────────────────────┬─────────────────────────┬─────────────────────────┤
-│ 1. NOMBRE EDITORIAL     │ 2. PERFIL SENSORIAL     │ 3. USO RECOMENDADO      │
-│    (Metáfora de Serie)  │    VALIDADO (Cata Real) │    COMPROBADO (Técnica) │
+│ 1. NOMBRE SENCILLO      │ 2. PERFIL SENSORIAL     │ 3. USO RECOMENDADO      │
+│    (Común + Científico) │    VALIDADO (Cata Real) │    COMPROBADO (Técnica) │
 ├─────────────────────────┼─────────────────────────┼─────────────────────────┤
-│ • Umami Roble           │ • Comprobado o          │ • Comprobado o          │
-│ • Pizarra Bruma         │   Por confirmar         │   Por confirmar         │
-│ • Ocre Dorado           │ • Exige testeo empírico │ • Exige validación en   │
-│ • Arcilla Coral         │   en cocina             │   sartén/fuego real     │
+│ • Shiitake              │ • Comprobado o          │ • Comprobado o          │
+│ • Orellana              │   Por confirmar         │   Por confirmar         │
+│ • Melena de León        │ • Exige testeo empírico │ • Exige validación en   │
+│ • Orellana Rosada       │   en cocina             │   sartén/fuego real     │
 └─────────────────────────┴─────────────────────────┴─────────────────────────┘
 ```
 
 ### Reglas de Aplicación
-1. **Nombres como «Umami Roble» o «Pizarra Bruma» son nombres de colección editorial:** Funcionan como identificadores de serie o paleta cromática, pero **nunca** como afirmaciones automáticas de sabor.
-2. **La Ficha de Producto debe desglosar explícitamente:**
-   - *Nombre editorial:* «Umami Roble» (etiqueta visual de serie).
-   - *Perfil sensorial validado:* Notas comprobadas (ej. *textura firme y notas tostadas*) o explícitamente marcado como `[Por confirmar]`.
-   - *Uso recomendado:* Técnica contrastada (ej. *salteado en sartén a fuego vivo*) o marcado como `[Por confirmar]` para otras preparaciones.
-3. **Cero promesas no respaldadas:** Queda terminantemente prohibido convertir una metáfora estética en un compromiso biológico o culinario sin pruebas agronómicas o culinarias directas.
+1. **Nombres directos y comprensibles:** Se utilizan únicamente los nombres comunes reconocidos (*Shiitake*, *Orellana*, *Melena de León*, *Orellana Rosada*) junto a su binomio botánico (*Lentinula edodes*, *Pleurotus ostreatus*, *Hericium erinaceus*, *Pleurotus djamor*). No se usan epítetos líricos, metáforas de madera ni adornos de montaña.
+2. **La Ficha de Producto desglosa con honestidad:**
+   - *Nombre común:* Nombre directo y especie botánica.
+   - *Perfil sensorial validado:* Notas comprobadas empíricamente (ej. *textura firme y notas tostadas en salteado*) o explícitamente marcado como `[Por confirmar]`.
+   - *Uso recomendado comprobado:* Técnica contrastada (ej. *salteado en sartén de hierro a fuego vivo*) o marcado como `[Por confirmar]` para otras preparaciones.
+3. **Cero promesas no respaldadas:** No se inventan notas organolépticas ni se convierten conjeturas en afirmaciones culinarias.
 
 ---
 
@@ -172,11 +172,11 @@ La paleta se estructura sobre una base bimodal de papel marfil e tinta carbón, 
 - `--sb-ink-2: #6B6759;` (Metadatos y leyendas · Contraste 5.15:1, cumple WCAG AA)
 - `--sb-ink-inverse: #F7F4EC;` (Texto sobre fondos oscuros o acentos sólidos)
 
-### 3.2. Especies y Perfiles Sensoriales
-- **Shiitake (*Lentinula edodes*):** `--sb-accent-shiitake: #6E472D;` y `--sb-accent-shiitake-deep: #5A3725;` (Roble tostado y fuego).
-- **Orellana Perla (*Pleurotus ostreatus*):** `--sb-accent-orellana: #5E7080;` (Pizarra y niebla andina).
-- **Melena de León (*Hericium erinaceus*):** `--sb-accent-melena: #9D6F28;` (Ocre dorado y miel silvestre · Contraste 3.83:1).
-- **Orellana Rosa (*Pleurotus djamor*):** `--sb-accent-rosa: #A85C32;` (Arcilla y coral de espora).
+### 3.2. Especies y Acentos Cromáticos
+- **Shiitake (*Lentinula edodes*):** `--sb-accent-shiitake: #6E472D;` y `--sb-accent-shiitake-deep: #5A3725;` (Marrón castaño de sombrero fresco).
+- **Orellana (*Pleurotus ostreatus*):** `--sb-accent-orellana: #5E7080;` (Gris pizarra de láminas).
+- **Melena de León (*Hericium erinaceus*):** `--sb-accent-melena: #9D6F28;` (Ocre tostado · Contraste 3.83:1).
+- **Orellana Rosada (*Pleurotus djamor*):** `--sb-accent-rosa: #A85C32;` (Coral salmón de cuerpo joven · Contraste 4.09:1).
 
 ### 3.3. Filetes y Bordes
 - `--sb-line-hairline: #988C6C;` (3.03:1 en papel, cumple WCAG 1.4.11 no-textual).

@@ -83,5 +83,5 @@ La dirección de Swiss Botanical adopta el concepto del **«Taller Botánico Cul
 - **Eliminación estricta de aserciones no verificadas:** Se descartan menciones a sustratos de roble silvestre de la Peña de Juaica, captación de agua de niebla o supuestos aumentos de umami por altitud.
 - **Veracidad en etiquetado:** Se comunica el clima frío de la Sabana de Bogotá (Tenjo), el control ambiental en salas de fructificación y el uso de subproductos agrícolas locales formulados biológicamente.
 
-### 4.3. Separación entre Metáforas Visuales y Promesas Culinarias
-Una de las conclusiones determinantes del sistema es evitar que las etiquetas cromáticas de serie (ej. *Umami Roble*, *Pizarra Bruma*, *Ocre Dorado*) se deslicen hacia promesas culinarias automáticas. El sistema clasifica estos términos como nombres editoriales de colección, exigiendo que todo perfil sensorial y técnica de uso se desglose con su estatus real: *Comprobado* o *Por confirmar*.
+### 4.3. Rechazo de Nombres Editoriales Poéticos y Adopción de Nombres Sencillos
+Se eliminan por completo las etiquetas poéticas o editoriales para los hongos (como *Umami Roble*, *Pizarra Bruma*, *Ocre Dorado*, *Arcilla Coral* o *Shiitake de Montaña*). Se adoptan de forma estricta los nombres comunes sencillos y directos (*Shiitake*, *Orellana*, *Melena de León*, *Orellana Rosada*) acompañados de su binomio botánico. El perfil sensorial y la técnica culinaria se presentan de manera honesta y validada (*Comprobado* o *Por confirmar*), sin recurrir a artificios líricos que generen falsas expectativas.

@@ -27,7 +27,7 @@ El sistema organiza la experiencia en cuatro capas operativas:
 - **Culinary Market:** Herramienta de decisión culinaria estructurada en 7 pasos:
   *Qué es → A qué sabe → Cómo se usa → Formatos → Disponibilidad → Origen → Próximo paso.*
 
-La especie protagonista de este lanzamiento es el **Shiitake de Montaña** (*Lentinula edodes*), cultivado sobre sustrato biológico de roble andino local (*Quercus humboldtii*).
+La especie protagonista de este lanzamiento es el **Shiitake** (*Lentinula edodes*), cultivado sobre sustrato biológico formulado en Tenjo.
 
 ---
 
@@ -58,7 +58,7 @@ El sistema es 100% autocontenido e independiente de las hojas de estilo de produ
 │   └── editorial.css          # Pliegos editoriales, folios, marginalia y citas
 ├── mockups/
 │   ├── home.html              # Portada comercial asimétrica y catálogo de temporada
-│   ├── product.html           # Ficha de producto (Shiitake de Montaña)
+│   ├── product.html           # Ficha de producto (Shiitake)
 │   ├── editorial.html         # Ensayo editorial: "El Dominio del Fuego y el Roble"
 │   ├── traceability.html      # Cuaderno de trazabilidad del Lote SDP-26-SH-04
 │   ├── manifest.json          # Configuración de resoluciones (Desktop + Mobile)
