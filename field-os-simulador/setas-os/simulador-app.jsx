@@ -9137,6 +9137,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
                   <div className="spp-info-top" style={{background:'color-mix(in oklab,var(--moss-100) 40%,var(--paper-50))'}}>
+                    <div className="ed-folio" style={{marginBottom:10}}>
+                      <span className="ed-folio__t">Ficha de especie</span>
+                      <span className="ed-folio__n">{SPP_CODE[sKey]} · Tenjo</span>
+                    </div>
                     <div className="spp-info-sci">{sp.scientific}</div>
                     <h2 className="spp-info-name">{sp.name}</h2>
                     <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:12,paddingBottom:12,borderBottom:'1px solid color-mix(in oklab,var(--moss-400) 20%,transparent)'}}>
