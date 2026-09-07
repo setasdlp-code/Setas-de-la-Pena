@@ -87,10 +87,20 @@ test('un lote en estado terminal no ofrece transiciones, y no es un error', asyn
   assert.deepEqual(r.allowedTransitions, []);
 });
 
-test('un lote heredado sin workflowState no ofrece transiciones hasta conocerse', async () => {
+test('un lote heredado sin workflowState arranca en el estado inicial, como el servidor', async () => {
+  // Antes devolvía null y no ofrecía nada, dejando la hoja vacía para todos los
+  // lotes existentes. Ahora resuelve igual que accept-field-event.js.
   const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { estado: 'activo' } }), 'operario');
-  assert.equal(r.state, null);
-  assert.deepEqual(r.allowedTransitions, []);
+  assert.equal(r.state, 'inoculated');
+  assert.deepEqual(r.allowedTransitions, ['incubation']);
+});
+
+test('un campo `state` en el lote no manda: las reglas no lo protegen', async () => {
+  // Si `state` ganara, un cliente podría escribirlo y saltarse etapas, porque
+  // las reglas desplegadas sólo protegen workflowState y revision.
+  const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { state: 'fruiting' } }), 'direccion');
+  assert.equal(r.state, 'inoculated');
+  assert.ok(!r.allowedTransitions.includes('resting'), 'no debe ofrecer transiciones de fruiting');
 });
 
 test('un rol desconocido se rechaza', async () => {

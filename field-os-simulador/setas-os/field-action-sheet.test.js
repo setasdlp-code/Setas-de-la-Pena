@@ -178,7 +178,7 @@ test('confirmTransition para una transición no autorizada lanza unauthorized_ac
   await assert.rejects(
     () => confirmTransition({
       db,
-      batch: { id: 'L-unauth', state: 'incubation' },
+      batch: { id: 'L-unauth', workflowState: 'incubation' },
       from: 'incubation',
       to: 'quarantine',
       accountId: 'acc_1',
@@ -289,4 +289,21 @@ test('la marca de simulado sólo aplica al estado confirmado', () => {
   });
   assert.equal(pending.statusLabel, 'Guardado en este equipo');
   assert.equal(pending.simulated, false);
+});
+
+test('cliente y servidor resuelven el estado con la misma regla', () => {
+  // El servidor es accept-field-event.js:77 -> workflowState || DEFAULT_INITIAL_STATE.
+  const serverResolves = (b) => b.workflowState || 'inoculated';
+
+  for (const batch of [
+    { estado: 'activo' },
+    { workflowState: 'fruiting' },
+    { state: 'fruiting' },
+    { state: 'fruiting', workflowState: 'incubation' },
+    {},
+  ]) {
+    const model = buildActionSheetModel({ batch, batchId: 'L-1' });
+    assert.equal(model.state, serverResolves(batch),
+      `divergencia para ${JSON.stringify(batch)}: la hoja ofrecería transiciones que el servidor rechaza`);
+  }
 });

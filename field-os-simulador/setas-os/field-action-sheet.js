@@ -86,7 +86,7 @@
     // Resolver estado: el servidor (accept-field-event.js) lee workflowState o
     // asume DEFAULT_INITIAL_STATE ('inoculated'). Nunca lee 'estado' para evitar
     // divergencias entre cliente y servidor.
-    const resolvedState = state || batch?.workflowState || batch?.state || DEFAULT_INITIAL_STATE;
+    const resolvedState = state || batch?.workflowState || DEFAULT_INITIAL_STATE;
 
     const title = resolvedBatchId
       ? `Lote ${batch?.codigo || resolvedBatchId}`
@@ -183,10 +183,15 @@
       throw new Error('field_event_queue_unavailable: field-event-queue.js aún no se ha cargado');
     }
 
-    // Asegurar que el lote tiene una propiedad state consistente para validateTransition
+    // Resolver el estado exactamente como el servidor (accept-field-event.js:77):
+    // workflowState, o el inicial por defecto. Nunca `state` ni `estado` — las
+    // reglas desplegadas protegen workflowState y revision pero NO `state`, así
+    // que dejar que `state` mande permitiría a un cliente escribirlo y saltarse
+    // etapas. Y usar aquí un orden distinto al de buildActionSheetModel haría
+    // que la hoja validara contra un estado diferente del que muestra.
     const batchWithState = batch ? {
       ...batch,
-      state: batch.state || batch.workflowState || DEFAULT_INITIAL_STATE,
+      state: batch.workflowState || DEFAULT_INITIAL_STATE,
     } : null;
 
     // Validar transición contra la máquina de estados y el rol antes de tocar la base de datos

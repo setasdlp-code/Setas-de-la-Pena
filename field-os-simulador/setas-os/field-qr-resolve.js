@@ -12,6 +12,7 @@
 
   const model = isNode ? require('./field-events-model.js') : globalThis.SetasFieldEvents;
   const getWorkflow = () => (isNode ? require('./setas-os-workflow.js') : globalThis.SetasOSWorkflow);
+  const getContracts = () => (isNode ? require('./field-event-contracts.js') : globalThis.SetasFieldEventContracts);
 
   // Formatos aceptados. Una cadena suelta no se acepta como código: es
   // indistinguible de un QR de otro sistema, y aceptarla haría que escanear
@@ -38,7 +39,11 @@
     const batch = await lookup(batchId);
     if (!batch) throw new Error(`batch_not_found: ${batchId}`);
 
-    const state = batch.workflowState || batch.state || null;
+    // Igual que el servidor y que la hoja de acción: workflowState o el estado
+    // inicial. No se lee `state` — las reglas no lo protegen.
+    const contracts = getContracts();
+    const initial = (contracts && contracts.DEFAULT_INITIAL_STATE) || 'inoculated';
+    const state = batch.workflowState || initial;
     const workflow = getWorkflow();
     const candidates = (state && workflow.DEFAULT_TRANSITIONS[state]) || [];
 
