@@ -6871,7 +6871,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="os-valid-actions">
             {actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+              🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
@@ -11981,7 +11981,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -12057,14 +12057,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${
-                        thermalSize === '40x30' ? '40mm 30mm' :
-                        thermalSize === '50x30' ? '50mm 30mm' :
-                        thermalSize === '60x40' ? '60mm 40mm' :
-                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
-                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
-                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
-                      };
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -12125,35 +12118,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('60x40')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        60 × 40 mm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('gourmet-wood')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Faja Madera (180×60)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('kraft-tray')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Bandeja Kraft (80×120)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('apothecary-50')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Apotecario (50 ml)
-                      </button>
 
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
                     </div>
                   </div>
 
@@ -12193,7 +12161,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -12204,17 +12172,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                            <div className="thermal-code">{item.id}</div>
                           </div>
                           <div className="thermal-body">
                             <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
-                              <div>{item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">
-                              <span>Setas de la Peña</span>
                             </div>
                           </div>
                         </div>
@@ -12247,17 +12211,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-code">{item.id}</div>
                         </div>
                         <div className="thermal-body">
                           <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
-                            <div>{item.recipe}</div>
-                          </div>
-                          <div className="thermal-footer">
-                            <span>Setas de la Peña</span>
                           </div>
                         </div>
                       </div>

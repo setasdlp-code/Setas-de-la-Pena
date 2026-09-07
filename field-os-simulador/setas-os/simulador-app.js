@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5d2e4c8012e06c62e5c5ba1cdff4ea826bd22984bc6199d345acddd9f4de87c6
+// source-hash: 4b895013e451ad569906e91862041868622956bd408f4bd570cba9e493d327fc
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -5323,7 +5323,7 @@ BATCH (${numBags}×${kgBag} kg):
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
       setShowThermalModal(true);
-    } }, "🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)")), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (bitSyncErr ? "os-sync-state--error" : "os-sync-state--synced") }, bitSyncErr ? "Sin sincronizar" : "Sincronizado"))));
+    } }, "🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)")), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (bitSyncErr ? "os-sync-state--error" : "os-sync-state--synced") }, bitSyncErr ? "Sin sincronizar" : "Sincronizado"))));
   };
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
@@ -7698,7 +7698,7 @@ Click para ver análisis completo`
           }
         },
         /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 14, color: "var(--ink-0)" }),
-        " 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)"
+        " 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -7765,7 +7765,7 @@ Click para ver análisis completo`
       /* @__PURE__ */ React.createElement("style", { dangerouslySetInnerHTML: { __html: `
                   @media print {
                     @page {
-                      size: ${thermalSize === "40x30" ? "40mm 30mm" : thermalSize === "50x30" ? "50mm 30mm" : thermalSize === "60x40" ? "60mm 40mm" : thermalSize === "gourmet-wood" ? "180mm 60mm" : thermalSize === "kraft-tray" ? "80mm 120mm" : thermalSize === "apothecary-50" ? "85mm 42mm" : "auto"};
+                      size: ${thermalSize === "40x30" ? "40mm 30mm" : "50mm 30mm"};
                       margin: 0 !important;
                     }
                     body {
@@ -7809,39 +7809,7 @@ Click para ver análisis completo`
           style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "50x30" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "50x30" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "50x30" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
         },
         "50 × 30 mm"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => setThermalSize("60x40"),
-          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "60x40" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "60x40" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "60x40" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
-        },
-        "60 × 40 mm"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => setThermalSize("gourmet-wood"),
-          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "gourmet-wood" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "gourmet-wood" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "gourmet-wood" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
-        },
-        "Faja Madera (180×60)"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => setThermalSize("kraft-tray"),
-          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "kraft-tray" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "kraft-tray" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "kraft-tray" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
-        },
-        "Bandeja Kraft (80×120)"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => setThermalSize("apothecary-50"),
-          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "apothecary-50" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "apothecary-50" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "apothecary-50" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
-        },
-        "Apotecario (50 ml)"
-      ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-scope", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Alcance de Impresión"), /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", marginTop: 4 } }, "Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-scope", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Alcance de Impresión"), /* @__PURE__ */ React.createElement(
         "select",
         {
           id: "thermal-scope",
@@ -7857,9 +7825,9 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("option", { value: "cosecha" }, "Etiqueta de Canastilla / Cosecha")
       ))),
       thermalScope === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: "var(--paper-0, #F7F4EC)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-start", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Desde bolsa:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-start", name: "thermal-bag-start", type: "number", min: 1, max: totalBags, value: thermalBagStart, onChange: (e) => setThermalBagStart(parseInt(e.target.value) || 1), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } }), /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-end", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Hasta:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-end", name: "thermal-bag-end", type: "number", min: thermalBagStart, max: totalBags, value: thermalBagEnd, onChange: (e) => setThermalBagEnd(parseInt(e.target.value) || totalBags), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } })),
-      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : thermalSize === "50x30" ? "50×30 mm" : thermalSize === "60x40" ? "60×40 mm" : thermalSize === "gourmet-wood" ? "Faja Madera 180×60 mm" : thermalSize === "kraft-tray" ? "Bandeja Kraft 80×120 mm" : "Apotecario 50 ml")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
+      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : "50×30 mm")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id)), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date), /* @__PURE__ */ React.createElement("div", null, item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, /* @__PURE__ */ React.createElement("span", null, "Setas de la Peña"))));
+        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowThermalModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cancelar"), /* @__PURE__ */ React.createElement(
         "button",
@@ -7881,7 +7849,7 @@ Click para ver análisis completo`
       )),
       /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id)), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date), /* @__PURE__ */ React.createElement("div", null, item.recipe)), /* @__PURE__ */ React.createElement("div", { className: "thermal-footer" }, /* @__PURE__ */ React.createElement("span", null, "Setas de la Peña"))));
+        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))
     );
   })(), showProdLaunchModal && prodLaunchForm && (() => {
