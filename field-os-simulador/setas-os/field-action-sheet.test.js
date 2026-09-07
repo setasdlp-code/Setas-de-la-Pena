@@ -307,3 +307,28 @@ test('cliente y servidor resuelven el estado con la misma regla', () => {
       `divergencia para ${JSON.stringify(batch)}: la hoja ofrecería transiciones que el servidor rechaza`);
   }
 });
+
+test('en simulacro el titular y el cuerpo tampoco afirman confirmación del servidor', () => {
+  // El rótulo pequeño no basta: el titular en mayúsculas es lo que el operario
+  // lee de un vistazo, y decía CONFIRMADO POR EL SERVIDOR sobre un evento que
+  // ningún servidor había visto.
+  const sim = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: 'confirmed' }, simulated: true });
+  const real = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: 'confirmed' } });
+
+  for (const text of [sim.statusHeading, sim.statusDetail, sim.statusLabel]) {
+    assert.ok(!/POR EL SERVIDOR|validada en el servidor/i.test(text),
+      `el modo simulado no debe afirmar respaldo del servidor: "${text}"`);
+  }
+  assert.match(sim.statusHeading, /SIMULACRO/);
+  assert.match(real.statusHeading, /POR EL SERVIDOR/);
+  assert.notEqual(sim.statusDetail, real.statusDetail);
+});
+
+test('cada estado trae su propio titular y detalle', () => {
+  for (const status of ['saved_local', 'conflict', 'rejected']) {
+    const entry = { saved_local: 'pending', conflict: 'conflict', rejected: 'rejected' }[status];
+    const m = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: entry } });
+    assert.ok(m.statusHeading.length > 0, `${status} necesita titular`);
+    assert.ok(m.statusDetail.length > 0, `${status} necesita detalle`);
+  }
+});

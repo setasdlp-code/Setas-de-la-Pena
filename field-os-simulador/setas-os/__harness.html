@@ -66,6 +66,18 @@ window.SetasFirebase = {
 <script src="flush-forecast-engine.js"></script><script src="sterilization-kinetics.js"></script>
 <script src="co-cultivation-matrix.js"></script><script src="post-harvest-engine.js"></script>
 <script src="historical-calibration.js"></script><script src="recipe-optimizer.js"></script>
-<script src="perito-scenarios.js"></script><script src="simulador-app.js"></script>
+<script src="perito-scenarios.js"></script>
+<!-- Cuaderno de campo. Mismo orden que PROTECTED_APP_SCRIPTS en firebase/auth-gate.js:
+     el banco carga estos antes que simulador-app.js igual que el shell real. -->
+<script src="field-event-contracts.js"></script><script src="field-event-queue.js"></script>
+<script src="field-events-model.js"></script><script src="field-event-reconcile.js"></script>
+<script src="field-event-sync.js"></script><script src="field-event-account.js"></script>
+<script src="field-qr-resolve.js"></script><script src="field-action-sheet.js"></script>
+<script src="field-event-mock-transport.js"></script><script src="field-event-callable-transport.js"></script>
+<!-- El banco no tiene sesión de Firebase, así que no puede obtener un token para
+     el callable real. Se pide el simulacro explícitamente: la hoja lo rotulará
+     como simulado, que es lo correcto aquí. -->
+<script>window.__setasFieldMockSync = true;</script>
+<script src="simulador-app.js"></script>
 <script>ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.SimuladorApp));</script>
 </body></html>

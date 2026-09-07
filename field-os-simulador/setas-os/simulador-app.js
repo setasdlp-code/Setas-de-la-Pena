@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 92d8aa41855c4d7eb6bb801bb0f9181d8b2673186d430261d78ad4bf7c4d38f4
+// source-hash: 9608784af8eb19de909ae9f4811798a18bbe6bc48594b9fe31c9b314e4db51e6
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2453,9 +2453,9 @@ const FieldActionModal = ({
           color: "#92400E"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "📱"), " ", /* @__PURE__ */ React.createElement("span", null, "GUARDADO EN ESTE EQUIPO")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "📱"), " ", /* @__PURE__ */ React.createElement("span", null, model.statusHeading)),
       /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#B45309" } }, "El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.")
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#B45309" } }, model.statusDetail)
     ),
     model.status === "confirmed" && /* @__PURE__ */ React.createElement(
       "div",
@@ -2470,9 +2470,9 @@ const FieldActionModal = ({
           color: "#065F46"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "☁️"), " ", /* @__PURE__ */ React.createElement("span", null, "CONFIRMADO POR EL SERVIDOR")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, model.simulated ? "🧪" : "☁️"), " ", /* @__PURE__ */ React.createElement("span", null, model.statusHeading)),
       /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#047857" } }, "Transición registrada y validada en el servidor central con recibo autorizado.")
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#047857" } }, model.statusDetail)
     ),
     model.status === "sending" && /* @__PURE__ */ React.createElement(
       "div",

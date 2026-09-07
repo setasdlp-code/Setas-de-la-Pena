@@ -38,6 +38,20 @@
     failed: 'Fallido',
   });
 
+  const STATUS_HEADINGS = Object.freeze({
+    saved_local: 'GUARDADO EN ESTE EQUIPO',
+    sending: 'ENVIANDO',
+    conflict: 'CONFLICTO',
+    rejected: 'RECHAZADO',
+  });
+
+  const STATUS_DETAILS = Object.freeze({
+    saved_local: 'El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.',
+    sending: 'Enviando la transición al servidor central.',
+    conflict: 'Otro dispositivo ya avanzó este lote. Refresca y vuelve a confirmar.',
+    rejected: 'El servidor rechazó la transición. El evento no se aplicó.',
+  });
+
   const STATUS_LABELS = Object.freeze({
     idle: 'Listo para registrar',
     saved_local: 'Guardado en este equipo',
@@ -137,9 +151,23 @@
     // valor entero del cuaderno es que "confirmado" signifique que el servidor
     // lo tiene, y un prototipo que mienta sobre eso enseña a desconfiar del
     // estado que sí es real.
-    const statusLabel = (status === 'confirmed' && simulated)
+    // Toda la copia del banner sale de aquí, no del JSX. Cuando sólo el rótulo
+    // pequeño respetaba `simulated`, el titular en mayúsculas seguía diciendo
+    // CONFIRMADO POR EL SERVIDOR encima de un evento que ningún servidor había
+    // visto — la línea que el operario lee de un vistazo contradecía a la letra
+    // chica de debajo.
+    const isSimulated = status === 'confirmed' && Boolean(simulated);
+    const statusLabel = isSimulated
       ? 'Confirmado (simulado — sin servidor)'
       : (STATUS_LABELS[status] || status);
+    const statusHeading = status === 'confirmed'
+      ? (isSimulated ? 'CONFIRMADO EN SIMULACRO' : 'CONFIRMADO POR EL SERVIDOR')
+      : (STATUS_HEADINGS[status] || '');
+    const statusDetail = status === 'confirmed'
+      ? (isSimulated
+        ? 'Servidor simulado: ningún servidor recibió esta transición. Sólo para pruebas.'
+        : 'Transición registrada y validada en el servidor central con recibo autorizado.')
+      : (STATUS_DETAILS[status] || '');
     const canConfirm = status === 'idle' && options.length > 0;
     const canRefresh = status === 'conflict';
 
@@ -150,7 +178,9 @@
       options,
       status,
       statusLabel,
-      simulated: Boolean(simulated) && status === 'confirmed',
+      statusHeading,
+      statusDetail,
+      simulated: isSimulated,
       canConfirm,
       canRefresh,
     };

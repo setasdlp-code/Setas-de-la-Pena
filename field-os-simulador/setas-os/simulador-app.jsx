@@ -3495,13 +3495,13 @@ const FieldActionModal = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>📱</span> <span>GUARDADO EN ESTE EQUIPO</span>
+            <span>📱</span> <span>{model.statusHeading}</span>
           </div>
           <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
             {model.statusLabel}
           </div>
           <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#B45309' }}>
-            El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.
+            {model.statusDetail}
           </div>
         </div>
       )}
@@ -3519,13 +3519,13 @@ const FieldActionModal = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>☁️</span> <span>CONFIRMADO POR EL SERVIDOR</span>
+            <span>{model.simulated ? '🧪' : '☁️'}</span> <span>{model.statusHeading}</span>
           </div>
           <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
             {model.statusLabel}
           </div>
           <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#047857' }}>
-            Transición registrada y validada en el servidor central con recibo autorizado.
+            {model.statusDetail}
           </div>
         </div>
       )}
