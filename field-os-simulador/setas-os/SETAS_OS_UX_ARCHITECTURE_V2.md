@@ -435,3 +435,21 @@ Migration is incremental. Existing engines (`scoring.js`, `perito-scenarios.js`,
 - Perito proposed change can be applied and re-evaluated against new state: 100%;
 - predictive values expose provenance/confidence: 100% when model provides it;
 - offline-capable writes expose synchronization state.
+
+## 21. Implementation status — canonical batch sheet
+
+The batch as core object (§3), the lifecycle state machine (§4) and the QR capture
+flow (§5) have an executable contract:
+
+- `setas-os-workflow.js` — lifecycle vocabulary, transitions, `validActions`, today queue.
+- `batch-sheet.js` — canonical batch sheet (`setas.batch-sheet.v1`): stable code, species,
+  state and days in state, room, active bags, recipe + version, spawn lot, consumed
+  inventory, event timeline, harvests, costs, anomalies, blocks, photographic evidence,
+  traceability completeness and next action. It also owns QR resolution (`resolveScan`),
+  contextual action derivation (`contextualActions`, 3–5 actions), the immutable
+  hash-chained event log (`appendBatchEvent` / `verifyEventChain`), the contamination
+  quick action (`contaminationEvent`), the capture-to-transition step (`applyAction`)
+  and the success indicators (`batchScoreboard`).
+
+Both are pure modules covered by `node --test`. UI code must derive batch state and
+available actions from them rather than re-deriving either locally.
