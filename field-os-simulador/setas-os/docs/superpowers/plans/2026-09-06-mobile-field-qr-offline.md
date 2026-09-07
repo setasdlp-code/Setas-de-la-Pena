@@ -601,10 +601,21 @@ git commit -m "feat: field event model with canonicalization
 
 # CURRENT STATE — read this first (2026-09-06)
 
-Branch `fix/qr-spec-atomicity-and-recovery`, 27 commits. **Nothing pushed or
-merged.** Suite: 627 tests, 626 pass — the one failure is pre-existing ADR-0004
-(`scoring.js`/`perito-scenarios.js` byte-parity vs `main`), which also fails at
-`f2e90e5`, before any of this work.
+Branch `fix/qr-spec-atomicity-and-recovery`. **Suite: 642 tests, 642 pass.**
+
+**The branch is no longer only this feature.** It merged `origin/main` on
+2026-09-07 (`44591f9`) and now carries ~97 commits, including a good deal of
+unrelated Swiss Botanical brand and Formulador work (PRs #237–#246). The field
+cuaderno commits are interleaved with those. Review and merge accordingly — this
+is not a single-purpose branch any more.
+
+That merge also resolved the ADR-0004 byte-parity failure that had been the one
+known red test all along: `perito-evidence-display.test.js` no longer compares
+engines byte-for-byte against `main`. It was fixed upstream, not here.
+
+Everything in this feature was re-verified after the merge: modules still
+registered in `auth-gate.js`, bundle fresh, hosting ignore still leak-free,
+52/52 across the field-event suites.
 
 ## The decision that shapes everything here
 
