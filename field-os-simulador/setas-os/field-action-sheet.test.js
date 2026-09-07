@@ -268,3 +268,25 @@ test('un lote con estado heredado no diverge del servidor y resuelve a DEFAULT_I
   assert.equal(m.state, DEFAULT_INITIAL_STATE);
   assert.deepEqual(m.options.map(o => o.to), ['incubation']);
 });
+
+test('un recibo simulado no se presenta como confirmación del servidor', () => {
+  const base = { batch: { workflowState: 'incubation' }, batchId: 'L-1', queueEntry: { status: 'confirmed' } };
+
+  const real = buildActionSheetModel(base);
+  const mock = buildActionSheetModel({ ...base, simulated: true });
+
+  assert.equal(real.statusLabel, 'Confirmado por el servidor');
+  assert.notEqual(mock.statusLabel, real.statusLabel,
+    'el prototipo no debe afirmar que el servidor tiene el evento');
+  assert.match(mock.statusLabel, /simulado/i);
+  assert.equal(mock.simulated, true);
+});
+
+test('la marca de simulado sólo aplica al estado confirmado', () => {
+  // Un evento en cola no está "simulado": de verdad está guardado en el equipo.
+  const pending = buildActionSheetModel({
+    batch: { workflowState: 'incubation' }, queueEntry: { status: 'pending' }, simulated: true,
+  });
+  assert.equal(pending.statusLabel, 'Guardado en este equipo');
+  assert.equal(pending.simulated, false);
+});

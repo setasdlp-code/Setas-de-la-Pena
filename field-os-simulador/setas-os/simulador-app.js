@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 12e78e77a0a29a66503d14b8df514cc200589fc792a72f391697666294f3d0ad
+// source-hash: 4f544b5b064d7a9dd577ee3d7b4a61c68da3bf00dc3a4e85767c653ea21025bd
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2350,6 +2350,7 @@ const FieldActionModal = ({
   }, [localBatch, db, accountId]);
   const actionSheetModule = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
   const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === "function" ? actionSheetModule.buildActionSheetModel({
+    simulated: true,
     batch: localBatch,
     batchId: localBatch?.id || localBatch?.codigo,
     state: localBatch?.workflowState || localBatch?.state,
@@ -2397,8 +2398,9 @@ const FieldActionModal = ({
         confirmed: true
       });
       setQueueEntry(result.queueEntry);
-      setInFlight(false);
       setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+      await runFieldSync(db, accountId, result.event.id, setQueueEntry);
+      setInFlight(false);
       if (typeof onTransitionConfirmed === "function") {
         onTransitionConfirmed(localBatch.id, selectedTo, result.event);
       }
@@ -3210,6 +3212,36 @@ const getFieldDb = () => {
     throw err;
   });
   return _fieldDbPromise;
+};
+let _fieldMock = null;
+const getFieldMockTransport = () => {
+  if (_fieldMock) return _fieldMock;
+  const mod = typeof window !== "undefined" ? window.SetasFieldEventMockTransport : null;
+  if (!mod || typeof mod.createMockTransport !== "function") return null;
+  _fieldMock = mod.createMockTransport();
+  return _fieldMock;
+};
+const readQueueEntry = (db, eventId) => new Promise((resolve) => {
+  try {
+    const req = db.transaction("queue_entries", "readonly").objectStore("queue_entries").get(eventId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  } catch (e) {
+    resolve(null);
+  }
+});
+const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
+  try {
+    const sync = typeof window !== "undefined" ? window.SetasFieldEventSync : null;
+    const mock = getFieldMockTransport();
+    if (!db || !sync || !mock || typeof sync.createSyncEngine !== "function") return;
+    const engine = sync.createSyncEngine({ db, accountId, transport: mock.transport });
+    await engine.syncOnce();
+  } catch (e) {
+  }
+  if (typeof setQueueEntry === "function" && db && eventId) {
+    setQueueEntry(await readQueueEntry(db, eventId));
+  }
 };
 function SimuladorShell(props) {
   const initialFormDraft = useMemo(() => readFormDraft(), []);

@@ -79,6 +79,7 @@
     operatorRole = 'operario',
     queueEntry = null,
     inFlight = false,
+    simulated = false,
   } = {}) => {
     const resolvedBatchId = batchId || batch?.id || batch?.codigo || '';
 
@@ -132,7 +133,13 @@
       }
     }
 
-    const statusLabel = STATUS_LABELS[status] || status;
+    // Un recibo simulado nunca debe leerse como confirmación del servidor: el
+    // valor entero del cuaderno es que "confirmado" signifique que el servidor
+    // lo tiene, y un prototipo que mienta sobre eso enseña a desconfiar del
+    // estado que sí es real.
+    const statusLabel = (status === 'confirmed' && simulated)
+      ? 'Confirmado (simulado — sin servidor)'
+      : (STATUS_LABELS[status] || status);
     const canConfirm = status === 'idle' && options.length > 0;
     const canRefresh = status === 'conflict';
 
@@ -143,6 +150,7 @@
       options,
       status,
       statusLabel,
+      simulated: Boolean(simulated) && status === 'confirmed',
       canConfirm,
       canRefresh,
     };

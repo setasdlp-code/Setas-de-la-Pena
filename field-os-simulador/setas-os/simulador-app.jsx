@@ -3344,8 +3344,12 @@ const FieldActionModal = ({
   }, [localBatch, db, accountId]);
 
   const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
+  // El proyecto sigue en el plan Spark, así que acceptFieldEvent no está
+  // desplegada y la sincronización corre contra un servidor simulado. El modelo
+  // recibe `simulated` para que la confirmación nunca se lea como definitiva.
   const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
     ? actionSheetModule.buildActionSheetModel({
+        simulated: true,
         batch: localBatch,
         batchId: localBatch?.id || localBatch?.codigo,
         state: localBatch?.workflowState || localBatch?.state,
@@ -3400,8 +3404,13 @@ const FieldActionModal = ({
       });
 
       setQueueEntry(result.queueEntry);
-      setInFlight(false);
       setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+
+      // Sincronizar de inmediato. Sin esto el evento se quedaría en
+      // "Guardado en este equipo" para siempre, que es justo el estado que el
+      // operario no debe confundir con una confirmación.
+      await runFieldSync(db, accountId, result.event.id, setQueueEntry);
+      setInFlight(false);
 
       if (typeof onTransitionConfirmed === 'function') {
         onTransitionConfirmed(localBatch.id, selectedTo, result.event);
@@ -4619,6 +4628,49 @@ const getFieldDb = () => {
     throw err;
   });
   return _fieldDbPromise;
+};
+
+// Servidor de aceptación simulado. acceptFieldEvent exige el plan Blaze y el
+// proyecto sigue en Spark, así que el prototipo ejercita el ciclo completo
+// contra un simulacro que respeta el mismo contrato de idempotencia. Los
+// recibos que emite llevan `simulated`, y la hoja de acción los rotula como
+// tales: el operario nunca debe leer un simulacro como confirmación real.
+let _fieldMock = null;
+const getFieldMockTransport = () => {
+  if (_fieldMock) return _fieldMock;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventMockTransport : null;
+  if (!mod || typeof mod.createMockTransport !== 'function') return null;
+  _fieldMock = mod.createMockTransport();
+  return _fieldMock;
+};
+
+const readQueueEntry = (db, eventId) => new Promise((resolve) => {
+  try {
+    const req = db.transaction('queue_entries', 'readonly').objectStore('queue_entries').get(eventId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  } catch (e) { resolve(null); }
+});
+
+/**
+ * Empuja los eventos pendientes de la cuenta y refresca la entrada de cola.
+ * Un fallo aquí no es un error del operario: el evento ya está guardado en el
+ * equipo y el motor lo reintentará, así que se refleja el estado y no se lanza.
+ */
+const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
+  try {
+    const sync = typeof window !== 'undefined' ? window.SetasFieldEventSync : null;
+    const mock = getFieldMockTransport();
+    if (!db || !sync || !mock || typeof sync.createSyncEngine !== 'function') return;
+
+    const engine = sync.createSyncEngine({ db, accountId, transport: mock.transport });
+    await engine.syncOnce();
+  } catch (e) {
+    // Silencio deliberado: el estado real lo cuenta la entrada de cola.
+  }
+  if (typeof setQueueEntry === 'function' && db && eventId) {
+    setQueueEntry(await readQueueEntry(db, eventId));
+  }
 };
 
 function SimuladorShell(props){
