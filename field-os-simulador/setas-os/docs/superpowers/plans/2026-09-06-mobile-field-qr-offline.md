@@ -599,139 +599,122 @@ git commit -m "feat: field event model with canonicalization
 
 ---
 
-# CURRENT STATE — read this first (2026-09-06)
+# CURRENT STATE — read this first (2026-09-07)
 
-Branch `fix/qr-spec-atomicity-and-recovery`. **Suite: 642 tests, 642 pass.**
+Branch `fix/qr-spec-atomicity-and-recovery`. **Suite: 652 tests, 652 pass.**
+Working tree clean. **Nothing pushed.**
 
-**The branch is no longer only this feature.** It merged `origin/main` on
-2026-09-07 (`44591f9`) and now carries ~97 commits, including a good deal of
-unrelated Swiss Botanical brand and Formulador work (PRs #237–#246). The field
-cuaderno commits are interleaved with those. Review and merge accordingly — this
-is not a single-purpose branch any more.
+**The branch is not single-purpose.** It merged `origin/main` on 2026-09-07
+(`44591f9`) and carries ~99 commits, including substantial unrelated Swiss
+Botanical brand and Formulador work (PRs #237–#246) interleaved with the field
+cuaderno commits. Review and merge accordingly.
 
-That merge also resolved the ADR-0004 byte-parity failure that had been the one
-known red test all along: `perito-evidence-display.test.js` no longer compares
-engines byte-for-byte against `main`. It was fixed upstream, not here.
+That merge also resolved the long-standing ADR-0004 byte-parity failure —
+`perito-evidence-display.test.js` no longer compares engines byte-for-byte
+against `main`. Fixed upstream, not by this work.
 
-Everything in this feature was re-verified after the merge: modules still
-registered in `auth-gate.js`, bundle fresh, hosting ignore still leak-free,
-52/52 across the field-event suites.
-
-## The decision that shapes everything here
-
-`sdlp-os` is on the **Spark (free)** plan. Cloud Functions require Blaze, so
-`acceptFieldEvent` is written and passing 12/12 against the emulator but
-**cannot deploy**. The owner is prototyping and chose to stay on Spark.
-
-**Consequence:** the app runs against a *simulated* acceptance server
-(`field-event-mock-transport.js`). The full journey is demonstrable — scan →
-sheet → explicit confirm → saved locally → sending → confirmed — but the
-confirmation is a simulation and the UI says so.
-
-**Do not delete `functions/`.** It is finished work blocked only on billing.
-
-## What is deployed
+## Deployed
 
 | | |
 |---|---|
-| `firebase/firestore.rules` | **LIVE on sdlp-os** (released 2026-09-06) |
-| `acceptFieldEvent` | **not deployed** — Blaze required |
-| hosting | **not deployed** — config fixed but never published |
+| `firebase/firestore.rules` | **LIVE** (2026-09-06) |
+| `acceptFieldEvent` | **LIVE** — v2 callable, `us-central1`, nodejs22, 256MB |
+| hosting | **not deployed** — config fixed, never published |
 
-The live rules deny client writes to `lotes_produccion.workflowState` and
-`.revision`, and make `field_events` client-read-only. Since nothing writes those
-fields yet, the rules are currently a closed door in front of an empty room —
-correct, and inert.
+The project is on **Blaze**. The simulation has been switched off: the sheet
+talks to the real function through `field-event-callable-transport.js` and reads
+"Confirmado por el servidor" again.
+
+**This writes to production.** Confirming a transition mutates a real document in
+`lotes_produccion`, setting `workflowState` and `revision` — fields nothing else
+in the app has ever written.
+
+## The one thing nobody has done
+
+**No part of this has been opened in a browser.** Everything is unit-verified
+against injected fakes. The callable URL, the ID-token flow, and the auth-gated
+script load order have never actually run together. The `saved_local` versus
+`confirmed` distinction — the entire reason this feature exists — has never been
+seen by a human eye.
+
+If something is broken, it is there, not in the logic. That is what Task 13 is
+for, and it is now unblocked for the first time; it needs `E2E_TEST_EMAIL` and
+`E2E_TEST_PASSWORD` to pass the auth gate.
 
 ## Running it
 
 ```bash
-npm test                                    # hermetic, no emulator
-PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:rules
-PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:functions
+npm test                                    # hermetic, 652/652
+PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:rules      # 11/11
+PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:functions  # 12/12
 node build.js && node --test build.test.js  # after ANY simulador-app.jsx edit
 ```
-The emulator needs a JDK. Homebrew's openjdk is keg-only, hence the PATH prefix.
+The emulator needs a JDK; Homebrew's openjdk is keg-only, hence the PATH prefix.
+
+To demo without a session, set `window.__setasFieldMockSync = true` before the
+sheet loads. The mock is **only** reachable that way — never as a silent
+fallback, so a broken real transport can never be masked by a simulation
+claiming confirmation the server never gave.
 
 ## Task status
 
 | Task | State |
 |---|---|
 | 1–4 queue, model, contracts, remediation | done, locally validated |
-| 5 `acceptFieldEvent` | done, emulator-validated, **not deployed** |
+| 5 `acceptFieldEvent` | done, emulator-validated, **deployed** |
 | 6 rules | done, emulator-validated, **deployed** |
-| 7 reconciliation | done, locally validated |
-| 8 sync engine | done, locally validated |
-| 9 logout / account switch | done, locally validated |
-| 10 QR resolution | done, locally validated |
-| 11 action sheet + UI wiring | done, locally validated, **UI never opened in a browser** |
+| 7–10 reconciliation, sync, account switch, QR | done, locally validated |
+| 11 action sheet + UI | done, locally validated, **never opened in a browser** |
 | 12 resilience suite | done, locally validated |
-| 13 E2E | **blocked** — needs the deployed function *and* `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` |
+| 13 E2E | **unblocked, not started** — needs E2E credentials |
 | final review | **not started** |
 
-## To switch off the simulation (when Blaze is enabled)
+## Open items
 
-1. `firebase deploy --only functions --project sdlp-os`
-2. In `simulador-app.jsx`, `runFieldSync` builds the engine with
-   `getFieldMockTransport().transport` — replace with a real callable transport.
-3. Remove `simulated: true` from the `buildActionSheetModel` call (~line 3352),
-   so the sheet reads "Confirmado por el servidor" again.
-4. `node build.js` and commit the bundle.
-
-The mock deliberately mirrors the real contract (idempotent replay, revision
-conflict, attachment refusal), so this swap should not change behaviour — only
-who is enforcing it.
-
-## Open items, in the order they matter
-
-1. **The UI has never been opened in a browser.** The `saved_local` vs
-   `confirmed` distinction is the entire point of the feature and only its view
-   model is tested. Nobody has confirmed the amber and green banners read as
-   different at arm's length in a grow room.
-2. **Client reads `batch.state`, server does not.**
-   `field-action-sheet.js` and `field-qr-resolve.js` resolve
-   `workflowState || state || DEFAULT_INITIAL_STATE`;
-   `functions/accept-field-event.js:77` resolves `workflowState || DEFAULT_INITIAL_STATE`.
-   Latent — no known producer writes `state` on a lote. **Fix by removing it from
-   the client, never by adding it to the server:** the deployed rules protect
-   `workflowState` and `revision` but *not* `state`, so a client could write
-   `state: 'fruiting'` and skip stages.
-3. **Task 13 and the final whole-branch review are outstanding.**
-4. **`usuarios/{uid}.rol` still is not the workflow vocabulary.** It distinguishes
-   only `'admin'`. `functions/index.js` maps it to least privilege
+1. **Task 13 and the final whole-branch review.** Both outstanding.
+2. **Artifact Registry cleanup policy is not set.** Every deploy pushes a
+   container image and they accumulate, billing for storage indefinitely. Fix
+   with `firebase functions:artifacts:setpolicy`. Deliberately left undone — it
+   is a deletion policy and wanted an explicit yes.
+3. **`usuarios/{uid}.rol` is still not the workflow vocabulary.** It
+   distinguishes only `'admin'`. `functions/index.js` maps to least privilege
    (`admin→direccion`, unknown→`operario`); the UI maps
    `isAdmin ? 'direccion' : 'produccion'`. Mapped, not resolved.
+4. **`firebase-functions` is a major version behind.** The deploy warns about it.
+   Upgrading has breaking changes; not attempted.
 
-## If Blaze is refused permanently
+## Invariants that must survive any future change
 
-Do not simply drop the server and let clients write freely. Firestore
-transactions work from the client SDK, so the browser can run the same
-read-modify-write with **rules** doing the enforcement:
+Each has an executed test behind it:
 
-- `field_events` `create`-only, `update`/`delete` denied → a replay fails with
-  "already exists" and the client reads back the existing record.
-- rules require `revision == resource.data.revision + 1`.
-- rules require `operatorId == request.auth.uid`.
-- rules encode the valid transition map.
-- `acceptedAt == request.time` makes the receipt rules-verified.
+- Retries reuse the event id — a lost response must never double-advance a batch.
+- Replaying an accepted event returns its **original** receipt.
+- Same id with different content is rejected (`content_mismatch`).
+- Every acceptance read happens **inside** the server transaction.
+- Logout preserves events, queue entries **and** reservations.
+- A delayed response cannot release a newer event's reservation, and the cached
+  revision only moves forward.
+- Scanning alone creates no transition.
+- `attachmentIds` is always `[]`.
+- Client and server resolve batch state by the same rule
+  (`workflowState || DEFAULT_INITIAL_STATE`). **`state` is consulted nowhere** —
+  the rules do not protect it, so letting it win would let a client write
+  `state: 'fruiting'` and skip stages.
 
-Cost: the state machine moves into rules — verbose and harder to test than the
-JS that already exists — and `functions/` plus its 12 tests are discarded.
+## Lessons recorded so they are not re-learned
 
-## Corrections made to this plan while executing it
-
-Recorded so they are not re-derived:
-
-- Assumed `batches`/`batch.state`; the repo uses `lotes_produccion`/`estado`.
-- Claimed no QR decoder existed (F7). **Wrong** — `simulador-app.jsx` has had a
-  `BarcodeDetector` scanner all along (`startCameraScanner` → `handleScannedValue`).
-- Said the E2E spec goes in `tests/e2e/`; the repo already has an `e2e/` harness
-  with `global-setup.js` and an `openApp()` helper.
-- Said a bare batch code is an accepted QR payload; it is now rejected as
-  indistinguishable from another system's QR.
-- Two reviews passed Tasks 1–2 that were not loadable in the browser at all. Unit
-  tests passing is not evidence the code runs in this app — check the script
+- Two subagent reviews passed Tasks 1–2 when the modules could not load in the
+  browser at all and the headline transition was rejected for every role. **Unit
+  tests passing is not evidence the code runs in this app** — check the script
   lists in `firebase/auth-gate.js` and the load order.
+- A later fix made the modules loadable but still broken: a global captured at
+  module-eval time that the loader defines afterwards. Resolve `Setas*` globals
+  lazily, inside the function that uses them.
+- Assumed `batches`/`batch.state`; the repo uses `lotes_produccion`/`estado`.
+- Claimed no QR decoder existed. Wrong — `simulador-app.jsx` has had a
+  `BarcodeDetector` scanner all along.
+- A stray constant once entered `buildRequestEnvelope`'s return value and twelve
+  contract tests passed without noticing. The envelope's key set is now pinned.
 
 ---
 
