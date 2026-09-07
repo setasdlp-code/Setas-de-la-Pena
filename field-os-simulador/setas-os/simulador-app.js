@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 94837298b7a78ab8400779b554e210337b0ceced4a2b0f34546bcb8a7110b50a
+// source-hash: 92d8aa41855c4d7eb6bb801bb0f9181d8b2673186d430261d78ad4bf7c4d38f4
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2351,7 +2351,7 @@ const FieldActionModal = ({
   }, [localBatch, db, accountId]);
   const actionSheetModule = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
   const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === "function" ? actionSheetModule.buildActionSheetModel({
-    simulated: true,
+    simulated: fieldMockRequested(),
     batch: localBatch,
     batchId: localBatch?.id || localBatch?.codigo,
     state: localBatch?.workflowState || localBatch?.state,
@@ -3224,6 +3224,32 @@ const getFieldMockTransport = () => {
   _fieldMock = mod.createMockTransport();
   return _fieldMock;
 };
+const fieldMockRequested = () => typeof window !== "undefined" && window.__setasFieldMockSync === true;
+let _fieldCallable = null;
+const getFieldCallableTransport = () => {
+  if (_fieldCallable) return _fieldCallable;
+  const mod = typeof window !== "undefined" ? window.SetasFieldEventCallableTransport : null;
+  const fb = typeof window !== "undefined" ? window.SetasFirebase : null;
+  const projectId = fb && fb.app && fb.app.options && fb.app.options.projectId;
+  if (!mod || typeof mod.createCallableTransport !== "function" || !fb || !fb.auth || !projectId) return null;
+  _fieldCallable = mod.createCallableTransport({
+    projectId,
+    getIdToken: () => {
+      const user = fb.auth.currentUser;
+      if (!user) return Promise.reject(new Error("sin sesión activa"));
+      return user.getIdToken();
+    }
+  });
+  return _fieldCallable;
+};
+const getFieldSyncTransport = () => {
+  if (fieldMockRequested()) {
+    const mock = getFieldMockTransport();
+    return mock ? { transport: mock.transport, simulated: true } : null;
+  }
+  const real = getFieldCallableTransport();
+  return real ? { transport: real, simulated: false } : null;
+};
 const readQueueEntry = (db, eventId) => new Promise((resolve) => {
   try {
     const req = db.transaction("queue_entries", "readonly").objectStore("queue_entries").get(eventId);
@@ -3236,9 +3262,9 @@ const readQueueEntry = (db, eventId) => new Promise((resolve) => {
 const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
   try {
     const sync = typeof window !== "undefined" ? window.SetasFieldEventSync : null;
-    const mock = getFieldMockTransport();
-    if (!db || !sync || !mock || typeof sync.createSyncEngine !== "function") return;
-    const engine = sync.createSyncEngine({ db, accountId, transport: mock.transport });
+    const chosen = getFieldSyncTransport();
+    if (!db || !sync || !chosen || typeof sync.createSyncEngine !== "function") return;
+    const engine = sync.createSyncEngine({ db, accountId, transport: chosen.transport });
     await engine.syncOnce();
   } catch (e) {
   }

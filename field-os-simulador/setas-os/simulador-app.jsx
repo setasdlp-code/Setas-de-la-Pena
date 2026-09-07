@@ -3349,12 +3349,11 @@ const FieldActionModal = ({
   }, [localBatch, db, accountId]);
 
   const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
-  // El proyecto sigue en el plan Spark, así que acceptFieldEvent no está
-  // desplegada y la sincronización corre contra un servidor simulado. El modelo
-  // recibe `simulated` para que la confirmación nunca se lea como definitiva.
+  // acceptFieldEvent ya está desplegada, así que la confirmación es real salvo
+  // que alguien haya pedido el simulacro a propósito.
   const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
     ? actionSheetModule.buildActionSheetModel({
-        simulated: true,
+        simulated: fieldMockRequested(),
         batch: localBatch,
         batchId: localBatch?.id || localBatch?.codigo,
         state: localBatch?.workflowState || localBatch?.state,
@@ -4651,6 +4650,43 @@ const getFieldMockTransport = () => {
   return _fieldMock;
 };
 
+// El simulacro sólo se usa si alguien lo pide explícitamente (banco de pruebas,
+// demo sin sesión). Nunca como respaldo silencioso: si el transporte real
+// fallara y el simulacro lo tapara, la hoja diría "confirmado" sin que el
+// servidor tenga nada, que es exactamente la mentira que este cuaderno existe
+// para evitar.
+const fieldMockRequested = () =>
+  typeof window !== 'undefined' && window.__setasFieldMockSync === true;
+
+let _fieldCallable = null;
+const getFieldCallableTransport = () => {
+  if (_fieldCallable) return _fieldCallable;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventCallableTransport : null;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const projectId = fb && fb.app && fb.app.options && fb.app.options.projectId;
+  if (!mod || typeof mod.createCallableTransport !== 'function' || !fb || !fb.auth || !projectId) return null;
+
+  _fieldCallable = mod.createCallableTransport({
+    projectId,
+    getIdToken: () => {
+      const user = fb.auth.currentUser;
+      if (!user) return Promise.reject(new Error('sin sesión activa'));
+      return user.getIdToken();
+    },
+  });
+  return _fieldCallable;
+};
+
+// Devuelve { transport, simulated }. `simulated` gobierna el rótulo de la hoja.
+const getFieldSyncTransport = () => {
+  if (fieldMockRequested()) {
+    const mock = getFieldMockTransport();
+    return mock ? { transport: mock.transport, simulated: true } : null;
+  }
+  const real = getFieldCallableTransport();
+  return real ? { transport: real, simulated: false } : null;
+};
+
 const readQueueEntry = (db, eventId) => new Promise((resolve) => {
   try {
     const req = db.transaction('queue_entries', 'readonly').objectStore('queue_entries').get(eventId);
@@ -4667,10 +4703,10 @@ const readQueueEntry = (db, eventId) => new Promise((resolve) => {
 const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
   try {
     const sync = typeof window !== 'undefined' ? window.SetasFieldEventSync : null;
-    const mock = getFieldMockTransport();
-    if (!db || !sync || !mock || typeof sync.createSyncEngine !== 'function') return;
+    const chosen = getFieldSyncTransport();
+    if (!db || !sync || !chosen || typeof sync.createSyncEngine !== 'function') return;
 
-    const engine = sync.createSyncEngine({ db, accountId, transport: mock.transport });
+    const engine = sync.createSyncEngine({ db, accountId, transport: chosen.transport });
     await engine.syncOnce();
   } catch (e) {
     // Silencio deliberado: el estado real lo cuenta la entrada de cola.
