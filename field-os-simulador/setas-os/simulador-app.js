@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 4b895013e451ad569906e91862041868622956bd408f4bd570cba9e493d327fc
+// source-hash: ffa9f66a39a7dc16af8fbae12c92b59681f136540c25b718e12ff409da2539fd
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3146,6 +3146,7 @@ function SimuladorShell(props) {
   const [optProfile, setOptProfile] = useState("produccion");
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [qrSelectedLoteId, setQrSelectedLoteId] = useState("");
+  const [qrScannedBagId, setQrScannedBagId] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [showEsp32ConfigModal, setShowEsp32ConfigModal] = useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
@@ -3208,18 +3209,30 @@ function SimuladorShell(props) {
       setIsCameraActive(false);
     }
   };
+  const [scanMiss, setScanMiss] = useState("");
   const handleScannedValue = (raw) => {
     if (!raw) return;
-    const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = match ? match[1] : raw;
-    const foundLote = bitLotes.find((l) => l.codigo === code || l.id === code || raw.includes(l.codigo) || code && code.startsWith(l.codigo));
-    if (foundLote) {
-      setQrSelectedLoteId(foundLote.id);
+    const sheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
+    let resolved = null;
+    if (sheetApi) {
+      resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+    } else {
+      const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
+      const code = match ? match[1] : raw;
+      const foundLote = bitLotes.find((l) => l.codigo === code || l.id === code || raw.includes(l.codigo) || code && code.startsWith(l.codigo));
+      resolved = foundLote ? { kind: "batch", batchId: foundLote.id, bagId: null } : { kind: "unknown", batchId: null, reason: "no_match" };
+    }
+    if (resolved.batchId) {
+      setScanMiss("");
+      setQrSelectedLoteId(resolved.batchId);
+      if (resolved.bagId) setQrScannedBagId(resolved.bagId);
       stopCameraScanner();
       try {
         if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
       } catch (e) {
       }
+    } else if (resolved.reason === "no_match") {
+      setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
   const [showThermalModal, setShowThermalModal] = useState(false);
@@ -5200,7 +5213,50 @@ BATCH (${numBags}×${kgBag} kg):
     goTab("bitacora");
     goBitTab("bit_ficha", true);
   };
-  const runBatchAction = (action, lote) => {
+  const batchSheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
+  const operatorRole = props.isAdmin === true || props.isAdmin === "true" ? "direccion" : "operario";
+  const buildSheetFor = (lote) => {
+    if (!batchSheetApi || !lote) return null;
+    const room = ROOMS_CONFIG[lote.sala || lote.ubicacion || ""] || null;
+    try {
+      return batchSheetApi.buildBatchSheet({
+        lote,
+        bolsas: bitBolsas,
+        cosechas: bitCosechas,
+        events: lote.lifecycleEvents || [],
+        room,
+        role: operatorRole
+      });
+    } catch (e) {
+      return null;
+    }
+  };
+  const commitSheetAction = (sheet, lote, action, payload = {}) => {
+    if (!batchSheetApi || !sheet) return false;
+    try {
+      const result = batchSheetApi.applyAction({
+        sheet,
+        action,
+        operatorId: lote.operador || "operador-local",
+        payload,
+        log: lote.lifecycleEvents || [],
+        role: operatorRole
+      });
+      const patch = { lifecycleEvents: result.log };
+      if (result.transitioned) {
+        patch.lifecycleState = result.state;
+        const legacyByState = Object.entries(legacyLifecycle).find(([, v]) => v === result.state);
+        if (legacyByState) patch.estado = legacyByState[0];
+      }
+      updateBitLote(lote.id, patch);
+      return true;
+    } catch (err) {
+      setNoticeDlg({ title: "Acción no válida ahora", msg: err.message });
+      return false;
+    }
+  };
+  const runBatchAction = (action, lote, sheet = null) => {
+    if (lote && lote.id !== bitActiveLoteId) setBitActiveLoteId(lote.id);
     if (action === "harvest") {
       const bolsa = bitBolsas.find((b) => b.loteId === lote.id && b.estado === "sana");
       setBitCosechaForm({ bolsaId: bolsa?.id || "", loteId: lote.id, codigo: bolsa?.codigo || "", flush: 1, fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0], pesoFresco: "", calidad: 4, observaciones: "" });
@@ -5208,6 +5264,8 @@ BATCH (${numBags}×${kgBag} kg):
       return;
     }
     if (action === "advance_stage") {
+      const activeSheet = sheet || buildSheetFor(lote);
+      if (activeSheet && commitSheetAction(activeSheet, lote, "advance_stage")) return;
       const next = lote.estado === "incubacion" ? "fructificacion" : lote.estado;
       const from = legacyLifecycle[lote.estado];
       const to = legacyLifecycle[next];
@@ -5221,7 +5279,12 @@ BATCH (${numBags}×${kgBag} kg):
       updateBitLote(lote.id, { estado: "completado" });
       return;
     }
-    if (action === "inspection") {
+    if (action === "move") {
+      setSelectedClimateRoom(lote.sala || lote.ubicacion || selectedClimateRoom);
+      goTab("control");
+      return;
+    }
+    if (action === "inspection" || action === "colonization" || action === "photo") {
       goBitTab("bit_bolsas", true);
       return;
     }
@@ -5312,13 +5375,26 @@ BATCH (${numBags}×${kgBag} kg):
   };
   const BatchDetailV2 = ({ lote }) => {
     const stats = calcLoteStats(lote.id);
-    const state = legacyLifecycle[lote.estado] || "planned";
+    const sheet = buildSheetFor(lote);
+    const state = sheet ? sheet.state : legacyLifecycle[lote.estado] || "planned";
     const isAdmin = props.isAdmin === true || props.isAdmin === "true";
-    const actions = workflow ? workflow.validActions(state, isAdmin ? "direccion" : "operario") : [];
+    const actions = sheet ? sheet.actions : workflow ? workflow.validActions(state, isAdmin ? "direccion" : "operario").map((a) => ({ action: a, label: actionLabel[a] || a, blockedBy: null })) : [];
     const bolsas = bitBolsas.filter((b) => b.loteId === lote.id);
     const cosechas = bitCosechas.filter((c) => c.loteId === lote.id);
-    const events = [...cosechas.map((c) => ({ id: c.id, title: `Cosecha · flush ${c.flush}`, meta: `${c.fecha} · ${c.pesoFresco} g`, kind: "measured" })), ...bolsas.filter((b) => b.col100).map((b) => ({ id: b.id, title: `Colonización completa · ${b.codigo}`, meta: b.col100, kind: "manual" }))];
-    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " 🏷 Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie)), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, /* @__PURE__ */ React.createElement("span", null, lote.numBolsas, " bolsas"), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, lote.recipeRef?.name || "Receta sin vincular")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, actionLabel[actions[0]] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.filter((a) => actionLabel[a]).map((action) => /* @__PURE__ */ React.createElement("button", { key: action, className: "os-action", type: "button", onClick: () => runBatchAction(action, lote) }, actionLabel[action])), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
+    const events = sheet ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, title: e.title, meta: [e.at, e.meta].filter(Boolean).join(" · "), kind: e.provenance })) : [...cosechas.map((c) => ({ id: c.id, title: `Cosecha · flush ${c.flush}`, meta: `${c.fecha} · ${c.pesoFresco} g`, kind: "measured" })), ...bolsas.filter((b) => b.col100).map((b) => ({ id: b.id, title: `Colonización completa · ${b.codigo}`, meta: b.col100, kind: "manual" }))];
+    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail", "data-batch-state": state, "data-batch-completeness": sheet ? sheet.completenessPct : null }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " 🏷 Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, sheet ? sheet.code : lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie, lote.especieCientifico && /* @__PURE__ */ React.createElement(React.Fragment, null, " · ", /* @__PURE__ */ React.createElement("i", null, lote.especieCientifico)))), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, sheet ? sheet.stateLabel : lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, sheet && sheet.daysInStage != null && /* @__PURE__ */ React.createElement("span", null, "Día ", sheet.daysInStage, " en ", sheet.stateLabel.toLowerCase()), /* @__PURE__ */ React.createElement("span", null, sheet ? `Sala ${sheet.room ? sheet.room.name : "sin asignar"}` : lote.sala || "Sala sin asignar"), /* @__PURE__ */ React.createElement("span", null, sheet ? `${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas` : `${lote.numBolsas} bolsas`), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` v${sheet.recipe.version}` : ""}` : lote.recipeRef?.name || "Receta sin vincular"), /* @__PURE__ */ React.createElement("span", null, sheet && sheet.spawnLot && sheet.spawnLot.id ? `Semilla ${sheet.spawnLot.id}` : "Semilla sin vincular"), sheet && sheet.consumedInventory.length > 0 && /* @__PURE__ */ React.createElement("span", null, sheet.consumedInventory.length, " lote(s) de insumo"), sheet && /* @__PURE__ */ React.createElement("span", { title: "Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos" }, "Trazabilidad ", sheet.completenessPct, "%")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, sheet && sheet.nextAction && sheet.nextAction.label || actionLabel[actions[0] && actions[0].action] || "Sin acciones pendientes"))), sheet && (sheet.blocks.length > 0 || sheet.anomalies.length > 0) && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("h2", null, "Bloqueos y anomalías"), sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: `anom-${i}` }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, a.severity === "critical" ? "Crítico" : "Atención", " · ", a.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, a.kind)))), sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: b.code }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, "Bloqueo · ", b.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, b.code))))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, "💰 Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte por Oleada (Flushes)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), /* @__PURE__ */ React.createElement("div", { className: "os-detail-grid" }, /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Actividad"), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "Todavía no hay eventos medidos o manuales para este lote.") : events.map((e) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: e.id }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, e.title), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, e.meta)), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--" + e.kind }, e.kind === "measured" ? "Medido" : "Manual")))), /* @__PURE__ */ React.createElement("aside", { className: "os-detail-panel" }, /* @__PURE__ */ React.createElement("h2", null, "Acciones válidas ahora"), /* @__PURE__ */ React.createElement("div", { className: "os-valid-actions" }, actions.map((a) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: a.action,
+        className: "os-action",
+        type: "button",
+        "data-action": a.action,
+        disabled: Boolean(a.blockedBy),
+        title: a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : a.requires && a.requires.length ? `Pide: ${a.requires.join(", ")}` : void 0,
+        onClick: () => runBatchAction(a.action, lote, sheet)
+      },
+      a.label
+    )), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", style: { marginTop: 8, background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", color: "var(--ink-0)" }, onClick: () => {
       setThermalLote(lote);
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
@@ -7504,12 +7580,16 @@ Click para ver análisis completo`
   ))), showQrSheet && (() => {
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+    const currentSheet = currentLote ? buildSheetFor(currentLote) : null;
+    const scannedBag = qrScannedBagId ? bitBolsas.find((b) => b.id === qrScannedBagId && b.loteId === currentLote?.id) : null;
     return /* @__PURE__ */ React.createElement(
       AccessibleModal,
       {
         onClose: () => {
           stopCameraScanner();
           setShowQrSheet(false);
+          setQrScannedBagId("");
+          setScanMiss("");
         },
         label: "Captura rápida de campo",
         dialogStyle: { width: "min(460px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
@@ -7517,6 +7597,8 @@ Click para ver análisis completo`
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "camera", size: 14, color: "var(--ink-0)" }), " Ronda de Campo · Registro Rápido"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => {
         stopCameraScanner();
         setShowQrSheet(false);
+        setQrScannedBagId("");
+        setScanMiss("");
       } }, "✕")),
       isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
         "video",
@@ -7545,6 +7627,7 @@ Click para ver análisis completo`
         "📷 Iniciar Escaneo con Cámara Móvil"
       ),
       cameraError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, "⚠️ ", cameraError),
+      scanMiss && /* @__PURE__ */ React.createElement("div", { role: "status", "data-testid": "scan-unresolved", style: { padding: "8px 10px", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", borderLeft: "3px solid var(--accent-terracotta,#A85C32)", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, scanMiss, " Elige el lote manualmente o vuelve a escanear."),
       currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -7577,7 +7660,7 @@ Click para ver análisis completo`
         },
         "Siguiente ",
         /* @__PURE__ */ React.createElement(AppIcon, { name: "chevron-right", size: 12 })
-      )), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, "Estado: ", currentLote.estado, " · ", currentLote.numBolsas || 0, " bolsas"), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, currentSheet ? `${currentSheet.stateLabel}${currentSheet.daysInStage != null ? ` · día ${currentSheet.daysInStage}` : ""} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room ? currentSheet.room.name : "sin sala"}` : `Estado: ${currentLote.estado} · ${currentLote.numBolsas || 0} bolsas`), scannedBag && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-olive,#5B6B44)", marginTop: 3 } }, "Etiqueta leída: bolsa ", scannedBag.codigo), currentSheet && currentSheet.blocks.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--accent-terracotta,#A85C32)", marginTop: 4 } }, currentSheet.blocks.map((b) => b.detail).join(" · ")), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
         "select",
         {
           className: "inv-input",
@@ -7587,7 +7670,7 @@ Click para ver análisis completo`
           "aria-label": "Cambiar lote activo"
         },
         activeBatches.map((l) => /* @__PURE__ */ React.createElement("option", { key: l.id, value: l.id }, l.codigo, " — ", l.especie, " (", l.estado, ")"))
-      )), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12, display: !currentSheet || currentSheet.actions.some((a) => a.action === "colonization") ? "block" : "none" } }, /* @__PURE__ */ React.createElement(
         ColonizationScaleSelector,
         {
           value: (() => {
@@ -7631,29 +7714,67 @@ Click para ver análisis completo`
             }
           }
         }
-      )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, "data-testid": "qr-contextual-actions" }, currentSheet && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)" } }, "Acciones válidas en ", currentSheet.stateLabel.toLowerCase()), (currentSheet ? currentSheet.actions : [{ action: "harvest", label: "Registrar cosecha", blockedBy: null }, { action: "contamination", label: "Reportar contaminación", blockedBy: null }]).map((a, i) => /* @__PURE__ */ React.createElement(
         "button",
         {
+          key: a.action,
           type: "button",
-          style: { minHeight: 46, cursor: "pointer", background: "var(--accent-olive,#5B6B44)", color: "var(--paper-0,#F7F4EC)", border: "1px solid var(--accent-olive,#5B6B44)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
+          "data-action": a.action,
+          disabled: Boolean(a.blockedBy),
+          title: a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : a.requires && a.requires.length ? `Pide: ${a.requires.join(", ")}` : void 0,
+          style: {
+            minHeight: i === 0 ? 46 : 44,
+            cursor: a.blockedBy ? "not-allowed" : "pointer",
+            opacity: a.blockedBy ? 0.5 : 1,
+            background: a.action === "contamination" ? "var(--accent-terracotta-dim,#EFE0D3)" : i === 0 ? "var(--accent-olive,#5B6B44)" : "var(--paper-0,#F7F4EC)",
+            color: a.action === "contamination" ? "var(--accent-terracotta,#A85C32)" : i === 0 ? "var(--paper-0,#F7F4EC)" : "var(--ink-0)",
+            border: `1px solid ${a.action === "contamination" ? "var(--accent-terracotta,#A85C32)" : i === 0 ? "var(--accent-olive,#5B6B44)" : "var(--border-hairline,#8C7F5B)"}`,
+            borderRadius: "var(--radius-md,3px)",
+            fontFamily: "var(--font-sans)",
+            fontSize: i === 0 ? 13 : 12,
+            fontWeight: i === 0 ? 700 : 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8
+          },
           onClick: () => {
-            setBitActiveLoteId(currentLote.id);
-            setBitCosechaForm({
-              loteId: currentLote.id,
-              bolsaId: "",
-              flush: 1,
-              fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-              pesoFresco: "",
-              calidad: 3,
-              observaciones: ""
-            });
+            if (a.action === "harvest") {
+              setBitActiveLoteId(currentLote.id);
+              setBitCosechaForm({
+                loteId: currentLote.id,
+                bolsaId: scannedBag ? scannedBag.id : "",
+                codigo: scannedBag ? scannedBag.codigo : "",
+                flush: 1,
+                fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+                pesoFresco: "",
+                calidad: 3,
+                observaciones: ""
+              });
+              setShowQrSheet(false);
+              setShowBitCosecha(true);
+              return;
+            }
+            if (a.action === "contamination") {
+              setDiagLoteId(currentLote.id);
+              const b = scannedBag || bitBolsas.find((x) => x.loteId === currentLote.id && x.estado !== "descartada");
+              setDiagBolsaId(b?.id || "");
+              setDiagImageBase64("");
+              setDiagResult(null);
+              setDiagError("");
+              setDiagNotes("");
+              setShowQrSheet(false);
+              setShowDiagModal(true);
+              return;
+            }
             setShowQrSheet(false);
-            setShowBitCosecha(true);
+            runBatchAction(a.action, currentLote, currentSheet);
           }
         },
-        /* @__PURE__ */ React.createElement(AppIcon, { name: "harvest", size: 15, color: "var(--paper-0)" }),
-        " Registrar Cosecha (g)"
-      ), /* @__PURE__ */ React.createElement(
+        a.action === "harvest" && /* @__PURE__ */ React.createElement(AppIcon, { name: "harvest", size: 15, color: "var(--paper-0)" }),
+        a.action === "contamination" && /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
+        a.label
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Siempre disponible"), /* @__PURE__ */ React.createElement(
         "button",
         {
           type: "button",
@@ -7665,25 +7786,6 @@ Click para ver análisis completo`
         },
         /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 14, color: "var(--ink-0)" }),
         " Registrar Clima / Sala"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          style: { minHeight: 44, cursor: "pointer", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", border: "1px solid var(--accent-terracotta,#A85C32)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
-          onClick: () => {
-            setDiagLoteId(currentLote.id);
-            const b = bitBolsas.find((x) => x.loteId === currentLote.id && x.estado !== "descartada");
-            setDiagBolsaId(b?.id || "");
-            setDiagImageBase64("");
-            setDiagResult(null);
-            setDiagError("");
-            setDiagNotes("");
-            setShowQrSheet(false);
-            setShowDiagModal(true);
-          }
-        },
-        /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
-        " Reportar Contaminación / Merma"
       ), /* @__PURE__ */ React.createElement(
         "button",
         {
