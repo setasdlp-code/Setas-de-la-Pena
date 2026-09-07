@@ -1,0 +1,36 @@
+/* Gaya — primary typeface, provided by Setas de la Peña. */
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-Thin.otf') format('opentype'); font-weight: 100; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-ThinItalic.otf') format('opentype'); font-weight: 100; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-Light.otf') format('opentype'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-Black.otf') format('opentype'); font-weight: 900; font-style: normal; }
+@font-face { font-family: 'Gaya'; src: url('./fonts/gaya/GayaPatched-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; }
+
+/* IBM Plex Sans — secondary typeface for accent and display use. */
+@font-face { font-family: 'IBM Plex Sans Display'; src: url('./fonts/plex-sans/IBMPlexSans-Light.ttf') format('truetype'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'IBM Plex Sans Display'; src: url('./fonts/plex-sans/IBMPlexSans-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'IBM Plex Sans Display'; src: url('./fonts/plex-sans/IBMPlexSans-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'IBM Plex Sans Display'; src: url('./fonts/plex-sans/IBMPlexSans-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; }
+@font-face { font-family: 'IBM Plex Sans Display'; src: url('./fonts/plex-sans/IBMPlexSans-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; }
+
+/* IBM Plex Mono — tabular data, lot codes, metadata.
+   Empaquetada localmente, igual que Plex Sans y Gaya: la mono es la que pinta
+   TODAS las lecturas de telemetría, y una app de campo en la sabana no puede
+   depender de que fonts.googleapis.com conteste para que los números sean
+   legibles. Antes venía por @import de Google Fonts.
+   Se traen los tres pesos que el sistema usa de verdad (400/500/600); no hay
+   itálica porque el tablero no usa ninguna — si algún día hace falta, el
+   navegador la sintetiza. */
+@font-face { font-family: 'IBM Plex Mono'; src: url('./fonts/plex-mono/IBMPlexMono-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('./fonts/plex-mono/IBMPlexMono-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('./fonts/plex-mono/IBMPlexMono-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+
+:root {
+  --font-sans: 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'IBM Plex Sans Display', 'Gaya', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}

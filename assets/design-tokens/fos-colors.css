@@ -1,0 +1,80 @@
+:root {
+  /* ---- Base: paper & ink ---- */
+  --paper-0: #F7F4EC;   /* page background */
+  --paper-1: #EFEBE0;   /* section / panel background */
+  --paper-2: #E5DFD0;   /* table stripe, recessed field */
+  --paper-3: #DCD5C2;   /* stronger recessed / pressed */
+
+  --ink-0: #1E1D19;     /* primary text, near-black warm */
+  --ink-1: #3C392F;     /* secondary text */
+  --ink-2: #6B6759;     /* tertiary text, captions, metadata */
+  --ink-3: #96907C;     /* disabled / placeholder text — 2.90:1 on paper-0, below WCAG 4.5:1.
+     Audited 2026: acceptable only because every current usage (.fos-annot__blank,
+     .fos-market__img placeholder label, ficha hand-fill guides) is genuinely
+     non-essential/placeholder content, never information the user must read.
+     If a new usage carries required information, do not reuse ink-3 — use ink-2. */
+
+  --line-0: #988C6C;    /* hairline rule, default — audited 2026: darkened from #C9C1A9 (1.64:1) to clear WCAG 1.4.11 non-text 3:1 floor (3.03:1) */
+  --line-1: #8C7F5B;    /* stronger rule, table borders, active underline — darkened from #A69E86 (2.43:1) to 3.6:1, keeps line-1 > line-0 */
+  --line-2: #1E1D19;    /* heaviest rule — section dividers, print borders */
+
+  /* ---- Accents: classification & status only, never decoration ----
+     FOS-07 (audited 2026): on a solid accent fill, text/logo must use
+     --paper-0, never --ink-0 (ink-0 on accent-olive = 2.92:1, fails WCAG
+     even at large-text threshold; paper-0 on accent-olive = 5.26:1, passes). ---- */
+  --accent-olive: #5B6B44;
+  --accent-olive-dim: #DCE1D1;      /* olive tint for backgrounds/chips */
+  --accent-terracotta: #A85C32;
+  --accent-terracotta-dim: #EFE0D3;
+  --accent-blue-grey: #5E7080;
+  --accent-blue-grey-dim: #DEE5E7;
+  --accent-mushroom: #7A6A52;
+  --accent-mushroom-dim: #E7E0D3;
+  --accent-rust: #8C3223;           /* reserved for error / contamination only */
+  --accent-rust-dim: #EEDAD3;
+
+  /* FOS-09 (audited 2026) — hover/pressed states for any interactive control
+     built on an accent fill (buttons, taps). Same pigment, ~18% darker —
+     no new hues, no gradients, consistent with the flat/pigment-only rule. */
+  --accent-olive-hover: #4A5737;
+  --accent-terracotta-hover: #894B29;
+  --accent-blue-grey-hover: #4D5B68;
+  --accent-mushroom-hover: #645643;
+  --accent-rust-hover: #72291C;
+
+  /* ---- Semantic aliases ---- */
+  --surface-page: var(--paper-0);
+  --surface-panel: var(--paper-1);
+  --surface-recessed: var(--paper-2);
+  --surface-pressed: var(--paper-3);
+
+  --text-primary: var(--ink-0);
+  --text-secondary: var(--ink-1);
+  --text-metadata: var(--ink-2);
+  --text-disabled: var(--ink-3);
+
+  --border-hairline: var(--line-0);
+  --border-strong: var(--line-1);
+  --border-heavy: var(--line-2);
+
+  --status-active: var(--accent-olive);
+  --status-active-bg: var(--accent-olive-dim);
+  --status-active-hover: var(--accent-olive-hover);
+  --status-attention: var(--accent-terracotta);
+  --status-attention-bg: var(--accent-terracotta-dim);
+  --status-attention-hover: var(--accent-terracotta-hover);
+  --status-info: var(--accent-blue-grey);
+  --status-info-bg: var(--accent-blue-grey-dim);
+  --status-info-hover: var(--accent-blue-grey-hover);
+  --status-archived: var(--accent-mushroom);
+  --status-archived-bg: var(--accent-mushroom-dim);
+  --status-archived-hover: var(--accent-mushroom-hover);
+  --status-error: var(--accent-rust);
+  --status-error-bg: var(--accent-rust-dim);
+  --status-error-hover: var(--accent-rust-hover);
+
+  --link: var(--accent-blue-grey);
+  --link-hover: var(--ink-0);
+
+  --focus-ring: var(--accent-olive);
+}

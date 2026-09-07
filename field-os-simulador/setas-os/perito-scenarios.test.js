@@ -14,6 +14,8 @@ const {
   searchScenarios,
   selectRecommended,
   dominantBaseKey,
+  objectiveVector,
+  classifyEvidence,
 } = require('./perito-scenarios.js');
 
 const ingredients = [
@@ -402,4 +404,113 @@ test('searchScenarios con receta parcial retorna isPartial=true y añade diffs e
     const tot = rec.recipe.reduce((s, r) => s + r.p, 0);
     assert.ok(Math.abs(tot - 100) < 0.2, `receta completada debe sumar 100%, dio ${tot}`);
   });
+});
+
+test('inventario cero corta la búsqueda sin recurrir silenciosamente al catálogo', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients, analyze, score, useStock: true, stockIds: new Set(),
+  });
+  assert.equal(out.noStock, true);
+  assert.equal(out.explored, 0);
+  assert.deepEqual(out.recommended, []);
+});
+
+test('receta 100% fijada no genera una falsa alternativa', () => {
+  const recipe = [{ id: 'sawdust', p: 80 }, { id: 'bran', p: 20 }];
+  const out = searchScenarios({
+    recipe, ingredients, analyze, score, generations: 2,
+    lockedIds: new Set(['sawdust', 'bran']),
+  });
+  assert.equal(out.recommended.length, 0);
+  assert.equal(out.best.id, 'baseline');
+});
+
+test('un ancla parcial explícitamente fijada conserva su porcentaje exacto', () => {
+  const catalog = [
+    { id: 'carbon', role: 'base_carbono', c: 50, n: 0.1, cn: 500, moisture: 10, cs: ['high'] },
+    { id: 'other', role: 'base_carbono', c: 45, n: 0.5, cn: 90, moisture: 10, cs: ['high'] },
+    { id: 'supp', role: 'suplemento_n', c: 42, n: 3, cn: 14, moisture: 10, cs: ['high'] },
+  ];
+  const spp = { high: { cn_optimal: { min: 40, ideal: 50, max: 70 }, supplementation_max: 20, eb_optimal: 100 } };
+  const out = searchScenarios({
+    recipe: [{ id: 'carbon', p: 40 }], targetKey: 'high', spp,
+    context: { sKey: 'high' }, ingredients: catalog, searchMode: 'hybrid',
+    lockedIds: new Set(['carbon']),
+    analyze: recipe => ({ tot: 100, cn: 50, eb: 80, cost: 400, sp: spp.high }),
+    score: () => ({ score: 80, dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 80 } } }),
+  });
+  assert.ok(out.recommended.length > 0);
+  out.recommended.forEach(candidate => {
+    assert.equal(candidate.recipe.find(row => row.id === 'carbon')?.p, 40);
+  });
+});
+
+test('Pareto explícito conserva empate y orden determinista por clave canónica', () => {
+  const mk = (id, recipe) => ({ id, recipe, utility: 80, evaluation: {
+    score: 80,
+    analysis: { cn: 35, moisture: 65, eb: 90, cost: 1000, sp: { cn_optimal: { min: 25, ideal: 35, max: 50 }, moisture: { ideal: 65 }, eb_optimal: 120 } },
+    dimensions: { safety: { score: 90 }, agronomy: { score: 80 }, economy: { score: 80 } },
+  } });
+  const candidates = [mk('b', [{ id: 'z', p: 100 }]), mk('a', [{ id: 'a', p: 100 }])];
+  assert.deepEqual(paretoFront(candidates).map(c => c.id), ['b', 'a']);
+  assert.deepEqual(objectiveVector(candidates[0].evaluation), objectiveVector(candidates[1].evaluation));
+});
+
+test('diff Perito incluye antes/después, bajas y códigos de razón sin inflar evidencia', () => {
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients, analyze, score, generations: 1, stepPct: 10,
+  });
+  const candidate = out.ranked.find(c => c.addedIngredients.some(change => change.change === 'removed' || change.change === 'decreased'));
+  assert.ok(candidate);
+  assert.ok(candidate.addedIngredients.every(change => Number.isFinite(change.beforeP) && Number.isFinite(change.afterP)));
+  assert.equal(candidate.evaluation.evidenceClassification.tier, 'tier_3');
+  assert.ok(candidate.evaluation.evidenceClassification.assessedConfidenceScore <= 35);
+});
+
+
+test('evidencia respalda campos específicos sin promover hipótesis agronómicas', () => {
+  const catalog = { claims: [{ fields: ['cost'], method: 'reported' }] };
+  assert.deepEqual(classifyEvidence({ provenance: { catalog } }).supportingEvidence, []);
+  const provenance = {
+    eb: { type: 'model+field-data', sampleSize: 4 },
+    risk: { type: 'rule-inference', observed: false },
+    catalog: {
+      sources: { paper: { type: 'literature', doi: '10.1234/example' } },
+      claims: [{ fields: ['cn'], sourceIds: ['paper'] }],
+    },
+  };
+  const classified = classifyEvidence({ provenance });
+  assert.equal(classified.tier, 'tier_3');
+  assert.deepEqual(classified.supportingEvidence.map(x => [x.tier, x.fields]),
+    [['tier_2', ['eb']], ['tier_1', ['cn']]]);
+  assert.deepEqual(classifyEvidence({ provenance: { eb: { type: 'model+field-data', sampleSize: 0 } } }).supportingEvidence, []);
+  const out = searchScenarios({
+    recipe: [{ id: 'sawdust', p: 90 }, { id: 'bran', p: 10 }],
+    ingredients: ingredients.map(g => ({ ...g, role: g.id === 'sawdust' ? 'base_carbono' : g.id === 'bran' ? 'suplemento_n' : 'aireador' })),
+    analyze, score: an => ({ ...score(an), provenance }), generations: 1,
+  });
+  assert.ok(out.ranked.some(c => c.agronomicInsights.length));
+  assert.ok(out.ranked.flatMap(c => c.agronomicInsights).every(x => x.evidenceTier === 'tier_3'));
+});
+
+
+test('Pareto no sustituye humedad ausente por agronomía ni descarta seguridad', () => {
+  const make = (id, agronomy, safety, cost, moisture) => ({ id, evaluation: {
+    analysis: { cn: 35, eb: 90, cost, moisture,
+      sp: { cn_optimal: { min: 25, ideal: 35, max: 50 }, moisture: { ideal: 65 }, eb_optimal: 120 } },
+    dimensions: { safety: { score: safety }, agronomy: { score: agronomy }, economy: { score: 80 } },
+  } });
+  const cheaper = make('cheaper', 60, 90, 500);
+  const expensive = make('expensive', 95, 90, 1000);
+  assert.equal(objectiveVector(cheaper.evaluation).moisture, null);
+  assert.deepEqual(paretoFront([expensive, cheaper]).map(c => c.id), ['cheaper']);
+  expensive.evaluation.analysis.moisture = 65;
+  assert.deepEqual(paretoFront([expensive, cheaper]).map(c => c.id), ['cheaper']);
+  const safer = make('safer', 60, 95, 1000, 65);
+  assert.deepEqual(paretoFront([safer, cheaper]).map(c => c.id), ['safer', 'cheaper']);
+  for (const moisture of [undefined, null, NaN, Infinity]) {
+    assert.equal(objectiveVector(make('missing', 80, 90, 1000, moisture).evaluation).moistureMeasured, false);
+  }
 });

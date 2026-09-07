@@ -1,0 +1,15 @@
+/* Mockup stage only — never part of the shipped system. */
+body { background: var(--surface-panel); padding: 40px; }
+.stage { display: flex; gap: 40px; align-items: flex-start; justify-content: center; }
+.stage--col { flex-direction: column; align-items: center; }
+.spec { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
+        color: var(--text-metadata); margin-bottom: 8px; }
+/* Print-substrate grain — packaging, labels and plates only. */
+.grain { position: relative; }
+.grain::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: url("../assets/textures/paper-grain.png");
+  background-size: 512px 512px; mix-blend-mode: multiply; opacity: .55;
+}
+/* Engravings are inked on white stock; multiply drops the white onto PAPER. */
+.engraving { mix-blend-mode: multiply; }

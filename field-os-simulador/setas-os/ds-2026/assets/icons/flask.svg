@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
+     fill="none" stroke="currentColor" stroke-width="1.5"
+     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="flask">
+  <path d="M19 6v13L8 38c-1 2 0 4 2 4h28c2 0 3-2 2-4L29 19V6"/>
+  <path d="M17 6h14"/>
+  <path d="M13.5 30h21"/>
+</svg>

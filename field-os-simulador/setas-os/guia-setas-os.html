@@ -1301,8 +1301,11 @@
           <span class="state-badge">resting</span> <span class="state-arrow">&rarr;</span>
           <span class="state-badge">closed</span>
         </div>
-        <div style="margin-top:10px; font-family:var(--font-mono); font-size:11px; color:var(--text-metadata);">
-          Estados de Excepción: <span class="fos-status fos-status--attention">quarantine</span> &nbsp; <span class="fos-status fos-status--error">discarded</span> &nbsp; <span class="fos-status fos-status--error">failed</span>
+        <div style="margin-top:10px; font-family:var(--font-mono); font-size:11px; color:var(--text-metadata); display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+          <span>Estados de Excepción:</span>
+          <span class="fos-status fos-status--quarantine"><span class="fos-status__dot" aria-hidden="true"></span>Por confirmar (quarantine)<a class="fos-status__action" href="#registro">Evaluar muestra</a></span>
+          <span class="fos-status fos-status--failed"><span class="fos-status__dot" aria-hidden="true"></span>No disponible (failed)<a class="fos-status__action" href="#registro">Revisar causa</a></span>
+          <span class="fos-status fos-status--discarded"><span class="fos-status__dot" aria-hidden="true"></span>Descartado (discarded)<a class="fos-status__action" href="#registro">Ver acta</a></span>
         </div>
       </div>
 

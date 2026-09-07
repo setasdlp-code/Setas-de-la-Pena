@@ -1,0 +1,7 @@
+# Derived output — regenerate, never hand-edit.
+
+# node claude-design/build.mjs
+ds-bundle/
+
+# node claude-design/render-cards.mjs
+claude-design/preview/

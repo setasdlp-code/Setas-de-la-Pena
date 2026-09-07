@@ -53,6 +53,8 @@ node_modules/
 .netlify/
 .lighthouseci/
 .firebase/
+firestore-debug.log
+ui-debug.log
 
 # Playwright (field-os-simulador/setas-os) — sesión de auth guardada y
 # artefactos de corridas locales, no versionables.

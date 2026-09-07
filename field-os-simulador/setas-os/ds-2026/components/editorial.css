@@ -1,0 +1,99 @@
+/* ═══════════════════════════════════════════════════════════════
+   DS-2026 — Editorial layer.
+   Devices for ARCHIVE surfaces: the ficha, the plate, the packaging
+   insert, the printed SOP cover. A botanical journal, not a UI.
+
+   Scoped: everything here is inert unless an ancestor carries
+   [data-mode="archive"] or the .ed-* class is applied deliberately.
+   Field and Control stay instrument-like — that contrast is the point.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Archive prose sets narrower than UI prose — a journal column, not a page width. */
+  --measure-archive: 58ch;
+  --measure-note: 22ch;
+
+  --t-lede: var(--weight-light) 22px/1.46 var(--font-editorial);
+  --t-prose-archive: var(--weight-light) 17.5px/1.62 var(--font-editorial);
+  --t-eyebrow-ed: var(--weight-medium) 12px/1.2 var(--font-editorial);
+
+  --rule-editorial: 1px solid var(--ink);
+}
+
+/* ── Prose face. In ARCHIVE the running text is set in Gaya: the same
+   voice as the species name, which is what makes a page read as a plate
+   rather than a form. Field and Control keep IBM Plex Sans. ───────── */
+[data-mode="archive"] .ed-prose p {
+  font: var(--t-prose-archive);
+  max-width: var(--measure-archive);
+  margin: 0 0 var(--space-2);
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+
+/* Lede — the first paragraph carries the reader in. */
+.ed-lede {
+  font: var(--t-lede) !important;
+  color: var(--text-primary);
+  max-width: var(--measure-archive);
+  margin: 0 0 var(--space-2);
+}
+
+/* Drop cap. Three lines, flush to the baseline grid, never on a lede. */
+.ed-drop::first-letter {
+  float: left;
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-black);
+  font-size: 3.05em;
+  line-height: 0.86;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--ink);
+}
+
+/* ── Eyebrow — Gaya in letterspaced caps. The archive counterpart to
+   the mono .t-label, which stays the field/operational register. ──── */
+.ed-eyebrow {
+  font: var(--t-eyebrow-ed);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Section head: hairline above, eyebrow, then the head. ────────── */
+.ed-sec { border-top: var(--rule-editorial); padding-top: var(--space-1); margin-top: var(--space-3); }
+.ed-sec__k { display: block; font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: var(--space-half); }
+.ed-sec__h { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); margin: 0; }
+
+/* ── Folio — running head and page mark, as on a printed sheet. ───── */
+.ed-folio {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: var(--rule-hairline); padding-bottom: var(--space-half);
+}
+.ed-folio__t { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+.ed-folio__n { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.ed-folio--foot { border-bottom: 0; border-top: var(--rule-hairline); padding: var(--space-half) 0 0; }
+
+/* ── Margin note — the apparatus of a scientific plate. ───────────── */
+.ed-note {
+  max-width: var(--measure-note);
+  font: var(--t-small);
+  color: var(--text-secondary);
+  border-top: var(--rule-hairline);
+  padding-top: var(--space-half);
+}
+.ed-note__k { display: block; font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); margin-bottom: 3px; }
+
+/* ── Editorial divider: a centred plate mark, not a full rule. ────── */
+.ed-div { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0; }
+.ed-div::before, .ed-div::after { content: ""; flex: 1; border-top: var(--rule-hairline); }
+.ed-div__m { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+/* ── Plate cartouche — the caption block under a specimen plate. ──── */
+.ed-cartouche { border-top: var(--rule-editorial); padding-top: var(--space-1); display: grid; gap: 3px; }
+.ed-cartouche__n { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.ed-cartouche__l { font-family: var(--font-editorial); font-style: italic; font-size: 17px; color: var(--text-primary); }
+.ed-cartouche__d { font: var(--t-small); color: var(--text-secondary); }
+
+/* ── Two-column editorial text, as a journal sets it. ─────────────── */
+.ed-cols { column-count: 2; column-gap: var(--space-4); column-rule: var(--rule-hairline); }
+.ed-cols > p { margin-top: 0; }

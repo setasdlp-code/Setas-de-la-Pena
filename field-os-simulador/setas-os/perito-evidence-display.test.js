@@ -10,42 +10,45 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const { execFileSync } = require('node:child_process');
 
 const HERE = __dirname;
 const jsx = fs.readFileSync(path.join(HERE, 'simulador-app.jsx'), 'utf8');
 
-// ── ADR-0004: scoring.js y perito-scenarios.js no se tocan ──────────────────
-// El ref a usar no es siempre "main": en un pull_request de CI el checkout no
-// crea la rama local, y en un worktree el "main" local puede estar atrasado
-// respecto del remoto. Se prueba "origin/main" primero — es el main real —
-// y se cae a "main" para el caso local sin remoto configurado.
-const resolveMainRef = () => {
-  for (const ref of ['origin/main', 'main']) {
-    try {
-      execFileSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
-        cwd: HERE, encoding: 'utf8', stdio: 'pipe',
-      });
-      return ref;
-    } catch { /* ref ausente: probar el siguiente */ }
-  }
-  return null;
-};
-
-test('scoring.js y perito-scenarios.js quedan byte-identicos a main (ADR-0004)', () => {
-  const ref = resolveMainRef();
-  // Sin ningún ref de main disponible no se puede probar la invariante, y no se
-  // debe fingir que pasó.
-  if (!ref) throw new Error('no hay ref de main (ni origin/main ni main) contra el cual diffear');
-  let diff;
-  try {
-    diff = execFileSync('git', ['diff', ref, '--', 'scoring.js', 'perito-scenarios.js'], {
-      cwd: HERE, encoding: 'utf8',
+// ADR-0004 governs the learning bridge, not byte equality of engines to Git main.
+// Execute the actual bridge with the real search and scoring implementations.
+test('evidencia contextual no altera scores, ranking ni selección (ADR-0004)', () => {
+  const { searchScenarios } = require('./perito-scenarios.js');
+  const { scoreRecipe } = require('./scoring.js');
+  const options = {
+    recipe: [{ id: 'base', p: 90 }, { id: 'supp', p: 10 }],
+    ingredients: [{ id: 'base', role: 'base_carbono' }, { id: 'supp', role: 'suplemento_n' }],
+    analyze: recipe => {
+      const suppP = recipe.find(r => r.id === 'supp')?.p || 0;
+      return { tot: 100, cn: 50 - suppP, eb: 80 + suppP, cost: 400 + suppP * 10,
+        suppP, avgN: 1.4, avgPh: 6.75, ebIndex: 25, cafeP: 0, manP: 0, densaP: 0, airP: 20, trichoderma: false, incompat: [], sp: { n_optimal: { min: 0.8, ideal: 1.4, max: 2 }, ph_optimal: { min: 6, max: 7.5 }, eb_baseline: 90, supplementation_max: 20, cn_optimal: { min: 25, ideal: 35, max: 50 }, eb_optimal: 120 } };
+    },
+    score: scoreRecipe, generations: 1,
+  };
+  const expected = searchScenarios(options);
+  assert.ok(expected.ranked.length > 0);
+  const bridge = fs.readFileSync(path.join(HERE, 'production-learning-bridge.js'), 'utf8')
+    .replace(/^import .*;$/gm, '');
+  for (const sampleSize of [0, 4, 100]) {
+    const evidence = { schema: 'setas.historical-evidence.v1', confidence: 'medium', summary: { sampleSize } };
+    const engine = { searchScenarios };
+    vm.runInNewContext(bridge, {
+      SetasPeritoScenarios: engine,
+      SetasCycleEvidence: { buildHistoricalEvidence: () => evidence },
+      localStorage: { getItem: () => null },
+      window: { addEventListener() {}, dispatchEvent() {} },
+      CustomEvent: function () {},
     });
-  } catch (e) {
-    throw new Error(`no se pudo diffear contra ${ref}: ${e.message}`);
+    const actual = engine.searchScenarios(options);
+    assert.equal(actual.historicalEvidence, evidence);
+    for (const key of ['ranked', 'recommended', 'pareto', 'best', 'baseline']) {
+      assert.deepEqual(actual[key], expected[key], key);
+    }
   }
-  assert.equal(diff, '', `scoring.js/perito-scenarios.js difieren de ${ref}:\n${diff}`);
 });
 
 // ── la UI lee out.historicalEvidence tal cual, no lo re-deriva ──────────────

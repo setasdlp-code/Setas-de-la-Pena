@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pase Gastronómico & Trazabilidad · Setas de la Peña</title>
+<meta name="robots" content="noindex" />
+<link rel="stylesheet" href="../assets/tokens/swiss-botanical-tokens.css">
+<style>
+  :root {
+    /* Alias locales de trace.html a los tokens reales de Swiss Botanical
+       (field-os-simulador/setas-os/assets/tokens/swiss-botanical-tokens.css).
+       No redefinir valores aquí — solo mapear los nombres que ya usa esta
+       página a su token --sb-* correspondiente. */
+    --paper-0: var(--sb-paper-0);
+    --paper-1: var(--sb-paper-1);
+    --paper-2: var(--sb-paper-2);
+    --paper-3: var(--sb-paper-3);
+
+    --ink-0: var(--sb-ink-0);
+    --ink-1: var(--sb-ink-1);
+    --ink-2: var(--sb-ink-2);
+    --ink-3: var(--sb-ink-3);
+
+    --line-0: var(--sb-line-hairline);
+    --line-1: var(--sb-line-strong);
+    --line-2: var(--sb-line-heavy);
+
+    --accent-terracotta: var(--sb-accent-rosa);
+    --accent-terracotta-dim: var(--sb-accent-rosa-tint);
+    --accent-olive: var(--sb-status-active);
+    --accent-olive-dim: var(--sb-status-active-tint);
+    --accent-blue-grey: var(--sb-accent-orellana);
+
+    --font-serif: var(--sb-font-serif);
+    --font-sans: var(--sb-font-sans);
+    --font-mono: var(--sb-font-mono);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--paper-1);
+    font-family: var(--font-sans);
+    color: var(--ink-0);
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cartouche-outer {
+    width: 100%;
+    max-width: 540px;
+    background: var(--paper-0);
+    border: 2px solid var(--line-2);
+    padding: 4px;
+    box-shadow: none;
+    border-radius: 0px;
+  }
+
+  .cartouche-inner {
+    border: 1px solid var(--line-0);
+    padding: 0;
+    background: var(--paper-0);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header Editorial — el acento se tiñe por especie vía --species-accent,
+     fijado en línea sobre .cartouche-outer según el binomio del lote
+     (ver script). Por defecto cae en el acento terracota general. */
+  :root {
+    --species-accent: var(--accent-terracotta);
+    --species-accent-tint: var(--accent-terracotta-dim);
+  }
+
+  header {
+    background: var(--ink-0);
+    color: var(--paper-0);
+    padding: 24px 20px 20px;
+    /* --species-accent-tint (no el acento sólido): sobre --ink-0 el acento
+       de Shiitake cae a 2.09:1, bajo el mínimo no-textual 3:1. */
+    border-bottom: 2px solid var(--species-accent-tint);
+    position: relative;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--paper-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .eyebrow::before {
+    /* Glifo decorativo sobre fondo oscuro (--ink-0): --species-accent puro
+       falla el contraste no-textual 3:1 para más de una especie (ver
+       auditoría). Se usa el tinte, que siempre queda claro sobre tinta. */
+    content: "■";
+    font-size: 8px;
+    color: var(--species-accent-tint);
+  }
+
+  header h1 {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--paper-0);
+    margin: 4px 0 2px;
+  }
+
+  header .sci {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--paper-2);
+    opacity: 0.95;
+  }
+
+  .badge-stamp {
+    /* Texto/borde fijos en --paper-0 (~15:1 sobre --ink-0, siempre legible):
+       --species-accent como color de texto aquí falla 4.5:1 para las
+       cuatro especies contra el fondo oscuro del header (auditado, peor
+       caso 2.09:1). El acento de especie queda como lavado de fondo, que
+       no tiene requisito de contraste de texto. */
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border: 1px solid var(--paper-2);
+    padding: 3px 7px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--paper-0);
+    background: color-mix(in srgb, var(--species-accent-tint) 22%, transparent);
+  }
+
+  main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Secciones con cartela */
+  .section-box {
+    border: 1px solid var(--line-1);
+    background: var(--paper-0);
+    border-radius: 0px;
+  }
+
+  .section-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    background: var(--paper-1);
+    border-bottom: 1px solid var(--line-1);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-1);
+  }
+
+  .section-hd .tag {
+    /* --species-accent como texto pequeño sobre --paper-1 falla 4.5:1 para
+       3 de 4 especies (auditado: 3.72–4.29:1). --ink-1 es el color de
+       texto seguro; el acento vive en elementos no-textuales (badge, CTA). */
+    color: var(--ink-1);
+    font-weight: 700;
+  }
+
+  .section-body {
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Ficha de Cata */
+  .tasting-lead {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-0);
+  }
+
+  .tasting-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--line-0);
+    padding-top: 12px;
+  }
+
+  @media (min-width: 480px) {
+    .tasting-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .tasting-item {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 12px;
+  }
+
+  .tasting-item .lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .tasting-item .val {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--ink-0);
+  }
+
+  /* Trazabilidad Agronómica */
+  .lot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 12px;
+  }
+
+  .codigo-mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-0);
+  }
+
+  .state-chip {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    background: var(--accent-olive-dim);
+    color: var(--accent-olive);
+    border: 1px solid var(--accent-olive);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .metric-cell {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 10px;
+  }
+
+  .metric-cell .lbl {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .metric-cell .val {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-0);
+    margin-top: 4px;
+  }
+
+  .cosechas-list {
+    border-top: 1px solid var(--line-0);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cosecha-item {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 6px 8px;
+    background: var(--paper-1);
+    border-left: 2px solid var(--accent-olive);
+  }
+
+  .stars {
+    /* Mismo motivo que .section-hd .tag: texto pequeño sobre --paper-1. */
+    color: var(--ink-1);
+    font-size: 11px;
+    margin-left: 4px;
+  }
+
+  .guarantee-box {
+    background: var(--paper-1);
+    border: 1px solid var(--line-1);
+    padding: 12px 14px;
+    font-size: 11.5px;
+    color: var(--ink-1);
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .guarantee-box strong {
+    color: var(--accent-olive);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .06em;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Culinary Market — Formato & Disponibilidad */
+  .format-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .format-card {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .format-card__weight {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-0);
+  }
+
+  .format-card__desc {
+    font-size: 11.5px;
+    color: var(--ink-1);
+  }
+
+  .availability-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--line-0);
+    padding-top: 12px;
+  }
+
+  .state-chip--active {
+    background: var(--accent-olive-dim);
+    color: var(--accent-olive);
+    border-color: var(--accent-olive);
+  }
+
+  .state-chip--warn {
+    background: var(--sb-status-warn-tint);
+    /* --sb-status-warn (#C49A4C) no alcanza 4.5:1 sobre su propio tinte
+       (solo 2.25:1) ni 3:1 como borde — el mismo patrón de "oscurecer
+       para AA" ya documentado en DESIGN_TOKENS.md (--cat-sup hover-text
+       #8B6014). No revertir a --sb-status-warn aquí. */
+    color: #8B6014;
+    border-color: #8B6014;
+  }
+
+  .state-chip--neutral {
+    background: var(--paper-2);
+    /* --ink-2 sobre --paper-2 da 4.26:1, bajo el mínimo AA de 4.5:1 para
+       texto pequeño — se usa --ink-1 (8.69:1) en su lugar. */
+    color: var(--ink-1);
+    border-color: var(--line-0);
+  }
+
+  .availability-note {
+    font-size: 11.5px;
+    color: var(--ink-1);
+    line-height: 1.4;
+  }
+
+  .cta-button {
+    /* Fondo fijo en --ink-0 (no --species-accent): algunos acentos de
+       especie (ej. Melena #9D6F28) caen bajo 4.5:1 con texto --paper-0
+       encima. El acento de especie se conserva como borde-izq de 4px. */
+    display: block;
+    text-align: center;
+    background: var(--ink-0);
+    color: var(--paper-0);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 12px 16px;
+    border: 1px solid var(--ink-0);
+    /* --species-accent-tint, no el acento sólido: sobre --ink-0 el de
+       Shiitake cae a 2.09:1, bajo el mínimo no-textual 3:1 (auditado). */
+    border-left: 4px solid var(--species-accent-tint);
+    transition: opacity var(--sb-duration-fast, 150ms) var(--sb-ease-pressed, ease);
+  }
+
+  .cta-button:hover {
+    opacity: 0.88;
+  }
+
+  footer {
+    border-top: 1px solid var(--line-0);
+    padding: 14px 20px 18px;
+    background: var(--paper-1);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    color: var(--ink-2);
+  }
+
+  footer a {
+    color: var(--ink-0);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .state-msg {
+    padding: 60px 24px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+</style>
+</head>
+<body>
+  <div class="cartouche-outer">
+    <div class="cartouche-inner" id="app">
+      <div class="state-msg" id="loading">Recuperando certificado y pase gastronómico…</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "../vendor/firebase/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy } from "../vendor/firebase/firebase-firestore.js";
+    import { firebaseConfig } from "../firebase/firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const PERFILES_GASTRONOMICOS = {
+      'Pleurotus ostreatus': {
+        comun: 'Orellana / Pleurotus',
+        textura: 'Carnosa, elástica y aterciopelada al dente.',
+        perfil: 'Umami sutil, notas de bosque húmedo, avellana tostada y final mineral limpio.',
+        maridaje: 'Salteado vivo a fuego alto en mantequilla clarificada o hierro fundido, risottos, fondos reducidos y vino blanco seco.',
+        conservacion: '3°C a 5°C en empaque respirable. No lavar antes de guardar; limpiar con brocha suave antes de cocción.'
+      },
+      'Lentinula edodes': {
+        comun: 'Shiitake',
+        textura: 'Densa, elástica y consistente, gran resistencia a cocciones prolongadas.',
+        perfil: 'Profundo umami concentrado, ahumado natural, notas terrosas y sotobosque andino.',
+        maridaje: 'Caldos ramen, reducciones de soja añeja, glaseados de miso, brasas directas o fondos madre.',
+        conservacion: '3°C a 5°C. Desarrolla mayor profundidad aromática tras 24–48h en frío ventilado.'
+      },
+      'Hericium erinaceus': {
+        comun: 'Melena de León',
+        textura: 'Tierna y deshilachable, textura análoga a langosta o vieiras de mar.',
+        perfil: 'Dulce y delicado, sutil recuerdo marino, notas de mantequilla dorada.',
+        maridaje: 'Sellado en medallones a la plancha con ghee y tomillo, o crudo en carpaccio fino con AOVE.',
+        conservacion: '2°C a 4°C. Manipular con extrema delicadeza para proteger las espinas fértiles.'
+      },
+      'Pleurotus djamor': {
+        comun: 'Orellana Rosada',
+        textura: 'Delicada y ligera, borde ondulado con menor grosor que la Orellana blanca.',
+        perfil: 'Umami suave, notas cítricas discretas y final ligeramente ahumado tras cocción.',
+        maridaje: 'Salteado breve a fuego alto para conservar el color; pierde tono rosado con cocciones largas.',
+        conservacion: '3°C a 5°C en empaque respirable. Consumir dentro de las primeras 48h para conservar el color.'
+      },
+      'default': {
+        comun: 'Seta Gourmet de Altura',
+        textura: 'Firme, carnosa y de alta absorción aromática.',
+        perfil: 'Umami fresco, limpio y fragante, característico de la altitud de Tenjo (2.592 msnm).',
+        maridaje: 'Cocción corta a temperatura media-alta con hierbas frescas, pastas artesanales o guarniciones de autor.',
+        conservacion: '3°C a 5°C en refrigeración ventilada.'
+      }
+    };
+
+    function extraerCodigo() {
+      return new URLSearchParams(location.search).get('codigo') || '';
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function diasEntre(fechaIso) {
+      if (!fechaIso) return null;
+      const start = new Date(fechaIso);
+      if (isNaN(start)) return null;
+      return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
+    }
+
+    function obtenerPerfil(especie, cientifico) {
+      return PERFILES_GASTRONOMICOS[cientifico] || PERFILES_GASTRONOMICOS[especie] || PERFILES_GASTRONOMICOS['default'];
+    }
+
+    // Acento cromático por especie (SOURCES.md #5 Taboocha: "codificación
+    // cromática vibrante pero disciplinada para diferenciar perfiles
+    // organolépticos entre variedades hermanas"). Referencian los tokens
+    // reales de assets/tokens/swiss-botanical-tokens.css.
+    const ACENTO_POR_ESPECIE = {
+      'Lentinula edodes':    { accent: 'var(--sb-accent-shiitake)',  tint: 'var(--sb-accent-shiitake-tint)' },
+      'Pleurotus ostreatus': { accent: 'var(--sb-accent-orellana)',  tint: 'var(--sb-accent-orellana-tint)' },
+      'Hericium erinaceus':  { accent: 'var(--sb-accent-melena)',    tint: 'var(--sb-accent-melena-tint)' },
+      'Pleurotus djamor':    { accent: 'var(--sb-accent-rosa)',      tint: 'var(--sb-accent-rosa-tint)' }
+    };
+
+    function obtenerAcento(cientifico) {
+      return ACENTO_POR_ESPECIE[cientifico] || { accent: 'var(--accent-terracotta)', tint: 'var(--accent-terracotta-dim)' };
+    }
+
+    // Disponibilidad de venta según el estado real del lote (ver
+    // batch-traceability.js / public-trace-sync.js: incubacion,
+    // fructificacion, completado). No se inventan calendarios de despacho
+    // no confirmados — solo el estado verificado del lote.
+    const DISPONIBILIDAD_POR_ESTADO = {
+      'incubacion':     { label: 'En incubación · aún no disponible', tone: 'warn' },
+      'fructificacion': { label: 'Cosecha activa · disponible',       tone: 'active' },
+      'completado':     { label: 'Ciclo completado',                 tone: 'neutral' }
+    };
+
+    function obtenerDisponibilidad(estado) {
+      return DISPONIBILIDAD_POR_ESTADO[estado] || { label: estado || 'Sin estado', tone: 'neutral' };
+    }
+
+    function render(lote, cosechas, codigo) {
+      const app = document.getElementById('app');
+      if (!lote) {
+        app.innerHTML = `
+          <header>
+            <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
+            <h1>Código no encontrado</h1>
+          </header>
+          <div class="state-msg">
+            No hay una ficha pública registrada para <strong>${esc(codigo)}</strong>.<br>
+            Verifica el código impreso en la etiqueta térmica o contacta al equipo de Setas de la Peña.
+          </div>
+          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
+        return;
+      }
+
+      const perfil = obtenerPerfil(lote.especie, lote.especieCientifico);
+      const dias = diasEntre(lote.fechaInoculacion);
+      const totalKg = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
+      const acento = obtenerAcento(lote.especieCientifico);
+      const disponibilidad = obtenerDisponibilidad(lote.estado);
+
+      app.style.setProperty('--species-accent', acento.accent);
+      app.style.setProperty('--species-accent-tint', acento.tint);
+
+      const cosechasHtml = cosechas.length
+        ? cosechas.map(c => {
+            const calidad = Math.max(0, Math.min(5, Math.floor(Number(c.calidad)) || 0));
+            const stars = calidad > 0 ? `<span class="stars">${'★'.repeat(calidad)}</span>` : '';
+            return `
+            <div class="cosecha-item">
+              <span>Flush #${esc(c.flush || 1)} · ${esc(c.fecha || '—')}</span>
+              <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g ${stars}</strong>
+            </div>`;
+          }).join('')
+        : '<div class="cosecha-item" style="color:var(--ink-2);">Cosecha en desarrollo en sala de fructificación</div>';
+
+      app.innerHTML = `
+        <header>
+          <div class="badge-stamp">Cosecha de Autor</div>
+          <div class="eyebrow">Tenjo, Colombia · 2.592 msnm · Sabana Centro</div>
+          <h1>${esc(lote.especie || 'Seta Cultivada')}</h1>
+          <div class="sci">${esc(lote.especieCientifico || perfil.comun)}</div>
+        </header>
+
+        <main>
+          <!-- BLOQUE 1: PASE GASTRONÓMICO / FICHA PARA CHEF -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Pase Gastronómico</span>
+              <span class="tag">Perfil de Cocina</span>
+            </div>
+            <div class="section-body">
+              <p class="tasting-lead">
+                <strong>Textura & Carácter:</strong> ${esc(perfil.textura)}
+              </p>
+              <div class="tasting-grid">
+                <div class="tasting-item">
+                  <span class="lbl">Perfil Organoléptico</span>
+                  <div class="val">${esc(perfil.perfil)}</div>
+                </div>
+                <div class="tasting-item">
+                  <span class="lbl">Técnica & Maridaje</span>
+                  <div class="val">${esc(perfil.maridaje)}</div>
+                </div>
+              </div>
+              <div class="tasting-item" style="background:var(--paper-0);border:1px dashed var(--line-0);">
+                <span class="lbl">Conservación en Cocina</span>
+                <div class="val" style="font-size:12px;color:var(--ink-1);">${esc(perfil.conservacion)}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOQUE 1.5: FORMATO & DISPONIBILIDAD (Culinary Market) -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Formato & Disponibilidad</span>
+              <span class="tag">Cómo Pedirlo</span>
+            </div>
+            <div class="section-body">
+              <div class="format-grid">
+                <div class="format-card">
+                  <span class="format-card__weight">200 g</span>
+                  <span class="format-card__desc">Cena para 1–2 personas</span>
+                </div>
+                <div class="format-card">
+                  <span class="format-card__weight">400 g</span>
+                  <span class="format-card__desc">Cocina familiar, 3–4 porciones</span>
+                </div>
+              </div>
+              <div class="availability-row">
+                <span class="state-chip state-chip--${disponibilidad.tone}">${esc(disponibilidad.label)}</span>
+                <span class="availability-note">Escríbenos para confirmar disponibilidad y fecha de entrega de este lote.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOQUE 2: TRAZABILIDAD AGRONÓMICA -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Ficha Técnica de Origen</span>
+              <span>Lote #${esc(lote.codigo)}</span>
+            </div>
+            <div class="section-body">
+              <div class="lot-row">
+                <div>
+                  <div class="codigo-mono">${esc(lote.codigo)}</div>
+                  <div style="font-size:11px;color:var(--ink-2);margin-top:2px;">Finca Santa Isabel · Serranía de Juaica</div>
+                </div>
+                <div class="state-chip state-chip--${disponibilidad.tone}">${esc(disponibilidad.label)}</div>
+              </div>
+
+              <div class="metrics-grid">
+                <div class="metric-cell">
+                  <div class="lbl">Inoculación</div>
+                  <div class="val">${esc(lote.fechaInoculacion || '—')}</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="lbl">Días de Ciclo</div>
+                  <div class="val">${dias != null ? dias + ' d' : '—'}</div>
+                </div>
+                <div class="metric-cell">
+                  <div class="lbl">Cosecha Total</div>
+                  <div class="val">${totalKg > 0 ? (totalKg / 1000).toFixed(2) + ' kg' : 'En sala'}</div>
+                </div>
+              </div>
+
+              <div class="cosechas-list">
+                <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px;">Registro de Cosechas por Flush</div>
+                ${cosechasHtml}
+              </div>
+
+              <div class="guarantee-box">
+                <strong>Garantía Botánica Limpia</strong>
+                Cultivado en el clima frío de la Sabana de Bogotá (Tenjo, 2.592 msnm), con control ambiental en sala de fructificación y sustrato formulado con subproductos agrícolas locales, sin pesticidas químicos ni fertilizantes sintéticos.
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOQUE 3: PRÓXIMO PASO (Culinary Market) -->
+          <a class="cta-button" href="mailto:info@setasdelapena.co?subject=${encodeURIComponent('Consulta lote ' + (lote.codigo || ''))}">
+            Escríbenos por este lote &rarr;
+          </a>
+        </main>
+
+        <footer>
+          Setas de la Peña · Sabana Centro, Colombia<br>
+          <a href="https://setasdelapena.co">setasdelapena.co</a> · <span style="font-family:var(--font-mono);">FOS v3.0</span>
+        </footer>`;
+    }
+
+    (async () => {
+      const codigo = extraerCodigo();
+      if (!codigo) {
+        render(null, [], '');
+        return;
+      }
+      try {
+        const loteSnap = await getDoc(doc(db, 'public_lotes', codigo));
+        const cosechasSnap = await getDocs(query(collection(db, 'public_lotes', codigo, 'cosechas'), orderBy('flush', 'asc')));
+        const cosechas = cosechasSnap.docs.map(d => d.data());
+        render(loteSnap.exists() ? loteSnap.data() : null, cosechas, codigo);
+      } catch (err) {
+        document.getElementById('app').innerHTML = `
+          <div class="state-msg">
+            Error cargando ficha técnica (${esc(err.message || err.code || 'error de red')}).<br>Por favor reintenta.
+          </div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,577 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Componentes de Sistema
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ---- Botones Comerciales & Acciones ---- */
+.sb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sb-space-2);
+  font-family: var(--sb-font-sans);
+  font-size: var(--sb-text-sm);
+  font-weight: 600;
+  letter-spacing: var(--sb-tracking-wide);
+  padding: var(--sb-space-3) var(--sb-space-5);
+  border-radius: var(--sb-radius-xs);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  background: transparent;
+  transition: background-color var(--sb-duration-fast) var(--sb-ease-editorial),
+              border-color var(--sb-duration-fast) var(--sb-ease-editorial),
+              color var(--sb-duration-fast) var(--sb-ease-editorial),
+              transform var(--sb-duration-fast) var(--sb-ease-pressed);
+  user-select: none;
+}
+
+.sb-btn:active {
+  transform: var(--sb-press-shift);
+}
+
+.sb-btn--primary {
+  background-color: var(--sb-ink-0);
+  color: var(--sb-ink-inverse);
+  border-color: var(--sb-ink-0);
+}
+
+.sb-btn--primary:hover {
+  background-color: var(--sb-accent-shiitake-deep);
+  border-color: var(--sb-accent-shiitake-deep);
+  color: var(--sb-ink-inverse);
+}
+
+.sb-btn--accent {
+  background-color: var(--sb-accent-shiitake);
+  color: var(--sb-ink-inverse);
+  border-color: var(--sb-accent-shiitake);
+}
+
+.sb-btn--accent:hover {
+  background-color: var(--sb-accent-shiitake-deep);
+  border-color: var(--sb-accent-shiitake-deep);
+  color: var(--sb-ink-inverse);
+}
+
+.sb-btn--secondary {
+  background-color: var(--sb-paper-1);
+  color: var(--sb-ink-0);
+  border-color: var(--sb-line-strong);
+}
+
+.sb-btn--secondary:hover {
+  background-color: var(--sb-paper-2);
+  border-color: var(--sb-ink-0);
+}
+
+.sb-btn--subtle {
+  background-color: transparent;
+  color: var(--sb-ink-0);
+  border-color: transparent;
+  padding-left: var(--sb-space-2);
+  padding-right: var(--sb-space-2);
+}
+
+.sb-btn--subtle:hover {
+  color: var(--sb-accent-shiitake);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.sb-btn:disabled,
+.sb-btn[aria-disabled="true"] {
+  background-color: var(--sb-paper-2);
+  border-color: var(--sb-line-hairline);
+  color: var(--sb-ink-2);
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
+}
+
+.sb-btn--sm {
+  font-size: var(--sb-text-xs);
+  padding: var(--sb-space-2) var(--sb-space-3);
+}
+
+.sb-btn--lg {
+  font-size: var(--sb-text-base);
+  padding: var(--sb-space-4) var(--sb-space-6);
+}
+
+/* ---- Cápsulas, Badges y Etiquetas ---- */
+.sb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sb-space-1);
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--sb-radius-xs);
+  border: 1px solid var(--sb-line-hairline);
+  background-color: var(--sb-paper-1);
+  color: var(--sb-ink-1);
+  white-space: nowrap;
+}
+
+.sb-badge--shiitake {
+  border-color: var(--sb-accent-shiitake);
+  background-color: var(--sb-accent-shiitake-tint);
+  color: var(--sb-accent-shiitake-deep);
+}
+
+.sb-badge--orellana {
+  border-color: var(--sb-accent-orellana);
+  background-color: var(--sb-accent-orellana-tint);
+  color: var(--sb-accent-orellana-text);
+}
+
+.sb-badge--melena {
+  border-color: var(--sb-accent-melena);
+  background-color: var(--sb-accent-melena-tint);
+  color: var(--sb-accent-melena-text);
+}
+
+.sb-badge--rosa {
+  border-color: var(--sb-accent-rosa);
+  background-color: var(--sb-accent-rosa-tint);
+  color: var(--sb-accent-rosa-text);
+}
+
+.sb-badge--status {
+  background-color: var(--sb-status-active-tint);
+  border-color: var(--sb-status-active);
+  color: var(--sb-status-active);
+}
+
+.sb-badge--status::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* Estados de confianza: siempre llevan texto; el color solo refuerza la lectura. */
+.sb-status--verified,
+.sb-status--available { background-color: var(--sb-status-active-tint); border-color: var(--sb-status-active); color: var(--sb-status-active); }
+.sb-status--pending,
+.sb-status--development { background-color: var(--sb-status-neutral-tint); border-color: var(--sb-status-neutral); color: var(--sb-status-neutral); }
+.sb-status--unavailable { background-color: var(--sb-status-error-tint); border-color: var(--sb-status-error); color: var(--sb-status-error); }
+.sb-status--development { background-color: var(--sb-status-info-tint); border-color: var(--sb-status-info); color: var(--sb-status-info); }
+.sb-status--verified::before,
+.sb-status--available::before,
+.sb-status--pending::before,
+.sb-status--unavailable::before,
+.sb-status--development::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ---- Selector Híbrido Hogar / Chef ---- */
+.sb-segment-switch {
+  display: inline-flex;
+  background-color: var(--sb-paper-2);
+  border: 1px solid var(--sb-line-strong);
+  border-radius: var(--sb-radius-xs);
+  padding: 2px;
+  gap: 2px;
+}
+
+.sb-segment-option,
+.sb-segment-btn {
+  font-family: var(--sb-font-sans);
+  font-size: var(--sb-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--sb-tracking-wide);
+  padding: var(--sb-space-2) var(--sb-space-4);
+  border-radius: var(--sb-radius-xs);
+  border: none;
+  background: transparent;
+  color: var(--sb-ink-1);
+  cursor: pointer;
+  transition: all var(--sb-duration-fast) var(--sb-ease-editorial);
+}
+
+.sb-segment-option--active,
+.sb-segment-btn[aria-pressed="true"] {
+  background-color: var(--sb-paper-0);
+  color: var(--sb-ink-0);
+  border-bottom: 2px solid var(--sb-ink-0);
+}
+
+/* ---- Cápsula de Trazabilidad Progresiva ---- */
+.sb-traceability-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sb-space-4);
+  background-color: var(--sb-paper-1);
+  border: 1px solid var(--sb-line-strong);
+  padding: var(--sb-space-3) var(--sb-space-4);
+  border-radius: var(--sb-radius-xs);
+  transition: border-color var(--sb-duration-normal) var(--sb-ease-editorial),
+              background-color var(--sb-duration-normal) var(--sb-ease-editorial);
+  text-decoration: none;
+  color: inherit;
+}
+
+.sb-traceability-capsule:hover {
+  border-color: var(--sb-accent-shiitake);
+  background-color: var(--sb-paper-0);
+}
+
+.sb-traceability-capsule__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-traceability-capsule__tag {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+.sb-traceability-capsule__lot {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-sm);
+  font-weight: 600;
+  color: var(--sb-ink-0);
+}
+
+.sb-traceability-capsule__meta {
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-1);
+}
+
+.sb-traceability-capsule__action {
+  font-family: var(--sb-font-sans);
+  font-size: var(--sb-text-xs);
+  font-weight: 600;
+  color: var(--sb-accent-shiitake);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---- Tarjetas y Cajas de Módulo ---- */
+.sb-card {
+  background-color: var(--sb-paper-1);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-6);
+  border-radius: var(--sb-radius-xs);
+  transition: border-color var(--sb-duration-normal) var(--sb-ease-editorial),
+              transform var(--sb-duration-normal) var(--sb-ease-editorial);
+}
+
+.sb-card--interactive:hover {
+  border-color: var(--sb-accent-shiitake);
+}
+
+.sb-card--sunken {
+  background-color: var(--sb-paper-2);
+  border-color: var(--sb-line-strong);
+}
+
+/* ---- Fichas y Tablas de Datos Botánicos ---- */
+.sb-specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--sb-text-sm);
+}
+
+.sb-specs-table th,
+.sb-specs-table td {
+  padding: var(--sb-space-3) var(--sb-space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--sb-line-hairline);
+}
+
+.sb-specs-table th {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-2);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+  width: 38%;
+}
+
+.sb-specs-table td {
+  color: var(--sb-ink-0);
+}
+
+/* ---- Navegación y Encabezado Común ---- */
+.sb-header {
+  border-bottom: 1px solid var(--sb-line-hairline);
+  background-color: var(--sb-paper-0);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.sb-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--sb-space-4);
+  padding-bottom: var(--sb-space-4);
+}
+
+.sb-brand-mark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sb-space-2);
+  font-family: var(--sb-font-serif);
+  font-weight: 900;
+  font-size: var(--sb-text-xl);
+  color: var(--sb-ink-0);
+  text-decoration: none;
+}
+
+.sb-brand-mark__sub {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  font-weight: 400;
+  color: var(--sb-ink-2);
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+.sb-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sb-space-6);
+  font-size: var(--sb-text-sm);
+  font-weight: 500;
+}
+
+.sb-nav__link {
+  color: var(--sb-ink-1);
+  padding: var(--sb-space-1) 0;
+  border-bottom: 1px solid transparent;
+  transition: all var(--sb-duration-fast) ease;
+}
+
+.sb-nav__link:hover,
+.sb-nav__link--active {
+  color: var(--sb-ink-0);
+  border-bottom-color: var(--sb-accent-shiitake);
+}
+
+/* ---- Pie de Página Común ---- */
+.sb-footer {
+  border-top: 1px solid var(--sb-line-strong);
+  background-color: var(--sb-paper-1);
+  padding-top: var(--sb-space-12);
+  padding-bottom: var(--sb-space-12);
+  margin-top: var(--sb-space-20);
+}
+
+.sb-footer__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: var(--sb-space-8);
+}
+
+@media (max-width: 860px) {
+  .sb-footer__grid {
+    grid-template-columns: 1fr;
+    gap: var(--sb-space-6);
+  }
+}
+
+/* Shared layouts keep navigation and actions available on narrow screens. */
+.sb-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-block: 24px; }
+.sb-editorial-teaser { display: grid; grid-template-columns: 1.4fr .6fr; align-items: center; gap: 48px; padding-block: 64px; border-top: 1px solid var(--sb-line-heavy); }
+.sb-editorial-teaser img { max-height: 340px; justify-self: center; object-fit: contain; }
+.sb-editorial-teaser h2 { font-size: clamp(32px, 4vw, 52px); max-width: 20ch; margin-bottom: 24px; }
+#catalogo { padding-block: 64px; }
+#catalogo > p { max-width: 65ch; margin-block: 20px; }
+.sb-traceability-capsule__tag, .sb-traceability-capsule__lot, .sb-traceability-capsule__meta { display: block; }
+.sb-hero figcaption { border-top: 1px solid var(--sb-line-hairline); margin-top: 24px; padding-top: 16px; text-align: left; }
+.sb-hero figcaption strong { font-family: var(--sb-font-serif); font-size: 28px; }
+.sb-product-layout dl { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px 20px; margin-block: 24px; }
+.sb-product-layout dt { font-weight: 600; }
+.sb-product-layout dd { margin: 0; }
+#formatos { margin-block: 24px; }
+#formatos fieldset { border: 0; min-width: 0; }
+#formatos legend { font-size: 24px; font-family: var(--sb-font-serif); font-weight: 700; margin-bottom: 12px; }
+#formatos .sb-gram-card { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 8px; min-height: 96px; }
+#formatos .sb-gram-card span { width: 100%; font-size: 14px; }
+#formatos .sb-gram-card:has(input:checked) { background: var(--sb-accent-shiitake-tint); border-color: var(--sb-accent-shiitake); }
+#formatos input { accent-color: var(--sb-accent-shiitake); }
+#seleccion:not(:empty) { border-left: 3px solid var(--sb-accent-shiitake); padding: 16px; margin-top: 20px; background: var(--sb-paper-1); }
+.sb-metric-card { min-width: 0; }
+.sb-metric-card h2 { font-family: var(--sb-font-sans); font-size: 16px; margin-bottom: 12px; }
+main > header, main > section { margin-block: 32px; }
+.sb-metric-card p { overflow-wrap: anywhere; }
+.sb-header__inner { gap: 20px; flex-wrap: wrap; }
+.sb-brand-mark { flex-wrap: wrap; column-gap: 12px; }
+.sb-nav { flex-wrap: wrap; gap: 8px 24px; }
+.sb-nav__link, .sb-btn, .sb-filter-btn, .sb-segment-option { min-height: 44px; }
+.sb-nav__link { display: inline-flex; align-items: center; }
+.sb-traceability-capsule { flex-wrap: wrap; }
+.sb-traceability-capsule__lead { min-width: 0; }
+.sb-badge { white-space: normal; }
+.sb-header__inner > *, .sb-product-layout > *, .sb-editorial-body > * { min-width: 0; }
+.sb-prose { max-width: 65ch; }
+.sb-editorial-folio, .sb-plate-caption { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 960px) {
+  .sb-header { position: static; }
+  .sb-header__inner { align-items: flex-start; }
+  .sb-nav { width: 100%; order: 3; }
+  .sb-brand-mark__sub { display: block; width: 100%; }
+}
+@media (max-width: 900px) {
+  .sb-product-info { order: -1; }
+  .sb-product-layout .sb-viewer__main { height: 260px; }
+}
+@media (max-width: 600px) {
+  .sb-editorial-teaser { grid-template-columns: 1fr; gap: 24px; padding-block: 40px; }
+  .sb-editorial-teaser img { max-height: 240px; }
+  #formatos .sb-gram-selector { grid-template-columns: 1fr; }
+  .sb-product-layout dl { grid-template-columns: 1fr; gap: 4px; }
+  .sb-product-layout dd { margin-bottom: 12px; }
+  .sb-container { padding-inline: 20px; }
+  .sb-specs-table th { width: 42%; }
+  .sb-specs-table th, .sb-specs-table td { overflow-wrap: anywhere; }
+  .sb-editorial-title { font-size: clamp(36px, 10vw, 52px); }
+}
+/* Módulo HORECA / Chef Profesional */
+.sb-chef-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sb-space-3);
+  margin-top: var(--sb-space-3);
+}
+
+.sb-chef-spec-card {
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-3);
+  border-radius: var(--sb-radius-xs);
+}
+
+.sb-chef-spec-card__label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.sb-chef-spec-card__value {
+  font-family: var(--sb-font-sans);
+  font-size: var(--sb-text-sm);
+  font-weight: 600;
+  color: var(--sb-ink-0);
+}
+
+.sb-chef-spec-card__detail {
+  font-size: var(--sb-text-2xs);
+  color: var(--sb-ink-1);
+  margin-top: 2px;
+}
+
+/* Nota Sensorial en Gaya Italic (Norma: máx 3 líneas, perfil validado) */
+.sb-sensory-note {
+  font-family: var(--sb-font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--sb-text-lg);
+  line-height: var(--sb-leading-snug);
+  color: var(--sb-accent-shiitake);
+  margin-top: var(--sb-space-1);
+  margin-bottom: var(--sb-space-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Estados Canónicos de Estatus y Validación Epistémica
+   ═══════════════════════════════════════════════════════════════ */
+
+.sb-status--verified,
+.sb-status--available,
+.sb-badge--validated {
+  border-color: var(--sb-status-active);
+  background-color: var(--sb-status-active-tint);
+  color: var(--sb-status-active);
+}
+
+.sb-status--pending,
+.sb-badge--pending {
+  border-color: var(--sb-line-hairline);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-2);
+  font-style: italic;
+}
+
+.sb-status--unavailable {
+  border-color: var(--sb-status-error);
+  background-color: var(--sb-status-error-tint);
+  color: var(--sb-status-error);
+}
+
+.sb-status--development {
+  border-color: var(--sb-status-warn);
+  background-color: var(--sb-status-warn-tint);
+  color: var(--sb-status-warn);
+}
+
+.sb-badge--editorial {
+  border-color: var(--sb-line-strong);
+  background-color: var(--sb-paper-2);
+  color: var(--sb-ink-1);
+  font-style: normal;
+}
+
+/* Fila Epistémica de Especificación */
+.sb-epistemic-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-2);
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-3) var(--sb-space-4);
+  border-radius: var(--sb-radius-xs);
+  margin-top: var(--sb-space-3);
+}
+
+.sb-epistemic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--sb-text-xs);
+  border-bottom: 1px solid var(--sb-paper-2);
+  padding-bottom: 4px;
+}
+
+.sb-epistemic-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sb-epistemic-label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  color: var(--sb-ink-2);
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+.sb-epistemic-val {
+  font-family: var(--sb-font-sans);
+  color: var(--sb-ink-0);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

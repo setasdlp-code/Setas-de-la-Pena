@@ -56,14 +56,14 @@
 /* 06.1 no lot codes, room names or operator names ever surface to a customer view — trace via QR only */
 /* 06.2 photography or QR only inside .fos-market__img — never a pictogram, which is an operational glyph */
 
-/* ---- FOS-07 Digital · Double-Bezel Architecture (Doppelrand) ---- */
-.fos-bezel{background:var(--surface-panel);border:1px solid var(--border-hairline);padding:6px;border-radius:16px;transition:var(--transition-fast);box-sizing:border-box}
-.fos-bezel__core{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:calc(16px - 6px);padding:18px 20px;box-sizing:border-box;transition:var(--transition-fast)}
+/* ---- FOS-07 Digital · Double-Bezel Architecture (Doppelrand · Swiss-Botanical 0px) ---- */
+.fos-bezel{background:var(--surface-panel);border:1px solid var(--border-hairline);padding:6px;border-radius:var(--radius-none,0px);transition:var(--transition-fast);box-sizing:border-box}
+.fos-bezel__core{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:var(--radius-none,0px);padding:18px 20px;box-sizing:border-box;transition:var(--transition-fast)}
 .fos-bezel--elevated:hover{border-color:var(--border-strong);transform:translateY(-2px)}
 .fos-bezel--elevated:hover .fos-bezel__core{border-color:var(--border-strong)}
 
-/* ---- FOS-08 Digital · Button-in-Button Architecture ---- */
-.fos-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;min-height:var(--tap-target-min,44px);padding:8px 18px;font-family:var(--font-sans);font-size:var(--text-base);font-weight:var(--weight-medium);border-radius:9999px;cursor:pointer;text-decoration:none;user-select:none;border:1px solid transparent;transition:var(--transition-fast);box-sizing:border-box}
+/* ---- FOS-08 Digital · Button-in-Button Architecture (Tinta prensada · Swiss 0px) ---- */
+.fos-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;min-height:var(--tap-target-min,44px);padding:8px 18px;font-family:var(--font-sans);font-size:var(--text-base);font-weight:var(--weight-medium);border-radius:var(--radius-none,0px);cursor:pointer;text-decoration:none;user-select:none;border:1px solid transparent;transition:var(--transition-fast);box-sizing:border-box}
 .fos-btn:active{transform:scale(0.98)}
 .fos-btn--primary{background:var(--accent-olive);color:var(--paper-0);border-color:var(--accent-olive-hover)}
 .fos-btn--primary:hover{background:var(--accent-olive-hover)}
@@ -73,23 +73,23 @@
 .fos-btn--secondary:hover{background:var(--surface-recessed);border-color:var(--border-strong)}
 .fos-btn--ghost{background:transparent;color:var(--text-primary);border-color:transparent}
 .fos-btn--ghost:hover{background:var(--surface-panel);border-color:var(--border-hairline)}
-.fos-btn__icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:rgba(0,0,0,0.08);transition:var(--transition-fast);flex-shrink:0}
+.fos-btn__icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-none,0px);background:rgba(0,0,0,0.08);transition:var(--transition-fast);flex-shrink:0}
 .fos-btn--primary .fos-btn__icon,.fos-btn--terracotta .fos-btn__icon{background:rgba(255,255,255,0.18)}
 .fos-btn:hover .fos-btn__icon{transform:translate(2px,-1px) scale(1.05)}
 
 /* ---- FOS-09 Digital · Telemetry & Hardware Instrument Readout ---- */
 .fos-telemetry{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;width:100%}
-.fos-telemetry__card{background:var(--surface-page);border:1px solid var(--border-hairline);padding:12px 14px;border-radius:6px;display:flex;flex-direction:column;gap:6px}
+.fos-telemetry__card{background:var(--surface-page);border:1px solid var(--border-hairline);padding:12px 14px;border-radius:var(--radius-none,0px);display:flex;flex-direction:column;gap:6px}
 .fos-telemetry__hd{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-metadata)}
 .fos-telemetry__val{font-family:var(--font-mono);font-size:22px;font-weight:var(--weight-bold);font-variant-numeric:tabular-nums;line-height:1;color:var(--text-primary)}
 .fos-telemetry__unit{font-family:var(--font-mono);font-size:11px;font-weight:var(--weight-regular);color:var(--text-metadata);margin-left:3px}
-.fos-meter{height:6px;background:var(--surface-recessed);border-radius:3px;overflow:hidden;margin-top:4px}
+.fos-meter{height:6px;background:var(--surface-recessed);border-radius:var(--radius-none,0px);overflow:hidden;margin-top:4px}
 .fos-meter__fill{height:100%;background:var(--accent-olive);transition:width var(--duration-fluid) var(--ease-out-expo)}
 .fos-meter__fill--warning{background:var(--accent-terracotta)}
 .fos-meter__fill--error{background:var(--accent-rust)}
 
 /* ---- FOS-11 · Culinary Tasting & Botanical Origin Sheet ---- */
-.fos-tasting{background:var(--surface-page);border:1px solid var(--border-hairline);width:100%;max-width:680px;display:grid;grid-template-columns:240px 1fr;box-sizing:border-box;overflow:hidden}
+.fos-tasting{background:var(--surface-page);border:1px solid var(--border-hairline);width:100%;max-width:680px;display:grid;grid-template-columns:240px 1fr;box-sizing:border-box;overflow:hidden;border-radius:var(--radius-none,0px)}
 .fos-tasting__media{background:var(--surface-panel);border-right:1px solid var(--border-hairline);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-sizing:border-box}
 .fos-tasting__media img{max-width:100%;max-height:220px;object-fit:contain}
 .fos-tasting__body{padding:20px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
@@ -101,19 +101,19 @@
 .fos-tasting__foot{display:flex;justify-content:space-between;align-items:center;border-top:var(--rule-hairline);padding-top:10px}
 
 /* ---- FOS-12 · Botanical Specimen Cartouche & Limited Batch Seal ---- */
-.fos-cartouche{background:var(--surface-page);border:1px solid var(--border-strong);padding:4px;box-sizing:border-box;max-width:580px;width:100%}
-.fos-cartouche__inner{border:1px solid var(--border-hairline);padding:18px 22px;display:flex;flex-direction:column;gap:12px;position:relative}
+.fos-cartouche{background:var(--surface-page);border:1px solid var(--border-strong);padding:4px;box-sizing:border-box;max-width:580px;width:100%;border-radius:var(--radius-none,0px)}
+.fos-cartouche__inner{border:1px solid var(--border-hairline);padding:18px 22px;display:flex;flex-direction:column;gap:12px;position:relative;border-radius:var(--radius-none,0px)}
 .fos-cartouche__hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border-hairline);padding-bottom:8px}
 .fos-cartouche__title{font-family:var(--font-sans);font-size:20px;font-weight:var(--weight-medium);font-style:italic;color:var(--text-primary);margin:0}
 .fos-cartouche__loc{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-metadata)}
-.fos-cartouche__seal{position:absolute;top:14px;right:18px;width:44px;height:44px;border:1px dashed var(--border-strong);border-radius:9999px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-terracotta);text-align:center;line-height:1.1;transform:rotate(-6deg)}
+.fos-cartouche__seal{position:absolute;top:14px;right:18px;width:44px;height:44px;border:1px dashed var(--border-strong);border-radius:var(--radius-none,0px);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-terracotta);text-align:center;line-height:1.1;transform:rotate(-6deg)}
 
 /* ---- FOS-13 · Cultivation Telemetry Console ---- */
-.fos-console{background:var(--surface-panel);border:1px solid var(--border-strong);border-radius:8px;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;width:100%}
+.fos-console{background:var(--surface-panel);border:1px solid var(--border-strong);border-radius:var(--radius-none,0px);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;width:100%}
 .fos-console__hd{display:flex;justify-content:space-between;align-items:center;border-bottom:var(--rule-hairline);padding-bottom:8px}
 .fos-console__title{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:var(--weight-bold);color:var(--text-primary)}
 .fos-console__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.fos-console__cell{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.fos-console__cell{background:var(--surface-page);border:1px solid var(--border-hairline);border-radius:var(--radius-none,0px);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
 .fos-console__metric{font-family:var(--font-mono);font-size:24px;font-weight:var(--weight-bold);font-variant-numeric:tabular-nums;color:var(--text-primary);line-height:1}
 .fos-console__target{font-family:var(--font-mono);font-size:9.5px;color:var(--text-metadata)}
 

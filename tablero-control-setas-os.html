@@ -1,639 +1,568 @@
 <!DOCTYPE html>
-<html lang="es" class="dark scroll-smooth">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Setas OS — Tablero de Control y Telemetría IoT en Vivo</title>
-  
-  <!-- Typography Stacks: Satoshi, Cabinet Grotesk & Geist Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;700;800;900&family=Geist+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tokens del sistema de diseño Field OS — fuente única, ver assets/design-tokens/README.md -->
+  <link rel="stylesheet" href="assets/design-tokens/fos-colors.css" />
+  <link rel="stylesheet" href="assets/design-tokens/fos-typography.css" />
+  <link rel="stylesheet" href="assets/design-tokens/fos-spacing.css" />
+  <link rel="stylesheet" href="assets/design-tokens/fos-structure.css" />
+  <link rel="stylesheet" href="assets/design-tokens/fos-fonts.css" />
+
+  <!-- Tailwind CDN — solo para utilidades de layout (grid/flex/spacing), sin paleta propia -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            display: ['Cabinet Grotesk', 'sans-serif'],
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-            mono: ['Geist Mono', 'monospace'],
-          },
-          colors: {
-            obsidian: {
-              950: '#040706',
-              900: '#090e0b',
-              850: '#0f1713',
-              800: '#14201a',
-              700: '#1e3027',
-              600: '#2d463a',
-            },
-            spore: {
-              300: '#6ee7b7',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-            },
-            mycelium: {
-              400: '#fbbf24',
-              500: '#f59e0b',
-              600: '#d97706',
-            },
-            terracotta: {
-              500: '#e06d53',
-              600: '#c85338',
-            }
-          }
-        }
-      }
-    }
+    tailwind.config = { corePlugins: { preflight: false } };
   </script>
 
-  <!-- GSAP & ScrollTrigger -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-
   <style>
-    body {
-      background-color: #040706;
-      color: #e2e8f0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      overflow-x: hidden;
+    /* FOS-08: ningún control interactivo baja de 44px — ver fos-structure.css */
+    .fos-tab {
+      min-height: var(--tap-target-min);
+      padding: 0 var(--space-4);
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      border: var(--rule-hairline);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      background: var(--surface-page);
+      white-space: nowrap;
+      transition: none;
     }
-    
-    .glass-panel {
-      background: linear-gradient(135deg, rgba(15, 23, 19, 0.75) 0%, rgba(9, 14, 11, 0.9) 100%);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(52, 211, 153, 0.12);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    .fos-tab[data-active="true"] {
+      background: var(--status-active);
+      border-color: var(--status-active);
+      color: var(--paper-0);
     }
-
-    .glass-panel-glow {
-      background: linear-gradient(135deg, rgba(20, 32, 26, 0.8) 0%, rgba(9, 14, 11, 0.95) 100%);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(52, 211, 153, 0.25);
-      box-shadow: 0 0 35px -5px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    .fos-panel {
+      background: var(--surface-panel);
+      border: var(--rule-hairline);
+      border-radius: var(--radius-none);
+      box-shadow: var(--shadow-none);
     }
-
-    .grid-glow-bg {
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
-        radial-gradient(circle at 10% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    .fos-panel-recessed {
+      background: var(--surface-recessed);
+      border: var(--rule-hairline);
+      border-radius: var(--radius-none);
     }
-
-    .pulse-indicator {
-      animation: pulseGlow 2.5s infinite;
+    .fos-btn-primary {
+      min-height: var(--tap-target-min);
+      padding: 0 var(--space-5);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      letter-spacing: var(--tracking-wide);
+      border-radius: var(--radius-sm);
+      background: var(--status-active);
+      color: var(--paper-0);
+      border: none;
     }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 4px #10b981); }
-      50% { opacity: 0.45; transform: scale(0.92); filter: drop-shadow(0 0 1px #10b981); }
+    .fos-btn-primary:hover { background: var(--status-active-hover); }
+    .fos-btn-secondary {
+      min-height: var(--tap-target-min);
+      padding: 0 var(--space-5);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      border-radius: var(--radius-sm);
+      background: var(--surface-page);
+      color: var(--text-primary);
+      border: var(--rule-strong);
     }
-
-    .custom-scroll::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+    .fos-btn-secondary:hover { background: var(--surface-recessed); }
+    /* Enlaces de navegación: son controles, no texto. Sin esto quedaban en
+       34-36 px porque no llevaban ninguna clase FOS y su alto lo decidía el
+       padding. */
+    .fos-navlink {
+      min-height: var(--tap-target-min);
+      padding: 0 var(--space-3);
+      display: inline-flex;
+      align-items: center;
     }
-    .custom-scroll::-webkit-scrollbar-track {
-      background: rgba(4, 7, 6, 0.5);
+    /* Enlace en línea dentro de texto: conserva el aspecto de enlace subrayado
+       pero con área de toque de 44 px. */
+    .fos-inline-link {
+      min-height: var(--tap-target-min);
+      display: inline-flex;
+      align-items: center;
+      color: var(--link);
+      text-decoration: underline;
     }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background: rgba(52, 211, 153, 0.2);
-      border-radius: 9999px;
+    .fos-inline-link:hover { color: var(--link-hover); }
+    .fos-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--status-active);
     }
+    .fos-eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-widest);
+      color: var(--status-active);
+    }
+    .fos-hairline-t { border-top: var(--rule-hairline); }
+    .fos-hairline-b { border-bottom: var(--rule-hairline); }
+    #telemetry-chart { background: var(--surface-page); border: var(--rule-hairline); }
   </style>
 </head>
 
-<body class="bg-obsidian-950 text-slate-100 antialiased selection:bg-spore-500 selection:text-black">
-  <main class="overflow-x-hidden w-full max-w-full relative grid-glow-bg min-h-screen">
-    
-    <!-- TOP NAVIGATION BAR (Floating Minimal Split Nav) -->
-    <header class="fixed top-6 left-0 right-0 z-50 px-4 sm:px-8 max-w-7xl mx-auto pointer-events-none">
-      <div class="pointer-events-auto glass-panel rounded-full px-5 py-3 flex items-center justify-between transition-all duration-300 border border-spore-400/20">
-        
-        <!-- Brand identity -->
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-full bg-spore-500/20 border border-spore-400/40 flex items-center justify-center">
-            <span class="w-2.5 h-2.5 rounded-full bg-spore-400 pulse-indicator"></span>
-          </div>
+<body style="background:var(--surface-page); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-prose); line-height:var(--leading-normal);">
+  <main class="w-full max-w-full">
+
+    <!-- NAV -->
+    <header class="fos-panel fos-hairline-b" style="position:sticky; top:0; z-index:50;">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between" style="min-height:64px;">
+        <div class="flex items-center" style="gap:var(--space-3);">
+          <span class="fos-dot"></span>
           <div>
-            <span class="font-display font-black tracking-tight text-white text-base">SETAS DE LA PEÑA</span>
-            <span class="text-[10px] font-mono uppercase tracking-widest text-spore-400 block -mt-1">OS · Tenjo Microclimate Node</span>
+            <div style="font-family:var(--font-display); font-weight:var(--weight-bold); letter-spacing:var(--tracking-tight); color:var(--text-primary); font-size:var(--text-base);">SETAS DE LA PEÑA</div>
+            <div class="fos-eyebrow" style="margin-top:-2px;">OS · Nodo Microclima Tenjo</div>
           </div>
         </div>
 
-        <!-- Center links -->
-        <nav class="hidden md:flex items-center space-x-1 text-xs font-mono font-medium text-slate-400">
-          <a href="#telemetria" class="px-3 py-1.5 rounded-full text-white bg-white/5 border border-white/10 transition-colors">Telemetría IoT</a>
-          <a href="#psicrometria" class="px-3 py-1.5 rounded-full hover:text-white hover:bg-white/5 transition-colors">Psicrometría & VPD</a>
-          <a href="#actuadores" class="px-3 py-1.5 rounded-full hover:text-white hover:bg-white/5 transition-colors">Actuadores</a>
-          <a href="#lotes" class="px-3 py-1.5 rounded-full hover:text-white hover:bg-white/5 transition-colors">Lotes Activos</a>
+        <nav class="hidden md:flex items-center" style="gap:var(--space-2); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">
+          <a href="#telemetria" class="fos-navlink" style="color:var(--text-primary); border-bottom:2px solid var(--status-active);">Telemetría IoT</a>
+          <a href="#psicrometria" class="fos-navlink">Psicrometría &amp; VPD</a>
+          <a href="#actuadores" class="fos-navlink">Actuadores</a>
+          <a href="#lotes" class="fos-navlink">Lotes Activos</a>
         </nav>
 
-        <!-- Right Quick Status -->
-        <div class="flex items-center space-x-3">
-          <div class="hidden sm:flex flex-col text-right font-mono text-[11px]">
-            <span class="text-slate-400">Altitud Tenjo: 2,585 msnm</span>
-            <span class="text-spore-400 font-semibold" id="clock-display">09:30:00 -5 UTC</span>
+        <div class="flex items-center" style="gap:var(--space-3);">
+          <div class="hidden sm:flex flex-col text-right" style="font-family:var(--font-mono); font-size:var(--text-2xs);">
+            <span style="color:var(--text-metadata);">Altitud Tenjo: 2,585 msnm</span>
+            <span style="color:var(--status-active); font-weight:var(--weight-medium);" id="clock-display">09:30:00 -5 UTC</span>
           </div>
-          <button id="sim-toggle-btn" class="px-4 py-1.5 rounded-full bg-spore-500 hover:bg-spore-400 text-obsidian-950 font-mono text-xs font-bold transition-transform duration-200 active:scale-95 shadow-lg shadow-spore-500/20">
-            En Vivo
-          </button>
+          <button id="sim-toggle-btn" class="fos-btn-primary">En vivo</button>
         </div>
       </div>
     </header>
 
-    <!-- SECTION 1: ATTENTION (CINEMATIC HERO) -->
-    <section class="relative pt-44 pb-28 md:pt-52 md:pb-36 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col items-center text-center">
-      
-      <!-- Ambient Spore Background Glow -->
-      <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-spore-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
-      <div class="absolute top-1/3 left-1/4 w-[400px] h-[300px] bg-mycelium-500/5 blur-[100px] rounded-full pointer-events-none -z-10"></div>
+    <!-- HERO -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style="padding-top:var(--space-9); padding-bottom:var(--space-8);">
+      <div class="fos-eyebrow" style="margin-bottom:var(--space-3);">Red telemetría ESP32 · Sabana de Tenjo · Red activa</div>
 
-      <!-- Live Badge -->
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-panel border-spore-500/30 text-xs font-mono text-spore-300 mb-8">
-        <span class="w-2 h-2 rounded-full bg-spore-400 pulse-indicator"></span>
-        <span>Red Telemetría ESP32 · Sabana de Tenjo · Red Activa</span>
-      </div>
-
-      <!-- Ultra-Wide H1: 2-3 Lines strictly enforced -->
-      <h1 class="font-display font-black text-4xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[1.04] tracking-tight text-white max-w-5xl mb-8">
-        Biocontrol micelar de alta precisión
-        <span class="inline-block w-20 sm:w-28 h-8 sm:h-12 rounded-full align-middle bg-cover bg-center mx-2 border border-spore-400/40 shadow-inner" style="background-image: url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80');"></span>
-        con telemetría psicrométrica continua.
+      <h1 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-3xl); line-height:var(--leading-tight); color:var(--text-primary); max-width:52rem; margin-bottom:var(--space-4);">
+        Biocontrol micelar de alta precisión con telemetría psicrométrica continua.
       </h1>
 
-      <p class="font-sans text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl font-light leading-relaxed mb-12">
+      <p style="font-size:var(--text-prose); color:var(--text-secondary); max-width:42rem; line-height:var(--leading-relaxed); margin-bottom:var(--space-6);">
         Monitoreo termodinámico en tiempo real para especies gourmet y medicinales. Algoritmos de Déficit de Presión de Vapor (VPD) adaptados a la presión barométrica de la sabana cundinamarquesa.
       </p>
 
-      <!-- Clean High-Contrast Action Hub -->
-      <div class="flex flex-wrap items-center justify-center gap-4">
-        <a href="#telemetria" class="px-8 py-3.5 rounded-full bg-spore-500 hover:bg-spore-400 text-obsidian-950 font-display font-bold text-sm tracking-wide transition-all duration-300 shadow-xl shadow-spore-500/25 hover:scale-105 active:scale-95">
-          Inspeccionar Cámaras en Vivo
-        </a>
-        <a href="#psicrometria" class="px-8 py-3.5 rounded-full glass-panel hover:bg-white/10 text-white font-mono text-sm transition-all duration-300 border-white/20 hover:border-spore-400/50">
-          Ver Curvas Psicrométricas
-        </a>
+      <div class="flex flex-wrap items-center" style="gap:var(--space-3); margin-bottom:var(--space-8);">
+        <a href="#telemetria" class="fos-btn-primary">Inspeccionar cámaras en vivo</a>
+        <a href="#psicrometria" class="fos-btn-secondary">Ver curvas psicrométricas</a>
       </div>
 
-      <!-- Quick Biometric HUD Row -->
-      <div class="mt-20 w-full grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl text-left">
-        <div class="glass-panel p-5 rounded-2xl border-spore-400/20">
-          <span class="font-mono text-xs text-slate-400 uppercase tracking-wider block">Eficiencia Biológica (EB)</span>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display font-extrabold text-2xl sm:text-3xl text-white">92.4%</span>
-            <span class="font-mono text-xs text-spore-400 font-semibold">+4.1% vs media</span>
+      <!-- HUD -->
+      <div class="grid grid-cols-2 md:grid-cols-4" style="gap:var(--space-4);">
+        <div class="fos-panel" style="padding:var(--space-4);">
+          <span class="fos-eyebrow" style="color:var(--text-metadata);">Eficiencia Biológica (EB)</span>
+          <div class="flex items-baseline" style="gap:var(--space-2); margin-top:var(--space-2);">
+            <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl);">92.4%</span>
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--status-active);">+4.1% vs media</span>
           </div>
         </div>
-        <div class="glass-panel p-5 rounded-2xl border-spore-400/20">
-          <span class="font-mono text-xs text-slate-400 uppercase tracking-wider block">Déficit Vapor (VPD)</span>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display font-extrabold text-2xl sm:text-3xl text-spore-300" id="hero-vpd">0.24</span>
-            <span class="font-mono text-xs text-slate-400">kPa (Óptimo)</span>
+        <div class="fos-panel" style="padding:var(--space-4);">
+          <span class="fos-eyebrow" style="color:var(--text-metadata);">Déficit Vapor (VPD)</span>
+          <div class="flex items-baseline" style="gap:var(--space-2); margin-top:var(--space-2);">
+            <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl); color:var(--status-active);" id="hero-vpd">0.24</span>
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">kPa (óptimo)</span>
           </div>
         </div>
-        <div class="glass-panel p-5 rounded-2xl border-spore-400/20">
-          <span class="font-mono text-xs text-slate-400 uppercase tracking-wider block">Concentración CO₂</span>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display font-extrabold text-2xl sm:text-3xl text-mycelium-400" id="hero-co2">740</span>
-            <span class="font-mono text-xs text-slate-400">ppm</span>
+        <div class="fos-panel" style="padding:var(--space-4);">
+          <span class="fos-eyebrow" style="color:var(--text-metadata);">Concentración CO₂</span>
+          <div class="flex items-baseline" style="gap:var(--space-2); margin-top:var(--space-2);">
+            <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl); color:var(--status-attention);" id="hero-co2">740</span>
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">ppm</span>
           </div>
         </div>
-        <div class="glass-panel p-5 rounded-2xl border-spore-400/20">
-          <span class="font-mono text-xs text-slate-400 uppercase tracking-wider block">Humedad de Cámara</span>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display font-extrabold text-2xl sm:text-3xl text-white" id="hero-hr">88.5%</span>
-            <span class="font-mono text-xs text-spore-400">RH Estable</span>
+        <div class="fos-panel" style="padding:var(--space-4);">
+          <span class="fos-eyebrow" style="color:var(--text-metadata);">Humedad de cámara</span>
+          <div class="flex items-baseline" style="gap:var(--space-2); margin-top:var(--space-2);">
+            <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl);" id="hero-hr">88.5%</span>
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--status-active);">RH estable</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- SECTION 2: INTEREST (THE GAPLESS DENSE BENTO GRID) -->
-    <section id="telemetria" class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-        <div>
-          <span class="font-mono text-xs uppercase tracking-widest text-spore-400 block mb-2">Matriz de Telemetría ESP32</span>
-          <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white">Monitoreo en Tiempo Real de Cámaras</h2>
-        </div>
+    <!-- TELEMETRÍA -->
+    <section id="telemetria" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fos-hairline-t" style="padding-top:var(--space-8); padding-bottom:var(--space-8);">
 
-        <!-- Room Selector Buttons -->
-        <div class="flex items-center p-1.5 rounded-xl glass-panel border-white/10 gap-1 overflow-x-auto custom-scroll">
-          <button onclick="switchRoom('sala-f1')" id="btn-sala-f1" class="room-btn px-4 py-2 rounded-lg font-mono text-xs font-semibold transition-all bg-spore-500 text-obsidian-950">
-            Fructificación 01 (Orellana)
-          </button>
-          <button onclick="switchRoom('sala-f2')" id="btn-sala-f2" class="room-btn px-4 py-2 rounded-lg font-mono text-xs font-semibold text-slate-400 hover:text-white transition-all">
-            Fructificación 02 (Melena / Shiitake)
-          </button>
-          <button onclick="switchRoom('sala-inc')" id="btn-sala-inc" class="room-btn px-4 py-2 rounded-lg font-mono text-xs font-semibold text-slate-400 hover:text-white transition-all">
-            Incubación 01 (Reishi)
-          </button>
+      <div class="flex flex-col md:flex-row md:items-end justify-between" style="gap:var(--space-4); margin-bottom:var(--space-6);">
+        <div>
+          <span class="fos-eyebrow" style="display:block; margin-bottom:var(--space-2);">Matriz de telemetría ESP32</span>
+          <h2 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl);">Monitoreo en tiempo real de cámaras</h2>
+        </div>
+        <div class="flex items-center flex-wrap" style="gap:var(--space-2);">
+          <button onclick="switchRoom('sala-f1')" id="btn-sala-f1" class="fos-tab" data-active="true">Fructificación 01 (Orellana)</button>
+          <button onclick="switchRoom('sala-f2')" id="btn-sala-f2" class="fos-tab" data-active="false">Fructificación 02 (Melena / Shiitake)</button>
+          <button onclick="switchRoom('sala-inc')" id="btn-sala-inc" class="fos-tab" data-active="false">Incubación 01 (Reishi)</button>
         </div>
       </div>
 
-      <!-- Bento Grid (Mathematically dense layout) -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 grid-flow-dense">
-        
-        <!-- CARD 1: Live Pulse Gauge & Room Info (col-span-8) -->
-        <div class="md:col-span-8 glass-panel-glow rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden group">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-12" style="gap:var(--space-5);">
+
+        <!-- Pulse gauge -->
+        <div class="md:col-span-8 fos-panel" style="padding:var(--space-5);">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between fos-hairline-b" style="gap:var(--space-3); padding-bottom:var(--space-4); margin-bottom:var(--space-4);">
             <div>
-              <div class="flex items-center gap-3">
-                <h3 class="font-display font-bold text-2xl text-white" id="active-room-title">Sala Fructificación 01 — Orellana Ostra</h3>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold bg-spore-500/20 text-spore-300 border border-spore-400/30">
-                  Lote SDP-2026-08A
-                </span>
+              <div class="flex items-center flex-wrap" style="gap:var(--space-2);">
+                <h3 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);" id="active-room-title">Sala Fructificación 01 — Orellana Ostra</h3>
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); text-transform:uppercase; padding:2px var(--space-2); background:var(--status-active-bg); color:var(--status-active);" id="active-lot-badge">Lote SDP-2026-08A</span>
               </div>
-              <p class="font-sans text-sm text-slate-400 mt-1" id="active-room-desc">Fase: Fructificación Día 7 · Sustrato: Paja de Trigo + Cascarilla Café</p>
+              <p style="font-size:var(--text-sm); color:var(--text-metadata); margin-top:var(--space-1);" id="active-room-desc">Fase: Fructificación Día 7 · Sustrato: Paja de Trigo + Cascarilla Café</p>
             </div>
-            <div class="font-mono text-xs text-right">
-              <span class="text-slate-400 block">Nodo Sensor</span>
-              <span class="text-spore-400 font-semibold" id="active-sensor-node">ESP32-TENJO-S1 (#04)</span>
+            <div style="font-family:var(--font-mono); font-size:var(--text-xs); text-align:right;">
+              <span style="color:var(--text-metadata); display:block;">Nodo sensor</span>
+              <span style="color:var(--status-active); font-weight:var(--weight-medium);" id="active-sensor-node">ESP32-TENJO-S1 (#04)</span>
             </div>
           </div>
 
-          <!-- Dynamic 4-Metric Sensor Gauges -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 my-4">
-            <!-- Temp -->
-            <div class="bg-obsidian-900/80 rounded-2xl p-4 border border-white/5 relative">
-              <span class="font-mono text-xs text-slate-400 block">Temperatura</span>
-              <div class="mt-2 flex items-baseline gap-1">
-                <span class="font-display font-extrabold text-3xl text-white" id="val-temp">17.8</span>
-                <span class="font-mono text-xs text-slate-400">°C</span>
+          <div class="grid grid-cols-2 lg:grid-cols-4" style="gap:var(--space-3);">
+            <div class="fos-panel-recessed" style="padding:var(--space-3);">
+              <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); display:block;">Temperatura</span>
+              <div class="flex items-baseline" style="gap:4px; margin-top:var(--space-2);">
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);" id="val-temp">17.8</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">°C</span>
               </div>
-              <div class="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div class="bg-spore-400 h-full rounded-full transition-all duration-500" id="bar-temp" style="width: 65%;"></div>
+              <div style="width:100%; height:4px; background:var(--paper-3); margin-top:var(--space-2); overflow:hidden;">
+                <div style="background:var(--status-active); height:100%;" id="bar-temp"></div>
               </div>
-              <span class="font-mono text-[10px] text-slate-400 mt-2 block">Rango: 16 - 20 °C</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); margin-top:var(--space-2); display:block;">Rango: 16–20 °C</span>
             </div>
 
-            <!-- Humedad -->
-            <div class="bg-obsidian-900/80 rounded-2xl p-4 border border-white/5 relative">
-              <span class="font-mono text-xs text-slate-400 block">Humedad (RH)</span>
-              <div class="mt-2 flex items-baseline gap-1">
-                <span class="font-display font-extrabold text-3xl text-spore-300" id="val-hr">88.5</span>
-                <span class="font-mono text-xs text-slate-400">%</span>
+            <div class="fos-panel-recessed" style="padding:var(--space-3);">
+              <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); display:block;">Humedad (RH)</span>
+              <div class="flex items-baseline" style="gap:4px; margin-top:var(--space-2);">
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg); color:var(--status-active);" id="val-hr">88.5</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">%</span>
               </div>
-              <div class="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div class="bg-spore-400 h-full rounded-full transition-all duration-500" id="bar-hr" style="width: 88%;"></div>
+              <div style="width:100%; height:4px; background:var(--paper-3); margin-top:var(--space-2); overflow:hidden;">
+                <div style="background:var(--status-active); height:100%;" id="bar-hr"></div>
               </div>
-              <span class="font-mono text-[10px] text-slate-400 mt-2 block">Rango: 85 - 92 %</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); margin-top:var(--space-2); display:block;">Rango: 85–92 %</span>
             </div>
 
-            <!-- CO2 -->
-            <div class="bg-obsidian-900/80 rounded-2xl p-4 border border-white/5 relative">
-              <span class="font-mono text-xs text-slate-400 block">Dióxido de Carbono</span>
-              <div class="mt-2 flex items-baseline gap-1">
-                <span class="font-display font-extrabold text-3xl text-mycelium-400" id="val-co2">740</span>
-                <span class="font-mono text-xs text-slate-400">ppm</span>
+            <div class="fos-panel-recessed" style="padding:var(--space-3);">
+              <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); display:block;">Dióxido de carbono</span>
+              <div class="flex items-baseline" style="gap:4px; margin-top:var(--space-2);">
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg); color:var(--status-attention);" id="val-co2">740</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">ppm</span>
               </div>
-              <div class="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div class="bg-mycelium-500 h-full rounded-full transition-all duration-500" id="bar-co2" style="width: 48%;"></div>
+              <div style="width:100%; height:4px; background:var(--paper-3); margin-top:var(--space-2); overflow:hidden;">
+                <div style="background:var(--status-attention); height:100%;" id="bar-co2"></div>
               </div>
-              <span class="font-mono text-[10px] text-slate-400 mt-2 block">Límite: < 900 ppm</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); margin-top:var(--space-2); display:block;">Límite: &lt; 900 ppm</span>
             </div>
 
-            <!-- VPD -->
-            <div class="bg-obsidian-900/80 rounded-2xl p-4 border border-white/5 relative">
-              <span class="font-mono text-xs text-slate-400 block">Déficit Vapor (VPD)</span>
-              <div class="mt-2 flex items-baseline gap-1">
-                <span class="font-display font-extrabold text-3xl text-spore-400" id="val-vpd">0.24</span>
-                <span class="font-mono text-xs text-slate-400">kPa</span>
+            <div class="fos-panel-recessed" style="padding:var(--space-3);">
+              <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); display:block;">Déficit vapor (VPD)</span>
+              <div class="flex items-baseline" style="gap:4px; margin-top:var(--space-2);">
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg); color:var(--status-active);" id="val-vpd">0.24</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">kPa</span>
               </div>
-              <div class="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div class="bg-spore-500 h-full rounded-full transition-all duration-500" id="bar-vpd" style="width: 40%;"></div>
+              <div style="width:100%; height:4px; background:var(--paper-3); margin-top:var(--space-2); overflow:hidden;">
+                <div style="background:var(--status-active); height:100%;" id="bar-vpd"></div>
               </div>
-              <span class="font-mono text-[10px] text-spore-400 mt-2 block" id="vpd-status-txt">Transpiración Ideal</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--status-active); margin-top:var(--space-2); display:block;" id="vpd-status-txt">Transpiración ideal</span>
             </div>
           </div>
 
-          <!-- Realtime Sparkline Canvas -->
-          <div class="mt-4 pt-4 border-t border-white/10">
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-mono text-xs text-slate-400">Telemetría en Vivo (Últimos 60 minutos)</span>
-              <span class="font-mono text-[10px] text-spore-400">Muestreo cada 2.5s</span>
+          <div class="fos-hairline-t" style="margin-top:var(--space-4); padding-top:var(--space-4);">
+            <div class="flex items-center justify-between" style="margin-bottom:var(--space-2);">
+              <span style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">Telemetría en vivo (últimos 60 minutos)</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--status-active);">Muestreo cada 2.5s</span>
             </div>
-            <canvas id="telemetry-chart" class="w-full h-28 rounded-xl bg-obsidian-950/60 border border-white/5"></canvas>
+            <canvas id="telemetry-chart" class="w-full" style="height:112px;"></canvas>
           </div>
         </div>
 
-        <!-- CARD 2: Psychrometric Diagnostics & Dew Point (col-span-4) -->
-        <div class="md:col-span-4 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-              <h4 class="font-display font-bold text-lg text-white">Estado Psicrométrico</h4>
-              <span class="font-mono text-xs text-spore-400">Tetens-Magnus</span>
-            </div>
-            
-            <p class="text-xs text-slate-400 leading-relaxed mb-6">
-              Cálculo riguroso del punto de rocío y presión de vapor para prevenir condensación foliar directa y asfixia en primordios.
-            </p>
+        <!-- Psychrometrics -->
+        <div class="md:col-span-4 fos-panel" style="padding:var(--space-5);">
+          <div class="flex items-center justify-between fos-hairline-b" style="padding-bottom:var(--space-3); margin-bottom:var(--space-3);">
+            <h4 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-md);">Estado psicrométrico</h4>
+            <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--status-active);">Tetens-Magnus</span>
+          </div>
 
-            <div class="space-y-4 font-mono text-xs">
-              <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                <span class="text-slate-300">Punto de Rocío (Dew Point)</span>
-                <span class="font-bold text-white text-sm" id="val-dewpoint">15.8 °C</span>
-              </div>
-              <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                <span class="text-slate-300">Presión Saturación (VPsat)</span>
-                <span class="font-bold text-white text-sm" id="val-vpsat">2.04 kPa</span>
-              </div>
-              <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                <span class="text-slate-300">Presión Actual (VPact)</span>
-                <span class="font-bold text-white text-sm" id="val-vpact">1.80 kPa</span>
-              </div>
-              <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                <span class="text-slate-300">Riesgo Condensación</span>
-                <span class="font-bold text-spore-400 text-sm">Bajo (< 1.2°C Margen)</span>
-              </div>
+          <p style="font-size:var(--text-sm); color:var(--text-metadata); line-height:var(--leading-relaxed); margin-bottom:var(--space-4);">
+            Cálculo riguroso del punto de rocío y presión de vapor para prevenir condensación foliar directa y asfixia en primordios.
+          </p>
+
+          <div style="font-family:var(--font-mono); font-size:var(--text-xs); display:flex; flex-direction:column; gap:var(--space-2);">
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-2) var(--space-3);">
+              <span style="color:var(--text-secondary);">Punto de rocío (dew point)</span>
+              <span style="font-weight:var(--weight-bold);" id="val-dewpoint">15.8 °C</span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-2) var(--space-3);">
+              <span style="color:var(--text-secondary);">Presión saturación (VPsat)</span>
+              <span style="font-weight:var(--weight-bold);" id="val-vpsat">2.04 kPa</span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-2) var(--space-3);">
+              <span style="color:var(--text-secondary);">Presión actual (VPact)</span>
+              <span style="font-weight:var(--weight-bold);" id="val-vpact">1.80 kPa</span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-2) var(--space-3);">
+              <span style="color:var(--text-secondary);">Riesgo condensación</span>
+              <span style="font-weight:var(--weight-bold); color:var(--status-active);">Bajo (&lt; 1.2 °C margen)</span>
             </div>
           </div>
 
-          <div class="mt-6 p-4 rounded-2xl bg-spore-500/10 border border-spore-500/30">
-            <span class="font-mono text-[11px] text-spore-300 font-semibold block">Diagnóstico Perito AI:</span>
-            <p class="font-sans text-xs text-slate-300 mt-1" id="ai-recommendation-txt">
+          <div style="margin-top:var(--space-4); padding:var(--space-3); background:var(--status-active-bg); border:var(--rule-hairline);">
+            <span style="font-family:var(--font-mono); font-size:var(--text-2xs); text-transform:uppercase; font-weight:var(--weight-medium); color:var(--status-active); display:block;">Diagnóstico Perito IA</span>
+            <p style="font-size:var(--text-sm); color:var(--text-secondary); margin-top:var(--space-1);" id="ai-recommendation-txt">
               Balance hídrico óptimo para desarrollo de sombreros de Orellana. Mantener pulsos de nebulización ultrasónica a 4 min de intervalo.
             </p>
           </div>
         </div>
 
-        <!-- CARD 3: Actuator Automation Status (col-span-6) -->
-        <div id="actuadores" class="md:col-span-6 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-              <div>
-                <h4 class="font-display font-bold text-xl text-white">Actuadores & Relés Automatizados</h4>
-                <p class="text-xs text-slate-400 font-mono mt-0.5">Control PID / Fuzzy Logic</p>
-              </div>
-              <span class="px-2 py-1 rounded bg-spore-500/20 text-spore-400 font-mono text-[10px] font-bold">AUTOMÁTICO</span>
+        <!-- Actuadores -->
+        <div id="actuadores" class="md:col-span-6 fos-panel" style="padding:var(--space-5);">
+          <div class="flex items-center justify-between fos-hairline-b" style="padding-bottom:var(--space-3); margin-bottom:var(--space-4);">
+            <div>
+              <h4 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);">Actuadores &amp; relés automatizados</h4>
+              <p style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); margin-top:2px;">Control PID / lógica difusa</p>
             </div>
+            <span style="font-family:var(--font-mono); font-size:var(--text-2xs); font-weight:var(--weight-medium); padding:2px var(--space-2); background:var(--status-active-bg); color:var(--status-active);">AUTOMÁTICO</span>
+          </div>
 
-            <div class="grid grid-cols-2 gap-4 mt-6">
-              <!-- Actuator 1: Nebulizador -->
-              <div class="p-4 rounded-2xl bg-obsidian-900/80 border border-white/5 flex items-center justify-between">
-                <div>
-                  <span class="font-display font-bold text-sm text-white block">Nebulizador Ultrasónico</span>
-                  <span class="font-mono text-[10px] text-slate-400">PWM 75% · Frec 1.7MHz</span>
-                </div>
-                <div class="w-3 h-3 rounded-full bg-spore-400 pulse-indicator shadow-md shadow-spore-400"></div>
+          <div class="grid grid-cols-2" style="gap:var(--space-3);">
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-3);">
+              <div>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-sm); display:block;">Nebulizador ultrasónico</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata);">PWM 75% · Frec 1.7MHz</span>
               </div>
-
-              <!-- Actuator 2: Extractor CO2 -->
-              <div class="p-4 rounded-2xl bg-obsidian-900/80 border border-white/5 flex items-center justify-between">
-                <div>
-                  <span class="font-display font-bold text-sm text-white block">Extractor de Aire (Renovación)</span>
-                  <span class="font-mono text-[10px] text-slate-400">Caudal 450 m³/h</span>
-                </div>
-                <div class="w-3 h-3 rounded-full bg-spore-400 pulse-indicator"></div>
+              <span class="fos-dot"></span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-3);">
+              <div>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-sm); display:block;">Extractor de aire (renovación)</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata);">Caudal 450 m³/h</span>
               </div>
-
-              <!-- Actuator 3: Climatizador -->
-              <div class="p-4 rounded-2xl bg-obsidian-900/80 border border-white/5 flex items-center justify-between">
-                <div>
-                  <span class="font-display font-bold text-sm text-white block">Intercambiador Térmico</span>
-                  <span class="font-mono text-[10px] text-slate-400">Modo Refrigeración Pasiva</span>
-                </div>
-                <div class="w-3 h-3 rounded-full bg-slate-600"></div>
+              <span class="fos-dot"></span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-3);">
+              <div>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-sm); display:block;">Intercambiador térmico</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata);">Modo refrigeración pasiva</span>
               </div>
-
-              <!-- Actuator 4: Iluminación LED -->
-              <div class="p-4 rounded-2xl bg-obsidian-900/80 border border-white/5 flex items-center justify-between">
-                <div>
-                  <span class="font-display font-bold text-sm text-white block">Fotoperiodo LED 6500K</span>
-                  <span class="font-mono text-[10px] text-slate-400">Ciclo 12h On / 12h Off</span>
-                </div>
-                <div class="w-3 h-3 rounded-full bg-mycelium-400 pulse-indicator"></div>
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--text-disabled);"></span>
+            </div>
+            <div class="fos-panel-recessed flex items-center justify-between" style="padding:var(--space-3);">
+              <div>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-sm); display:block;">Fotoperiodo LED 6500K</span>
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata);">Ciclo 12h on / 12h off</span>
               </div>
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--status-attention);"></span>
             </div>
           </div>
 
-          <div class="mt-6 flex items-center justify-between text-xs font-mono text-slate-400 pt-4 border-t border-white/10">
+          <div class="fos-hairline-t flex items-center justify-between" style="margin-top:var(--space-4); padding-top:var(--space-4); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata);">
             <span>Último ciclo de purga: hace 4 min</span>
-            <button onclick="triggerPurge()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all text-xs font-mono">
-              Forzar Purga Manual
-            </button>
+            <button onclick="triggerPurge()" class="fos-btn-secondary" style="padding:0 var(--space-3);">Forzar purga manual</button>
           </div>
         </div>
 
-        <!-- CARD 4: Active Species & Harvest Forecast (col-span-6) -->
-        <div id="lotes" class="md:col-span-6 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-              <div>
-                <h4 class="font-display font-bold text-xl text-white">Cronograma & Proyección de Cosecha</h4>
-                <p class="text-xs text-slate-400 font-mono mt-0.5">Basado en balance térmico acumulado</p>
-              </div>
-              <span class="font-mono text-xs text-mycelium-400 font-bold">1er Flush en 4 Días</span>
+        <!-- Lotes -->
+        <div id="lotes" class="md:col-span-6 fos-panel" style="padding:var(--space-5);">
+          <div class="flex items-center justify-between fos-hairline-b" style="padding-bottom:var(--space-3); margin-bottom:var(--space-4);">
+            <div>
+              <h4 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);">Cronograma &amp; proyección de cosecha</h4>
+              <p style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-metadata); margin-top:2px;">Basado en balance térmico acumulado</p>
+            </div>
+            <span style="font-family:var(--font-mono); font-size:var(--text-xs); font-weight:var(--weight-medium); color:var(--status-attention);">1er flush en 4 días</span>
+          </div>
+
+          <div style="margin-top:var(--space-4);">
+            <div class="flex justify-between" style="font-family:var(--font-mono); font-size:var(--text-xs); margin-bottom:var(--space-2);">
+              <span style="color:var(--text-secondary);">Progreso de ciclo (fase fructificación)</span>
+              <span style="color:var(--status-active); font-weight:var(--weight-bold);">64% completado</span>
+            </div>
+            <div style="width:100%; height:6px; background:var(--paper-3); overflow:hidden;">
+              <div style="background:var(--status-active); height:100%; width:64%;"></div>
+            </div>
+            <div class="flex justify-between" style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-disabled); margin-top:var(--space-2);">
+              <span>Inducción (día 1)</span>
+              <span>Pinhead (día 5)</span>
+              <span style="color:var(--status-active); font-weight:var(--weight-bold);">Hoy (día 7)</span>
+              <span>Cosecha (día 11)</span>
             </div>
 
-            <div class="space-y-4 mt-6">
-              <!-- Stage bar -->
-              <div>
-                <div class="flex justify-between text-xs font-mono mb-2">
-                  <span class="text-slate-300">Progreso de Ciclo (Fase Fructificación)</span>
-                  <span class="text-spore-400 font-bold">64% Completado</span>
-                </div>
-                <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-gradient-to-r from-spore-500 to-spore-300 h-full rounded-full" style="width: 64%;"></div>
-                </div>
-                <div class="flex justify-between text-[10px] font-mono text-slate-500 mt-1.5">
-                  <span>Inducción (Día 1)</span>
-                  <span>Pinhead (Día 5)</span>
-                  <span class="text-spore-300 font-bold">Hoy (Día 7)</span>
-                  <span>Cosecha (Día 11)</span>
-                </div>
+            <div class="grid grid-cols-3" style="gap:var(--space-3); margin-top:var(--space-4);">
+              <div class="fos-panel-recessed text-center" style="padding:var(--space-3);">
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); display:block;">Rendimiento proyectado</span>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-md); display:block; margin-top:var(--space-1);">42.5 kg</span>
               </div>
-
-              <div class="grid grid-cols-3 gap-3 pt-3">
-                <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                  <span class="font-mono text-[10px] text-slate-400 block">Rendimiento Proyectado</span>
-                  <span class="font-display font-bold text-lg text-white mt-1 block">42.5 kg</span>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                  <span class="font-mono text-[10px] text-slate-400 block">Eficiencia Estimada</span>
-                  <span class="font-display font-bold text-lg text-spore-400 mt-1 block">94.2%</span>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                  <span class="font-mono text-[10px] text-slate-400 block">Fecha Cosecha #1</span>
-                  <span class="font-display font-bold text-lg text-mycelium-400 mt-1 block">30 Ago</span>
-                </div>
+              <div class="fos-panel-recessed text-center" style="padding:var(--space-3);">
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); display:block;">Eficiencia estimada</span>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-md); color:var(--status-active); display:block; margin-top:var(--space-1);">94.2%</span>
+              </div>
+              <div class="fos-panel-recessed text-center" style="padding:var(--space-3);">
+                <span style="font-family:var(--font-mono); font-size:var(--text-2xs); color:var(--text-metadata); display:block;">Fecha cosecha #1</span>
+                <span style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-md); color:var(--status-attention); display:block; margin-top:var(--space-1);">30 ago</span>
               </div>
             </div>
           </div>
 
-          <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-            <span class="text-slate-400">Variedad: Pleurotus ostreatus (Cepa Po-08 Tenjo)</span>
-            <a href="#" class="text-spore-400 hover:underline">Ver Trazabilidad QR →</a>
+          <div class="fos-hairline-t flex items-center justify-between" style="margin-top:var(--space-4); padding-top:var(--space-4); font-family:var(--font-mono); font-size:var(--text-xs);">
+            <span style="color:var(--text-metadata);">Variedad: Pleurotus ostreatus (Cepa Po-08 Tenjo)</span>
+            <a href="#" class="fos-inline-link">Ver trazabilidad QR →</a>
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- SECTION 3: DESIRE (GSAP SCROLL PARADIGM & SPECIES GALLERY) -->
-    <section id="psicrometria" class="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/10">
-      
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        
-        <!-- Pinned Left Section -->
-        <div class="lg:col-span-5 gsap-pinned-title space-y-6">
-          <span class="font-mono text-xs uppercase tracking-widest text-spore-400 block">Ciencia Aplicada al Cultivo</span>
-          <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-white leading-tight">
+    <!-- ESPECIES -->
+    <section id="psicrometria" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fos-hairline-t" style="padding-top:var(--space-8); padding-bottom:var(--space-8);">
+      <div class="grid grid-cols-1 lg:grid-cols-12" style="gap:var(--space-6);">
+
+        <div class="lg:col-span-5" style="display:flex; flex-direction:column; gap:var(--space-4);">
+          <span class="fos-eyebrow">Ciencia aplicada al cultivo</span>
+          <h2 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-xl); line-height:var(--leading-tight);">
             Control bioclimático adaptado a la altitud de Tenjo.
           </h2>
-          <p class="font-sans text-slate-400 leading-relaxed text-base">
+          <p style="color:var(--text-secondary); line-height:var(--leading-relaxed); font-size:var(--text-prose);">
             A 2,585 metros de altura sobre el nivel del mar, la presión atmosférica reduce la densidad del aire a ~75 kPa. Nuestro motor psicrométrico calcula la evapotranspiración real del hongo con calibraciones específicas para cada cepa.
           </p>
-          
-          <div class="space-y-3 font-mono text-xs pt-4">
-            <div class="flex items-center gap-3 p-3 rounded-xl glass-panel">
-              <span class="w-2 h-2 rounded-full bg-spore-400"></span>
-              <span class="text-slate-300">Pleurotus (Orellana): VPD 0.20 - 0.35 kPa</span>
+
+          <div style="display:flex; flex-direction:column; gap:var(--space-2); font-family:var(--font-mono); font-size:var(--text-xs); padding-top:var(--space-2);">
+            <div class="fos-panel-recessed flex items-center" style="gap:var(--space-2); padding:var(--space-2) var(--space-3);">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--status-active);"></span>
+              <span style="color:var(--text-secondary);">Pleurotus (Orellana): VPD 0.20–0.35 kPa</span>
             </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl glass-panel">
-              <span class="w-2 h-2 rounded-full bg-mycelium-400"></span>
-              <span class="text-slate-300">Lentinula (Shiitake): VPD 0.30 - 0.50 kPa</span>
+            <div class="fos-panel-recessed flex items-center" style="gap:var(--space-2); padding:var(--space-2) var(--space-3);">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--status-attention);"></span>
+              <span style="color:var(--text-secondary);">Lentinula (Shiitake): VPD 0.30–0.50 kPa</span>
             </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl glass-panel">
-              <span class="w-2 h-2 rounded-full bg-terracotta-500"></span>
-              <span class="text-slate-300">Ganoderma (Reishi): VPD 0.15 - 0.30 kPa</span>
+            <div class="fos-panel-recessed flex items-center" style="gap:var(--space-2); padding:var(--space-2) var(--space-3);">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--accent-mushroom);"></span>
+              <span style="color:var(--text-secondary);">Ganoderma (Reishi): VPD 0.15–0.30 kPa</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Scrolling Showcase Cards -->
-        <div class="lg:col-span-7 space-y-8">
-          
-          <!-- Card 1: Orellana -->
-          <div class="glass-panel p-8 rounded-3xl border-spore-400/30 gsap-scroll-card hover:border-spore-400 transition-all duration-500">
-            <div class="flex justify-between items-start mb-4">
+        <div class="lg:col-span-7" style="display:flex; flex-direction:column; gap:var(--space-5);">
+
+          <div class="fos-panel" style="padding:var(--space-5);">
+            <div class="flex justify-between items-start" style="margin-bottom:var(--space-3);">
               <div>
-                <span class="font-mono text-xs text-spore-400 uppercase tracking-wider block">Gourmet · Crecimiento Rápido</span>
-                <h3 class="font-display font-bold text-2xl text-white">Orellana Blanca & Rosa</h3>
+                <span class="fos-eyebrow" style="display:block;">Gourmet · Crecimiento rápido</span>
+                <h3 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);">Orellana Blanca &amp; Rosa</h3>
               </div>
-              <span class="font-mono text-xs px-3 py-1 rounded-full bg-spore-500/20 text-spore-300 border border-spore-400/30">Cámara F01</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); padding:2px var(--space-2); background:var(--status-active-bg); color:var(--status-active);">Cámara F01</span>
             </div>
-            <p class="font-sans text-sm text-slate-400 mb-6">
-              Requiere altos pulsos de renovación de aire (CO₂ < 850 ppm) y microgotas de alta frecuencia para inducir primordios sin generar deformaciones en abanico.
+            <p style="font-size:var(--text-sm); color:var(--text-metadata); margin-bottom:var(--space-4);">
+              Requiere altos pulsos de renovación de aire (CO₂ &lt; 850 ppm) y microgotas de alta frecuencia para inducir primordios sin generar deformaciones en abanico.
             </p>
-            <div class="grid grid-cols-3 gap-4 font-mono text-xs">
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">TEMP ÓPTIMA</span>
-                <span class="text-white font-bold text-sm">17 - 19 °C</span>
+            <div class="grid grid-cols-3" style="gap:var(--space-3); font-family:var(--font-mono); font-size:var(--text-xs);">
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">Temp óptima</span>
+                <span style="font-weight:var(--weight-bold);">17–19 °C</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">HR FRUCTIFICACIÓN</span>
-                <span class="text-white font-bold text-sm">88 - 92 %</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">HR fructificación</span>
+                <span style="font-weight:var(--weight-bold);">88–92 %</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">VPD META</span>
-                <span class="text-spore-400 font-bold text-sm">0.24 kPa</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">VPD meta</span>
+                <span style="font-weight:var(--weight-bold); color:var(--status-active);">0.24 kPa</span>
               </div>
             </div>
           </div>
 
-          <!-- Card 2: Melena de León -->
-          <div class="glass-panel p-8 rounded-3xl border-white/10 gsap-scroll-card hover:border-spore-400 transition-all duration-500">
-            <div class="flex justify-between items-start mb-4">
+          <div class="fos-panel" style="padding:var(--space-5);">
+            <div class="flex justify-between items-start" style="margin-bottom:var(--space-3);">
               <div>
-                <span class="font-mono text-xs text-mycelium-400 uppercase tracking-wider block">Medicinal / Nootrópico · Alta Densidad</span>
-                <h3 class="font-display font-bold text-2xl text-white">Melena de León (Hericium erinaceus)</h3>
+                <span class="fos-eyebrow" style="display:block; color:var(--status-attention);">Medicinal / nootrópico · Alta densidad</span>
+                <h3 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);">Melena de León (Hericium erinaceus)</h3>
               </div>
-              <span class="font-mono text-xs px-3 py-1 rounded-full bg-mycelium-500/20 text-mycelium-400 border border-mycelium-400/30">Cámara F02</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); padding:2px var(--space-2); background:var(--status-attention-bg); color:var(--status-attention);">Cámara F02</span>
             </div>
-            <p class="font-sans text-sm text-slate-400 mb-6">
+            <p style="font-size:var(--text-sm); color:var(--text-metadata); margin-bottom:var(--space-4);">
               Extremadamente sensible a las corrientes directas de aire seco. Nuestro sistema modula los difusores perimetrales para evitar amarillamiento en espinas.
             </p>
-            <div class="grid grid-cols-3 gap-4 font-mono text-xs">
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">TEMP ÓPTIMA</span>
-                <span class="text-white font-bold text-sm">16 - 18 °C</span>
+            <div class="grid grid-cols-3" style="gap:var(--space-3); font-family:var(--font-mono); font-size:var(--text-xs);">
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">Temp óptima</span>
+                <span style="font-weight:var(--weight-bold);">16–18 °C</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">HR FRUCTIFICACIÓN</span>
-                <span class="text-white font-bold text-sm">90 - 95 %</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">HR fructificación</span>
+                <span style="font-weight:var(--weight-bold);">90–95 %</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-mycelium-400 font-bold text-sm">0.18 kPa</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">VPD meta</span>
+                <span style="font-weight:var(--weight-bold); color:var(--status-attention);">0.18 kPa</span>
               </div>
             </div>
           </div>
 
-          <!-- Card 3: Reishi -->
-          <div class="glass-panel p-8 rounded-3xl border-white/10 gsap-scroll-card hover:border-spore-400 transition-all duration-500">
-            <div class="flex justify-between items-start mb-4">
+          <div class="fos-panel" style="padding:var(--space-5);">
+            <div class="flex justify-between items-start" style="margin-bottom:var(--space-3);">
               <div>
-                <span class="font-mono text-xs text-terracotta-500 uppercase tracking-wider block">Adaptógeno Ancestral</span>
-                <h3 class="font-display font-bold text-2xl text-white">Reishi (Ganoderma lucidum)</h3>
+                <span class="fos-eyebrow" style="display:block; color:var(--accent-mushroom);">Adaptógeno ancestral</span>
+                <h3 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-lg);">Reishi (Ganoderma lucidum)</h3>
               </div>
-              <span class="font-mono text-xs px-3 py-1 rounded-full bg-terracotta-500/20 text-terracotta-500 border border-terracotta-500/30">Incubación 01</span>
+              <span style="font-family:var(--font-mono); font-size:var(--text-2xs); padding:2px var(--space-2); background:var(--accent-mushroom-dim); color:var(--accent-mushroom);">Incubación 01</span>
             </div>
-            <p class="font-sans text-sm text-slate-400 mb-6">
+            <p style="font-size:var(--text-sm); color:var(--text-metadata); margin-bottom:var(--space-4);">
               Ciclos largos de incubación con tolerancia a niveles elevados de CO₂ para inducir la formación característica de cornamenta o sombrero barnizado.
             </p>
-            <div class="grid grid-cols-3 gap-4 font-mono text-xs">
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">TEMP ÓPTIMA</span>
-                <span class="text-white font-bold text-sm">22 - 25 °C</span>
+            <div class="grid grid-cols-3" style="gap:var(--space-3); font-family:var(--font-mono); font-size:var(--text-xs);">
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">Temp óptima</span>
+                <span style="font-weight:var(--weight-bold);">22–25 °C</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-slate-500 block text-[10px]">CO2 TOLERADO</span>
-                <span class="text-white font-bold text-sm">< 2500 ppm</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">CO2 tolerado</span>
+                <span style="font-weight:var(--weight-bold);">&lt; 2500 ppm</span>
               </div>
-              <div class="bg-obsidian-950 p-3 rounded-xl border border-white/5">
-                <span class="text-terracotta-500 font-bold text-sm">0.32 kPa</span>
+              <div class="fos-panel-recessed" style="padding:var(--space-2) var(--space-3);">
+                <span style="color:var(--text-disabled); font-size:var(--text-2xs); display:block;">VPD meta</span>
+                <span style="font-weight:var(--weight-bold); color:var(--accent-mushroom);">0.32 kPa</span>
               </div>
             </div>
           </div>
 
         </div>
-
       </div>
-
     </section>
 
-    <!-- SECTION 4: ACTION (CALL TO ACTION & FOOTER) -->
-    <section class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div class="glass-panel-glow rounded-3xl p-10 sm:p-16 text-center relative overflow-hidden">
-        
-        <div class="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-spore-500/15 blur-[120px] rounded-full pointer-events-none"></div>
-
-        <span class="font-mono text-xs uppercase tracking-widest text-spore-400 block mb-4">Setas de la Peña · Operaciones Tenjo</span>
-        <h2 class="font-display font-black text-3xl sm:text-5xl text-white max-w-3xl mx-auto leading-tight mb-6">
+    <!-- CTA -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fos-hairline-t" style="padding-top:var(--space-8); padding-bottom:var(--space-8);">
+      <div class="fos-panel text-center" style="padding:var(--space-8);">
+        <span class="fos-eyebrow" style="display:block; margin-bottom:var(--space-3);">Setas de la Peña · Operaciones Tenjo</span>
+        <h2 style="font-family:var(--font-display); font-weight:var(--weight-bold); font-size:var(--text-2xl); max-width:42rem; margin:0 auto var(--space-4); line-height:var(--leading-tight);">
           Automatización modular, datos reproducibles y máxima eficiencia biológica.
         </h2>
-        <p class="font-sans text-slate-400 max-w-xl mx-auto text-sm sm:text-base mb-10 leading-relaxed">
+        <p style="color:var(--text-metadata); max-width:32rem; margin:0 auto var(--space-6); font-size:var(--text-sm);">
           Infraestructura de software y hardware de bajo costo diseñada para centros de producción en la sabana de Bogotá.
         </p>
-
-        <div class="flex flex-wrap items-center justify-center gap-4">
-          <a href="#telemetria" class="px-8 py-4 rounded-full bg-spore-500 hover:bg-spore-400 text-obsidian-950 font-display font-black text-sm tracking-wider uppercase transition-all duration-300 shadow-2xl shadow-spore-500/30 hover:scale-105 active:scale-95">
-            Abrir Consola Telemetría Completa
-          </a>
-          <button onclick="exportTelemetryLog()" class="px-8 py-4 rounded-full glass-panel hover:bg-white/10 text-white font-mono text-sm transition-all duration-300 border-white/20">
-            Descargar Log de Telemetría JSON
-          </button>
+        <div class="flex flex-wrap items-center justify-center" style="gap:var(--space-3);">
+          <a href="#telemetria" class="fos-btn-primary">Abrir consola telemetría completa</a>
+          <button onclick="exportTelemetryLog()" class="fos-btn-secondary">Descargar log de telemetría JSON</button>
         </div>
       </div>
 
-      <!-- Minimalist Clean Footer -->
-      <footer class="mt-20 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-slate-500 gap-4">
-        <div>
-          <span>© 2026 Setas de la Peña S.A.S. · Tenjo, Cundinamarca, Colombia</span>
-        </div>
-        <div class="flex items-center space-x-6">
+      <footer class="fos-hairline-t flex flex-col sm:flex-row items-center justify-between" style="margin-top:var(--space-6); padding-top:var(--space-4); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-disabled); gap:var(--space-3);">
+        <span>© 2026 Setas de la Peña S.A.S. · Tenjo, Cundinamarca, Colombia</span>
+        <div class="flex items-center" style="gap:var(--space-4);">
           <span>Setas OS v5.2</span>
           <span>ESP32 Telemetry Engine</span>
-          <span class="text-spore-400">Node Online</span>
+          <span style="color:var(--status-active);">Node online</span>
         </div>
       </footer>
     </section>
@@ -642,83 +571,48 @@
 
   <!-- Telemetry Simulation & Psychrometric JS Engine -->
   <script>
-    // Room Data Profiles
     const ROOMS = {
       'sala-f1': {
         name: 'Sala Fructificación 01 — Orellana Ostra',
-        species: 'Pleurotus ostreatus (Cepa Po-08)',
         stage: 'Fase: Fructificación Día 7 · Sustrato: Paja de Trigo + Cascarilla Café',
         node: 'ESP32-TENJO-S1 (#04)',
-        baseTemp: 17.8,
-        baseHr: 88.5,
-        baseCo2: 740,
-        tempRange: [16, 20],
-        hrRange: [85, 92],
-        co2Max: 900,
+        baseTemp: 17.8, baseHr: 88.5, baseCo2: 740,
+        tempRange: [16, 20], hrRange: [85, 92], co2Max: 900,
         advice: 'Balance hídrico óptimo para desarrollo de sombreros de Orellana. Mantener pulsos de nebulización ultrasónica a 4 min de intervalo.'
       },
       'sala-f2': {
         name: 'Sala Fructificación 02 — Melena de León',
-        species: 'Hericium erinaceus (Cepa He-02)',
         stage: 'Fase: Fructificación Día 4 · Formación de Primordios e Himenio',
         node: 'ESP32-TENJO-S2 (#02)',
-        baseTemp: 16.5,
-        baseHr: 93.0,
-        baseCo2: 680,
-        tempRange: [15, 18],
-        hrRange: [90, 96],
-        co2Max: 800,
+        baseTemp: 16.5, baseHr: 93.0, baseCo2: 680,
+        tempRange: [15, 18], hrRange: [90, 96], co2Max: 800,
         advice: 'Alta humedad requerida para elongación de espinas. Flujo de aire indirecto activado para evitar deshidratación superficial.'
       },
       'sala-inc': {
         name: 'Sala Incubación 01 — Reishi',
-        species: 'Ganoderma lucidum (Cepa Gl-05)',
         stage: 'Fase: Colonización Micelial Día 18 · Sustrato: Aserrín Roble + Salvado',
         node: 'ESP32-TENJO-INC (#01)',
-        baseTemp: 23.4,
-        baseHr: 75.0,
-        baseCo2: 2150,
-        tempRange: [22, 25],
-        hrRange: [70, 80],
-        co2Max: 3000,
+        baseTemp: 23.4, baseHr: 75.0, baseCo2: 2150,
+        tempRange: [22, 25], hrRange: [70, 80], co2Max: 3000,
         advice: 'Micelio en colonización vigorosa. CO₂ elevado estimula ramificación densa de hifas. Mantener temperatura estable.'
       }
     };
 
     let activeRoomKey = 'sala-f1';
-    let currentTemp = 17.8;
-    let currentHr = 88.5;
-    let currentCo2 = 740;
+    let currentTemp = 17.8, currentHr = 88.5, currentCo2 = 740;
     let isLiveSim = true;
 
-    // Psychrometric Calculations (Magnus-Tetens)
-    function calcVPsat(tC) {
-      return 0.61078 * Math.exp((17.27 * tC) / (tC + 237.3));
-    }
-
-    function calcVPact(tC, rhPct) {
-      const sat = calcVPsat(tC);
-      return sat * (Math.max(0, Math.min(100, rhPct)) / 100);
-    }
-
-    function calcVPD(tC, rhPct) {
-      const sat = calcVPsat(tC);
-      const act = calcVPact(tC, rhPct);
-      return Math.max(0, sat - act);
-    }
-
+    function calcVPsat(tC) { return 0.61078 * Math.exp((17.27 * tC) / (tC + 237.3)); }
+    function calcVPact(tC, rhPct) { return calcVPsat(tC) * (Math.max(0, Math.min(100, rhPct)) / 100); }
+    function calcVPD(tC, rhPct) { return Math.max(0, calcVPsat(tC) - calcVPact(tC, rhPct)); }
     function calcDewPoint(tC, rhPct) {
-      const a = 17.27;
-      const b = 237.3;
+      const a = 17.27, b = 237.3;
       const alpha = ((a * tC) / (b + tC)) + Math.log(rhPct / 100);
       return (b * alpha) / (a - alpha);
     }
 
-    // Telemetry Chart Buffer
     const historyData = {
-      vpd: Array.from({length: 40}, (_, i) => 0.22 + Math.sin(i / 4) * 0.04),
-      co2: Array.from({length: 40}, (_, i) => 720 + Math.cos(i / 3) * 30),
-      hr: Array.from({length: 40}, (_, i) => 88 + Math.sin(i / 5) * 2)
+      vpd: Array.from({ length: 40 }, (_, i) => 0.22 + Math.sin(i / 4) * 0.04)
     };
 
     function switchRoom(roomKey) {
@@ -726,18 +620,11 @@
       activeRoomKey = roomKey;
       const r = ROOMS[roomKey];
 
-      // Update button states
-      document.querySelectorAll('.room-btn').forEach(btn => {
-        btn.className = 'room-btn px-4 py-2 rounded-lg font-mono text-xs font-semibold text-slate-400 hover:text-white transition-all';
-      });
+      document.querySelectorAll('.fos-tab').forEach(btn => btn.setAttribute('data-active', 'false'));
       const activeBtn = document.getElementById('btn-' + roomKey);
-      if (activeBtn) {
-        activeBtn.className = 'room-btn px-4 py-2 rounded-lg font-mono text-xs font-semibold transition-all bg-spore-500 text-obsidian-950';
-      }
+      if (activeBtn) activeBtn.setAttribute('data-active', 'true');
 
-      currentTemp = r.baseTemp;
-      currentHr = r.baseHr;
-      currentCo2 = r.baseCo2;
+      currentTemp = r.baseTemp; currentHr = r.baseHr; currentCo2 = r.baseCo2;
 
       document.getElementById('active-room-title').textContent = r.name;
       document.getElementById('active-room-desc').textContent = r.stage;
@@ -753,7 +640,6 @@
       const vpSat = calcVPsat(currentTemp);
       const vpAct = calcVPact(currentTemp, currentHr);
 
-      // DOM updates
       document.getElementById('val-temp').textContent = currentTemp.toFixed(1);
       document.getElementById('val-hr').textContent = currentHr.toFixed(1);
       document.getElementById('val-co2').textContent = Math.round(currentCo2);
@@ -767,7 +653,6 @@
       document.getElementById('val-vpsat').textContent = vpSat.toFixed(2) + ' kPa';
       document.getElementById('val-vpact').textContent = vpAct.toFixed(2) + ' kPa';
 
-      // Bars
       const r = ROOMS[activeRoomKey];
       const tempPct = Math.min(100, Math.max(0, ((currentTemp - 10) / 20) * 100));
       const hrPct = Math.min(100, Math.max(0, currentHr));
@@ -779,7 +664,6 @@
       document.getElementById('bar-co2').style.width = co2Pct + '%';
       document.getElementById('bar-vpd').style.width = vpdPct + '%';
 
-      // Update Chart Canvas
       drawTelemetryChart();
     }
 
@@ -789,49 +673,29 @@
       const ctx = canvas.getContext('2d');
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * window.devicePixelRatio || 600;
-      canvas.height = rect.height * window.devicePixelRatio || 120;
+      canvas.height = rect.height * window.devicePixelRatio || 112;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const w = canvas.width;
-      const h = canvas.height;
-      const len = historyData.vpd.length;
+      const w = canvas.width, h = canvas.height, len = historyData.vpd.length;
 
-      // Draw Grid Lines
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = '#988c6c33'; /* --line-0 a baja opacidad */
       ctx.lineWidth = 1;
       for (let y = 0.25; y < 1; y += 0.25) {
-        ctx.beginPath();
-        ctx.moveTo(0, h * y);
-        ctx.lineTo(w, h * y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, h * y); ctx.lineTo(w, h * y); ctx.stroke();
       }
 
-      // Draw VPD Curve (Emerald)
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#5B6B44'; /* --accent-olive */
+      ctx.lineWidth = 2;
       ctx.beginPath();
       for (let i = 0; i < len; i++) {
         const x = (i / (len - 1)) * w;
-        // Normalize VPD 0 to 0.6 kPa
         const norm = Math.max(0, Math.min(1, historyData.vpd[i] / 0.6));
         const y = h - (norm * (h - 20) + 10);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
-
-      // Gradient Fill under VPD Curve
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-      grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
-      ctx.fillStyle = grad;
-      ctx.lineTo(w, h);
-      ctx.lineTo(0, h);
-      ctx.closePath();
-      ctx.fill();
     }
 
-    // Live Tick Simulation
     setInterval(() => {
       if (!isLiveSim) return;
       const r = ROOMS[activeRoomKey];
@@ -839,20 +703,16 @@
       currentHr += (Math.random() - 0.5) * 0.3;
       currentCo2 += (Math.random() - 0.5) * 12;
 
-      // Keep within bounds
       currentTemp = Math.max(r.tempRange[0] - 1, Math.min(r.tempRange[1] + 1, currentTemp));
       currentHr = Math.max(r.hrRange[0] - 5, Math.min(98, currentHr));
       currentCo2 = Math.max(400, Math.min(r.co2Max + 200, currentCo2));
 
-      // Append to chart history
-      const newVpd = calcVPD(currentTemp, currentHr);
       historyData.vpd.shift();
-      historyData.vpd.push(newVpd);
+      historyData.vpd.push(calcVPD(currentTemp, currentHr));
 
       updateUI();
     }, 2500);
 
-    // Live Clock
     setInterval(() => {
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0] + ' -5 UTC';
@@ -869,46 +729,20 @@
         room: ROOMS[activeRoomKey],
         timestamp: new Date().toISOString(),
         readings: {
-          tempC: currentTemp,
-          rhPct: currentHr,
-          co2Ppm: currentCo2,
-          vpdKpa: calcVPD(currentTemp, currentHr),
-          dewPointC: calcDewPoint(currentTemp, currentHr)
+          tempC: currentTemp, rhPct: currentHr, co2Ppm: currentCo2,
+          vpdKpa: calcVPD(currentTemp, currentHr), dewPointC: calcDewPoint(currentTemp, currentHr)
         },
         location: 'Tenjo, Cundinamarca (2585 msnm)'
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `telemetria-setas-os-${activeRoomKey}-${Date.now()}.json`;
-      a.click();
+      a.href = url; a.download = `telemetria-setas-os-${activeRoomKey}-${Date.now()}.json`; a.click();
     }
 
-    // GSAP ScrollTrigger Animations
     document.addEventListener('DOMContentLoaded', () => {
       updateUI();
       window.addEventListener('resize', drawTelemetryChart);
-
-      if (typeof gsap !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger);
-
-        // Cards Stagger
-        gsap.utils.toArray('.gsap-scroll-card').forEach((card, i) => {
-          gsap.from(card, {
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 85%',
-              toggleActions: 'play none none reverse'
-            },
-            opacity: 0,
-            y: 40,
-            duration: 0.8,
-            ease: 'power3.out',
-            delay: i * 0.1
-          });
-        });
-      }
     });
   </script>
 </body>

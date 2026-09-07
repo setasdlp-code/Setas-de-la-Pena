@@ -204,3 +204,9 @@ test('climate dashboard generates and exports customizable ESPHome firmware YAML
   assert.match(source, /relay_ch2_fae/);
   assert.match(styles, /\.sim-root \.esp32-code-preview/);
 });
+
+test('home lot cards scope colonizado properly without ReferenceError', () => {
+  assert.match(source, /return \{lote,stats,columna,age,colonizado\};/);
+  assert.match(source, /items\.map\(\(\{lote:lt,stats,age,colonizado\}\)=>\{/);
+  assert.match(source, /width: colonizado \? '100%' : '65%'/);
+});

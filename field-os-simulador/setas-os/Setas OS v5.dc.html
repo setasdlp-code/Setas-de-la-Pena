@@ -7,6 +7,11 @@
 <title>Setas OS v5 — Setas de la Peña</title>
 <meta name="description" content="Cuaderno de campo, formulador de sustratos y bodega para el cultivo de hongos en Setas de la Peña.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="ds-2026/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
 <style>
   /*
@@ -22,20 +27,20 @@
   html[data-setas-auth-state="unauthenticated"] x-dc { display:none !important; }
 </style>
 </head>
-<body>
-  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper-1,#efebe0);contain:strict;">
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
-      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
-        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
-        <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink-2,#6b6759);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
-        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--ink-2,#6b6759);">Conectando…</div>
-        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Correo</label>
-        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
-        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Contraseña</label>
-        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
-        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error,#c53030);font-size:12px;font-family:var(--font-mono,monospace);"></div>
-        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-sm,2px);font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+<body data-mode="field">
+  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper,#FAF5E9);contain:strict;">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
+        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--warning-text,#8C6B2E);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo · 2.600 m</div>
+        <h1 style="margin:2px 0 0;font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif));font-size:30px;line-height:1.05;font-weight:700;color:var(--ink,#222222);">Setas de la Peña</h1>
+        <p style="margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--ink-muted,#555555);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
+        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted,#555555);">Conectando…</div>
+        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Correo</label>
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
+        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Contraseña</label>
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
+        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--rust,#8E2C14);font-size:12px;font-family:var(--font-mono,'IBM Plex Mono',monospace);"></div>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink,#222222);color:var(--paper,#FAF5E9);border:1px solid var(--ink,#222222);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
       </div>
     </form>
   </div>
@@ -47,8 +52,14 @@
 <link data-auth-managed="true" data-auth-rel="icon" type="image/svg+xml" data-auth-href="favicon.svg">
 <link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.googleapis.com">
 <link data-auth-managed="true" data-auth-rel="preconnect" data-auth-href="https://fonts.gstatic.com" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Medium.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
@@ -130,6 +141,17 @@
   @keyframes fos-toast-undo { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 92%{opacity:1;transform:translateY(0);} 100%{opacity:0;} }
 
   .app-shell { display:flex; min-height:100vh; background:var(--paper-1); font-family:var(--font-sans); }
+  .app-shell h1, h1 { font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif)) !important; font-weight:700 !important; }
+  .app-shell button,
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea,
+  .app-shell .rail-btn,
+  .app-shell .rail-flyout-item,
+  .app-shell .workspace-more-item {
+    border-radius:0 !important;
+    box-shadow:none !important;
+  }
   .app-rail { position:fixed; z-index:var(--z-rail); background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
   .rail-peek { display:none; }
   .rail-btn { display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:9px 4px; transition:color .15s, background-color .15s; border-radius:var(--radius-sm); }
@@ -137,7 +159,7 @@
   .rail-btn.on { color:var(--ink-0); }
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--paper-0); animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { display:flex; align-items:center; justify-content:center; padding:12px 2px 8px; border:0; background:none; cursor:pointer; width:100%; }
@@ -146,7 +168,7 @@
   .app-main { flex:1; min-width:0; }
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
-  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border-right:1px solid var(--border-strong); box-shadow:6px 0 24px rgba(0,0,0,.12); width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
+  .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border:1px solid var(--border-strong); box-shadow:none; width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
   .rail-flyout-title { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
   .rail-flyout-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; background:none; border:none; cursor:pointer; padding:9px 4px; border-radius:var(--radius-sm); color:var(--ink-2); position:relative; }
   .rail-flyout-item svg { width:22px; height:22px; flex-shrink:0; }
@@ -176,7 +198,7 @@
   .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
   .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
-    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:0 -6px 24px rgba(0,0,0,.12); padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
+    .rail-flyout { position:fixed; left:0; right:0; top:auto; bottom:calc(62px + env(safe-area-inset-bottom)); margin:0; width:auto; flex-direction:row; justify-content:center; flex-wrap:wrap; border-right:none; border-top:1px solid var(--border-strong); box-shadow:none; padding:8px 6px; gap:4px; z-index:var(--z-rail-flyout); }
     .rail-flyout-title { display:none; }
     .rail-flyout-item { flex:0 0 auto; min-width:54px; padding:8px 6px; gap:3px; }
     .rail-flyout-item svg { width:20px; height:20px; }
@@ -198,11 +220,11 @@
       background:linear-gradient(to right, var(--paper-2), transparent);
     }
     .app-shell.sim-collapsed .rail-peek::before {
-      content:''; width:3px; height:44px; border-radius:2px; background:var(--accent-terracotta); opacity:var(--opacity-subtle);
+      content:''; width:3px; height:44px; border-radius:0; background:var(--accent-terracotta); opacity:var(--opacity-subtle);
     }
     .app-shell.sim-collapsed .rail-peek:hover::before { opacity:1; }
     .app-shell.sim-collapsed .rail-peek:hover ~ .app-rail,
-    .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:2px 0 24px rgba(0,0,0,.12); }
+    .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:none; }
   }
   @media (max-width:859px){
     .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow:visible; }
@@ -461,7 +483,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
           </div>
 
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Especie</div>
@@ -517,7 +539,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Contenedores <span style="font-weight:400;color:var(--text-metadata);">· selecciona uno o varios</span></div>
@@ -581,7 +603,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Contenedor</div>
@@ -625,7 +647,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">{{ quickHint }}</p>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
@@ -683,7 +705,7 @@
           <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-7 · Historia</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 16px;">Contenedores</h1>
             <div style="display:flex;flex-direction:column;gap:10px;">
               <sc-for list="{{ allContainers }}" as="c" hint-placeholder-count="5">
                 <button onClick="{{ c.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;gap:14px;">
@@ -789,7 +811,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Volver</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
           </div>
           <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
@@ -852,7 +874,7 @@
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;">
           <div style="min-width:0;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Planta de Tenjo · en vivo</div>
-            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:42px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h1>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font:var(--t-caption);color:var(--text-metadata);">Ocupación de planta</span>
@@ -1059,7 +1081,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · solo lectura</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:42px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
 
         <div class="fos-scroll" style="display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid var(--border-soft);margin:20px 0 4px;mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);-webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);">
@@ -1275,7 +1297,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Demanda → Capacidad → Lotes</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Plan de producción</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Plan de producción</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Demanda, capacidad de cámaras y órdenes de cultivo en una misma secuencia.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
           <button onClick="{{ goSimProduccion }}" style="cursor:pointer;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;font:var(--t-label);color:var(--ink-0);display:flex;align-items:center;gap:8px;">Ficha de producción <span style="color:var(--accent-terracotta);">→</span></button>
@@ -1385,7 +1407,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Lote de origen → Movimiento → Costo</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Inventario</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Inventario</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Disponibilidad de sustratos e insumos por lote, proveedor y costo.</p>
         <div style="margin-top:18px;">
           <button onClick="{{ goSimInventario }}" style="cursor:pointer;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;font:var(--t-label);color:var(--ink-0);display:flex;align-items:center;gap:8px;">Bodega del simulador (ingredientes) <span style="color:var(--accent-terracotta);">→</span></button>
@@ -1441,7 +1463,7 @@
         </div>
 
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Sustrato + mano de obra + energía</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Costes y margen</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Costes y margen</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Costo real por kilo de cada lote, contra el precio del canal al que se despachó.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
@@ -1509,7 +1531,7 @@
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
           <div style="min-width:0;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Del contenedor al cliente</div>
-            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Calidad y trazabilidad</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Calidad y trazabilidad</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Cada lote vincula receta, contenedores, eventos y cosecha en una sola cadena.</p>
           </div>
           <button onClick="{{ exportQualityReport }}" style="cursor:pointer;flex:none;display:flex;align-items:center;gap:8px;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px;font:var(--t-button);">
@@ -1672,7 +1694,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Hipótesis → Evidencia → Decisión → SOP</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Aprender</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Aprender</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Los ensayos comparten la memoria operativa y quedan separados de la línea base de producción.</p>
 
         <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,0.9fr);gap:20px;margin-top:24px;align-items:start;">
@@ -1775,7 +1797,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Pedidos → Cosecha → Entrega</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Comercial</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Comercial</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Salidas de cosecha vinculadas con destino, cliente y lote de producción.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border-soft);margin-top:24px;">

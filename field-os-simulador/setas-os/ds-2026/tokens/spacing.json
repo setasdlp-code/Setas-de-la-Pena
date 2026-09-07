@@ -1,0 +1,24 @@
+{
+  "system": "Setas de la Peña · DS-2026",
+  "baseline": "8px. Every gap, pad and offset is a multiple. --space-half (4px) is the sole exception, for optical alignment against a 1px hairline.",
+  "scale": {
+    "half": "4px", "1": "8px", "2": "16px", "3": "24px", "4": "32px",
+    "5": "40px", "6": "48px", "7": "64px", "8": "80px", "9": "96px"
+  },
+  "grid": {
+    "columns": 12,
+    "modes": {
+      "archive": { "gutter": "32px", "pageMargin": "64px", "use": "Editorial and print. Fichas, posters, packaging, the folio system. Air is the point." },
+      "field":   { "gutter": "24px", "pageMargin": "32px", "use": "Reports, labels, lot records, SOPs. The default mode." },
+      "control": { "gutter": "12px", "pageMargin": "16px", "use": "Dense telemetry. Dashboards, metric tables, room monitors." }
+    },
+    "measureProse": "68ch"
+  },
+  "structure": {
+    "radius": { "none": "0", "sm": "2px" },
+    "shadow": "none — the only legal value. Depth is expressed with rules, never blur.",
+    "tapTargetMin": "44px",
+    "fieldCellMinHeight": "48px",
+    "pictogram": { "grid": 48, "stroke": "1.5px", "fill": "none" }
+  }
+}

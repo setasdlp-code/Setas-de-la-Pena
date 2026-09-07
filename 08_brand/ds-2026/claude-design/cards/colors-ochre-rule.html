@@ -1,0 +1,28 @@
+<!-- @dsCard group="Colors" viewport="700x245" name="La regla del ocre" subtitle="WARNING mide 2.39:1 — relleno sí, texto no" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="height:245px;background:var(--surface-page);padding:18px 20px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+  <div class="t-label">CONTRASTE · WCAG 2.1 AA</div>
+  <div style="display:flex;gap:12px;flex:1">
+    <div style="flex:1;border:1px solid var(--rule);padding:12px;display:flex;flex-direction:column;gap:8px">
+      <span class="t-micro" style="color:var(--moss)">✓ PERMITIDO</span>
+      <div style="background:var(--warning);padding:8px 10px"><span class="t-label" style="color:var(--ink)">RELLENO + INK</span></div>
+      <span class="t-micro">6.12:1</span>
+      <div style="border-left:4px solid var(--warning);background:var(--warning-tint);padding:8px 10px">
+        <span class="t-label" style="color:var(--warning-text)">ATENCIÓN</span>
+      </div>
+      <span class="t-micro">Filete ocre · texto 13.32:1</span>
+    </div>
+    <div style="flex:1;border:1px solid var(--rule);padding:12px;display:flex;flex-direction:column;gap:8px">
+      <span class="t-micro" style="color:var(--rust)">✗ PROHIBIDO</span>
+      <div style="padding:8px 10px;border:1px dashed var(--rule)">
+        <span class="t-label" style="color:var(--warning)">OCRE COMO TEXTO</span>
+      </div>
+      <span class="t-micro" style="color:var(--rust)">2.39:1 — falla</span>
+      <div style="padding:8px 10px;border:1px dashed var(--rule);background:var(--warning-tint)">
+        <span class="t-label" style="color:var(--warning)">SOBRE SU TINTE</span>
+      </div>
+      <span class="t-micro" style="color:var(--rust)">2.18:1 — falla</span>
+    </div>
+  </div>
+  <div class="t-micro" style="letter-spacing:var(--tracking-micro)">Para texto ocre usar WARNING_TEXT #8C6B2E — mismo tono, 4.53:1</div>
+</div>

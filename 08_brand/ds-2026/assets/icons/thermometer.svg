@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"
+     fill="none" stroke="currentColor" stroke-width="1.5"
+     stroke-linecap="butt" stroke-linejoin="miter" role="img" aria-label="thermometer">
+  <path d="M20 31V11a4 4 0 0 1 8 0v20"/>
+  <circle cx="24" cy="36" r="6"/>
+  <path d="M24 20v12"/>
+  <path d="M28 14h4M28 20h4M28 26h4"/>
+</svg>

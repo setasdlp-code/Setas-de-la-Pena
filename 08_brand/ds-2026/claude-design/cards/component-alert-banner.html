@@ -1,0 +1,16 @@
+<!-- @dsCard group="Components" viewport="700x275" name="Alert banner" subtitle="Filete de 4px con el pigmento; el texto nunca sobre ocre crudo" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="height:275px;background:var(--surface-page);padding:20px;display:flex;flex-direction:column;gap:12px;justify-content:center;overflow:hidden">
+  <div class="sdp-alert sdp-alert--ok">
+    <span class="sdp-alert__icon"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="17"/><path d="M15 24l6 7 13-14"/></svg></span>
+    <div class="sdp-alert__body"><div class="sdp-alert__label">En especificación</div><div class="sdp-alert__msg">Sala 02 estable desde hace 14 días.</div></div>
+  </div>
+  <div class="sdp-alert sdp-alert--warn">
+    <span class="sdp-alert__icon"><svg viewBox="0 0 48 48"><path d="M24 8l18 31c1 2 0 3-2 3H8c-2 0-3-1-2-3Z"/><path d="M24 19v10"/><circle cx="24" cy="35" r="1.2" fill="currentColor" stroke="none"/></svg></span>
+    <div class="sdp-alert__body"><div class="sdp-alert__label">Atención · CO₂</div><div class="sdp-alert__msg">Sala 03 a 1.240 ppm. Ventilar antes de las 14:00.</div></div>
+  </div>
+  <div class="sdp-alert sdp-alert--error">
+    <span class="sdp-alert__icon"><svg viewBox="0 0 48 48"><path d="M24 8l18 31c1 2 0 3-2 3H8c-2 0-3-1-2-3Z"/><path d="M24 19v10"/><circle cx="24" cy="35" r="1.2" fill="currentColor" stroke="none"/></svg></span>
+    <div class="sdp-alert__body"><div class="sdp-alert__label">Contaminación</div><div class="sdp-alert__msg">Bloque HER-04 con <i style="font-family:var(--font-editorial)">Trichoderma</i>. Retirar del cuarto.</div></div>
+  </div>
+</div>
