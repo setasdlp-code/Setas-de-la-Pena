@@ -8925,6 +8925,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               })}
             </div>
 
+            <div className="ed-div" aria-hidden="true"><span className="ed-div__m">Recetario</span></div>
+
             {/* ---- RECETARIO: recetas guardadas de la especie seleccionada ---- */}
             <section className="recetario-sect" id="recetario-panel" aria-labelledby="recetario-title">
               <div className="recetario-hdr">

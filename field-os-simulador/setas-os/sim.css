@@ -1878,7 +1878,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* Catalog header row */
 /* Catalog header — more breathing room before grid */
 .sim-root .catalog-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px;}
-.sim-root .catalog-eyebrow{font-family:var(--font-body);font-weight:800;font-size:11.25px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral-500);display:block;margin-bottom:6px;}
+.sim-root .catalog-eyebrow{font-family:var(--font-editorial);font-weight:500;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-500);display:block;margin-bottom:6px;}
 .sim-root .catalog-title{font-family:var(--font-display);font-size:38px;color:var(--ink-0);margin:0;font-weight:400;line-height:1;}
 
 
