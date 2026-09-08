@@ -30,7 +30,10 @@
       "playwright.config.js",
       "playwright.config.cjs",
       "lighthouserc.cjs",
-      "docs/**"
+      "docs/**",
+      "__harness.html",
+      "probe-callable.js",
+      "field-event-mock-transport.js"
     ]
   },
   "functions": {
