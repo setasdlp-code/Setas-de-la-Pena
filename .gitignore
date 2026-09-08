@@ -79,3 +79,11 @@ knowledge_base.zip
 # Subagent-driven-development scratch workspace (ledgers, briefs, reports)
 # ─────────────────────────────────────────────
 .superpowers/
+
+# ─────────────────────────────────────────────
+# Claude Code — la config compartida (.claude/settings.json, .claude/hooks/)
+# sí se versiona; lo personal y los worktrees efímeros no.
+# ─────────────────────────────────────────────
+.claude/settings.local.json
+.claude/worktrees/
+.claude/.cc-writes

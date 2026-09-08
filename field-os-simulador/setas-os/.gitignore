@@ -1,0 +1,4 @@
+functions/shared/
+functions/node_modules/
+firestore-debug.log
+firebase-debug.log

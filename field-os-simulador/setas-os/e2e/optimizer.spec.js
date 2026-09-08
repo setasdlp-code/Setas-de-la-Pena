@@ -11,15 +11,15 @@ test('Calcular produce >=4 firmas de base distintas en el top-12, sin ninguna en
   await goWorkspace(page, 'formular');
   await selectSpecies(page, 'p_ostreatus_gris');
 
-  // Orellana Gris tiene >=4 bases compatibles en el catálogo. El control de
-  // origen cambia de etiqueta en la superficie de inicio rápido móvil.
+  // Orellana Gris tiene >=4 bases compatibles en el catálogo. El botón de origen
+  // se llama 'Catálogo' en ambas superficies; 'Paleta completa' sólo sobrevive en
+  // textos de ayuda, así que buscarlo como botón dejaba colgada la rama de
+  // escritorio hasta el timeout.
   const quickStart = page.getByTestId('form-mobile-start');
-  if (await quickStart.isVisible()) {
-    await quickStart.getByRole('button', { name: 'Catálogo', exact: true }).click();
-  } else {
-    await page.getByRole('group', { name: 'Origen de ingredientes' })
-      .getByRole('button', { name: 'Paleta completa', exact: true }).click();
-  }
+  const originScope = (await quickStart.isVisible())
+    ? quickStart
+    : page.getByRole('group', { name: 'Origen de ingredientes' });
+  await originScope.getByRole('button', { name: 'Catálogo', exact: true }).click();
 
   await page.getByRole('tab', { name: /Generador de Recetas/ }).click();
   const generator = page.locator('#formular-panel-generador');

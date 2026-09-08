@@ -59,6 +59,20 @@ const PROTECTED_APP_SCRIPTS = [
   "../historical-calibration.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Cuaderno de campo offline. setas-os-workflow.js llega después, en
+  // DC_RUNTIME_SCRIPTS, así que field-events-model.js resuelve ese global de
+  // forma perezosa en cada llamada en vez de capturarlo al cargarse.
+  "../field-event-contracts.js",
+  "../field-event-queue.js",
+  "../field-events-model.js",
+  "../field-event-reconcile.js",
+  "../field-event-sync.js",
+  "../field-event-account.js",
+  "../field-qr-resolve.js",
+  "../field-action-sheet.js",
+  "../field-event-callable-transport.js",
+  // field-event-mock-transport.js NO se carga aquí a propósito: es un servidor
+  // de aceptación falso. Sólo __harness.html lo incluye, con su propia etiqueta.
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;
