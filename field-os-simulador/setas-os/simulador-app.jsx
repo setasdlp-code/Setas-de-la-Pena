@@ -4954,6 +4954,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
     return ()=>{active=false;};
   },[]);
+  // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
+  const [qrScannedBagId,setQrScannedBagId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
@@ -5021,27 +5023,32 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
 
+  // Escanear resuelve el objeto, no abre un menú genérico: batch-sheet.js
+  // interpreta código de lote, id, etiqueta de bolsa, URL de trazabilidad y
+  // payload JSON, y devuelve un motivo explícito cuando no resuelve.
+  const [scanMiss, setScanMiss] = useState('');
   const handleScannedValue = (raw) => {
     if (!raw) return;
-    let batchId = null;
-    const qrResolve = typeof window !== 'undefined' ? window.SetasFieldQrResolve : null;
-    if (qrResolve && typeof qrResolve.parseBatchRef === 'function') {
-      try {
-        const parsed = qrResolve.parseBatchRef(raw);
-        if (parsed && parsed.batchId) batchId = parsed.batchId;
-      } catch (_) {
-        // Formato ajeno a la etiqueta de campo estándar; fallback al regex existente
-      }
+    const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
+    let resolved = null;
+    if (sheetApi) {
+      resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+    } else {
+      const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
+      const code = match ? match[1] : raw;
+      const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
+      resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
     }
-    const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = batchId || (match ? match[1] : raw);
-    const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || (batchId && (l.id === batchId || l.codigo === batchId)) || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
-    if (foundLote) {
-      setQrSelectedLoteId(foundLote.id);
+    if (resolved.batchId) {
+      setScanMiss('');
+      setQrSelectedLoteId(resolved.batchId);
+      if (resolved.bagId) setQrScannedBagId(resolved.bagId);
       stopCameraScanner();
       setShowQrSheet(false);
       setShowFieldActionModal(true);
       try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
+    } else if (resolved.reason === 'no_match') {
+      setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
 
@@ -7121,13 +7128,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
   const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
-  const runBatchAction=(action,lote)=>{
+
+  // ── Ficha operativa canónica del lote ─────────────────────────────────────
+  // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
+  // inventario, eventos, cosechas, costos, anomalías, bloqueos y evidencia en un
+  // solo objeto, y deriva de ahí las acciones válidas ahora. La UI no vuelve a
+  // decidir qué acción cabe: pregunta a la ficha.
+  const batchSheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+  const operatorRole=(props.isAdmin===true||props.isAdmin==='true')?'direccion':'operario';
+  const buildSheetFor=(lote)=>{
+    if(!batchSheetApi||!lote) return null;
+    const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
+    try{
+      return batchSheetApi.buildBatchSheet({
+        lote,
+        bolsas:bitBolsas,
+        cosechas:bitCosechas,
+        events:lote.lifecycleEvents||[],
+        room,
+        role:operatorRole,
+      });
+    }catch(e){ return null; }
+  };
+  // Registra la acción elegida en la ficha: valida contra el estado, encadena el
+  // evento inmutable y persiste la transición cuando la acción la produce.
+  const commitSheetAction=(sheet,lote,action,payload={})=>{
+    if(!batchSheetApi||!sheet) return false;
+    try{
+      const result=batchSheetApi.applyAction({
+        sheet,action,operatorId:lote.operador||'operador-local',
+        payload,log:lote.lifecycleEvents||[],role:operatorRole,
+      });
+      const patch={lifecycleEvents:result.log};
+      if(result.transitioned){
+        patch.lifecycleState=result.state;
+        const legacyByState=Object.entries(legacyLifecycle).find(([,v])=>v===result.state);
+        if(legacyByState) patch.estado=legacyByState[0];
+      }
+      updateBitLote(lote.id,patch);
+      return true;
+    }catch(err){
+      setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
+      return false;
+    }
+  };
+  const runBatchAction=(action,lote,sheet=null)=>{
+    // Toda acción de campo opera sobre un lote concreto: fijarlo primero evita
+    // que la captura aterrice en el lote que quedó abierto de la ronda anterior.
+    if(lote&&lote.id!==bitActiveLoteId) setBitActiveLoteId(lote.id);
     if(action==='harvest'){
       const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
       setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
       setShowBitCosecha(true);return;
     }
     if(action==='advance_stage'){
+      // La ficha decide el destino a partir de la máquina de estados; el avance
+      // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
+      const activeSheet=sheet||buildSheetFor(lote);
+      if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
       const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
       const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
       if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
@@ -7137,7 +7195,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
-    if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
+    if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
+    // Inspección, colonización y evidencia fotográfica se capturan sobre la
+    // bolsa, que es donde viven el %, la fecha y la foto.
+    if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
     if(action==='contamination'){
       setDiagLoteId(lote.id);
       const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
@@ -7312,12 +7373,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </section>;
   };
   const BatchDetailV2=({lote})=>{
-    const stats=calcLoteStats(lote.id);const state=legacyLifecycle[lote.estado]||'planned';
+    const stats=calcLoteStats(lote.id);
+    const sheet=buildSheetFor(lote);
+    const state=sheet?sheet.state:(legacyLifecycle[lote.estado]||'planned');
     const isAdmin=props.isAdmin===true||props.isAdmin==='true';
-    const actions=workflow?workflow.validActions(state,isAdmin?'direccion':'operario'):[];
+    // Las acciones salen de la ficha (estado + permisos + bloqueos). Sin la ficha
+    // se cae a la máquina de estados desnuda, nunca a un menú genérico.
+    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,isAdmin?'direccion':'operario').map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
-    const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
-    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
+    const events=sheet
+      ?sheet.timeline.map((e,i)=>({id:e.eventId||e.bagId||e.cosechaId||`${e.type}-${i}`,title:e.title,meta:[e.at,e.meta].filter(Boolean).join(' · '),kind:e.provenance}))
+      :[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
+    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail" data-batch-state={state} data-batch-completeness={sheet?sheet.completenessPct:null}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -7326,9 +7393,35 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
         </div>
       </div>
-      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
-        <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
-        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
+      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{sheet?sheet.code:lote.codigo}</div><div className="os-batch-header__species">{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{sheet?sheet.stateLabel:(lifecycleLabel[state]||state)}</span></div>
+        <div className="os-batch-header__meta">
+          {sheet&&sheet.daysInStage!=null&&<span>Día {sheet.daysInStage} en {sheet.stateLabel.toLowerCase()}</span>}
+          <span>{sheet?`Sala ${sheet.room?sheet.room.name:'sin asignar'}`:(lote.sala||'Sala sin asignar')}</span>
+          <span>{sheet?`${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas`:`${lote.numBolsas} bolsas`}</span>
+          <span>Inoculación {lote.fechaInoculacion}</span>
+          <span>{sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular')}</span>
+          <span>{sheet&&sheet.spawnLot&&sheet.spawnLot.id?`Semilla ${sheet.spawnLot.id}`:'Semilla sin vincular'}</span>
+          {sheet&&sheet.consumedInventory.length>0&&<span>{sheet.consumedInventory.length} lote(s) de insumo</span>}
+          {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
+        </div>
+        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{(sheet&&sheet.nextAction&&sheet.nextAction.label)||actionLabel[actions[0]&&actions[0].action]||'Sin acciones pendientes'}</span></div></header>
+      {sheet&&(sheet.blocks.length>0||sheet.anomalies.length>0)&&(
+        <section className="os-detail-panel" data-testid="batch-blocks" style={{marginBottom:12}}>
+          <h2>Bloqueos y anomalías</h2>
+          {sheet.anomalies.map((a,i)=>(
+            <div className="os-event-row" key={`anom-${i}`}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">{a.severity==='critical'?'Crítico':'Atención'} · {a.detail}</div><div className="os-event-row__meta">{a.kind}</div></div>
+            </div>
+          ))}
+          {sheet.blocks.map(b=>(
+            <div className="os-event-row" key={b.code}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">Bloqueo · {b.detail}</div><div className="os-event-row__meta">{b.code}</div></div>
+            </div>
+          ))}
+        </section>
+      )}
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
       {stats&&(
         <section className="os-finance-panel" data-testid="batch-financial-closure">
@@ -7392,9 +7485,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
           <div className="os-valid-actions">
-            {actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}
+            {actions.map(a=>(
+              <button key={a.action} className="os-action" type="button"
+                data-action={a.action}
+                disabled={Boolean(a.blockedBy)}
+                title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
+            ))}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+              🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
@@ -12324,9 +12423,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {showQrSheet&&(()=>{
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const currentLote=bitLotes.find(l=>l.id===(qrSelectedLoteId||bitActiveLoteId))||activeBatches[0]||bitLotes[0];
+          // Escanear → resolver lote → mostrar estado → elegir acción válida.
+          // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
+          // menú fijo para un lote en enfriamiento que para uno en fructificación.
+          const currentSheet=currentLote?buildSheetFor(currentLote):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
@@ -12334,7 +12438,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
                     <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}>✕</button>
                 </div>
 
                 {/* ESCÁNER DE CÁMARA EN VIVO */}
@@ -12371,6 +12475,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {cameraError && (
                   <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
                     ⚠️ {cameraError}
+                  </div>
+                )}
+
+                {scanMiss && (
+                  <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                    {scanMiss} Elige el lote manualmente o vuelve a escanear.
                   </div>
                 )}
 
@@ -12417,8 +12527,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
                       </div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',marginTop:4}}>
-                        Estado: {currentLote.estado} · {currentLote.numBolsas||0} bolsas
+                        {currentSheet
+                          ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
+                          :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
+                      {scannedBag&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
+                          Etiqueta leída: bolsa {scannedBag.codigo}
+                        </div>
+                      )}
+                      {currentSheet&&currentSheet.blocks.length>0&&(
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta,#A85C32)',marginTop:4}}>
+                          {currentSheet.blocks.map(b=>b.detail).join(' · ')}
+                        </div>
+                      )}
                       {activeBatches.length>1&&(
                         <select
                           className="inv-input"
@@ -12434,8 +12556,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                     </div>
 
-                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%) */}
-                    <div style={{marginBottom:12}}>
+                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%)
+                        Sólo cuando el estado del lote admite registrar colonización:
+                        en enfriamiento o en descanso este control no significa nada. */}
+                    <div style={{marginBottom:12,display:(!currentSheet||currentSheet.actions.some(a=>a.action==='colonization'))?'block':'none'}}>
                       <ColonizationScaleSelector
                         value={(()=>{
                           const b=bitBolsas.filter(x=>x.loteId===currentLote.id);
@@ -12480,27 +12604,66 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       />
                     </div>
 
-                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                      <button
-                        type="button"
-                        style={{minHeight:46,cursor:'pointer',background:'var(--accent-olive,#5B6B44)',color:'var(--paper-0,#F7F4EC)',border:'1px solid var(--accent-olive,#5B6B44)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-                        onClick={()=>{
-                          setBitActiveLoteId(currentLote.id);
-                          setBitCosechaForm({
-                            loteId:currentLote.id,
-                            bolsaId:'',
-                            flush:1,
-                            fecha:new Date().toISOString().split('T')[0],
-                            pesoFresco:'',
-                            calidad:3,
-                            observaciones:''
-                          });
-                          setShowQrSheet(false);
-                          setShowBitCosecha(true);
-                        }}
-                      >
-                        <AppIcon name="harvest" size={15} color="var(--paper-0)" /> Registrar Cosecha (g)
-                      </button>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}} data-testid="qr-contextual-actions">
+                      {currentSheet&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                          Acciones válidas en {currentSheet.stateLabel.toLowerCase()}
+                        </div>
+                      )}
+                      {(currentSheet?currentSheet.actions:[{action:'harvest',label:'Registrar cosecha',blockedBy:null},{action:'contamination',label:'Reportar contaminación',blockedBy:null}]).map((a,i)=>(
+                        <button
+                          key={a.action}
+                          type="button"
+                          data-action={a.action}
+                          disabled={Boolean(a.blockedBy)}
+                          title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                          style={{minHeight:i===0?46:44,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
+                            background:a.action==='contamination'?'var(--accent-terracotta-dim,#EFE0D3)':(i===0?'var(--accent-olive,#5B6B44)':'var(--paper-0,#F7F4EC)'),
+                            color:a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--paper-0,#F7F4EC)':'var(--ink-0)'),
+                            border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--accent-olive,#5B6B44)':'var(--border-hairline,#8C7F5B)')}`,
+                            borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:i===0?13:12,fontWeight:i===0?700:600,
+                            display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                          onClick={()=>{
+                            if(a.action==='harvest'){
+                              setBitActiveLoteId(currentLote.id);
+                              setBitCosechaForm({
+                                loteId:currentLote.id,
+                                bolsaId:scannedBag?scannedBag.id:'',
+                                codigo:scannedBag?scannedBag.codigo:'',
+                                flush:1,
+                                fecha:new Date().toISOString().split('T')[0],
+                                pesoFresco:'',
+                                calidad:3,
+                                observaciones:''
+                              });
+                              setShowQrSheet(false);
+                              setShowBitCosecha(true);
+                              return;
+                            }
+                            if(a.action==='contamination'){
+                              setDiagLoteId(currentLote.id);
+                              const b=scannedBag||bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
+                              setDiagBolsaId(b?.id||'');
+                              setDiagImageBase64('');
+                              setDiagResult(null);
+                              setDiagError('');
+                              setDiagNotes('');
+                              setShowQrSheet(false);
+                              setShowDiagModal(true);
+                              return;
+                            }
+                            setShowQrSheet(false);
+                            runBatchAction(a.action,currentLote,currentSheet);
+                          }}
+                        >
+                          {a.action==='harvest'&&<AppIcon name="harvest" size={15} color="var(--paper-0)" />}
+                          {a.action==='contamination'&&<AppIcon name="alert" size={14} color="var(--accent-terracotta)" />}
+                          {a.label}
+                        </button>
+                      ))}
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Siempre disponible
+                      </div>
                       <button
                         type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
@@ -12513,23 +12676,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-                        onClick={()=>{
-                          setDiagLoteId(currentLote.id);
-                          const b=bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
-                          setDiagBolsaId(b?.id||'');
-                          setDiagImageBase64('');
-                          setDiagResult(null);
-                          setDiagError('');
-                          setDiagNotes('');
-                          setShowQrSheet(false);
-                          setShowDiagModal(true);
-                        }}
-                      >
-                        <AppIcon name="alert" size={14} color="var(--accent-terracotta)" /> Reportar Contaminación / Merma
-                      </button>
-                      <button
-                        type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setThermalLote(currentLote);
@@ -12539,7 +12685,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -12615,14 +12761,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${
-                        thermalSize === '40x30' ? '40mm 30mm' :
-                        thermalSize === '50x30' ? '50mm 30mm' :
-                        thermalSize === '60x40' ? '60mm 40mm' :
-                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
-                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
-                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
-                      };
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -12683,35 +12822,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('60x40')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        60 × 40 mm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('gourmet-wood')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Faja Madera (180×60)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('kraft-tray')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Bandeja Kraft (80×120)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('apothecary-50')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Apotecario (50 ml)
-                      </button>
 
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
                     </div>
                   </div>
 
@@ -12751,7 +12865,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -12762,17 +12876,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                            <div className="thermal-code">{item.id}</div>
                           </div>
                           <div className="thermal-body">
                             <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
-                              <div>{item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">
-                              <span>Setas de la Peña</span>
                             </div>
                           </div>
                         </div>
@@ -12805,17 +12915,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-code">{item.id}</div>
                         </div>
                         <div className="thermal-body">
                           <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
-                            <div>{item.recipe}</div>
-                          </div>
-                          <div className="thermal-footer">
-                            <span>Setas de la Peña</span>
                           </div>
                         </div>
                       </div>

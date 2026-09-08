@@ -105,12 +105,28 @@ test('workspace state is deep-linkable through the view query parameter', () => 
   assert.match(shell, /window\.removeEventListener\('popstate', this\._onPopState\)/);
 });
 
-test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
+test('mobile field QR action sheet derives its actions from the batch sheet, not a fixed menu', () => {
   assert.match(source, /showQrSheet/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Captura rápida de campo"/);
-  assert.match(source, /Registrar Cosecha \(g\)/);
+  // El escaneo resuelve el lote y la ficha decide qué acciones caben ahora.
+  assert.match(source, /window\.SetasBatchSheet/);
+  assert.match(source, /resolveScan\(raw,\s*\{\s*lotes:\s*bitLotes,\s*bolsas:\s*bitBolsas\s*\}\)/);
+  assert.match(source, /data-testid="qr-contextual-actions"/);
+  assert.match(source, /Acciones válidas en \{currentSheet\.stateLabel/);
+  assert.match(source, /currentSheet\.actions/);
+  // La captura de clima queda fuera del ciclo de vida del lote: siempre disponible.
   assert.match(source, /Registrar Clima \/ Sala/);
-  assert.match(source, /Reportar Contaminación \/ Merma/);
+  // Un QR que no resuelve explica por qué en vez de abrir un menú genérico.
+  assert.match(source, /data-testid="scan-unresolved"/);
+});
+
+test('batch detail renders the canonical batch sheet with links, blocks and contextual actions', () => {
+  assert.match(source, /buildSheetFor/);
+  assert.match(source, /data-testid="batch-blocks"/);
+  assert.match(source, /Trazabilidad \{sheet\.completenessPct\}%/);
+  assert.match(source, /Semilla sin vincular/);
+  assert.match(source, /data-batch-completeness/);
+  assert.match(source, /commitSheetAction/);
 });
 
 test('perito bridge renders structured co-formulation cards with DS tokens and 44px targets', () => {
@@ -121,17 +137,15 @@ test('perito bridge renders structured co-formulation cards with DS tokens and 4
   assert.match(styles, /\.sim-root \.coform-card/);
 });
 
-test('thermal label generator supports 40x30mm, 50x30mm and 60x40mm formats with print pagination', () => {
+test('thermal label generator supports 40x30mm and 50x30mm formats (only sizes the Phomemo M110 can print) with print pagination', () => {
   assert.match(source, /showThermalModal/);
   assert.match(source, /40 × 30 mm/);
   assert.match(source, /50 × 30 mm/);
-  assert.match(source, /60 × 40 mm/);
   assert.match(source, /generateQrSvgDataUrl/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Generador de etiquetas térmicas"/);
   assert.match(styles, /\.sim-root \.thermal-preview-container/);
   assert.match(styles, /\.sim-root \.thermal-card-40x30/);
   assert.match(styles, /\.sim-root \.thermal-card-50x30/);
-  assert.match(styles, /\.sim-root \.thermal-card-60x40/);
   assert.match(styles, /\.thermal-card-print/);
   assert.match(shell, /\.thermal-print-roll/);
 });
@@ -146,7 +160,7 @@ test('thermal print buttons are embedded across Hoy, Bitacora bags, Field QR and
   assert.match(source, /Imprimir etiqueta de la bolsa/);
 
   // 3. Field QR Action Sheet
-  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 60×40\)/);
+  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 40×30\)/);
 
   // 6. Harvest modal & table
   assert.match(source, /openThermalForCosecha/);
