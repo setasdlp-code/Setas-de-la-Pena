@@ -599,122 +599,142 @@ git commit -m "feat: field event model with canonicalization
 
 ---
 
-# CURRENT STATE — read this first (2026-09-07)
+# CURRENT STATE — read this first (2026-09-08)
 
-Branch `fix/qr-spec-atomicity-and-recovery`. **Suite: 652 tests, 652 pass.**
-Working tree clean. **Nothing pushed.**
+Branch `fix/qr-spec-atomicity-and-recovery`, 102 commits, clean tree, **nothing
+pushed**. Unit suite **654/654**. Playwright E2E **16 passed / 1 failed / 4
+skipped** (the failure is unrelated — see Separate tasks).
 
-**The branch is not single-purpose.** It merged `origin/main` on 2026-09-07
-(`44591f9`) and carries ~99 commits, including substantial unrelated Swiss
-Botanical brand and Formulador work (PRs #237–#246) interleaved with the field
-cuaderno commits. Review and merge accordingly.
+## BLOCKER: the deployed function is unreachable from any browser
 
-That merge also resolved the long-standing ADR-0004 byte-parity failure —
-`perito-evidence-display.test.js` no longer compares engines byte-for-byte
-against `main`. Fixed upstream, not by this work.
+`acceptFieldEvent` is deployed and healthy, but **every browser call fails**:
+
+```
+OPTIONS preflight     -> 403  (Google Frontend, HTML body, no CORS headers)
+unauthenticated POST  -> 403
+```
+
+The request is rejected at Google's edge **before reaching the function**, so no
+`Access-Control-Allow-Origin` is ever emitted and Chrome reports it as CORS. The
+Cloud Run service backing the callable is not publicly invokable. Firebase
+usually grants this automatically for `onCall`; it did not here.
+
+**As deployed, nothing in the field cuaderno works in production.** Twelve
+emulator tests and ten transport tests pass — none can see this, because the
+emulator has no IAM layer.
+
+**Fix:** grant `roles/run.invoker` to `allUsers` on the service.
+
+Console: https://console.cloud.google.com/run -> `acceptfieldevent` -> Security
+-> *Allow unauthenticated invocations*.
+
+Or: `gcloud run services add-iam-policy-binding acceptfieldevent
+--region=us-central1 --member=allUsers --role=roles/run.invoker --project=sdlp-os`
+(gcloud is not installed on this machine).
+
+**This is not a security downgrade.** It only lets the request reach the code.
+Authorization is still enforced in `functions/accept-field-event.js:40`
+(`if (!auth || !auth.uid) throw fail('unauthenticated')`), `operatorId` comes
+from the verified session and never the payload, and Firestore rules deny every
+client write. This is the standard configuration for a Firebase callable.
+
+**To verify after fixing:** re-run the read-only probe. It targets a deliberately
+non-existent batch, so success looks like `code: "batch_not_found"` and it writes
+nothing:
+
+```bash
+cd field-os-simulador/setas-os
+(python3 -m http.server 8744 --bind 127.0.0.1 &)
+NODE_PATH=$PWD/node_modules node <scratchpad>/probe-callable.js
+```
+The probe opens the real app with the saved Playwright session, resolves
+`SetasFieldEventCallableTransport` from the page, and calls the live function.
+Recreate it if the scratchpad is gone — it is ~60 lines.
 
 ## Deployed
 
 | | |
 |---|---|
-| `firebase/firestore.rules` | **LIVE** (2026-09-06) |
-| `acceptFieldEvent` | **LIVE** — v2 callable, `us-central1`, nodejs22, 256MB |
-| hosting | **not deployed** — config fixed, never published |
+| `firebase/firestore.rules` | **LIVE** |
+| `acceptFieldEvent` | **deployed but unreachable** — see blocker above |
+| hosting | config fixed, **not deployed** |
 
-The project is on **Blaze**. The simulation has been switched off: the sheet
-talks to the real function through `field-event-callable-transport.js` and reads
-"Confirmado por el servidor" again.
-
-**This writes to production.** Confirming a transition mutates a real document in
-`lotes_produccion`, setting `workflowState` and `revision` — fields nothing else
-in the app has ever written.
-
-## The one thing nobody has done
-
-**No part of this has been opened in a browser.** Everything is unit-verified
-against injected fakes. The callable URL, the ID-token flow, and the auth-gated
-script load order have never actually run together. The `saved_local` versus
-`confirmed` distinction — the entire reason this feature exists — has never been
-seen by a human eye.
-
-If something is broken, it is there, not in the logic. That is what Task 13 is
-for, and it is now unblocked for the first time; it needs `E2E_TEST_EMAIL` and
-`E2E_TEST_PASSWORD` to pass the auth gate.
-
-## Running it
+## Testing
 
 ```bash
-npm test                                    # hermetic, 652/652
+npm test                                    # 654/654, hermetic
 PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:rules      # 11/11
 PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run test:functions  # 12/12
+npx playwright test --project=chromium      # needs .env
 node build.js && node --test build.test.js  # after ANY simulador-app.jsx edit
 ```
-The emulator needs a JDK; Homebrew's openjdk is keg-only, hence the PATH prefix.
 
-To demo without a session, set `window.__setasFieldMockSync = true` before the
-sheet loads. The mock is **only** reachable that way — never as a silent
-fallback, so a broken real transport can never be masked by a simulation
-claiming confirmation the server never gave.
+**E2E is now set up and working.** `.env` holds `E2E_TEST_EMAIL` /
+`E2E_TEST_PASSWORD` (gitignored); `e2e/global-setup.js` logs into real Firebase
+once and saves the session to `e2e/.auth/state.json`.
+
+**Bench without a session:** serve the directory and open `__harness.html`. It
+loads the field modules in the same order as `PROTECTED_APP_SCRIPTS` and sets
+`window.__setasFieldMockSync = true`, so the sheet runs against the simulated
+server and labels itself as such.
+
+## Verified in a real browser (2026-09-07)
+
+Against real IndexedDB and real `crypto.randomUUID`, not `fake-indexeddb`:
+`inoculated` offers `incubation`; explicit confirm gives *Guardado en este
+equipo*; sync gives confirmed; a **page reload** preserves the event, the receipt
+in `auth_receipts`, cache revision 1, released reservation, and a replay returns
+the original receipt. DB at v2 with all five stores.
 
 ## Task status
 
 | Task | State |
 |---|---|
-| 1–4 queue, model, contracts, remediation | done, locally validated |
-| 5 `acceptFieldEvent` | done, emulator-validated, **deployed** |
-| 6 rules | done, emulator-validated, **deployed** |
-| 7–10 reconciliation, sync, account switch, QR | done, locally validated |
-| 11 action sheet + UI | done, locally validated, **never opened in a browser** |
-| 12 resilience suite | done, locally validated |
-| 13 E2E | **unblocked, not started** — needs E2E credentials |
+| 1–4 queue, model, contracts, remediation | done, validated |
+| 5 `acceptFieldEvent` | done, emulator-validated, deployed, **unreachable** |
+| 6 rules | done, validated, **deployed** |
+| 7–10 reconciliation, sync, account switch, QR | done, validated |
+| 11 action sheet + UI | done, validated, **exercised in a browser** |
+| 12 resilience suite | done, validated |
+| 13 E2E offline journey | **not started** — blocked on the IAM fix above |
 | final review | **not started** |
 
 ## Open items
 
-1. **Task 13 and the final whole-branch review.** Both outstanding.
-2. **Artifact Registry cleanup policy is not set.** Every deploy pushes a
-   container image and they accumulate, billing for storage indefinitely. Fix
-   with `firebase functions:artifacts:setpolicy`. Deliberately left undone — it
-   is a deletion policy and wanted an explicit yes.
-3. **`usuarios/{uid}.rol` is still not the workflow vocabulary.** It
-   distinguishes only `'admin'`. `functions/index.js` maps to least privilege
-   (`admin→direccion`, unknown→`operario`); the UI maps
-   `isAdmin ? 'direccion' : 'produccion'`. Mapped, not resolved.
-4. **`firebase-functions` is a major version behind.** The deploy warns about it.
-   Upgrading has breaking changes; not attempted.
+1. **The Cloud Run IAM blocker.** Everything else waits on it.
+2. **Task 13** — write it only after the probe passes, against selectors seen in
+   a real browser rather than guessed.
+3. **Final whole-branch review** — never done; the branch carries ~100 commits
+   including unrelated merged work.
+4. **Artifact Registry cleanup policy unset** — `firebase functions:artifacts:setpolicy`.
+   Left pending: it is a deletion policy.
+5. **`usuarios/{uid}.rol` is still not the workflow vocabulary** — mapped to
+   least privilege, not resolved.
+6. **`firebase-functions` is a major version behind** — breaking changes; not attempted.
+7. **Banners verified on a desktop screen only** — not on a phone in a grow room.
 
-## Invariants that must survive any future change
+## Separate tasks (not this feature)
 
-Each has an executed test behind it:
+- **`optimizer.spec.js:9`** — "Calcular produce >=4 firmas de base distintas en
+  el top-12" fails. Recipe-formulation diversity in the recommender engine,
+  unrelated to the cuaderno; the files it covers last changed in `8aa14e3` /
+  `755155f`, which arrived via the `origin/main` merge. Investigate
+  `recipe-recommender.js` and the optimizer diversity calculation separately.
 
-- Retries reuse the event id — a lost response must never double-advance a batch.
-- Replaying an accepted event returns its **original** receipt.
-- Same id with different content is rejected (`content_mismatch`).
-- Every acceptance read happens **inside** the server transaction.
-- Logout preserves events, queue entries **and** reservations.
-- A delayed response cannot release a newer event's reservation, and the cached
-  revision only moves forward.
-- Scanning alone creates no transition.
-- `attachmentIds` is always `[]`.
-- Client and server resolve batch state by the same rule
-  (`workflowState || DEFAULT_INITIAL_STATE`). **`state` is consulted nowhere** —
-  the rules do not protect it, so letting it win would let a client write
-  `state: 'fruiting'` and skip stages.
+## What browser testing caught that tests could not
 
-## Lessons recorded so they are not re-learned
+Both found only by looking, after every unit test was green:
 
-- Two subagent reviews passed Tasks 1–2 when the modules could not load in the
-  browser at all and the headline transition was rejected for every role. **Unit
-  tests passing is not evidence the code runs in this app** — check the script
-  lists in `firebase/auth-gate.js` and the load order.
-- A later fix made the modules loadable but still broken: a global captured at
-  module-eval time that the loader defines afterwards. Resolve `Setas*` globals
-  lazily, inside the function that uses them.
-- Assumed `batches`/`batch.state`; the repo uses `lotes_produccion`/`estado`.
-- Claimed no QR decoder existed. Wrong — `simulador-app.jsx` has had a
-  `BarcodeDetector` scanner all along.
-- A stray constant once entered `buildRequestEnvelope`'s return value and twelve
-  contract tests passed without noticing. The envelope's key set is now pinned.
+1. The simulated banner's uppercase heading read **CONFIRMADO POR EL SERVIDOR**
+   above a label admitting it was a simulation — the line an operator reads at a
+   glance asserted a confirmation that never happened. All banner copy now comes
+   from the model so heading, label and detail cannot disagree.
+2. **The Cloud Run IAM 403** above.
+
+`e2e/helpers.js` also waited on `networkidle`, which never arrives with Firebase's
+long-lived connections — every spec importing it timed out at 30s. The reason was
+already documented in `e2e/setas-os.spec.cjs` but never fixed in the shared
+helper. `navigation.spec.js`: three 30s timeouts -> 3 passed in 8.6s.
 
 ---
 
