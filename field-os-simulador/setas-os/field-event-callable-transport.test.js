@@ -122,3 +122,17 @@ test('exige getIdToken y projectId', () => {
   assert.throws(() => createCallableTransport({ projectId: 'p', fetchImpl: async () => {} }), /getIdToken/);
   assert.throws(() => createCallableTransport({ getIdToken: async () => 't', fetchImpl: async () => {} }), /projectId/);
 });
+
+test('no duplica el código cuando el servidor ya lo antepuso al mensaje', async () => {
+  // Este texto se muestra al operario en la hoja de acción.
+  const transport = make(okFetch(
+    { error: { message: 'batch_not_found: L-123', details: { code: 'batch_not_found' } } },
+    { ok: false, status: 404 }
+  ));
+
+  await assert.rejects(transport(envelope), (err) => {
+    assert.equal(err.message, 'batch_not_found: L-123');
+    assert.ok(!/batch_not_found.*batch_not_found/.test(err.message), 'no debe repetirse el código');
+    return true;
+  });
+});

@@ -23,10 +23,15 @@
   const DEFAULT_REGION = 'us-central1';
   const FUNCTION_NAME = 'acceptFieldEvent';
 
-  const fail = (code, detail) => Object.assign(
-    new Error(detail ? `${code}: ${detail}` : code),
-    { code }
-  );
+  // El servidor ya antepone el código a su mensaje, así que volver a anteponerlo
+  // produce "batch_not_found: batch_not_found: L-123" — y ese texto llega al
+  // operario tal cual en el error de la hoja de acción.
+  const fail = (code, detail) => {
+    const clean = detail && String(detail).startsWith(`${code}:`)
+      ? String(detail).slice(code.length + 1).trim()
+      : detail;
+    return Object.assign(new Error(clean ? `${code}: ${clean}` : code), { code });
+  };
 
   const endpointFor = (projectId, region) =>
     `https://${region}-${projectId}.cloudfunctions.net/${FUNCTION_NAME}`;
