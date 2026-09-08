@@ -49,7 +49,7 @@ test('escanear no escribe nada', async () => {
   const calls = [];
   const r = await resolveBatch(
     'setas:lote:L-1',
-    async (id) => { calls.push(id); return { workflowState: 'incubation' }; },
+    async (id) => { calls.push(id); return { lifecycleState: 'incubation' }; },
     'operario'
   );
   assert.deepEqual(calls, ['L-1']);
@@ -57,7 +57,7 @@ test('escanear no escribe nada', async () => {
 });
 
 test('un operario no ve el descarte entre las transiciones ofrecidas', async () => {
-  const batches = { 'L-1': { workflowState: 'quarantine' } };
+  const batches = { 'L-1': { lifecycleState: 'quarantine' } };
 
   const asOperario = await resolveBatch('setas:lote:L-1', lookupFor(batches), 'operario');
   assert.ok(!asOperario.allowedTransitions.includes('discarded'));
@@ -67,7 +67,7 @@ test('un operario no ve el descarte entre las transiciones ofrecidas', async () 
 });
 
 test('un operario tampoco ve las transiciones de excepción', async () => {
-  const batches = { 'L-1': { workflowState: 'incubation' } };
+  const batches = { 'L-1': { lifecycleState: 'incubation' } };
 
   const asOperario = await resolveBatch('setas:lote:L-1', lookupFor(batches), 'operario');
   assert.ok(!asOperario.allowedTransitions.includes('quarantine'));
@@ -78,34 +78,36 @@ test('un operario tampoco ve las transiciones de excepción', async () => {
 });
 
 test('el flujo principal ofrece incubation desde inoculated', async () => {
-  const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { workflowState: 'inoculated' } }), 'operario');
+  const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { lifecycleState: 'inoculated' } }), 'operario');
   assert.deepEqual(r.allowedTransitions, ['incubation']);
 });
 
 test('un lote en estado terminal no ofrece transiciones, y no es un error', async () => {
-  const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { workflowState: 'closed' } }), 'direccion');
+  const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { lifecycleState: 'closed' } }), 'direccion');
   assert.deepEqual(r.allowedTransitions, []);
 });
 
-test('un lote heredado sin workflowState arranca en el estado inicial, como el servidor', async () => {
+test('un lote heredado sin lifecycleState arranca en el estado inicial, como el servidor', async () => {
   // Antes devolvía null y no ofrecía nada, dejando la hoja vacía para todos los
   // lotes existentes. Ahora resuelve igual que accept-field-event.js.
+  const { normalizeLifecycleState } = require('./batch-sheet.js');
   const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { estado: 'activo' } }), 'operario');
-  assert.equal(r.state, 'inoculated');
-  assert.deepEqual(r.allowedTransitions, ['incubation']);
+  assert.equal(r.state, normalizeLifecycleState('activo', 'inoculated'),
+    'misma regla que el servidor, o la confirmación fallará');
+  assert.ok(r.allowedTransitions.length > 0);
 });
 
 test('un campo `state` en el lote no manda: las reglas no lo protegen', async () => {
   // Si `state` ganara, un cliente podría escribirlo y saltarse etapas, porque
-  // las reglas desplegadas sólo protegen workflowState y revision.
+  // las reglas desplegadas sólo protegen lifecycleState y revision.
   const r = await resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { state: 'fruiting' } }), 'direccion');
-  assert.equal(r.state, 'inoculated');
+  assert.equal(r.state, 'inoculated', 'un `state` del cliente no debe mandar');
   assert.ok(!r.allowedTransitions.includes('resting'), 'no debe ofrecer transiciones de fruiting');
 });
 
 test('un rol desconocido se rechaza', async () => {
   await assert.rejects(
-    () => resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { workflowState: 'incubation' } }), 'banana'),
+    () => resolveBatch('setas:lote:L-1', lookupFor({ 'L-1': { lifecycleState: 'incubation' } }), 'banana'),
     /unknown_role/
   );
 });

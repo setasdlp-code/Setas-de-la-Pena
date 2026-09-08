@@ -11,7 +11,7 @@
     "test:rules:only": "mocha test/firestore.rules.test.js",
     "test:rules:field": "firebase emulators:exec --only firestore \"node --test tests/rules/*.test.js\"",
     "test:functions": "npm run functions:sync && firebase emulators:exec --only firestore \"node --test tests/functions/*.test.js\"",
-    "functions:sync": "mkdir -p functions/shared && cp field-events-model.js field-event-contracts.js setas-os-workflow.js functions/shared/"
+    "functions:sync": "mkdir -p functions/shared && cp field-events-model.js field-event-contracts.js setas-os-workflow.js batch-sheet.js functions/shared/"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",

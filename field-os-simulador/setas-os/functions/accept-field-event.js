@@ -15,6 +15,10 @@
 // raíz; shared/ es generado y está en .gitignore.
 const { contentEquals, validateTransition } = require('./shared/field-events-model.js');
 const { validateReceipt, DEFAULT_INITIAL_STATE } = require('./shared/field-event-contracts.js');
+// Misma normalización que usa la ficha del lote en el navegador. Si el servidor
+// interpretara `estado` de otra forma, la hoja ofrecería transiciones que el
+// servidor rechaza — el lote se vería en un estado y se validaría contra otro.
+const { normalizeLifecycleState } = require('./shared/batch-sheet.js');
 
 const BATCHES = 'lotes_produccion';
 const EVENTS = 'field_events';
@@ -74,7 +78,8 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       if (!batchSnap.exists) throw fail('batch_not_found', event.batchId);
 
       const batch = batchSnap.data();
-      const currentState = batch.workflowState || DEFAULT_INITIAL_STATE;
+      const currentState = batch.lifecycleState
+        || normalizeLifecycleState(batch.estado, DEFAULT_INITIAL_STATE);
       const currentRevision = Number.isInteger(batch.revision) ? batch.revision : 0;
 
       if (event.expectedBatchRevision !== currentRevision) {
@@ -92,7 +97,7 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       };
       validateReceipt(receipt);
 
-      tx.set(batchRef, { workflowState: event.payload.to, revision: nextRevision }, { merge: true });
+      tx.set(batchRef, { lifecycleState: event.payload.to, revision: nextRevision }, { merge: true });
       tx.set(eventRef, { ...event, operatorId, accountId, receipt });
 
       return receipt;

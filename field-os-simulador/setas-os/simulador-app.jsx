@@ -7152,6 +7152,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   // Registra la acción elegida en la ficha: valida contra el estado, encadena el
   // evento inmutable y persiste la transición cuando la acción la produce.
+  /**
+   * Encola una transición para que la acepte el servidor. Es la única vía hacia
+   * `lifecycleState`: el cliente ya no lo escribe. Si el lote tiene otra
+   * transición pendiente se avisa en vez de encolar una segunda, que es la
+   * misma reserva que impide dos avances simultáneos del mismo lote.
+   */
+  const enqueueFieldTransition=async(lote,from,to)=>{
+    const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
+    const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
+      ? window.SetasFirebase.auth.currentUser.uid : null;
+    if(!SHEET||!uid) return;
+    try{
+      const db=await getFieldDb();
+      const res=await SHEET.confirmTransition({
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,operatorRole,
+        expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
+        confirmed:true,
+      });
+      await runFieldSync(db,uid,res.event.id,()=>{});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo registrar la transición',msg:err.message});
+    }
+  };
+
   const commitSheetAction=(sheet,lote,action,payload={})=>{
     if(!batchSheetApi||!sheet) return false;
     try{
@@ -7159,13 +7183,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
         sheet,action,operatorId:lote.operador||'operador-local',
         payload,log:lote.lifecycleEvents||[],role:operatorRole,
       });
-      const patch={lifecycleEvents:result.log};
+      // El estado canónico lo escribe acceptFieldEvent, no el cliente: las reglas
+      // protegen lifecycleState y revision precisamente para que dos operarios
+      // sin señal no puedan avanzar el mismo lote sin que ninguna escritura vea
+      // a la otra. Aquí sólo se persiste la bitácora local y se encola la
+      // transición; el estado cambia cuando el servidor la acepta.
+      updateBitLote(lote.id,{lifecycleEvents:result.log});
       if(result.transitioned){
-        patch.lifecycleState=result.state;
-        const legacyByState=Object.entries(legacyLifecycle).find(([,v])=>v===result.state);
-        if(legacyByState) patch.estado=legacyByState[0];
+        enqueueFieldTransition(lote,sheet.state,result.state);
       }
-      updateBitLote(lote.id,patch);
       return true;
     }catch(err){
       setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
@@ -7190,7 +7216,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
       if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
         const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,to);
       }
       return;
     }

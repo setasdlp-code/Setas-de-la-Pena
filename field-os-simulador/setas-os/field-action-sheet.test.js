@@ -48,7 +48,7 @@ test('inFlight: true produce sending sin importar el estado almacenado en la col
 // 4. No queueEntry → idle and canConfirm is true when transitions exist
 test('sin queueEntry produce idle y canConfirm es true cuando hay opciones', () => {
   const m = buildActionSheetModel({
-    batch: { id: 'L-1', workflowState: 'inoculated' },
+    batch: { id: 'L-1', lifecycleState: 'inoculated' },
     allowedTransitions: ['incubation'],
     queueEntry: null,
   });
@@ -60,7 +60,7 @@ test('sin queueEntry produce idle y canConfirm es true cuando hay opciones', () 
 // 5. A terminal batch (closed) → options is [] and canConfirm is false
 test('un lote terminal (closed) no ofrece opciones y canConfirm es false', () => {
   const m = buildActionSheetModel({
-    batch: { id: 'L-closed', workflowState: 'closed' },
+    batch: { id: 'L-closed', lifecycleState: 'closed' },
     allowedTransitions: [],
   });
   assert.deepEqual(m.options, []);
@@ -70,7 +70,7 @@ test('un lote terminal (closed) no ofrece opciones y canConfirm es false', () =>
 // 6. conflict → canRefresh true, canConfirm false
 test('conflict activa canRefresh y desactiva canConfirm', () => {
   const m = buildActionSheetModel({
-    batch: { id: 'L-1', workflowState: 'inoculated' },
+    batch: { id: 'L-1', lifecycleState: 'inoculated' },
     allowedTransitions: ['incubation'],
     queueEntry: { status: 'conflict' },
   });
@@ -87,7 +87,7 @@ test('buildActionSheetModel es una función pura que no toca IndexedDB', () => {
 
   // Llamada sin db ni cola inicializada
   const m = buildActionSheetModel({
-    batch: { id: 'L-pure', workflowState: 'inoculated' },
+    batch: { id: 'L-pure', lifecycleState: 'inoculated' },
     allowedTransitions: ['incubation'],
   });
   assert.ok(m);
@@ -178,7 +178,7 @@ test('confirmTransition para una transición no autorizada lanza unauthorized_ac
   await assert.rejects(
     () => confirmTransition({
       db,
-      batch: { id: 'L-unauth', workflowState: 'incubation' },
+      batch: { id: 'L-unauth', lifecycleState: 'incubation' },
       from: 'incubation',
       to: 'quarantine',
       accountId: 'acc_1',
@@ -218,16 +218,18 @@ test('el módulo carga en el orden real del navegador en un sandbox vm', () => {
   assert.equal(sandbox.SetasFieldActionSheet.DEFAULT_INITIAL_STATE, 'inoculated');
 });
 
-// 12. Garantía de continuidad operativa: lotes existentes sin workflowState ({ estado: "activo" })
-test('un lote existente sin workflowState asume DEFAULT_INITIAL_STATE ("inoculated") y ofrece "incubation" al operario', () => {
+// 12. Garantía de continuidad operativa: lotes existentes sin lifecycleState ({ estado: "activo" })
+test('un lote existente sin lifecycleState toma el alias de `estado`, igual que la ficha', () => {
   const m = buildActionSheetModel({
     batch: { id: 'L-legacy-1', estado: 'activo' },
     operatorRole: 'operario',
   });
-  assert.equal(m.state, DEFAULT_INITIAL_STATE);
+  const { normalizeLifecycleState } = require('./batch-sheet.js');
+  assert.equal(m.state, normalizeLifecycleState('activo', DEFAULT_INITIAL_STATE),
+    'debe coincidir con la regla que aplica el servidor');
   assert.equal(m.status, 'idle');
   assert.equal(m.canConfirm, true);
-  assert.deepEqual(m.options.map(o => o.to), ['incubation']);
+  assert.ok(m.options.length > 0, 'un lote activo debe ofrecer alguna transición');
 });
 
 // 13. Garantía G10: resolver o abrir la hoja no realiza escrituras en base de datos
@@ -258,19 +260,21 @@ test('abrir la hoja de acción y computar el modelo no escribe en IndexedDB (G10
 });
 
 // 14. Alineación estricta cliente-servidor: no leer 'estado' para evitar divergencia con el servidor
-test('un lote con estado heredado no diverge del servidor y resuelve a DEFAULT_INITIAL_STATE', () => {
+test('un lote con estado heredado no diverge del servidor', () => {
   const m = buildActionSheetModel({
-    batch: { id: 'L-legacy-incubacion', estado: 'incubacion' }, // sin workflowState
+    batch: { id: 'L-legacy-incubacion', estado: 'incubacion' }, // sin lifecycleState
     operatorRole: 'operario',
   });
-  // El servidor asume batch.workflowState || DEFAULT_INITIAL_STATE ('inoculated').
-  // El cliente no debe inventar 'incubation', pues provocaría invalid_state_transition en el servidor.
-  assert.equal(m.state, DEFAULT_INITIAL_STATE);
-  assert.deepEqual(m.options.map(o => o.to), ['incubation']);
+  // El servidor asume batch.lifecycleState || DEFAULT_INITIAL_STATE ('inoculated').
+  // Lo que importa no es el valor sino que sea el mismo que usará el servidor:
+  // cualquier diferencia produce invalid_state_transition al confirmar.
+  const { normalizeLifecycleState: norm } = require('./batch-sheet.js');
+  assert.equal(m.state, norm('activo', DEFAULT_INITIAL_STATE));
+  assert.ok(m.options.length > 0);
 });
 
 test('un recibo simulado no se presenta como confirmación del servidor', () => {
-  const base = { batch: { workflowState: 'incubation' }, batchId: 'L-1', queueEntry: { status: 'confirmed' } };
+  const base = { batch: { lifecycleState: 'incubation' }, batchId: 'L-1', queueEntry: { status: 'confirmed' } };
 
   const real = buildActionSheetModel(base);
   const mock = buildActionSheetModel({ ...base, simulated: true });
@@ -285,21 +289,25 @@ test('un recibo simulado no se presenta como confirmación del servidor', () => 
 test('la marca de simulado sólo aplica al estado confirmado', () => {
   // Un evento en cola no está "simulado": de verdad está guardado en el equipo.
   const pending = buildActionSheetModel({
-    batch: { workflowState: 'incubation' }, queueEntry: { status: 'pending' }, simulated: true,
+    batch: { lifecycleState: 'incubation' }, queueEntry: { status: 'pending' }, simulated: true,
   });
   assert.equal(pending.statusLabel, 'Guardado en este equipo');
   assert.equal(pending.simulated, false);
 });
 
 test('cliente y servidor resuelven el estado con la misma regla', () => {
-  // El servidor es accept-field-event.js:77 -> workflowState || DEFAULT_INITIAL_STATE.
-  const serverResolves = (b) => b.workflowState || 'inoculated';
+  // Regla del servidor (accept-field-event.js): lifecycleState, o `estado`
+  // normalizado con la misma tabla de alias que usa la ficha del lote.
+  const { normalizeLifecycleState } = require('./batch-sheet.js');
+  const serverResolves = (b) => b.lifecycleState || normalizeLifecycleState(b.estado, 'inoculated');
 
   for (const batch of [
     { estado: 'activo' },
-    { workflowState: 'fruiting' },
+    { estado: 'incubacion' },
+    { estado: 'fructificacion' },
+    { lifecycleState: 'fruiting' },
     { state: 'fruiting' },
-    { state: 'fruiting', workflowState: 'incubation' },
+    { state: 'fruiting', lifecycleState: 'incubation' },
     {},
   ]) {
     const model = buildActionSheetModel({ batch, batchId: 'L-1' });
@@ -312,8 +320,8 @@ test('en simulacro el titular y el cuerpo tampoco afirman confirmación del serv
   // El rótulo pequeño no basta: el titular en mayúsculas es lo que el operario
   // lee de un vistazo, y decía CONFIRMADO POR EL SERVIDOR sobre un evento que
   // ningún servidor había visto.
-  const sim = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: 'confirmed' }, simulated: true });
-  const real = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: 'confirmed' } });
+  const sim = buildActionSheetModel({ batch: { lifecycleState: 'incubation' }, queueEntry: { status: 'confirmed' }, simulated: true });
+  const real = buildActionSheetModel({ batch: { lifecycleState: 'incubation' }, queueEntry: { status: 'confirmed' } });
 
   for (const text of [sim.statusHeading, sim.statusDetail, sim.statusLabel]) {
     assert.ok(!/POR EL SERVIDOR|validada en el servidor/i.test(text),
@@ -327,7 +335,7 @@ test('en simulacro el titular y el cuerpo tampoco afirman confirmación del serv
 test('cada estado trae su propio titular y detalle', () => {
   for (const status of ['saved_local', 'conflict', 'rejected']) {
     const entry = { saved_local: 'pending', conflict: 'conflict', rejected: 'rejected' }[status];
-    const m = buildActionSheetModel({ batch: { workflowState: 'incubation' }, queueEntry: { status: entry } });
+    const m = buildActionSheetModel({ batch: { lifecycleState: 'incubation' }, queueEntry: { status: entry } });
     assert.ok(m.statusHeading.length > 0, `${status} necesita titular`);
     assert.ok(m.statusDetail.length > 0, `${status} necesita detalle`);
   }

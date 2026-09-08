@@ -39,11 +39,13 @@
     const batch = await lookup(batchId);
     if (!batch) throw new Error(`batch_not_found: ${batchId}`);
 
-    // Igual que el servidor y que la hoja de acción: workflowState o el estado
-    // inicial. No se lee `state` — las reglas no lo protegen.
+    // Igual que el servidor y que la hoja: lifecycleState, o `estado` normalizado.
+    // No se lee `state` — las reglas no lo protegen.
     const contracts = getContracts();
     const initial = (contracts && contracts.DEFAULT_INITIAL_STATE) || 'inoculated';
-    const state = batch.workflowState || initial;
+    const bs = isNode ? require('./batch-sheet.js') : globalThis.SetasBatchSheet;
+    const state = batch.lifecycleState
+      || (bs && bs.normalizeLifecycleState ? bs.normalizeLifecycleState(batch.estado, initial) : initial);
     const workflow = getWorkflow();
     const candidates = (state && workflow.DEFAULT_TRANSITIONS[state]) || [];
 

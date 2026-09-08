@@ -69,7 +69,7 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
 
   const initial = await readBatch(page, batchId);
   expect(initial.estado, 'db.js crea el lote con estado activo').toBe('activo');
-  expect(initial.workflowState, 'un lote nuevo no lleva workflowState').toBeUndefined();
+  expect(initial.lifecycleState, 'un lote nuevo no lleva lifecycleState').toBeUndefined();
   expect(initial.revision, 'ni revision').toBeUndefined();
 
   // ── Sin señal ────────────────────────────────────────────────────────────
@@ -78,28 +78,38 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
   // Escanear no registra nada: sólo resuelve el lote.
   const resolved = await page.evaluate((id) => {
     const R = window.SetasFieldQrResolve;
-    return R.resolveBatch(`setas:lote:${id}`, async () => ({ id }), 'produccion');
+    // El lookup debe devolver el lote tal como está en Firestore: sin `estado`
+    // la resolución no ejercita la tabla de alias que sí aplica el servidor.
+    return R.resolveBatch(`setas:lote:${id}`, async () => ({ id, estado: 'activo' }), 'produccion');
   }, batchId);
-  expect(resolved.state, 'el servidor asume inoculated cuando no hay workflowState').toBe('inoculated');
-  expect(resolved.allowedTransitions).toContain('incubation');
+  // No se fija un estado concreto: lo que importa es que el cliente resuelva
+  // igual que el servidor. Un lote nuevo trae `estado: 'activo'`, que la tabla
+  // de alias compartida traduce — fijar 'inoculated' aquí volvería a acoplar la
+  // prueba a un detalle que las dos partes ya acordaron entre ellas.
+  const expectedState = await page.evaluate(
+    () => window.SetasBatchSheet.normalizeLifecycleState('activo', 'inoculated'));
+  expect(resolved.state, 'cliente y servidor deben coincidir').toBe(expectedState);
+  expect(resolved.allowedTransitions.length, 'debe ofrecer alguna transición').toBeGreaterThan(0);
+  const targetState = resolved.allowedTransitions[0];
 
   const afterScan = await readBatch(page, batchId);
-  expect(afterScan.workflowState, 'escanear no debe cambiar el lote').toBeUndefined();
+  expect(afterScan.lifecycleState, 'escanear no debe cambiar el lote').toBeUndefined();
 
   // Confirmación explícita del operario.
-  const saved = await page.evaluate(async (id) => {
+  const saved = await page.evaluate(async (args) => {
+    const id = args.id;
     const SHEET = window.SetasFieldActionSheet;
     const db = await window.SetasFieldEventQueue.initializeQueue();
-    const batch = { id, workflowState: undefined };
+    const batch = { id, lifecycleState: undefined, estado: 'activo' };
     const res = await SHEET.confirmTransition({
-      db, batch, from: 'inoculated', to: 'incubation',
+      db, batch, from: args.from, to: args.to,
       accountId: window.SetasFirebase.auth.currentUser.uid,
       operatorId: window.SetasFirebase.auth.currentUser.uid,
       operatorRole: 'produccion', expectedBatchRevision: 0, confirmed: true,
     });
     const model = SHEET.buildActionSheetModel({ batch, batchId: id, queueEntry: res.queueEntry });
     return { eventId: res.event.id, status: model.status, label: model.statusLabel };
-  }, batchId);
+  }, { id: batchId, from: expectedState, to: targetState });
 
   expect(saved.status, 'sin señal sólo puede estar guardado localmente').toBe('saved_local');
   expect(saved.label).toMatch(/en este equipo/i);
@@ -160,14 +170,14 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
 
   // ── Exactamente una transición aceptada ──────────────────────────────────
   const finalBatch = await readBatch(page, batchId);
-  expect(finalBatch.workflowState, 'el lote avanzó a incubation').toBe('incubation');
+  expect(finalBatch.lifecycleState, 'el lote avanzó al destino elegido').toBe(targetState);
   expect(finalBatch.revision, 'la revisión avanza exactamente uno').toBe(1);
   expect(finalBatch.estado, 'el campo heredado no se toca').toBe('activo');
 
   const events = await countAcceptedEvents(page, batchId);
   expect(events.length, 'debe existir un solo evento aceptado').toBe(1);
   expect(events[0].hasReceipt, 'con recibo del servidor').toBe(true);
-  expect(events[0].to).toBe('incubation');
+  expect(events[0].to).toBe(targetState);
 
   // ── Limpieza ─────────────────────────────────────────────────────────────
   // Las reglas sólo permiten borrar lotes a un admin. Si la cuenta de prueba no

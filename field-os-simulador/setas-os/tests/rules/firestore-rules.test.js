@@ -48,11 +48,11 @@ test('un cliente puede crear un lote sin campos de flujo', async () => {
   }));
 });
 
-test('un cliente no puede crear un lote con workflowState', async () => {
+test('un cliente no puede crear un lote con lifecycleState', async () => {
   await assertFails(setDoc(doc(asOperator(), 'lotes_produccion/l_ws'), {
     codigo: 'L-2',
     recetaSnapshot: RECETA_OK,
-    workflowState: 'incubation',
+    lifecycleState: 'incubation',
   }));
 });
 
@@ -64,25 +64,25 @@ test('un cliente no puede crear un lote con revision', async () => {
   }));
 });
 
-test('un cliente no puede mover workflowState de un lote existente', async () => {
+test('un cliente no puede mover lifecycleState de un lote existente', async () => {
   await seed('lotes_produccion/l_1', {
-    codigo: 'L-4', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+    codigo: 'L-4', recetaSnapshot: RECETA_OK, lifecycleState: 'inoculated', revision: 1,
   });
   await assertFails(updateDoc(doc(asOperator(), 'lotes_produccion/l_1'), {
-    workflowState: 'fruiting',
+    lifecycleState: 'fruiting',
   }));
 });
 
 test('un cliente no puede mover revision de un lote existente', async () => {
   await seed('lotes_produccion/l_2', {
-    codigo: 'L-5', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+    codigo: 'L-5', recetaSnapshot: RECETA_OK, lifecycleState: 'inoculated', revision: 1,
   });
   await assertFails(updateDoc(doc(asOperator(), 'lotes_produccion/l_2'), { revision: 99 }));
 });
 
 test('un cliente sigue pudiendo editar otros campos del lote', async () => {
   await seed('lotes_produccion/l_3', {
-    codigo: 'L-6', recetaSnapshot: RECETA_OK, workflowState: 'inoculated', revision: 1,
+    codigo: 'L-6', recetaSnapshot: RECETA_OK, lifecycleState: 'inoculated', revision: 1,
   });
   // Regresión: las reglas nuevas no deben romper las escrituras que ya existían.
   await assertSucceeds(updateDoc(doc(asOperator(), 'lotes_produccion/l_3'), { status: 'activo' }));

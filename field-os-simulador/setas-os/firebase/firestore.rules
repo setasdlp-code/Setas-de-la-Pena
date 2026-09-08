@@ -56,16 +56,17 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Cuaderno de campo: `workflowState` y `revision` son campos nuevos que
-    // sólo escribe la aceptación de eventos (Admin SDK, que ignora estas
-    // reglas). El campo `estado` heredado no cambia de significado.
+    // Cuaderno de campo: `lifecycleState` y `revision` sólo los escribe la
+    // aceptación de eventos (Admin SDK, que ignora estas reglas). `estado` sigue
+    // siendo del cliente: lo usan bitácora y trazabilidad, y una vez que existe
+    // `lifecycleState` ya no influye en la decisión del servidor.
     //
     // Si un cliente pudiera moverlos saltaría la aceptación transaccional, y
     // con ella la idempotencia y el control de concurrencia: dos operarios sin
     // señal podrían avanzar el mismo lote y ninguna de las dos escrituras
     // detectaría a la otra.
     function transicionIntacta() {
-      return request.resource.data.get('workflowState', null) == resource.data.get('workflowState', null)
+      return request.resource.data.get('lifecycleState', null) == resource.data.get('lifecycleState', null)
           && request.resource.data.get('revision', null) == resource.data.get('revision', null);
     }
 
@@ -76,7 +77,7 @@ service cloud.firestore {
         && masaBalanceada(request.resource.data.recetaSnapshot.ingredientes)
         // recetaSnapshot se escribe una sola vez, al crear el lote — nunca se edita.
         // El lote nace sin estado de flujo: lo establece la primera transición aceptada.
-        && !('workflowState' in request.resource.data)
+        && !('lifecycleState' in request.resource.data)
         && !('revision' in request.resource.data)
         ;
       allow update: if signedIn()

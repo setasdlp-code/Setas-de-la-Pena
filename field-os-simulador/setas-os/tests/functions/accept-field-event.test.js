@@ -63,7 +63,7 @@ test('acepta la primera transición y devuelve un recibo válido', async () => {
   assert.equal(receipt.serverEventPath, `field_events/${env.event.id}`);
 
   const batch = (await db.collection('lotes_produccion').doc('l1').get()).data();
-  assert.equal(batch.workflowState, 'incubation');
+  assert.equal(batch.lifecycleState, 'incubation');
   assert.equal(batch.revision, 1);
   assert.equal(batch.codigo, 'l1', 'no debe borrar campos existentes');
 });
@@ -92,7 +92,7 @@ test('el mismo id con contenido distinto se rechaza', async () => {
   await assert.rejects(() => accept(tampered, AUTH), /content_mismatch/);
 
   const batch = (await db.collection('lotes_produccion').doc('l3').get()).data();
-  assert.equal(batch.workflowState, 'incubation', 'el lote no debe cambiar');
+  assert.equal(batch.lifecycleState, 'incubation', 'el lote no debe cambiar');
 });
 
 test('dos transiciones desde la misma revisión: una gana, la otra entra en conflicto', async () => {
@@ -145,13 +145,13 @@ test('un lote inexistente se rechaza', async () => {
 });
 
 test('una transición no permitida por la máquina de estados se rechaza', async () => {
-  await seedBatch('l8', { workflowState: 'incubation', revision: 2 });
+  await seedBatch('l8', { lifecycleState: 'incubation', revision: 2 });
   const env = envelopeFor('l8', 'incubation', 'planned', 2);
   await assert.rejects(() => accept(env, AUTH), /invalid_state_transition/);
 });
 
 test('un rol sin permiso para descartar se rechaza', async () => {
-  await seedBatch('l9', { workflowState: 'quarantine', revision: 1 });
+  await seedBatch('l9', { lifecycleState: 'quarantine', revision: 1 });
   role = 'operario';
   const env = envelopeFor('l9', 'quarantine', 'discarded', 1);
   await assert.rejects(() => accept(env, AUTH), /unauthorized_action/);
@@ -162,14 +162,22 @@ test('una llamada sin sesión se rechaza', async () => {
   await assert.rejects(() => accept(env, null), /unauthenticated/);
 });
 
-test('un lote heredado sin workflowState arranca en el estado inicial del servidor', async () => {
+test('un lote heredado sin lifecycleState se interpreta con el alias de `estado`', async () => {
+  // El servidor traduce `estado` con la misma tabla que la ficha del lote, así
+  // que `activo` no es `inoculated`: mandar ese `from` debe fallar.
+  const { normalizeLifecycleState } = require('../../batch-sheet.js');
   await seedBatch('l11', { estado: 'activo' });
-  const env = envelopeFor('l11', 'inoculated', 'incubation', 0);
+  assert.equal(normalizeLifecycleState('activo', 'inoculated'), 'incubation');
 
-  const receipt = await accept(env, AUTH);
+  await assert.rejects(
+    () => accept(envelopeFor('l11', 'inoculated', 'incubation', 0), AUTH),
+    /invalid_state_transition/
+  );
+
+  const receipt = await accept(envelopeFor('l11', 'incubation', 'maturation', 0), AUTH);
   assert.equal(receipt.batchRevisionAfter, 1);
 
   const batch = (await db.collection('lotes_produccion').doc('l11').get()).data();
   assert.equal(batch.estado, 'activo', 'el campo heredado no se toca');
-  assert.equal(batch.workflowState, 'incubation');
+  assert.equal(batch.lifecycleState, 'maturation');
 });

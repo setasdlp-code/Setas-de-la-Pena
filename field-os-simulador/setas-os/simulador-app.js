@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: c5d85ba2c56b0a2de0ae02b078c6e911250bdb4f7168d418d4b987e39e95eb82
+// source-hash: 06e356222eec2ab20f4cb4b21a9450c0c5fafc2940c8021306c498cb34cdf510
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -5617,6 +5617,29 @@ BATCH (${numBags}×${kgBag} kg):
       return null;
     }
   };
+  const enqueueFieldTransition = async (lote, from, to) => {
+    const SHEET = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
+    const uid = window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : null;
+    if (!SHEET || !uid) return;
+    try {
+      const db = await getFieldDb();
+      const res = await SHEET.confirmTransition({
+        db,
+        batch: lote,
+        from,
+        to,
+        accountId: uid,
+        operatorId: uid,
+        operatorRole,
+        expectedBatchRevision: Number.isInteger(lote.revision) ? lote.revision : 0,
+        confirmed: true
+      });
+      await runFieldSync(db, uid, res.event.id, () => {
+      });
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo registrar la transición", msg: err.message });
+    }
+  };
   const commitSheetAction = (sheet, lote, action, payload = {}) => {
     if (!batchSheetApi || !sheet) return false;
     try {
@@ -5628,13 +5651,10 @@ BATCH (${numBags}×${kgBag} kg):
         log: lote.lifecycleEvents || [],
         role: operatorRole
       });
-      const patch = { lifecycleEvents: result.log };
+      updateBitLote(lote.id, { lifecycleEvents: result.log });
       if (result.transitioned) {
-        patch.lifecycleState = result.state;
-        const legacyByState = Object.entries(legacyLifecycle).find(([, v]) => v === result.state);
-        if (legacyByState) patch.estado = legacyByState[0];
+        enqueueFieldTransition(lote, sheet.state, result.state);
       }
-      updateBitLote(lote.id, patch);
       return true;
     } catch (err) {
       setNoticeDlg({ title: "Acción no válida ahora", msg: err.message });
@@ -5657,7 +5677,8 @@ BATCH (${numBags}×${kgBag} kg):
       const to = legacyLifecycle[next];
       if (next !== lote.estado && workflow && workflow.canTransition(from, to)) {
         const event = workflow.transitionEvent({ batchId: lote.id, from, to, operatorId: lote.operador || "operador-local" });
-        updateBitLote(lote.id, { estado: next, lifecycleState: to, lifecycleEvents: [...lote.lifecycleEvents || [], event] });
+        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
+        enqueueFieldTransition(lote, from, to);
       }
       return;
     }

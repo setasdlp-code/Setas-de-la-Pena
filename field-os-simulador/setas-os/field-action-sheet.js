@@ -14,10 +14,26 @@
   const getModel = () => (isNode ? require('./field-events-model.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEvents : null));
   const getQueue = () => (isNode ? require('./field-event-queue.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEventQueue : null));
   const getWorkflow = () => (isNode ? require('./setas-os-workflow.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasOSWorkflow : null));
+  const getBatchSheet = () => (isNode ? require('./batch-sheet.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasBatchSheet : null));
+
+  /**
+   * Resuelve el estado del lote EXACTAMENTE como functions/accept-field-event.js:
+   * `lifecycleState`, y si no existe, `estado` normalizado con la misma tabla de
+   * alias que usa la ficha. Si las dos partes usaran reglas distintas, la hoja
+   * ofrecería transiciones que el servidor rechaza.
+   */
+  const resolveLifecycleState = (batch) => {
+    if (!batch) return DEFAULT_INITIAL_STATE;
+    if (batch.lifecycleState) return batch.lifecycleState;
+    const bs = getBatchSheet();
+    return bs && typeof bs.normalizeLifecycleState === 'function'
+      ? bs.normalizeLifecycleState(batch.estado, DEFAULT_INITIAL_STATE)
+      : DEFAULT_INITIAL_STATE;
+  };
   const getContracts = () => (isNode ? require('./field-event-contracts.js') : (typeof globalThis !== 'undefined' ? globalThis.SetasFieldEventContracts : null));
 
   // Fuente única compartida de estado inicial (definida en field-event-contracts.js):
-  // los lotes creados antes del cuaderno de campo no llevan workflowState y
+  // los lotes creados antes del cuaderno de campo no llevan lifecycleState y
   // su jornada operativa arranca autoritativamente en Inoculación.
   const DEFAULT_INITIAL_STATE = (getContracts() && getContracts().DEFAULT_INITIAL_STATE) || 'inoculated';
 
@@ -97,10 +113,10 @@
   } = {}) => {
     const resolvedBatchId = batchId || batch?.id || batch?.codigo || '';
 
-    // Resolver estado: el servidor (accept-field-event.js) lee workflowState o
+    // Resolver estado: misma regla que el servidor (accept-field-event.js) —
     // asume DEFAULT_INITIAL_STATE ('inoculated'). Nunca lee 'estado' para evitar
     // divergencias entre cliente y servidor.
-    const resolvedState = state || batch?.workflowState || DEFAULT_INITIAL_STATE;
+    const resolvedState = state || resolveLifecycleState(batch);
 
     const title = resolvedBatchId
       ? `Lote ${batch?.codigo || resolvedBatchId}`
@@ -214,14 +230,13 @@
     }
 
     // Resolver el estado exactamente como el servidor (accept-field-event.js:77):
-    // workflowState, o el inicial por defecto. Nunca `state` ni `estado` — las
-    // reglas desplegadas protegen workflowState y revision pero NO `state`, así
-    // que dejar que `state` mande permitiría a un cliente escribirlo y saltarse
-    // etapas. Y usar aquí un orden distinto al de buildActionSheetModel haría
-    // que la hoja validara contra un estado diferente del que muestra.
+    // la misma regla que buildActionSheetModel y que el servidor. Nunca `state`:
+    // las reglas no lo protegen, así que dejarlo mandar permitiría a un cliente
+    // escribirlo y saltarse etapas. Usar aquí un orden distinto haría que la hoja
+    // validara contra un estado diferente del que muestra.
     const batchWithState = batch ? {
       ...batch,
-      state: batch.workflowState || DEFAULT_INITIAL_STATE,
+      state: resolveLifecycleState(batch),
     } : null;
 
     // Validar transición contra la máquina de estados y el rol antes de tocar la base de datos
