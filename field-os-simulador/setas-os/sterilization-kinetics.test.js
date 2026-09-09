@@ -115,3 +115,59 @@ test('simulateCorePenetration y validateAutoclaveCycle validan esterilidad comer
   assert.equal(cycleFail.riskLevel, 'critico');
   assert.ok(cycleFail.recommendations.some(r => r.includes('19')));
 });
+
+test('calcOptimalHoldTime resuelve el tiempo de meseta exacto para alcanzar F0 objetivo', () => {
+  const solver = require('./sterilization-kinetics.js').calcOptimalHoldTime;
+
+  // Para bolsa de 1.5 kg a 19.04 psig en Tenjo con target F0 = 12
+  const opt1_5 = solver({
+    targetF0: 12.0,
+    gaugePressurePsi: 19.04,
+    bagKg: 1.5,
+    moisturePct: 65,
+  });
+
+  assert.ok(opt1_5.exactHoldMin >= 75 && opt1_5.exactHoldMin <= 95, `Hold time exacto esperado ~85 min, obtenido ${opt1_5.exactHoldMin}`);
+  assert.ok(opt1_5.recommendedHoldMin > opt1_5.exactHoldMin, 'Debe incluir margen de seguridad (+5 min)');
+  assert.ok(opt1_5.simulatedF0 >= 12.0, 'El F0 resultante debe cumplir el objetivo');
+  assert.equal(opt1_5.isSterile, true);
+
+  // Para bolsa más pesada (2.5 kg), requiere mayor tiempo de sostenimiento por inercia térmica
+  const opt2_5 = solver({
+    targetF0: 12.0,
+    gaugePressurePsi: 19.04,
+    bagKg: 2.5,
+    moisturePct: 65,
+  });
+  assert.ok(opt2_5.exactHoldMin > opt1_5.exactHoldMin, 'Bolsa de 2.5 kg debe requerir más tiempo que 1.5 kg');
+});
+
+test('containerType modela diferencias de conductividad y validateAutoclaveCycle detecta sobre-procesamiento', () => {
+  const { simulateCorePenetration, validateAutoclaveCycle } = require('./sterilization-kinetics.js');
+
+  // Frasco de vidrio ('jar') penetra más rápido que bolsa de sustrato ('bag')
+  const simBag = simulateCorePenetration({ holdTimeMin: 60, bagKg: 1.0, containerType: 'bag' });
+  const simJar = simulateCorePenetration({ holdTimeMin: 60, bagKg: 1.0, containerType: 'jar' });
+  assert.ok(simJar.f0Total > simBag.f0Total, 'El frasco de vidrio debe acumular mayor F0 que la bolsa por menor resistencia térmica');
+
+  // Ciclo excesivo (>35 min F0): detecta sobre-procesamiento y alerta de Maillard
+  const cycleOver = validateAutoclaveCycle({
+    holdTimeMin: 180,
+    gaugePressurePsi: 19.04,
+    bagKg: 1.0,
+    moisturePct: 65,
+  });
+  assert.equal(cycleOver.isOverprocessed, true);
+  assert.ok(cycleOver.recommendations.some(r => r.includes('Alerta nutricional') || r.includes('Maillard')));
+
+  // Caso límite: presión ambiental (0 psi) o muy baja no puede alcanzar esterilidad comercial (F0=12)
+  const optAmbient = require('./sterilization-kinetics.js').calcOptimalHoldTime({
+    targetF0: 12.0,
+    gaugePressurePsi: 0,
+  });
+  assert.equal(optAmbient.isAchievable, false, 'A 0 psi en Tenjo (91.6°C) F0=12 debe ser inalcanzable');
+  assert.equal(optAmbient.exactHoldMin, null);
+  assert.equal(optAmbient.recommendedHoldMin, null);
+  assert.ok(optAmbient.warning.includes('inalcanzable'));
+  assert.ok(optAmbient.warning.includes('psi'));
+});

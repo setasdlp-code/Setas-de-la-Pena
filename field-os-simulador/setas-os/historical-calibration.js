@@ -14,19 +14,22 @@ const bitacoraEBRows = (bitLotes, bitCosechas) => {
   if (!Array.isArray(bitLotes) || !Array.isArray(bitCosechas)) return [];
   const rows = [];
   for (const lote of bitLotes) {
-    const peseSeco = parseFloat(lote && lote.peseSeco) || 0;
+    const rawDry = lote && (lote.peseSeco ?? lote.pesoSeco ?? lote.peso_seco ?? lote.dryWeightKg);
+    const peseSeco = parseFloat(rawDry) || 0;
     const ref = lote && lote.recipeRef;
     if (peseSeco <= 0 || !ref || !ref.sKey) continue;
     const cosechas = bitCosechas.filter((c) => c && c.loteId === lote.id);
     if (!cosechas.length) continue;
     const totalFresco = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0) / 1000;
     if (totalFresco <= 0) continue;
+    const be = (totalFresco / peseSeco) * 100;
+    if (!Number.isFinite(be) || be <= 0 || be > 400) continue;
     rows.push({
       loteId: lote.id,
       codigo: lote.codigo || '',
       sKey: ref.sKey,
       recipe: Array.isArray(ref.recipe) ? ref.recipe : [],
-      be: (totalFresco / peseSeco) * 100,
+      be,
       fecha: lote.fechaInoculacion || null,
     });
   }
@@ -106,7 +109,7 @@ const historicalEB = (sKey, rows, recipe = null) => {
   const empty = { n: 0, avg: null, meanEB: null, sd: null, subs: [], weight: 0, matched: false, similarity: 0 };
   if (!sKey || !Array.isArray(rows) || !rows.length) return empty;
 
-  let pool = rows.filter((r) => r && r.sKey === sKey && Number.isFinite(r.be));
+  let pool = rows.filter((r) => r && r.sKey === sKey && Number.isFinite(r.be) && r.be >= 0 && r.be <= 400);
   if (!pool.length) return empty;
 
   let matched = false;
@@ -173,9 +176,15 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 // como brecha abierta, fuera de alcance de este cambio).
 const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   if (!Array.isArray(rows) || !rows.length || typeof recipeDistanceFn !== 'function') return null;
+  const validRows = rows.filter((r) => r && Number.isFinite(Number(r.ebReal)) && Number(r.ebReal) >= 0 && Number(r.ebReal) <= 400);
+  if (!validRows.length) return null;
   const now = Number.isFinite(options.now) ? options.now : Date.now();
   const recencyWindowDays = Number.isFinite(options.recencyWindowDays) ? options.recencyWindowDays : RECENCY_WINDOW_DAYS;
-  const comparable = rows.map((r) => ({ ...r, similarity: Math.max(0, 1 - recipeDistanceFn(recipe, r.recipe)) }));
+  const comparable = validRows.map((r) => {
+    const rawDist = recipeDistanceFn(recipe, r.recipe);
+    const dist = Number.isFinite(Number(rawDist)) ? Math.max(0, Math.min(1, Number(rawDist))) : 1;
+    return { ...r, similarity: 1 - dist };
+  });
   const selected = comparable.filter((r) => r.similarity >= CALIBRATION_SIMILARITY_THRESHOLD);
   const pool = selected.length ? selected : comparable;
   const weights = pool.map((r) => Math.max(CALIBRATION_WEIGHT_FLOOR, r.similarity));

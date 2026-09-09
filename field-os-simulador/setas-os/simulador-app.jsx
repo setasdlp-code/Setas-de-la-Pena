@@ -1478,39 +1478,45 @@ const DEFAULT_FRESH_PRICES={
 };
 
 const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
-  if(!recipe.length||!n||!kg) return null;
+  if(!Array.isArray(recipe)||!recipe.length||!Number.isFinite(Number(n))||Number(n)<=0||!Number.isFinite(Number(kg))||Number(kg)<=0) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
-  const hF=Math.min(0.85,Math.max(0.40,hObj/100));  // fracción de humedad objetivo
+  const hF=Math.min(0.85,Math.max(0.40,(Number(hObj)||67)/100));  // fracción de humedad objetivo
   const dry=wet*(1-hF);                             // masa seca total requerida (kg)
-  const spawnRate=Math.min(0.15,Math.max(0.05,dynSpawn/100));
+  const spawnRate=Math.min(0.15,Math.max(0.05,(Number(dynSpawn)||8)/100));
+  const effectiveIngs=Array.isArray(ings)&&ings.length?ings:INGS;
   const items=recipe.map(r=>{
-    const g=ings.find(i=>i.id===r.id);if(!g) return null;
-    const masaSeca=dry*(parseFloat(r.p)/100);       // aporte seco del insumo
-    const m=Math.min(0.92,Math.max(0,(g.moisture||0)/100)); // humedad intrínseca
+    const g=effectiveIngs.find(i=>i.id===r.id);if(!g) return null;
+    const masaSeca=dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
+    const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100)); // humedad intrínseca
     const kr=masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
     const aguaOculta=kr*m;                           // agua que ya trae el insumo
-    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*g.cost,unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
+    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*(Number(g.cost)||0),unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
   }).filter(Boolean);
+  if(!items.length) return null;
   const aguaTot=dry*(hF/(1-hF));                     // agua total que debe contener la mezcla
   const aguaInh=items.reduce((s,i)=>s+i.aguaOculta,0); // agua aportada por los insumos
   const agua=Math.max(0,aguaTot-aguaInh);            // agua neta a inyectar (L ≈ kg)
+  const waterExcessKg=Math.max(0,aguaInh-aguaTot);
+  const actualWetTotal=dry+aguaInh+agua;
+  const resultingMoisturePct=actualWetTotal>0?Math.round(((aguaInh+agua)/actualWetTotal)*1000)/10:Math.round(hF*1000)/10;
+  const isOverhydrated=waterExcessKg>0.05;
   const kgComercialTotal=items.reduce((s,i)=>s+i.kr,0); // peso total a pesar (base húmeda comercial)
   const sustCost=items.reduce((s,i)=>s+i.cost,0);
   const spawnKg=wet*spawnRate;
-  const spawnCostTotal=spawnKg*spawnCostKg;
-  const energyCostKgSeco=tr?.energy?.cop_per_kg_seco||0;
+  const spawnCostTotal=spawnKg*(Number(spawnCostKg)||12000);
+  const energyCostKgSeco=Number.isFinite(Number(tr?.energy?.cop_per_kg_seco))?Number(tr.energy.cop_per_kg_seco):0;
   const energyCostTotal=dry*energyCostKgSeco;
-  const bagConsumableCostUnit=customBagConsumable!=null?customBagConsumable:300;
+  const bagConsumableCostUnit=customBagConsumable!=null?Number(customBagConsumable):300;
   const bagConsumableCostTotal=n*bagConsumableCostUnit;
   const totalCost=sustCost+spawnCostTotal+energyCostTotal+bagConsumableCostTotal;
   const costPerBag=n>0?totalCost/n:0;
 
   // Proyección de cosecha en fresco y margen comercial
   const dryPerBag=n>0?dry/n:0;
-  const ebRate=Math.max(0,(eb!=null?eb:85)/100);
+  const ebRate=Math.max(0,(eb!=null?Number(eb):85)/100);
   const projectedFreshKgPerBag=dryPerBag*ebRate;
   const projectedFreshKgTotal=dry*ebRate;
-  const freshPriceKg=customFreshPrice||DEFAULT_FRESH_PRICES[sKey]||22000;
+  const freshPriceKg=(Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
   const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
   const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
   const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
@@ -1522,6 +1528,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
     energyCostTotal,energyCostKgSeco,
     bagConsumableCostUnit,bagConsumableCostTotal,
     totalCost,costPerBag,agua,hObj,
+    waterExcessKg,resultingMoisturePct,isOverhydrated,
     dryPerBag,ebRate,
     projectedFreshKgPerBag,projectedFreshKgTotal,
     freshPriceKg,projectedRevenuePerBag,
@@ -1545,6 +1552,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
 const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
+  if(isNaN(base.getTime())) return null;
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};

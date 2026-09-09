@@ -128,6 +128,36 @@
   };
 
   /**
+   * Mapeo canónico de alias taxonómicos y nombres del sistema a los perfiles poscosecha.
+   */
+  const SPECIES_KEY_ALIASES = {
+    p_ostreatus_gris: 'orellana_gris',
+    p_ostreatus_blanco: 'orellana_blanca',
+    p_djamor_rosa: 'orellana_rosa',
+    p_eryngii: 'seta_cardo',
+    lions_mane: 'melena_leon',
+    pleurotus_ostreatus: 'orellana_gris',
+    pleurotus_florida: 'orellana_blanca',
+    pleurotus_djamor: 'orellana_rosa',
+    pleurotus_eryngii: 'seta_cardo',
+    hericium_erinaceus: 'melena_leon',
+    lentinula_edodes: 'shiitake',
+    flammulina_velutipes: 'enoki',
+    pholiota_nameko: 'nameko',
+    ganoderma_lucidum: 'reishi',
+  };
+
+  /**
+   * Resuelve cualquier clave o alias a la clave de perfil poscosecha correspondiente.
+   */
+  const resolveSpeciesKey = (key) => {
+    if (!key || typeof key !== 'string') return 'orellana_gris';
+    const clean = key.trim().toLowerCase();
+    if (SPECIES_POSTHARVEST_PROFILES[clean]) return clean;
+    return SPECIES_KEY_ALIASES[clean] || 'orellana_gris';
+  };
+
+  /**
    * Presión de vapor de saturación según Tetens (kPa).
    */
   const calcVPsat = (tempC) => 0.61078 * Math.exp((17.27 * tempC) / (tempC + 237.3));
@@ -150,8 +180,9 @@
    * @returns {object} Tasa de CO2 (mg/kg h), calor vital (Watts) y factor de aceleración
    */
   const calcPostHarvestRespiration = (speciesKey, tempC, batchKg = 1.0) => {
-    const sp = SPECIES_POSTHARVEST_PROFILES[speciesKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
-    const t = parseFloat(tempC) || 4.0;
+    const normKey = resolveSpeciesKey(speciesKey);
+    const sp = SPECIES_POSTHARVEST_PROFILES[normKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
+    const t = Number.isFinite(parseFloat(tempC)) ? parseFloat(tempC) : 4.0;
     const mass = Math.max(0.01, parseFloat(batchKg) || 1.0);
 
     // Ley de Van 't Hoff / Q10: R(T) = R_4 * Q10^((T - 4) / 10)
@@ -166,6 +197,7 @@
 
     return {
       species: sp.name,
+      speciesKey: sp.id,
       tempC: t,
       batchKg: mass,
       r4Co2: sp.r4Co2,
@@ -182,17 +214,19 @@
    * Si el hongo está empacado (isPackaged = true), la película BOPP/termoformado retiene un microclima
    * de 95-97% HR, reduciendo drásticamente la tasa de desecación frente a hongos expuestos al aire libre.
    *
-   * @param {string} speciesKey
+   * @param {string} speciesKey Clave o alias de especie
    * @param {number} tempC Temperatura en °C
    * @param {number} [rhPct=90] Humedad relativa en cámara de almacenamiento (%)
    * @param {boolean} [isPackaged=true] Indica si el producto está en empaque comercial (BOPP/punnet)
    * @returns {object} VPD, % pérdida diaria y días hasta merma comercial
    */
   const calcTranspirationLoss = (speciesKey, tempC, rhPct = 90, isPackaged = true) => {
-    const sp = SPECIES_POSTHARVEST_PROFILES[speciesKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
+    const normKey = resolveSpeciesKey(speciesKey);
+    const sp = SPECIES_POSTHARVEST_PROFILES[normKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
+    const t = Number.isFinite(parseFloat(tempC)) ? parseFloat(tempC) : 4.0;
     // En empaque microperforado, la humedad de equilibrio interna se mantiene en ~96%
-    const effectiveRh = isPackaged ? Math.max(rhPct, 96.0) : parseFloat(rhPct) || 90.0;
-    const vpd = calcStorageVPD(tempC, effectiveRh);
+    const effectiveRh = isPackaged ? Math.max(rhPct, 96.0) : (Number.isFinite(parseFloat(rhPct)) ? parseFloat(rhPct) : 90.0);
+    const vpd = calcStorageVPD(t, effectiveRh);
 
     // Si está empacado, el empaque impone una resistencia difusiva adicional (factor 0.35x sobre el aire libre)
     const packagingBarrierFactor = isPackaged ? 0.35 : 1.0;
@@ -203,6 +237,7 @@
 
     return {
       species: sp.name,
+      speciesKey: sp.id,
       tempC,
       rhPct,
       effectiveRh,
@@ -221,7 +256,7 @@
    * 2. Consumo de carbohidratos de reserva (manitol/trehalosa) por respiración acelerada.
    * 3. Senescencia enzimática (pardeamiento PPO y pérdida de firmeza).
    *
-   * @param {string} speciesKey
+   * @param {string} speciesKey Clave o alias de especie
    * @param {number} tempC Temperatura (°C)
    * @param {number} [rhPct=90] Humedad relativa (%)
    * @param {object} [options={}] Opciones adicionales
@@ -229,17 +264,19 @@
    * @returns {object} Días de vida comercial, modo de fallo limitante y recomendaciones de empaque
    */
   const predictShelfLife = (speciesKey, tempC, rhPct = 90, options = {}) => {
-    const sp = SPECIES_POSTHARVEST_PROFILES[speciesKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
-    const t = parseFloat(tempC) || 4.0;
-    const rh = parseFloat(rhPct) || 90.0;
-    const isPackaged = options.isPackaged ?? true;
+    const opts = options || {};
+    const normKey = resolveSpeciesKey(speciesKey);
+    const sp = SPECIES_POSTHARVEST_PROFILES[normKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
+    const t = Number.isFinite(parseFloat(tempC)) ? parseFloat(tempC) : 4.0;
+    const rh = Number.isFinite(parseFloat(rhPct)) ? parseFloat(rhPct) : 90.0;
+    const isPackaged = opts.isPackaged ?? true;
 
     // 1. Límite por transpiración
-    const transp = calcTranspirationLoss(speciesKey, t, rh, isPackaged);
+    const transp = calcTranspirationLoss(normKey, t, rh, isPackaged);
     const slTransp = transp.daysToDesiccationLimit;
 
     // 2. Límite por respiración metabólica (reserva de ~35 g/kg de manitol oxidable)
-    const resp = calcPostHarvestRespiration(speciesKey, t, 1.0);
+    const resp = calcPostHarvestRespiration(normKey, t, 1.0);
     // Consumo de 35 g azúcar = 51.3 g CO2 = 51,300 mg CO2
     const slResp = Math.max(1.0, 51300 / (resp.respirationMgKgH * 24));
 
@@ -301,11 +338,115 @@
     };
   };
 
+  /**
+   * Simula el impacto acumulativo de rupturas de cadena de frío (eventos a temperatura ambiente o transporte).
+   * Calcula los días equivalentes de almacenamiento a 4°C consumidos por cada hora de abuso térmico.
+   *
+   * @param {string} speciesKey Clave o alias de la especie
+   * @param {number} [initialDaysStored4C=0] Días previos de almacenamiento correcto a 4°C
+   * @param {Array<object>} [breakEvents=[]] Lista de eventos: [{ hours: 4, tempC: 20 }]
+   * @returns {object} Vida útil remanente a 4°C, pérdida porcentual y advertencias
+   */
+  const simulateColdChainBreak = (speciesKey, initialDaysStored4C = 0, breakEvents = []) => {
+    const normKey = resolveSpeciesKey(speciesKey);
+    const sp = SPECIES_POSTHARVEST_PROFILES[normKey] || SPECIES_POSTHARVEST_PROFILES.orellana_gris;
+    const baseDays = sp.baseShelfLifeDays4C;
+    let daysConsumedEquivalent = Math.max(0, parseFloat(initialDaysStored4C) || 0);
+
+    const eventDetails = (Array.isArray(breakEvents) ? breakEvents : []).map((ev, idx) => {
+      const hours = Math.max(0, parseFloat(ev.hours) || 0);
+      const tempC = Number.isFinite(ev.tempC) ? ev.tempC : 18.0;
+      const deltaT = (tempC - 4.0) / 10.0;
+      const accel = Math.pow(sp.q10, deltaT);
+      const daysLostAt4C = (hours / 24.0) * accel;
+      daysConsumedEquivalent += daysLostAt4C;
+
+      return {
+        eventIndex: idx + 1,
+        hours,
+        tempC,
+        accelFactor: Math.round(accel * 100) / 100,
+        daysLostAt4C: Math.round(daysLostAt4C * 100) / 100,
+      };
+    });
+
+    const remainingShelfLifeDaysAt4C = Math.max(0, Math.round((baseDays - daysConsumedEquivalent) * 10) / 10);
+    const lossPct = Math.min(100, Math.round((daysConsumedEquivalent / baseDays) * 100));
+
+    let riskVerdict = 'CALIDAD PRESERVADA';
+    let badge = '🟢';
+    if (remainingShelfLifeDaysAt4C <= 1.0) {
+      riskVerdict = 'VIDA ÚTIL AGOTADA / RIESGO DE DESCARTE';
+      badge = '🔴';
+    } else if (lossPct >= 50) {
+      riskVerdict = 'DEGRADACIÓN ACELERADA / PRIORIZAR DESPACHO INMEDIATO';
+      badge = '🟡';
+    }
+
+    return {
+      speciesId: sp.id,
+      speciesName: sp.name,
+      baseShelfLifeDays4C: baseDays,
+      daysConsumedEquivalent: Math.round(daysConsumedEquivalent * 10) / 10,
+      remainingShelfLifeDaysAt4C,
+      lossPct,
+      riskVerdict,
+      badge,
+      events: eventDetails,
+      recommendation: lossPct >= 50
+        ? 'Rotura térmica severa: comercializar en las próximas 24-48 horas. No destinar a almacenamiento prolongado.'
+        : 'Cadena de frío dentro de límites tolerables.',
+    };
+  };
+
+  /**
+   * Evalúa el riesgo de condensación libre sobre el hongo al salir del cuarto frío (4°C) al ambiente de empaque.
+   * Si la temperatura del hongo está por debajo del punto de rocío del aire ambiente, el agua condensará
+   * inmediatamente sobre la cutícula, disparando mancha bacteriana (Pseudomonas tolaasii).
+   *
+   * @param {number} [storageTempC=4.0] Temperatura del producto en cámara fría
+   * @param {number} [ambientTempC=18.0] Temperatura del área de empaque / despacho
+   * @param {number} [ambientRhPct=75.0] Humedad relativa del área de empaque
+   * @returns {object} Punto de rocío, riesgo de condensación y recomendación operativa
+   */
+  const assessCondensationRiskOnUnpack = (storageTempC = 4.0, ambientTempC = 18.0, ambientRhPct = 75.0) => {
+    const tStorage = Number.isFinite(parseFloat(storageTempC)) ? parseFloat(storageTempC) : 4.0;
+    const tAmb = Number.isFinite(parseFloat(ambientTempC)) ? parseFloat(ambientTempC) : 18.0;
+    const rh = Math.max(1, Math.min(100, Number.isFinite(parseFloat(ambientRhPct)) ? parseFloat(ambientRhPct) : 75.0));
+
+    // Punto de rocío del aire ambiente mediante Magnus-Tetens
+    const gamma = ((17.27 * tAmb) / (tAmb + 237.3)) + Math.log(rh / 100);
+    const ambientDewPoint = Math.round(((237.3 * gamma) / (17.27 - gamma)) * 10) / 10;
+
+    const condensationRisk = tStorage <= ambientDewPoint;
+    const deltaT = Math.round((tStorage - ambientDewPoint) * 10) / 10;
+
+    return {
+      storageTempC: tStorage,
+      ambientTempC: tAmb,
+      ambientRhPct: rh,
+      ambientDewPoint,
+      deltaT,
+      condensationRisk,
+      verdict: condensationRisk
+        ? 'ALTO RIESGO DE CONDENSACIÓN (SUPERFICIE FRÍA < ROCÍO AMBIENTE)'
+        : 'SEGURO (SIN CONDENSACIÓN INMEDIATA)',
+      badge: condensationRisk ? '🔴' : '🟢',
+      recommendation: condensationRisk
+        ? `El hongo a ${tStorage}°C está por debajo del punto de rocío (${ambientDewPoint}°C). Se formará condensación libre. Mantener en empaque cerrado anti-fog hasta atemperar o deshumidificar sala de empaque.`
+        : 'Condiciones de empaque seguras frente a condensación superficial.',
+    };
+  };
+
   const api = {
     SPECIES_POSTHARVEST_PROFILES,
+    SPECIES_KEY_ALIASES,
+    resolveSpeciesKey,
     calcPostHarvestRespiration,
     calcTranspirationLoss,
     predictShelfLife,
+    simulateColdChainBreak,
+    assessCondensationRiskOnUnpack,
   };
 
   if (isNode) module.exports = api;

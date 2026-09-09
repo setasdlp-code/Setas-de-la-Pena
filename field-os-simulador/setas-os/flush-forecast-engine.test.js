@@ -165,4 +165,150 @@ test('Setas OS — Motor de Pronóstico de Cosechas & Oleadas (flush-forecast-en
     assert.equal(c120.costSubstratePerFreshKg, 1500);
   });
 
+  await t.test('8. Modelo de Temperatura Cardinal (CTMI) y estrés térmico en Tenjo', () => {
+    // A 28°C (por encima de tOpt=24°C para p_ostreatus_gris), debe detectar estrés térmico
+    const t28 = engine.calcThermalDelayFactor('p_ostreatus_gris', 28);
+    assert.ok(t28.isHeatStressed, 'A 28°C debe marcar estrés térmico');
+    assert.ok(t28.factor > 1.0, 'El factor debe ser mayor a 1.0 por desaceleración enzimática');
+    assert.match(t28.heatWarning, /Estrés térmico/);
+
+    // A 32°C (por encima de tMax=30°C), debe marcar arresto térmico
+    const t32 = engine.calcThermalDelayFactor('p_ostreatus_gris', 32);
+    assert.equal(t32.thermalArrest, true, 'A 32°C debe marcar arresto térmico');
+    assert.equal(t32.factor, 3.5, 'Factor limitado a 3.5 por paro térmico biológico');
+
+    // Normalización de alias biológicos (ej. hericium_erinaceus / melena_leon -> lions_mane)
+    const lm = engine.calcThermalDelayFactor('hericium_erinaceus', 22);
+    assert.equal(lm.speciesKey, 'lions_mane', 'Debe normalizar hericium_erinaceus a lions_mane');
+  });
+
+  await t.test('9. Cálculo de requerimientos de siembra con objetivo de primera oleada (targetFlush)', () => {
+    // Si se necesitan 15 kg exclusivamente en la 1ra oleada (p_ostreatus_gris rinde 55% en F1)
+    const reqF1 = engine.calculateSowingRequirement(15, 'p_ostreatus_gris', {
+      kgPerBag: 1.5,
+      moisture: 65,
+      eb: 90,
+      targetFlush: 1,
+    });
+    // Con F1 (55%), cada bolsa produce 0.4488 * 0.55 ≈ 0.2469 kg frescos en F1
+    // Bolsas requeridas = ceil(15 / 0.2469) = 61 bolsas (en vez de 34 bolsas para todo el ciclo)
+    assert.ok(reqF1.bagsNeeded > 55, 'Para cumplir entrega en F1 deben sembrarse más bolsas que para ciclo completo');
+    assert.equal(reqF1.targetFlush, 1);
+  });
+
+  await t.test('10. Proyección dinámica de oleadas restantes para lote activo en sala', () => {
+    const activeLot = engine.calculateLotYieldAndFlushes({
+      bags: 100,
+      kgPerBag: 1.5,
+      moisture: 65,
+      eb: 90,
+      sKey: 'p_ostreatus_gris',
+      currentFlush: 1,
+      lastFlushDate: '2026-09-01',
+    });
+
+    // Como currentFlush = 1, F1 está cosechada y restan F2 y F3
+    assert.equal(activeLot.flushes.length, 3, 'El perfil conserva las 3 oleadas para trazabilidad');
+    assert.equal(activeLot.flushes[0].isHarvested, true, 'F1 ya fue cosechada');
+    assert.equal(activeLot.remainingFlushes.length, 2, 'Solo deben quedar 2 oleadas activas (F2 y F3)');
+    assert.equal(activeLot.remainingFlushes[0].flush, 2);
+    assert.equal(activeLot.remainingFlushes[1].flush, 3);
+    assert.ok(activeLot.remainingFlushes[0].date.includes('2026-09-'));
+  });
+
+  await t.test('11. Emparejamiento de oferta con desglose por especie (bySpecies)', () => {
+    const lots = [
+      {
+        id: 'LOTE-GRIS-1',
+        bags: 100,
+        kgPerBag: 1.5,
+        moisture: 65,
+        eb: 90,
+        fechaInoculacion: '2026-08-01',
+        sKey: 'p_ostreatus_gris',
+      },
+      {
+        id: 'LOTE-ROSA-1',
+        bags: 100,
+        kgPerBag: 1.5,
+        moisture: 67,
+        eb: 85,
+        fechaInoculacion: '2026-08-01',
+        sKey: 'p_djamor_rosa',
+      },
+    ];
+
+    const commitments = [
+      { week: '2026-W36', cliente: 'Restaurante Criterión', kg: 15, sKey: 'p_ostreatus_gris' },
+    ];
+
+    const coverage = engine.matchWeeklyCoverage(lots, commitments);
+    assert.ok(coverage.bySpecies != null, 'Debe incluir balance global bySpecies');
+    assert.ok(coverage.bySpecies['p_ostreatus_gris'] != null);
+    assert.ok(coverage.bySpecies['p_djamor_rosa'] != null);
+    assert.ok(coverage.weeks[0].bySpecies != null, 'Cada semana debe desglosar bySpecies');
+  });
+
+  await t.test('12. parseDateSafe y getISOWeekKey manejan cadenas ISO completas y timestamps sin desbordamiento', () => {
+    // String ISO con timestamp
+    assert.equal(engine.getISOWeekKey('2026-05-15T10:30:00.000Z'), '2026-W20');
+    assert.equal(engine.getISOWeekKey('2026-01-01'), '2026-W01');
+    assert.equal(engine.getISOWeekKey('2026-12-31'), '2026-W53');
+
+    // Fechas nulas o inválidas retornan fallback seguro sin lanzar excepción
+    assert.equal(engine.getISOWeekKey(null), '2026-W01');
+    assert.equal(engine.getISOWeekKey('fecha-invalida'), '2026-W01');
+
+    // calculateLotYieldAndFlushes no lanza RangeError con strings ISO de Firestore
+    const isoLot = engine.calculateLotYieldAndFlushes({
+      bags: 50,
+      kgPerBag: 1.5,
+      fechaInoculacion: '2026-04-10T08:30:00.000Z',
+      sKey: 'p_ostreatus_gris',
+    });
+    assert.ok(isoLot.flushes[0].date.startsWith('2026-05-'));
+  });
+
+  await t.test('13. calculateSowingRequirement programa siembra según tiempo de desarrollo de la oleada objetivo', () => {
+    // Para F1 (días = 32)
+    const reqF1 = engine.calculateSowingRequirement(10, 'p_ostreatus_gris', {
+      targetFlush: 1,
+      targetDate: '2026-10-01',
+      ambientTemp: 24, // factor = 1.0 -> 32 días
+    });
+    assert.equal(reqF1.recommendedSowDate, '2026-08-30');
+
+    // Para F2 (días = 46)
+    const reqF2 = engine.calculateSowingRequirement(10, 'p_ostreatus_gris', {
+      targetFlush: 2,
+      targetDate: '2026-10-01',
+      ambientTemp: 24, // factor = 1.0 -> 46 días
+    });
+    assert.equal(reqF2.recommendedSowDate, '2026-08-16', 'F2 debe sembrarse 46 días antes de la entrega, no 32 días');
+  });
+
+  await t.test('14. matchWeeklyCoverage excluye oleadas ya cosechadas cuando se solicita excludeHarvested', () => {
+    const activeLot = engine.calculateLotYieldAndFlushes({
+      id: 'LOTE-ACTIVO-1',
+      bags: 100,
+      kgPerBag: 1.5,
+      moisture: 65,
+      eb: 90,
+      sKey: 'p_ostreatus_gris',
+      fechaInoculacion: '2026-07-01',
+      currentFlush: 1, // F1 ya cosechada
+      lastFlushDate: '2026-08-05',
+    });
+
+    const comms = [{ week: '2026-W34', kg: 10 }];
+
+    // Sin filtro: incluye todas las oleadas históricas y futuras
+    const allCov = engine.matchWeeklyCoverage([activeLot], comms);
+    assert.ok(allCov.totalProjectedKg > 40);
+
+    // Con filtro excludeHarvested: solo proyecta oleadas futuras pendientes
+    const futureCov = engine.matchWeeklyCoverage([activeLot], comms, { excludeHarvested: true });
+    assert.ok(futureCov.totalProjectedKg < allCov.totalProjectedKg, 'Debe descontar los kg de F1 ya cosechados');
+  });
+
 });
