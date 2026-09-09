@@ -160,6 +160,16 @@
 }
 
 /* ── Mode scopes: set on any container to switch density ── */
-[data-mode="archive"] { --gutter: var(--gutter-archive); --page-margin: var(--margin-archive); }
+[data-mode="archive"] {
+  --gutter: var(--gutter-archive); --page-margin: var(--margin-archive);
+
+  /* Customer-surface accent — additive, not a ninth pigment. Same hue
+     family as --rust (terracotta, ~38° vs ~35°), lighter and less
+     saturated. Archive-only: fichas, packaging. Fill / underline /
+     thin-rule ONLY — 4.38:1 on paper clears the 3:1 non-text floor but
+     misses 4.5:1 for text, so it is banned as body text by the same
+     logic that constrains --warning. See scripts/contrast-audit.py. */
+  --accent-warm: oklch(57% 0.15 38);
+}
 [data-mode="field"]   { --gutter: var(--gutter-field);   --page-margin: var(--margin-field); }
 [data-mode="control"] { --gutter: var(--gutter-control); --page-margin: var(--margin-control); }

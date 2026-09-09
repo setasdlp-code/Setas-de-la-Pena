@@ -18,6 +18,27 @@
   --t-eyebrow-ed: var(--weight-medium) 12px/1.2 var(--font-editorial);
 
   --rule-editorial: 1px solid var(--ink);
+
+  /* Cover scale — one step above --size-display-01 (64px), for ARCHIVE
+     cover treatments only: a packaging-front species name, a ficha
+     masthead. Not part of the nine-role type scale in tokens.css; it
+     never appears in running layout, only on the single cover mark
+     a surface is allowed. */
+  --size-display-cover: 88px;
+  --t-display-cover: var(--weight-black) var(--size-display-cover)/var(--leading-solid) var(--font-editorial);
+}
+
+/* ── Cover masthead — the species name on a ficha header or a packaging
+   front, set at cover scale with the accent-warm rule beneath it. This
+   is the one place --accent-warm appears; the surface takes no other
+   accent alongside it. ─────────────────────────────────────────────── */
+[data-mode="archive"] .sdp-ficha__hd .sdp-species__common,
+[data-mode="archive"] .sdp-pack--front .sdp-species__common {
+  font: var(--t-display-cover);
+  letter-spacing: var(--tracking-display);
+  display: inline-block;
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid var(--accent-warm);
 }
 
 /* ── Prose face. In ARCHIVE the running text is set in Gaya: the same
@@ -39,8 +60,13 @@
   margin: 0 0 var(--space-2);
 }
 
-/* Drop cap. Three lines, flush to the baseline grid, never on a lede. */
-.ed-drop::first-letter {
+/* Drop cap. Three lines, flush to the baseline grid, never on a lede.
+   Default (not opt-in) on the two customer-facing surfaces this layer
+   absorbs: the ficha's body copy and the packaging back's first section
+   — no .ed-drop class required there. */
+.ed-drop::first-letter,
+[data-mode="archive"] .sdp-ficha__prose > p:first-of-type::first-letter,
+[data-mode="archive"] .sdp-pack--back .sdp-pack__sect:not(.sdp-pack__sect ~ .sdp-pack__sect) .sdp-pack__sv::first-letter {
   float: left;
   font-family: var(--font-editorial);
   font-weight: var(--weight-black);
@@ -97,3 +123,19 @@
 /* ── Two-column editorial text, as a journal sets it. ─────────────── */
 .ed-cols { column-count: 2; column-gap: var(--space-4); column-rule: var(--rule-hairline); }
 .ed-cols > p { margin-top: 0; }
+
+/* ── Caption voice on ARCHIVE surfaces. A figure/species caption still
+   marked up as .sdp-fig__ref (mono uppercase, the FIELD/CONTROL plate
+   ref) reads as cartouche copy instead once it sits under [data-mode=
+   "archive"] — italic Gaya, sentence case, matching .ed-cartouche__l.
+   New captions should use .ed-cartouche directly; this is the safety
+   net for the plain component markup. ───────────────────────────────  */
+[data-mode="archive"] .sdp-fig__ref {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  font-size: 17px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
