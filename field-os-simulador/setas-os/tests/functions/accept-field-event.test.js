@@ -162,22 +162,34 @@ test('una llamada sin sesión se rechaza', async () => {
   await assert.rejects(() => accept(env, null), /unauthenticated/);
 });
 
-test('un lote heredado sin lifecycleState se interpreta con el alias de `estado`', async () => {
-  // El servidor traduce `estado` con la misma tabla que la ficha del lote, así
-  // que `activo` no es `inoculated`: mandar ese `from` debe fallar.
+test('un lote recién creado admite el recorrido principal inoculado -> incubación', async () => {
+  // db.js crea el lote con estado 'activo' en el momento de la inoculación
+  // (knowledge_base/06_operations/batch_tracking.md:32), así que el primer
+  // registro del operario en campo debe ser exactamente esta transición.
   const { normalizeLifecycleState } = require('../../batch-sheet.js');
   await seedBatch('l11', { estado: 'activo' });
-  assert.equal(normalizeLifecycleState('activo', 'inoculated'), 'incubation');
+  assert.equal(normalizeLifecycleState('activo', 'inoculated'), 'inoculated');
 
-  await assert.rejects(
-    () => accept(envelopeFor('l11', 'inoculated', 'incubation', 0), AUTH),
-    /invalid_state_transition/
-  );
-
-  const receipt = await accept(envelopeFor('l11', 'incubation', 'maturation', 0), AUTH);
+  const receipt = await accept(envelopeFor('l11', 'inoculated', 'incubation', 0), AUTH);
   assert.equal(receipt.batchRevisionAfter, 1);
 
   const batch = (await db.collection('lotes_produccion').doc('l11').get()).data();
   assert.equal(batch.estado, 'activo', 'el campo heredado no se toca');
-  assert.equal(batch.lifecycleState, 'maturation');
+  assert.equal(batch.lifecycleState, 'incubation');
+});
+
+test('un lote heredado en español se interpreta con su propio alias', async () => {
+  const { normalizeLifecycleState } = require('../../batch-sheet.js');
+  await seedBatch('l12', { estado: 'incubacion' });
+  assert.equal(normalizeLifecycleState('incubacion', 'inoculated'), 'incubation');
+
+  // Mandar el `from` equivocado debe fallar, no aceptarse por aproximación.
+  await assert.rejects(
+    () => accept(envelopeFor('l12', 'inoculated', 'incubation', 0), AUTH),
+    /invalid_state_transition/
+  );
+
+  const receipt = await accept(envelopeFor('l12', 'incubation', 'maturation', 0), AUTH);
+  assert.equal(receipt.batchRevisionAfter, 1);
+  assert.equal((await db.collection('lotes_produccion').doc('l12').get()).data().lifecycleState, 'maturation');
 });

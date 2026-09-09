@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: fb017649dc89ad0e99c0f5e63e808670a24a14418b1710a02a5af04583da76a3
+// source-hash: 98132e8fd4c44d20c3217cc2dc21097ef244fe914a557616d7818a6afec6ba6b
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2383,6 +2383,7 @@ const FieldActionModal = ({
       setSelectedTo(model.options[0].to);
     }
   }, [model.options, selectedTo]);
+  const STATUS_ICONS = { saved_local: "📱", sending: "📡", confirmed: "☁️", simulated: "🧪", conflict: "⚠️", rejected: "⛔" };
   const handleConfirm = async () => {
     if (!selectedTo) return;
     setActionError("");
@@ -2450,39 +2451,23 @@ const FieldActionModal = ({
       "✕"
     )),
     /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-sm, 2px)", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-2, #6B7280)", display: "block" } }, "Estado Actual"), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--ink-0, #111827)" } }, actionSheetModule?.STATE_LABELS?.[model.state] || model.state)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2, #6B7280)", background: "var(--paper-100, #E5E0D0)", padding: "3px 7px", borderRadius: 2 } }, "Rol: ", operatorRole)),
-    model.status === "saved_local" && /* @__PURE__ */ React.createElement(
+    ["saved_local", "sending", "confirmed", "conflict", "rejected"].includes(model.status) && /* @__PURE__ */ React.createElement(
       "div",
       {
-        "data-testid": "status-saved-local",
+        "data-testid": `status-${model.status.replace("_", "-")}`,
+        "data-simulated": model.simulated ? "true" : "false",
         style: {
           padding: "12px 14px",
           marginBottom: 14,
-          background: "#FFFBEB",
-          border: "1.5px solid #D97706",
+          background: model.statusPalette.bg,
+          border: `1.5px solid ${model.statusPalette.border}`,
           borderRadius: 3,
-          color: "#92400E"
+          color: model.statusPalette.fg
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, "📱"), " ", /* @__PURE__ */ React.createElement("span", null, model.statusHeading)),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#B45309" } }, model.statusDetail)
-    ),
-    model.status === "confirmed" && /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        "data-testid": "status-confirmed",
-        style: {
-          padding: "12px 14px",
-          marginBottom: 14,
-          background: "#ECFDF5",
-          border: "1.5px solid #059669",
-          borderRadius: 3,
-          color: "#065F46"
-        }
-      },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, model.simulated ? "🧪" : "☁️"), " ", /* @__PURE__ */ React.createElement("span", null, model.statusHeading)),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: "#047857" } }, model.statusDetail)
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" } }, /* @__PURE__ */ React.createElement("span", null, STATUS_ICONS[model.simulated ? "simulated" : model.status] || ""), /* @__PURE__ */ React.createElement("span", null, model.statusHeading)),
+      model.showStatusLabel && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub } }, model.statusDetail)
     ),
     model.status === "sending" && /* @__PURE__ */ React.createElement(
       "div",
@@ -3225,6 +3210,24 @@ const getFieldDb = () => {
     throw err;
   });
   return _fieldDbPromise;
+};
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== "undefined" ? window.SetasFirebase : null;
+  const contracts = typeof window !== "undefined" ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve("operario");
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import("./vendor/firebase/firebase-firestore.js");
+      const snap = await getDoc(doc(fb.db, "usuarios", uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      return "operario";
+    }
+  })();
+  return _fieldRolePromise;
 };
 let _fieldMock = null;
 const getFieldMockTransport = () => {
@@ -5640,7 +5643,7 @@ BATCH (${numBags}×${kgBag} kg):
         to,
         accountId: uid,
         operatorId: uid,
-        operatorRole,
+        operatorRole: await getFieldOperatorRole(),
         expectedBatchRevision: Number.isInteger(lote.revision) ? lote.revision : 0,
         confirmed: true
       });

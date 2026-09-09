@@ -56,7 +56,13 @@
     cuarentena: 'quarantine',
     descartado: 'discarded',
     fallido: 'failed',
-    activo: 'incubation',
+    // El lote nace en la inoculación, no en la incubación:
+    // knowledge_base/06_operations/batch_tracking.md:32 — "Each lot is assigned
+    // a unique identifier at inoculation", y el sistema traza el lote "from
+    // inoculation through sale or disposal". Mapear `activo` a incubation hacía
+    // que la transición inoculado -> incubación nunca se ofreciera al operario,
+    // que es justamente el primer registro que hace en campo.
+    activo: 'inoculated',
   });
 
   const STATE_LABELS = Object.freeze({

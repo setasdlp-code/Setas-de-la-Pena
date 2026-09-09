@@ -261,16 +261,24 @@ test('abrir la hoja de acción y computar el modelo no escribe en IndexedDB (G10
 
 // 14. Alineación estricta cliente-servidor: no leer 'estado' para evitar divergencia con el servidor
 test('un lote con estado heredado no diverge del servidor', () => {
-  const m = buildActionSheetModel({
-    batch: { id: 'L-legacy-incubacion', estado: 'incubacion' }, // sin lifecycleState
-    operatorRole: 'operario',
-  });
-  // El servidor asume batch.lifecycleState || DEFAULT_INITIAL_STATE ('inoculated').
-  // Lo que importa no es el valor sino que sea el mismo que usará el servidor:
-  // cualquier diferencia produce invalid_state_transition al confirmar.
+  // Se normaliza el `estado` REAL del lote, no uno fijo: la versión anterior
+  // comparaba contra norm('activo') mientras el lote traía 'incubacion', y sólo
+  // pasaba porque ambos alias apuntaban al mismo estado.
   const { normalizeLifecycleState: norm } = require('./batch-sheet.js');
-  assert.equal(m.state, norm('activo', DEFAULT_INITIAL_STATE));
-  assert.ok(m.options.length > 0);
+  for (const estado of ['incubacion', 'activo', 'fructificacion']) {
+    const m = buildActionSheetModel({
+      batch: { id: `L-legacy-${estado}`, estado },   // sin lifecycleState
+      operatorRole: 'operario',
+    });
+    assert.equal(m.state, norm(estado, DEFAULT_INITIAL_STATE),
+      `divergencia para estado='${estado}': el servidor rechazaría la confirmación`);
+  }
+
+  // Y el recorrido principal vuelve a estar disponible para un lote recién creado.
+  const nuevo = buildActionSheetModel({ batch: { id: 'L-nuevo', estado: 'activo' }, operatorRole: 'operario' });
+  assert.equal(nuevo.state, 'inoculated');
+  assert.deepEqual(nuevo.options.map(o => o.to), ['incubation'],
+    'inoculado -> incubación es el primer registro que hace el operario en campo');
 });
 
 test('un recibo simulado no se presenta como confirmación del servidor', () => {
@@ -338,5 +346,38 @@ test('cada estado trae su propio titular y detalle', () => {
     const m = buildActionSheetModel({ batch: { lifecycleState: 'incubation' }, queueEntry: { status: entry } });
     assert.ok(m.statusHeading.length > 0, `${status} necesita titular`);
     assert.ok(m.statusDetail.length > 0, `${status} necesita detalle`);
+  }
+});
+
+test('el simulacro no comparte paleta con ninguna confirmación ni con el guardado local', () => {
+  const batch = { estado: 'activo' };
+  const local = buildActionSheetModel({ batch, queueEntry: { status: 'pending' } });
+  const real = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' } });
+  const sim = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' }, simulated: true });
+
+  // El color se lee antes que el texto. Si el simulacro fuera verde diría
+  // "listo, confía"; si fuera ámbar se confundiría con "guardado en el equipo".
+  assert.notEqual(sim.statusPalette.bg, real.statusPalette.bg);
+  assert.notEqual(sim.statusPalette.bg, local.statusPalette.bg);
+  assert.notEqual(sim.statusPalette.border, real.statusPalette.border);
+  assert.notEqual(sim.statusPalette.border, local.statusPalette.border);
+});
+
+test('no se repite el titular como rótulo cuando dicen lo mismo', () => {
+  const batch = { estado: 'activo' };
+  const local = buildActionSheetModel({ batch, queueEntry: { status: 'pending' } });
+  assert.equal(local.statusLabel.toUpperCase(), local.statusHeading.toUpperCase());
+  assert.equal(local.showStatusLabel, false, 'no debe gastar una línea repitiendo el titular');
+
+  const sim = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' }, simulated: true });
+  assert.equal(sim.showStatusLabel, true, 'aquí sí aporta: aclara que no hubo servidor');
+});
+
+test('todo estado visible trae paleta completa', () => {
+  for (const status of ['pending', 'retry_wait', 'confirmed', 'conflict', 'rejected']) {
+    const m = buildActionSheetModel({ batch: { estado: 'activo' }, queueEntry: { status } });
+    for (const key of ['bg', 'border', 'fg', 'sub']) {
+      assert.ok(m.statusPalette[key], `${status} sin ${key}`);
+    }
   }
 });

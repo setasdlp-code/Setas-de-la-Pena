@@ -31,6 +31,26 @@
   // la reserva del lote retenida indefinidamente.
   const RETRYABLE_CODES = Object.freeze(['network_error']);
 
+  // El vocabulario de roles del flujo de trabajo, y cómo se traduce lo que hay
+  // en `usuarios/{uid}.rol`. Vive aquí porque cliente y servidor tienen que
+  // llegar al mismo rol: si difieren, la hoja ofrece acciones que la aceptación
+  // rechaza con unauthorized_action y el operario no entiende por qué.
+  const WORKFLOW_ROLES = Object.freeze(['direccion', 'produccion', 'operario']);
+
+  const ROLE_ALIASES = Object.freeze(Object.assign(Object.create(null), {
+    admin: 'direccion',
+    direccion: 'direccion',
+    produccion: 'produccion',
+    operario: 'operario',
+  }));
+
+  // Mínimo privilegio ante lo desconocido: un rol ausente o no reconocido no
+  // debe heredar permisos por accidente.
+  const mapWorkflowRole = (rol) => {
+    const key = typeof rol === 'string' ? rol.trim().toLowerCase() : '';
+    return ROLE_ALIASES[key] || 'operario';
+  };
+
   const RECEIPT_FIELDS = Object.freeze(['eventId', 'acceptedAt', 'batchRevisionAfter', 'serverEventPath']);
 
   const SCHEMA_VERSION = 1;
@@ -88,6 +108,9 @@
     ERROR_CODES,
     RETRYABLE_CODES,
     RECEIPT_FIELDS,
+    WORKFLOW_ROLES,
+    ROLE_ALIASES,
+    mapWorkflowRole,
     isRetryable,
     buildRequestEnvelope,
     validateReceipt,

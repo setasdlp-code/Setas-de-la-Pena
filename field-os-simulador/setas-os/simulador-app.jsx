@@ -3386,6 +3386,8 @@ const FieldActionModal = ({
     }
   }, [model.options, selectedTo]);
 
+  const STATUS_ICONS = { saved_local: '📱', sending: '📡', confirmed: '☁️', simulated: '🧪', conflict: '⚠️', rejected: '⛔' };
+
   const handleConfirm = async () => {
     if (!selectedTo) return;
     setActionError('');
@@ -3490,49 +3492,29 @@ const FieldActionModal = ({
         </span>
       </div>
 
-      {model.status === 'saved_local' && (
+      {['saved_local', 'sending', 'confirmed', 'conflict', 'rejected'].includes(model.status) && (
         <div
-          data-testid="status-saved-local"
+          data-testid={`status-${model.status.replace('_', '-')}`}
+          data-simulated={model.simulated ? 'true' : 'false'}
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#FFFBEB',
-            border: '1.5px solid #D97706',
+            background: model.statusPalette.bg,
+            border: `1.5px solid ${model.statusPalette.border}`,
             borderRadius: 3,
-            color: '#92400E',
+            color: model.statusPalette.fg,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>📱</span> <span>{model.statusHeading}</span>
+            <span>{STATUS_ICONS[model.simulated ? 'simulated' : model.status] || ''}</span>
+            <span>{model.statusHeading}</span>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
-            {model.statusLabel}
-          </div>
-          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#B45309' }}>
-            {model.statusDetail}
-          </div>
-        </div>
-      )}
-
-      {model.status === 'confirmed' && (
-        <div
-          data-testid="status-confirmed"
-          style={{
-            padding: '12px 14px',
-            marginBottom: 14,
-            background: '#ECFDF5',
-            border: '1.5px solid #059669',
-            borderRadius: 3,
-            color: '#065F46',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>{model.simulated ? '🧪' : '☁️'}</span> <span>{model.statusHeading}</span>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
-            {model.statusLabel}
-          </div>
-          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#047857' }}>
+          {model.showStatusLabel && (
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+              {model.statusLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub }}>
             {model.statusDetail}
           </div>
         </div>
@@ -4649,6 +4631,33 @@ const getFieldDb = () => {
 // contra un simulacro que respeta el mismo contrato de idempotencia. Los
 // recibos que emite llevan `simulated`, y la hoja de acción los rotula como
 // tales: el operario nunca debe leer un simulacro como confirmación real.
+// El rol que gobierna las transiciones sale de `usuarios/{uid}.rol` del usuario
+// autenticado, traducido con la tabla compartida — la misma que aplica
+// acceptFieldEvent. Antes se derivaba de props.isAdmin, que viene del selector
+// de operario del encabezado y no de la sesión de Firebase: un operario veía
+// ofrecidas acciones de cuarentena que el servidor rechazaba.
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import('./vendor/firebase/firebase-firestore.js');
+      const snap = await getDoc(doc(fb.db, 'usuarios', uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      // Mínimo privilegio si no se puede leer: mejor ofrecer de menos que
+      // ofrecer acciones que el servidor va a rechazar.
+      return 'operario';
+    }
+  })();
+  return _fieldRolePromise;
+};
+
 let _fieldMock = null;
 const getFieldMockTransport = () => {
   if (_fieldMock) return _fieldMock;
@@ -7174,7 +7183,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try{
       const db=await getFieldDb();
       const res=await SHEET.confirmTransition({
-        db,batch:lote,from,to,accountId:uid,operatorId:uid,operatorRole,
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
         expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
         confirmed:true,
       });
