@@ -261,16 +261,24 @@ test('abrir la hoja de acción y computar el modelo no escribe en IndexedDB (G10
 
 // 14. Alineación estricta cliente-servidor: no leer 'estado' para evitar divergencia con el servidor
 test('un lote con estado heredado no diverge del servidor', () => {
-  const m = buildActionSheetModel({
-    batch: { id: 'L-legacy-incubacion', estado: 'incubacion' }, // sin lifecycleState
-    operatorRole: 'operario',
-  });
-  // El servidor asume batch.lifecycleState || DEFAULT_INITIAL_STATE ('inoculated').
-  // Lo que importa no es el valor sino que sea el mismo que usará el servidor:
-  // cualquier diferencia produce invalid_state_transition al confirmar.
+  // Se normaliza el `estado` REAL del lote, no uno fijo: la versión anterior
+  // comparaba contra norm('activo') mientras el lote traía 'incubacion', y sólo
+  // pasaba porque ambos alias apuntaban al mismo estado.
   const { normalizeLifecycleState: norm } = require('./batch-sheet.js');
-  assert.equal(m.state, norm('activo', DEFAULT_INITIAL_STATE));
-  assert.ok(m.options.length > 0);
+  for (const estado of ['incubacion', 'activo', 'fructificacion']) {
+    const m = buildActionSheetModel({
+      batch: { id: `L-legacy-${estado}`, estado },   // sin lifecycleState
+      operatorRole: 'operario',
+    });
+    assert.equal(m.state, norm(estado, DEFAULT_INITIAL_STATE),
+      `divergencia para estado='${estado}': el servidor rechazaría la confirmación`);
+  }
+
+  // Y el recorrido principal vuelve a estar disponible para un lote recién creado.
+  const nuevo = buildActionSheetModel({ batch: { id: 'L-nuevo', estado: 'activo' }, operatorRole: 'operario' });
+  assert.equal(nuevo.state, 'inoculated');
+  assert.deepEqual(nuevo.options.map(o => o.to), ['incubation'],
+    'inoculado -> incubación es el primer registro que hace el operario en campo');
 });
 
 test('un recibo simulado no se presenta como confirmación del servidor', () => {
