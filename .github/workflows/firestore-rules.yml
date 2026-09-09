@@ -85,6 +85,14 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      # El job de despliegue no instala dependencias del proyecto — no las
+      # necesita, sólo el CLI. Sin esta línea `npx firebase` no encuentra nada
+      # que ejecutar y el paso falla con "could not determine executable to run",
+      # que no dice nada sobre reglas ni sobre la credencial.
+      - name: Instalar firebase-tools
+        if: steps.cred.outputs.present == 'true'
+        run: npm install -g firebase-tools
+
       - name: Desplegar
         if: steps.cred.outputs.present == 'true'
         env:
@@ -92,6 +100,6 @@ jobs:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SDLP_OS }}
         run: |
           printf '%s' "$SA" > /tmp/sa.json
-          npx firebase deploy --only firestore:rules --project sdlp-os --non-interactive
+          firebase deploy --only firestore:rules --project sdlp-os --non-interactive
           rm -f /tmp/sa.json
           echo "### Reglas de Firestore desplegadas a sdlp-os" >> "$GITHUB_STEP_SUMMARY"
