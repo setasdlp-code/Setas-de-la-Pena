@@ -3378,6 +3378,8 @@ const FieldActionModal = ({
     }
   }, [model.options, selectedTo]);
 
+  const STATUS_ICONS = { saved_local: '📱', sending: '📡', confirmed: '☁️', simulated: '🧪', conflict: '⚠️', rejected: '⛔' };
+
   const handleConfirm = async () => {
     if (!selectedTo) return;
     setActionError('');
@@ -3482,49 +3484,29 @@ const FieldActionModal = ({
         </span>
       </div>
 
-      {model.status === 'saved_local' && (
+      {['saved_local', 'sending', 'confirmed', 'conflict', 'rejected'].includes(model.status) && (
         <div
-          data-testid="status-saved-local"
+          data-testid={`status-${model.status.replace('_', '-')}`}
+          data-simulated={model.simulated ? 'true' : 'false'}
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#FFFBEB',
-            border: '1.5px solid #D97706',
+            background: model.statusPalette.bg,
+            border: `1.5px solid ${model.statusPalette.border}`,
             borderRadius: 3,
-            color: '#92400E',
+            color: model.statusPalette.fg,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>📱</span> <span>{model.statusHeading}</span>
+            <span>{STATUS_ICONS[model.simulated ? 'simulated' : model.status] || ''}</span>
+            <span>{model.statusHeading}</span>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
-            {model.statusLabel}
-          </div>
-          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#B45309' }}>
-            {model.statusDetail}
-          </div>
-        </div>
-      )}
-
-      {model.status === 'confirmed' && (
-        <div
-          data-testid="status-confirmed"
-          style={{
-            padding: '12px 14px',
-            marginBottom: 14,
-            background: '#ECFDF5',
-            border: '1.5px solid #059669',
-            borderRadius: 3,
-            color: '#065F46',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>{model.simulated ? '🧪' : '☁️'}</span> <span>{model.statusHeading}</span>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
-            {model.statusLabel}
-          </div>
-          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: '#047857' }}>
+          {model.showStatusLabel && (
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+              {model.statusLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub }}>
             {model.statusDetail}
           </div>
         </div>

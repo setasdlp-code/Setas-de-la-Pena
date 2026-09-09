@@ -54,6 +54,16 @@
     failed: 'Fallido',
   });
 
+  const PALETTES = Object.freeze({
+    idle:        Object.freeze({ bg: 'transparent', border: 'transparent', fg: 'inherit', sub: 'inherit' }),
+    saved_local: Object.freeze({ bg: '#FFFBEB', border: '#D97706', fg: '#92400E', sub: '#B45309' }),
+    sending:     Object.freeze({ bg: '#EFF6FF', border: '#2563EB', fg: '#1E3A8A', sub: '#1D4ED8' }),
+    confirmed:   Object.freeze({ bg: '#ECFDF5', border: '#059669', fg: '#065F46', sub: '#047857' }),
+    conflict:    Object.freeze({ bg: '#FEF2F2', border: '#DC2626', fg: '#991B1B', sub: '#B91C1C' }),
+    rejected:    Object.freeze({ bg: '#FEF2F2', border: '#DC2626', fg: '#991B1B', sub: '#B91C1C' }),
+  });
+  const SIMULATED_PALETTE = Object.freeze({ bg: '#F1F5F9', border: '#64748B', fg: '#334155', sub: '#475569' });
+
   const STATUS_HEADINGS = Object.freeze({
     saved_local: 'GUARDADO EN ESTE EQUIPO',
     sending: 'ENVIANDO',
@@ -196,6 +206,13 @@
       statusLabel,
       statusHeading,
       statusDetail,
+      // Pizarra para el simulacro: ni ámbar (que ya significa "en este equipo")
+      // ni verde (que significa "el servidor lo tiene"). El color es lo primero
+      // que se lee, así que debe decir "esto no es real" por sí solo.
+      statusPalette: isSimulated ? SIMULATED_PALETTE : (PALETTES[status] || PALETTES.idle),
+      // El titular ya dice lo mismo en mayúsculas; repetirlo gasta una línea en
+      // una pantalla de teléfono sin añadir información.
+      showStatusLabel: statusLabel.toUpperCase() !== statusHeading.toUpperCase(),
       simulated: isSimulated,
       canConfirm,
       canRefresh,
@@ -276,6 +293,8 @@
     DEFAULT_INITIAL_STATE,
     STATE_LABELS,
     STATUS_LABELS,
+    PALETTES,
+    SIMULATED_PALETTE,
     buildActionSheetModel,
     confirmTransition,
   };

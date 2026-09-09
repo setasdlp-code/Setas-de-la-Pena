@@ -348,3 +348,36 @@ test('cada estado trae su propio titular y detalle', () => {
     assert.ok(m.statusDetail.length > 0, `${status} necesita detalle`);
   }
 });
+
+test('el simulacro no comparte paleta con ninguna confirmación ni con el guardado local', () => {
+  const batch = { estado: 'activo' };
+  const local = buildActionSheetModel({ batch, queueEntry: { status: 'pending' } });
+  const real = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' } });
+  const sim = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' }, simulated: true });
+
+  // El color se lee antes que el texto. Si el simulacro fuera verde diría
+  // "listo, confía"; si fuera ámbar se confundiría con "guardado en el equipo".
+  assert.notEqual(sim.statusPalette.bg, real.statusPalette.bg);
+  assert.notEqual(sim.statusPalette.bg, local.statusPalette.bg);
+  assert.notEqual(sim.statusPalette.border, real.statusPalette.border);
+  assert.notEqual(sim.statusPalette.border, local.statusPalette.border);
+});
+
+test('no se repite el titular como rótulo cuando dicen lo mismo', () => {
+  const batch = { estado: 'activo' };
+  const local = buildActionSheetModel({ batch, queueEntry: { status: 'pending' } });
+  assert.equal(local.statusLabel.toUpperCase(), local.statusHeading.toUpperCase());
+  assert.equal(local.showStatusLabel, false, 'no debe gastar una línea repitiendo el titular');
+
+  const sim = buildActionSheetModel({ batch, queueEntry: { status: 'confirmed' }, simulated: true });
+  assert.equal(sim.showStatusLabel, true, 'aquí sí aporta: aclara que no hubo servidor');
+});
+
+test('todo estado visible trae paleta completa', () => {
+  for (const status of ['pending', 'retry_wait', 'confirmed', 'conflict', 'rejected']) {
+    const m = buildActionSheetModel({ batch: { estado: 'activo' }, queueEntry: { status } });
+    for (const key of ['bg', 'border', 'fg', 'sub']) {
+      assert.ok(m.statusPalette[key], `${status} sin ${key}`);
+    }
+  }
+});
