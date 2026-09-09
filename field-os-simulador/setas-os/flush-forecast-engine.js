@@ -22,6 +22,31 @@
   const round3 = (v) => Math.round(v * 1000) / 1000;
 
   /**
+   * Parsea de manera segura fechas ISO, strings 'YYYY-MM-DD', timestamps y objetos Date.
+   * Evita desplazamientos de zona horaria al forzar medio día local en strings solo-fecha,
+   * y previene el error RangeError: Invalid time value ante cadenas ISO con sufijo horario.
+   */
+  const parseDateSafe = (d) => {
+    if (!d) return null;
+    if (d instanceof Date) return isNaN(d.getTime()) ? null : new Date(d);
+    if (typeof d === 'string') {
+      const trimmed = d.trim();
+      if (!trimmed) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const parsed = new Date(trimmed + 'T12:00:00');
+        return isNaN(parsed.getTime()) ? null : parsed;
+      }
+      const parsed = new Date(trimmed);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    if (typeof d === 'number') {
+      const parsed = new Date(d);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+  };
+
+  /**
    * Perfiles biológicos de distribución y temporalidad de oleadas (flushes)
    * verificados para las 9 especies de Setas OS bajo cultivo en sustrato lignocelulósico.
    */
@@ -182,6 +207,8 @@
       maxCommercialFlushes: 2,
       tBase: 10.0,
       tRef: 28,
+      tOpt: 30,
+      tMax: 36,
       q10: 2.0,
       nominalIncubationDays: 50,
       nominalFirstFlushDays: 115,
@@ -189,50 +216,129 @@
     },
   };
 
+  // Asignar cardinales térmicos estándar por defecto a especies si no están explícitos
+  SPECIES_FLUSH_PROFILES.p_ostreatus_gris.tOpt = 25;
+  SPECIES_FLUSH_PROFILES.p_ostreatus_gris.tMax = 32;
+  SPECIES_FLUSH_PROFILES.p_ostreatus_blanco.tOpt = 26;
+  SPECIES_FLUSH_PROFILES.p_ostreatus_blanco.tMax = 33;
+  SPECIES_FLUSH_PROFILES.p_djamor_rosa.tOpt = 29;
+  SPECIES_FLUSH_PROFILES.p_djamor_rosa.tMax = 35;
+  SPECIES_FLUSH_PROFILES.p_eryngii.tOpt = 24;
+  SPECIES_FLUSH_PROFILES.p_eryngii.tMax = 30;
+  SPECIES_FLUSH_PROFILES.shiitake.tOpt = 25;
+  SPECIES_FLUSH_PROFILES.shiitake.tMax = 30;
+  SPECIES_FLUSH_PROFILES.lions_mane.tOpt = 24;
+  SPECIES_FLUSH_PROFILES.lions_mane.tMax = 29;
+  SPECIES_FLUSH_PROFILES.nameko.tOpt = 23;
+  SPECIES_FLUSH_PROFILES.nameko.tMax = 28;
+  SPECIES_FLUSH_PROFILES.enoki.tOpt = 22;
+  SPECIES_FLUSH_PROFILES.enoki.tMax = 27;
+
   /**
-   * Obtiene el perfil de oleadas por especie, con fallback a Orellana Gris.
+   * Alias taxonómicos y claves operacionales canónicas de Setas OS.
+   */
+  const SPECIES_KEY_ALIASES = {
+    orellana_gris: 'p_ostreatus_gris',
+    orellana_blanca: 'p_ostreatus_blanco',
+    orellana_rosa: 'p_djamor_rosa',
+    seta_cardo: 'p_eryngii',
+    melena_leon: 'lions_mane',
+    pleurotus_ostreatus: 'p_ostreatus_gris',
+    pleurotus_florida: 'p_ostreatus_blanco',
+    pleurotus_djamor: 'p_djamor_rosa',
+    pleurotus_eryngii: 'p_eryngii',
+    hericium_erinaceus: 'lions_mane',
+    lentinula_edodes: 'shiitake',
+    flammulina_velutipes: 'enoki',
+    pholiota_nameko: 'nameko',
+    ganoderma_lucidum: 'reishi',
+  };
+
+  /**
+   * Normaliza cualquier clave o alias de especie a la clave canónica del perfil de flushes.
+   */
+  const normalizeSpeciesKey = (key) => {
+    if (!key || typeof key !== 'string') return 'p_ostreatus_gris';
+    const clean = key.trim().toLowerCase();
+    return SPECIES_KEY_ALIASES[clean] || (SPECIES_FLUSH_PROFILES[clean] ? clean : 'p_ostreatus_gris');
+  };
+
+  /**
+   * Obtiene el perfil de oleadas por especie, con normalización de alias y fallback a Orellana Gris.
    */
   const getSpeciesFlushProfile = (speciesKey) => {
-    return SPECIES_FLUSH_PROFILES[speciesKey] || SPECIES_FLUSH_PROFILES.p_ostreatus_gris;
+    const norm = normalizeSpeciesKey(speciesKey);
+    return SPECIES_FLUSH_PROFILES[norm] || SPECIES_FLUSH_PROFILES.p_ostreatus_gris;
   };
 
   /**
    * Calcula el factor de retraso cinético térmico según temperatura de cámara
-   * aplicando el coeficiente metabólico Q10 = 2.0.
+   * aplicando el coeficiente metabólico Q10 y el modelo biológico de temperaturas cardinales (CTMI).
    *
-   * D(T) = D(T_ref) * Q10^((T_ref - T) / 10)
+   * D(T) = D(T_ref) * Q10^((T_ref - T) / 10) para T <= T_opt
    *
-   * @param {string} speciesKey Clave de la especie
+   * @param {string} speciesKey Clave o alias de la especie
    * @param {number} ambientTemp Temperatura promedio del cuarto en °C
    * @returns {object} Factor térmico, advertencias y temperatura evaluada
    */
   const calcThermalDelayFactor = (speciesKey, ambientTemp) => {
     const profile = getSpeciesFlushProfile(speciesKey);
+    const normKey = normalizeSpeciesKey(speciesKey);
     const temp = Number.isFinite(ambientTemp) ? ambientTemp : profile.tRef;
     const tRef = profile.tRef || 24;
     const tBase = profile.tBase || 5.0;
+    const tOpt = profile.tOpt || (tRef + 1.0);
+    const tMax = profile.tMax || 32.0;
     const q10 = profile.q10 || 2.0;
 
-    // Alerta biológica si la temperatura se acerca a tBase
+    // Alertas biológicas por umbrales térmicos
     let coldWarning = null;
-    if (temp <= tBase + 1.0) {
+    let heatWarning = null;
+    let thermalArrest = false;
+
+    if (temp <= tBase) {
+      coldWarning = `Temperatura crítica (${temp}°C) por debajo del umbral biológico mínimo (${tBase}°C). Crecimiento detenido por frío.`;
+      thermalArrest = true;
+    } else if (temp <= tBase + 1.0) {
       coldWarning = `Temperatura crítica (${temp}°C) cercana al umbral biológico mínimo (${tBase}°C). Crecimiento detenido.`;
-    } else if (speciesKey === 'p_djamor_rosa' && temp < 16.0) {
+    } else if (normKey === 'p_djamor_rosa' && temp < 16.0) {
       coldWarning = `Especie termófila P. djamor a ${temp}°C (<16°C). Alto riesgo de aborto primoridial y letargia.`;
     }
 
-    const exponent = (tRef - temp) / 10;
-    const rawFactor = Math.pow(q10, exponent);
-    // Factor acotado entre 0.65 (aceleración por calor controlado) y 3.0 (retraso severo por frío)
-    const factor = Math.max(0.65, Math.min(3.0, rawFactor));
+    if (temp >= tMax) {
+      heatWarning = `Temperatura extrema (${temp}°C) sobrepasa el límite letal vegetativo (${tMax}°C). Desnaturalización enzimática y paro metabólico.`;
+      thermalArrest = true;
+    } else if (temp > tOpt + 1.5) {
+      heatWarning = `Estrés térmico por calor (${temp}°C > ${tOpt}°C). Tasa de crecimiento micelial reducida por gasto de respiración de mantenimiento.`;
+    }
+
+    let factor;
+    if (thermalArrest) {
+      factor = 3.5; // Paro térmico
+    } else if (temp <= tOpt) {
+      const exponent = (tRef - temp) / 10;
+      const rawFactor = Math.pow(q10, exponent);
+      factor = Math.max(0.65, Math.min(3.0, rawFactor));
+    } else {
+      // Régimen supra-óptimo: gasto respiratorio de mantenimiento penaliza el avance micelial
+      const heatPenalty = 1.0 + ((temp - tOpt) / (tMax - tOpt)) * 1.5;
+      factor = Math.min(3.0, Math.max(0.65, heatPenalty * 0.85));
+    }
 
     return {
+      speciesKey: normKey,
       factor: round2(factor),
       temp,
       tRef,
+      tBase,
+      tOpt,
+      tMax,
       coldWarning,
+      heatWarning,
+      thermalArrest,
       isColdDelayed: factor > 1.15,
       isAccelerated: factor < 0.90,
+      isHeatStressed: temp > tOpt,
     };
   };
 
@@ -247,19 +353,21 @@
    * @returns {object} Proyección detallada de producción por oleada
    */
   const calculateLotYieldAndFlushes = (lot = {}, options = {}) => {
-    const speciesKey = lot.especie || lot.sKey || lot.speciesKey || options.speciesKey || 'p_ostreatus_gris';
+    const l = lot || {};
+    const opts = options || {};
+    const speciesKey = l.especie || l.sKey || l.speciesKey || opts.speciesKey || 'p_ostreatus_gris';
     const profile = getSpeciesFlushProfile(speciesKey);
 
-    const bags = Math.max(1, parseInt(lot.bags || lot.numBolsas || options.bags || 1, 10));
-    const kgPerBag = Math.max(0.1, parseFloat(lot.kgPerBag || lot.pesoBolsa || options.kgPerBag || 1.5));
-    const moisturePct = Math.max(40, Math.min(85, parseFloat(lot.moisture || lot.humedad || options.moisture || profile.typicalMoisturePct || 65)));
+    const bags = Math.max(1, parseInt(l.bags || l.numBolsas || opts.bags || 1, 10));
+    const kgPerBag = Math.max(0.1, parseFloat(l.kgPerBag || l.pesoBolsa || opts.kgPerBag || 1.5));
+    const moisturePct = Math.max(40, Math.min(85, parseFloat(l.moisture || l.humedad || opts.moisture || profile.typicalMoisturePct || 65)));
     const dryFraction = 1 - (moisturePct / 100);
 
     // Materia seca real
     let dryKgPerBag;
     let totalDryKg;
-    if (Number.isFinite(parseFloat(lot.peseSeco)) && parseFloat(lot.peseSeco) > 0) {
-      totalDryKg = parseFloat(lot.peseSeco);
+    if (Number.isFinite(parseFloat(l.peseSeco)) && parseFloat(l.peseSeco) > 0) {
+      totalDryKg = parseFloat(l.peseSeco);
       dryKgPerBag = totalDryKg / bags;
     } else {
       dryKgPerBag = kgPerBag * dryFraction;
@@ -267,10 +375,10 @@
     }
 
     // Eficiencia Biológica (EB %)
-    const eb = Math.max(10, Math.min(250, parseFloat(lot.eb || lot.ebEstimada || options.eb || 90)));
+    const eb = Math.max(10, Math.min(250, parseFloat(l.eb || l.ebEstimada || opts.eb || 90)));
 
     // Factor de merma por contaminación prevista o medida
-    const contamRate = clamp01(parseFloat(lot.contamRate ?? (lot.contPct != null ? lot.contPct / 100 : options.contamRate ?? 0)));
+    const contamRate = clamp01(parseFloat(l.contamRate ?? (l.contPct != null ? l.contPct / 100 : opts.contamRate ?? 0)));
     const healthyFraction = 1 - contamRate;
     const healthyDryKg = totalDryKg * healthyFraction;
 
@@ -279,20 +387,38 @@
     const expectedKgPerBag = dryKgPerBag * (eb / 100) * healthyFraction;
 
     // Ajuste térmico de días
-    const ambientTemp = Number.isFinite(options.ambientTemp) ? options.ambientTemp : (lot.ambientTemp ?? profile.tRef);
+    const ambientTemp = Number.isFinite(opts.ambientTemp) ? opts.ambientTemp : (l.ambientTemp ?? profile.tRef);
     const thermal = calcThermalDelayFactor(speciesKey, ambientTemp);
     const thermalFactor = thermal.factor;
 
     // Fecha base de inoculación
-    const inocDateStr = lot.fechaInoculacion || lot.inocDate || options.inocDate || new Date().toISOString().split('T')[0];
-    const inocBase = new Date(inocDateStr + 'T12:00:00');
+    const inocDateInput = l.fechaInoculacion || l.inocDate || opts.inocDate || new Date();
+    const inocBase = parseDateSafe(inocDateInput) || new Date();
 
-    // Desglose por oleadas
+    // Desglose por oleadas y soporte de estado de avance
+    const currentFlush = parseInt(l.currentFlush ?? opts.currentFlush ?? 0, 10);
+    const lastFlushDateInput = l.lastFlushDate || opts.lastFlushDate || null;
+    const lastFlushBase = parseDateSafe(lastFlushDateInput);
+
     const flushes = profile.flushes.map((f) => {
       const flushKg = totalExpectedKg * f.pct;
-      const adjustedDays = Math.round(f.daysAfterInoc * thermalFactor);
-      const flushDate = new Date(inocBase);
-      flushDate.setDate(flushDate.getDate() + adjustedDays);
+      let adjustedDays;
+      let flushDate;
+      const isPastHarvested = currentFlush > 0 && f.flush <= currentFlush;
+
+      if (currentFlush > 0 && lastFlushBase && f.flush > currentFlush) {
+        // Proyección dinámica de oleadas futuras a partir de la última fecha de cosecha real
+        const flushesAhead = f.flush - currentFlush;
+        const restDays = (profile.restDaysBetweenFlushes || 14) * flushesAhead;
+        const restAdjusted = Math.round(restDays * thermalFactor);
+        flushDate = new Date(lastFlushBase);
+        flushDate.setDate(flushDate.getDate() + restAdjusted);
+        adjustedDays = Math.round((flushDate.getTime() - inocBase.getTime()) / 86400000);
+      } else {
+        adjustedDays = Math.round(f.daysAfterInoc * thermalFactor);
+        flushDate = new Date(inocBase);
+        flushDate.setDate(flushDate.getDate() + adjustedDays);
+      }
 
       return {
         flush: f.flush,
@@ -303,6 +429,7 @@
         adjustedDays,
         date: flushDate.toISOString().split('T')[0],
         label: f.label,
+        isHarvested: isPastHarvested,
       };
     });
 
@@ -321,7 +448,13 @@
       thermalFactor,
       ambientTemp: thermal.temp,
       coldWarning: thermal.coldWarning,
+      heatWarning: thermal.heatWarning,
+      thermalArrest: thermal.thermalArrest,
+      isHeatStressed: thermal.isHeatStressed,
+      currentFlush,
       flushes,
+      remainingFlushes: flushes.filter(f => !f.isHarvested),
+      remainingExpectedKg: round2(flushes.filter(f => !f.isHarvested).reduce((acc, f) => acc + f.kg, 0)),
       // Compatibilidad directa con interfaces previas que esperan flush1, flush2, flush3
       flush1: flushes[0] ? { pct: flushes[0].pct, kg: flushes[0].kg } : { pct: 0.6, kg: 0 },
       flush2: flushes[1] ? { pct: flushes[1].pct, kg: flushes[1].kg } : { pct: 0.3, kg: 0 },
@@ -334,7 +467,7 @@
    *
    * @param {number} deficitKg Kilogramos de hongo fresco requeridos
    * @param {string} speciesKey Clave de la especie
-   * @param {object} options Opciones de formato de bolsa, EB y merma
+   * @param {object} options Opciones de formato de bolsa, EB, merma y oleada objetivo
    * @returns {object} Recomendación de siembra estructurada
    */
   const calculateSowingRequirement = (deficitKg, speciesKey = 'p_ostreatus_gris', options = {}) => {
@@ -350,39 +483,51 @@
       };
     }
 
+    const opts = options || {};
     const profile = getSpeciesFlushProfile(speciesKey);
-    const kgPerBag = Math.max(0.5, parseFloat(options.kgPerBag || 1.5));
-    const moisturePct = Math.max(45, Math.min(80, parseFloat(options.moisture || profile.typicalMoisturePct || 65)));
+    const kgPerBag = Math.max(0.5, parseFloat(opts.kgPerBag || 1.5));
+    const moisturePct = Math.max(45, Math.min(80, parseFloat(opts.moisture || profile.typicalMoisturePct || 65)));
     const dryKgPerBag = kgPerBag * (1 - moisturePct / 100);
 
     // EB objetivo (default a valor base o provisto)
-    const eb = Math.max(20, Math.min(200, parseFloat(options.eb || 90)));
-    const contamRate = clamp01(parseFloat(options.contamRate ?? 0.05)); // 5% de contingencia estándar
+    const eb = Math.max(20, Math.min(200, parseFloat(opts.eb || 90)));
+    const contamRate = clamp01(parseFloat(opts.contamRate ?? 0.05)); // 5% de contingencia estándar
+
+    // Factor de oleada objetivo: si el pedido es para una fecha única de entrega,
+    // normalmente se debe cubrir con la primera oleada comercial (F1)
+    const firstFlushOnly = opts.firstFlushOnly === true || opts.targetFlush === 1;
+    const targetFlushNumber = opts.targetFlush ? parseInt(opts.targetFlush, 10) : (firstFlushOnly ? 1 : null);
+    const targetFlushObj = targetFlushNumber ? profile.flushes.find(f => f.flush === targetFlushNumber) : null;
+    const flushFraction = targetFlushObj ? targetFlushObj.pct : 1.0;
 
     // Rendimiento esperado por bolsa
-    const yieldPerBagKg = dryKgPerBag * (eb / 100) * (1 - contamRate);
+    const yieldPerBagKg = dryKgPerBag * (eb / 100) * (1 - contamRate) * flushFraction;
     const bagsNeeded = Math.ceil(deficit / Math.max(0.05, yieldPerBagKg));
     const wetSubstrateKg = round1(bagsNeeded * kgPerBag);
     const drySubstrateKg = round1(bagsNeeded * dryKgPerBag);
 
     // Spawn / micelio requerido (típicamente 7-8% según especie)
-    const spawnRatePct = Math.max(3, Math.min(15, parseFloat(options.spawnRate || 8)));
+    const spawnRatePct = Math.max(3, Math.min(15, parseFloat(opts.spawnRate || 8)));
     const spawnNeededKg = round2(wetSubstrateKg * (spawnRatePct / 100));
 
     // Cálculo de fecha recomendada de siembra si hay fecha objetivo de entrega
     let recommendedSowDate = null;
-    if (options.targetDate) {
-      const target = new Date(options.targetDate + 'T12:00:00');
-      const ambientTemp = Number.isFinite(options.ambientTemp) ? options.ambientTemp : profile.tRef;
-      const thermal = calcThermalDelayFactor(speciesKey, ambientTemp);
-      const daysToF1 = Math.round(profile.nominalFirstFlushDays * thermal.factor);
+    if (opts.targetDate) {
+      const target = parseDateSafe(opts.targetDate);
+      if (target) {
+        const ambientTemp = Number.isFinite(opts.ambientTemp) ? opts.ambientTemp : profile.tRef;
+        const thermal = calcThermalDelayFactor(speciesKey, ambientTemp);
+        const targetDays = (targetFlushObj && targetFlushObj.daysAfterInoc) ? targetFlushObj.daysAfterInoc : profile.nominalFirstFlushDays;
+        const daysToTarget = Math.round(targetDays * thermal.factor);
 
-      const sow = new Date(target);
-      sow.setDate(sow.getDate() - daysToF1);
-      recommendedSowDate = sow.toISOString().split('T')[0];
+        const sow = new Date(target);
+        sow.setDate(sow.getDate() - daysToTarget);
+        recommendedSowDate = sow.toISOString().split('T')[0];
+      }
     }
 
-    const message = `Inocular ${bagsNeeded} bolsas de ${kgPerBag} kg (${wetSubstrateKg} kg sustrato húmedo, ${drySubstrateKg} kg seco, ${spawnNeededKg} kg spawn al ${spawnRatePct}%) para cosechar ~${deficit} kg de ${profile.name} (EB ${eb}%).`;
+    const flushLabel = targetFlushObj ? ` (Oleada ${targetFlushObj.flush} · ${Math.round(targetFlushObj.pct * 100)}%)` : '';
+    const message = `Inocular ${bagsNeeded} bolsas de ${kgPerBag} kg (${wetSubstrateKg} kg sustrato húmedo, ${drySubstrateKg} kg seco, ${spawnNeededKg} kg spawn al ${spawnRatePct}%) para cosechar ~${deficit} kg de ${profile.name} (EB ${eb}%)${flushLabel}.`;
 
     return {
       deficitKg: round2(deficit),
@@ -396,7 +541,9 @@
       contamRate,
       speciesKey,
       speciesName: profile.name,
-      targetDate: options.targetDate || null,
+      targetFlush: targetFlushNumber,
+      flushFraction,
+      targetDate: opts.targetDate || null,
       recommendedSowDate,
       message,
     };
@@ -410,52 +557,104 @@
   };
 
   /**
-   * Empareja las cosechas proyectadas por semana con los compromisos de venta a restaurantes B2B.
+   * Obtiene la clave de semana ISO 8601 canónica (YYYY-Www) para cualquier fecha.
+   */
+  const getISOWeekKey = (dateInput) => {
+    const d = parseDateSafe(dateInput);
+    if (!d) return '2026-W01';
+    d.setHours(0, 0, 0, 0);
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day + 3);
+    const thursdayYear = d.getFullYear();
+    const firstThursday = new Date(thursdayYear, 0, 4);
+    firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3);
+    const weekNum = 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
+    return `${thursdayYear}-W${String(weekNum).padStart(2, '0')}`;
+  };
+
+  /**
+   * Empareja las cosechas proyectadas por semana con los compromisos de venta a restaurantes B2B,
+   * con soporte de balance global y desglose desagregado por especie.
    *
    * @param {Array<object>} projections Proyecciones de lotes (o lista de lotes activos)
    * @param {Array<object>} commitments Pedidos/compromisos semanales B2B
    * @returns {object} Balance de superávit, déficit, porcentaje de cobertura y desglose
    */
-  const matchWeeklyCoverage = (projections = [], commitments = []) => {
+  const matchWeeklyCoverage = (projections = [], commitments = [], options = {}) => {
+    const opts = options || {};
     const lotList = Array.isArray(projections) ? projections : [projections].filter(Boolean);
     const commList = Array.isArray(commitments) ? commitments : [];
+    const excludeHarvested = opts.excludeHarvested === true || opts.onlyRemaining === true;
 
     // Normalizar todas las proyecciones a flushes con fechas
     const weeklySupply = {};
+    const speciesSupplyTotals = {};
+
     lotList.forEach((item) => {
       const proj = item.flushes ? item : calculateLotYieldAndFlushes(item);
+      const sKey = normalizeSpeciesKey(proj.speciesKey || item.especie || item.sKey || 'p_ostreatus_gris');
       (proj.flushes || []).forEach((f) => {
         if (!f.date) return;
-        const d = new Date(f.date + 'T12:00:00');
-        // Identificador de semana: YYYY-Www
-        const year = d.getFullYear();
-        const firstDayOfYear = new Date(year, 0, 1);
-        const dayOfYear = Math.floor((d - firstDayOfYear) / 86400000);
-        const weekNum = Math.ceil((dayOfYear + firstDayOfYear.getDay() + 1) / 7);
-        const weekKey = `${year}-W${String(weekNum).padStart(2, '0')}`;
+        if (excludeHarvested && f.isHarvested) return;
+        const weekKey = getISOWeekKey(f.date);
 
-        if (!weeklySupply[weekKey]) weeklySupply[weekKey] = { projectedKg: 0, lots: [] };
+        if (!weeklySupply[weekKey]) {
+          weeklySupply[weekKey] = { projectedKg: 0, lots: [], bySpecies: {} };
+        }
         weeklySupply[weekKey].projectedKg += f.kg;
         weeklySupply[weekKey].lots.push({
           loteId: item.id || item.codigo || 'LOTE',
           flush: f.flush,
           kg: f.kg,
           date: f.date,
+          speciesKey: sKey,
+          isHarvested: !!f.isHarvested,
         });
+
+        if (!weeklySupply[weekKey].bySpecies[sKey]) {
+          weeklySupply[weekKey].bySpecies[sKey] = { projectedKg: 0, lots: [] };
+        }
+        weeklySupply[weekKey].bySpecies[sKey].projectedKg += f.kg;
+        weeklySupply[weekKey].bySpecies[sKey].lots.push({
+          loteId: item.id || item.codigo || 'LOTE',
+          flush: f.flush,
+          kg: f.kg,
+          isHarvested: !!f.isHarvested,
+        });
+
+        speciesSupplyTotals[sKey] = (speciesSupplyTotals[sKey] || 0) + f.kg;
       });
     });
 
     // Mapear demanda comprometida
     const weeklyDemand = {};
+    const speciesDemandTotals = {};
+
     commList.forEach((c) => {
       const weekKey = c.week || c.semana || '2026-W36';
       const kg = parseFloat(c.kg || c.cantidadKg || 0);
-      if (!weeklyDemand[weekKey]) weeklyDemand[weekKey] = { committedKg: 0, customers: [] };
+      const sKey = normalizeSpeciesKey(c.speciesKey || c.especie || c.sKey || 'p_ostreatus_gris');
+
+      if (!weeklyDemand[weekKey]) {
+        weeklyDemand[weekKey] = { committedKg: 0, customers: [], bySpecies: {} };
+      }
       weeklyDemand[weekKey].committedKg += kg;
       weeklyDemand[weekKey].customers.push({
         cliente: c.cliente || c.customer || 'Restaurante',
         kg,
+        speciesKey: sKey,
       });
+
+      if (!weeklyDemand[weekKey].bySpecies[sKey]) {
+        weeklyDemand[weekKey].bySpecies[sKey] = { committedKg: 0, customers: [] };
+      }
+      weeklyDemand[weekKey].bySpecies[sKey].committedKg += kg;
+      weeklyDemand[weekKey].bySpecies[sKey].customers.push({
+        cliente: c.cliente || c.customer || 'Restaurante',
+        kg,
+      });
+
+      speciesDemandTotals[sKey] = (speciesDemandTotals[sKey] || 0) + kg;
     });
 
     const allWeeks = [...new Set([...Object.keys(weeklySupply), ...Object.keys(weeklyDemand)])].sort();
@@ -477,6 +676,26 @@
       if (balance >= 0) totalSurplus += balance;
       else totalDeficit += Math.abs(balance);
 
+      // Desglose por especie dentro de la semana
+      const weekSpeciesKeys = new Set([
+        ...Object.keys(weeklySupply[weekKey]?.bySpecies || {}),
+        ...Object.keys(weeklyDemand[weekKey]?.bySpecies || {}),
+      ]);
+      const weekBySpecies = {};
+      weekSpeciesKeys.forEach((sKey) => {
+        const sProj = round1(weeklySupply[weekKey]?.bySpecies?.[sKey]?.projectedKg || 0);
+        const sComm = round1(weeklyDemand[weekKey]?.bySpecies?.[sKey]?.committedKg || 0);
+        const sBalance = round1(sProj - sComm);
+        const sStatus = sBalance >= 0 ? 'superavit' : (sProj / (sComm || 1) >= 0.85 ? 'cobertura' : 'deficit');
+        weekBySpecies[sKey] = {
+          projectedKg: sProj,
+          committedKg: sComm,
+          balanceKg: sBalance,
+          status: sStatus,
+          badge: sStatus === 'superavit' ? '🟢' : sStatus === 'cobertura' ? '🟡' : '🔴',
+        };
+      });
+
       return {
         week: weekKey,
         projectedKg: proj,
@@ -486,11 +705,31 @@
         badge,
         lots: weeklySupply[weekKey]?.lots || [],
         customers: weeklyDemand[weekKey]?.customers || [],
+        bySpecies: weekBySpecies,
       };
     });
 
     const overallBalance = round1(totalProjected - totalCommitted);
     const overallCoveragePct = totalCommitted > 0 ? round1((totalProjected / totalCommitted) * 100) : 100;
+
+    // Desglose global por especie
+    const allSpeciesKeys = new Set([...Object.keys(speciesSupplyTotals), ...Object.keys(speciesDemandTotals)]);
+    const bySpecies = {};
+    allSpeciesKeys.forEach((sKey) => {
+      const sProj = round1(speciesSupplyTotals[sKey] || 0);
+      const sComm = round1(speciesDemandTotals[sKey] || 0);
+      const sBal = round1(sProj - sComm);
+      const sCov = sComm > 0 ? round1((sProj / sComm) * 100) : 100;
+      const sStatus = sBal >= 0 ? 'superavit' : (sCov >= 85 ? 'cobertura' : 'deficit');
+      bySpecies[sKey] = {
+        projectedKg: sProj,
+        committedKg: sComm,
+        balanceKg: sBal,
+        cobertura: sCov,
+        status: sStatus,
+        badge: sStatus === 'superavit' ? '🟢' : sStatus === 'cobertura' ? '🟡' : '🔴',
+      };
+    });
 
     return {
       superavit: round1(totalSurplus),
@@ -500,6 +739,7 @@
       totalProjectedKg: round1(totalProjected),
       totalCommittedKg: round1(totalCommitted),
       weeks,
+      bySpecies,
     };
   };
 
@@ -523,7 +763,9 @@
 
     cosechas.forEach((c) => {
       const fNum = parseInt(c.flush || c.numeroFlush || 1, 10);
-      const kg = (parseFloat(c.pesoFresco) || 0) / 1000;
+      const isKg = c.unit === 'kg' || c.pesoFrescoKg != null;
+      const raw = parseFloat(c.pesoFrescoKg ?? c.pesoFresco) || 0;
+      const kg = isKg ? raw : raw / 1000;
       if (kg > 0 && fNum >= 1 && fNum <= 3) {
         flushKgs[fNum] += kg;
         totalHarvestKg += kg;
@@ -579,6 +821,7 @@
    * @returns {object} Costo estimado por kilogramo de seta fresca cosechada
    */
   const predictSubstrateCostPerFreshKg = (substrateCostPerDryKg, eb, options = {}) => {
+    const opts = options || {};
     const costDry = Math.max(0, parseFloat(substrateCostPerDryKg) || 0);
     const ebVal = Math.max(10, Math.min(250, parseFloat(eb) || 90));
     const ebFraction = ebVal / 100;
@@ -587,8 +830,8 @@
     const costSubstratePerFreshKg = round1(costDry / ebFraction);
 
     // Si se pasan costos integrales (spawn, energía, consumible)
-    const spawnCostPerFreshKg = Number.isFinite(options.spawnCostPerFreshKg) ? options.spawnCostPerFreshKg : 0;
-    const energyCostPerFreshKg = Number.isFinite(options.energyCostPerFreshKg) ? options.energyCostPerFreshKg : 0;
+    const spawnCostPerFreshKg = Number.isFinite(opts.spawnCostPerFreshKg) ? opts.spawnCostPerFreshKg : 0;
+    const energyCostPerFreshKg = Number.isFinite(opts.energyCostPerFreshKg) ? opts.energyCostPerFreshKg : 0;
     const totalIncurredPerFreshKg = round1(costSubstratePerFreshKg + spawnCostPerFreshKg + energyCostPerFreshKg);
 
     return {
@@ -601,7 +844,11 @@
 
   const api = {
     SPECIES_FLUSH_PROFILES,
+    SPECIES_KEY_ALIASES,
+    normalizeSpeciesKey,
+    parseDateSafe,
     getSpeciesFlushProfile,
+    getISOWeekKey,
     calcThermalDelayFactor,
     calculateLotYieldAndFlushes,
     calculateSowingRequirement,

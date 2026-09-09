@@ -81,3 +81,42 @@ test('predictShelfLife predice vida útil comercial y contrasta 4°C vs 18°C', 
   assert.ok(slWarm.packagingRecommendation.type.includes('bopp'));
   assert.equal(slWarm.packagingRecommendation.antiFogRequired, true);
 });
+
+test('post-harvest-engine resuelve alias taxonómicos, simula rotura de frío y riesgo de condensación', () => {
+  const {
+    resolveSpeciesKey,
+    predictShelfLife,
+    simulateColdChainBreak,
+    assessCondensationRiskOnUnpack
+  } = require('./post-harvest-engine.js');
+
+  // 1. Alias taxonómicos
+  assert.equal(resolveSpeciesKey('lions_mane'), 'melena_leon');
+  assert.equal(resolveSpeciesKey('p_ostreatus_gris'), 'orellana_gris');
+  const slAlias = predictShelfLife('lions_mane', 4.0, 92);
+  assert.equal(slAlias.speciesId, 'melena_leon');
+
+  // 2. Simulación de rotura de cadena de frío
+  // Orellana Gris con 2 días en frío previo, expuesta 6 horas a 22°C en camioneta de reparto
+  const breakSim = simulateColdChainBreak('p_ostreatus_gris', 2.0, [
+    { hours: 6, tempC: 22.0 }
+  ]);
+  assert.ok(breakSim.daysConsumedEquivalent > 2.0 + (6 / 24), '6h a 22°C debe consumir mucho más que 0.25 días de frío por cinética Q10');
+  assert.ok(breakSim.remainingShelfLifeDaysAt4C < breakSim.baseShelfLifeDays4C);
+  assert.equal(typeof breakSim.lossPct, 'number');
+
+  // 3. Riesgo de condensación libre al desempacar en sala de despacho
+  // Seta a 4°C llevada a sala a 19°C con 75% HR (punto de rocío de la sala ≈ 14.4°C > 4°C)
+  const condRisk = assessCondensationRiskOnUnpack(4.0, 19.0, 75.0);
+  assert.equal(condRisk.condensationRisk, true);
+  assert.equal(condRisk.badge, '🔴');
+  assert.ok(condRisk.ambientDewPoint > 13.0);
+
+  // 4. Manejo estricto de 0°C (temperatura industrial de precámara sin falsy fallback a 4°C)
+  const resp0 = calcPostHarvestRespiration('orellana_gris', 0.0);
+  assert.equal(resp0.tempC, 0.0, '0°C debe evaluarse como 0°C exactos, no 4°C');
+  assert.ok(resp0.accelerationFactor < 1.0, 'A 0°C la tasa metabólica debe ser menor que a 4°C');
+
+  const cond0 = assessCondensationRiskOnUnpack(0.0, 15.0, 60.0);
+  assert.equal(cond0.storageTempC, 0.0);
+});
