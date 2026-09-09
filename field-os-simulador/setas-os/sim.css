@@ -5735,11 +5735,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ════════════════════════════════════════════════════════════════
    38. ESTADOS OPERATIVOS CANÓNICOS (SETAS OS × SWISS BOTANICAL)
-   - Dentro del rango / Verificado (.fos-status--within-target)
+   - Dentro del rango (.fos-status--within-target)
    - Disponible (.fos-status--available)
    - Atención (.fos-status--attention)
    - En cuarentena (.fos-status--quarantine)
-   - Falló / No disponible (.fos-status--failed)
+   - Falló (.fos-status--failed)
    - Descartado (.fos-status--discarded)
    ════════════════════════════════════════════════════════════════ */
 
@@ -5792,13 +5792,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   color: var(--ink-900, #000000);
 }
 
-/* 1. Dentro del rango / Verificado */
+/* 1. Dentro del rango */
 .sim-root .fos-status--within-target,
-.sim-root .fos-status--verified,
-.sim-root .fos-status--verificado,
-.fos-status--within-target,
-.fos-status--verified,
-.fos-status--verificado {
+.fos-status--within-target {
   background: var(--moss-tint, #E5E4D5);
   border-color: var(--moss, #4E6B3F);
   color: var(--moss-700, #385933);
@@ -5806,9 +5802,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* 2. Disponible */
 .sim-root .fos-status--available,
-.sim-root .fos-status--disponible,
-.fos-status--available,
-.fos-status--disponible {
+.fos-status--available {
   background: var(--moss-tint, #E5E4D5);
   border-color: var(--moss, #4E6B3F);
   color: var(--moss-700, #385933);
@@ -5816,9 +5810,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* 3. Atención */
 .sim-root .fos-status--attention,
-.sim-root .fos-status--atencion,
-.fos-status--attention,
-.fos-status--atencion {
+.fos-status--attention {
   background: var(--warning-tint, #F4EAD6);
   border-color: var(--warning, #C49A4C);
   color: var(--warning-text, #8C6B2E);
@@ -5826,23 +5818,15 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* 4. En cuarentena */
 .sim-root .fos-status--quarantine,
-.sim-root .fos-status--pending,
-.sim-root .fos-status--por-confirmar,
-.fos-status--quarantine,
-.fos-status--pending,
-.fos-status--por-confirmar {
+.fos-status--quarantine {
   background: var(--paper-recessed, #EAE4D8);
   border-color: var(--rule, #888888);
   color: var(--ink-muted, #555555);
 }
 
-/* 5. Falló / No disponible */
+/* 5. Falló */
 .sim-root .fos-status--failed,
-.sim-root .fos-status--unavailable,
-.sim-root .fos-status--no-disponible,
-.fos-status--failed,
-.fos-status--unavailable,
-.fos-status--no-disponible {
+.fos-status--failed {
   background: var(--rust-tint, #EDDDCF);
   border-color: var(--rust, #8E2C14);
   color: var(--rust, #8E2C14);
@@ -5850,9 +5834,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* 6. Descartado */
 .sim-root .fos-status--discarded,
-.sim-root .fos-status--descartado,
-.fos-status--discarded,
-.fos-status--descartado {
+.fos-status--discarded {
   background: var(--rust-tint, #EDDDCF);
   border-color: var(--rust, #8E2C14);
   color: var(--rust, #8E2C14);
@@ -5884,6 +5866,26 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   line-height: 1.15;
   color: var(--ink-900);
 }
+
+.sim-root .form-draft-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-600);
+}
+
+.sim-root .catalog-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: auto;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border-soft);
+}
+.sim-root .catalog-card-action { color: var(--ink-900); font: 700 var(--text-xs)/1 var(--font-sans); }
 
 .sim-root .form-editorial-context-meta {
   display: flex;

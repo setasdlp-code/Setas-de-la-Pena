@@ -8919,6 +8919,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div className="p-chip p-chip-arr" aria-hidden="true"><IcoArrow/></div>
                       </div>
                     </div>
+                    <div className="catalog-card-footer">
+                      <span className="fos-status fos-status--available"><span className="fos-status__dot" aria-hidden="true"></span>Disponible</span>
+                      <span className="catalog-card-action">Ver especie <span aria-hidden="true">→</span></span>
+                    </div>
                     </div>
                   </button>
                 );
@@ -9384,10 +9388,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <header className="form-editorial-context-header" aria-labelledby="form-editorial-title">
             <div className="form-editorial-context-head">
               <span className="os-provenance-line" style={{marginTop:0}}>Setas OS · Swiss Botanical</span>
-              <span className={`fos-status ${recipe.length>0?'fos-status--attention':'fos-status--available'}`}>
-                <span className="fos-status__dot" aria-hidden="true"></span>
-                {recipe.length>0?'Borrador activo':'Listo para formular'}
-              </span>
+              <span className="form-draft-state">Estado · {recipe.length>0?'Borrador':'Sin iniciar'}</span>
             </div>
             <h1 id="form-editorial-title" className="form-editorial-context-title">
               Formulador de receta · {hasPickedSpecies?(sp?.name||'Especie activa'):'Especie por definir'}
@@ -9400,7 +9401,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span>{recipe.length} ingrediente{recipe.length===1?'':'s'} en mezcla</span>
             </div>
             <p className="form-editorial-context-desc">
-              Diseño agronómico y balance de masa para sustratos de fructificación en Tenjo, Cundinamarca (2.600 msnm).
+              Una fórmula para revisar proporciones, disponibilidad de insumos y comportamiento esperado antes de guardarla.
             </p>
           </header>
 
@@ -9419,8 +9420,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
-                <span className="os-provenance-line">Calculado</span>
+                <span className="form-summary-v">{`${(numBags*kgBag).toFixed(1)} kg`}</span>
+                <span className="os-provenance-line">Manual · lote planificado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
@@ -9439,8 +9440,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line">Inventario</span>
+                <span className="form-summary-v">{globalMode==='produccion'&&realCostPerKg!=null?`$${realCostPerKg.toLocaleString('es-CO')}`:an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line">{globalMode==='produccion'?(realCostPerKg!=null?'Basado en inventario registrado':'Por confirmar · referencia de catálogo'):'Basado en catálogo de análisis'}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
