@@ -52,12 +52,22 @@
   // treatment ranking from preferTreatment under the guise of legacy parity.
 
   const normalizeRecipe = (recipe = []) => {
-    const clean = recipe
-      .map(r => ({ id: r.id, p: Math.max(0, Number(r.p ?? r.pct) || 0) }))
-      .filter(r => r.id && r.p > 0);
+    const clean = (Array.isArray(recipe) ? recipe : [])
+      .map(r => ({ id: r?.id, p: Math.max(0, Number(r?.p ?? r?.pct) || 0) }))
+      .filter(r => r.id && Number.isFinite(r.p) && r.p > 0);
     const total = clean.reduce((s, r) => s + r.p, 0);
-    if (!total) return [];
-    return clean.map(r => ({ ...r, p: round2(r.p / total * 100) }));
+    if (!total || !Number.isFinite(total)) return [];
+    const rounded = clean.map(r => ({ ...r, p: round2(r.p / total * 100) }));
+    const roundedTotal = rounded.reduce((s, r) => s + r.p, 0);
+    const diff = round2(100 - roundedTotal);
+    if (Math.abs(diff) >= 0.01 && rounded.length > 0) {
+      let maxIdx = 0;
+      for (let i = 1; i < rounded.length; i++) {
+        if (rounded[i].p > rounded[maxIdx].p) maxIdx = i;
+      }
+      rounded[maxIdx].p = round2(rounded[maxIdx].p + diff);
+    }
+    return rounded;
   };
 
   const recipeMap = (recipe = []) => Object.fromEntries(
@@ -85,8 +95,16 @@
   };
 
   const noveltyScore = (recipe, history = []) => {
-    if (!history.length) return 100;
-    const nearest = Math.min(...history.map(h => recipeDistance(recipe, h.recipe || h)));
+    if (!Array.isArray(history) || !history.length) return 100;
+    const distances = history
+      .map(h => {
+        const target = (h && typeof h === 'object' && 'recipe' in h) ? h.recipe : h;
+        if (!Array.isArray(target) || !target.length) return null;
+        return recipeDistance(recipe, target);
+      })
+      .filter(d => Number.isFinite(d));
+    if (!distances.length) return 100;
+    const nearest = Math.min(...distances);
     return Math.round(clamp(nearest * 160, 0, 100));
   };
 
@@ -248,7 +266,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const ps = remaining * (b.c - T * b.n) / denom;
                 const pb = remaining - ps;
-                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+                if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
                 const rec = [
                   { id: base.id, p: round1(pb) },
@@ -327,7 +345,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const ps = remaining * (cBlend - T * nBlend) / denom;
                 const pb = remaining - ps;
-                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+                if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
                 const rec = [
                   { id: b1.id, p: round1(pb * f1) },
@@ -409,7 +427,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const psTotal = remaining * (db.c - T * db.n) / denom;
                 const pb = remaining - psTotal;
-                if (psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
+                if (!Number.isFinite(psTotal) || !Number.isFinite(pb) || psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
 
                 const rec = [
                   { id: base.id, p: round1(pb) },
@@ -594,7 +612,7 @@
       completions.forEach(r => mergedMap.set(r.id, (mergedMap.get(r.id) || 0) + r.p));
       const merged = [...mergedMap.entries()].map(([id, p]) => ({ id, p: round2(p) }));
       const tot = merged.reduce((s, r) => s + r.p, 0);
-      if (Math.abs(tot - 100) > 0.5) return;
+      if (!Number.isFinite(tot) || Math.abs(tot - 100) > 0.5) return;
       const norm = normalizeRecipe(merged);
       const key = canonicalRecipeKey(norm);
       if (tried.has(key)) return;
@@ -631,7 +649,7 @@
               const ps = (anchorC - T * anchorN + P_free * (b.c - T * b.n)) / denom;
               const pb = P_free - ps;
 
-              if (ps < 0 || pb < 0) return;
+              if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 0 || pb < 0) return;
               if (anchorSuppP + ps > suppMaxFor(supp)) return;
 
               const comp = [];
@@ -1066,7 +1084,7 @@
     const map = recipeMap(recipe);
     const ingredientById = new Map((ingredients || []).map(g => [g?.id, g]));
     const total = Object.values(map).reduce((sum, p) => sum + Number(p || 0), 0);
-    if (total <= 0 || Math.abs(total - 100) > 0.05) failures.push('mass_balance');
+    if (!Number.isFinite(total) || total <= 0 || Math.abs(total - 100) > 0.05) failures.push('mass_balance');
 
     if (useStock && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
 

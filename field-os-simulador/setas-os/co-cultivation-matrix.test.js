@@ -83,3 +83,32 @@ test('generateFullMatrix genera matriz 9x9 coherente y simétrica en score', () 
     });
   });
 });
+
+test('co-cultivation-matrix resuelve alias taxonómicos canónicos y calcula VPD de cámara', () => {
+  const { resolveSpeciesKey, calcPairwiseCompatibility, optimizeChamberSetpoints } = require('./co-cultivation-matrix.js');
+
+  // Alias canónicos de Setas OS
+  assert.equal(resolveSpeciesKey('p_ostreatus_gris'), 'orellana_gris');
+  assert.equal(resolveSpeciesKey('lions_mane'), 'melena_leon');
+  assert.equal(resolveSpeciesKey('p_eryngii'), 'seta_cardo');
+
+  // Compatibilidad usando claves canónicas del formulador
+  const pair = calcPairwiseCompatibility('p_ostreatus_gris', 'lions_mane');
+  assert.ok(pair.score > 0, 'Debe resolver compatibilidad con claves canónicas');
+  assert.equal(pair.speciesA, 'Orellana Gris (P. ostreatus)');
+  assert.equal(pair.speciesB, 'Melena de León (Hericium erinaceus)');
+
+  // Optimización de setpoints con cálculo de VPD de cámara
+  const opt = optimizeChamberSetpoints(['p_ostreatus_gris', 'p_eryngii'], {
+    weights: { p_ostreatus_gris: 1.2, p_eryngii: 0.8 }
+  });
+  assert.ok(opt.setpoints.vpdKpa != null, 'Debe calcular VPD de cámara');
+  assert.ok(opt.setpoints.vpdKpa >= 0.10 && opt.setpoints.vpdKpa <= 0.45, `VPD seguro esperado, obtenido ${opt.setpoints.vpdKpa} kPa`);
+
+  // Verificación de ponderación de biomasa sin truncamiento artificial de satisfacción
+  const optWeights = optimizeChamberSetpoints(['orellana_rosa', 'enoki'], {
+    weights: { orellana_rosa: 1.5, enoki: 0.5 }
+  });
+  // En humedad relativa, ambas especies son compatibles en 85-90% RH (satisfacción 100%, no truncada a 50%)
+  assert.ok(optWeights.satisfaction.humedad >= 90, `Humedad esperada >= 90%, obtenida ${optWeights.satisfaction.humedad}%`);
+});
