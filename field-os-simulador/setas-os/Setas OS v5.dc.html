@@ -13,6 +13,21 @@
 <link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="ds-2026/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
+<!-- Service worker: permite abrir la aplicación sin señal, que es la situación
+     en la que el cuaderno de campo tiene que funcionar. Se registra después de
+     `load` para no competir por ancho de banda con el arranque, y un fallo al
+     registrar no rompe nada: la aplicación sigue funcionando online. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        // Sin service worker la aplicación funciona igual con señal; sólo se
+        // pierde el arranque en frío sin conexión.
+        if (window.console) console.warn('[SetasOS] service worker no registrado:', err && err.message);
+      });
+    });
+  }
+</script>
 <style>
   /*
    * Firebase resolves after the .dc runtime parses this document. Keep
