@@ -4623,6 +4623,33 @@ const getFieldDb = () => {
 // contra un simulacro que respeta el mismo contrato de idempotencia. Los
 // recibos que emite llevan `simulated`, y la hoja de acción los rotula como
 // tales: el operario nunca debe leer un simulacro como confirmación real.
+// El rol que gobierna las transiciones sale de `usuarios/{uid}.rol` del usuario
+// autenticado, traducido con la tabla compartida — la misma que aplica
+// acceptFieldEvent. Antes se derivaba de props.isAdmin, que viene del selector
+// de operario del encabezado y no de la sesión de Firebase: un operario veía
+// ofrecidas acciones de cuarentena que el servidor rechazaba.
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import('./vendor/firebase/firebase-firestore.js');
+      const snap = await getDoc(doc(fb.db, 'usuarios', uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      // Mínimo privilegio si no se puede leer: mejor ofrecer de menos que
+      // ofrecer acciones que el servidor va a rechazar.
+      return 'operario';
+    }
+  })();
+  return _fieldRolePromise;
+};
+
 let _fieldMock = null;
 const getFieldMockTransport = () => {
   if (_fieldMock) return _fieldMock;
@@ -7148,7 +7175,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try{
       const db=await getFieldDb();
       const res=await SHEET.confirmTransition({
-        db,batch:lote,from,to,accountId:uid,operatorId:uid,operatorRole,
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
         expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
         confirmed:true,
       });

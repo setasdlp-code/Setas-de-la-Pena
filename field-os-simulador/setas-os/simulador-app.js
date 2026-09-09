@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: a61b0c058a33550ab279c145babb830a3e2286ff6d194780353ffcda20e56435
+// source-hash: 034561a03cffa6cdc8bb77d73ad4feb525520e7604232c458057a16a300cac60
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3201,6 +3201,24 @@ const getFieldDb = () => {
   });
   return _fieldDbPromise;
 };
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== "undefined" ? window.SetasFirebase : null;
+  const contracts = typeof window !== "undefined" ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve("operario");
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import("./vendor/firebase/firebase-firestore.js");
+      const snap = await getDoc(doc(fb.db, "usuarios", uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      return "operario";
+    }
+  })();
+  return _fieldRolePromise;
+};
 let _fieldMock = null;
 const getFieldMockTransport = () => {
   if (_fieldMock) return _fieldMock;
@@ -5615,7 +5633,7 @@ BATCH (${numBags}×${kgBag} kg):
         to,
         accountId: uid,
         operatorId: uid,
-        operatorRole,
+        operatorRole: await getFieldOperatorRole(),
         expectedBatchRevision: Number.isInteger(lote.revision) ? lote.revision : 0,
         confirmed: true
       });

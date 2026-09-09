@@ -7,6 +7,8 @@ const fs = require('node:fs');
 
 const {
   ERROR_CODES,
+  WORKFLOW_ROLES,
+  mapWorkflowRole,
   DEFAULT_INITIAL_STATE,
   RECEIPT_FIELDS,
   isRetryable,
@@ -115,4 +117,35 @@ test('contracts load with neither indexedDB nor firebase present', () => {
 
 test('exports DEFAULT_INITIAL_STATE as inoculated', () => {
   assert.equal(DEFAULT_INITIAL_STATE, 'inoculated');
+});
+
+test('cliente y servidor traducen el rol con la misma tabla', () => {
+  // La divergencia real que esto cierra: el cliente daba 'produccion' a
+  // cualquiera que no fuera admin, el servidor daba 'operario'. La hoja ofrecía
+  // cuarentena y la aceptación la rechazaba con unauthorized_action.
+  const casos = [
+    ['admin', 'direccion'],
+    ['direccion', 'direccion'],
+    ['produccion', 'produccion'],
+    ['operario', 'operario'],
+    [null, 'operario'],
+    [undefined, 'operario'],
+    ['', 'operario'],
+    ['banana', 'operario'],
+  ];
+  for (const [rol, esperado] of casos) {
+    assert.equal(mapWorkflowRole(rol), esperado, `rol=${JSON.stringify(rol)}`);
+  }
+});
+
+test('el rol se normaliza sin distinguir espacios ni mayúsculas', () => {
+  assert.equal(mapWorkflowRole('  ADMIN  '), 'direccion');
+  assert.equal(mapWorkflowRole('Produccion'), 'produccion');
+});
+
+test('todo rol traducido pertenece al vocabulario del flujo', () => {
+  for (const entrada of ['admin', 'operario', 'banana', null, 42, {}]) {
+    assert.ok(WORKFLOW_ROLES.includes(mapWorkflowRole(entrada)),
+      `${JSON.stringify(entrada)} produjo un rol fuera del vocabulario`);
+  }
 });

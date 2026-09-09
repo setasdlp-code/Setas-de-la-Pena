@@ -5,26 +5,18 @@ const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
 const { createAcceptFieldEvent } = require('./accept-field-event.js');
+const { mapWorkflowRole } = require('./shared/field-event-contracts.js');
 
 initializeApp();
 const db = getFirestore();
 
 /**
- * `usuarios/{uid}.rol` no usa el vocabulario del flujo de trabajo: hoy sólo
- * distingue 'admin'. Se mapea al mínimo privilegio, de modo que un rol que
- * todavía no existe en ese documento no herede permisos por accidente.
+ * El rol de flujo de trabajo sale de `usuarios/{uid}.rol` a través de la tabla
+ * compartida, la misma que usa el cliente para decidir qué acciones ofrece.
  */
-const ROLE_MAP = Object.freeze(Object.assign(Object.create(null), {
-  admin: 'direccion',
-  direccion: 'direccion',
-  produccion: 'produccion',
-  operario: 'operario',
-}));
-
 const resolveRole = async (uid) => {
   const snap = await db.collection('usuarios').doc(uid).get();
-  const declared = snap.exists ? snap.data().rol : null;
-  return (declared && ROLE_MAP[declared]) || 'operario';
+  return mapWorkflowRole(snap.exists ? snap.data().rol : null);
 };
 
 const acceptFieldEvent = createAcceptFieldEvent({ db, resolveRole });
