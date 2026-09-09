@@ -26,3 +26,24 @@
   showed the mobile footer and misrepresented the component.
 
 - `ds-bundle/` is derived output. Regenerate it; never hand-edit it.
+
+- **`templates/archive-unificado/ArchivoUnificado.dc.html`** lives in the
+  project (not this repo) — a prior proposal sketch merging `.sdp-ficha`/
+  `.sdp-pack` into ARCHIVE's editorial voice. It is NOT synced content (its
+  own header says so); it's a `.dc.html` design-canvas file the project
+  happens to hold. Useful as a directional reference: it independently
+  landed on the same `--accent-warm: oklch(57% 0.15 38)` value and the
+  hairline downgrade for `.sdp-ficha`/`.sdp-pack`, which is corroborating,
+  not authoritative. Don't copy it verbatim — it also uses `--accent-warm`
+  as text color on an `.ed-eyebrow` ("Disponible"), which fails the 4.5:1
+  AA floor the real token is constrained to (4.38:1 on paper). Fetch it via
+  `DesignSync(get_file)` if revisiting this work; it isn't mirrored to disk.
+
+- 2026-09-09 sync (74 files, 23 cards, atomic path — project was already
+  non-empty from the 2026-09-04 sync): pushed the ARCHIVE/editorial
+  unification of `.sdp-ficha`/`.sdp-pack` — `--accent-warm`, the
+  `--t-display-cover` masthead, hairline rules, `.ed-eyebrow` labels,
+  default `.ed-drop`, `.sdp-fig--bleed`. `component-ficha.html` and
+  `brand-packaging.html` needed their inline `font-size` overrides on
+  `.sdp-species__common` removed — inline styles beat the new cover-scale
+  CSS rule, so the masthead silently stayed small until that was fixed.

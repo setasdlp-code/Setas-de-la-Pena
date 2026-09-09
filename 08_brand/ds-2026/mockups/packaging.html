@@ -17,10 +17,14 @@
 
       <img class="sdp-pack__illo" src="../assets/img/reishi-botanical-engraving.png" alt="Ganoderma lucidum">
 
-      <div style="display:grid;gap:6px;justify-items:center;width:100%">
-        <!-- Gaya Bold 36px / Gaya Italic 18px — normative for the front face -->
-        <div style="font-family:var(--font-editorial);font-weight:700;font-size:36px;line-height:1.05;letter-spacing:-0.01em">Reishi</div>
-        <div style="font-family:var(--font-editorial);font-style:italic;font-weight:400;font-size:18px;color:var(--text-secondary)">Ganoderma lucidum</div>
+      <div style="display:grid;gap:10px;justify-items:center;width:100%">
+        <!-- Cover scale (--t-display-cover, 88px Gaya Black) + the archive
+             accent rule — see .sdp-pack--front .sdp-species__common in
+             editorial.css. Normative for the front face. -->
+        <div class="sdp-species" style="justify-items:center;gap:2px">
+          <div class="sdp-species__common">Reishi</div>
+          <div class="sdp-species__latin">Ganoderma lucidum</div>
+        </div>
         <div class="sdp-pack__net" style="text-align:center;margin-top:12px">Hongo deshidratado · 40 g</div>
       </div>
     </div>
@@ -42,7 +46,10 @@
 
       <div class="sdp-pack__sect">
         <span class="sdp-pack__sk">Ingredientes</span>
-        <span class="sdp-pack__sv">100 % <i style="font-family:var(--font-editorial)">Ganoderma lucidum</i> cultivado sobre roble y salvado de trigo. Sin aditivos, sin conservantes.</span>
+        <!-- First letter carries the default drop cap (.sdp-pack--back
+             .sdp-pack__sect:first-of-type .sdp-pack__sv, editorial.css) —
+             copy leads with a word, not a numeral, so the cap lands well. -->
+        <span class="sdp-pack__sv">Cultivado 100 % sobre roble y salvado de trigo: <i style="font-family:var(--font-editorial)">Ganoderma lucidum</i> puro, sin aditivos ni conservantes.</span>
       </div>
 
       <div class="sdp-pack__sect">

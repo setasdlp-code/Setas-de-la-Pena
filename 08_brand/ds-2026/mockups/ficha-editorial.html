@@ -20,8 +20,11 @@
 
         <div>
           <div class="ed-eyebrow" style="margin-bottom:10px">Basidiomycota · Polyporales</div>
-          <h1 style="font:var(--t-display-02);letter-spacing:var(--tracking-display);margin:0">Reishi</h1>
-          <div style="font-family:var(--font-editorial);font-style:italic;font-weight:300;font-size:23px;color:var(--text-secondary);margin-top:2px">Ganoderma lucidum</div>
+          <!-- Cover scale (--t-display-cover, 88px Gaya Black) with the
+               archive accent rule beneath — the same masthead motif as
+               the ficha header and packaging front now share. -->
+          <h1 style="font:var(--t-display-cover);letter-spacing:var(--tracking-display);margin:0;display:inline-block;padding-bottom:var(--space-1);border-bottom:2px solid var(--accent-warm)">Reishi</h1>
+          <div style="font-family:var(--font-editorial);font-style:italic;font-weight:300;font-size:23px;color:var(--text-secondary);margin-top:10px">Ganoderma lucidum</div>
 
           <div class="ed-div" style="margin:22px 0 20px"><span class="ed-div__m">Lám. IV</span></div>
 
@@ -48,9 +51,11 @@
         </div>
 
         <aside style="display:grid;gap:20px">
-          <figure style="margin:0">
-            <div class="sdp-fig__frame frame-specimen" style="background:var(--surface-page);padding:14px;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center">
-              <img src="../assets/img/species/reishi.png" alt="" style="max-width:100%;max-height:100%;object-fit:contain">
+          <!-- Full-bleed plate variant (sdp-fig--bleed): no interior
+               padding or ground, the specimen runs to the frame edge. -->
+          <figure class="sdp-fig sdp-fig--plate sdp-fig--bleed" style="margin:0">
+            <div class="sdp-fig__frame frame-specimen">
+              <img src="../assets/img/species/reishi.png" alt="Ganoderma lucidum">
             </div>
             <figcaption class="ed-cartouche" style="margin-top:12px">
               <span class="ed-cartouche__n">Lám. IV · cuerpo, corte y esporas</span>

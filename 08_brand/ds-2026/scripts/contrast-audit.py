@@ -18,6 +18,7 @@ P = {
     "PAPER_PANEL": "#F3EEE2", "PAPER_RECESSED": "#EAE4D8",
     "MOSS_TINT": "#E5E4D5", "RUST_TINT": "#EDDDCF",
     "WARNING_TINT": "#F4EAD6", "SOIL_TINT": "#E5DFD3",
+    "ACCENT_WARM": "#BE512D",  # oklch(57% 0.15 38) — archive-only, see tokens.css
 }
 
 def lin(c):
@@ -55,11 +56,13 @@ PAIRS = [
     ("INK",          "WARNING_TINT",   "Caution banner text (sanctioned)",       4.5, A),
     ("RULE",         "PAPER",          "Hairlines, specimen frames (non-text)",  3.0, A),
     ("MOSS",         "PAPER",          "Meter fill (non-text)",                  3.0, A),
+    ("ACCENT_WARM",  "PAPER",          "Archive accent — fill/underline/hairline (non-text)", 3.0, A),
     # --- Banned pairings. The system forbids these; the gate proves why. ---
     ("WARNING",      "PAPER",          "Ochre as TEXT — use WARNING_TEXT",       4.5, F),
     ("WARNING",      "WARNING_TINT",   "Ochre text on its own tint — use INK",   4.5, F),
     ("PAPER",        "WARNING",        "Paper on ochre fill — use INK",          4.5, F),
     ("WARNING",      "PAPER",          "Ochre hairline/meter alone — needs INK", 3.0, F),
+    ("ACCENT_WARM",  "PAPER",          "Archive accent as TEXT — never; fails AA", 4.5, F),
 ]
 
 rows = []

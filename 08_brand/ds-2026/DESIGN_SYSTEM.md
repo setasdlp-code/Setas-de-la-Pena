@@ -93,6 +93,16 @@ Derived surfaces — mixed from the eight above, introducing no new pigment:
 **One accent per view.** A dashboard showing moss, ochre and rust at once has
 stopped classifying and started decorating.
 
+**`--accent-warm` — the archive accent (additive).** `oklch(57% 0.15 38)`,
+scoped to `[data-mode="archive"]` only — it does not exist in FIELD or
+CONTROL, and it is not a ninth pigment role. Same hue family as `RUST`
+(~38° vs. ~35°), lighter and less saturated: a terracotta, not a new
+colour story. **Fill, underline or thin-rule only** — 4.38:1 on paper
+clears the 3:1 non-text floor but misses 4.5:1 for text, so it is banned
+as body text by the same logic that constrains `WARNING` (§1.4). Its one
+sanctioned use is the masthead rule beneath a cover-scale species name
+(§5B) — a surface using it takes no other accent alongside it.
+
 ### 1.4 Contrast audit — the ochre constraint
 
 `WARNING #C49A4C` measures **2.39:1** on `PAPER`. That fails WCAG AA for text
@@ -131,12 +141,14 @@ means the palette moved and the ban is stale). Run it in CI.
 | `INK` | `WARNING_TINT` | Caution banner text (sanctioned) | 4.5:1 | 13.32:1 | Sanctioned |
 | `RULE` | `PAPER` | Hairlines, specimen frames (non-text) | 3.0:1 | 3.26:1 | Sanctioned |
 | `MOSS` | `PAPER` | Meter fill (non-text) | 3.0:1 | 5.52:1 | Sanctioned |
+| `ACCENT_WARM` | `PAPER` | Archive accent — fill/underline/hairline (non-text) | 3.0:1 | 4.38:1 | Sanctioned |
 | `WARNING` | `PAPER` | Ochre as TEXT — use WARNING_TEXT | 4.5:1 | 2.39:1 | **Banned** |
 | `WARNING` | `WARNING_TINT` | Ochre text on its own tint — use INK | 4.5:1 | 2.18:1 | **Banned** |
 | `PAPER` | `WARNING` | Paper on ochre fill — use INK | 4.5:1 | 2.39:1 | **Banned** |
 | `WARNING` | `PAPER` | Ochre hairline/meter alone — needs INK | 3.0:1 | 2.39:1 | **Banned** |
+| `ACCENT_WARM` | `PAPER` | Archive accent as TEXT — never; fails AA | 4.5:1 | 4.38:1 | **Banned** |
 
-22/22 expectations hold
+24/24 expectations hold
 
 ---
 
@@ -201,6 +213,18 @@ binomial in Gaya italic and the plate reference in mono micro.
 
 **Cropping.** Plates are `object-fit: contain` — a specimen is never cropped,
 because the silhouette is the identifying information. Photos are `cover`.
+
+**Full-bleed plate.** `.sdp-fig--plate.sdp-fig--bleed` drops the interior
+padding and paper ground of the default plate frame — the specimen runs to
+the frame edge instead of sitting contained inside it. An ARCHIVE-mode
+variant only; combine with `.sdp-fig--plate`, don't replace it.
+
+**Captions on ARCHIVE surfaces.** `.sdp-fig__ref` — the mono uppercase plate
+ref used in FIELD/CONTROL — reads as `.ed-cartouche` copy instead wherever
+it sits under `[data-mode="archive"]`: italic Gaya, sentence case, no
+tracking. New archive captions should be marked up with `.ed-cartouche`
+directly (§5B); the `.sdp-fig__ref` override exists as a safety net for
+plain component markup that hasn't been converted.
 
 **The species plates.** `assets/img/species/` holds nine specimen plates — one
 per species the farm grows: *Hericium erinaceus* (melena de león), *Ganoderma
@@ -289,12 +313,18 @@ photocopy.
 
 ### 5.2 Anatomy and states
 
-**Ficha / Lámina** — the archive object.
+**Ficha / Lámina** — the archive object, fully in the editorial voice (§5B).
 `__hd` (species block ‖ plate line) → `__body` (2-col: plate ‖ prose) →
-`__ft` (3 equal cells, hairline-divided).
-Header and footer are separated by `--rule-heavy` (2px `INK`); internal
-divisions are hairlines. Below 700px body and footer both collapse to one
-column and the cell borders move from right to bottom.
+`__ft` (3 equal cells, hairline-divided). Every division — outer frame,
+header rule, footer rule, cell dividers — is `--rule-hairline`; the ficha
+no longer carries a `--rule-heavy`/`--rule-frame` weight anywhere. The
+species name in `__hd` sets at the cover scale (§5B) with the
+`--accent-warm` rule beneath it. Footer cell keys (`__k`: presentación /
+preparación / precio) use the `.ed-eyebrow` treatment, not mono `.t-label`.
+The prose's first paragraph gets `.ed-drop`'s three-line cap by default —
+no class needed, and never combined with `.ed-lede`. Below 700px body and
+footer both collapse to one column and the cell borders move from right to
+bottom.
 *States:* none — a ficha is a document, not a control.
 
 **Lote card** — the field object.
@@ -330,7 +360,13 @@ footer lot line. Printed at A2; the room name is `display-02` in Gaya.
 **Packaging.** Front is a 3-row grid (brand / plate / naming block) centred.
 Back is a **flex column** so the traceability block sits at the foot regardless
 of copy length. Front carries **no** operational codes; the back carries the lot
-line and QR. A customer never sees a room name or an operator name.
+line and QR. A customer never sees a room name or an operator name. Both
+faces are in the editorial voice: the outer frame is `--rule-hairline`, and
+`__brand` / `__net` / `__sk` all take the `.ed-eyebrow` treatment instead of
+mono `.t-label`. The front's species name sets at the cover scale with the
+`--accent-warm` rule beneath (the same masthead device as the ficha
+header); the back's first section value (`__sect:first-of-type __sv`) gets
+`.ed-drop`'s cap by default, same as the ficha's prose.
 
 **SOP.** `__hd` (title + species block ‖ revision) → conditions `sdp-table` →
 `__step` boxes (`40px` mono numeral | title + body) → stop banner → folio.
@@ -344,6 +380,12 @@ as a botanical journal rather than a form. Everything in it is scoped: it is
 inert unless an ancestor carries `data-mode="archive"` or an `.ed-*` class is
 applied deliberately. **Field and Control stay instrument-like** — that contrast
 is the point of the system, not an inconsistency in it.
+
+**The customer-facing components live here now.** `.sdp-ficha` and `.sdp-pack`
+are Archive-mode components, and this layer no longer treats them as a
+separate, more restrained register — their rules, labels and captions are
+the same editorial devices as the flagship plate (`09-ficha-editorial`).
+Field and Control are the only surfaces still deliberately held apart.
 
 ### The prose face changes in Archive
 
@@ -362,7 +404,7 @@ Light is normative here, and the lede differs by **size, not weight**.
 |---|---|
 | `.ed-prose` | Marks a block as archive prose; switches the face and measure. |
 | `.ed-lede` | Opening paragraph, Gaya Light 22px. Never carries a drop cap. |
-| `.ed-drop` | Three-line drop cap on the paragraph's first letter, Gaya Black. |
+| `.ed-drop` | Three-line drop cap on the paragraph's first letter, Gaya Black. Default (no class needed) on `.sdp-ficha__prose`'s first paragraph and `.sdp-pack--back`'s first section value. |
 | `.ed-eyebrow` | Gaya in letterspaced caps — the archive counterpart to the mono `.t-label`, which stays the operational register. |
 | `.ed-sec` | Section head: rule above, `__k` eyebrow, `__h` heading. |
 | `.ed-folio` / `--foot` | Running head and folio foot, as on a printed sheet. |
@@ -370,6 +412,15 @@ Light is normative here, and the lede differs by **size, not weight**.
 | `.ed-cartouche` | Caption block under a plate: `__n` reference, `__l` binomial, `__d` description. |
 | `.ed-note` | Margin note, 22ch — the apparatus of a scientific plate. |
 | `.ed-cols` | Two-column text with a hairline column rule. |
+
+### Cover scale
+
+`--t-display-cover` (`--size-display-cover: 88px`, Gaya Black, same leading
+as `display-01`) is one step above `display-01` (64px) — defined in
+`editorial.css`, not in the nine-role scale in `tokens.css`, because it is
+never for running layout. Its only two uses are cover marks: the species
+name in a `.sdp-ficha__hd` and a `.sdp-pack--front`, each set with the
+`--accent-warm` rule beneath it as a single masthead device.
 
 ### `.chem` — a real fix, not a flourish
 
