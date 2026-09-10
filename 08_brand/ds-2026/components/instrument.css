@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════════
+   DS-2026 — Instrument layer.
+   Devices for FIELD and CONTROL surfaces: status rails, state
+   markers, telemetry blocks, dense section heads. A control panel,
+   not a journal — legibility under bad light and gloves is the
+   brief, not restraint-as-taste.
+
+   Scoped: everything here is inert unless an ancestor carries
+   [data-mode="field"] or [data-mode="control"], or the .instr-*
+   class is applied deliberately. Archive stays print-like — that
+   contrast with this layer is the point.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --instr-marker-size: 9px;
+}
+
+/* ── State marker — the FIELD/CONTROL counterpart to ARCHIVE's cover
+   mark: the one place a mode is allowed a colour move. One active
+   status colour per marker, never blended — ok, warn, or error,
+   never a gradient between them. Colour is never the only signal
+   (COMPONENTS.md, "status is colour *and* word") — a marker sits
+   beside a word, it does not replace one. ─────────────────────── */
+[data-mode="field"] .instr-marker,
+[data-mode="control"] .instr-marker {
+  display: inline-block;
+  width: var(--instr-marker-size);
+  height: var(--instr-marker-size);
+  border: 1px solid var(--border-heavy);
+  background: var(--surface-page);
+}
+[data-mode="field"] .instr-marker--ok,
+[data-mode="control"] .instr-marker--ok {
+  background: var(--status-ok);
+  border-color: var(--status-ok);
+}
+[data-mode="field"] .instr-marker--warn,
+[data-mode="control"] .instr-marker--warn {
+  background: var(--status-warn);
+  border-color: var(--status-warn);
+}
+[data-mode="field"] .instr-marker--error,
+[data-mode="control"] .instr-marker--error {
+  background: var(--status-error);
+  border-color: var(--status-error);
+}
+
+/* ── Status rail — a running strip: mono label left, marker(s)
+   trailing right, hairline beneath. The instrument counterpart to
+   .ed-folio, for a sticky bridge or status strip rather than a page
+   head. ────────────────────────────────────────────────────────── */
+[data-mode="field"] .instr-rail,
+[data-mode="control"] .instr-rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-bottom: var(--rule-hairline);
+  padding-bottom: var(--space-half);
+}
+[data-mode="field"] .instr-rail__k,
+[data-mode="control"] .instr-rail__k {
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+}
+[data-mode="field"] .instr-rail__markers,
+[data-mode="control"] .instr-rail__markers {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ── Data block — key/value telemetry pairing. The instrument
+   counterpart to .ed-cartouche/.ed-note: label above, reading below,
+   both mono — no editorial voice on either line. ─────────────────── */
+[data-mode="field"] .instr-block,
+[data-mode="control"] .instr-block {
+  display: grid;
+  gap: 3px;
+}
+[data-mode="field"] .instr-block__k,
+[data-mode="control"] .instr-block__k {
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+}
+[data-mode="field"] .instr-block__v,
+[data-mode="control"] .instr-block__v {
+  font: var(--t-data);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ── Section head — hairline above, mono eyebrow, then the head.
+   No drop cap: a data section never gets illustrative flourish.
+   CONTROL may upgrade to --rule-heavy where density calls for it;
+   FIELD stays hairline by default. ───────────────────────────────── */
+[data-mode="field"] .instr-sec,
+[data-mode="control"] .instr-sec {
+  border-top: var(--rule-hairline);
+  padding-top: var(--space-1);
+  margin-top: var(--space-3);
+}
+[data-mode="control"] .instr-sec--dense {
+  border-top: var(--rule-heavy);
+}
+[data-mode="field"] .instr-sec__k,
+[data-mode="control"] .instr-sec__k {
+  display: block;
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+  margin-bottom: var(--space-half);
+}
+[data-mode="field"] .instr-sec__h,
+[data-mode="control"] .instr-sec__h {
+  font: var(--t-heading-03);
+  margin: 0;
+}
