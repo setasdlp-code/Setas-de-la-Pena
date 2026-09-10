@@ -9683,7 +9683,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sdp-ficha recetario-ficha">
                   <div className="sdp-ficha__hd" style={{background:'var(--paper-0)',padding:'12px 16px',borderBottom:'1px solid var(--border-hairline)'}}>
                     <div className="sdp-species">
-                      <div className="sdp-species__common" style={{fontFamily:'var(--font-editorial)',fontWeight:700,fontSize:'22px'}}>{focusSpp.name}</div>
+                      <div className="sdp-species__common">{focusSpp.name}</div>
                       <div className="sdp-species__latin" style={{fontFamily:'var(--font-editorial)',fontStyle:'italic'}}>{focusSpp.scientific}</div>
                     </div>
                     <div className="sdp-plateline">{SPP_CODE[focusKey]} · Tenjo · 2.600 m</div>
@@ -9691,7 +9691,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:16,padding:'12px 16px',alignItems:'flex-start',flexWrap:'wrap'}}>
                     {IMG[focusKey]&&<div className="sdp-fig__frame recetario-ficha-img" style={{width:100,height:75}}><img src={IMG[focusKey]} alt={focusSpp.name} width="100" height="75" loading="lazy" decoding="async"/></div>}
                     <div className="recetario-ficha-body" style={{flex:1,minWidth:200}}>
-                      <p className="ed-lede ed-drop">{focusSpp.notes}</p>
+                      <p>{focusSpp.notes}</p>
                     </div>
                   </div>
                   <div className="sdp-ficha__ft recetario-ficha-params">
