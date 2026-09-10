@@ -50,6 +50,9 @@
 /* B.1 Botanical plate — full specimen, portrait, hairline specimen frame */
 .sdp-fig--plate       .sdp-fig__frame { aspect-ratio: 4 / 5;  padding: var(--space-3); background: var(--surface-page); }
 .sdp-fig--plate       .sdp-fig__frame img { object-fit: contain; }
+/* B.1a Full-bleed plate — ARCHIVE variant, no interior padding or ground.
+   Combine with .sdp-fig--plate: class="sdp-fig sdp-fig--plate sdp-fig--bleed" */
+.sdp-fig--plate.sdp-fig--bleed .sdp-fig__frame { padding: 0; background: none; }
 /* B.2 Specimen photo — detail, square */
 .sdp-fig--specimen    .sdp-fig__frame { aspect-ratio: 1 / 1; }
 /* B.3 Cultivation photo — context, 3:2 landscape */
@@ -66,10 +69,10 @@
 /* ─────────────────────────────────────────────────────────────
    C · FICHA / LÁMINA — botanical info sheet. ARCHIVE mode.
    ───────────────────────────────────────────────────────────── */
-.sdp-ficha { border: var(--rule-heavy); background: var(--surface-page); display: grid; }
+.sdp-ficha { border: var(--rule-hairline); background: var(--surface-page); display: grid; }
 .sdp-ficha__hd {
   display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3);
-  padding: var(--space-3); border-bottom: var(--rule-heavy);
+  padding: var(--space-3); border-bottom: var(--rule-hairline);
 }
 .sdp-ficha__body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); padding: var(--space-4) var(--space-3); }
 .sdp-ficha__prose > p:last-child { margin-bottom: 0; }
@@ -79,7 +82,10 @@
 }
 .sdp-ficha__cell { padding: var(--space-2) var(--space-3); border-right: var(--rule-hairline); }
 .sdp-ficha__cell:last-child { border-right: 0; }
-.sdp-ficha__k { display: block; font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half); }
+/* Editorial eyebrow (Gaya letterspaced caps), not the mono .t-label —
+   requires components/editorial.css loaded; every ARCHIVE-mode surface
+   that uses .sdp-ficha ships with it. */
+.sdp-ficha__k { display: block; font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: var(--space-half); }
 .sdp-ficha__v { font: var(--t-body); }
 .sdp-ficha__v--price { font: var(--t-data); font-size: var(--size-body); }
 @media (max-width: 700px) { .sdp-ficha__body { grid-template-columns: 1fr; } .sdp-ficha__ft { grid-template-columns: 1fr; } .sdp-ficha__cell { border-right: 0; border-bottom: var(--rule-hairline); } }
@@ -211,15 +217,17 @@
 /* ─────────────────────────────────────────────────────────────
    K · PACKAGING — front and back faces.
    ───────────────────────────────────────────────────────────── */
-.sdp-pack { border: var(--rule-frame); background: var(--surface-page); display: grid; }
-.sdp-pack__brand { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-pack { border: var(--rule-hairline); background: var(--surface-page); display: grid; }
+/* Editorial eyebrow treatment on __brand / __net / __sk — see the note
+   at .sdp-ficha__k above; same dependency on editorial.css. */
+.sdp-pack__brand { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
 .sdp-pack--front { padding: var(--space-4) var(--space-3); grid-template-rows: auto 1fr auto; gap: var(--space-3); text-align: center; justify-items: center; }
 .sdp-pack__illo { width: 100%; max-width: 260px; }
-.sdp-pack__net { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; border-top: var(--rule-hairline); padding-top: var(--space-1); width: 100%; }
+.sdp-pack__net { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; border-top: var(--rule-hairline); padding-top: var(--space-1); width: 100%; }
 .sdp-pack--back { display: flex; flex-direction: column; padding: var(--space-3); gap: var(--space-2); }
 .sdp-pack__sect { border-top: var(--rule-hairline); padding-top: var(--space-1); }
-.sdp-pack__sk { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); display: block; margin-bottom: var(--space-half); }
-.sdp-pack__sv { font: var(--t-small); }
+.sdp-pack__sk { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: var(--space-half); }
+.sdp-pack__sv { font: var(--t-small); display: block; }
 
 /* ─────────────────────────────────────────────────────────────
    L · SOP DOCUMENT — procedure sheet. FIELD mode.
