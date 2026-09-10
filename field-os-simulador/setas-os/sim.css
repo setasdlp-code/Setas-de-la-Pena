@@ -155,6 +155,13 @@
      now live there so the whole category palette is versioned with the DS.
      Do not redefine them here. */
 
+  /* ── EDITORIAL ACCENT — ported from ds-2026 ARCHIVE mode (2026-09).
+     Same hue family as --color-terracotta/--rust: a masthead/highlight
+     accent, not a status color. Fill, underline or thin-rule only, never
+     body text — it fails the 4.5:1 AA floor on paper by design, same
+     constraint ds-2026's own contrast-audit.py enforces on this value. */
+  --accent-warm: oklch(57% 0.15 38);
+
   /* ── MOTION SCALE — replaces 8 scattered durations (.1s–.4s) ──
      Pick by role, not by feel. Pair with --ease (existing curve) unless noted. */
   --duration-quick: .12s;    /* micro-interactions: hover color/bg swap, active press */
@@ -5495,10 +5502,23 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .sdp-fig--plate .sdp-fig__frame img { object-fit: contain; }
 .sim-root .frame-specimen { border: var(--rule-frame, 1px solid var(--rule)); outline: 1px solid var(--rule); outline-offset: 3px; }
 
-.sim-root .sdp-ficha { border: var(--rule-heavy, 2px solid var(--ink)); background: var(--surface-page, var(--paper)); display: grid; }
+.sim-root .sdp-ficha { border: var(--rule-hairline, 1px solid var(--border-hairline)); background: var(--surface-page, var(--paper)); display: grid; }
 .sim-root .sdp-ficha__hd {
   display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3, 24px);
-  padding: var(--space-3, 24px); border-bottom: var(--rule-heavy, 2px solid var(--ink));
+  padding: var(--space-3, 24px); border-bottom: var(--rule-hairline, 1px solid var(--border-hairline));
+}
+/* Masthead device (ds-2026, 2026-09): an accent-warm rule under the species
+   name — the same motif as the DS's ficha header/packaging-front cover
+   treatment. Not bumped to the DS's 88px cover scale: this ficha is a
+   compact operational panel, not a full print plate, so the size stays
+   whatever .sdp-species__common already resolves to (--t-species, 28px) —
+   only the rule is new. Callers must not override font-size inline, or
+   they silently block this same class of change (see recetario-ficha's
+   .sdp-species__common, fixed alongside this). */
+.sim-root .sdp-ficha__hd .sdp-species__common {
+  display: inline-block;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent-warm);
 }
 .sim-root .sdp-ficha__body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4, 32px); padding: var(--space-4, 32px) var(--space-3, 24px); }
 .sim-root .sdp-ficha__ft {
@@ -5507,9 +5527,34 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .sdp-ficha__cell { padding: var(--space-2, 16px) var(--space-3, 24px); border-right: var(--rule-hairline, 1px solid var(--border-hairline)); }
 .sim-root .sdp-ficha__cell:last-child { border-right: 0; }
-.sim-root .sdp-ficha__k { display: block; font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half, 4px); }
+/* Editorial eyebrow (Gaya letterspaced caps), not mono .t-label — mirrors
+   ds-2026's own components.css change to .sdp-ficha__k (2026-09). */
+.sim-root .sdp-ficha__k { display: block; font: 500 12px/1.2 var(--font-editorial); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary, var(--ink-muted)); margin-bottom: var(--space-half, 4px); }
 .sim-root .sdp-ficha__v { font: var(--t-body); }
 .sim-root .sdp-ficha__v--price { font: var(--t-data); font-size: var(--size-body); }
+
+/* Default drop cap on the recetario ficha's body copy (ds-2026, 2026-09):
+   .ed-drop's three-line cap is now the DEFAULT here too, no class needed —
+   replaces this card's previous reliance on the external, now-stale
+   vendored ds-2026/editorial.css for `.ed-lede`/`.ed-drop` (see JSX). The
+   base paragraph font replaces what `.ed-lede` used to provide, natively. */
+.sim-root .recetario-ficha-body p {
+  font-family: var(--font-editorial);
+  font-weight: 300;
+  font-size: var(--text-md, 15px);
+  line-height: 1.5;
+  color: var(--text-primary, var(--ink-900));
+  margin: 0;
+}
+.sim-root .recetario-ficha-body p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-editorial);
+  font-weight: 900;
+  font-size: 3.05em;
+  line-height: 0.86;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--ink-900, var(--ink));
+}
 
 .sim-root .sdp-lote { border: var(--rule-frame, 1px solid var(--rule)); background: var(--surface-page, var(--paper)); display: grid; }
 .sim-root .sdp-lote__media { aspect-ratio: 3 / 2; background: var(--surface-recessed, var(--paper-recessed)); border-bottom: var(--rule-frame, 1px solid var(--rule)); overflow: hidden; }
