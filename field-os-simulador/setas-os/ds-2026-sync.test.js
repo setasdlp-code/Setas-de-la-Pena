@@ -22,7 +22,7 @@ test('packaged DS-2026 tokens stay in sync with canonical 08_brand/ds-2026', () 
 });
 
 test('packaged DS-2026 components stay in sync with canonical 08_brand/ds-2026', () => {
-  const compFiles = ['components/base.css', 'components/components.css', 'components/editorial.css'];
+  const compFiles = ['components/base.css', 'components/components.css', 'components/editorial.css', 'components/instrument.css'];
   for (const f of compFiles) {
     assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in ${f}`);
   }
