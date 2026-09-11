@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 09ed2340538c444134a063326fdfdac0412b3e98e00466497c9e0eb0de1f768b
+// source-hash: 818d8dfe7a89f6a1834fdc3feee3508f03d58311f4dc9de2a6d1ab98aa8e85e0
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3639,6 +3639,8 @@ function SimuladorShell(props) {
     }
   };
   const [scanMiss, setScanMiss] = useState("");
+  const [qrEventoObsAbierta, setQrEventoObsAbierta] = useState(false);
+  const [qrEventoObsNota, setQrEventoObsNota] = useState("");
   const handleScannedValue = (raw) => {
     if (!raw) return;
     const sheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
@@ -5676,6 +5678,66 @@ BATCH (${numBags}×${kgBag} kg):
       });
     } catch (e) {
       return null;
+    }
+  };
+  const reportarEventoCultivo = (tipo, lote, bag, nota = "") => {
+    if (!batchSheetApi || !lote) return;
+    const uid = typeof window !== "undefined" && window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : lote.operador || "operario_local";
+    let evento;
+    try {
+      evento = batchSheetApi.buildCultivoEvento({ batchId: lote.id, bagId: bag ? bag.id : null, tipo, operatorId: uid, nota });
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo registrar el evento", msg: err.message });
+      return;
+    }
+    if (typeof window !== "undefined" && window.SetasEventosCultivoDB) {
+      window.SetasEventosCultivoDB.registrarEvento(evento).catch((err) => console.warn("No se sincronizó el evento de cultivo:", err));
+    } else {
+      console.warn("SetasEventosCultivoDB no disponible — evento de cultivo no se respaldó en Firestore.");
+    }
+    if (tipo === "riego" || tipo === "observacion") {
+      try {
+        const nextLog = batchSheetApi.appendBatchEvent(lote.lifecycleEvents || [], {
+          batchId: lote.id,
+          action: tipo === "riego" ? "riego" : "note",
+          operatorId: uid,
+          payload: tipo === "riego" ? { nota: nota || "Riego registrado por QR" } : { nota }
+        });
+        updateBitLote(lote.id, { lifecycleEvents: nextLog });
+      } catch (err) {
+        console.warn("No se pudo reflejar el evento en la bitácora del lote:", err);
+      }
+      setQrEventoObsAbierta(false);
+      setQrEventoObsNota("");
+      setNoticeDlg({ title: tipo === "riego" ? "Riego registrado" : "Observación registrada", msg: `Lote ${lote.codigo}${bag ? " · bolsa " + bag.codigo : ""}.` });
+      return;
+    }
+    if (tipo === "contaminacion") {
+      setDiagLoteId(lote.id);
+      const b = bag || bitBolsas.find((x) => x.loteId === lote.id && x.estado !== "descartada");
+      setDiagBolsaId(b ? b.id : "");
+      setDiagImageBase64("");
+      setDiagResult(null);
+      setDiagError("");
+      setDiagNotes("");
+      setShowQrSheet(false);
+      setShowDiagModal(true);
+      return;
+    }
+    if (tipo === "cosecha_parcial") {
+      setBitActiveLoteId(lote.id);
+      setBitCosechaForm({
+        loteId: lote.id,
+        bolsaId: bag ? bag.id : "",
+        codigo: bag ? bag.codigo : "",
+        flush: 1,
+        fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+        pesoFresco: "",
+        calidad: 3,
+        observaciones: ""
+      });
+      setShowQrSheet(false);
+      setShowBitCosecha(true);
     }
   };
   const enqueueFieldTransition = async (lote, from, to) => {
@@ -8091,6 +8153,8 @@ Click para ver análisis completo`
           setScanMiss("");
           setManualScanCode("");
           setCameraError("");
+          setQrEventoObsAbierta(false);
+          setQrEventoObsNota("");
         },
         label: "Captura rápida de campo",
         dialogStyle: { width: "min(460px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
@@ -8102,6 +8166,8 @@ Click para ver análisis completo`
         setScanMiss("");
         setManualScanCode("");
         setCameraError("");
+        setQrEventoObsAbierta(false);
+        setQrEventoObsNota("");
       } }, "✕")),
       isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
         "video",
@@ -8315,6 +8381,63 @@ Click para ver análisis completo`
         a.action === "harvest" && /* @__PURE__ */ React.createElement(AppIcon, { name: "harvest", size: 15, color: "var(--paper-0)" }),
         a.action === "contamination" && /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
         a.label
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Reportar evento"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, "data-testid": "qr-reportar-evento" }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          "data-action": "evento-observacion",
+          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
+          onClick: () => setQrEventoObsAbierta((v) => !v)
+        },
+        "📝 Observación"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          "data-action": "evento-riego",
+          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
+          onClick: () => reportarEventoCultivo("riego", currentLote, scannedBag)
+        },
+        "💧 Riego"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          "data-action": "evento-contaminacion",
+          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
+          onClick: () => reportarEventoCultivo("contaminacion", currentLote, scannedBag)
+        },
+        "⚠️ Contaminación"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          "data-action": "evento-cosecha_parcial",
+          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
+          onClick: () => reportarEventoCultivo("cosecha_parcial", currentLote, scannedBag)
+        },
+        "🧺 Cosecha parcial"
+      )), qrEventoObsAbierta && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          "data-testid": "qr-evento-observacion-nota",
+          className: "inv-input",
+          rows: 2,
+          placeholder: "Nota de campo (obligatoria)",
+          value: qrEventoObsNota,
+          onChange: (e) => setQrEventoObsNota(e.target.value),
+          style: { resize: "vertical", fontSize: 12 }
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-pri",
+          style: { minHeight: 40 },
+          disabled: !qrEventoObsNota.trim(),
+          onClick: () => reportarEventoCultivo("observacion", currentLote, scannedBag, qrEventoObsNota)
+        },
+        "Guardar observación"
       )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Siempre disponible"), /* @__PURE__ */ React.createElement(
         "button",
         {

@@ -154,6 +154,7 @@ function loadDataRuntime() {
         import("./db.js"),
         import("./bitacora-sync.js"),
         import("./public-trace-sync.js"),
+        import("./eventos-cultivo-sync.js"),
       ]);
       // Estos motores UMD dependen entre sí y el bundle React los resuelve
       // como globals. Se ejecutan en orden solo tras Auth, antes del bundle.

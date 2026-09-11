@@ -138,6 +138,27 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // Eventos de cultivo reportados por QR desde dentro de la app (ver
+    // "Reportar evento" en el action sheet móvil, respaldados por
+    // firebase/eventos-cultivo-sync.js). Es un log de campo, no un registro
+    // editable: solo se crea, nunca se corrige ni se borra un evento ya
+    // reportado — igual que app_errors más abajo. El operador solo puede
+    // reportar a su propio nombre: sin esto, cualquier sesión autenticada
+    // podría atribuir un evento a otro operador.
+    function tipoDeEventoCultivoValido(tipo) {
+      return tipo in ['observacion', 'riego', 'contaminacion', 'cosecha_parcial'];
+    }
+
+    match /eventos_cultivo/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.operatorId == request.auth.uid
+        && request.resource.data.batchId is string
+        && tipoDeEventoCultivoValido(request.resource.data.tipo)
+        && esStringOpcional(request.resource.data, 'nota', 2000);
+      allow update, delete: if false;
+    }
+
     // Catálogo de ingredientes — de solo lectura para todos los operadores,
     // solo un admin lo edita (evita que un error de captura rompa el formulador).
     match /ingredientes/{id} {
