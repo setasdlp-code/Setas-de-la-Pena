@@ -9762,7 +9762,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:16,padding:'12px 16px',alignItems:'flex-start',flexWrap:'wrap'}}>
                     {IMG[focusKey]&&<div className="sdp-fig__frame recetario-ficha-img" style={{width:100,height:75}}><img src={IMG[focusKey]} alt={focusSpp.name} width="100" height="75" loading="lazy" decoding="async"/></div>}
                     <div className="recetario-ficha-body" style={{flex:1,minWidth:200}}>
-                      <p>{focusSpp.notes}</p>
+                      <p className="ed-lede ed-drop">{focusSpp.notes}</p>
                     </div>
                   </div>
                   <div className="sdp-ficha__ft recetario-ficha-params">
@@ -9886,6 +9886,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
                   <div className="spp-info-top" style={{background:'color-mix(in oklab,var(--moss-100) 40%,var(--paper-50))'}}>
+                    <div className="ed-folio" style={{marginBottom:10}}>
+                      <span className="ed-folio__t">Ficha de especie</span>
+                      <span className="ed-folio__n">{SPP_CODE[sKey]} · Tenjo</span>
+                    </div>
                     <div className="spp-info-sci">{sp.scientific}</div>
                     <h2 className="spp-info-name">{sp.name}</h2>
                     <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:12,paddingBottom:12,borderBottom:'1px solid color-mix(in oklab,var(--moss-400) 20%,transparent)'}}>
