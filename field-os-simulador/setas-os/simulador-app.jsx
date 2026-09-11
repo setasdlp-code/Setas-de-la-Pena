@@ -267,6 +267,28 @@ function calculateCost(biomassGrams, solventLiters, speciesKey, methodKey, rawBi
   return { biomassCost, solventCost, totalCost, costPerGramExtract };
 }
 
+// Decodificador QR de respaldo para navegadores sin BarcodeDetector — todo
+// iOS hoy, por obligación de Apple de correr sobre WebKit. jsQR es puro JS
+// (decodifica ImageData de un canvas, sin depender de una API nativa), así
+// que funciona igual en Safari/Chrome-iOS que en cualquier escritorio.
+// Se carga bajo demanda (no en el arranque) porque la mayoría de operadores
+// en Android/desktop nunca lo necesita — cachea la promesa para no pedirlo
+// dos veces si el operador abre y cierra el escáner varias veces.
+let jsQRLoadPromise = null;
+function loadJsQR() {
+  if (typeof window !== 'undefined' && window.jsQR) return Promise.resolve(window.jsQR);
+  if (jsQRLoadPromise) return jsQRLoadPromise;
+  jsQRLoadPromise = new Promise((resolve, reject) => {
+    if (typeof document === 'undefined') { reject(new Error('Sin document')); return; }
+    const script = document.createElement('script');
+    script.src = 'vendor/jsQR.js';
+    script.onload = () => (window.jsQR ? resolve(window.jsQR) : reject(new Error('jsQR no se expuso en window tras cargar')));
+    script.onerror = () => { jsQRLoadPromise = null; reject(new Error('No se pudo cargar el decodificador QR (sin conexión y sin caché previa)')); };
+    document.head.appendChild(script);
+  });
+  return jsQRLoadPromise;
+}
+
 function generateBatchQrDataUrl(batch) {
   if (!batch) return "";
   const payload = JSON.stringify({
@@ -4996,6 +5018,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  // Canvas fuera de pantalla para el respaldo jsQR — nunca se monta en el DOM,
+  // solo sirve para volcar cada fotograma del <video> y leer sus píxeles.
+  const qrCanvasRef = React.useRef(null);
   // El stream vive en su propia ref y no colgado del <video>: al cerrar la hoja
   // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
   // quedaba encendida con el modal cerrado.
@@ -5050,6 +5075,29 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return true;
   };
 
+  // Bucle de decodificación con jsQR sobre un <canvas> fuera de pantalla —
+  // el respaldo para iOS (y cualquier otro navegador sin BarcodeDetector).
+  // Más lento que la API nativa (dibuja + decodifica cada fotograma en JS
+  // puro), pero es justamente lo que hace que funcione en Safari/WebKit.
+  const startJsQRLoop = (jsQR) => {
+    if (!qrCanvasRef.current) qrCanvasRef.current = document.createElement('canvas');
+    const canvas = qrCanvasRef.current;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    scannerIntervalRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data) handleScannedValue(code.data);
+      } catch (e) {}
+    }, 300);
+  };
+
   const startCameraScanner = async () => {
     setCameraError('');
     setScanMiss('');
@@ -5057,11 +5105,20 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
-      // Sin decodificador no se enciende la cámara: pedir permiso para mostrar
-      // un vídeo que nunca va a leer el QR es peor que decirlo de frente.
-      if (!(await detectQrSupport())) {
-        setCameraError('Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.');
-        return;
+      // BarcodeDetector nativo es la vía rápida cuando existe; si no, se
+      // intenta el respaldo jsQR antes de rendirse — no encender la cámara
+      // para mostrar un vídeo que nunca decodifica nada sigue siendo peor
+      // que decirlo de frente, pero eso solo pasa si ninguno de los dos
+      // decodificadores está disponible.
+      const nativeOk = await detectQrSupport();
+      let jsQR = null;
+      if (!nativeOk) {
+        try {
+          jsQR = await loadJsQR();
+        } catch (e) {
+          setCameraError('No se pudo cargar el decodificador de QR (revisa tu conexión la primera vez que uses el escáner) — escribe abajo el código impreso en la etiqueta.');
+          return;
+        }
       }
       setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -5069,6 +5126,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       });
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
+
+      if (jsQR) {
+        startJsQRLoop(jsQR);
+        return;
+      }
 
       const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
       if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);

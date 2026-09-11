@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 281b331c18bbcbcb1a8bf414c24345a59485e2702b8d968d4bfbb8c02ace43d4
+// source-hash: a2be929f233ee1b6024b273cee4279ca5905e2deb3e7b6cdf3aabf52f4df5775
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -237,6 +237,26 @@ function calculateCost(biomassGrams, solventLiters, speciesKey, methodKey, rawBi
   const { yieldGrams } = calculateYield(biomassGrams, speciesKey, methodKey, factors);
   const costPerGramExtract = yieldGrams > 0 ? Math.round(totalCost / yieldGrams) : 0;
   return { biomassCost, solventCost, totalCost, costPerGramExtract };
+}
+let jsQRLoadPromise = null;
+function loadJsQR() {
+  if (typeof window !== "undefined" && window.jsQR) return Promise.resolve(window.jsQR);
+  if (jsQRLoadPromise) return jsQRLoadPromise;
+  jsQRLoadPromise = new Promise((resolve, reject) => {
+    if (typeof document === "undefined") {
+      reject(new Error("Sin document"));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "vendor/jsQR.js";
+    script.onload = () => window.jsQR ? resolve(window.jsQR) : reject(new Error("jsQR no se expuso en window tras cargar"));
+    script.onerror = () => {
+      jsQRLoadPromise = null;
+      reject(new Error("No se pudo cargar el decodificador QR (sin conexión y sin caché previa)"));
+    };
+    document.head.appendChild(script);
+  });
+  return jsQRLoadPromise;
 }
 function generateBatchQrDataUrl(batch) {
   if (!batch) return "";
@@ -3563,6 +3583,7 @@ function SimuladorShell(props) {
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  const qrCanvasRef = React.useRef(null);
   const cameraStreamRef = React.useRef(null);
   const stopCameraScanner = () => {
     setIsCameraActive(false);
@@ -3603,6 +3624,25 @@ function SimuladorShell(props) {
     });
     return true;
   };
+  const startJsQRLoop = (jsQR) => {
+    if (!qrCanvasRef.current) qrCanvasRef.current = document.createElement("canvas");
+    const canvas = qrCanvasRef.current;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    scannerIntervalRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+        if (code && code.data) handleScannedValue(code.data);
+      } catch (e) {
+      }
+    }, 300);
+  };
   const startCameraScanner = async () => {
     setCameraError("");
     setScanMiss("");
@@ -3610,9 +3650,15 @@ function SimuladorShell(props) {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Cámara no disponible o no compatible en este navegador");
       }
-      if (!await detectQrSupport()) {
-        setCameraError("Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.");
-        return;
+      const nativeOk = await detectQrSupport();
+      let jsQR = null;
+      if (!nativeOk) {
+        try {
+          jsQR = await loadJsQR();
+        } catch (e) {
+          setCameraError("No se pudo cargar el decodificador de QR (revisa tu conexión la primera vez que uses el escáner) — escribe abajo el código impreso en la etiqueta.");
+          return;
+        }
       }
       setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -3620,6 +3666,10 @@ function SimuladorShell(props) {
       });
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
+      if (jsQR) {
+        startJsQRLoop(jsQR);
+        return;
+      }
       const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"] });
       if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = setInterval(async () => {
