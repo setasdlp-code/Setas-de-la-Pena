@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: a2be929f233ee1b6024b273cee4279ca5905e2deb3e7b6cdf3aabf52f4df5775
+// source-hash: 00fc14941404f535ad39cccfa16aae566d5f03eda36539d79396841a45dc8b9f
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3039,6 +3039,63 @@ const generateQrSvgDataUrl = (text) => {
     return "";
   }
 };
+const THERMAL_PX_PER_MM = 16;
+function drawThermalLabelToCanvas(ctx, item, x0, y0, wMm, hMm) {
+  const w = wMm * THERMAL_PX_PER_MM;
+  const h = hMm * THERMAL_PX_PER_MM;
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "#ccc";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  const pad = 6;
+  const qrSize = h - pad * 2;
+  const qrMini = typeof window !== "undefined" ? window.QRMini : null;
+  if (qrMini && typeof qrMini.matrix === "function") {
+    const m = qrMini.matrix(item.qrUrl || item.id || "SETAS-OS");
+    const n = m.length;
+    const cell = qrSize / n;
+    ctx.fillStyle = "#000";
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) ctx.fillRect(pad + c * cell, pad + r * cell, Math.ceil(cell), Math.ceil(cell));
+      }
+    }
+  }
+  const textX = pad * 2 + qrSize;
+  let textY = pad + 10;
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 11px sans-serif";
+  ctx.fillText(item.species || "", textX, textY, w - textX - pad);
+  textY += 14;
+  ctx.font = "10px monospace";
+  ctx.fillText(item.id || "", textX, textY, w - textX - pad);
+  textY += 12;
+  if (item.bagCode && item.bagCode !== "LOTE MAESTRO") {
+    ctx.font = "9px monospace";
+    ctx.fillText(item.bagCode, textX, textY, w - textX - pad);
+    textY += 11;
+  }
+  ctx.font = "9px monospace";
+  ctx.fillText(item.date || "", textX, textY, w - textX - pad);
+  ctx.restore();
+}
+function buildThermalShareCanvas(items, sizeKey) {
+  const [wMm, hMm] = sizeKey === "40x30" ? [40, 30] : [50, 30];
+  const wPx = wMm * THERMAL_PX_PER_MM;
+  const hPx = hMm * THERMAL_PX_PER_MM;
+  const gap = 4;
+  const canvas = document.createElement("canvas");
+  canvas.width = wPx;
+  canvas.height = items.length * hPx + Math.max(0, items.length - 1) * gap;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), wMm, hMm));
+  return canvas;
+}
 const FORM_DRAFT_KEY = "setas_formulator_draft_v1";
 const readFormDraft = () => {
   try {
@@ -8652,6 +8709,36 @@ Click para ver análisis completo`
         return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowThermalModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cancelar"), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: async () => {
+            try {
+              const canvas = buildThermalShareCanvas(items, thermalSize);
+              const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+              if (!blob) throw new Error("No se pudo generar la imagen de la etiqueta");
+              const file = new File([blob], `etiquetas-${lote.codigo || "lote"}.png`, { type: "image/png" });
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: "Etiquetas Setas OS", text: `Etiquetas de ${lote.codigo || ""} — ábrelas en PrintMaster para imprimir en el Phomemo M110.` });
+              } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = file.name;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 4e3);
+                setNoticeDlg({ title: "Imagen descargada", msg: "Este navegador no soporta compartir archivos directamente — la imagen se descargó. Ábrela desde Archivos/Fotos y compártela con PrintMaster." });
+              }
+            } catch (e) {
+              if (e && e.name === "AbortError") return;
+              setNoticeDlg({ title: "No se pudo compartir la etiqueta", msg: e && e.message ? e.message : "Intenta de nuevo o usa Imprimir." });
+            }
+          },
+          className: "inv-btn inv-btn-sec",
+          style: { minHeight: 44, padding: "8px 14px" }
+        },
+        "📤 Compartir"
+      ), /* @__PURE__ */ React.createElement(
         "button",
         {
           onClick: () => {
