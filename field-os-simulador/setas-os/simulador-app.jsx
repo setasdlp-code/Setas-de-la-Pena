@@ -9568,7 +9568,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
