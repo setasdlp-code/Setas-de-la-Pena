@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 00fc14941404f535ad39cccfa16aae566d5f03eda36539d79396841a45dc8b9f
+// source-hash: fcf94ee1d2b40e5b06d02a8ef2ed6c847175af453b9cff8be053cfa256e2919b
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3667,7 +3667,7 @@ function SimuladorShell(props) {
       const formats = await window.BarcodeDetector.getSupportedFormats();
       return Array.isArray(formats) ? formats.includes("qr_code") : true;
     } catch (e) {
-      return true;
+      return false;
     }
   };
   const attachCameraStream = async (stream) => {
@@ -3686,6 +3686,7 @@ function SimuladorShell(props) {
     const canvas = qrCanvasRef.current;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    let consecutiveErrors = 0;
     scannerIntervalRef.current = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.readyState < 2 || !video.videoWidth) return;
@@ -3694,9 +3695,15 @@ function SimuladorShell(props) {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+        consecutiveErrors = 0;
         if (code && code.data) handleScannedValue(code.data);
       } catch (e) {
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 10) {
+          stopCameraScanner();
+          setCameraError("El escáner dejó de poder leer la cámara (" + (e && e.message ? e.message : "error desconocido") + ") — escribe abajo el código impreso en la etiqueta.");
+        }
       }
     }, 300);
   };
