@@ -6060,14 +6060,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
   // ── Bitácora helpers ──
-  const buildBitNuevoForm=()=>{
+  // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
+  // lote), Producción (Lanzar producción) y Formulador (N.º lote a imprimir/
+  // ejecutar) — un solo lugar para no repetir el mapa de especie→código ni
+  // dejar que una de las tres se desactualice sola.
+  const SPP_CODE={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
+  const sugerirCodigoLote=(key)=>{
     const today=new Date().toISOString().split('T')[0];
+    const sppCode=SPP_CODE[key]||'EXP';const dc=today.replace(/-/g,'').slice(2);
+    const cnt=bitLotes.length+1;
+    return `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+  };
+  // Precarga el N.º de lote del Formulador con la sugerencia — sin esto el
+  // campo se queda vacío hasta que el operador escribe algo a mano, con
+  // riesgo de que invente un formato distinto al SDP-{fecha}-{especie}-R{n}
+  // que usan Bitácora y Producción. Solo autocompleta mientras el campo
+  // sigue vacío: si el operador ya escribió algo (o lo borró a propósito),
+  // un cambio de especie no se lo pisa.
+  useEffect(()=>{
+    if(!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[sKey]);
+  const buildBitNuevoForm=()=>{
     const sp=SPP[sKey];const tr=an?calcTreatment(an, sKey, SPP):null;
-    const SC={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
-    const sppCode=SC[sKey]||'EXP';const dc=today.replace(/-/g,'').slice(2);
-    const cnt=bitLotes.length+1;const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
+    const today=new Date().toISOString().split('T')[0];
+    const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
-      codigo:`SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`,
+      codigo:sugerirCodigoLote(sKey),
       especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
       fechaMezcla:today,fechaInoculacion:today,
       numBolsas:nb,pesoHumedo:kb,peseSeco:parseFloat((nb*kb*(1-hm/100)).toFixed(3)),
@@ -6113,11 +6131,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     const today = new Date().toISOString().split('T')[0];
     const sp = SPP[sKey];
-    const SC = { p_ostreatus_gris:'OST', p_ostreatus_blanco:'OBL', p_djamor_rosa:'ROS', p_eryngii:'ERY', shiitake:'SHI', lions_mane:'MEL', reishi:'REI', enoki:'ENO', nameko:'NAM' };
-    const sppCode = SC[sKey] || 'EXP';
-    const dc = today.replace(/-/g,'').slice(2);
-    const cnt = bitLotes.length + 1;
-    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+    const codigo = sugerirCodigoLote(sKey);
 
     // Desglose de insumos a descontar
     const insumos = (bd?.items || []).map(it => {
