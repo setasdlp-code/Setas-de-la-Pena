@@ -5060,7 +5060,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       // Sin decodificador no se enciende la cámara: pedir permiso para mostrar
       // un vídeo que nunca va a leer el QR es peor que decirlo de frente.
       if (!(await detectQrSupport())) {
-        setCameraError('Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.');
+        // En iOS, Apple obliga a todo navegador (Chrome, Firefox, el que sea)
+        // a correr sobre el motor WebKit de Safari — "abre en Chrome" no
+        // cambia nada ahí porque no es un problema de qué navegador se usa,
+        // sino de que WebKit no implementa BarcodeDetector. Sugerir Chrome
+        // en iOS es un consejo que no puede funcionar.
+        const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+        setCameraError(isIOS
+          ? 'En iPhone/iPad ningún navegador puede leer códigos QR todavía (Apple obliga a que todos usen el mismo motor de Safari, que no lo soporta) — escribe abajo el código impreso en la etiqueta.'
+          : 'Este navegador no sabe leer códigos QR. Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.');
         return;
       }
       setIsCameraActive(true);
