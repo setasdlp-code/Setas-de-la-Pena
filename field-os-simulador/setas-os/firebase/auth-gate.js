@@ -35,6 +35,7 @@ const DC_RUNTIME_SCRIPTS = [
   "../bridge-protocol.js",
   "../navigation-state.js",
   "../setas-os-workflow.js",
+  "../contamination-workflow.js",
   "../climate-sparkline.js",
   "../support.js",
 ];
