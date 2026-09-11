@@ -5,12 +5,15 @@
 // procedencia y calibración para que el Perito no confunda heurística con medición.
 (function () {
 
-const clamp01to100 = (v) => Math.max(0, Math.min(100, v));
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const clamp01to100 = (v) => Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+const clamp01 = (v) => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0;
 
-const nearIdeal = (value, { min, max, ideal }) => {
-  const side = value < ideal ? Math.max(1e-6, ideal - min) : Math.max(1e-6, max - ideal);
-  const ratio = Math.abs(value - ideal) / side;
+const nearIdeal = (value, opt) => {
+  if (!opt || !Number.isFinite(value) || !Number.isFinite(opt.ideal)) return 0;
+  const min = Number.isFinite(opt.min) ? opt.min : opt.ideal;
+  const max = Number.isFinite(opt.max) ? opt.max : opt.ideal;
+  const side = value < opt.ideal ? Math.max(1e-6, opt.ideal - min) : Math.max(1e-6, max - opt.ideal);
+  const ratio = Math.abs(value - opt.ideal) / side;
   if (ratio <= 1) return 100 - ratio * 10;
   return clamp01to100(90 - (ratio - 1) * 90);
 };
@@ -22,12 +25,12 @@ const nearIdeal = (value, { min, max, ideal }) => {
 // digestibilidad varía de verdad entre combinaciones y no se auto-satura.
 // Sin dato (fixtures/llamadores que no la calculan) es neutral: no penaliza.
 const scoreDigestibility = (an) => {
-  if (!Number.isFinite(an.avgDig)) return 100;
+  if (!an || !Number.isFinite(an.avgDig)) return 100;
   return clamp01to100((an.avgDig / 10) * 100);
 };
 
 const scoreNutrition = (an) => {
-  const sp = an.sp;
+  const sp = an?.sp;
   if (!sp) return 0;
   const cnScore = nearIdeal(an.cn, sp.cn_optimal);
   const nScore = nearIdeal(an.avgN, sp.n_optimal);
@@ -61,39 +64,46 @@ const scoreCost = (costDetail) => {
 };
 
 const scoreRisk = (an, treatment) => {
-  const sp = an.sp;
+  const sp = an?.sp;
   if (!sp) return 50;
   let pen = 0;
   if (an.trichoderma) pen += 35;
-  const suppOver = Math.max(0, an.suppP - sp.supplementation_max);
+  const suppP = Number.isFinite(an.suppP) ? an.suppP : 0;
+  const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
+  const suppOver = Math.max(0, suppP - suppLimit);
   if (suppOver > 0 && treatment && treatment.col !== 'autoclave') pen += 20 + suppOver * 3;
   else if (suppOver > 0) pen += 8 + suppOver * 1.5;
-  if (an.cafeP > 25) pen += 12;
-  else if (an.cafeP > 20) pen += 5;
-  if (an.densaP > 60 && an.airP < 10) pen += 15;
-  else if (an.densaP > 40 && an.airP < 8) pen += 8;
-  if (sp.ph_optimal) {
+  const cafeP = Number.isFinite(an.cafeP) ? an.cafeP : 0;
+  if (cafeP > 25) pen += 12;
+  else if (cafeP > 20) pen += 5;
+  const densaP = Number.isFinite(an.densaP) ? an.densaP : 0;
+  const airP = Number.isFinite(an.airP) ? an.airP : 0;
+  if (densaP > 60 && airP < 10) pen += 15;
+  else if (densaP > 40 && airP < 8) pen += 8;
+  if (sp.ph_optimal && Number.isFinite(an.avgPh)) {
     if (an.avgPh < sp.ph_optimal.min - 0.5 || an.avgPh > sp.ph_optimal.max + 0.5) pen += 12;
     else if (an.avgPh < sp.ph_optimal.min || an.avgPh > sp.ph_optimal.max) pen += 5;
   }
-  if (an.incompat && an.incompat.length > 0) pen += an.incompat.length * 5;
-  if (treatment && treatment.col === 'cwlp' && an.suppP > 12) pen += 10;
-  if (an.tot < 97 || an.tot > 103) pen += 5;
+  if (Array.isArray(an.incompat) && an.incompat.length > 0) pen += an.incompat.length * 5;
+  if (treatment && treatment.col === 'cwlp' && suppP > 12) pen += 10;
+  if (Number.isFinite(an.tot) && (an.tot < 97 || an.tot > 103)) pen += 5;
   return clamp01to100(100 - pen);
 };
 
 const scoreTreatment = (an, treatment) => {
   if (!treatment) return 50;
-  if (an.trichoderma) return treatment.col === 'autoclave' ? 100 : 10;
-  const sp = an.sp;
-  if (sp && an.suppP >= (sp.supplementation_max || 20) && treatment.col === 'autoclave') return 95;
-  if (an.suppP > 12 && treatment.col === 'cwlp') return 40;
+  if (an?.trichoderma) return treatment.col === 'autoclave' ? 100 : 10;
+  const sp = an?.sp;
+  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppMax = Number.isFinite(sp?.supplementation_max) ? sp.supplementation_max : 20;
+  if (sp && suppP >= suppMax && treatment.col === 'autoclave') return 95;
+  if (suppP > 12 && treatment.col === 'cwlp') return 40;
   return 65;
 };
 
 const scoreMassBalance = (an) => {
-  const tot = an.tot;
-  if (tot == null) return 100;
+  const tot = an?.tot;
+  if (tot == null || !Number.isFinite(tot)) return 100;
   if (tot >= 99 && tot <= 101) return 100;
   if (tot >= 97 && tot <= 103) return 70;
   return 40;
@@ -161,9 +171,11 @@ const getStockDetail = (ctx) => {
 const scoreStock = (ctx) => getStockDetail(ctx).score;
 
 const resolveCalibration = (an, ctx = {}) => {
+  const baseEB = Number.isFinite(an?.eb) ? an.eb : (Number.isFinite(an?.sp?.eb_baseline) ? an.sp.eb_baseline : 60);
   if (ctx.blendedEB != null) {
+    const b = Number(ctx.blendedEB);
     return {
-      eb: Number(ctx.blendedEB),
+      eb: Number.isFinite(b) ? b : baseEB,
       source: 'preblended',
       weight: null,
       history: ctx.historyCalibration || null,
@@ -171,13 +183,13 @@ const resolveCalibration = (an, ctx = {}) => {
   }
   const h = ctx.historyCalibration;
   if (!h || !Number.isFinite(h.meanEB) || !Number.isFinite(h.n) || h.n <= 0) {
-    return { eb: an.eb, source: 'theoretical', weight: 0, history: null };
+    return { eb: baseEB, source: 'theoretical', weight: 0, history: null };
   }
   const similarity = clamp01(Number.isFinite(h.similarity) ? h.similarity : 0.5);
   const sampleWeight = h.n / (h.n + 5);
   const weight = Math.min(0.65, similarity * sampleWeight);
   return {
-    eb: an.eb * (1 - weight) + h.meanEB * weight,
+    eb: baseEB * (1 - weight) + h.meanEB * weight,
     source: 'history-blend',
     weight,
     history: h,
@@ -185,11 +197,14 @@ const resolveCalibration = (an, ctx = {}) => {
 };
 
 const scoreYield = (an, ctx = {}) => {
-  const sp = an.sp;
+  const sp = an?.sp;
   if (!sp) return 0;
-  const range = Math.max(1, sp.eb_optimal - sp.eb_baseline);
+  const baseline = Number.isFinite(sp.eb_baseline) ? sp.eb_baseline : 60;
+  const optimal = Number.isFinite(sp.eb_optimal) ? sp.eb_optimal : 95;
+  const range = Math.max(1, optimal - baseline);
   const ebUsed = resolveCalibration(an, ctx).eb;
-  const norm = (ebUsed - sp.eb_baseline) / range;
+  if (!Number.isFinite(ebUsed)) return 0;
+  const norm = (ebUsed - baseline) / range;
   return clamp01to100(norm * 100);
 };
 
@@ -219,31 +234,32 @@ const minConfidence = (...levels) => levels.reduce((a, b) => confidenceRank[b] <
 const EB_HIGH_MIN_RECENT_N = 20;
 
 const buildUncertainty = (an, ctx, calibration) => {
-  const sp = an.sp;
-  const h = calibration.history;
+  const sp = an?.sp;
+  const h = calibration?.history;
+  const calEb = Number.isFinite(calibration?.eb) ? calibration.eb : 0;
   let ebConfidence = 'low';
-  let halfWidth = Math.max(15, Math.abs(calibration.eb) * 0.20);
+  let halfWidth = Math.max(15, Math.abs(calEb) * 0.20);
   if (h && Number.isFinite(h.n)) {
     const sim = clamp01(Number.isFinite(h.similarity) ? h.similarity : 0.5);
     const recentN = Number.isFinite(h.recentN) ? h.recentN : 0;
     if (recentN >= EB_HIGH_MIN_RECENT_N && sim >= 0.8) ebConfidence = 'high';
     else if (h.n >= 3 && sim >= 0.6) ebConfidence = 'medium';
-    if (Number.isFinite(h.sd) && h.sd > 0) halfWidth = Math.max(h.sd * 1.5, Math.abs(calibration.eb) * (ebConfidence === 'high' ? 0.08 : 0.12));
-    else halfWidth = Math.abs(calibration.eb) * (ebConfidence === 'high' ? 0.10 : ebConfidence === 'medium' ? 0.15 : 0.20);
+    if (Number.isFinite(h.sd) && h.sd > 0) halfWidth = Math.max(h.sd * 1.5, Math.abs(calEb) * (ebConfidence === 'high' ? 0.08 : 0.12));
+    else halfWidth = Math.abs(calEb) * (ebConfidence === 'high' ? 0.10 : ebConfidence === 'medium' ? 0.15 : 0.20);
   }
   const eb = {
-    central: Math.round(calibration.eb),
-    low: Math.max(0, Math.round(calibration.eb - halfWidth)),
-    high: Math.max(0, Math.round(calibration.eb + halfWidth)),
+    central: Math.round(calEb),
+    low: Math.max(0, Math.round(calEb - halfWidth)),
+    high: Math.max(0, Math.round(calEb + halfWidth)),
     confidence: ebConfidence,
-    source: calibration.source,
+    source: calibration?.source || 'theoretical',
     note: ebConfidence === 'low'
       ? 'Estimación heurística; usar como rango comparativo, no como rendimiento garantizado.'
       : 'Rango ajustado con resultados históricos comparables de Setas de la Peña.',
   };
 
   let phTrend = 'sin referencia';
-  if (sp?.ph_optimal) {
+  if (sp?.ph_optimal && Number.isFinite(an?.avgPh)) {
     phTrend = an.avgPh < sp.ph_optimal.min ? 'tendencia ácida'
       : an.avgPh > sp.ph_optimal.max ? 'tendencia alcalina'
       : 'tendencia dentro del rango';
@@ -273,8 +289,12 @@ const buildDimensions = (breakdown, ctx, an) => {
   const economyScore = Math.round(clamp01to100(
     breakdown.cost * 0.60 + breakdown.stock * 0.40
   ));
-  const suppUnsafe = !!(an.sp && an.suppP > an.sp.supplementation_max && ctx.treatment?.col !== 'autoclave');
-  const blocked = !!an.trichoderma || suppUnsafe || breakdown.massBalance < 70;
+  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppMax = Number.isFinite(an?.sp?.supplementation_max) ? an.sp.supplementation_max : 20;
+  const suppUnsafe = !!(an?.sp && suppP > suppMax && ctx.treatment?.col !== 'autoclave');
+  const nMin = an?.sp?.n_optimal?.min;
+  const nLiebigStarvation = Number.isFinite(an?.avgN) && Number.isFinite(nMin) && an.avgN < nMin * 0.4;
+  const blocked = !!an?.trichoderma || suppUnsafe || breakdown.massBalance < 70 || nLiebigStarvation;
   const viability = blocked ? 'hold' : safetyScore >= 80 ? 'approved' : safetyScore >= 60 ? 'review' : 'hold';
   return {
     safety: { score: safetyScore, status: viability },
@@ -321,6 +341,30 @@ const buildProvenance = (ctx, uncertainty, calibration, stockDetail) => ({
 });
 
 const scoreRecipe = (an, ctx = {}) => {
+  if (!an || typeof an !== 'object' || !an.sp) {
+    return {
+      score: 0,
+      status: 'critical',
+      breakdown: { nutrition: 0, yield: 0, cost: 0, risk: 0, treatment: 0, massBalance: 0, stock: 0 },
+      weights: { ...DEFAULT_WEIGHTS, ...(ctx.weights || {}) },
+      caps: SEVERITY_CAPS,
+      dimensions: {
+        safety: { score: 0, status: 'hold' },
+        agronomy: { score: 0, status: 'weak' },
+        economy: { score: 0, status: 'expensive_or_unavailable' },
+      },
+      confidence: 'low',
+      uncertainty: {
+        eb: { central: 0, low: 0, high: 0, confidence: 'low', source: 'theoretical', note: 'Sin análisis de receta o especie válida.' },
+        ph: { trend: 'sin referencia', confidence: 'low', note: 'Sin análisis.' },
+        risk: { confidence: 'low', observed: false, note: 'Sin análisis.' },
+      },
+      provenance: buildProvenance(ctx, { eb: { confidence: 'low' } }, { eb: 0, source: 'theoretical' }, { score: 0, mode: 'none' }),
+      stockDetail: { score: 0, mode: 'none', limiting: [] },
+      costDetail: { value: 0, source: 'catalog' },
+      calibration: { eb: 0, source: 'theoretical', weight: 0, history: null },
+    };
+  }
   const stockDetail = getStockDetail(ctx);
   const calibration = resolveCalibration(an, ctx);
   const costDetail = resolveCost(an, ctx);

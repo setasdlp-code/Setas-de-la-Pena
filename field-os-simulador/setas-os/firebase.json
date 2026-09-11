@@ -12,8 +12,35 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "firebase/firestore.rules",
+      "firebase/firestore.indexes.json",
+      "functions/**",
+      "tests/**",
+      "e2e/**",
+      "**/*.test.js",
+      "**/*.spec.js",
+      "**/*.spec.cjs",
+      "**/*.jsx",
+      "build.js",
+      "package.json",
+      "package-lock.json",
+      "playwright.config.js",
+      "playwright.config.cjs",
+      "lighthouserc.cjs",
+      "docs/**",
+      "__harness.html",
+      "probe-callable.js",
+      "field-event-mock-transport.js"
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR/..\" run functions:sync"
     ]
   },
   "emulators": {

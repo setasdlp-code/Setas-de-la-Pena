@@ -34,10 +34,28 @@ const ASSIGNMENT_RE = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/;
 const templateFiles = () => {
   // Solo archivos rastreados: lo no versionado no puede filtrarse al remoto, y
   // así no se inspecciona node_modules ni artefactos locales.
-  const out = execFileSync('git', ['ls-files', '-z'], {
-    cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
-  });
-  return out.split('\0').filter((f) => f && TEMPLATE_RE.test(f));
+  try {
+    const out = execFileSync('git', ['ls-files', '-z'], {
+      cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+    });
+    return out.split('\0').filter((f) => f && TEMPLATE_RE.test(f));
+  } catch (err) {
+    // Fallback cuando git no tiene acceso a gitdir fuera del sandbox
+    const results = [];
+    const walk = (dir) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (TEMPLATE_RE.test(entry.name)) {
+          results.push(path.relative(REPO_ROOT, full));
+        }
+      }
+    };
+    walk(REPO_ROOT);
+    return results;
+  }
 };
 
 test('las plantillas *.example no llevan valores rellenados', () => {

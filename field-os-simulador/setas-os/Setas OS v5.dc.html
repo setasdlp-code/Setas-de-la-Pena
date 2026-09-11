@@ -13,6 +13,21 @@
 <link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="ds-2026/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
+<!-- Service worker: permite abrir la aplicación sin señal, que es la situación
+     en la que el cuaderno de campo tiene que funcionar. Se registra después de
+     `load` para no competir por ancho de banda con el arranque, y un fallo al
+     registrar no rompe nada: la aplicación sigue funcionando online. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        // Sin service worker la aplicación funciona igual con señal; sólo se
+        // pierde el arranque en frío sin conexión.
+        if (window.console) console.warn('[SetasOS] service worker no registrado:', err && err.message);
+      });
+    });
+  }
+</script>
 <style>
   /*
    * Firebase resolves after the .dc runtime parses this document. Keep
@@ -1064,7 +1079,7 @@
       <!-- Auth carga simulador-app.js de forma dinámica después de Firebase
            data-ready. El runtime .dc vigila window.SimuladorApp sin un `from`
            estático para no descargar/evaluar el bundle en el login. -->
-      <x-import component-from-global-scope="SimuladorApp" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" scan-nonce="{{ scanNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (solo después de autenticar) =================== -->
@@ -2254,6 +2269,7 @@ class Component extends DCLogic {
     simRecipes: [],
     simTab: 'home',
     simTabNonce: 0,
+    scanNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
     simFlyoutOpen: false,
@@ -2703,11 +2719,19 @@ class Component extends DCLogic {
             try {
               const codes = await detector.detect(this._scanVideoEl);
               if(codes.length){
-                clearInterval(this._detectLoop);
                 const act=this.state.containers.filter(c=>c.status==='activo');
                 const raw = codes[0].rawValue;
-                const found = act.find(c=>c.id===raw) || act[Math.floor(Math.random()*act.length)];
-                if(found) this.applyScanResult(found.id);
+                // Sólo una coincidencia real. Antes, una etiqueta que no
+                // correspondía a ningún contenedor caía en uno al azar: el
+                // evento quedaba registrado contra el contenedor equivocado y
+                // nadie podía notarlo.
+                const found = act.find(c=>c.id===raw) || act.find(c=>String(raw).includes(c.id));
+                if(found){
+                  clearInterval(this._detectLoop);
+                  this.applyScanResult(found.id);
+                } else {
+                  this.setState({ scanStatusText:'Etiqueta «'+String(raw).slice(0,28)+'» sin contenedor activo. Sigue apuntando o elígelo a mano.' });
+                }
               }
             } catch(e){}
           }, 350);
@@ -2718,11 +2742,19 @@ class Component extends DCLogic {
         /* fall back to simulated match below */
       }
     }
+    // Sin cámara o sin decodificador no se adivina: inventar un contenedor
+    // convierte un escaneo fallido en un registro falso.
     this._scanT = setTimeout(()=>{
-      const act=this.state.containers.filter(c=>c.status==='activo');
-      const found=act[Math.floor(Math.random()*act.length)];
-      if(found) this.setState({ scanFound:found.id });
+      this.setState({ scanStatusText:'Este navegador no puede leer el QR. Elige el contenedor a mano.' });
     }, 1500);
+  }
+  // Escanear una etiqueta abre la captura rápida del shell React, no el
+  // escáner de esta pantalla: aquélla resuelve el QR contra los lotes de la
+  // bitácora (batch-sheet.resolveScan), mientras que openScan() sólo conoce los
+  // contenedores de demostración de este módulo.
+  openFieldScan(){
+    this.goSimTab('bitacora');
+    this.setState(s=>({ scanNonce: s.scanNonce + 1 }));
   }
   applyScanResult(id){
     this.setState({ scanFound:id });
@@ -3416,12 +3448,13 @@ class Component extends DCLogic {
       obsPhotoRef:(el)=>{ if(el) el.src = s.obsPhoto || TRANSPARENT_PX; },
       hasQuickPhoto:!!s.qPhoto, quickPhoto:s.qPhoto||TRANSPARENT_PX, setQuickPhoto:(e)=>this.setQuickPhoto(e), clearQuickPhoto:()=>this.clearQuickPhoto(),
       quickPhotoRef:(el)=>{ if(el) el.src = s.qPhoto || TRANSPARENT_PX; },
+      scanNonce:s.scanNonce,
       scanning:s.scanning, scanSearching:s.scanning&&!s.scanFound, hasScanFound:!!s.scanFound, scanFoundId:s.scanFound||'',
       camActive:s.camActive, scanStatusText:s.scanStatusText||'Buscando etiqueta…',
       scanVideoRef:(el)=>{ this._scanVideoEl = el; if(el && this._camStream && !el.srcObject) el.srcObject = this._camStream; },
       scanFoundSpecies: s.scanFound ? spName((s.containers.find(c=>c.id===s.scanFound)||{}).key) : '',
       scanTargetLabel: ({obs:'observación', harvest:'cosecha', quick:'evento', home:'ficha'})[s.scanTarget]||'',
-      openScanObs:()=>this.openScan('obs'), openScanHarvest:()=>this.openScan('harvest'), openScanQuick:()=>this.openScan('quick'), openScanHome:()=>this.openScan('home'),
+      openScanObs:()=>this.openScan('obs'), openScanHarvest:()=>this.openScan('harvest'), openScanQuick:()=>this.openScan('quick'), openScanHome:()=>this.openFieldScan(),
       closeScan:()=>this.closeScan(), applyScan:()=>this.applyScan(),
       correctionOpen:s.correcting!=null, corrNote:s.corrNote, setCorrNote:(e)=>this.setState({corrNote:e.target.value}),
       confirmCorrection:()=>this.confirmCorrection(), closeCorrection:()=>this.closeCorrection(),

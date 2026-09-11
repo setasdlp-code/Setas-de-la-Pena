@@ -1,0 +1,105 @@
+# Reglas de Firestore: se prueban en cada cambio y se despliegan al entrar a main.
+#
+# Existe porque la deriva ya ocurrió: producción estuvo corriendo reglas que no
+# eran las del repositorio — le faltaban el endurecimiento de `public_lotes`
+# (c542a97) y las reglas del cuaderno de campo (#251) — porque nada ataba un
+# cambio de reglas a su despliegue. Las reglas son la única defensa del servidor
+# cuando el cliente falla o alguien escribe a mano, así que la brecha entre lo
+# revisado y lo vigente no puede depender de que alguien se acuerde.
+name: Firestore rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'field-os-simulador/setas-os/firebase/firestore.rules'
+      - 'field-os-simulador/setas-os/test/firestore.rules.test.js'
+      - 'field-os-simulador/setas-os/tests/rules/**'
+      - '.github/workflows/firestore-rules.yml'
+  pull_request:
+    paths:
+      - 'field-os-simulador/setas-os/firebase/firestore.rules'
+      - 'field-os-simulador/setas-os/test/firestore.rules.test.js'
+      - 'field-os-simulador/setas-os/tests/rules/**'
+      - '.github/workflows/firestore-rules.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: field-os-simulador/setas-os
+
+jobs:
+  test:
+    name: Probar reglas en el emulador
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # El emulador de Firestore corre sobre la JVM; sin Java arranca y falla
+      # con un error que no dice nada sobre las reglas.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Reglas de public_lotes
+        run: npm run test:rules
+      - name: Reglas del cuaderno de campo
+        run: npm run test:rules:field
+
+  deploy:
+    name: Desplegar reglas a sdlp-os
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # El despliegue sólo ocurre si existe la credencial. Sin ella el job avisa
+      # en el resumen en vez de fallar: un push a main no debería romperse por
+      # una credencial ausente, pero tampoco debe pasar en silencio dejando
+      # producción con reglas viejas, que es exactamente lo que ya pasó.
+      - name: Comprobar credencial
+        id: cred
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SDLP_OS }}
+        run: |
+          if [ -n "$SA" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Reglas de Firestore NO desplegadas"
+              echo ""
+              echo "Falta el secreto \`FIREBASE_SERVICE_ACCOUNT_SDLP_OS\`, así que las reglas"
+              echo "de este commit **no** llegaron a producción. Despliégalas a mano:"
+              echo ""
+              echo '```bash'
+              echo 'cd field-os-simulador/setas-os'
+              echo 'npx firebase deploy --only firestore:rules --project sdlp-os'
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # El job de despliegue no instala dependencias del proyecto — no las
+      # necesita, sólo el CLI. Sin esta línea `npx firebase` no encuentra nada
+      # que ejecutar y el paso falla con "could not determine executable to run",
+      # que no dice nada sobre reglas ni sobre la credencial.
+      - name: Instalar firebase-tools
+        if: steps.cred.outputs.present == 'true'
+        run: npm install -g firebase-tools
+
+      - name: Desplegar
+        if: steps.cred.outputs.present == 'true'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SDLP_OS }}
+        run: |
+          printf '%s' "$SA" > /tmp/sa.json
+          firebase deploy --only firestore:rules --project sdlp-os --non-interactive
+          rm -f /tmp/sa.json
+          echo "### Reglas de Firestore desplegadas a sdlp-os" >> "$GITHUB_STEP_SUMMARY"

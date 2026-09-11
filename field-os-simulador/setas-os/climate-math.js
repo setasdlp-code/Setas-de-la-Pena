@@ -181,6 +181,36 @@
   };
 
   /**
+   * Mapeo canónico de alias taxonómicos y nombres del sistema a tasas de respiración.
+   */
+  const SPECIES_KEY_ALIASES = {
+    p_ostreatus_gris: 'orellana_gris',
+    p_ostreatus_blanco: 'orellana_blanca',
+    p_djamor_rosa: 'orellana_rosa',
+    p_eryngii: 'seta_cardo',
+    lions_mane: 'melena_leon',
+    pleurotus_ostreatus: 'orellana_gris',
+    pleurotus_florida: 'orellana_blanca',
+    pleurotus_djamor: 'orellana_rosa',
+    pleurotus_eryngii: 'seta_cardo',
+    hericium_erinaceus: 'melena_leon',
+    lentinula_edodes: 'shiitake',
+    flammulina_velutipes: 'enoki',
+    pholiota_nameko: 'nameko',
+    ganoderma_lucidum: 'reishi',
+  };
+
+  /**
+   * Resuelve cualquier clave o alias a la clave de perfil respiratorio correspondiente.
+   */
+  const resolveSpeciesKey = (key) => {
+    if (!key || typeof key !== 'string') return 'orellana_gris';
+    const clean = key.trim().toLowerCase();
+    if (SPECIES_RESPIRATION_RATES[clean]) return clean;
+    return SPECIES_KEY_ALIASES[clean] || 'orellana_gris';
+  };
+
+  /**
    * Corrección barométrica para sensores de CO2 tipo NDIR (MH-Z19C, SCD30, Senseair S8) en altitud.
    * La ley de Beer-Lambert depende de la densidad molar del gas; a 745 hPa (Tenjo) el sensor no compensado
    * subestima la concentración de CO2 en ~26.5% (factor 1.360x).
@@ -232,14 +262,16 @@
    * @returns {object} Caudales requeridos, renovaciones y temporización recomendada del extractor
    */
   const calcDynamicFAE = (biomassKg, speciesKey = 'orellana_gris', options = {}) => {
+    const opts = options || {};
     const mass = Math.max(0, parseFloat(biomassKg) || 0);
-    const rCo2 = SPECIES_RESPIRATION_RATES[speciesKey] || SPECIES_RESPIRATION_RATES.default;
-    const targetPpm = Math.max(500, parseFloat(options.targetPpm || 800));
-    const outdoorPpm = Math.max(380, parseFloat(options.outdoorPpm || 420));
-    const roomVolumeM3 = Math.max(0.5, parseFloat(options.roomVolumeM3 || 10.0));
-    const fanRatedCfm = Math.max(10, parseFloat(options.fanRatedCfm || 140.0));
-    const cyclePeriodMin = Math.max(1, parseFloat(options.cyclePeriodMin || 10.0));
-    const minAch = Math.max(1, parseFloat(options.minAch || 4.0));
+    const normKey = resolveSpeciesKey(speciesKey);
+    const rCo2 = SPECIES_RESPIRATION_RATES[normKey] || SPECIES_RESPIRATION_RATES.default;
+    const targetPpm = Math.max(500, parseFloat(opts.targetPpm || 800));
+    const outdoorPpm = Math.max(380, parseFloat(opts.outdoorPpm || 420));
+    const roomVolumeM3 = Math.max(0.5, parseFloat(opts.roomVolumeM3 || 10.0));
+    const fanRatedCfm = Math.max(10, parseFloat(opts.fanRatedCfm || 140.0));
+    const cyclePeriodMin = Math.max(1, parseFloat(opts.cyclePeriodMin || 10.0));
+    const minAch = Math.max(1, parseFloat(opts.minAch || 4.0));
 
     const deltaPpm = Math.max(50, targetPpm - outdoorPpm);
 
@@ -316,16 +348,155 @@
     }).join(' ');
   };
 
+  /**
+   * Calcula la Humedad Absoluta (AH) del aire en gramos de agua por metro cúbico (g/m³).
+   * AH = (216.7 * VPact_hPa) / (T + 273.15)
+   *
+   * @param {number} tempC Temperatura en °C
+   * @param {number} rhPct Humedad relativa [0 - 100%]
+   * @returns {number|null} Humedad absoluta en g/m³
+   */
+  const calcAbsoluteHumidity = (tempC, rhPct) => {
+    if (tempC == null || rhPct == null) return null;
+    const t = parseFloat(tempC);
+    const rh = parseFloat(rhPct);
+    if (!Number.isFinite(t) || !Number.isFinite(rh)) return null;
+    const actKpa = calcVPact(t, rh);
+    if (actKpa == null) return null;
+    const vpActHpa = actKpa * 10; // 1 kPa = 10 hPa
+    const ah = (216.7 * vpActHpa) / (t + 273.15);
+    return Math.round(ah * 100) / 100;
+  };
+
+  /**
+   * Calcula la Temperatura de Bulbo Húmedo (Wet-Bulb Temperature) en °C
+   * mediante la ecuación empírica de Stull (2011).
+   *
+   * @param {number} tempC Temperatura de bulbo seco en °C
+   * @param {number} rhPct Humedad relativa [0 - 100%]
+   * @returns {number|null} Temperatura de bulbo húmedo en °C
+   */
+  const calcWetBulbTemp = (tempC, rhPct) => {
+    if (tempC == null || rhPct == null) return null;
+    const t = parseFloat(tempC);
+    const rh = parseFloat(rhPct);
+    if (!Number.isFinite(t) || !Number.isFinite(rh)) return null;
+    const clampedRh = Math.max(1, Math.min(100, rh));
+
+    // Stull (2011)
+    const tw = t * Math.atan(0.151977 * Math.pow(clampedRh + 8.313659, 0.5)) +
+      Math.atan(t + clampedRh) -
+      Math.atan(clampedRh - 1.676331) +
+      0.00391838 * Math.pow(clampedRh, 1.5) * Math.atan(0.023101 * clampedRh) -
+      4.686035;
+
+    return Math.round(tw * 10) / 10;
+  };
+
+  /**
+   * Calcula la entalpía específica del aire húmedo (kJ/kg de aire seco).
+   * h = 1.006 * T + w * (2501 + 1.86 * T), donde w es la relación de mezcla (kg agua / kg aire seco).
+   *
+   * @param {number} tempC Temperatura en °C
+   * @param {number} rhPct Humedad relativa [0 - 100%]
+   * @param {number} [pressureHpa=745.0] Presión barométrica local en hPa
+   * @returns {number|null} Entalpía en kJ/kg
+   */
+  const calcAirEnthalpy = (tempC, rhPct, pressureHpa = TENJO_NOMINAL_PRESSURE_HPA) => {
+    if (tempC == null || rhPct == null) return null;
+    const t = parseFloat(tempC);
+    const rh = parseFloat(rhPct);
+    if (!Number.isFinite(t) || !Number.isFinite(rh)) return null;
+    const actKpa = calcVPact(t, rh);
+    const pKpa = (parseFloat(pressureHpa) || TENJO_NOMINAL_PRESSURE_HPA) / 10;
+    if (actKpa == null) return null;
+
+    // Relación de mezcla w: w = 0.622 * (VPact / (P_tot - VPact))
+    const pDry = Math.max(1, pKpa - actKpa);
+    const w = (0.622 * actKpa) / pDry;
+
+    // Entalpía: h = 1.006 * T + w * (2501 + 1.86 * T)
+    const h = (1.006 * t) + (w * (2501 + 1.86 * t));
+    return Math.round(h * 10) / 10;
+  };
+
+  /**
+   * Cálculo de reposición hídrica por ventilación (Demanda de Humidificación).
+   * Resuelve el déficit de agua (L/h) generado al renovar el aire húmedo de la carpa
+   * con aire exterior más seco o frío de la Sabana de Bogotá.
+   *
+   * @param {object} params
+   * @param {number} [params.faeM3h] Caudal de ventilación en m³/h
+   * @param {number} [params.faeCfm] Alternativamente, caudal en CFM
+   * @param {number} [params.indoorTempC=18.0] Temperatura deseada del cuarto
+   * @param {number} [params.indoorRhPct=90.0] Humedad relativa objetivo (%)
+   * @param {number} [params.outdoorTempC=14.0] Temperatura del aire exterior tomado
+   * @param {number} [params.outdoorRhPct=65.0] Humedad relativa exterior (%)
+   * @returns {object} Tasa de humidificación requerida en L/h, g/h y dimensionamiento
+   */
+  const calcHumidificationDemand = (params = {}) => {
+    const p = params || {};
+    const indoorT = parseFloat(p.indoorTempC ?? 18.0);
+    const indoorRh = Math.max(10, Math.min(100, parseFloat(p.indoorRhPct ?? 90.0)));
+    const outdoorT = parseFloat(p.outdoorTempC ?? 14.0);
+    const outdoorRh = Math.max(10, Math.min(100, parseFloat(p.outdoorRhPct ?? 65.0)));
+
+    let m3h = null;
+    if (p.faeM3h != null && Number.isFinite(parseFloat(p.faeM3h))) {
+      m3h = Math.max(0, parseFloat(p.faeM3h));
+    } else if (p.faeCfm != null && Number.isFinite(parseFloat(p.faeCfm))) {
+      m3h = Math.max(0, parseFloat(p.faeCfm) * 1.69901);
+    } else if (p.roomVolumeM3 != null && (p.airChangesPerHour != null || p.ach != null)) {
+      const vol = Math.max(0, parseFloat(p.roomVolumeM3));
+      const ach = Math.max(0, parseFloat(p.airChangesPerHour ?? p.ach));
+      m3h = vol * ach;
+    } else {
+      m3h = 25.0; // Caudal representativo de 15 CFM
+    }
+
+    const ahIndoor = calcAbsoluteHumidity(indoorT, indoorRh);
+    const ahOutdoor = calcAbsoluteHumidity(outdoorT, outdoorRh);
+
+    // Déficit hídrico por m³ de aire renovado (g/m³)
+    const moistureDeficitGPerM3 = Math.max(0, ahIndoor - ahOutdoor);
+    const waterLossGramsPerHour = Math.round(m3h * moistureDeficitGPerM3);
+    const waterLossLitersPerHour = Math.round((waterLossGramsPerHour / 1000) * 100) / 100;
+
+    // Margen de absorción / condensación en ductos (factor 1.25x de seguridad)
+    const recommendedHumidifierCapLPerH = waterLossLitersPerHour > 0
+      ? Math.max(0.5, Math.round(waterLossLitersPerHour * 1.25 * 10) / 10)
+      : 0;
+
+    return {
+      faeM3h: Math.round(m3h * 10) / 10,
+      indoor: { tempC: indoorT, rhPct: indoorRh, absoluteHumidityGm3: ahIndoor },
+      outdoor: { tempC: outdoorT, rhPct: outdoorRh, absoluteHumidityGm3: ahOutdoor },
+      moistureDeficitGm3: Math.round(moistureDeficitGPerM3 * 100) / 100,
+      waterLossGramsPerHour,
+      waterLossLitersPerHour,
+      recommendedHumidifierCapLPerH,
+      recommendation: waterLossLitersPerHour > 0
+        ? `Para mantener ${indoorRh}% HR a ${indoorT}°C con extracción de ${Math.round(m3h)} m³/h, el humidificador debe nebulizar al menos ${recommendedHumidifierCapLPerH} L/h de agua desmineralizada.`
+        : `Sin renovación forzada de aire, el déficit hídrico por ventilación es 0 L/h. Mantener nebulización base mínima según infiltración.`,
+    };
+  };
+
   const api = {
     calcVPsat,
     calcVPact,
     calcVPD,
     calcDewPoint,
+    calcAbsoluteHumidity,
+    calcWetBulbTemp,
+    calcAirEnthalpy,
+    calcHumidificationDemand,
     evalClimateHealth,
     generateSvgPolyline,
     calcBarometricCO2Correction,
     calcDynamicFAE,
     SPECIES_RESPIRATION_RATES,
+    SPECIES_KEY_ALIASES,
+    resolveSpeciesKey,
     SEA_LEVEL_PRESSURE_HPA,
     TENJO_NOMINAL_PRESSURE_HPA
   };

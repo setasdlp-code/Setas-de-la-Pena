@@ -1,0 +1,69 @@
+'use strict';
+
+/**
+ * @file field-qr-resolve.js — Lectura de la etiqueta QR de un lote.
+ *
+ * Resolver es sólo leer: escanear no registra nada ni cambia el estado del
+ * lote. La transición la crea el operario al confirmarla en la hoja de acción.
+ */
+
+(function () {
+  const isNode = typeof module !== 'undefined' && module.exports;
+
+  const model = isNode ? require('./field-events-model.js') : globalThis.SetasFieldEvents;
+  const getWorkflow = () => (isNode ? require('./setas-os-workflow.js') : globalThis.SetasOSWorkflow);
+  const getContracts = () => (isNode ? require('./field-event-contracts.js') : globalThis.SetasFieldEventContracts);
+
+  // Formatos aceptados. Una cadena suelta no se acepta como código: es
+  // indistinguible de un QR de otro sistema, y aceptarla haría que escanear
+  // cualquier etiqueta ajena abriera la hoja de acción de un lote arbitrario.
+  const TRACE_URL = /^https?:\/\/(?:www\.)?setasdelapena\.com\/trace\/([A-Za-z0-9_-]{1,64})\/?$/;
+  const SETAS_SCHEME = /^setas:lote:([A-Za-z0-9_-]{1,64})$/;
+  // La etiqueta térmica que imprime la aplicación lleva el código en la query
+  // sobre la copia publicada en GitHub Pages. Sigue siendo lista blanca: el
+  // dominio es parte del patrón, no un formato genérico de URL.
+  const LABEL_URL = /^https?:\/\/setasdlp-code\.github\.io\/Setas-de-la-Pena\/public\/trace\.html\?(?:[^#]*&)?codigo=([A-Za-z0-9_-]{1,64})(?:&[^#]*)?$/;
+
+  const parseBatchRef = (text) => {
+    const raw = typeof text === 'string' ? text.trim() : '';
+    const match = raw.match(TRACE_URL) || raw.match(SETAS_SCHEME) || raw.match(LABEL_URL);
+    if (!match) throw new Error(`invalid_qr_payload: no es una etiqueta de lote ("${raw.slice(0, 40)}")`);
+    return { batchId: decodeURIComponent(match[1]) };
+  };
+
+  /**
+   * @param {string} text        contenido crudo del QR
+   * @param {(batchId:string) => Promise<object|null>} lookup
+   * @param {string} operatorRole
+   * @returns {Promise<{batch: object, allowedTransitions: string[]}>}
+   */
+  const resolveBatch = async (text, lookup, operatorRole) => {
+    const { batchId } = parseBatchRef(text);
+
+    const batch = await lookup(batchId);
+    if (!batch) throw new Error(`batch_not_found: ${batchId}`);
+
+    // Igual que el servidor y que la hoja: lifecycleState, o `estado` normalizado.
+    // No se lee `state` — las reglas no lo protegen.
+    const contracts = getContracts();
+    const initial = (contracts && contracts.DEFAULT_INITIAL_STATE) || 'inoculated';
+    const bs = isNode ? require('./batch-sheet.js') : globalThis.SetasBatchSheet;
+    const state = batch.lifecycleState
+      || (bs && bs.normalizeLifecycleState ? bs.normalizeLifecycleState(batch.estado, initial) : initial);
+    const workflow = getWorkflow();
+    const candidates = (state && workflow.DEFAULT_TRANSITIONS[state]) || [];
+
+    const permitted = model.ROLE_PERMISSIONS[operatorRole];
+    if (!permitted) throw new Error(`unknown_role: rol desconocido "${operatorRole}"`);
+
+    // Un estado terminal no es un error: simplemente no ofrece transiciones.
+    const allowedTransitions = candidates.filter(to => permitted.includes(model.transitionClass(to)));
+
+    return { batch, batchId, state, allowedTransitions };
+  };
+
+  const api = { parseBatchRef, resolveBatch, TRACE_URL, SETAS_SCHEME, LABEL_URL };
+
+  if (isNode) module.exports = api;
+  if (typeof globalThis !== 'undefined') globalThis.SetasFieldQrResolve = api;
+})();

@@ -1,0 +1,83 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>harness</title>
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
+<link rel="stylesheet" href="fieldos-tokens.css"><link rel="stylesheet" href="sim.css">
+<style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style></head><body>
+<div id="root" class="sim-root"></div>
+<script>window.__setasAuthState=true;</script>
+<script>
+// Emula window.SetasFirebase.subscribeToLiveClimate para probar el transporte
+// firestore de punta a punta sin red. Los valores de CO₂ son CRUDOS de NDIR:
+// el puente debe compensarlos por altitud antes de mostrarlos.
+//
+// Opt-in con ?live=1 — por defecto el harness se comporta como antes (sin
+// telemetría), para no cambiarle el escenario a quien lo use para otra cosa.
+if (new URLSearchParams(location.search).has('live')) {
+window.SetasFirebase = {
+  subscribeToLiveClimate: function (cb) {
+    var n = 0;
+    function emit() {
+      n++;
+      var t = Date.now();
+      cb({
+        martha_01: {
+          room_id: 'martha_01', device_id: 'esp32-martha-01',
+          temperature_c: 17.1 + Math.sin(n / 3) * 0.4,
+          rh_pct: 90.5 + Math.cos(n / 4) * 1.5,
+          co2_ppm: 520 + n * 2,                       // crudo → ~700 compensado
+          substrate_temperature_c: 17.6,
+          timestamp_local: new Date(t).toISOString()
+        },
+        cloudlab_844: {
+          room_id: 'cloudlab_844', device_id: 'esp32-cloudlab-01',
+          temperature_c: 29.4,                        // > criticalMax (28) → crítico inmediato
+          rh_pct: 74.0,                               // < min (80)
+          co2_ppm: 2100,                              // crudo → ~2840 compensado, > criticalMax
+          timestamp_local: new Date(t).toISOString()
+        }
+      });
+    }
+    emit();
+    var id = setInterval(emit, 1200);
+    window.__harnessEmit = emit;
+    return function () { clearInterval(id); };
+  }
+};
+}
+</script>
+
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js"></script>
+<script src="qr-mini.js"></script><script src="bridge-protocol.js"></script>
+<script src="navigation-state.js"></script><script src="setas-os-workflow.js"></script>
+<script src="climate-sparkline.js"></script><script src="support.js"></script>
+<script src="recipe-recommender.js"></script><script src="scoring.js"></script>
+<script src="bitacora-model.js"></script><script src="climate-math.js"></script>
+<script src="telemetry-contract.js"></script><script src="esp32-telemetry-adapter.js"></script>
+<script src="anomaly-thresholds.js"></script><script src="live-telemetry-bridge.js"></script>
+<script src="flush-forecast-engine.js"></script><script src="sterilization-kinetics.js"></script>
+<script src="co-cultivation-matrix.js"></script><script src="post-harvest-engine.js"></script>
+<script src="historical-calibration.js"></script><script src="recipe-optimizer.js"></script>
+<script src="perito-scenarios.js"></script>
+<!-- Cuaderno de campo. Mismo orden que PROTECTED_APP_SCRIPTS en firebase/auth-gate.js:
+     el banco carga estos antes que simulador-app.js igual que el shell real. -->
+<script src="field-event-contracts.js"></script><script src="field-event-queue.js"></script>
+<script src="field-events-model.js"></script><script src="field-event-reconcile.js"></script>
+<script src="field-event-sync.js"></script><script src="field-event-account.js"></script>
+<script src="field-qr-resolve.js"></script><script src="field-action-sheet.js"></script>
+<script src="field-event-mock-transport.js"></script><script src="field-event-callable-transport.js"></script>
+<!-- El banco no tiene sesión de Firebase, así que no puede obtener un token para
+     el callable real. Se pide el simulacro explícitamente: la hoja lo rotulará
+     como simulado, que es lo correcto aquí. -->
+<script>window.__setasFieldMockSync = true;</script>
+<script src="simulador-app.js"></script>
+<script>ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.SimuladorApp));</script>
+</body></html>

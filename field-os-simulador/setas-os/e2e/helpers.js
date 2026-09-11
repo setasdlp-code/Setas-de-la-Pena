@@ -5,7 +5,13 @@ const APP_PATH = '/Setas%20OS%20v5.dc.html';
 /** @param {import('@playwright/test').Page} page */
 async function openApp(page) {
   await page.goto(APP_PATH);
-  await page.waitForLoadState('networkidle');
+  // No esperar 'networkidle': Firebase Auth y Firestore mantienen conexiones
+  // long-lived (listeners, long-polling), así que la red nunca queda inactiva y
+  // la espera agota los 30 s. La señal real de "aplicación lista" es que el gate
+  // se haya ocultado y el shell esté montado, que es lo que se comprueba abajo.
+  // (Ya estaba documentado en e2e/setas-os.spec.cjs, pero este helper —el que
+  // importan todos los demás specs— seguía usando el patrón que allí se descarta.)
+  await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 20000 });
   await page.locator('.rail-btn[data-workspace]').first().waitFor();
   await page.locator('main.app-main').waitFor({ state: 'visible' });
 }

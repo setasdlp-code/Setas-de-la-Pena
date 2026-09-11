@@ -14,6 +14,7 @@ const sterilization = require('./sterilization-kinetics.js');
 const coCultivation = require('./co-cultivation-matrix.js');
 const postHarvest = require('./post-harvest-engine.js');
 const climateMath = require('./climate-math.js');
+const flushForecast = require('./flush-forecast-engine.js');
 
 test('Motores avanzados exportan sus APIs canónicas completas', () => {
   // 1. Cinética de Esterilización
@@ -22,22 +23,45 @@ test('Motores avanzados exportan sus APIs canónicas completas', () => {
   assert.equal(typeof sterilization.validateAutoclaveCycle, 'function');
   assert.equal(typeof sterilization.simulateCorePenetration, 'function');
   assert.equal(typeof sterilization.calcTimeCompFactorAt15Psi, 'function');
+  assert.equal(typeof sterilization.calcOptimalHoldTime, 'function');
 
   // 2. Co-Cultivo e Intersección Climática
   assert.equal(typeof coCultivation.calcPairwiseCompatibility, 'function');
   assert.equal(typeof coCultivation.optimizeChamberSetpoints, 'function');
   assert.equal(typeof coCultivation.generateFullMatrix, 'function');
+  assert.equal(typeof coCultivation.resolveSpeciesKey, 'function');
   assert.ok(Object.keys(coCultivation.SPECIES_CLIMATE_PROFILES).length >= 9);
+  assert.ok(Object.keys(coCultivation.SPECIES_KEY_ALIASES).length >= 9);
 
   // 3. Poscosecha y Cadena de Frío
   assert.equal(typeof postHarvest.predictShelfLife, 'function');
   assert.equal(typeof postHarvest.calcPostHarvestRespiration, 'function');
   assert.equal(typeof postHarvest.calcTranspirationLoss, 'function');
+  assert.equal(typeof postHarvest.simulateColdChainBreak, 'function');
+  assert.equal(typeof postHarvest.assessCondensationRiskOnUnpack, 'function');
+  assert.equal(typeof postHarvest.resolveSpeciesKey, 'function');
   assert.ok(Object.keys(postHarvest.SPECIES_POSTHARVEST_PROFILES).length >= 8);
 
   // 4. Clima y Ventilación FAE
   assert.equal(typeof climateMath.calcBarometricCO2Correction, 'function');
   assert.equal(typeof climateMath.calcDynamicFAE, 'function');
+  assert.equal(typeof climateMath.calcAbsoluteHumidity, 'function');
+  assert.equal(typeof climateMath.calcWetBulbTemp, 'function');
+  assert.equal(typeof climateMath.calcAirEnthalpy, 'function');
+  assert.equal(typeof climateMath.calcHumidificationDemand, 'function');
+  assert.equal(typeof climateMath.resolveSpeciesKey, 'function');
+  assert.ok(Object.keys(climateMath.SPECIES_KEY_ALIASES).length >= 9);
+
+  // 5. Pronóstico de Cosechas y Oleadas
+  assert.equal(typeof flushForecast.calculateLotYieldAndFlushes, 'function');
+  assert.equal(typeof flushForecast.calculateSowingRequirement, 'function');
+  assert.equal(typeof flushForecast.matchWeeklyCoverage, 'function');
+  assert.equal(typeof flushForecast.calibrateFlushProfileFromHarvests, 'function');
+  assert.equal(typeof flushForecast.predictSubstrateCostPerFreshKg, 'function');
+  assert.equal(typeof flushForecast.calcThermalDelayFactor, 'function');
+  assert.equal(typeof flushForecast.getISOWeekKey, 'function');
+  assert.equal(typeof flushForecast.parseDateSafe, 'function');
+  assert.ok(Object.keys(flushForecast.SPECIES_FLUSH_PROFILES).length >= 9);
 });
 
 test('auth-gate.js registra los nuevos motores en PROTECTED_APP_SCRIPTS', () => {

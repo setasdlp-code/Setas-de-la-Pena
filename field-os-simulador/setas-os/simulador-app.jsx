@@ -1478,39 +1478,45 @@ const DEFAULT_FRESH_PRICES={
 };
 
 const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
-  if(!recipe.length||!n||!kg) return null;
+  if(!Array.isArray(recipe)||!recipe.length||!Number.isFinite(Number(n))||Number(n)<=0||!Number.isFinite(Number(kg))||Number(kg)<=0) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
-  const hF=Math.min(0.85,Math.max(0.40,hObj/100));  // fracción de humedad objetivo
+  const hF=Math.min(0.85,Math.max(0.40,(Number(hObj)||67)/100));  // fracción de humedad objetivo
   const dry=wet*(1-hF);                             // masa seca total requerida (kg)
-  const spawnRate=Math.min(0.15,Math.max(0.05,dynSpawn/100));
+  const spawnRate=Math.min(0.15,Math.max(0.05,(Number(dynSpawn)||8)/100));
+  const effectiveIngs=Array.isArray(ings)&&ings.length?ings:INGS;
   const items=recipe.map(r=>{
-    const g=ings.find(i=>i.id===r.id);if(!g) return null;
-    const masaSeca=dry*(parseFloat(r.p)/100);       // aporte seco del insumo
-    const m=Math.min(0.92,Math.max(0,(g.moisture||0)/100)); // humedad intrínseca
+    const g=effectiveIngs.find(i=>i.id===r.id);if(!g) return null;
+    const masaSeca=dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
+    const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100)); // humedad intrínseca
     const kr=masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
     const aguaOculta=kr*m;                           // agua que ya trae el insumo
-    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*g.cost,unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
+    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*(Number(g.cost)||0),unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
   }).filter(Boolean);
+  if(!items.length) return null;
   const aguaTot=dry*(hF/(1-hF));                     // agua total que debe contener la mezcla
   const aguaInh=items.reduce((s,i)=>s+i.aguaOculta,0); // agua aportada por los insumos
   const agua=Math.max(0,aguaTot-aguaInh);            // agua neta a inyectar (L ≈ kg)
+  const waterExcessKg=Math.max(0,aguaInh-aguaTot);
+  const actualWetTotal=dry+aguaInh+agua;
+  const resultingMoisturePct=actualWetTotal>0?Math.round(((aguaInh+agua)/actualWetTotal)*1000)/10:Math.round(hF*1000)/10;
+  const isOverhydrated=waterExcessKg>0.05;
   const kgComercialTotal=items.reduce((s,i)=>s+i.kr,0); // peso total a pesar (base húmeda comercial)
   const sustCost=items.reduce((s,i)=>s+i.cost,0);
   const spawnKg=wet*spawnRate;
-  const spawnCostTotal=spawnKg*spawnCostKg;
-  const energyCostKgSeco=tr?.energy?.cop_per_kg_seco||0;
+  const spawnCostTotal=spawnKg*(Number(spawnCostKg)||12000);
+  const energyCostKgSeco=Number.isFinite(Number(tr?.energy?.cop_per_kg_seco))?Number(tr.energy.cop_per_kg_seco):0;
   const energyCostTotal=dry*energyCostKgSeco;
-  const bagConsumableCostUnit=customBagConsumable!=null?customBagConsumable:300;
+  const bagConsumableCostUnit=customBagConsumable!=null?Number(customBagConsumable):300;
   const bagConsumableCostTotal=n*bagConsumableCostUnit;
   const totalCost=sustCost+spawnCostTotal+energyCostTotal+bagConsumableCostTotal;
   const costPerBag=n>0?totalCost/n:0;
 
   // Proyección de cosecha en fresco y margen comercial
   const dryPerBag=n>0?dry/n:0;
-  const ebRate=Math.max(0,(eb!=null?eb:85)/100);
+  const ebRate=Math.max(0,(eb!=null?Number(eb):85)/100);
   const projectedFreshKgPerBag=dryPerBag*ebRate;
   const projectedFreshKgTotal=dry*ebRate;
-  const freshPriceKg=customFreshPrice||DEFAULT_FRESH_PRICES[sKey]||22000;
+  const freshPriceKg=(Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
   const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
   const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
   const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
@@ -1522,6 +1528,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
     energyCostTotal,energyCostKgSeco,
     bagConsumableCostUnit,bagConsumableCostTotal,
     totalCost,costPerBag,agua,hObj,
+    waterExcessKg,resultingMoisturePct,isOverhydrated,
     dryPerBag,ebRate,
     projectedFreshKgPerBag,projectedFreshKgTotal,
     freshPriceKg,projectedRevenuePerBag,
@@ -1545,6 +1552,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
 const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
+  if(isNaN(base.getTime())) return null;
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
@@ -3294,6 +3302,396 @@ const NoticeModal=({dlg,onClose})=>{
   );
 };
 
+const FieldActionModal = ({
+  onClose,
+  lote,
+  db,
+  operatorRole = 'produccion',
+  operatorId = 'operario_local',
+  accountId = 'setas_default_account',
+  onTransitionConfirmed,
+}) => {
+  const [selectedTo, setSelectedTo] = React.useState('');
+  const [inFlight, setInFlight] = React.useState(false);
+  const [queueEntry, setQueueEntry] = React.useState(null);
+  const [actionError, setActionError] = React.useState('');
+  const [actionSuccess, setActionSuccess] = React.useState('');
+  const [localBatch, setLocalBatch] = React.useState(lote);
+
+  React.useEffect(() => {
+    setLocalBatch(lote);
+    setSelectedTo('');
+    setActionError('');
+    setActionSuccess('');
+  }, [lote]);
+
+  React.useEffect(() => {
+    if (!localBatch || !db) return;
+    let active = true;
+    const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+    if (queue && typeof queue.getReservation === 'function') {
+      const batchId = localBatch.id || localBatch.codigo;
+      queue.getReservation(db, accountId, batchId).then(reservation => {
+        if (!active) return;
+        if (!reservation) {
+          setQueueEntry(null);
+          return;
+        }
+        try {
+          const tx = db.transaction('queue_entries', 'readonly');
+          const req = tx.objectStore('queue_entries').get(reservation.eventId);
+          req.onsuccess = () => {
+            if (active) setQueueEntry(req.result || null);
+          };
+          req.onerror = () => {
+            if (active) setQueueEntry(null);
+          };
+        } catch (_) {
+          if (active) setQueueEntry(null);
+        }
+      }).catch(() => {
+        if (active) setQueueEntry(null);
+      });
+    }
+    return () => { active = false; };
+  }, [localBatch, db, accountId]);
+
+  const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
+  // acceptFieldEvent ya está desplegada, así que la confirmación es real salvo
+  // que alguien haya pedido el simulacro a propósito.
+  const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
+    ? actionSheetModule.buildActionSheetModel({
+        simulated: fieldMockRequested(),
+        batch: localBatch,
+        batchId: localBatch?.id || localBatch?.codigo,
+        state: localBatch?.workflowState || localBatch?.state,
+        operatorRole,
+        queueEntry,
+        inFlight,
+      })
+    : {
+        title: localBatch ? `Lote ${localBatch.codigo || localBatch.id}` : 'Lote',
+        subtitle: localBatch?.especie || '',
+        state: localBatch?.workflowState || localBatch?.estado || 'inoculated',
+        options: [],
+        status: 'idle',
+        statusLabel: 'Listo para registrar',
+        canConfirm: false,
+        canRefresh: false,
+      };
+
+  React.useEffect(() => {
+    if (model.options && model.options.length > 0 && !selectedTo) {
+      setSelectedTo(model.options[0].to);
+    }
+  }, [model.options, selectedTo]);
+
+  const STATUS_ICONS = { saved_local: '📱', sending: '📡', confirmed: '☁️', simulated: '🧪', conflict: '⚠️', rejected: '⛔' };
+
+  const handleConfirm = async () => {
+    if (!selectedTo) return;
+    setActionError('');
+    setActionSuccess('');
+    setInFlight(true);
+
+    try {
+      if (!actionSheetModule || typeof actionSheetModule.confirmTransition !== 'function') {
+        throw new Error('field_action_sheet_unavailable: módulo de hoja de acción no cargado');
+      }
+      if (!db) {
+        throw new Error('db_unavailable: base de datos local no inicializada');
+      }
+
+      const fromState = model.state;
+      const expectedBatchRevision = Number.isInteger(localBatch?.revision) ? localBatch.revision : 0;
+
+      const result = await actionSheetModule.confirmTransition({
+        db,
+        batch: localBatch,
+        from: fromState,
+        to: selectedTo,
+        accountId,
+        operatorId,
+        operatorRole,
+        expectedBatchRevision,
+        confirmed: true,
+      });
+
+      setQueueEntry(result.queueEntry);
+      setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+
+      // Sincronizar de inmediato. Sin esto el evento se quedaría en
+      // "Guardado en este equipo" para siempre, que es justo el estado que el
+      // operario no debe confundir con una confirmación.
+      await runFieldSync(db, accountId, result.event.id, setQueueEntry);
+      setInFlight(false);
+
+      if (typeof onTransitionConfirmed === 'function') {
+        onTransitionConfirmed(localBatch.id, selectedTo, result.event);
+      }
+    } catch (err) {
+      setInFlight(false);
+      setActionError(err.message || 'Error al confirmar transición');
+    }
+  };
+
+  const handleRefresh = () => {
+    setQueueEntry(null);
+    setActionError('');
+    setActionSuccess('');
+  };
+
+  return (
+    <AccessibleModal
+      onClose={onClose}
+      label="Hoja de acción de campo (QR)"
+      dialogStyle={{
+        width: 'min(480px, 94vw)',
+        padding: '20px 18px',
+        background: 'var(--paper-1, #EFEBE0)',
+        border: '1px solid var(--border-hairline, #8C7F5B)',
+        borderRadius: 'var(--radius-md, 3px)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2, #6B7280)', marginBottom: 2 }}>
+            Hoja de Acción de Campo · Transición de Estado
+          </div>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0, #1F2937)', fontWeight: 700 }}>
+            {model.title}
+          </h2>
+          {model.subtitle && (
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #4B5563)', marginTop: 2 }}>
+              {model.subtitle}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="modal-icon-close"
+          aria-label="Cerrar hoja de acción"
+          onClick={onClose}
+          style={{ background: 'transparent', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ink-2)' }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2, #6B7280)', display: 'block' }}>
+            Estado Actual
+          </span>
+          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0, #111827)' }}>
+            {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
+          </strong>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2, #6B7280)', background: 'var(--paper-100, #E5E0D0)', padding: '3px 7px', borderRadius: 2 }}>
+          Rol: {operatorRole}
+        </span>
+      </div>
+
+      {['saved_local', 'sending', 'confirmed', 'conflict', 'rejected'].includes(model.status) && (
+        <div
+          data-testid={`status-${model.status.replace('_', '-')}`}
+          data-simulated={model.simulated ? 'true' : 'false'}
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: model.statusPalette.bg,
+            border: `1.5px solid ${model.statusPalette.border}`,
+            borderRadius: 3,
+            color: model.statusPalette.fg,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <span>{STATUS_ICONS[model.simulated ? 'simulated' : model.status] || ''}</span>
+            <span>{model.statusHeading}</span>
+          </div>
+          {model.showStatusLabel && (
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+              {model.statusLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub }}>
+            {model.statusDetail}
+          </div>
+        </div>
+      )}
+
+      {model.status === 'sending' && (
+        <div
+          data-testid="status-sending"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#EFF6FF',
+            border: '1px solid #3B82F6',
+            borderRadius: 3,
+            color: '#1E40AF',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⏳</span> <span>ENVIANDO AL SERVIDOR...</span>
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>
+            Transmitiendo evento de campo al servidor central...
+          </div>
+        </div>
+      )}
+
+      {model.status === 'conflict' && (
+        <div
+          data-testid="status-conflict"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#FEF2F2',
+            border: '1.5px solid #DC2626',
+            borderRadius: 3,
+            color: '#991B1B',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⚠️</span> <span>CONFLICTO DE REVISIÓN</span>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>
+            El lote cambió de versión en el servidor o fue actualizado desde otro equipo.
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            onClick={handleRefresh}
+          >
+            🔄 Refrescar lote
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ⚠️ {actionError}
+        </div>
+      )}
+      {actionSuccess && (
+        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ✓ {actionSuccess}
+        </div>
+      )}
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1, #374151)', marginBottom: 8 }}>
+          Transiciones Disponibles
+        </div>
+
+        {model.options.length === 0 ? (
+          <div style={{ padding: '12px', background: 'var(--paper-0, #F7F4EC)', border: '1px dashed var(--border-hairline, #8C7F5B)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2, #6B7280)', textAlign: 'center' }}>
+            No hay transiciones disponibles para este lote en su estado actual ({model.state}).
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {model.options.map(opt => {
+              const isSelected = selectedTo === opt.to;
+              const isDiscard = opt.transitionClass === 'discard';
+              const isException = opt.transitionClass === 'exception';
+
+              return (
+                <label
+                  key={opt.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: isSelected ? 'var(--paper-0, #F7F4EC)' : '#fff',
+                    border: isSelected ? '2px solid var(--accent-olive, #5B6B44)' : '1px solid var(--border-hairline, #8C7F5B)',
+                    borderRadius: 3,
+                    cursor: model.canConfirm ? 'pointer' : 'default',
+                    opacity: model.canConfirm ? 1 : 0.7,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="radio"
+                      name="transitionTarget"
+                      value={opt.to}
+                      checked={isSelected}
+                      disabled={!model.canConfirm}
+                      onChange={() => setSelectedTo(opt.to)}
+                    />
+                    <div>
+                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700, #C53030)' : (isException ? 'var(--ochre-700, #B45309)' : 'var(--ink-0, #111827)') }}>
+                        {opt.label}
+                      </strong>
+                      <span style={{ fontSize: 11, color: 'var(--ink-2, #6B7280)', marginLeft: 6 }}>
+                        ({opt.to})
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                    borderRadius: 2,
+                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
+                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                  }}>
+                    {opt.transitionClass}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <button
+          type="button"
+          className="inv-btn inv-btn-sec"
+          onClick={onClose}
+          style={{ minHeight: 40, padding: '0 14px', fontSize: 12 }}
+        >
+          Cerrar
+        </button>
+
+        {model.canRefresh && (
+          <button
+            type="button"
+            className="inv-btn inv-btn-pri"
+            onClick={handleRefresh}
+            style={{ minHeight: 40, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
+          >
+            🔄 Refrescar Lote
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="inv-btn inv-btn-pri"
+          disabled={!model.canConfirm || inFlight || !selectedTo}
+          onClick={handleConfirm}
+          data-testid="btn-confirm-field-transition"
+          style={{
+            minHeight: 40,
+            padding: '0 16px',
+            fontSize: 12,
+            fontWeight: 700,
+            background: model.canConfirm && selectedTo ? 'var(--accent-olive, #5B6B44)' : 'var(--border-soft)',
+            cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {inFlight ? '⏳ Guardando...' : (selectedTo ? `Confirmar: ${model.state} → ${selectedTo}` : 'Confirmar transición')}
+        </button>
+      </div>
+    </AccessibleModal>
+  );
+};
+
+
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
 const CAT_COLORS={
@@ -4213,6 +4611,128 @@ function liveAgeLabel(ms) {
   return `hace ${Math.round(ms / 3600000)} h`;
 }
 
+
+let _fieldDbPromise = null;
+const getFieldDb = () => {
+  if (_fieldDbPromise) return _fieldDbPromise;
+  const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+  if (!queue || typeof queue.initializeQueue !== 'function') {
+    return Promise.reject(new Error('field_event_queue_unavailable: SetasFieldEventQueue no cargado'));
+  }
+  _fieldDbPromise = queue.initializeQueue().catch(err => {
+    _fieldDbPromise = null;
+    throw err;
+  });
+  return _fieldDbPromise;
+};
+
+// Servidor de aceptación simulado. acceptFieldEvent exige el plan Blaze y el
+// proyecto sigue en Spark, así que el prototipo ejercita el ciclo completo
+// contra un simulacro que respeta el mismo contrato de idempotencia. Los
+// recibos que emite llevan `simulated`, y la hoja de acción los rotula como
+// tales: el operario nunca debe leer un simulacro como confirmación real.
+// El rol que gobierna las transiciones sale de `usuarios/{uid}.rol` del usuario
+// autenticado, traducido con la tabla compartida — la misma que aplica
+// acceptFieldEvent. Antes se derivaba de props.isAdmin, que viene del selector
+// de operario del encabezado y no de la sesión de Firebase: un operario veía
+// ofrecidas acciones de cuarentena que el servidor rechazaba.
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import('./vendor/firebase/firebase-firestore.js');
+      const snap = await getDoc(doc(fb.db, 'usuarios', uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      // Mínimo privilegio si no se puede leer: mejor ofrecer de menos que
+      // ofrecer acciones que el servidor va a rechazar.
+      return 'operario';
+    }
+  })();
+  return _fieldRolePromise;
+};
+
+let _fieldMock = null;
+const getFieldMockTransport = () => {
+  if (_fieldMock) return _fieldMock;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventMockTransport : null;
+  if (!mod || typeof mod.createMockTransport !== 'function') return null;
+  _fieldMock = mod.createMockTransport();
+  return _fieldMock;
+};
+
+// El simulacro sólo se usa si alguien lo pide explícitamente (banco de pruebas,
+// demo sin sesión). Nunca como respaldo silencioso: si el transporte real
+// fallara y el simulacro lo tapara, la hoja diría "confirmado" sin que el
+// servidor tenga nada, que es exactamente la mentira que este cuaderno existe
+// para evitar.
+const fieldMockRequested = () =>
+  typeof window !== 'undefined' && window.__setasFieldMockSync === true;
+
+let _fieldCallable = null;
+const getFieldCallableTransport = () => {
+  if (_fieldCallable) return _fieldCallable;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventCallableTransport : null;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const projectId = fb && fb.app && fb.app.options && fb.app.options.projectId;
+  if (!mod || typeof mod.createCallableTransport !== 'function' || !fb || !fb.auth || !projectId) return null;
+
+  _fieldCallable = mod.createCallableTransport({
+    projectId,
+    getIdToken: () => {
+      const user = fb.auth.currentUser;
+      if (!user) return Promise.reject(new Error('sin sesión activa'));
+      return user.getIdToken();
+    },
+  });
+  return _fieldCallable;
+};
+
+// Devuelve { transport, simulated }. `simulated` gobierna el rótulo de la hoja.
+const getFieldSyncTransport = () => {
+  if (fieldMockRequested()) {
+    const mock = getFieldMockTransport();
+    return mock ? { transport: mock.transport, simulated: true } : null;
+  }
+  const real = getFieldCallableTransport();
+  return real ? { transport: real, simulated: false } : null;
+};
+
+const readQueueEntry = (db, eventId) => new Promise((resolve) => {
+  try {
+    const req = db.transaction('queue_entries', 'readonly').objectStore('queue_entries').get(eventId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  } catch (e) { resolve(null); }
+});
+
+/**
+ * Empuja los eventos pendientes de la cuenta y refresca la entrada de cola.
+ * Un fallo aquí no es un error del operario: el evento ya está guardado en el
+ * equipo y el motor lo reintentará, así que se refleja el estado y no se lanza.
+ */
+const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
+  try {
+    const sync = typeof window !== 'undefined' ? window.SetasFieldEventSync : null;
+    const chosen = getFieldSyncTransport();
+    if (!db || !sync || !chosen || typeof sync.createSyncEngine !== 'function') return;
+
+    const engine = sync.createSyncEngine({ db, accountId, transport: chosen.transport });
+    await engine.syncOnce();
+  } catch (e) {
+    // Silencio deliberado: el estado real lo cuenta la entrada de cola.
+  }
+  if (typeof setQueueEntry === 'function' && db && eventId) {
+    setQueueEntry(await readQueueEntry(db, eventId));
+  }
+};
+
 function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
@@ -4444,7 +4964,20 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [optProfile,setOptProfile]=useState('produccion');
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
+  const [showFieldActionModal,setShowFieldActionModal]=useState(false);
+  const [fieldDb,setFieldDb]=useState(null);
+  useEffect(()=>{
+    let active=true;
+    getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    return ()=>{active=false;};
+  },[]);
+  // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
+  const [qrScannedBagId,setQrScannedBagId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
+  // El render de la captura rápida lee cameraError; sin este estado el modal
+  // entero reventaba con ReferenceError al abrirse y no se escaneaba nada.
+  const [cameraError,setCameraError]=useState('');
+  const [manualScanCode,setManualScanCode]=useState('');
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
   const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
@@ -4463,6 +4996,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  // El stream vive en su propia ref y no colgado del <video>: al cerrar la hoja
+  // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
+  // quedaba encendida con el modal cerrado.
+  const cameraStreamRef = React.useRef(null);
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
@@ -4470,58 +5007,135 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
     }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') {
       stream.getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
     }
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
+  // Apagar la cámara si el componente se va sin pasar por el botón de cerrar.
+  useEffect(() => () => {
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') stream.getTracks().forEach(t => t.stop());
+    cameraStreamRef.current = null;
+  }, []);
+
+  // Formatos que el navegador sabe decodificar de verdad. Chrome expone
+  // BarcodeDetector con la lista vacía en algunos escritorios: comprobar sólo
+  // que el constructor existe deja la cámara encendida sin leer nunca nada.
+  const detectQrSupport = async () => {
+    if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      return Array.isArray(formats) ? formats.includes('qr_code') : true;
+    } catch (e) {
+      return true;
+    }
+  };
+
+  // setIsCameraActive(true) sólo pide el render; el <video> aparece un tick
+  // después. Esperar a la ref evita el fotograma en negro cuando el permiso ya
+  // estaba concedido y getUserMedia resuelve de inmediato.
+  const attachCameraStream = async (stream) => {
+    for (let i = 0; i < 40 && !videoRef.current; i++) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    if (!videoRef.current) return false;
+    videoRef.current.srcObject = stream;
+    const playing = videoRef.current.play();
+    if (playing && typeof playing.catch === 'function') playing.catch(() => {});
+    return true;
   };
 
   const startCameraScanner = async () => {
     setCameraError('');
-    setIsCameraActive(true);
+    setScanMiss('');
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
+      // Sin decodificador no se enciende la cámara: pedir permiso para mostrar
+      // un vídeo que nunca va a leer el QR es peor que decirlo de frente.
+      if (!(await detectQrSupport())) {
+        setCameraError('Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.');
+        return;
+      }
+      setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
+      cameraStreamRef.current = stream;
+      await attachCameraStream(stream);
 
-      if ('BarcodeDetector' in window) {
-        const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
-        scannerIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes && barcodes.length > 0) {
-              const rawVal = barcodes[0].rawValue;
-              handleScannedValue(rawVal);
-            }
-          } catch (e) {}
-        }, 300);
-      }
+      const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+      if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      scannerIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          if (barcodes && barcodes.length > 0) {
+            const rawVal = barcodes[0].rawValue;
+            handleScannedValue(rawVal);
+          }
+        } catch (e) {}
+      }, 300);
     } catch (err) {
-      setCameraError(err.message || 'No se pudo acceder al hardware de cámara');
-      setIsCameraActive(false);
+      setCameraError(err && err.message ? err.message : 'No se pudo acceder al hardware de cámara');
+      stopCameraScanner();
     }
   };
 
+  // Escanear resuelve el objeto, no abre un menú genérico: batch-sheet.js
+  // interpreta código de lote, id, etiqueta de bolsa, URL de trazabilidad y
+  // payload JSON, y devuelve un motivo explícito cuando no resuelve.
+  const [scanMiss, setScanMiss] = useState('');
   const handleScannedValue = (raw) => {
     if (!raw) return;
-    const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = match ? match[1] : raw;
-    const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
-    if (foundLote) {
-      setQrSelectedLoteId(foundLote.id);
+    const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
+    let resolved = null;
+    if (sheetApi) {
+      resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+    } else {
+      const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
+      const code = match ? match[1] : raw;
+      const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
+      resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
+    }
+    if (resolved.batchId) {
+      setScanMiss('');
+      setQrSelectedLoteId(resolved.batchId);
+      if (resolved.bagId) setQrScannedBagId(resolved.bagId);
       stopCameraScanner();
+      setShowQrSheet(false);
+      setShowFieldActionModal(true);
       try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
+    } else if (resolved.reason === 'no_match') {
+      setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
+
+  // Único punto de entrada al escáner real. La hoja resuelve la etiqueta contra
+  // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
+  // sobre contenedores de demostración y no sabe nada de estos lotes.
+  const openFieldScanSheet = () => {
+    const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
+    setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
+    setQrScannedBagId('');
+    setScanMiss('');
+    setCameraError('');
+    setManualScanCode('');
+    setShowQrSheet(true);
+  };
+
+  // El botón «Escanear» del shell no abre su propio escáner: sube el nonce y
+  // esta hoja se abre aquí, donde están los lotes de verdad.
+  useEffect(()=>{
+    if(!Number(props.scanNonce)) return;
+    openFieldScanSheet();
+  },[props.scanNonce]);
 
   const [showThermalModal,setShowThermalModal]=useState(false);
   const [thermalLote,setThermalLote]=useState(null);
@@ -4539,7 +5153,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
-  const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [diagNotes,setDiagNotes]=useState('');
+  const [diagError,setDiagError]=useState('');
   const [showAIFormModal,setShowAIFormModal]=useState(false);
   const [aiFormGoal,setAiFormGoal]=useState('');
   const [aiFormLoading,setAiFormLoading]=useState(false);
@@ -5665,7 +6280,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowProdLaunchModal(false);
 
     if (printQr) {
-      setThermalLoteId(lote.id);
+      setThermalLote(lote);
+      setThermalBagEnd(lote.numBolsas || 12);
+      setThermalScope('all');
       setShowThermalModal(true);
     } else {
       setBitActiveLoteId(lote.id);
@@ -6599,23 +7216,105 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
   const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
-  const runBatchAction=(action,lote)=>{
+
+  // ── Ficha operativa canónica del lote ─────────────────────────────────────
+  // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
+  // inventario, eventos, cosechas, costos, anomalías, bloqueos y evidencia en un
+  // solo objeto, y deriva de ahí las acciones válidas ahora. La UI no vuelve a
+  // decidir qué acción cabe: pregunta a la ficha.
+  const batchSheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+  const operatorRole=(props.isAdmin===true||props.isAdmin==='true')?'direccion':'operario';
+  const buildSheetFor=(lote)=>{
+    if(!batchSheetApi||!lote) return null;
+    const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
+    try{
+      return batchSheetApi.buildBatchSheet({
+        lote,
+        bolsas:bitBolsas,
+        cosechas:bitCosechas,
+        events:lote.lifecycleEvents||[],
+        room,
+        role:operatorRole,
+      });
+    }catch(e){ return null; }
+  };
+  // Registra la acción elegida en la ficha: valida contra el estado, encadena el
+  // evento inmutable y persiste la transición cuando la acción la produce.
+  /**
+   * Encola una transición para que la acepte el servidor. Es la única vía hacia
+   * `lifecycleState`: el cliente ya no lo escribe. Si el lote tiene otra
+   * transición pendiente se avisa en vez de encolar una segunda, que es la
+   * misma reserva que impide dos avances simultáneos del mismo lote.
+   */
+  const enqueueFieldTransition=async(lote,from,to)=>{
+    const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
+    const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
+      ? window.SetasFirebase.auth.currentUser.uid : null;
+    if(!SHEET||!uid) return;
+    try{
+      const db=await getFieldDb();
+      const res=await SHEET.confirmTransition({
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
+        expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
+        confirmed:true,
+      });
+      await runFieldSync(db,uid,res.event.id,()=>{});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo registrar la transición',msg:err.message});
+    }
+  };
+
+  const commitSheetAction=(sheet,lote,action,payload={})=>{
+    if(!batchSheetApi||!sheet) return false;
+    try{
+      const result=batchSheetApi.applyAction({
+        sheet,action,operatorId:lote.operador||'operador-local',
+        payload,log:lote.lifecycleEvents||[],role:operatorRole,
+      });
+      // El estado canónico lo escribe acceptFieldEvent, no el cliente: las reglas
+      // protegen lifecycleState y revision precisamente para que dos operarios
+      // sin señal no puedan avanzar el mismo lote sin que ninguna escritura vea
+      // a la otra. Aquí sólo se persiste la bitácora local y se encola la
+      // transición; el estado cambia cuando el servidor la acepta.
+      updateBitLote(lote.id,{lifecycleEvents:result.log});
+      if(result.transitioned){
+        enqueueFieldTransition(lote,sheet.state,result.state);
+      }
+      return true;
+    }catch(err){
+      setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
+      return false;
+    }
+  };
+  const runBatchAction=(action,lote,sheet=null)=>{
+    // Toda acción de campo opera sobre un lote concreto: fijarlo primero evita
+    // que la captura aterrice en el lote que quedó abierto de la ronda anterior.
+    if(lote&&lote.id!==bitActiveLoteId) setBitActiveLoteId(lote.id);
     if(action==='harvest'){
       const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
       setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
       setShowBitCosecha(true);return;
     }
     if(action==='advance_stage'){
+      // La ficha decide el destino a partir de la máquina de estados; el avance
+      // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
+      const activeSheet=sheet||buildSheetFor(lote);
+      if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
       const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
       const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
       if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
         const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,to);
       }
       return;
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
-    if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
+    if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
+    // Inspección, colonización y evidencia fotográfica se capturan sobre la
+    // bolsa, que es donde viven el %, la fecha y la foto.
+    if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
     if(action==='contamination'){
       setDiagLoteId(lote.id);
       const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
@@ -6790,22 +7489,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </section>;
   };
   const BatchDetailV2=({lote})=>{
-    const stats=calcLoteStats(lote.id);const state=legacyLifecycle[lote.estado]||'planned';
+    const stats=calcLoteStats(lote.id);
+    const sheet=buildSheetFor(lote);
+    const state=sheet?sheet.state:(legacyLifecycle[lote.estado]||'planned');
     const isAdmin=props.isAdmin===true||props.isAdmin==='true';
-    const actions=workflow?workflow.validActions(state,isAdmin?'direccion':'operario'):[];
+    // Las acciones salen de la ficha (estado + permisos + bloqueos). Sin la ficha
+    // se cae a la máquina de estados desnuda, nunca a un menú genérico.
+    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,isAdmin?'direccion':'operario').map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
-    const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
-    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
+    const events=sheet
+      ?sheet.timeline.map((e,i)=>({id:e.eventId||e.bagId||e.cosechaId||`${e.type}-${i}`,title:e.title,meta:[e.at,e.meta].filter(Boolean).join(' · '),kind:e.provenance}))
+      :[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
+    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail" data-batch-state={state} data-batch-completeness={sheet?sheet.completenessPct:null}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="chevron-right" size={13} color="var(--accent-olive,#5B6B44)" /> 📋 Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
           <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
         </div>
       </div>
-      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
-        <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
-        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
+      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{sheet?sheet.code:lote.codigo}</div><div className="os-batch-header__species">{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{sheet?sheet.stateLabel:(lifecycleLabel[state]||state)}</span></div>
+        <div className="os-batch-header__meta">
+          {sheet&&sheet.daysInStage!=null&&<span>Día {sheet.daysInStage} en {sheet.stateLabel.toLowerCase()}</span>}
+          <span>{sheet?`Sala ${sheet.room?sheet.room.name:'sin asignar'}`:(lote.sala||'Sala sin asignar')}</span>
+          <span>{sheet?`${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas`:`${lote.numBolsas} bolsas`}</span>
+          <span>Inoculación {lote.fechaInoculacion}</span>
+          <span>{sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular')}</span>
+          <span>{sheet&&sheet.spawnLot&&sheet.spawnLot.id?`Semilla ${sheet.spawnLot.id}`:'Semilla sin vincular'}</span>
+          {sheet&&sheet.consumedInventory.length>0&&<span>{sheet.consumedInventory.length} lote(s) de insumo</span>}
+          {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
+        </div>
+        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{(sheet&&sheet.nextAction&&sheet.nextAction.label)||actionLabel[actions[0]&&actions[0].action]||'Sin acciones pendientes'}</span></div></header>
+      {sheet&&(sheet.blocks.length>0||sheet.anomalies.length>0)&&(
+        <section className="os-detail-panel" data-testid="batch-blocks" style={{marginBottom:12}}>
+          <h2>Bloqueos y anomalías</h2>
+          {sheet.anomalies.map((a,i)=>(
+            <div className="os-event-row" key={`anom-${i}`}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">{a.severity==='critical'?'Crítico':'Atención'} · {a.detail}</div><div className="os-event-row__meta">{a.kind}</div></div>
+            </div>
+          ))}
+          {sheet.blocks.map(b=>(
+            <div className="os-event-row" key={b.code}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">Bloqueo · {b.detail}</div><div className="os-event-row__meta">{b.code}</div></div>
+            </div>
+          ))}
+        </section>
+      )}
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
       {stats&&(
         <section className="os-finance-panel" data-testid="batch-financial-closure">
@@ -6869,9 +7601,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
           <div className="os-valid-actions">
-            {actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}
+            {actions.map(a=>(
+              <button key={a.action} className="os-action" type="button"
+                data-action={a.action}
+                disabled={Boolean(a.blockedBy)}
+                title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
+            ))}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+              🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
@@ -8473,6 +9211,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <LiveClimateStrip/>
                 </div>
 
+                {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
+                    cabecera del Tablero de Control y por encima de la cola de
+                    trabajo, porque una sala fuera de banda es lo primero que hay
+                    que atender del turno — y porque este es el cockpit que el
+                    operario ve de verdad al entrar (TodayV2 no se monta). */}
+                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                  <LiveTelemetryStatusBar/>
+                  <LiveAlertsSection/>
+                  <LiveClimateStrip/>
+                </div>
+
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
                   <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border-hairline)'}}>
                   <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
@@ -8535,7 +9284,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                         else props.onStartSession&&props.onStartSession();
                       },jornada:true},
-                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
@@ -8945,8 +9694,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {saved.length > 0 && (() => {
-                const costs = saved.map(e => {
+              {/* Resumen de la selección activa. Las métricas vienen de #218, que las
+                  movió aquí desde el panel "Finanzas & Rendimiento" de la home; al
+                  fusionar Catálogo y Recetario pasan a seguir el filtro de especie,
+                  porque el costo/kg varía demasiado entre especies para que un
+                  promedio global signifique algo (orellana ~$640 vs shiitake ~$1.730).
+                  Con "Todas" seleccionado siguen siendo las cifras de cartera de #218.
+                  El tile de ciclo se sustituyó por EB promedio: `sch` depende de
+                  `schKey`, el selector de la pestaña Cronograma, y no de estas
+                  recetas — mostraba un dato ajeno a la especie en pantalla. */}
+              {shown.length > 0 && (() => {
+                const costs = shown.map(e => {
                   const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
                   const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
                   const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
@@ -8959,33 +9717,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }).filter(c => c > 0);
                 const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
                 const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-                const avgCycleDays = sch?.totDays || 45;
-
+                const ebs = shown.map(e => parseFloat(e.eb)).filter(v => v > 0);
+                const avgEb = ebs.length > 0 ? Math.round(ebs.reduce((a,b)=>a+b, 0) / ebs.length) : null;
+                const tiles = [
+                  {lbl:'Fórmulas Guardadas', val:shown.length, unit:shown.length===1?'receta':'recetas'},
+                  {lbl:'Costo Promedio / kg', val:'$'+avgCostKg.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'Bolsa Estándar (1.5 kg)', val:'$'+avgBagCost.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'EB Promedio', val:avgEb!=null?avgEb+'%':'—', unit:avgEb==null?'sin dato':(ebs.length===shown.length?'eficiencia biológica':`sobre ${ebs.length} de ${shown.length}`)},
+                ];
                 return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
-                      </div>
+                  <div className="recetario-kpis">
+                    <div className="recetario-kpis-lbl">Promedios · {focusSpp?focusSpp.name:'Todas las recetas'}</div>
+                    <div className="recetario-kpis-grid">
+                      {tiles.map(t => (
+                        <div key={t.lbl}>
+                          <div className="recetario-kpi-lbl">{t.lbl}</div>
+                          <div className="recetario-kpi-val">{t.val} <span>{t.unit}</span></div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
@@ -9005,7 +9754,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sdp-ficha recetario-ficha">
                   <div className="sdp-ficha__hd" style={{background:'var(--paper-0)',padding:'12px 16px',borderBottom:'1px solid var(--border-hairline)'}}>
                     <div className="sdp-species">
-                      <div className="sdp-species__common" style={{fontFamily:'var(--font-editorial)',fontWeight:700,fontSize:'22px'}}>{focusSpp.name}</div>
+                      <div className="sdp-species__common">{focusSpp.name}</div>
                       <div className="sdp-species__latin" style={{fontFamily:'var(--font-editorial)',fontStyle:'italic'}}>{focusSpp.scientific}</div>
                     </div>
                     <div className="sdp-plateline">{SPP_CODE[focusKey]} · Tenjo · 2.600 m</div>
@@ -11766,13 +12515,42 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
           </AccessibleModal>
         )}
+        {/* HOJA DE ACCIÓN DE CAMPO (MODAL DE TRANSICIÓN OFFLINE QR) */}
+        {showFieldActionModal && (()=>{
+          const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
+          const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+          const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
+          const operatorRole = props.operatorRole || (isAdmin ? 'direccion' : 'produccion');
+          const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
+          const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
+
+          return (
+            <FieldActionModal
+              onClose={() => setShowFieldActionModal(false)}
+              lote={currentLote}
+              db={fieldDb}
+              operatorRole={operatorRole}
+              operatorId={operatorId}
+              accountId={accountId}
+              onTransitionConfirmed={(batchId, nextState) => {
+                setBitLotes(prev => prev.map(l => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+              }}
+            />
+          );
+        })()}
+
         {/* MODAL / ACTION SHEET QR DE CAMPO (MODO RONDA DE CAMPO) */}
         {showQrSheet&&(()=>{
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const currentLote=bitLotes.find(l=>l.id===(qrSelectedLoteId||bitActiveLoteId))||activeBatches[0]||bitLotes[0];
+          // Escanear → resolver lote → mostrar estado → elegir acción válida.
+          // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
+          // menú fijo para un lote en enfriamiento que para uno en fructificación.
+          const currentSheet=currentLote?buildSheetFor(currentLote):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
@@ -11780,7 +12558,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
                     <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}>✕</button>
                 </div>
 
                 {/* ESCÁNER DE CÁMARA EN VIVO */}
@@ -11817,6 +12595,38 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {cameraError && (
                   <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
                     ⚠️ {cameraError}
+                  </div>
+                )}
+
+                <form
+                  data-testid="scan-manual-code"
+                  onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
+                  style={{display:'flex',gap:6,marginBottom:12}}
+                >
+                  <input
+                    type="text"
+                    value={manualScanCode}
+                    onChange={(e)=>setManualScanCode(e.target.value)}
+                    placeholder="Código impreso en la etiqueta (p. ej. SHI-260714-03)"
+                    aria-label="Código impreso en la etiqueta"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!manualScanCode.trim()}
+                    className="inv-btn inv-btn-sec"
+                    style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                  >
+                    Abrir
+                  </button>
+                </form>
+
+                {scanMiss && (
+                  <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                    {scanMiss} Elige el lote manualmente o vuelve a escanear.
                   </div>
                 )}
 
@@ -11863,8 +12673,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
                       </div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',marginTop:4}}>
-                        Estado: {currentLote.estado} · {currentLote.numBolsas||0} bolsas
+                        {currentSheet
+                          ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
+                          :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
+                      {scannedBag&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
+                          Etiqueta leída: bolsa {scannedBag.codigo}
+                        </div>
+                      )}
+                      {currentSheet&&currentSheet.blocks.length>0&&(
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta,#A85C32)',marginTop:4}}>
+                          {currentSheet.blocks.map(b=>b.detail).join(' · ')}
+                        </div>
+                      )}
                       {activeBatches.length>1&&(
                         <select
                           className="inv-input"
@@ -11880,8 +12702,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                     </div>
 
-                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%) */}
-                    <div style={{marginBottom:12}}>
+                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%)
+                        Sólo cuando el estado del lote admite registrar colonización:
+                        en enfriamiento o en descanso este control no significa nada. */}
+                    <div style={{marginBottom:12,display:(!currentSheet||currentSheet.actions.some(a=>a.action==='colonization'))?'block':'none'}}>
                       <ColonizationScaleSelector
                         value={(()=>{
                           const b=bitBolsas.filter(x=>x.loteId===currentLote.id);
@@ -11926,27 +12750,66 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       />
                     </div>
 
-                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                      <button
-                        type="button"
-                        style={{minHeight:46,cursor:'pointer',background:'var(--accent-olive,#5B6B44)',color:'var(--paper-0,#F7F4EC)',border:'1px solid var(--accent-olive,#5B6B44)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-                        onClick={()=>{
-                          setBitActiveLoteId(currentLote.id);
-                          setBitCosechaForm({
-                            loteId:currentLote.id,
-                            bolsaId:'',
-                            flush:1,
-                            fecha:new Date().toISOString().split('T')[0],
-                            pesoFresco:'',
-                            calidad:3,
-                            observaciones:''
-                          });
-                          setShowQrSheet(false);
-                          setShowBitCosecha(true);
-                        }}
-                      >
-                        <AppIcon name="harvest" size={15} color="var(--paper-0)" /> Registrar Cosecha (g)
-                      </button>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}} data-testid="qr-contextual-actions">
+                      {currentSheet&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                          Acciones válidas en {currentSheet.stateLabel.toLowerCase()}
+                        </div>
+                      )}
+                      {(currentSheet?currentSheet.actions:[{action:'harvest',label:'Registrar cosecha',blockedBy:null},{action:'contamination',label:'Reportar contaminación',blockedBy:null}]).map((a,i)=>(
+                        <button
+                          key={a.action}
+                          type="button"
+                          data-action={a.action}
+                          disabled={Boolean(a.blockedBy)}
+                          title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                          style={{minHeight:i===0?46:44,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
+                            background:a.action==='contamination'?'var(--accent-terracotta-dim,#EFE0D3)':(i===0?'var(--accent-olive,#5B6B44)':'var(--paper-0,#F7F4EC)'),
+                            color:a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--paper-0,#F7F4EC)':'var(--ink-0)'),
+                            border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--accent-olive,#5B6B44)':'var(--border-hairline,#8C7F5B)')}`,
+                            borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:i===0?13:12,fontWeight:i===0?700:600,
+                            display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                          onClick={()=>{
+                            if(a.action==='harvest'){
+                              setBitActiveLoteId(currentLote.id);
+                              setBitCosechaForm({
+                                loteId:currentLote.id,
+                                bolsaId:scannedBag?scannedBag.id:'',
+                                codigo:scannedBag?scannedBag.codigo:'',
+                                flush:1,
+                                fecha:new Date().toISOString().split('T')[0],
+                                pesoFresco:'',
+                                calidad:3,
+                                observaciones:''
+                              });
+                              setShowQrSheet(false);
+                              setShowBitCosecha(true);
+                              return;
+                            }
+                            if(a.action==='contamination'){
+                              setDiagLoteId(currentLote.id);
+                              const b=scannedBag||bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
+                              setDiagBolsaId(b?.id||'');
+                              setDiagImageBase64('');
+                              setDiagResult(null);
+                              setDiagError('');
+                              setDiagNotes('');
+                              setShowQrSheet(false);
+                              setShowDiagModal(true);
+                              return;
+                            }
+                            setShowQrSheet(false);
+                            runBatchAction(a.action,currentLote,currentSheet);
+                          }}
+                        >
+                          {a.action==='harvest'&&<AppIcon name="harvest" size={15} color="var(--paper-0)" />}
+                          {a.action==='contamination'&&<AppIcon name="alert" size={14} color="var(--accent-terracotta)" />}
+                          {a.label}
+                        </button>
+                      ))}
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Siempre disponible
+                      </div>
                       <button
                         type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
@@ -11959,23 +12822,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-                        onClick={()=>{
-                          setDiagLoteId(currentLote.id);
-                          const b=bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
-                          setDiagBolsaId(b?.id||'');
-                          setDiagImageBase64('');
-                          setDiagResult(null);
-                          setDiagError('');
-                          setDiagNotes('');
-                          setShowQrSheet(false);
-                          setShowDiagModal(true);
-                        }}
-                      >
-                        <AppIcon name="alert" size={14} color="var(--accent-terracotta)" /> Reportar Contaminación / Merma
-                      </button>
-                      <button
-                        type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setThermalLote(currentLote);
@@ -11985,7 +12831,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -12061,14 +12907,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${
-                        thermalSize === '40x30' ? '40mm 30mm' :
-                        thermalSize === '50x30' ? '50mm 30mm' :
-                        thermalSize === '60x40' ? '60mm 40mm' :
-                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
-                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
-                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
-                      };
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -12129,35 +12968,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('60x40')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        60 × 40 mm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('gourmet-wood')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Faja Madera (180×60)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('kraft-tray')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Bandeja Kraft (80×120)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('apothecary-50')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Apotecario (50 ml)
-                      </button>
 
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
                     </div>
                   </div>
 
@@ -12197,7 +13011,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -12208,17 +13022,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                            <div className="thermal-code">{item.id}</div>
                           </div>
                           <div className="thermal-body">
                             <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
-                              <div>{item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">
-                              <span>Setas de la Peña</span>
                             </div>
                           </div>
                         </div>
@@ -12251,17 +13061,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-code">{item.id}</div>
                         </div>
                         <div className="thermal-body">
                           <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
-                            <div>{item.recipe}</div>
-                          </div>
-                          <div className="thermal-footer">
-                            <span>Setas de la Peña</span>
                           </div>
                         </div>
                       </div>
