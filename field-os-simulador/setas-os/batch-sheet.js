@@ -155,11 +155,37 @@
 
   const stateLabel = state => STATE_LABELS[state] || state;
 
+  // Nombres de parámetro que llevan el código en una URL de etiqueta o enlace
+  // público. `flush`, `utm_*` y compañía viajan al lado y deben ignorarse.
+  const SCAN_CODE_PARAMS = ['codigo', 'code', 'lote', 'batch', 'bolsa', 'bag', 'c', 'id'];
+
+  // Un QR ajeno puede traer un `%` suelto: decodeURIComponent lanzaría y se
+  // llevaría por delante el escaneo entero, así que el crudo es el respaldo.
+  const safeDecode = (value) => {
+    try { return decodeURIComponent(value); } catch (err) { return value; }
+  };
+
+  const readScanCodeParam = (search) => {
+    if (!search) return '';
+    const pairs = String(search).split(/[&;]/);
+    for (const key of SCAN_CODE_PARAMS) {
+      for (const pair of pairs) {
+        const eq = pair.indexOf('=');
+        if (eq < 0) continue;
+        if (safeDecode(pair.slice(0, eq)).trim().toLowerCase() !== key) continue;
+        const value = safeDecode(pair.slice(eq + 1).replace(/\+/g, ' ')).trim();
+        if (value) return value;
+      }
+    }
+    return '';
+  };
+
   /**
    * Resuelve el contenido de una etiqueta QR a un objeto operativo.
    *
    * Acepta el código de lote crudo, el id interno, un código de bolsa
-   * (`<lote>-B03`), una URL de trazabilidad (`.../trace/<codigo>`) y payloads
+   * (`<lote>-B03`), una URL de trazabilidad —tanto `.../trace/<codigo>` como la
+   * etiqueta impresa `.../trace.html?codigo=<codigo>`— y payloads
    * JSON `{"batch":"..."}`. Devuelve siempre un resultado explícito para que la
    * UI nunca aterrice en un menú genérico.
    *
@@ -179,10 +205,23 @@
         candidate = parsed.batch || parsed.batchCode || parsed.codigo || parsed.id || parsed.bag || text;
       } catch (err) { /* payload no-JSON: se sigue tratando como texto */ }
     }
-    // URL de trazabilidad o deep-link: el último segmento no vacío es el código.
+    // URL de trazabilidad o deep-link. La etiqueta impresa lleva el código en la
+    // query (`.../public/trace.html?codigo=<codigo>`), así que la query manda
+    // sobre la ruta: leer el último segmento devolvería "trace.html" y ninguna
+    // etiqueta impresa resolvería jamás. Sin query se conserva el formato de
+    // ruta (`.../trace/<codigo>`), que es el que usan los enlaces públicos.
     if (/[:/]/.test(candidate)) {
-      const segments = candidate.split(/[?#]/)[0].split('/').filter(Boolean);
-      if (segments.length) candidate = decodeURIComponent(segments[segments.length - 1]);
+      const [beforeHash, ...hashRest] = candidate.split('#');
+      const queryAt = beforeHash.indexOf('?');
+      const pathPart = queryAt >= 0 ? beforeHash.slice(0, queryAt) : beforeHash;
+      const query = queryAt >= 0 ? beforeHash.slice(queryAt + 1) : '';
+      const fromQuery = readScanCodeParam(query) || readScanCodeParam(hashRest.join('#'));
+      if (fromQuery) {
+        candidate = fromQuery;
+      } else {
+        const segments = pathPart.split('/').filter(Boolean);
+        if (segments.length) candidate = safeDecode(segments[segments.length - 1]);
+      }
     }
     candidate = candidate.replace(/^(?:SDP-CERT-|CAN-)/i, '').trim();
     if (!candidate) return miss('empty_payload');

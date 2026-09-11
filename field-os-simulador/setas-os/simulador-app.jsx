@@ -4974,6 +4974,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
   const [qrScannedBagId,setQrScannedBagId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
+  // El render de la captura rápida lee cameraError; sin este estado el modal
+  // entero reventaba con ReferenceError al abrirse y no se escaneaba nada.
+  const [cameraError,setCameraError]=useState('');
+  const [manualScanCode,setManualScanCode]=useState('');
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
   const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
@@ -4992,6 +4996,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  // El stream vive en su propia ref y no colgado del <video>: al cerrar la hoja
+  // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
+  // quedaba encendida con el modal cerrado.
+  const cameraStreamRef = React.useRef(null);
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
@@ -4999,44 +5007,84 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
     }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') {
       stream.getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
     }
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
+  // Apagar la cámara si el componente se va sin pasar por el botón de cerrar.
+  useEffect(() => () => {
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') stream.getTracks().forEach(t => t.stop());
+    cameraStreamRef.current = null;
+  }, []);
+
+  // Formatos que el navegador sabe decodificar de verdad. Chrome expone
+  // BarcodeDetector con la lista vacía en algunos escritorios: comprobar sólo
+  // que el constructor existe deja la cámara encendida sin leer nunca nada.
+  const detectQrSupport = async () => {
+    if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      return Array.isArray(formats) ? formats.includes('qr_code') : true;
+    } catch (e) {
+      return true;
+    }
+  };
+
+  // setIsCameraActive(true) sólo pide el render; el <video> aparece un tick
+  // después. Esperar a la ref evita el fotograma en negro cuando el permiso ya
+  // estaba concedido y getUserMedia resuelve de inmediato.
+  const attachCameraStream = async (stream) => {
+    for (let i = 0; i < 40 && !videoRef.current; i++) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    if (!videoRef.current) return false;
+    videoRef.current.srcObject = stream;
+    const playing = videoRef.current.play();
+    if (playing && typeof playing.catch === 'function') playing.catch(() => {});
+    return true;
   };
 
   const startCameraScanner = async () => {
     setCameraError('');
-    setIsCameraActive(true);
+    setScanMiss('');
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
+      // Sin decodificador no se enciende la cámara: pedir permiso para mostrar
+      // un vídeo que nunca va a leer el QR es peor que decirlo de frente.
+      if (!(await detectQrSupport())) {
+        setCameraError('Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.');
+        return;
+      }
+      setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
+      cameraStreamRef.current = stream;
+      await attachCameraStream(stream);
 
-      if ('BarcodeDetector' in window) {
-        const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
-        scannerIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes && barcodes.length > 0) {
-              const rawVal = barcodes[0].rawValue;
-              handleScannedValue(rawVal);
-            }
-          } catch (e) {}
-        }, 300);
-      }
+      const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+      if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      scannerIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          if (barcodes && barcodes.length > 0) {
+            const rawVal = barcodes[0].rawValue;
+            handleScannedValue(rawVal);
+          }
+        } catch (e) {}
+      }, 300);
     } catch (err) {
-      setCameraError(err.message || 'No se pudo acceder al hardware de cámara');
-      setIsCameraActive(false);
+      setCameraError(err && err.message ? err.message : 'No se pudo acceder al hardware de cámara');
+      stopCameraScanner();
     }
   };
 
@@ -5069,6 +5117,26 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
 
+  // Único punto de entrada al escáner real. La hoja resuelve la etiqueta contra
+  // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
+  // sobre contenedores de demostración y no sabe nada de estos lotes.
+  const openFieldScanSheet = () => {
+    const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
+    setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
+    setQrScannedBagId('');
+    setScanMiss('');
+    setCameraError('');
+    setManualScanCode('');
+    setShowQrSheet(true);
+  };
+
+  // El botón «Escanear» del shell no abre su propio escáner: sube el nonce y
+  // esta hoja se abre aquí, donde están los lotes de verdad.
+  useEffect(()=>{
+    if(!Number(props.scanNonce)) return;
+    openFieldScanSheet();
+  },[props.scanNonce]);
+
   const [showThermalModal,setShowThermalModal]=useState(false);
   const [thermalLote,setThermalLote]=useState(null);
   const [thermalSize,setThermalSize]=useState('50x30');
@@ -5085,7 +5153,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
-  const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [diagNotes,setDiagNotes]=useState('');
+  const [diagError,setDiagError]=useState('');
   const [showAIFormModal,setShowAIFormModal]=useState(false);
   const [aiFormGoal,setAiFormGoal]=useState('');
   const [aiFormLoading,setAiFormLoading]=useState(false);
@@ -6211,7 +6280,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowProdLaunchModal(false);
 
     if (printQr) {
-      setThermalLoteId(lote.id);
+      setThermalLote(lote);
+      setThermalBagEnd(lote.numBolsas || 12);
+      setThermalScope('all');
       setShowThermalModal(true);
     } else {
       setBitActiveLoteId(lote.id);
@@ -9213,7 +9284,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                         else props.onStartSession&&props.onStartSession();
                       },jornada:true},
-                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
@@ -12475,7 +12546,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
@@ -12483,7 +12554,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
                     <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}>✕</button>
                 </div>
 
                 {/* ESCÁNER DE CÁMARA EN VIVO */}
@@ -12522,6 +12593,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ⚠️ {cameraError}
                   </div>
                 )}
+
+                <form
+                  data-testid="scan-manual-code"
+                  onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
+                  style={{display:'flex',gap:6,marginBottom:12}}
+                >
+                  <input
+                    type="text"
+                    value={manualScanCode}
+                    onChange={(e)=>setManualScanCode(e.target.value)}
+                    placeholder="Código impreso en la etiqueta (p. ej. SHI-260714-03)"
+                    aria-label="Código impreso en la etiqueta"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!manualScanCode.trim()}
+                    className="inv-btn inv-btn-sec"
+                    style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                  >
+                    Abrir
+                  </button>
+                </form>
 
                 {scanMiss && (
                   <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>

@@ -44,8 +44,13 @@ test('Hoy quick actions only cover destinations with no equivalent CTA in Espaci
   assert.doesNotMatch(source, /label:'Formular Receta'/);
   assert.doesNotMatch(source, /label:'Lotes',sub:'Crear y gestionar lotes'/);
   assert.doesNotMatch(source, /label:'Módulos de cultivo'/);
-  assert.match(source, /onClick:\(\)=>props\.onScanLot&&props\.onScanLot\(\)/);
+  // La tarjeta abre la hoja de captura del propio shell React: es la que
+  // resuelve la etiqueta contra los lotes de la bitácora. El escáner del .dc
+  // trabajaba sobre contenedores de demostración.
+  assert.match(source, /onClick:\(\)=>openFieldScanSheet\(\)/);
   assert.match(shell, /on-scan-lot="\{\{ openScanHome \}\}"/);
+  assert.match(shell, /scan-nonce="\{\{ scanNonce \}\}"/);
+  assert.match(source, /\},\[props\.scanNonce\]\)/);
 });
 
 test('Hoy keeps species selection out of the operational header', () => {
@@ -208,6 +213,42 @@ test('mobile field action sheet integrates live camera QR scanner with viewport 
   assert.match(styles, /\.sim-root \.qr-scanner-video/);
   assert.match(styles, /\.sim-root \.qr-scanner-reticle/);
   assert.match(styles, /\.sim-root \.qr-scanner-laser/);
+});
+
+test('todo setState usado en el shell React está declarado — un setter huérfano es un ReferenceError en producción', () => {
+  // `cameraError` se leía en el render de la captura rápida sin existir: abrir
+  // la hoja del QR reventaba el modal entero y no se escaneaba nada. El mismo
+  // fallo estaba en el diagnóstico de contaminación (`diagError`, `diagNotes`)
+  // y al imprimir etiquetas tras lanzar producción (`setThermalLoteId`).
+  // Los tests de esta suite son de fuente: comprueban que el identificador
+  // aparece, no que exista. Esta es la comprobación que faltaba.
+  const GLOBALES = new Set(['setInterval', 'setTimeout', 'setImmediate']);
+  const usados = new Set();
+  const uso = /(^|[^.\w$])(set[A-Z][A-Za-z0-9_]*)\s*\(/g;
+  for (let m; (m = uso.exec(source)); ) usados.add(m[2]);
+
+  const declarados = new Set();
+  const porDesestructuracion = /\[\s*[A-Za-z0-9_$]+\s*,\s*(set[A-Z][A-Za-z0-9_]*)\s*\]/g;
+  for (let m; (m = porDesestructuracion.exec(source)); ) declarados.add(m[1]);
+  const porNombre = /(?:const|let|var|function)\s+(set[A-Z][A-Za-z0-9_]*)\b/g;
+  for (let m; (m = porNombre.exec(source)); ) declarados.add(m[1]);
+
+  const huerfanos = [...usados].filter(n => !declarados.has(n) && !GLOBALES.has(n));
+  assert.deepEqual(huerfanos, [], `setters sin declarar: ${huerfanos.join(', ')}`);
+});
+
+test('la captura rápida resuelve la etiqueta impresa y no depende sólo de la cámara', () => {
+  // El QR de la etiqueta lleva el código en la query, no en la ruta.
+  assert.match(source, /qrUrl: `\$\{PUBLIC_TRACE_BASE_URL\}\?codigo=/);
+  const sheet = fs.readFileSync(path.join(root, 'batch-sheet.js'), 'utf8');
+  assert.match(sheet, /readScanCodeParam\(query\)/, 'resolveScan debe leer el código de la query de la URL');
+  assert.match(sheet, /const SCAN_CODE_PARAMS = \[[^\]]*'codigo'/);
+  // Sin decodificador (Safari, Firefox) la hoja lo dice y ofrece el código a mano.
+  assert.match(source, /BarcodeDetector\.getSupportedFormats\(\)/);
+  assert.match(source, /data-testid="scan-manual-code"/);
+  assert.match(source, /const \[cameraError,setCameraError\]=useState\(''\)/);
+  // La cámara se apaga aunque la hoja se cierre sin pasar por el botón.
+  assert.match(source, /cameraStreamRef/);
 });
 
 test('climate dashboard generates and exports customizable ESPHome firmware YAML for microcontrollers', () => {

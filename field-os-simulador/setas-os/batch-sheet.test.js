@@ -98,6 +98,27 @@ test('el QR resuelve el lote por código, id, URL de trazabilidad y payload JSON
   assert.equal(sheetApi.resolveScan('{"batch":"SHI-260714-03"}', index).batchId, 'LOTE_1');
 });
 
+test('el QR de la etiqueta impresa resuelve por el parámetro de la URL de trazabilidad', () => {
+  const index = { lotes: [lote], bolsas };
+  // Es la URL que generateQrSvgDataUrl() imprime en la etiqueta térmica: el
+  // código va en la query, no en la ruta. Leer el último segmento daría
+  // "trace.html" y ninguna etiqueta impresa resolvería jamás.
+  const base = 'https://setasdlp-code.github.io/Setas-de-la-Pena/public/trace.html';
+  assert.equal(sheetApi.resolveScan(`${base}?codigo=SHI-260714-03`, index).batchId, 'LOTE_1');
+  // Etiqueta de cosecha: el flush viaja al lado del código y no debe estorbar.
+  assert.equal(sheetApi.resolveScan(`${base}?codigo=SHI-260714-03&flush=2`, index).batchId, 'LOTE_1');
+  // El código llega percent-encoded desde encodeURIComponent().
+  assert.equal(sheetApi.resolveScan(`${base}?codigo=SHI%2D260714%2D03`, index).batchId, 'LOTE_1');
+  // Una bolsa impresa con su propio código sigue resolviendo a la bolsa.
+  const bag = sheetApi.resolveScan(`${base}?codigo=SHI-260714-03-B02`, index);
+  assert.equal(bag.kind, 'bag');
+  assert.equal(bag.bagId, 'B2');
+  // Sin parámetro conocido se conserva el comportamiento por ruta.
+  assert.equal(sheetApi.resolveScan('https://setasdelapena.com/trace/SHI-260714-03?utm=qr', index).batchId, 'LOTE_1');
+  // Una URL de trazabilidad de otro lote no debe colarse como coincidencia.
+  assert.equal(sheetApi.resolveScan(`${base}?codigo=OTRO-999`, index).reason, 'no_match');
+});
+
 test('el QR de una bolsa resuelve a su lote y conserva la bolsa escaneada', () => {
   const index = { lotes: [lote], bolsas };
   const bag = sheetApi.resolveScan('SHI-260714-03-B02', index);
