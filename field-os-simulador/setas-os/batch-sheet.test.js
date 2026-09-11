@@ -257,6 +257,35 @@ test('la línea de tiempo ordena de lo más reciente a lo más antiguo y vincula
   assert.ok(s.timeline.some(e => e.type === 'inoculated'));
 });
 
+test('buildCultivoEvento construye el documento de un evento reportado por QR', () => {
+  const ev = sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'riego', operatorId: 'op-1', at: '2026-09-07T09:00:00-05:00' });
+  assert.equal(ev.batchId, 'LOTE_1');
+  assert.equal(ev.bagId, null);
+  assert.equal(ev.tipo, 'riego');
+  assert.equal(ev.operatorId, 'op-1');
+  assert.equal(ev.nota, '');
+  assert.equal(ev.at, '2026-09-07T09:00:00-05:00');
+  assert.equal(ev.source, 'qr_scan');
+  assert.match(ev.id, /^EVC_LOTE_1_\d+$/);
+
+  const withBag = sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', bagId: 'B2', tipo: 'contaminacion', operatorId: 'op-1', nota: '  moho visible  ' });
+  assert.equal(withBag.bagId, 'B2');
+  assert.equal(withBag.nota, 'moho visible');
+});
+
+test('buildCultivoEvento rechaza tipo desconocido, falta de operador y observación sin nota', () => {
+  assert.throws(() => sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'inventado', operatorId: 'op-1' }), /tipo debe ser uno de/);
+  assert.throws(() => sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'riego' }), /operatorId es requerido/);
+  assert.throws(() => sheetApi.buildCultivoEvento({ batchId: 'LOTE_1', tipo: 'observacion', operatorId: 'op-1' }), /nota es requerida/);
+  assert.throws(() => sheetApi.buildCultivoEvento({ tipo: 'riego', operatorId: 'op-1' }), /batchId es requerido/);
+  assert.deepEqual(sheetApi.CULTIVO_EVENT_TIPOS, ['observacion', 'riego', 'contaminacion', 'cosecha_parcial']);
+});
+
+test('la ficha ofrece "riego" como acción de campo válida en incubación', () => {
+  assert.ok(sheetApi.ACTION_CATALOG.riego);
+  assert.deepEqual(sheetApi.ACTION_CATALOG.riego.requires, []);
+});
+
 test('el marcador de indicadores resume la salud de trazabilidad de la operación', () => {
   const sheets = [
     build(),

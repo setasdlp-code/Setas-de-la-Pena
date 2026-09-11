@@ -5092,6 +5092,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // interpreta código de lote, id, etiqueta de bolsa, URL de trazabilidad y
   // payload JSON, y devuelve un motivo explícito cuando no resuelve.
   const [scanMiss, setScanMiss] = useState('');
+  // "Reportar evento" del action sheet móvil: Observación pide texto antes de
+  // registrar, por eso vive en su propio estado en vez de resolverse en un
+  // solo clic como Riego, Contaminación y Cosecha parcial.
+  const [qrEventoObsAbierta, setQrEventoObsAbierta] = useState(false);
+  const [qrEventoObsNota, setQrEventoObsNota] = useState('');
   const handleScannedValue = (raw) => {
     if (!raw) return;
     const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
@@ -7238,6 +7243,83 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }catch(e){ return null; }
   };
+
+  /**
+   * "Reportar evento" del escáner QR del action sheet móvil (Observación,
+   * Riego, Contaminación, Cosecha parcial). Siempre registra el evento en la
+   * colección `eventos_cultivo` (write-through fire-and-forget, mismo patrón
+   * que bitacora-sync.js). Riego y Observación además se reflejan en la
+   * bitácora del lote reutilizando appendBatchEvent + updateBitLote, que ya
+   * respalda a Firestore; Contaminación y Cosecha parcial abren el modal
+   * existente (setShowDiagModal / setShowBitCosecha) para capturar el detalle
+   * estructurado que esos flujos ya piden.
+   */
+  const reportarEventoCultivo = (tipo, lote, bag, nota = '') => {
+    if (!batchSheetApi || !lote) return;
+    const uid = (typeof window !== 'undefined' && window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser)
+      ? window.SetasFirebase.auth.currentUser.uid
+      : (lote.operador || 'operario_local');
+    let evento;
+    try {
+      evento = batchSheetApi.buildCultivoEvento({ batchId: lote.id, bagId: bag ? bag.id : null, tipo, operatorId: uid, nota });
+    } catch (err) {
+      setNoticeDlg({ title: 'No se pudo registrar el evento', msg: err.message });
+      return;
+    }
+    if (typeof window !== 'undefined' && window.SetasEventosCultivoDB) {
+      window.SetasEventosCultivoDB.registrarEvento(evento).catch(err => console.warn('No se sincronizó el evento de cultivo:', err));
+    } else {
+      console.warn('SetasEventosCultivoDB no disponible — evento de cultivo no se respaldó en Firestore.');
+    }
+
+    if (tipo === 'riego' || tipo === 'observacion') {
+      try {
+        const nextLog = batchSheetApi.appendBatchEvent(lote.lifecycleEvents || [], {
+          batchId: lote.id,
+          action: tipo === 'riego' ? 'riego' : 'note',
+          operatorId: uid,
+          payload: tipo === 'riego' ? { nota: nota || 'Riego registrado por QR' } : { nota },
+        });
+        updateBitLote(lote.id, { lifecycleEvents: nextLog });
+      } catch (err) {
+        console.warn('No se pudo reflejar el evento en la bitácora del lote:', err);
+      }
+      setQrEventoObsAbierta(false);
+      setQrEventoObsNota('');
+      setNoticeDlg({ title: tipo === 'riego' ? 'Riego registrado' : 'Observación registrada', msg: `Lote ${lote.codigo}${bag ? ' · bolsa ' + bag.codigo : ''}.` });
+      return;
+    }
+
+    if (tipo === 'contaminacion') {
+      setDiagLoteId(lote.id);
+      const b = bag || bitBolsas.find(x => x.loteId === lote.id && x.estado !== 'descartada');
+      setDiagBolsaId(b ? b.id : '');
+      setDiagImageBase64('');
+      setDiagResult(null);
+      setDiagError('');
+      setDiagNotes('');
+      setShowQrSheet(false);
+      setShowDiagModal(true);
+      return;
+    }
+
+    if (tipo === 'cosecha_parcial') {
+      setBitActiveLoteId(lote.id);
+      setBitCosechaForm({
+        loteId: lote.id,
+        bolsaId: bag ? bag.id : '',
+        codigo: bag ? bag.codigo : '',
+        flush: 1,
+        fecha: new Date().toISOString().split('T')[0],
+        pesoFresco: '',
+        calidad: 3,
+        observaciones: '',
+      });
+      setShowQrSheet(false);
+      setShowBitCosecha(true);
+    }
+  };
+
   // Registra la acción elegida en la ficha: valida contra el estado, encadena el
   // evento inmutable y persiste la transición cuando la acción la produce.
   /**
@@ -12550,7 +12632,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
@@ -12558,7 +12640,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
                     <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}>✕</button>
                 </div>
 
                 {/* ESCÁNER DE CÁMARA EN VIVO */}
@@ -12807,6 +12889,69 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {a.label}
                         </button>
                       ))}
+
+                      {/* REPORTAR EVENTO — se atribuye al operador con sesión activa;
+                          no requiere ni habilita nada en la ficha pública (trace.html). */}
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Reportar evento
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}} data-testid="qr-reportar-evento">
+                        <button
+                          type="button"
+                          data-action="evento-observacion"
+                          style={{minHeight:42,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600}}
+                          onClick={()=>setQrEventoObsAbierta(v=>!v)}
+                        >
+                          📝 Observación
+                        </button>
+                        <button
+                          type="button"
+                          data-action="evento-riego"
+                          style={{minHeight:42,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
+                        >
+                          💧 Riego
+                        </button>
+                        <button
+                          type="button"
+                          data-action="evento-contaminacion"
+                          style={{minHeight:42,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('contaminacion',currentLote,scannedBag)}
+                        >
+                          ⚠️ Contaminación
+                        </button>
+                        <button
+                          type="button"
+                          data-action="evento-cosecha_parcial"
+                          style={{minHeight:42,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('cosecha_parcial',currentLote,scannedBag)}
+                        >
+                          🧺 Cosecha parcial
+                        </button>
+                      </div>
+                      {qrEventoObsAbierta&&(
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          <textarea
+                            data-testid="qr-evento-observacion-nota"
+                            className="inv-input"
+                            rows={2}
+                            placeholder="Nota de campo (obligatoria)"
+                            value={qrEventoObsNota}
+                            onChange={e=>setQrEventoObsNota(e.target.value)}
+                            style={{resize:'vertical',fontSize:12}}
+                          />
+                          <button
+                            type="button"
+                            className="inv-btn inv-btn-pri"
+                            style={{minHeight:40}}
+                            disabled={!qrEventoObsNota.trim()}
+                            onClick={()=>reportarEventoCultivo('observacion',currentLote,scannedBag,qrEventoObsNota)}
+                          >
+                            Guardar observación
+                          </button>
+                        </div>
+                      )}
+
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
                         Siempre disponible
                       </div>

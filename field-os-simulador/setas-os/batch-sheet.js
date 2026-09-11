@@ -98,6 +98,7 @@
     photo: { label: 'Adjuntar foto', requires: ['foto'] },
     move: { label: 'Mover de sala', requires: ['salaDestinoId'] },
     note: { label: 'Nota de campo', requires: ['nota'] },
+    riego: { label: 'Riego', requires: [] },
     harvest: { label: 'Registrar cosecha', requires: ['pesoFresco', 'flush'] },
     advance_stage: { label: 'Avanzar etapa', requires: [] },
     report_problem: { label: 'Reportar problema', requires: ['observacion'] },
@@ -601,6 +602,50 @@
   };
 
   /**
+   * Tipos de evento reportables desde el escáner QR del action sheet móvil
+   * (ver "Reportar evento" en simulador-app.jsx). Viven en su propia
+   * colección Firestore `eventos_cultivo` — no reemplazan ni duplican el
+   * historial inmutable de `appendBatchEvent`, aunque Riego y Observación
+   * también se reflejan ahí para que aparezcan en la línea de tiempo del lote.
+   */
+  const CULTIVO_EVENT_TIPOS = Object.freeze(['observacion', 'riego', 'contaminacion', 'cosecha_parcial']);
+
+  /**
+   * Construye el documento de un evento de cultivo reportado por QR. Lógica
+   * pura: no escribe a Firestore (eso lo hace firebase/eventos-cultivo-sync.js
+   * con este mismo objeto) ni muta nada — solo valida y da forma al payload.
+   *
+   * @param {object} params
+   * @param {string} params.batchId Lote resuelto por el escáner
+   * @param {?string} [params.bagId] Bolsa resuelta por el escáner, si la hubo
+   * @param {'observacion'|'riego'|'contaminacion'|'cosecha_parcial'} params.tipo
+   * @param {string} params.operatorId Operador con sesión activa que escaneó
+   * @param {string} [params.nota] Texto libre (obligatorio para 'observacion')
+   * @param {string} [params.at] Timestamp ISO inyectable (por defecto: ahora)
+   * @returns {{id:string,batchId:string,bagId:?string,tipo:string,operatorId:string,nota:string,at:string,source:string}}
+   */
+  const buildCultivoEvento = ({ batchId, bagId = null, tipo, operatorId, nota = '', at = null } = {}) => {
+    if (!batchId) throw new Error('batchId es requerido para registrar un evento de cultivo');
+    if (!CULTIVO_EVENT_TIPOS.includes(tipo)) {
+      throw new Error(`tipo debe ser uno de: ${CULTIVO_EVENT_TIPOS.join(', ')}`);
+    }
+    if (!operatorId) throw new Error('operatorId es requerido para registrar un evento de cultivo');
+    if (tipo === 'observacion' && !String(nota || '').trim()) {
+      throw new Error('nota es requerida para un evento de tipo "observacion"');
+    }
+    return {
+      id: `EVC_${batchId}_${Date.now()}`,
+      batchId,
+      bagId: bagId || null,
+      tipo,
+      operatorId,
+      nota: String(nota || '').trim(),
+      at: at || new Date().toISOString(),
+      source: 'qr_scan',
+    };
+  };
+
+  /**
    * Aplica una acción a la ficha: valida que sea válida ahora, construye el
    * evento inmutable y devuelve el estado resultante. Es el paso
    * `registrar → actualizar estado` del flujo de captura.
@@ -699,6 +744,8 @@
     contaminationEvent,
     applyAction,
     batchScoreboard,
+    CULTIVO_EVENT_TIPOS,
+    buildCultivoEvento,
   };
 
   if (isNode) module.exports = api;
