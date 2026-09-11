@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 281b331c18bbcbcb1a8bf414c24345a59485e2702b8d968d4bfbb8c02ace43d4
+// source-hash: 58d823cc75fd16f4f8b528abf112238bbba0e5f3263bd9da4da1acf5ead5719d
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3611,7 +3611,8 @@ function SimuladorShell(props) {
         throw new Error("Cámara no disponible o no compatible en este navegador");
       }
       if (!await detectQrSupport()) {
-        setCameraError("Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.");
+        const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent || "");
+        setCameraError(isIOS ? "En iPhone/iPad ningún navegador puede leer códigos QR todavía (Apple obliga a que todos usen el mismo motor de Safari, que no lo soporta) — escribe abajo el código impreso en la etiqueta." : "Este navegador no sabe leer códigos QR. Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.");
         return;
       }
       setIsCameraActive(true);
