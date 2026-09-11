@@ -2780,7 +2780,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 /* UX v2 production vertical: object -> lifecycle -> valid action. */
 .sim-root :is(input,select,textarea,button,[role="button"]):focus-visible{outline:2px solid var(--focus-ring,var(--coral-500))!important;outline-offset:2px}
-.os-today-v2,.os-batch-detail-v2{max-width:1080px;margin:0 auto 48px}.os-page-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}.os-page-title{font-family:var(--font-sans);font-size:var(--text-2xl);margin:var(--space-2) 0 var(--space-5)}.os-today-group{margin-top:var(--space-6)}.os-section-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:var(--rule-hairline,1px solid var(--border-hairline));padding-bottom:var(--space-2)}.os-section-head h2,.os-detail-panel h2{font-family:var(--font-sans);font-size:var(--text-lg);margin:0}.os-section-head span{font-family:var(--font-mono);color:var(--text-metadata)}.os-task-marker{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}.os-v2-empty{padding:var(--space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}.os-lifecycle-state{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid var(--status-active);padding-top:3px;color:var(--status-active)}.os-detail-back{margin-bottom:var(--space-3)}.os-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}.os-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--space-5);margin-top:var(--space-6);align-items:start}.os-detail-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--space-4)}.os-valid-actions{display:grid;gap:var(--tap-target-gap-min);margin:var(--space-3) 0 var(--space-4)}
+.os-today-v2,.os-batch-detail-v2{max-width:1080px;margin:0 auto 48px}.os-page-kicker{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-widest);text-transform:uppercase;color:var(--text-metadata)}.os-page-title{font-family:var(--font-sans);font-size:var(--text-2xl);margin:var(--fos-space-2) 0 var(--fos-space-5)}.os-today-group{margin-top:var(--fos-space-6)}.os-section-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:var(--rule-hairline,1px solid var(--border-hairline));padding-bottom:var(--fos-space-2)}.os-section-head h2,.os-detail-panel h2{font-family:var(--font-sans);font-size:var(--text-lg);margin:0}.os-section-head span{font-family:var(--font-mono);color:var(--text-metadata)}.os-task-marker{width:9px;height:9px;border:1px solid var(--border-heavy);margin-top:6px}.os-v2-empty{padding:var(--fos-space-5) 0;color:var(--text-metadata);font-size:var(--text-base)}.os-lifecycle-state{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:var(--tracking-wide);text-transform:uppercase;border-top:1px solid var(--status-active);padding-top:3px;color:var(--status-active)}.os-detail-back{margin-bottom:var(--fos-space-3)}.os-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--fos-space-4);margin-top:var(--fos-space-4)}.os-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:var(--fos-space-5);margin-top:var(--fos-space-6);align-items:start}.os-detail-panel{background:var(--surface-page);border:var(--rule-strong);padding:var(--fos-space-4)}.os-valid-actions{display:grid;gap:var(--tap-target-gap-min);margin:var(--fos-space-3) 0 var(--fos-space-4)}
 @media(max-width:700px){.os-today-v2,.os-batch-detail-v2{margin-bottom:24px}.os-page-title{font-size:var(--text-xl)}.os-metric-grid,.os-detail-grid{grid-template-columns:1fr}.os-task-row{grid-template-columns:auto minmax(0,1fr)}.os-task-row>.os-action{grid-column:2;width:100%}}
 /* ── Batch header (Hoy → canonical batch detail, .os-batch-header) — a
    ficha-like identity block (lot code + species) that had no styling at
@@ -4700,6 +4700,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   flex-direction: column;
   gap: 8px;
   cursor: pointer;
+  width: 100%;
+  color: inherit;
+  text-align: left;
   transition: border-color var(--duration-standard), box-shadow var(--duration-standard);
 }
 
@@ -4712,7 +4715,21 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* La procedencia del dato es parte del dato: una tarjeta alimentada por
    telemetría real se distingue de una con valores de referencia. */
 .sim-root .today-climate-card--live { border-left: 2px solid var(--moss-700, var(--color-dark-secondary)); }
-.sim-root .today-climate-card--demo { border-left: 2px dashed var(--ink-500, var(--color-species-name)); }
+.sim-root .today-climate-card--missing { border-left: 2px dashed var(--ink-500, var(--color-species-name)); }
+.sim-root .today-climate-card:focus-visible { outline: 2px solid var(--focus-ring, var(--accent-olive)); outline-offset: 2px; }
+
+.sim-root .stock-alert-toggle {
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--status-warn-text);
+  cursor: pointer;
+  font: 700 var(--text-xs)/1.2 var(--font-mono);
+  text-align: left;
+  text-decoration: underline;
+}
 
 .sim-root .today-climate-card__prov {
   font: var(--text-2xs, 10px)/1.3 var(--font-mono);

@@ -53,10 +53,10 @@ test('los tres transportes se configuran y ninguno se declara sin URL', () => {
   assert.match(jsx, /window\.SetasFirebase\.subscribeToLiveClimate === 'function'/);
 });
 
-test('el cockpit de Hoy consume telemetría real, no constantes escritas a mano', () => {
+test('el cockpit de Hoy muestra solo telemetría medida y señala lecturas ausentes', () => {
   assert.match(jsx, /data-testid="today-climate-strip"/);
   assert.match(jsx, /const live = liveTelemetry\.roomLive\(r\.id\)/);
-  assert.match(jsx, /isLive\('temperature_c'\) \? sample\.temperature_c : demo\.temperature_c/);
+  assert.match(jsx, /isLive\('temperature_c'\) \? sample\.temperature_c : null/);
 
   // Las constantes que había incrustadas en el strip ya no pueden estar ahí:
   // eran mediciones inventadas presentadas como lecturas de sonda.
@@ -67,9 +67,11 @@ test('el cockpit de Hoy consume telemetría real, no constantes escritas a mano'
   assert.doesNotMatch(strip, /const t = isMartha \? 17\.2 : 18\.4/);
   assert.doesNotMatch(strip, /const rh = isMartha \? 91\.5 : 88\.0/);
   assert.doesNotMatch(strip, /const co2 = isMartha \? 680 : 750/);
-  // Y el respaldo de demo se muestra siempre etiquetado como tal.
-  assert.match(strip, /today-climate-card--demo/);
-  assert.match(strip, /sin telemetría · valores de referencia/);
+  // There is no fallback measurement: a missing sensor is an unknown state.
+  assert.doesNotMatch(strip, /DEMO_ROOM_METRICS/);
+  assert.match(strip, /today-climate-card--missing/);
+  assert.match(strip, /sin telemetría conectada · sin lectura/);
+  assert.match(strip, /<button\s+type="button"/);
 });
 
 test('Hoy publica las alertas de umbral con su acción correctiva', () => {
@@ -127,6 +129,8 @@ test('los bloques en vivo se montan en el cockpit que de verdad se renderiza', (
   // Tablero de Control del tab 'home'. Poner ahí las alertas es la diferencia
   // entre que el operario las vea y que existan solo en el código.
   assert.equal((jsx.match(/<TodayV2\s*\/>/g) || []).length, 0, 'si TodayV2 se monta, revisar esta prueba');
+  assert.equal((jsx.match(/className="home-live-telemetry"/g) || []).length, 1,
+    'el cockpit operativo monta una sola franja de telemetría');
   assert.match(jsx, /className="home-live-telemetry"/);
   const homeStart = jsx.indexOf('className="home-live-telemetry"');
   const homeBlock = jsx.slice(homeStart, homeStart + 400);
@@ -142,7 +146,7 @@ test('los bloques en vivo se montan en el cockpit que de verdad se renderiza', (
 
 test('sim.css define el estado del puente y las alertas de umbral', () => {
   ['.live-telemetry-status', '.live-telemetry-dot', '.os-live-alert', '.os-live-alerts',
-   '.climate-live-alerts', '.today-climate-card--live', '.today-climate-card--demo',
+   '.climate-live-alerts', '.today-climate-card--live', '.today-climate-card--missing',
    '.today-climate-card__prov'].forEach(sel => {
     assert.ok(css.includes(`.sim-root ${sel}`), `falta ${sel} en sim.css`);
   });

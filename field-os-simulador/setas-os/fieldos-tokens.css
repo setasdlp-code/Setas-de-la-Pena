@@ -1,14 +1,23 @@
 /* ────────────────────────────────────────────────────────────────
    Setas de la Peña — Deck alias layer
    This file no longer defines its own palette/type/fonts. Every
-   variable the deck references is aliased to the bound design
-   system's real tokens (Field Operating System), loaded via
-   _ds_bundle.js + tokens/*.css in the deck's <helmet> BEFORE this
-   file. Do not add new hex colors, shadows, or radii here — add a
-   new alias pointing at a DS token instead.
+   variable the legacy shell references is mapped to its named FOS
+   compatibility token. DS-2026 loads afterwards and remains the global
+   foundation; old FOS spacing is deliberately namespaced below so it cannot
+   silently overwrite DS spacing for new components. Do not add new hex
+   colors, shadows, or radii here — add a named compatibility mapping.
    ──────────────────────────────────────────────────────────────── */
 
 :root {
+  /* FOS v5 used a denser 4px ladder. Legacy sim.css call sites use these
+     explicit names; new DS-2026 components keep the 8px --space-* baseline. */
+  --fos-space-half: 4px;
+  --fos-space-1: 4px;
+  --fos-space-2: 8px;
+  --fos-space-3: 12px;
+  --fos-space-4: 16px;
+  --fos-space-5: 24px;
+  --fos-space-6: 32px;
   /* ── DS-2026 STANDALONE SYSTEM PALETTE ── */
   --paper:          #FAF5E9;  /* warm ivory — every page ground        */
   --ink:            #222222;  /* charcoal — primary text               */
@@ -17,8 +26,12 @@
   --soil:           #4A3C31;  /* dark earth — infill, inverted blocks  */
   --moss:           #4E6B3F;  /* forest green — OK / active / success  */
   --rust:           #8E2C14;  /* oxidised red-brown — error only       */
-  --warning:        #C49A4C;  /* muted ochre — caution                 */
-  --warning-text:   #8C6B2E;  /* accessible ochre text on paper        */
+  /* Keep the pigment separate from the legacy semantic alias below.  The
+     previous --status-attention → --warning → --status-attention chain made
+     both variables invalid at computed-value time. */
+  --warning-pigment:#C49A4C;  /* muted ochre — fill/bar only           */
+  --warning:        var(--warning-pigment);
+  --warning-text:   #826326;  /* AA text on paper and warning tint      */
 
   --paper-panel:    #F3EEE2;  /* paper +4% soil — panels, table stripe */
   --paper-recessed: #EAE4D8;  /* paper +9% soil — wells, placeholders  */
@@ -111,7 +124,7 @@
 
   --status-ok:             var(--moss);
   --status-ok-bg:          var(--moss-tint);
-  --status-warn:           var(--warning);
+  --status-warn:           var(--warning-pigment);
   --status-warn-bg:        var(--warning-tint);
   --status-warn-text:      var(--warning-text);
   --status-error:          var(--rust);
@@ -119,12 +132,14 @@
 
   --status-active:         var(--moss);
   --status-active-bg:      var(--moss-tint);
-  --status-attention:      var(--warning);
+  --status-attention:      var(--warning-pigment);
   --status-attention-bg:   var(--warning-tint);
   --status-attention-text: var(--warning-text);
 
   --success: var(--status-active);
-  --warning: var(--status-attention);
+  /* Legacy semantic name; it deliberately resolves to the immutable pigment
+     above instead of pointing back through --status-attention. */
+  --warning: var(--warning-pigment);
   --danger:  var(--status-error);
 
   /* ── SEMANTIC SURFACES / TEXT — alias to DS-2026 semantic names ── */
@@ -303,6 +318,33 @@
   --z-modal:      300; /* first-level modal overlay */
   --z-modal-top:  400; /* modal that can open on top of another modal */
   --z-overlay:    1000; /* full-screen blocking overlay (loading/onboarding) */
+}
+
+/* The packaged FOS operational components predate DS-2026. Keep their compact
+   rhythm local instead of letting their old global --space-* definitions leak
+   into DS components such as .sdp-* and .instr-*. */
+.sim-root .os-batch-header,
+.sim-root .os-task-row,
+.sim-root .os-event-row,
+.sim-root .os-alert-row,
+.sim-root .os-room-card,
+.sim-root .os-scan-target,
+.sim-root .os-sticky-actions {
+  --space-half: var(--fos-space-half);
+  --space-1: var(--fos-space-1);
+  --space-2: var(--fos-space-2);
+  --space-3: var(--fos-space-3);
+  --space-4: var(--fos-space-4);
+  --space-5: var(--fos-space-5);
+  --space-6: var(--fos-space-6);
+}
+
+/* DS components carry their own semantic type contract even when rendered
+   inside the legacy application shell. */
+.sim-root [class*="sdp-"] {
+  --t-label: 500 11px/1.1 var(--font-mono);
+  --t-data: 400 13px/1.4 var(--font-mono);
+  --t-small: 400 14px/1.55 var(--font-sans);
 }
 
 /* ── Semantic type classes (unchanged usage, now DS-backed) ── */

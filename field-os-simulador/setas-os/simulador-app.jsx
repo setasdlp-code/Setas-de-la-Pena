@@ -1655,7 +1655,7 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
   };
   const steps=guides[tr.col]||[];
   return(
-    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--space-4)'}}>
+    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--fos-space-4)'}}>
       <div className="sec">Guía de {tr.name} · Tenjo 2.580 msnm</div>
       {steps.map(st=>(
         <div key={st.n} style={{display:'flex',gap:14,marginBottom:12,paddingBottom:12,borderBottom:'1px solid var(--paper-300)'}}>
@@ -1729,9 +1729,9 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
   
   return(
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--space-5) 0 var(--space-4)',background:'var(--paper-200)',marginBottom:14}}>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--fos-space-5) 0 var(--fos-space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--space-2) var(--space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
     </div>
   );
 };
@@ -5537,6 +5537,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invLotes,setInvLotes]=useState([]);
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
+  const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
@@ -6979,12 +6980,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
@@ -7018,12 +7020,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div className="inv-section">
@@ -7614,11 +7617,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
   };
-  // ── Piezas de telemetría en vivo, compartidas entre cockpits ───────────────
-  // Se definen una vez y se montan tanto en el Tablero de Control (la pantalla
-  // que el operario ve al entrar) como en TodayV2. Sin esto, cada cockpit
-  // acabaría con su propia copia del markup y su propio criterio de severidad,
-  // que es exactamente cómo el strip de Hoy terminó mostrando 17.2 °C fijos.
+  // ── Piezas de telemetría en vivo, compartidas por el cockpit ───────────────
+  // Se definen una vez y solo se montan en el Tablero de Control. TodayV2 is a
+  // dormant implementation, so mounting the strip there would invite a second
+  // operational criterion if it is ever restored.
   // Estado del puente en vivo: transporte activo, frescura y recordatorio de
   // que el CO₂ que se está mostrando ya viene compensado por altitud.
   const LiveTelemetryStatusBar=()=>(
@@ -7676,60 +7678,61 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </React.Fragment>
   );
 
-  // Micro-tarjetas de telemetría ambiental por sala.
+  // Micro-tarjetas de telemetría ambiental por sala. A missing value remains
+  // visibly missing; a reference reading must never impersonate a sensor.
   const LiveClimateStrip=()=>(
       <div className="today-climate-strip" data-testid="today-climate-strip">
         {Object.values(ROOMS_CONFIG).map(r => {
           const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
           const live = liveTelemetry.roomLive(r.id);
-          const demo = DEMO_ROOM_METRICS[r.id] || DEMO_ROOM_METRICS.martha_01;
-          // Una lectura real manda sobre el respaldo de demo, métrica por métrica:
-          // una sala puede tener sonda de T°/HR conectada y todavía no de CO₂.
           const sample = (live && live.sample) || {};
           const isLive = (metric) => Number.isFinite(sample[metric]);
-          const t = isLive('temperature_c') ? sample.temperature_c : demo.temperature_c;
-          const rh = isLive('rh_pct') ? sample.rh_pct : demo.rh_pct;
-          const co2 = isLive('co2_ppm') ? sample.co2_ppm : demo.co2_ppm;
+          const t = isLive('temperature_c') ? sample.temperature_c : null;
+          const rh = isLive('rh_pct') ? sample.rh_pct : null;
+          const co2 = isLive('co2_ppm') ? sample.co2_ppm : null;
           const anyLive = isLive('temperature_c') || isLive('rh_pct') || isLive('co2_ppm');
-          const vpd = climateMath ? climateMath.calcVPD(t, rh) : null;
+          const completeLive = isLive('temperature_c') && isLive('rh_pct') && isLive('co2_ppm');
+          const vpd = climateMath && t != null && rh != null ? climateMath.calcVPD(t, rh) : null;
           const roomAlerts = liveTelemetry.roomAlerts(r.id);
-          // Con datos reales manda el motor de umbrales (con dwell e histéresis);
-          // sin ellos se cae al diagnóstico instantáneo sobre los números de demo.
-          const severity = anyLive
-            ? liveSeverityOf(roomAlerts)
-            : (climateMath ? climateMath.evalClimateHealth({ tC: t, rhPct: rh, co2Ppm: co2, targets: ROOM_TARGET_BANDS[r.id] }).severity : 'optimal');
-          const badge = severity === 'critical' ? '⚠ ALERTA' : severity === 'warning' ? '◐ VIGILAR' : '● EN RANGO';
+          // Only the threshold engine may classify a measured room. Without a
+          // measurement the truthful state is unknown, never "en rango".
+          const severity = completeLive ? liveSeverityOf(roomAlerts) : anyLive ? 'partial' : 'unknown';
+          const badge = severity === 'critical' ? 'Alerta' : severity === 'warning' ? 'Vigilar' : completeLive ? 'En rango' : anyLive ? 'Lectura parcial' : 'Sin lectura';
+          const statusClass = severity === 'critical' ? 'fos-status--error' : severity === 'warning' ? 'fos-status--attention' : completeLive ? 'fos-status--within-target' : 'fos-status--pending';
+          const formatMetric = (value, unit, decimals=1) => value == null ? `— ${unit}` : `${Number(value).toFixed(decimals)} ${unit}`;
 
           return (
-            <div
+            <button
+              type="button"
               key={r.id}
-              className={`today-climate-card ${severity === 'critical' ? 'os-alert-row--critical' : ''} ${anyLive ? 'today-climate-card--live' : 'today-climate-card--demo'}`}
+              className={`today-climate-card ${severity === 'critical' ? 'os-alert-row--critical' : ''} ${anyLive ? 'today-climate-card--live' : 'today-climate-card--missing'}`}
               onClick={() => { setSelectedClimateRoom(r.id); goTab('clima'); }}
-              title={anyLive ? 'Ver telemetría y curvas en vivo' : 'Sin telemetría conectada — valores de referencia'}
+              aria-label={`${r.name}: ${badge}. ${anyLive ? 'Abrir telemetría de la cámara' : 'Sin telemetría conectada; abrir configuración de cámara'}`}
+              title={anyLive ? 'Ver telemetría y curvas en vivo' : 'Sin telemetría conectada'}
             >
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
-                  🌱 {r.name}
+                  {r.name}
                 </span>
-                <span className={`fos-status ${severity === 'critical' ? 'fos-status--attention' : 'fos-status--within-target'}`}>
+                <span className={`fos-status ${statusClass}`}>
                   <span className="fos-status__dot" aria-hidden="true"></span>
                   {badge}
                 </span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-0)',marginTop:4}}>
-                <span>🌡 {Math.round(t*10)/10}°C</span>
-                <span>💧 {Math.round(rh*10)/10}%</span>
-                <span>💨 {Math.round(co2)} ppm</span>
-                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd!=null?vpd:'—'} kPa</span>
+                <span>{formatMetric(t, '°C')}</span>
+                <span>{formatMetric(rh, '%')}</span>
+                <span>{formatMetric(co2, 'ppm', 0)}</span>
+                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd!=null?`${vpd} kPa`:'— kPa'}</span>
               </div>
               {/* La procedencia del número es parte del número: un valor de demo
                   presentado como medición vale menos que no mostrar nada. */}
               <div className="today-climate-card__prov">
                 {anyLive
                   ? `${liveAgeLabel(live.ageMs)} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
-                  : 'sin telemetría · valores de referencia'}
+                  : 'sin telemetría conectada · sin lectura'}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -7756,10 +7759,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
         setShowQrSheet(true);
       }}>Escanear lote o registrar evento</button>
-
-      <LiveTelemetryStatusBar/>
-      <LiveAlertsSection/>
-      <LiveClimateStrip/>
 
       {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
       {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
@@ -9484,17 +9483,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ))}
                   </div>
                   <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
-                </div>
-
-                {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
-                    cabecera del Tablero de Control y por encima de la cola de
-                    trabajo, porque una sala fuera de banda es lo primero que hay
-                    que atender del turno — y porque este es el cockpit que el
-                    operario ve de verdad al entrar (TodayV2 no se monta). */}
-                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
-                  <LiveTelemetryStatusBar/>
-                  <LiveAlertsSection/>
-                  <LiveClimateStrip/>
                 </div>
 
                 {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
@@ -11730,7 +11718,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
@@ -11804,7 +11792,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         const tc=t.col==='autoclave'
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
-                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention)',lbl:'Pasteurización 65–75°C núcleo'}
+                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
                                           :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
@@ -11850,7 +11838,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}

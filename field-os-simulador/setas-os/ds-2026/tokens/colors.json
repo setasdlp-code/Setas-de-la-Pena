@@ -20,7 +20,7 @@
       "rustTint":      { "value": "#EDDDCF", "type": "color", "role": "12% rust on paper. Error banner ground." },
       "warningTint":   { "value": "#F4EAD6", "type": "color", "role": "12% warning on paper. Caution banner ground." },
       "soilTint":      { "value": "#E5DFD3", "type": "color", "role": "12% soil on paper. Neutral infill." },
-      "warningText":   { "value": "#8C6B2E", "type": "color", "role": "Same hue/sat as warning, darkened to 4.53:1 on paper. The ONLY legal ochre text colour." }
+      "warningText":   { "value": "#826326", "type": "color", "role": "Accessible ochre text on paper and warning tint. The ONLY legal ochre text colour." }
     },
     "semantic": {
       "surfacePage":    { "value": "{color.primitive.paper}" },

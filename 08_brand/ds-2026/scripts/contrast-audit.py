@@ -9,17 +9,26 @@ Every pair the system actually uses is asserted here, with an expectation:
 Exit 0 only when every expectation holds.
 Run:  python3 scripts/contrast-audit.py [--md]
 """
-import sys
+import pathlib, re, sys
 
-P = {
-    "PAPER": "#FAF5E9", "INK": "#222222", "INK_MUTED": "#555555",
-    "RULE": "#888888", "SOIL": "#4A3C31", "MOSS": "#4E6B3F",
-    "RUST": "#8E2C14", "WARNING": "#C49A4C", "WARNING_TEXT": "#8C6B2E",
-    "PAPER_PANEL": "#F3EEE2", "PAPER_RECESSED": "#EAE4D8",
-    "MOSS_TINT": "#E5E4D5", "RUST_TINT": "#EDDDCF",
-    "WARNING_TINT": "#F4EAD6", "SOIL_TINT": "#E5DFD3",
-    "ACCENT_WARM": "#BE512D",  # oklch(57% 0.15 38) — archive-only, see tokens.css
-}
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+TOKEN_NAMES = ('PAPER', 'INK', 'INK_MUTED', 'RULE', 'SOIL', 'MOSS', 'RUST',
+               'WARNING', 'WARNING_TEXT', 'PAPER_PANEL', 'PAPER_RECESSED',
+               'MOSS_TINT', 'RUST_TINT', 'WARNING_TINT', 'SOIL_TINT', 'ACCENT_WARM')
+
+def load_palette():
+    css = (ROOT / 'tokens' / 'tokens.css').read_text()
+    values = dict(re.findall(r'(--[a-z-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;', css))
+    palette = {name: values.get('--' + name.lower().replace('_', '-')) for name in TOKEN_NAMES}
+    # Accent warm is intentionally OKLCH in the source; the rendered hex is the
+    # documented fallback used for contrast checks.
+    palette['ACCENT_WARM'] = '#BE512D'
+    missing = [name for name, value in palette.items() if value is None]
+    if missing:
+        raise RuntimeError('missing canonical token(s): ' + ', '.join(missing))
+    return palette
+
+P = load_palette()
 
 def lin(c):
     c /= 255.0
@@ -53,6 +62,7 @@ PAIRS = [
     ("PAPER",        "RUST",           "Text on solid rust fill",                4.5, A),
     ("INK",          "WARNING",        "Text on solid ochre fill",               4.5, A),
     ("WARNING_TEXT", "PAPER",          "Caution text (sanctioned ochre)",        4.5, A),
+    ("WARNING_TEXT", "WARNING_TINT",   "Caution label on caution banner",        4.5, A),
     ("INK",          "WARNING_TINT",   "Caution banner text (sanctioned)",       4.5, A),
     ("RULE",         "PAPER",          "Hairlines, specimen frames (non-text)",  3.0, A),
     ("MOSS",         "PAPER",          "Meter fill (non-text)",                  3.0, A),
@@ -85,6 +95,15 @@ else:
         print(f"{tag} [{kind}] {r:5.2f}:1 (need {req})  {fg} on {bg} — {why}")
 
 bad = [x for x in rows if not x[7]]
+# Assert the actual warning component uses the audited pair. This prevents a
+# passing palette audit while a component regresses to raw ochre text.
+component_css = (ROOT / 'components' / 'components.css').read_text()
+component_contract = (
+    re.search(r'\.sdp-alert--warn\s*\{[^}]*border-left-color:\s*var\(--status-warn\)[^}]*background:\s*var\(--status-warn-bg\)', component_css)
+    and re.search(r'\.sdp-alert--warn\s+\.sdp-alert__label[^}]*\.sdp-alert--warn\s+\.sdp-alert__icon\s*\{\s*color:\s*var\(--status-warn-text\)', component_css)
+)
+if not component_contract:
+    bad.append(('COMPONENT', 'WARNING', 'warning alert must use warning text on warning tint', 4.5, 0, 'ALLOW', False, False))
 print(f"\n{len(rows)-len(bad)}/{len(rows)} expectations hold"
       f"{'' if not bad else '  — ' + str(len(bad)) + ' VIOLATED'}")
 sys.exit(1 if bad else 0)

@@ -60,7 +60,7 @@
 }
 [data-mode="field"] .instr-rail__k,
 [data-mode="control"] .instr-rail__k {
-  font: var(--t-label);
+  font: 500 11px/1.1 var(--font-mono);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-metadata);
@@ -82,14 +82,14 @@
 }
 [data-mode="field"] .instr-block__k,
 [data-mode="control"] .instr-block__k {
-  font: var(--t-label);
+  font: 500 11px/1.1 var(--font-mono);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-metadata);
 }
 [data-mode="field"] .instr-block__v,
 [data-mode="control"] .instr-block__v {
-  font: var(--t-data);
+  font: 400 13px/1.4 var(--font-mono);
   font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
@@ -110,7 +110,7 @@
 [data-mode="field"] .instr-sec__k,
 [data-mode="control"] .instr-sec__k {
   display: block;
-  font: var(--t-label);
+  font: 500 11px/1.1 var(--font-mono);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-metadata);

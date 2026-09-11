@@ -8,10 +8,12 @@ imagery, metadata grammar, components, compositions, mockups, sources.
 Per-component detail is in [`components/COMPONENTS.md`](components/COMPONENTS.md).
 References are in [`SOURCES.md`](SOURCES.md).
 
-> ⚠️ **This is not FOS.** `08_brand/field-os-identity/` is a separate, independently
-> audited system in this repo. DS-2026 does not import or replace it, and the two
-> stylesheets **must not be loaded on the same surface** — both define
-> `--paper-*`, `--ink-*` and `--space-*`. See `DESIGN_SYSTEM.md` §10.
+> ⚠️ **This is not FOS.** `08_brand/field-os-identity/` is a separate,
+> independently audited system. Setas OS is the one explicit compatibility
+> surface: it loads FOS first, DS-2026 second, then maps legacy FOS spacing to
+> `--fos-space-*` in `fieldos-tokens.css`. New or migrated UI uses DS-2026
+> tokens and its FIELD/CONTROL instrument layer. Other surfaces must not load
+> both systems. See `DESIGN_SYSTEM.md` §10.
 
 ## Use it
 
@@ -36,7 +38,7 @@ framework, no runtime. Fonts are vendored: it works offline.
 |---|---|
 | **Type** | Gaya Patched = species & titles · IBM Plex Sans = prose · IBM Plex Mono = metadata (uppercase, tracked ≥ 0.15em) |
 | **Colour** | 8 roles. Colour is classification or state, never decoration. One accent per view. |
-| **Ochre** | `WARNING #C49A4C` is 2.39:1 — fills and bars only, never text. Use `WARNING_TEXT #8C6B2E` for ochre text. |
+| **Ochre** | `WARNING #C49A4C` is 2.39:1 — fills and bars only, never text. Use `WARNING_TEXT #826326` for ochre text. |
 | **Space** | 8px baseline. `--space-half` (4px) is the only exception. |
 | **Grid** | 12 columns always; density is a `data-mode`, not another grid. |
 | **Depth** | No shadows. Frames and rules only. |
@@ -48,7 +50,7 @@ framework, no runtime. Fonts are vendored: it works offline.
 
 ```bash
 python3 scripts/validate.py          # structural gate — tokens, fonts, assets, parity
-python3 scripts/contrast-audit.py    # WCAG gate — must exit 0 (22/22)
+python3 scripts/contrast-audit.py    # WCAG gate — must exit 0 (25/25)
 node     scripts/render.mjs          # eight mockups → mockups/out/*.png
 ```
 

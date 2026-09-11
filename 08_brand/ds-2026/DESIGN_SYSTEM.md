@@ -88,7 +88,7 @@ Derived surfaces — mixed from the eight above, introducing no new pigment:
 | `RUST_TINT` | `#EDDDCF` | 12 % rust on paper — error banner ground |
 | `WARNING_TINT` | `#F4EAD6` | 12 % warning on paper — caution banner ground |
 | `SOIL_TINT` | `#E5DFD3` | 12 % soil on paper — neutral infill |
-| `WARNING_TEXT` | `#8C6B2E` | warning at hue 39°, same saturation, darkened to 36.5 % lightness |
+| `WARNING_TEXT` | `#826326` | accessible ochre text on paper and warning tint |
 
 **One accent per view.** A dashboard showing moss, ochre and rust at once has
 stopped classifying and started decorating.
@@ -114,8 +114,8 @@ sanctioned use is the masthead rule beneath a cover-scale species name
 - ❌ ochre as **text** on paper or on its own tint
 - ❌ ochre as a **lone hairline or meter** carrying meaning with no ink alongside
 
-Where ochre itself must be the text colour, use `WARNING_TEXT #8C6B2E` — same
-hue and saturation, darkened until it clears AA at **4.53:1**.
+Where ochre itself must be the text colour, use `WARNING_TEXT #826326` —
+darkened until it clears AA on paper and on the warning tint.
 
 `scripts/contrast-audit.py` asserts all of this and **exits non-zero if any
 expectation breaks**, including the bans (a forbidden pair that starts passing
@@ -137,7 +137,8 @@ means the palette moved and the ban is stale). Run it in CI.
 | `PAPER` | `MOSS` | Text on solid moss fill | 4.5:1 | 5.52:1 | Sanctioned |
 | `PAPER` | `RUST` | Text on solid rust fill | 4.5:1 | 7.66:1 | Sanctioned |
 | `INK` | `WARNING` | Text on solid ochre fill | 4.5:1 | 6.12:1 | Sanctioned |
-| `WARNING_TEXT` | `PAPER` | Caution text (sanctioned ochre) | 4.5:1 | 4.53:1 | Sanctioned |
+| `WARNING_TEXT` | `PAPER` | Caution text (sanctioned ochre) | 4.5:1 | 5.13:1 | Sanctioned |
+| `WARNING_TEXT` | `WARNING_TINT` | Caution label on caution banner | 4.5:1 | 4.67:1 | Sanctioned |
 | `INK` | `WARNING_TINT` | Caution banner text (sanctioned) | 4.5:1 | 13.32:1 | Sanctioned |
 | `RULE` | `PAPER` | Hairlines, specimen frames (non-text) | 3.0:1 | 3.26:1 | Sanctioned |
 | `MOSS` | `PAPER` | Meter fill (non-text) | 3.0:1 | 5.52:1 | Sanctioned |
@@ -148,7 +149,7 @@ means the palette moved and the ban is stale). Run it in CI.
 | `WARNING` | `PAPER` | Ochre hairline/meter alone — needs INK | 3.0:1 | 2.39:1 | **Banned** |
 | `ACCENT_WARM` | `PAPER` | Archive accent as TEXT — never; fails AA | 4.5:1 | 4.38:1 | **Banned** |
 
-24/24 expectations hold
+25/25 expectations hold
 
 ---
 
