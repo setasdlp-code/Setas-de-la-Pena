@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 1c02467fa7d5250801aec5f20a96cdab885e3530edf4e77e80f18c3e48ad5392
+// source-hash: 389b1e6e08737ba2fb7dec4c9f42d46e83420c85b7dde24739f44385dc3f3377
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3545,6 +3545,8 @@ function SimuladorShell(props) {
   }, []);
   const [qrScannedBagId, setQrScannedBagId] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [manualScanCode, setManualScanCode] = useState("");
   const [showEsp32ConfigModal, setShowEsp32ConfigModal] = useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
   const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
@@ -3561,49 +3563,79 @@ function SimuladorShell(props) {
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  const cameraStreamRef = React.useRef(null);
   const stopCameraScanner = () => {
     setIsCameraActive(false);
     if (scannerIntervalRef.current) {
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
     }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === "function") {
       stream.getTracks().forEach((t) => t.stop());
-      videoRef.current.srcObject = null;
     }
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+  useEffect(() => () => {
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === "function") stream.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current = null;
+  }, []);
+  const detectQrSupport = async () => {
+    if (typeof window === "undefined" || !("BarcodeDetector" in window)) return false;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      return Array.isArray(formats) ? formats.includes("qr_code") : true;
+    } catch (e) {
+      return true;
+    }
+  };
+  const attachCameraStream = async (stream) => {
+    for (let i = 0; i < 40 && !videoRef.current; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    if (!videoRef.current) return false;
+    videoRef.current.srcObject = stream;
+    const playing = videoRef.current.play();
+    if (playing && typeof playing.catch === "function") playing.catch(() => {
+    });
+    return true;
   };
   const startCameraScanner = async () => {
     setCameraError("");
-    setIsCameraActive(true);
+    setScanMiss("");
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Cámara no disponible o no compatible en este navegador");
       }
+      if (!await detectQrSupport()) {
+        setCameraError("Este navegador no sabe leer códigos QR (Safari y Firefox aún no). Abre Setas OS en Chrome desde el móvil, o escribe abajo el código impreso en la etiqueta.");
+        return;
+      }
+      setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" }
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-      if ("BarcodeDetector" in window) {
-        const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"] });
-        scannerIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes && barcodes.length > 0) {
-              const rawVal = barcodes[0].rawValue;
-              handleScannedValue(rawVal);
-            }
-          } catch (e) {
+      cameraStreamRef.current = stream;
+      await attachCameraStream(stream);
+      const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"] });
+      if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      scannerIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          if (barcodes && barcodes.length > 0) {
+            const rawVal = barcodes[0].rawValue;
+            handleScannedValue(rawVal);
           }
-        }, 300);
-      }
+        } catch (e) {
+        }
+      }, 300);
     } catch (err) {
-      setCameraError(err.message || "No se pudo acceder al hardware de cámara");
-      setIsCameraActive(false);
+      setCameraError(err && err.message ? err.message : "No se pudo acceder al hardware de cámara");
+      stopCameraScanner();
     }
   };
   const [scanMiss, setScanMiss] = useState("");
@@ -3634,6 +3666,19 @@ function SimuladorShell(props) {
       setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
+  const openFieldScanSheet = () => {
+    const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
+    setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
+    setQrScannedBagId("");
+    setScanMiss("");
+    setCameraError("");
+    setManualScanCode("");
+    setShowQrSheet(true);
+  };
+  useEffect(() => {
+    if (!Number(props.scanNonce)) return;
+    openFieldScanSheet();
+  }, [props.scanNonce]);
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [thermalLote, setThermalLote] = useState(null);
   const [thermalSize, setThermalSize] = useState("50x30");
@@ -3650,7 +3695,8 @@ function SimuladorShell(props) {
   const [diagImageMime, setDiagImageMime] = useState("image/jpeg");
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState(null);
-  const [showDiagNotes, setShowDiagNotes] = useState("");
+  const [diagNotes, setDiagNotes] = useState("");
+  const [diagError, setDiagError] = useState("");
   const [showAIFormModal, setShowAIFormModal] = useState(false);
   const [aiFormGoal, setAiFormGoal] = useState("");
   const [aiFormLoading, setAiFormLoading] = useState(false);
@@ -4836,7 +4882,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     setShowProdLaunchModal(false);
     if (printQr) {
-      setThermalLoteId(lote.id);
+      setThermalLote(lote);
+      setThermalBagEnd(lote.numBolsas || 12);
+      setThermalScope("all");
       setShowThermalModal(true);
     } else {
       setBitActiveLoteId(lote.id);
@@ -6736,7 +6784,7 @@ BATCH (${numBags}×${kgBag} kg):
         if (hasActiveSession) props.onContinueSession && props.onContinueSession();
         else props.onStartSession && props.onStartSession();
       }, jornada: true },
-      { label: "Escanear lote", sub: "Registro de campo por QR", icon: IconTarget, tab: "registro", onClick: () => props.onScanLot && props.onScanLot(), pri: true },
+      { label: "Escanear lote", sub: "Registro de campo por QR", icon: IconTarget, tab: "registro", onClick: () => openFieldScanSheet(), pri: true },
       { label: "Entrada a Bodega", sub: "Compras & stock FIFO", icon: IconBox, tab: "inventario", onClick: () => {
         goTab("inventario");
         setInvTab("compra");
@@ -8041,6 +8089,8 @@ Click para ver análisis completo`
           setShowQrSheet(false);
           setQrScannedBagId("");
           setScanMiss("");
+          setManualScanCode("");
+          setCameraError("");
         },
         label: "Captura rápida de campo",
         dialogStyle: { width: "min(460px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
@@ -8050,6 +8100,8 @@ Click para ver análisis completo`
         setShowQrSheet(false);
         setQrScannedBagId("");
         setScanMiss("");
+        setManualScanCode("");
+        setCameraError("");
       } }, "✕")),
       isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
         "video",
@@ -8078,6 +8130,44 @@ Click para ver análisis completo`
         "📷 Iniciar Escaneo con Cámara Móvil"
       ),
       cameraError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, "⚠️ ", cameraError),
+      /* @__PURE__ */ React.createElement(
+        "form",
+        {
+          "data-testid": "scan-manual-code",
+          onSubmit: (e) => {
+            e.preventDefault();
+            const code = manualScanCode.trim();
+            if (!code) return;
+            handleScannedValue(code);
+            setManualScanCode("");
+          },
+          style: { display: "flex", gap: 6, marginBottom: 12 }
+        },
+        /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "text",
+            value: manualScanCode,
+            onChange: (e) => setManualScanCode(e.target.value),
+            placeholder: "Código impreso en la etiqueta (p. ej. SHI-260714-03)",
+            "aria-label": "Código impreso en la etiqueta",
+            autoComplete: "off",
+            autoCapitalize: "characters",
+            spellCheck: false,
+            style: { flex: 1, minHeight: 42, padding: "8px 10px", fontFamily: "var(--font-mono)", fontSize: 12, background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
+          }
+        ),
+        /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "submit",
+            disabled: !manualScanCode.trim(),
+            className: "inv-btn inv-btn-sec",
+            style: { minHeight: 42, padding: "8px 14px", fontSize: 12, fontWeight: 700 }
+          },
+          "Abrir"
+        )
+      ),
       scanMiss && /* @__PURE__ */ React.createElement("div", { role: "status", "data-testid": "scan-unresolved", style: { padding: "8px 10px", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", borderLeft: "3px solid var(--accent-terracotta,#A85C32)", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, scanMiss, " Elige el lote manualmente o vuelve a escanear."),
       currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 } }, /* @__PURE__ */ React.createElement(
         "button",

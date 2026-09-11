@@ -16,6 +16,16 @@ test('acepta el esquema corto de etiqueta térmica', () => {
   assert.deepEqual(parseBatchRef('setas:lote:L-042'), { batchId: 'L-042' });
 });
 
+test('acepta la URL que imprime de verdad la etiqueta térmica', () => {
+  // generateQrSvgDataUrl() codifica `<base>/public/trace.html?codigo=<codigo>`.
+  // Sin este formato el lector canónico rechaza las etiquetas de la propia casa.
+  const base = 'https://setasdlp-code.github.io/Setas-de-la-Pena/public/trace.html';
+  assert.deepEqual(parseBatchRef(`${base}?codigo=L-042`), { batchId: 'L-042' });
+  assert.deepEqual(parseBatchRef(`${base}?codigo=L-042&flush=2`), { batchId: 'L-042' });
+  // Sigue siendo una lista blanca: el mismo formato en otro dominio no vale.
+  assert.throws(() => parseBatchRef('https://otrositio.com/public/trace.html?codigo=L-042'), /invalid_qr_payload/);
+});
+
 test('ambos formatos apuntan al mismo lote', () => {
   assert.equal(
     parseBatchRef('https://setasdelapena.com/trace/L-042').batchId,

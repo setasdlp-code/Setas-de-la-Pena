@@ -19,10 +19,14 @@
   // cualquier etiqueta ajena abriera la hoja de acción de un lote arbitrario.
   const TRACE_URL = /^https?:\/\/(?:www\.)?setasdelapena\.com\/trace\/([A-Za-z0-9_-]{1,64})\/?$/;
   const SETAS_SCHEME = /^setas:lote:([A-Za-z0-9_-]{1,64})$/;
+  // La etiqueta térmica que imprime la aplicación lleva el código en la query
+  // sobre la copia publicada en GitHub Pages. Sigue siendo lista blanca: el
+  // dominio es parte del patrón, no un formato genérico de URL.
+  const LABEL_URL = /^https?:\/\/setasdlp-code\.github\.io\/Setas-de-la-Pena\/public\/trace\.html\?(?:[^#]*&)?codigo=([A-Za-z0-9_-]{1,64})(?:&[^#]*)?$/;
 
   const parseBatchRef = (text) => {
     const raw = typeof text === 'string' ? text.trim() : '';
-    const match = raw.match(TRACE_URL) || raw.match(SETAS_SCHEME);
+    const match = raw.match(TRACE_URL) || raw.match(SETAS_SCHEME) || raw.match(LABEL_URL);
     if (!match) throw new Error(`invalid_qr_payload: no es una etiqueta de lote ("${raw.slice(0, 40)}")`);
     return { batchId: decodeURIComponent(match[1]) };
   };
@@ -58,7 +62,7 @@
     return { batch, batchId, state, allowedTransitions };
   };
 
-  const api = { parseBatchRef, resolveBatch, TRACE_URL, SETAS_SCHEME };
+  const api = { parseBatchRef, resolveBatch, TRACE_URL, SETAS_SCHEME, LABEL_URL };
 
   if (isNode) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasFieldQrResolve = api;
