@@ -4414,20 +4414,55 @@ const generateQrSvgDataUrl = (text) => {
 // información que ya pinta la vista previa (QR + especie + código + fecha)
 // directo a un PNG que el share sheet del sistema puede mandar a la app de
 // Phomemo en un solo toque.
-const THERMAL_PX_PER_MM = 16;
-function drawThermalLabelToCanvas(ctx, item, x0, y0, wMm, hMm) {
-  const w = wMm * THERMAL_PX_PER_MM;
-  const h = hMm * THERMAL_PX_PER_MM;
+// Escala de exportación: cuántos px de canvas equivalen a 1mm real de la
+// etiqueta. 12 da buena nitidez sin generar PNGs pesados en el share sheet.
+const THERMAL_PX_PER_MM = 12;
+// 1mm de CSS a 96dpi (el estándar del navegador) son 3.7795px — todo valor
+// del diseño que en sim.css está en px (fuentes, gaps, letter-spacing), no en
+// mm, se reescala con este factor para guardar la misma proporción visual
+// que ve el operador en la vista previa, sin importar THERMAL_PX_PER_MM.
+const CSS_PX_PER_MM = 96 / 25.4;
+const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
+const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
+// Mismos valores que .thermal-card-40x30/50x30 en sim.css (incluye el
+// título +20% acordado) — si el diseño de la etiqueta cambia ahí, hay que
+// actualizar esto también para que "Compartir" no se desalinee otra vez.
+const THERMAL_LABEL_SPECS = {
+  '40x30': { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 17, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
+  '50x30': { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 },
+};
+
+// Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
+// es Bluetooth propietario, no AirPrint, así que window.print() nunca lo
+// detecta desde Safari/iOS (WebKit tampoco expone Web Bluetooth). En vez de
+// depender de una captura de pantalla manual, se genera aquí el mismo
+// diseño que ya pinta la vista previa/impresión (.thermal-card-* en
+// sim.css: QR a la izquierda, especie/código/fecha a la derecha) directo a
+// un PNG que el share sheet del sistema puede mandar a PrintMaster.
+function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const w = spec.wMm * THERMAL_PX_PER_MM;
+  const h = spec.hMm * THERMAL_PX_PER_MM;
+  const padX = spec.padXMm * THERMAL_PX_PER_MM;
+  const padY = spec.padYMm * THERMAL_PX_PER_MM;
+  const gap = cssPxToCanvas(spec.gapPx);
+  const qrSize = spec.qrMm * THERMAL_PX_PER_MM;
+
   ctx.save();
   ctx.translate(x0, y0);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#ccc';
+  ctx.strokeStyle = '#777';
+  ctx.setLineDash([2, 2]);
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
 
-  const pad = 6;
-  const qrSize = h - pad * 2;
+  // .thermal-aside: columna centrada — el QR se centra verticalmente en el
+  // alto disponible entre el padding vertical.
+  const qrX = padX;
+  const qrY = (h - qrSize) / 2;
   const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
   if (qrMini && typeof qrMini.matrix === 'function') {
     const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
@@ -4436,41 +4471,52 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, wMm, hMm) {
     ctx.fillStyle = '#000';
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
-        if (m[r][c]) ctx.fillRect(pad + c * cell, pad + r * cell, Math.ceil(cell), Math.ceil(cell));
+        if (m[r][c]) ctx.fillRect(qrX + c * cell, qrY + r * cell, Math.ceil(cell), Math.ceil(cell));
       }
     }
   }
 
-  const textX = pad * 2 + qrSize;
-  let textY = pad + 10;
-  ctx.fillStyle = '#000';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText(item.species || '', textX, textY, w - textX - pad);
-  textY += 14;
-  ctx.font = '10px monospace';
-  ctx.fillText(item.id || '', textX, textY, w - textX - pad);
-  textY += 12;
+  // .thermal-body: columna centrada verticalmente, texto alineado a la
+  // izquierda — se arma cada línea primero para poder centrar el bloque
+  // completo como hace justify-content:center en flexbox.
+  const textX = qrX + qrSize + gap;
+  const textW = w - textX - padX;
+  const lines = [];
+  lines.push({ text: (item.species || '').toUpperCase(), font: `900 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_SANS}`, lineHeight: cssPxToCanvas(spec.speciesPx) * 1.1, marginTop: 0 });
+  lines.push({ text: item.id || '', font: `900 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`, lineHeight: cssPxToCanvas(spec.codePx) * 1.15, marginTop: cssPxToCanvas(spec.codeMarginTopPx) });
+  const metaFont = `700 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
+  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.25;
+  let metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
   if (item.bagCode && item.bagCode !== 'LOTE MAESTRO') {
-    ctx.font = '9px monospace';
-    ctx.fillText(item.bagCode, textX, textY, w - textX - pad);
-    textY += 11;
+    lines.push({ text: item.bagCode, font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+    metaMarginTop = 0;
   }
-  ctx.font = '9px monospace';
-  ctx.fillText(item.date || '', textX, textY, w - textX - pad);
+  lines.push({ text: item.date || '', font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+
+  const blockHeight = lines.reduce((sum, l) => sum + l.marginTop + l.lineHeight, 0);
+  let textY = (h - blockHeight) / 2;
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
+  lines.forEach((l) => {
+    textY += l.marginTop;
+    ctx.font = l.font;
+    ctx.fillText(l.text, textX, textY, textW);
+    textY += l.lineHeight;
+  });
   ctx.restore();
 }
 function buildThermalShareCanvas(items, sizeKey) {
-  const [wMm, hMm] = sizeKey === '40x30' ? [40, 30] : [50, 30];
-  const wPx = wMm * THERMAL_PX_PER_MM;
-  const hPx = hMm * THERMAL_PX_PER_MM;
-  const gap = 4;
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const wPx = spec.wMm * THERMAL_PX_PER_MM;
+  const hPx = spec.hMm * THERMAL_PX_PER_MM;
+  const gap = Math.round(THERMAL_PX_PER_MM); // 1mm de separación entre etiquetas apiladas
   const canvas = document.createElement('canvas');
   canvas.width = wPx;
   canvas.height = items.length * hPx + Math.max(0, items.length - 1) * gap;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), wMm, hMm));
+  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), sizeKey));
   return canvas;
 }
 
@@ -13354,6 +13400,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       // directo al share sheet del sistema, para abrirla en PrintMaster
                       // (la app de Phomemo) sin depender de una captura de pantalla manual.
                       try {
+                        // Si IBM Plex Sans/Mono todavía no terminó de cargar, el canvas
+                        // dibuja en la fuente de sistema sin avisar — esperar aquí evita
+                        // compartir una etiqueta con la tipografía equivocada.
+                        if (document.fonts && document.fonts.ready) {
+                          try { await document.fonts.ready; } catch (e) {}
+                        }
                         const canvas = buildThermalShareCanvas(items, thermalSize);
                         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                         if (!blob) throw new Error('No se pudo generar la imagen de la etiqueta');

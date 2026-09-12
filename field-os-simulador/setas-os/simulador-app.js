@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: fcf94ee1d2b40e5b06d02a8ef2ed6c847175af453b9cff8be053cfa256e2919b
+// source-hash: fabdcce66b8a8ea99a4da2b66e49d9b380204ff4f444e008b917a89b25ea1983
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3039,19 +3039,34 @@ const generateQrSvgDataUrl = (text) => {
     return "";
   }
 };
-const THERMAL_PX_PER_MM = 16;
-function drawThermalLabelToCanvas(ctx, item, x0, y0, wMm, hMm) {
-  const w = wMm * THERMAL_PX_PER_MM;
-  const h = hMm * THERMAL_PX_PER_MM;
+const THERMAL_PX_PER_MM = 12;
+const CSS_PX_PER_MM = 96 / 25.4;
+const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
+const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
+const THERMAL_LABEL_SPECS = {
+  "40x30": { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 17, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
+  "50x30": { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 }
+};
+function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS["40x30"];
+  const w = spec.wMm * THERMAL_PX_PER_MM;
+  const h = spec.hMm * THERMAL_PX_PER_MM;
+  const padX = spec.padXMm * THERMAL_PX_PER_MM;
+  const padY = spec.padYMm * THERMAL_PX_PER_MM;
+  const gap = cssPxToCanvas(spec.gapPx);
+  const qrSize = spec.qrMm * THERMAL_PX_PER_MM;
   ctx.save();
   ctx.translate(x0, y0);
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = "#ccc";
+  ctx.strokeStyle = "#777";
+  ctx.setLineDash([2, 2]);
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
-  const pad = 6;
-  const qrSize = h - pad * 2;
+  ctx.setLineDash([]);
+  const qrX = padX;
+  const qrY = (h - qrSize) / 2;
   const qrMini = typeof window !== "undefined" ? window.QRMini : null;
   if (qrMini && typeof qrMini.matrix === "function") {
     const m = qrMini.matrix(item.qrUrl || item.id || "SETAS-OS");
@@ -3060,40 +3075,47 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, wMm, hMm) {
     ctx.fillStyle = "#000";
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
-        if (m[r][c]) ctx.fillRect(pad + c * cell, pad + r * cell, Math.ceil(cell), Math.ceil(cell));
+        if (m[r][c]) ctx.fillRect(qrX + c * cell, qrY + r * cell, Math.ceil(cell), Math.ceil(cell));
       }
     }
   }
-  const textX = pad * 2 + qrSize;
-  let textY = pad + 10;
-  ctx.fillStyle = "#000";
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillText(item.species || "", textX, textY, w - textX - pad);
-  textY += 14;
-  ctx.font = "10px monospace";
-  ctx.fillText(item.id || "", textX, textY, w - textX - pad);
-  textY += 12;
+  const textX = qrX + qrSize + gap;
+  const textW = w - textX - padX;
+  const lines = [];
+  lines.push({ text: (item.species || "").toUpperCase(), font: `900 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_SANS}`, lineHeight: cssPxToCanvas(spec.speciesPx) * 1.1, marginTop: 0 });
+  lines.push({ text: item.id || "", font: `900 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`, lineHeight: cssPxToCanvas(spec.codePx) * 1.15, marginTop: cssPxToCanvas(spec.codeMarginTopPx) });
+  const metaFont = `700 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
+  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.25;
+  let metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
   if (item.bagCode && item.bagCode !== "LOTE MAESTRO") {
-    ctx.font = "9px monospace";
-    ctx.fillText(item.bagCode, textX, textY, w - textX - pad);
-    textY += 11;
+    lines.push({ text: item.bagCode, font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+    metaMarginTop = 0;
   }
-  ctx.font = "9px monospace";
-  ctx.fillText(item.date || "", textX, textY, w - textX - pad);
+  lines.push({ text: item.date || "", font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+  const blockHeight = lines.reduce((sum, l) => sum + l.marginTop + l.lineHeight, 0);
+  let textY = (h - blockHeight) / 2;
+  ctx.fillStyle = "#000";
+  ctx.textBaseline = "top";
+  lines.forEach((l) => {
+    textY += l.marginTop;
+    ctx.font = l.font;
+    ctx.fillText(l.text, textX, textY, textW);
+    textY += l.lineHeight;
+  });
   ctx.restore();
 }
 function buildThermalShareCanvas(items, sizeKey) {
-  const [wMm, hMm] = sizeKey === "40x30" ? [40, 30] : [50, 30];
-  const wPx = wMm * THERMAL_PX_PER_MM;
-  const hPx = hMm * THERMAL_PX_PER_MM;
-  const gap = 4;
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS["40x30"];
+  const wPx = spec.wMm * THERMAL_PX_PER_MM;
+  const hPx = spec.hMm * THERMAL_PX_PER_MM;
+  const gap = Math.round(THERMAL_PX_PER_MM);
   const canvas = document.createElement("canvas");
   canvas.width = wPx;
   canvas.height = items.length * hPx + Math.max(0, items.length - 1) * gap;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), wMm, hMm));
+  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), sizeKey));
   return canvas;
 }
 const FORM_DRAFT_KEY = "setas_formulator_draft_v1";
@@ -8721,6 +8743,12 @@ Click para ver análisis completo`
           type: "button",
           onClick: async () => {
             try {
+              if (document.fonts && document.fonts.ready) {
+                try {
+                  await document.fonts.ready;
+                } catch (e) {
+                }
+              }
               const canvas = buildThermalShareCanvas(items, thermalSize);
               const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
               if (!blob) throw new Error("No se pudo generar la imagen de la etiqueta");
