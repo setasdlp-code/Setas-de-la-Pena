@@ -5226,8 +5226,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const video = videoRef.current;
       if (!video || video.readyState < 2 || !video.videoWidth) return;
       try {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // El stream de cámara pide 1080p como ideal (ver getUserMedia) para
+        // que el QR denso e impreso en 17-22mm tenga detalle suficiente —
+        // pero decodificar esa resolución completa con jsQR (JS puro) cada
+        // 300ms es pesado. Se topa el lado mayor del canvas: conserva casi
+        // todo el detalle que importa y evita que el teléfono se quede sin
+        // aire a mitad de escaneo.
+        const MAX_DECODE_SIDE = 1280;
+        const scale = Math.min(1, MAX_DECODE_SIDE / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
@@ -5266,8 +5274,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         }
       }
       setIsCameraActive(true);
+      // Sin pedir resolución, el navegador puede entregar un stream de baja
+      // definición (640×480 o menos) — suficiente para verse fluido en
+      // pantalla, pero no para resolver los módulos finos de un QR denso
+      // impreso en solo 17-22mm de lado (la URL completa de trazabilidad
+      // que codifica cada etiqueta no es corta). La cámara sigue
+      // "funcionando" (se ve el video) pero nunca detecta nada — pedir
+      // 1080p como ideal (el navegador cae a lo que el hardware soporte si
+      // no llega) es lo que le da al decodificador píxeles suficientes.
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
