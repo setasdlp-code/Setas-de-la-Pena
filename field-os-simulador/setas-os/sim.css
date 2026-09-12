@@ -4102,7 +4102,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .thermal-card-40x30 .thermal-species {
-  font-size: 10px;
+  font-size: 12px; /* 10px + 20% */
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.01em;
@@ -4111,7 +4111,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .thermal-card-50x30 .thermal-species {
-  font-size: 12px;
+  font-size: 14.4px; /* 12px + 20% */
   text-transform: uppercase;
   line-height: 1.1;
 }
@@ -4203,7 +4203,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     gap: 6px !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-species {
-    font-size: 10px !important;
+    font-size: 12px !important; /* 10px + 20% */
     font-weight: 900 !important;
     text-transform: uppercase !important;
     line-height: 1.1 !important;
@@ -4230,7 +4230,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     page-break-inside: avoid !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-species {
-    font-size: 12px !important;
+    font-size: 14.4px !important; /* 12px + 20% */
     text-transform: uppercase !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-code {
