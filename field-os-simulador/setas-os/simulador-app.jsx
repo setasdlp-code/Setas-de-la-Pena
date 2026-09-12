@@ -5164,13 +5164,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Formatos que el navegador sabe decodificar de verdad. Chrome expone
   // BarcodeDetector con la lista vacía en algunos escritorios: comprobar sólo
   // que el constructor existe deja la cámara encendida sin leer nunca nada.
+  // Si getSupportedFormats() falla, NO asumir que sí hay soporte (eso dejaba
+  // la cámara "escaneando" para siempre sin detectar nada ni avisar) — caer
+  // al respaldo jsQR es la opción segura.
   const detectQrSupport = async () => {
     if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
     try {
       const formats = await window.BarcodeDetector.getSupportedFormats();
       return Array.isArray(formats) ? formats.includes('qr_code') : true;
     } catch (e) {
-      return true;
+      return false;
     }
   };
 
@@ -5197,6 +5200,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const canvas = qrCanvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    // Si dibujar/leer el fotograma falla de verdad (no "no hay QR en cuadro",
+    // sino una excepción real: canvas contaminado, decodificador roto, etc.)
+    // no hay que quedarse escaneando en silencio para siempre — tras unos
+    // intentos seguidos fallidos se corta el bucle y se avisa.
+    let consecutiveErrors = 0;
     scannerIntervalRef.current = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.readyState < 2 || !video.videoWidth) return;
@@ -5205,9 +5213,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        consecutiveErrors = 0;
         if (code && code.data) handleScannedValue(code.data);
-      } catch (e) {}
+      } catch (e) {
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 10) {
+          stopCameraScanner();
+          setCameraError('El escáner dejó de poder leer la cámara (' + (e && e.message ? e.message : 'error desconocido') + ') — escribe abajo el código impreso en la etiqueta.');
+        }
+      }
     }, 300);
   };
 
