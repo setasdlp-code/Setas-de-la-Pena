@@ -94,6 +94,10 @@ test('el QR resuelve el lote por código, id, URL de trazabilidad y payload JSON
   assert.equal(sheetApi.resolveScan('SHI-260714-03', index).batchId, 'LOTE_1');
   assert.equal(sheetApi.resolveScan('LOTE_1', index).batchId, 'LOTE_1');
   assert.equal(sheetApi.resolveScan('https://setasdelapena.com/trace/SHI-260714-03', index).batchId, 'LOTE_1');
+  assert.equal(sheetApi.resolveScan('https://setasdelapena.co/c/SHI-260714-03', index).batchId, 'LOTE_1');
+  assert.equal(sheetApi.resolveScan('setas:lote:SHI-260714-03', index).batchId, 'LOTE_1');
+  assert.equal(sheetApi.resolveScan('setas:bag:SHI-260714-03-B02', index).batchId, 'LOTE_1');
+  assert.equal(sheetApi.resolveScan('setas:bag:SHI-260714-03-B02', index).bagId, 'B2');
   assert.equal(sheetApi.resolveScan('SDP-CERT-SHI-260714-03', index).batchId, 'LOTE_1');
   assert.equal(sheetApi.resolveScan('{"batch":"SHI-260714-03"}', index).batchId, 'LOTE_1');
 });

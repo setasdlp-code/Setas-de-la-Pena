@@ -75,6 +75,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../field-event-account.js",
   "../field-qr-resolve.js",
   "../field-action-sheet.js",
+  "../field-qr-events.js",
   "../field-event-callable-transport.js",
   // field-event-mock-transport.js NO se carga aquí a propósito: es un servidor
   // de aceptación falso. Sólo __harness.html lo incluye, con su propia etiqueta.

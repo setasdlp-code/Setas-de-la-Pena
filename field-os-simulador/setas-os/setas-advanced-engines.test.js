@@ -54,6 +54,7 @@ test('Motores avanzados exportan sus APIs canónicas completas', () => {
 
   // 5. Pronóstico de Cosechas y Oleadas
   assert.equal(typeof flushForecast.calculateLotYieldAndFlushes, 'function');
+  assert.equal(typeof flushForecast.calculateRemainingFlushes, 'function');
   assert.equal(typeof flushForecast.calculateSowingRequirement, 'function');
   assert.equal(typeof flushForecast.matchWeeklyCoverage, 'function');
   assert.equal(typeof flushForecast.calibrateFlushProfileFromHarvests, 'function');
@@ -75,6 +76,8 @@ test('simulador-app.jsx integra puentes de importación para los nuevos motores'
   assert.match(jsx, /SetasSterilization/);
   assert.match(jsx, /SetasCoCultivation/);
   assert.match(jsx, /SetasPostHarvest/);
+  assert.match(jsx, /calculateRemainingFlushes/);
+  assert.match(jsx, /assessCondensationRiskOnUnpack/);
   assert.match(jsx, /calcBarometricCO2Correction/);
   assert.match(jsx, /calcDynamicFAE/);
 });
@@ -96,6 +99,87 @@ test('simulador-app.jsx expone botones accesibles y modales de los 4 motores', (
   assert.match(jsx, /Fisiología Poscosecha & Degradación en Cadena de Frío/);
   assert.match(jsx, /Ventilación Dinámica FAE \(Extracción\)/);
   assert.match(jsx, /Dióxido de Carbono \(NDIR\)/);
+});
+
+test('Dynamic Harvest Projection se integra en Batch Sheet canónico y BatchDetailV2', () => {
+  const batchSheetModule = require('./batch-sheet.js');
+  const mockLote = {
+    id: 'lote-test-01',
+    codigo: 'L-TEST-01',
+    especie: 'Orellana Gris',
+    speciesKey: 'p_ostreatus_gris',
+    numBolsas: 10,
+    pesoHumedo: 2.0,
+    humedad: 65,
+    eb: 90,
+    fechaInoculacion: '2026-08-01',
+    estado: 'fructificacion',
+  };
+
+  const sheet = batchSheetModule.buildBatchSheet({
+    lote: mockLote,
+    bolsas: [{ id: 'b-1', loteId: 'lote-test-01', codigo: 'L-TEST-01-B01', estado: 'sana' }],
+    cosechas: [{ id: 'c-1', loteId: 'lote-test-01', flush: 1, fecha: '2026-09-02', pesoFresco: 3500 }],
+  });
+
+  assert.ok(sheet.flushForecast, 'La ficha canónica debe calcular y exponer sheet.flushForecast');
+  assert.equal(sheet.flushForecast.currentFlush, 1);
+  assert.ok(Array.isArray(sheet.flushForecast.flushes));
+  assert.ok(sheet.flushForecast.flushes.length >= 3);
+  assert.ok(sheet.flushForecast.flushes[0].isHarvested, 'Flush 1 debe marcarse como cosechado');
+  assert.ok(!sheet.flushForecast.flushes[1].isHarvested, 'Flush 2 debe estar pendiente');
+  assert.ok(sheet.flushForecast.remainingFlushes.length >= 1);
+  assert.ok(sheet.flushForecast.remainingExpectedKg > 0);
+
+  // Verificación en fuentes JSX y bundle JS
+  assert.match(jsx, /data-testid="batch-harvest-forecast"/);
+  assert.match(jsx, /Pronóstico Dinámico de Cosechas & Oleadas/);
+  assert.match(jsx, /BatchSheetModal/);
+  assert.match(js, /"data-testid":\s*"batch-harvest-forecast"/);
+  assert.match(js, /Pronóstico Dinámico de Cosechas & Oleadas/);
+});
+
+test('Post-Harvest Shelf-Life & Condensation Warning se integran en Harvest Modal', () => {
+  // Verificación funcional del motor
+  const shelf = postHarvest.predictShelfLife('orellana_gris', 4.0, 90.0);
+  assert.ok(shelf.marketableDays > 5);
+  assert.ok(shelf.limitingFactor);
+
+  const riskHigh = postHarvest.assessCondensationRiskOnUnpack(4.0, 18.0, 75.0);
+  assert.equal(riskHigh.condensationRisk, true);
+  assert.match(riskHigh.verdict, /ALTO RIESGO DE CONDENSACIÓN/);
+
+  const riskSafe = postHarvest.assessCondensationRiskOnUnpack(15.0, 18.0, 50.0);
+  assert.equal(riskSafe.condensationRisk, false);
+
+  // Verificación en fuentes JSX y bundle JS
+  assert.match(jsx, /data-testid="harvest-postharvest-advisor"/);
+  assert.match(jsx, /Poscosecha & Cadena de Frío/);
+  assert.match(jsx, /enginePredictShelfLife|predictShelfLife/);
+  assert.match(jsx, /engineAssessCondensationRiskOnUnpack|assessCondensationRiskOnUnpack/);
+  assert.match(js, /"data-testid":\s*"harvest-postharvest-advisor"/);
+});
+
+test('Co-Cultivation Advisor se integra en Fruiting Room Cockpit y Asignación de Sala', () => {
+  // Verificación funcional del optimizador
+  const opt = coCultivation.optimizeChamberSetpoints(['orellana_gris', 'melena_leon']);
+  assert.ok(opt.groupScore > 0 && opt.groupScore <= 100);
+  assert.ok(opt.setpoints.tempC > 0);
+  assert.ok(opt.setpoints.rhPct > 0);
+  assert.ok(opt.setpoints.co2Ppm > 0);
+
+  // Verificación en Fruiting Room Cockpit
+  assert.match(jsx, /data-testid="fruiting-cocultivation-advisor"/);
+  assert.match(jsx, /Asesor de Co-Cultivo Multiespecie/);
+  assert.match(jsx, /Setpoints Pareto Minimax Recomendados/);
+  assert.match(jsx, /Cuellos de Botella Biológicos/);
+  assert.match(js, /"data-testid":\s*"fruiting-cocultivation-advisor"/);
+
+  // Verificación en Asignación de Sala
+  assert.match(jsx, /data-testid="room-assignment-cocultivation-advisor"/);
+  assert.match(jsx, /Asesor de Co-Cultivo al Asignar/);
+  assert.match(js, /"data-testid":\s*"room-assignment-cocultivation-advisor"/);
+  assert.match(js, /Asesor de Co-Cultivo al Asignar/);
 });
 
 test('simulador-app.js bundle generado está actualizado y compila sin errores', () => {
