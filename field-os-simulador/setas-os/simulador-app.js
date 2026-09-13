@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: e51e0f71dbbd85c04fb68f10cf586c765c5b8e4e20caeb98b786abc5a6a612c9
+// source-hash: e0f3442235962451e54f356a2476f41c7d5a5bdbabac83fe957a67f80c65f3e1
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2924,11 +2924,14 @@ const runHybridRecipeSearch = ({
   useStock = false,
   profileKey = "produccion",
   stockMap = {},
-  lockedIds = []
+  lockedIds = [],
+  // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
+  // spp explícito se conserva el catálogo heredado para los llamadores viejos.
+  spp = SPP
 }) => {
   const engine = globalThis.SetasPeritoScenarios;
   if (!engine?.searchScenarios) throw new Error("SetasPeritoScenarios no disponible");
-  const target = SPP[targetKey];
+  const target = spp[targetKey];
   if (!target) return { ranked: [], pareto: [], recommended: [], noStock: false, diagnostics: { error: "Especie no encontrada" } };
   const stockIds = /* @__PURE__ */ new Set([
     ...Object.keys(stockMap || {}).filter((k) => Number(stockMap[k]) > 0),
@@ -2937,9 +2940,9 @@ const runHybridRecipeSearch = ({
   const compatible = (ingredients || []).filter(
     (g) => (!useStock || stockIds.has(g.id)) && (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients);
+  const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients, spp);
   const scoreAdapter = (analysis, ctx) => {
-    const treatment = calcTreatment(analysis, targetKey, SPP);
+    const treatment = calcTreatment(analysis, targetKey, spp);
     return scoreAn(analysis, {
       treatment,
       recipe: ctx.recipe,
@@ -2948,10 +2951,10 @@ const runHybridRecipeSearch = ({
   };
   return engine.searchScenarios({
     recipe,
-    context: { sKey: targetKey, spp: SPP, stockIds },
+    context: { sKey: targetKey, spp, stockIds },
     searchMode: "hybrid",
     targetKey,
-    spp: SPP,
+    spp,
     ingredients: compatible,
     analyze: analyzeAdapter,
     score: scoreAdapter,
@@ -2970,9 +2973,38 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || [])
   });
 };
+const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+  let cur = recipe;
+  let bestScore = -1;
+  for (let i = 0; i < maxIter; i++) {
+    const a = analyze(cur, sKey, ings, spp);
+    if (!a) break;
+    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, spp, usageCounts);
+    if (o.score <= bestScore) break;
+    bestScore = o.score;
+    const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
+    if (!candidates.length) break;
+    let bestCandScore = -1, bestCandidate = null, bestO2 = null;
+    for (const cand of candidates) {
+      const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
+      const tryA = analyze(tryRec, sKey, ings, spp);
+      if (!tryA) continue;
+      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, spp, usageCounts);
+      if (tryO.score > bestCandScore) {
+        bestCandScore = tryO.score;
+        bestCandidate = tryRec;
+        bestO2 = tryO;
+      }
+    }
+    if (!bestCandidate) break;
+    if (bestO2.score <= o.score) break;
+    cur = bestCandidate;
+  }
+  return cur;
+};
 const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
   const an = candidate?.evaluation?.analysis;
-  const sp = SPP[targetKey];
+  const sp = an?.sp || SPP[targetKey];
   const profile = OPT_PROFILES[profileKey] || OPT_PROFILES.produccion;
   const speciesSupp = Number(sp?.supplementation_max) || 20;
   const suppLimit = profile.maxSupp != null ? Math.min(speciesSupp, profile.maxSupp) : speciesSupp;
@@ -2992,7 +3024,7 @@ const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profile
     scenario: candidate
   };
 };
-const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, profileKey) => {
+const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, profileKey, spp = SPP) => {
   const stockIds = new Set((invLotes || []).filter((l) => l?.activo && Number(l.cantidadKgDisponible) > 0).map((l) => l.ingredienteId));
   const pool = useStock ? (ingredients || []).filter((g) => stockIds.has(g.id)) : (ingredients || []).filter((g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
   const compatible = (g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey);
@@ -3007,7 +3039,7 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     aers: aers.length,
     tried: Number(out?.explored) || 0,
     resultsRaw: Number(out?.diagnostics?.allowedCount ?? out?.ranked?.length ?? 0),
-    suppLimit: Number(out?.profile?.maxSupp ?? SPP[targetKey]?.supplementation_max ?? 20),
+    suppLimit: Number(out?.profile?.maxSupp ?? spp[targetKey]?.supplementation_max ?? 20),
     profileKey,
     targetKey,
     baseNames: bases.map((g) => g.name),
@@ -4464,6 +4496,7 @@ function SimuladorShell(props) {
   const histRows = useMemo(() => bitacoraEBRows(bitLotes, bitCosechas), [bitLotes, bitCosechas]);
   const histStats = useMemo(() => historicalEB(sKey, histRows, recipe), [sKey, histRows, recipe]);
   const effectiveSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, recipe, effectiveINGS), [sKey, recipe, effectiveINGS]);
+  const searchSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], optimizerINGS), [sKey, optimizerINGS]);
   const sp = effectiveSPP[sKey];
   const an = useMemo(() => analyze(recipe, sKey, effectiveINGS, effectiveSPP), [recipe, sKey, effectiveINGS, effectiveSPP]);
   const moistureTouched = useRef({ hObj: false, prodH: false });
@@ -4491,13 +4524,14 @@ function SimuladorShell(props) {
         ingredients: optimizerINGS,
         useStock: false,
         profileKey: "produccion",
-        stockMap: {}
+        stockMap: {},
+        spp: searchSPP
       });
       return r.ranked?.[0]?.evaluation?.analysis || null;
     } catch (e) {
       return null;
     }
-  }, [sKey, invLotes, optimizerINGS]);
+  }, [sKey, invLotes, optimizerINGS, searchSPP]);
   const dg = useMemo(() => diagnose(an, sKey), [an, sKey]);
   const tr = useMemo(() => calcTreatment(an, sKey, effectiveSPP), [an, sKey, effectiveSPP]);
   const bd = useMemo(() => showBatch ? calcBatch(recipe, numBags, kgBag, hObj, spawnCost, effectiveINGS, an?.dynSpawn, tr, an?.eb, sKey, vegPrice) : null, [recipe, numBags, kgBag, showBatch, hObj, spawnCost, effectiveINGS, an?.dynSpawn, tr, an?.eb, sKey, vegPrice]);
@@ -4550,7 +4584,8 @@ function SimuladorShell(props) {
         useStock: true,
         stockMap,
         ingredients: INGS,
-        profileKey: optProfile || "produccion"
+        profileKey: optProfile || "produccion",
+        spp: SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], INGS)
       });
       let cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0] || r.pareto && r.pareto[0] || (r.best?.recipe?.length ? r.best : null);
       if (!cand || !cand.recipe || !cand.recipe.length) {
@@ -4605,7 +4640,7 @@ function SimuladorShell(props) {
   React.useEffect(() => {
     setUsageCounts({});
   }, [sKey]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, void 0, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, usageCounts]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts]);
   const realCostPerKg = useMemo(() => {
     if (!recipe.length) return null;
     let known = false;
@@ -4676,38 +4711,7 @@ function SimuladorShell(props) {
     setRecipeHistory((h) => h.slice(0, -1));
   };
   const autoImprove = () => {
-    let cur = recipe;
-    let bestScore = -1;
-    for (let i = 0; i < 6; i++) {
-      const a = analyze(cur, sKey, effectiveINGS);
-      if (!a) break;
-      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), optUseStock, void 0, void 0, usageCounts);
-      if (o.score <= bestScore) break;
-      bestScore = o.score;
-      const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
-      if (!candidates.length) break;
-      let bestCandScore = -1, bestCandidate = null, bestA2 = null, bestO2 = null;
-      for (const cand of candidates) {
-        const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
-        const tryA = analyze(tryRec, sKey, effectiveINGS);
-        if (!tryA) continue;
-        const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), optUseStock, void 0, void 0, usageCounts);
-        if (tryO.score > bestCandScore) {
-          bestCandScore = tryO.score;
-          bestCandidate = tryRec;
-          bestA2 = tryA;
-          bestO2 = tryO;
-        }
-      }
-      if (!bestCandidate) break;
-      const candidate = bestCandidate;
-      const a2 = bestA2;
-      if (!a2) break;
-      const o2 = bestO2;
-      if (o2.score <= o.score) break;
-      cur = candidate;
-    }
-    setRecipe(cur);
+    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
   };
   const openPrintWindow = (mode2) => {
     const el = document.querySelector(".prod-sheet");
@@ -5324,7 +5328,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
         ingredients: optimizerINGS,
         useStock: false,
         profileKey: "produccion",
-        stockMap: {}
+        stockMap: {},
+        spp: searchSPP
       });
       if (r.ranked?.length) {
         setRecipe(r.ranked[0].recipe);
@@ -7996,6 +8001,7 @@ Click para ver análisis completo`
           let noStock = false;
           let _diag = null;
           const byProfile = {};
+          const optTargetSPP = SetasSpeciesTargetsApi.applyToSpp(SPP, optTarget, lockedIds.length ? recipe : [], optimizerINGS);
           Object.keys(OPT_PROFILES).forEach((pk) => {
             try {
               const out = runHybridRecipeSearch({
@@ -8007,13 +8013,14 @@ Click para ver análisis completo`
                 useStock: optUseStock,
                 profileKey: pk,
                 stockMap,
-                lockedIds
+                lockedIds,
+                spp: optTargetSPP
               });
               noStock = noStock || !!out.noStock;
               byProfile[pk] = (out.ranked || []).slice(0, 12).map(
                 (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk)
               );
-              const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
+              const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk, optTargetSPP);
               const stockCount = diag.stockIds;
               byProfile[`_diag_${pk}`] = { stockCount, diag };
               byProfile[`_evidence_${pk}`] = out.historicalEvidence || null;
@@ -8075,7 +8082,7 @@ Click para ver análisis completo`
       setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
       goTab("produccion");
     } }, "Producir"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
-      const tOpt = calcTreatment(r.an, optTarget, SPP);
+      const tOpt = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
       const totalCost = Math.round(r.an.cost) + eCost;
       return [
@@ -8089,7 +8096,7 @@ Click para ver análisis completo`
         }
       ];
     })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), r.agronomicInsights?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, padding: "7px 10px", borderLeft: "3px solid var(--moss-500,var(--accent-olive))", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("b", null, "Lectura agronómica · ", r.evidenceClassification?.label || "Tier 3 · hipótesis/modelo", ":"), " ", r.agronomicInsights.slice(0, 2).map((x) => x.message).join(" ")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Riesgo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500,#A07828)" : "#C53030" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
-      const tOpt2 = calcTreatment(r.an, optTarget, SPP);
+      const tOpt2 = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
       const bags = [
         { nom: "Bolsa 20×50", kgH: 1.8 },
@@ -8103,7 +8110,7 @@ Click para ver análisis completo`
         return /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "5px 8px", borderRight: "1px solid var(--border-soft)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginBottom: 2, letterSpacing: "var(--tracking-label)", fontWeight: 600 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--coral-700)", fontWeight: 700 } }, "$", costBolsa.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, "COP / bolsa"));
       }));
     })(), (() => {
-      const t = calcTreatment(r.an, optTarget, SPP);
+      const t = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       if (!t) return null;
       const tc = t.col === "autoclave" ? { bg: "#FCEEE9", br: "#E8B4A0", fg: "#B5451F", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention-text)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "#EEF3EA", br: "#90A870", fg: "#3D5520", icon: "❄", lbl: "CWLP — Cal en Frío pH≥12" };
       return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));

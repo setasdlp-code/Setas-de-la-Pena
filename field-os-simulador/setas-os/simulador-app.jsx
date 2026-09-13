@@ -4297,10 +4297,13 @@ const runHybridRecipeSearch=({
   profileKey='produccion',
   stockMap={},
   lockedIds=[],
+  // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
+  // spp explícito se conserva el catálogo heredado para los llamadores viejos.
+  spp=SPP,
 })=>{
   const engine=globalThis.SetasPeritoScenarios;
   if(!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
-  const target=SPP[targetKey];
+  const target=spp[targetKey];
   if(!target) return{ranked:[],pareto:[],recommended:[],noStock:false,diagnostics:{error:'Especie no encontrada'}};
   const stockIds = new Set([
     ...Object.keys(stockMap || {}).filter(k => Number(stockMap[k]) > 0),
@@ -4310,9 +4313,9 @@ const runHybridRecipeSearch=({
     (!useStock || stockIds.has(g.id)) &&
     (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
+  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients,spp);
   const scoreAdapter=(analysis,ctx)=>{
-    const treatment=calcTreatment(analysis,targetKey,SPP);
+    const treatment=calcTreatment(analysis,targetKey,spp);
     return scoreAn(analysis,{
       treatment,
       recipe:ctx.recipe,
@@ -4321,10 +4324,10 @@ const runHybridRecipeSearch=({
   };
   return engine.searchScenarios({
     recipe,
-    context:{sKey:targetKey,spp:SPP,stockIds},
+    context:{sKey:targetKey,spp,stockIds},
     searchMode:'hybrid',
     targetKey,
-    spp:SPP,
+    spp,
     ingredients:compatible,
     analyze:analyzeAdapter,
     score:scoreAdapter,
@@ -4343,9 +4346,43 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
+// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
+//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
+//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
+//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+//    análisis y las cantidades de cada paso usan los mismos rangos que la UI
+//    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
+const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  let cur=recipe;let bestScore=-1;
+  for(let i=0;i<maxIter;i++){
+    const a=analyze(cur,sKey,ings,spp);
+    if(!a) break;
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
+    if(o.score<=bestScore) break;
+    bestScore=o.score;
+    const candidates=o.items
+      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
+      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
+      .slice(0,3);
+    if(!candidates.length) break;
+    let bestCandScore=-1,bestCandidate=null,bestO2=null;
+    for(const cand of candidates){
+      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
+      const tryA=analyze(tryRec,sKey,ings,spp);
+      if(!tryA) continue;
+      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
+      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    }
+    if(!bestCandidate) break;
+    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
+    cur=bestCandidate;
+  }
+  return cur;
+};
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
-  const sp=SPP[targetKey];
+  // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
+  const sp=an?.sp||SPP[targetKey];
   const profile=OPT_PROFILES[profileKey]||OPT_PROFILES.produccion;
   const speciesSupp=Number(sp?.supplementation_max)||20;
   const suppLimit=profile.maxSupp!=null?Math.min(speciesSupp,profile.maxSupp):speciesSupp;
@@ -4367,7 +4404,7 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     scenario:candidate,
   };
 };
-const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey)=>{
+const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey,spp=SPP)=>{
   const stockIds=new Set((invLotes||[]).filter(l=>l?.activo&&Number(l.cantidadKgDisponible)>0).map(l=>l.ingredienteId));
   const pool=useStock
     ?(ingredients||[]).filter(g=>stockIds.has(g.id))
@@ -4384,7 +4421,7 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     aers:aers.length,
     tried:Number(out?.explored)||0,
     resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
-    suppLimit:Number(out?.profile?.maxSupp??SPP[targetKey]?.supplementation_max??20),
+    suppLimit:Number(out?.profile?.maxSupp??spp[targetKey]?.supplementation_max??20),
     profileKey,
     targetKey,
     baseNames:bases.map(g=>g.name),
@@ -5950,6 +5987,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
   const effectiveSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,recipe,effectiveINGS),[sKey,recipe,effectiveINGS]);
+  // Búsquedas híbridas desde receta vacía: objetivos de la clase por defecto de
+  // la especie (sin receta no hay sustrato que clasificar). No depende de
+  // `recipe`, así que no relanza la búsqueda en cada edición de la receta.
+  const searchSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],optimizerINGS),[sKey,optimizerINGS]);
   // Especie activa con targets resueltos (D5/D8) — todo el render de este
   // componente lee `sp` de aquí, no del catálogo legado SPP[sKey].
   const sp=effectiveSPP[sKey];
@@ -5981,9 +6022,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       useStock:false,
       profileKey:'produccion',
       stockMap:{},
+      spp:searchSPP,
     });
     return r.ranked?.[0]?.evaluation?.analysis||null;
-  }catch(e){return null;}},[sKey,invLotes,optimizerINGS]);
+  }catch(e){return null;}},[sKey,invLotes,optimizerINGS,searchSPP]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
   const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
   const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
@@ -6031,6 +6073,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         stockMap,
         ingredients:INGS,
         profileKey:optProfile||'produccion',
+        spp:SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],INGS),
       });
       let cand = (r.recommended && r.recommended[0]) || (r.ranked && r.ranked[0]) || (r.pareto && r.pareto[0]) || (r.best?.recipe?.length ? r.best : null);
       if (!cand || !cand.recipe || !cand.recipe.length) {
@@ -6093,7 +6136,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,undefined,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,usageCounts]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -6185,35 +6228,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
   const autoImprove=()=>{
-    let cur=recipe;let bestScore=-1;
-    for(let i=0;i<6;i++){
-      const a=analyze(cur,sKey,effectiveINGS);
-      if(!a) break;
-      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock,undefined,undefined,usageCounts);
-      if(o.score<=bestScore) break;
-      bestScore=o.score;
-      const candidates=o.items
-        .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-        .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-        .slice(0,3);
-      if(!candidates.length) break;
-      let bestCandScore=-1,bestCandidate=null,bestA2=null,bestO2=null;
-      for(const cand of candidates){
-        const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-        const tryA=analyze(tryRec,sKey,effectiveINGS);
-        if(!tryA) continue;
-        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),optUseStock,undefined,undefined,usageCounts);
-        if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestA2=tryA;bestO2=tryO;}
-      }
-      if(!bestCandidate) break;
-      const candidate=bestCandidate;
-      const a2=bestA2;
-      if(!a2) break;
-      const o2=bestO2;
-      if(o2.score<=o.score) break; // no aceptar si no mejora el score global
-      cur=candidate;
-    }
-    setRecipe(cur);
+    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
@@ -6750,6 +6765,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         useStock:false,
         profileKey:'produccion',
         stockMap:{},
+        spp:searchSPP,
       });
       if(r.ranked?.length){setRecipe(r.ranked[0].recipe);setLockedIds([]);}
       else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
@@ -11802,6 +11818,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   setTimeout(()=>{
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
+                                    // Objetivos resueltos para la especie objetivo del generador (C1).
+                                    const optTargetSPP=SetasSpeciesTargetsApi.applyToSpp(SPP,optTarget,lockedIds.length?recipe:[],optimizerINGS);
                                     Object.keys(OPT_PROFILES).forEach(pk=>{
                                       try{
                                         const out=runHybridRecipeSearch({
@@ -11814,12 +11832,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           profileKey:pk,
                                           stockMap,
                                           lockedIds,
+                                          spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
                                         byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
                                           hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
                                         );
-                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
+                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
                                         // Evidencia de producción tal como la adjuntó production-learning-bridge.js
@@ -11908,7 +11927,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       </div>
                                       <div className="opt-metrics">
                                         {(()=>{
-                                          const tOpt=calcTreatment(r.an, optTarget, SPP);
+                                          const tOpt=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                           const eCost=tOpt?.energy?.cop_per_kg_seco||0;
                                           const totalCost=Math.round(r.an.cost)+eCost;
                                           return[
@@ -11943,7 +11962,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         )}
                                       </div>
                                       {r.an.cost>0&&(()=>{
-                                        const tOpt2=calcTreatment(r.an, optTarget, SPP);
+                                        const tOpt2=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         const eCost2=tOpt2?.energy?.cop_per_kg_seco||0;
                                         const bags=[
                                           {nom:'Bolsa 20×50',kgH:1.8},
@@ -11968,7 +11987,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         );
                                       })()}
                                       {(()=>{
-                                        const t=calcTreatment(r.an, optTarget, SPP);
+                                        const t=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}

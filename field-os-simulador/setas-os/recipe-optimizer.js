@@ -106,7 +106,7 @@
     const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
     const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
     return {
-      tot, avgN, cn, cost, eb, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
+      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
       ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
       ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
       ebIndex: ebIndex !== undefined ? ebIndex : 0,
