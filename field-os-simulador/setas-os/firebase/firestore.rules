@@ -61,6 +61,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.opId == opId
+        && request.resource.data.loteId == opId
         && request.resource.data.allocations is list;
       allow update, delete: if false;
     }

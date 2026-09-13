@@ -295,6 +295,10 @@ describe('firestore.rules · inventory_consumptions', function () {
     const db = testEnv.authenticatedContext('u1').firestore();
     await assertFails(setDoc(doc(db, 'inventory_consumptions/OTRO'), rec));
   });
+  it('rechaza loteId distinto al id del documento (identidad del consumo = loteId)', async () => {
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertFails(setDoc(doc(db, 'inventory_consumptions/BIT_1'), { ...rec, loteId: 'BIT_2' }));
+  });
   it('rechaza sin autenticación', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
     await assertFails(setDoc(doc(db, 'inventory_consumptions/BIT_1'), rec));
