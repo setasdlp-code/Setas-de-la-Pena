@@ -33,9 +33,9 @@ const sanearCosecha = (cosecha) => ({
   pesoFresco: Number.isFinite(Number(cosecha.pesoFresco))
     ? Math.max(0, Math.min(10000000, Number(cosecha.pesoFresco)))
     : 0,
-  calidad: Number.isFinite(Number(cosecha.calidad))
-    ? Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))
-    : null,
+  ...(cosecha.calidad != null && cosecha.calidad !== '' && Number.isFinite(Number(cosecha.calidad))
+    ? {calidad: Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))}
+    : {}),
   flush: Number.isFinite(Number(cosecha.flush))
     ? Math.max(1, Math.floor(Number(cosecha.flush)))
     : 1,
