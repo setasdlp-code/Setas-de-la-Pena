@@ -6454,15 +6454,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
       plan,
       insumos
     });
+    // Nueva sesión de lanzamiento: rearma la guarda de re-entrancia.
+    launchInFlight.current = false;
+    setLaunching(false);
     setShowProdLaunchModal(true);
   };
 
-  const ejecutarLanzamientoProduccion = () => {
-    if (!prodLaunchForm) return;
+  // ── Guarda de re-entrancia contra doble clic / doble envío — Task 7/8.
+  // Es un ref, no un estado: toma efecto de inmediato (síncrono), antes de
+  // que React re-renderice y deshabilite el botón. No se libera solo al
+  // terminar la función (eso no protegería un segundo clic separado — cada
+  // evento de clic corre como una llamada íntegra e independiente, así que
+  // un `finally` síncrono ya habría desbloqueado la guarda para cuando el
+  // segundo clic llega). Se libera explícitamente al reabrir el lanzador
+  // (nueva sesión) o si el intento de lanzamiento no llegó a completarse.
+  const launchInFlight = useRef(false);
+  const [launching, setLaunching] = useState(false);
+  const conGuardaLanzamiento = fn => (...args) => {
+    if (launchInFlight.current) return;
+    launchInFlight.current = true;
+    setLaunching(true);
+    return fn(...args);
+  };
+
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
     const f = prodLaunchForm;
     const now = Date.now();
     const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-    registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+    const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+    if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
 
     setBitLotes(prev => {
       const upd = [lote, ...prev];
@@ -6504,7 +6525,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       title: '🚀 Producción de Lote Lanzada',
       msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
     });
-  };
+  });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
@@ -6671,9 +6692,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
-    const r=SetasInventoryConsumptionApi.applyLocal(invLotes,op,{fecha,nota});
-    saveLotes(r.lotes);
-    saveMovimientos([...invMovimientos,...r.movimientos]);
+    // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
+    // distintos lanzados muy seguido) deben componerse sobre el prev más
+    // reciente, no sobre el invLotes/invMovimientos capturado por closure
+    // en el render que originó cada llamada. Los movimientos se derivan
+    // solo de op.allocations — no dependen de los lotes — así que se
+    // calculan una vez fuera del updater y se reutilizan en ambos lados.
+    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
+    setInvLotes(prev => {
+      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
+      try { localStorage.setItem('sdp_lotes', JSON.stringify(r.lotes)); } catch(e) {}
+      return r.lotes;
+    });
+    setInvMovimientos(prev => {
+      const upd = [...prev, ...movimientos];
+      try { localStorage.setItem('sdp_movimientos', JSON.stringify(upd)); } catch(e) {}
+      return upd;
+    });
     saveInvOps(queue);
     runInventorySync();
     return true;
@@ -13629,10 +13664,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button
                     type="button"
                     onClick={ejecutarLanzamientoProduccion}
+                    disabled={launching}
                     className="btn-launch-prod"
                     style={{minHeight:44,padding:'8px 20px'}}
                   >
-                    🚀 Confirmar y Lanzar Producción
+                    {launching ? 'Lanzando…' : '🚀 Confirmar y Lanzar Producción'}
                   </button>
                 </div>
               </div>

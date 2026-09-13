@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b8800bc359b29f69086533987fbc6fde1b73e542d910e1d5073e235a8d9df10d
+// source-hash: d7cd61388b80f5994afea2444c53a9f62723f5a10ab2aaba075f02c0fd39298b
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4948,14 +4948,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
       plan,
       insumos
     });
+    launchInFlight.current = false;
+    setLaunching(false);
     setShowProdLaunchModal(true);
   };
-  const ejecutarLanzamientoProduccion = () => {
-    if (!prodLaunchForm) return;
+  const launchInFlight = useRef(false);
+  const [launching, setLaunching] = useState(false);
+  const conGuardaLanzamiento = (fn) => (...args) => {
+    if (launchInFlight.current) return;
+    launchInFlight.current = true;
+    setLaunching(true);
+    return fn(...args);
+  };
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      return;
+    }
     const f = prodLaunchForm;
     const now = Date.now();
     const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-    registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+    const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+    if (!registered) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      return;
+    }
     setBitLotes((prev) => {
       const upd = [lote, ...prev];
       try {
@@ -4999,7 +5018,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       title: "🚀 Producción de Lote Lanzada",
       msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
     });
-  };
+  });
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
   const crearBitLote = (form) => {
     const lote = { ...form, id: "BIT_" + Date.now(), createdAt: (/* @__PURE__ */ new Date()).toISOString() };
@@ -5297,9 +5316,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
     const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
     if (!added) return false;
-    const r = SetasInventoryConsumptionApi.applyLocal(invLotes, op, { fecha, nota });
-    saveLotes(r.lotes);
-    saveMovimientos([...invMovimientos, ...r.movimientos]);
+    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
+    setInvLotes((prev) => {
+      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
+      try {
+        localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+      } catch (e) {
+      }
+      return r.lotes;
+    });
+    setInvMovimientos((prev) => {
+      const upd = [...prev, ...movimientos];
+      try {
+        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
     saveInvOps(queue);
     runInventorySync();
     return true;
@@ -8910,10 +8943,11 @@ Click para ver análisis completo`
         {
           type: "button",
           onClick: ejecutarLanzamientoProduccion,
+          disabled: launching,
           className: "btn-launch-prod",
           style: { minHeight: 44, padding: "8px 20px" }
         },
-        "🚀 Confirmar y Lanzar Producción"
+        launching ? "Lanzando…" : "🚀 Confirmar y Lanzar Producción"
       )))
     );
   })(), showTastingModal && (() => {
