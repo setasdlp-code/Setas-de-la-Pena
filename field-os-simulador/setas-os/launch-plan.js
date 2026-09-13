@@ -50,7 +50,8 @@ function buildLaunchPlan({
     const m = clampMoisture(moistureOverrides[row.id] ?? g.moisture);
     const itemDry = dryKg * pct / 100;
     let asReceived = itemDry / (1 - m);
-    if (scaleG > 0) asReceived = Math.ceil((asReceived * 1000) / scaleG) * scaleG / 1000;
+    // Redondeo al incremento de báscula más cercano; +1e-9 absorbe el error de coma flotante (0.35/0.8 = 0.43749999…).
+    if (scaleG > 0) asReceived = Math.round((asReceived * 1000) / scaleG + 1e-9) * scaleG / 1000;
     const water = asReceived * m;
     intrinsic += water;
     items.push({
