@@ -67,10 +67,27 @@ async function syncDue({ queue = [], persist, now }) {
   return q;
 }
 
+// syncDue trabaja sobre una instantánea de la cola; mientras espera a Firestore
+// pueden encolarse ops nuevas. La cola re-leída después del await es la base:
+// de syncedQueue solo se toma el resultado de sincronización de cada op (por
+// opId). Ops que solo existen en latestQueue quedan intactas; ops que ya no
+// están en latestQueue no se resucitan.
+const SYNC_FIELDS = ['status', 'attempts', 'lastError', 'nextAttemptAt', 'syncedAt'];
+function mergeSyncResults(latestQueue = [], syncedQueue = []) {
+  const byId = new Map((syncedQueue || []).map(o => [o.opId, o]));
+  return (latestQueue || []).map(op => {
+    const s = byId.get(op.opId);
+    if (!s) return op;
+    const out = { ...op };
+    for (const k of SYNC_FIELDS) if (k in s) out[k] = s[k];
+    return out;
+  });
+}
+
 const isPendingForLote = (queue = [], loteId) => queue.some(o => o.loteId === loteId && o.status !== 'synced');
 const failuresForBanner = (queue = []) => queue.filter(o => o.status === 'failed' && o.attempts >= BANNER_AFTER_FAILURES);
 
-const api = { QUEUE_KEY, SCHEMA, BANNER_AFTER_FAILURES, buildConsumptionOp, enqueue, applyLocal, toRecord, syncDue, backoffMs, isPendingForLote, failuresForBanner };
+const api = { QUEUE_KEY, SCHEMA, BANNER_AFTER_FAILURES, buildConsumptionOp, enqueue, applyLocal, toRecord, syncDue, mergeSyncResults, backoffMs, isPendingForLote, failuresForBanner };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

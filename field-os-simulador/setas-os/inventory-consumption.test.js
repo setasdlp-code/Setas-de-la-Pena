@@ -99,3 +99,55 @@ test('isPendingForLote y failuresForBanner', () => {
   assert.equal(IC.isPendingForLote(q, 'C'), false);
   assert.deepEqual(IC.failuresForBanner(q).map(o => o.opId), ['B']);
 });
+
+// ── I2: la cola re-leída tras el await de syncDue manda; syncDue solo aporta
+// el resultado de sincronización de las ops que procesó. ──
+test('mergeSyncResults: una op encolada durante la sincronización sobrevive', () => {
+  const a = IC.buildConsumptionOp({ loteId: 'A', plan, createdAt: 0 });
+  const snapshot = [a];
+  const synced = [{ ...a, status: 'synced', syncedAt: 5_000, lastError: null }];
+  const nueva = IC.buildConsumptionOp({ loteId: 'NUEVA', plan, createdAt: 4_000 });
+  const latest = [a, nueva];
+  const merged = IC.mergeSyncResults(latest, synced);
+  assert.deepEqual(merged.map(o => o.opId), ['A', 'NUEVA']);
+  assert.deepEqual(merged[1], nueva);
+  assert.equal(snapshot.length, 1);
+});
+
+test('mergeSyncResults: aplica status/attempts/lastError/nextAttemptAt/syncedAt por opId', () => {
+  const ok = IC.buildConsumptionOp({ loteId: 'OK', plan, createdAt: 0 });
+  const bad = IC.buildConsumptionOp({ loteId: 'BAD', plan, createdAt: 0 });
+  const synced = [
+    { ...ok, status: 'synced', syncedAt: 9_000, lastError: null },
+    { ...bad, status: 'failed', attempts: 1, lastError: 'offline', nextAttemptAt: 40_000 },
+  ];
+  const merged = IC.mergeSyncResults([bad, ok], synced);
+  assert.deepEqual(merged.map(o => o.opId), ['BAD', 'OK']);
+  const o = merged.find(x => x.opId === 'OK');
+  assert.equal(o.status, 'synced');
+  assert.equal(o.syncedAt, 9_000);
+  assert.equal(o.lastError, null);
+  const b = merged.find(x => x.opId === 'BAD');
+  assert.equal(b.status, 'failed');
+  assert.equal(b.attempts, 1);
+  assert.equal(b.lastError, 'offline');
+  assert.equal(b.nextAttemptAt, 40_000);
+  assert.equal('syncedAt' in b, false);
+  assert.deepEqual(b.allocations, bad.allocations);
+});
+
+test('mergeSyncResults: una op ausente de la cola más reciente no se resucita', () => {
+  const a = IC.buildConsumptionOp({ loteId: 'A', plan, createdAt: 0 });
+  const merged = IC.mergeSyncResults([], [{ ...a, status: 'synced', syncedAt: 1 }]);
+  assert.deepEqual(merged, []);
+});
+
+test('syncDue + mergeSyncResults: una op encolada mientras persist está en vuelo no se pierde', async () => {
+  let store = [IC.buildConsumptionOp({ loteId: 'A', plan, createdAt: 0 })];
+  const synced = await IC.syncDue({
+    queue: store, now: 1_000,
+    persist: async () => { store = IC.enqueue(store, IC.buildConsumptionOp({ loteId: 'B', plan, createdAt: 500 })).queue; },
+  });
+  store = IC.mergeSyncResults(store, synced);
+  assert.deepEqual(store.map(o => [o.opId, o.status]), [['A', 'synced'], ['B', 'pending']]);
+});

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: e0f3442235962451e54f356a2476f41c7d5a5bdbabac83fe957a67f80c65f3e1
+// source-hash: 9618a16b5de71c253542dbdaefa08328d30bf241ac1449f358d073d25137b98b
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -5401,10 +5401,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
     } catch (e) {
     }
   };
-  const runInventorySync = useCallback(async () => {
-    if (!window.SetasDB?.guardarConsumoInventario) return;
-    const next = await SetasInventoryConsumptionApi.syncDue({ queue: readInvOps(), now: Date.now(), persist: (rec) => window.SetasDB.guardarConsumoInventario(rec) });
-    saveInvOps(next);
+  const invSyncRef = useRef({ inFlight: null, again: false });
+  const runInventorySync = useCallback(() => {
+    const st = invSyncRef.current;
+    if (st.inFlight) {
+      st.again = true;
+      return st.inFlight;
+    }
+    if (!window.SetasDB?.guardarConsumoInventario) return Promise.resolve();
+    st.inFlight = (async () => {
+      try {
+        const synced = await SetasInventoryConsumptionApi.syncDue({ queue: readInvOps(), now: Date.now(), persist: (rec) => window.SetasDB.guardarConsumoInventario(rec) });
+        saveInvOps(SetasInventoryConsumptionApi.mergeSyncResults(readInvOps(), synced));
+      } finally {
+        st.inFlight = null;
+        if (st.again) {
+          st.again = false;
+          runInventorySync();
+        }
+      }
+    })();
+    return st.inFlight;
   }, []);
   const registrarConsumo = ({ loteId, codigo, plan, fecha, nota }) => {
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });

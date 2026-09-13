@@ -6803,10 +6803,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
   const [invOps,setInvOps]=useState(readInvOps);
   const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
-  const runInventorySync=useCallback(async()=>{
-    if(!window.SetasDB?.guardarConsumoInventario) return;
-    const next=await SetasInventoryConsumptionApi.syncDue({queue:readInvOps(),now:Date.now(),persist:rec=>window.SetasDB.guardarConsumoInventario(rec)});
-    saveInvOps(next);
+  // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
+  // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
+  // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
+  // guardar, la cola se re-lee y solo se le aplica el resultado de syncDue
+  // (mergeSyncResults) — una op encolada durante el await no se pierde.
+  const invSyncRef=useRef({inFlight:null,again:false});
+  const runInventorySync=useCallback(()=>{
+    const st=invSyncRef.current;
+    if(st.inFlight){st.again=true;return st.inFlight;}
+    if(!window.SetasDB?.guardarConsumoInventario) return Promise.resolve();
+    st.inFlight=(async()=>{
+      try{
+        const synced=await SetasInventoryConsumptionApi.syncDue({queue:readInvOps(),now:Date.now(),persist:rec=>window.SetasDB.guardarConsumoInventario(rec)});
+        saveInvOps(SetasInventoryConsumptionApi.mergeSyncResults(readInvOps(),synced));
+      }finally{
+        st.inFlight=null;
+        if(st.again){st.again=false;runInventorySync();}
+      }
+    })();
+    return st.inFlight;
   },[]);
   const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
