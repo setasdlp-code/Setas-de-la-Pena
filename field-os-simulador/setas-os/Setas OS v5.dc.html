@@ -143,7 +143,7 @@
      Buttons that already declare their own inline `transition` keep that untouched
      (inline always wins per-property); they still get the instant scale on press. */
   button:not(:disabled) { transition: transform .12s cubic-bezier(.32,.72,.36,1), background-color .15s ease, color .15s ease, border-color .15s ease; }
-  button:not(:disabled):active { transform: scale(.97); }
+  button:not(:disabled):active { transform: translateY(1px) scale(.99); }
   a { color: var(--accent-terracotta); transition: color .15s ease; }
   a:hover { color: color-mix(in oklab, var(--accent-terracotta) 78%, black); }
   .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
@@ -175,7 +175,7 @@
   .rail-btn.on { color:var(--ink-0); }
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { display:flex; align-items:center; justify-content:center; padding:12px 2px 8px; border:0; background:none; cursor:pointer; width:100%; }
@@ -194,7 +194,9 @@
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
   .workspace-subnav { position:sticky; top:0; z-index:var(--z-sticky-subnav); display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .workspace-subnav::-webkit-scrollbar { display:none; }
-  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
+  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; transition:color .15s ease, border-color .15s ease, transform .12s cubic-bezier(.32,.72,.36,1); }
+  .workspace-tab:hover { color:var(--ink-1); }
+  .workspace-tab:active { transform:translateY(1px); }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
   .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
@@ -202,15 +204,17 @@
      subnav para que no se desplace fuera de alcance cuando la fila de pestañas
      scrollea. Era la única función pensada para este contexto y no tenía
      ningún control en pantalla. */
-  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s; }
+  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s, transform .12s cubic-bezier(.32,.72,.36,1); }
   .gloves-toggle:hover { color:var(--ink-1); background:var(--paper-2); }
+  .gloves-toggle:active { transform:translateY(1px) scale(.99); }
   .gloves-toggle.on:hover { background:var(--accent-olive); color:var(--paper-0); }
   .gloves-toggle svg { width:20px; height:20px; flex-shrink:0; }
   .gloves-toggle.on { background:var(--accent-olive); color:var(--paper-0); }
   .gloves-toggle:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
   .workspace-more-panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:4px; padding:8px 26px 10px; background:var(--paper-1); border-bottom:1px solid var(--border-soft); }
-  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s; overflow-wrap:break-word; }
+  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s, transform .12s cubic-bezier(.32,.72,.36,1); overflow-wrap:break-word; }
   .workspace-more-item:hover { background:var(--paper-2); color:var(--ink-0); border-color:var(--border-strong); }
+  .workspace-more-item:active { transform:translateY(1px) scale(.99); }
   .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
   .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
