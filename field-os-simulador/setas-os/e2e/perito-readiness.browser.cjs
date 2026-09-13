@@ -52,6 +52,7 @@ const root=path.resolve(__dirname,'..');
   await page.setViewportSize({width:390,height:844});
   await expect(assessment).toBeVisible();
   assert.ok(await assessment.evaluate(el=>el.scrollWidth<=el.clientWidth),'readiness panel must not overflow on mobile');
+  if(process.env.SETAS_PERITO_SCREENSHOT)await assessment.screenshot({path:process.env.SETAS_PERITO_SCREENSHOT});
   // Action links use the application's canonical navigation.
   await assessment.locator('[data-perito-action="inventory"]').first().click();
   await expect.poll(()=>page.evaluate(()=>new URL(location.href).searchParams.get('view'))).toBe('inventario');

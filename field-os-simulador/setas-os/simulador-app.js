@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 75249b5d44bfd8a96211bc9d171afa5fe6e91aa61a728836537b50182422bf3e
+// source-hash: 7e994b8f9b157ca2961933ed2bf7136611ab0f86abf957f0438b81699533de4f
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2348,7 +2348,8 @@ const FieldActionModal = ({
   operatorRole = "produccion",
   operatorId = "operario_local",
   accountId = "setas_default_account",
-  onTransitionConfirmed
+  onTransitionConfirmed,
+  captureContent
 }) => {
   const [selectedTo, setSelectedTo] = React.useState("");
   const [inFlight, setInFlight] = React.useState(false);
@@ -2474,7 +2475,7 @@ const FieldActionModal = ({
         borderRadius: "var(--radius-md, 3px)"
       }
     },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2, #6B7280)", marginBottom: 2 } }, "Hoja de Acción de Campo · Transición de Estado"), /* @__PURE__ */ React.createElement("h2", { style: { margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: "var(--ink-0, #1F2937)", fontWeight: 700 } }, model.title), model.subtitle && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #4B5563)", marginTop: 2 } }, model.subtitle)), /* @__PURE__ */ React.createElement(
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2, #6B7280)", marginBottom: 2 } }, "Registro de campo · Acciones del lote"), /* @__PURE__ */ React.createElement("h2", { style: { margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: "var(--ink-0, #1F2937)", fontWeight: 700 } }, model.title), model.subtitle && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1, #4B5563)", marginTop: 2 } }, model.subtitle)), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2504,6 +2505,7 @@ const FieldActionModal = ({
       model.showStatusLabel && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, marginTop: 4 } }, model.statusLabel),
       /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub } }, model.statusDetail)
     ),
+    captureContent,
     model.status === "sending" && /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -2578,7 +2580,7 @@ const FieldActionModal = ({
             disabled: !model.canConfirm,
             onChange: () => setSelectedTo(opt.to)
           }
-        ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { style: { fontSize: 13, color: isDiscard ? "var(--coral-700, #C53030)" : isException ? "var(--ochre-700, #B45309)" : "var(--ink-0, #111827)" } }, opt.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--ink-2, #6B7280)", marginLeft: 6 } }, "(", opt.to, ")"))),
+        ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { style: { fontSize: 13, color: isDiscard ? "var(--coral-700, #C53030)" : isException ? "var(--ochre-700, #B45309)" : "var(--ink-0, #111827)" } }, opt.label))),
         /* @__PURE__ */ React.createElement("span", { style: {
           fontSize: 10,
           fontFamily: "var(--font-mono)",
@@ -2587,16 +2589,16 @@ const FieldActionModal = ({
           borderRadius: 2,
           background: isDiscard ? "#FEE2E2" : isException ? "#FEF3C7" : "#E0E7FF",
           color: isDiscard ? "#991B1B" : isException ? "#92400E" : "#3730A3"
-        } }, opt.transitionClass)
+        } }, { advance: "Avance", exception: "Excepción", discard: "Descarte" }[opt.transitionClass] || "Cambio")
       );
     }))),
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
         className: "inv-btn inv-btn-sec",
         onClick: onClose,
-        style: { minHeight: 40, padding: "0 14px", fontSize: 12 }
+        style: { minHeight: 48, padding: "0 14px", fontSize: 12 }
       },
       "Cerrar"
     ), model.canRefresh && /* @__PURE__ */ React.createElement(
@@ -2605,7 +2607,7 @@ const FieldActionModal = ({
         type: "button",
         className: "inv-btn inv-btn-pri",
         onClick: handleRefresh,
-        style: { minHeight: 40, padding: "0 16px", fontSize: 12, background: "var(--accent-terracotta, #A85C32)" }
+        style: { minHeight: 48, padding: "0 16px", fontSize: 12, background: "var(--accent-terracotta, #A85C32)" }
       },
       "🔄 Refrescar Lote"
     ), /* @__PURE__ */ React.createElement(
@@ -2617,15 +2619,17 @@ const FieldActionModal = ({
         onClick: handleConfirm,
         "data-testid": "btn-confirm-field-transition",
         style: {
-          minHeight: 40,
-          padding: "0 16px",
+          minHeight: 48,
+          maxWidth: "100%",
+          whiteSpace: "normal",
+          padding: "8px 16px",
           fontSize: 12,
           fontWeight: 700,
           background: model.canConfirm && selectedTo ? "var(--accent-olive, #5B6B44)" : "var(--border-soft)",
           cursor: model.canConfirm && selectedTo ? "pointer" : "not-allowed"
         }
       },
-      inFlight ? "⏳ Guardando..." : selectedTo ? `Confirmar: ${model.state} → ${selectedTo}` : "Confirmar transición"
+      inFlight ? "⏳ Guardando..." : selectedTo ? `Confirmar: ${model.options.find((option) => option.to === selectedTo)?.label || selectedTo}` : "Confirmar transición"
     ))
   );
 };
@@ -3803,6 +3807,8 @@ function SimuladorShell(props) {
   const [scanMiss, setScanMiss] = useState("");
   const [qrEventoObsAbierta, setQrEventoObsAbierta] = useState(false);
   const [qrEventoObsNota, setQrEventoObsNota] = useState("");
+  const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
+  const qrSavingRef = useRef(/* @__PURE__ */ new Set());
   const handleScannedValue = (raw) => {
     if (!raw) return;
     const sheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
@@ -3818,7 +3824,9 @@ function SimuladorShell(props) {
     if (resolved.batchId) {
       setScanMiss("");
       setQrSelectedLoteId(resolved.batchId);
-      if (resolved.bagId) setQrScannedBagId(resolved.bagId);
+      setQrScannedBagId(resolved.bagId || "");
+      setQrEventoObsAbierta(false);
+      setQrEventoObsNota("");
       stopCameraScanner();
       setShowQrSheet(false);
       setShowFieldActionModal(true);
@@ -4014,6 +4022,8 @@ function SimuladorShell(props) {
   const [promptDlg, setPromptDlg] = useState(null);
   const [noticeDlg, setNoticeDlg] = useState(null);
   const [bitLotes, setBitLotes] = useState([]);
+  const qrLotesRef = useRef(bitLotes);
+  qrLotesRef.current = bitLotes;
   const [bitBolsas, setBitBolsas] = useState([]);
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTab, setBitTab] = useState("bit_dash");
@@ -5938,36 +5948,52 @@ BATCH (${numBags}×${kgBag} kg):
       return null;
     }
   };
-  const reportarEventoCultivo = (tipo, lote, bag, nota = "") => {
-    if (!batchSheetApi || !lote) return;
-    const uid = typeof window !== "undefined" && window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : lote.operador || "operario_local";
-    let evento;
-    try {
-      evento = batchSheetApi.buildCultivoEvento({ batchId: lote.id, bagId: bag ? bag.id : null, tipo, operatorId: uid, nota });
-    } catch (err) {
-      setNoticeDlg({ title: "No se pudo registrar el evento", msg: err.message });
+  const reportarEventoCultivo = async (tipo, selectedLote, bag, nota = "", eventOverride = null) => {
+    const lote = qrLotesRef.current.find((l) => l.id === selectedLote?.id);
+    const qrEvents = window.SetasFieldQrEvents;
+    if (!batchSheetApi || !lote || !qrEvents?.isAllowed(buildSheetFor(lote), tipo)) {
+      setNoticeDlg({ title: "Acción no disponible", msg: "La acción no está permitida para este lote y tu rol en su estado actual." });
       return;
     }
-    if (typeof window !== "undefined" && window.SetasEventosCultivoDB) {
-      window.SetasEventosCultivoDB.registrarEvento(evento).catch((err) => console.warn("No se sincronizó el evento de cultivo:", err));
-    } else {
-      console.warn("SetasEventosCultivoDB no disponible — evento de cultivo no se respaldó en Firestore.");
-    }
     if (tipo === "riego" || tipo === "observacion") {
+      const captureKey = eventOverride?.id || `${lote.id}:${tipo}`;
+      if (qrSavingRef.current.has(captureKey)) return;
+      qrSavingRef.current.add(captureKey);
+      const uid = window.SetasFirebase?.auth?.currentUser?.uid || lote.operador || "operario_local";
+      let evento = eventOverride;
+      let savedLocally = false;
+      const updateStatus = (patch) => setQrEventoStatuses((previous) => {
+        const record = { ...previous.find((item) => item.eventId === evento.id), ...patch, eventId: evento.id, event: evento, tipo, loteId: lote.id, bag, nota };
+        return [...previous.filter((item) => item.eventId !== evento.id), record];
+      });
       try {
-        const nextLog = batchSheetApi.appendBatchEvent(lote.lifecycleEvents || [], {
+        if (!evento) evento = batchSheetApi.buildCultivoEvento({ batchId: lote.id, bagId: bag?.id || null, tipo, operatorId: uid, nota });
+        const previousLog = lote.lifecycleEvents || [];
+        const nextLog = previousLog.some((entry) => entry.id === evento.id) ? previousLog : batchSheetApi.appendBatchEvent(previousLog, {
+          id: evento.id,
           batchId: lote.id,
           action: tipo === "riego" ? "riego" : "note",
-          operatorId: uid,
-          payload: tipo === "riego" ? { nota: nota || "Riego registrado por QR" } : { nota }
+          operatorId: evento.operatorId,
+          at: evento.at,
+          payload: { nota: evento.nota || "Riego registrado por QR" }
         });
-        updateBitLote(lote.id, { lifecycleEvents: nextLog });
+        const updated = qrLotesRef.current.map((item) => item.id === lote.id ? { ...item, lifecycleEvents: nextLog } : item);
+        localStorage.setItem("sdp_bit_lotes", JSON.stringify(updated));
+        qrLotesRef.current = updated;
+        setBitLotes(updated);
+        savedLocally = true;
+        updateStatus({ status: "pending", savedLocally: true, error: null });
+        const result = await qrEvents.persistQuickEvent({ tipo, lote, bag, nota, sheet: buildSheetFor(lote), batchSheetApi, eventDb: window.SetasEventosCultivoDB, awaitPersistence: false, event: evento });
+        const syncLog = window.SetasBitacoraDB?.actualizarLote ? Promise.resolve().then(() => window.SetasBitacoraDB.actualizarLote(lote.id, { lifecycleEvents: nextLog })) : Promise.reject(new Error("Respaldo de Bitácora no disponible."));
+        Promise.all([result.syncPromise, syncLog]).then(() => updateStatus({ status: "synchronized", savedLocally: true, error: null })).catch((err) => updateStatus({ status: "error", savedLocally: true, error: err.message || "No se pudo sincronizar." }));
+        setQrEventoObsAbierta(false);
+        setQrEventoObsNota("");
       } catch (err) {
-        console.warn("No se pudo reflejar el evento en la bitácora del lote:", err);
+        if (evento) updateStatus({ status: "error", savedLocally, error: err.message || "No se pudo guardar el evento." });
+        else setNoticeDlg({ title: "No se pudo guardar", msg: err.message });
+      } finally {
+        qrSavingRef.current.delete(captureKey);
       }
-      setQrEventoObsAbierta(false);
-      setQrEventoObsNota("");
-      setNoticeDlg({ title: tipo === "riego" ? "Riego registrado" : "Observación registrada", msg: `Lote ${lote.codigo}${bag ? " · bolsa " + bag.codigo : ""}.` });
       return;
     }
     if (tipo === "contaminacion") {
@@ -5979,6 +6005,7 @@ BATCH (${numBags}×${kgBag} kg):
       setDiagError("");
       setDiagNotes("");
       setShowQrSheet(false);
+      setShowFieldActionModal(false);
       setShowDiagModal(true);
       return;
     }
@@ -5995,8 +6022,71 @@ BATCH (${numBags}×${kgBag} kg):
         observaciones: ""
       });
       setShowQrSheet(false);
+      setShowFieldActionModal(false);
       setShowBitCosecha(true);
     }
+  };
+  const renderQrCaptures = (currentLote, scannedBag, currentSheet) => {
+    if (!currentLote) return null;
+    const qrAllowedActions = new Set((currentSheet?.actions || []).filter((action) => !action.blockedBy).map((action) => action.action));
+    return /* @__PURE__ */ React.createElement("section", { "aria-label": "Registrar en este lote", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Reportar evento"), qrEventoStatuses.filter((item) => item.loteId === currentLote.id).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.eventId, "data-testid": "qr-evento-status", "data-sync-status": item.status, role: "status", style: { fontSize: 16, lineHeight: 1.5, padding: 10, border: "1px solid var(--border-soft)", overflowWrap: "anywhere" } }, /* @__PURE__ */ React.createElement("strong", null, item.tipo === "riego" ? "Riego" : "Observación"), " · ", item.nota, /* @__PURE__ */ React.createElement("div", null, item.status === "pending" ? "Guardado en este equipo · sincronización pendiente" : item.status === "synchronized" ? "Sincronizado con el servidor" : `${item.savedLocally ? "Guardado en este equipo. " : "No se guardó en este equipo. "}${item.error}`), item.status === "error" && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", style: { minHeight: 48, fontSize: 16 }, onClick: () => reportarEventoCultivo(item.tipo, currentLote, item.bag, item.nota, item.event) }, "Reintentar"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, "data-testid": "qr-reportar-evento" }, qrAllowedActions.has("inspection") && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-action": "evento-observacion",
+        style: { minHeight: 48, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 600 },
+        onClick: () => setQrEventoObsAbierta((v) => !v)
+      },
+      "📝 Observación"
+    ), qrAllowedActions.has("riego") && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-action": "evento-riego",
+        style: { minHeight: 48, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 600 },
+        onClick: () => reportarEventoCultivo("riego", currentLote, scannedBag)
+      },
+      "💧 Riego"
+    ), qrAllowedActions.has("contamination") && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-action": "evento-contaminacion",
+        style: { minHeight: 48, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 600 },
+        onClick: () => reportarEventoCultivo("contaminacion", currentLote, scannedBag)
+      },
+      "⚠️ Contaminación"
+    ), qrAllowedActions.has("harvest") && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-action": "evento-cosecha_parcial",
+        style: { minHeight: 48, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 600 },
+        onClick: () => reportarEventoCultivo("cosecha_parcial", currentLote, scannedBag)
+      },
+      "🧺 Cosecha parcial"
+    )), qrEventoObsAbierta && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        "data-testid": "qr-evento-observacion-nota",
+        className: "inv-input",
+        rows: 2,
+        placeholder: "Nota de campo (obligatoria)",
+        value: qrEventoObsNota,
+        onChange: (e) => setQrEventoObsNota(e.target.value),
+        style: { resize: "vertical", fontSize: 16 }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "inv-btn inv-btn-pri",
+        style: { minHeight: 48 },
+        disabled: !qrEventoObsNota.trim(),
+        onClick: () => reportarEventoCultivo("observacion", currentLote, scannedBag, qrEventoObsNota)
+      },
+      "Guardar observación"
+    )));
   };
   const enqueueFieldTransition = async (lote, from, to) => {
     const SHEET = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
@@ -7420,7 +7510,7 @@ BATCH (${numBags}×${kgBag} kg):
       "aria-label": `Revisar receta activa: ${recipe.length} ingrediente${recipe.length === 1 ? "" : "s"}`
     },
     /* @__PURE__ */ React.createElement("span", null, "Ruta de producción"),
-    /* @__PURE__ */ React.createElement("strong", null, formNextState === "species" ? "Falta definir la especie" : formNextState === "balance" ? "Falta cerrar el balance" : "Receta lista para preparar"),
+    /* @__PURE__ */ React.createElement("strong", null, formNextState === "species" ? "Falta definir la especie" : formNextState === "balance" ? "Falta cerrar el balance" : "Composición lista · revisar Perito"),
     /* @__PURE__ */ React.createElement("em", null, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s", " · Revisar receta · Autoguardado")
   ), /* @__PURE__ */ React.createElement(
     "button",
@@ -8404,6 +8494,7 @@ Click para ver análisis completo`
       {
         onClose: () => setShowFieldActionModal(false),
         lote: currentLote,
+        captureContent: renderQrCaptures(currentLote, bitBolsas.find((b) => b.id === qrScannedBagId && b.loteId === currentLote?.id) || null, buildSheetFor(currentLote)),
         db: fieldDb,
         operatorRole: operatorRole2,
         operatorId,
@@ -8596,7 +8687,7 @@ Click para ver análisis completo`
             }
           }
         }
-      )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, "data-testid": "qr-contextual-actions" }, currentSheet && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)" } }, "Acciones válidas en ", currentSheet.stateLabel.toLowerCase()), (currentSheet ? currentSheet.actions : [{ action: "harvest", label: "Registrar cosecha", blockedBy: null }, { action: "contamination", label: "Reportar contaminación", blockedBy: null }]).map((a, i) => /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, "data-testid": "qr-contextual-actions" }, currentSheet && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)" } }, "Acciones válidas en ", currentSheet.stateLabel.toLowerCase()), (currentSheet ? currentSheet.actions.filter((a) => !["inspection", "riego", "contamination", "harvest"].includes(a.action)) : []).map((a, i) => /* @__PURE__ */ React.createElement(
         "button",
         {
           key: a.action,
@@ -8605,7 +8696,7 @@ Click para ver análisis completo`
           disabled: Boolean(a.blockedBy),
           title: a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : a.requires && a.requires.length ? `Pide: ${a.requires.join(", ")}` : void 0,
           style: {
-            minHeight: i === 0 ? 46 : 44,
+            minHeight: 48,
             cursor: a.blockedBy ? "not-allowed" : "pointer",
             opacity: a.blockedBy ? 0.5 : 1,
             background: a.action === "contamination" ? "var(--accent-terracotta-dim,#EFE0D3)" : i === 0 ? "var(--accent-olive,#5B6B44)" : "var(--paper-0,#F7F4EC)",
@@ -8613,7 +8704,7 @@ Click para ver análisis completo`
             border: `1px solid ${a.action === "contamination" ? "var(--accent-terracotta,#A85C32)" : i === 0 ? "var(--accent-olive,#5B6B44)" : "var(--border-hairline,#8C7F5B)"}`,
             borderRadius: "var(--radius-md,3px)",
             fontFamily: "var(--font-sans)",
-            fontSize: i === 0 ? 13 : 12,
+            fontSize: 16,
             fontWeight: i === 0 ? 700 : 600,
             display: "flex",
             alignItems: "center",
@@ -8621,34 +8712,6 @@ Click para ver análisis completo`
             gap: 8
           },
           onClick: () => {
-            if (a.action === "harvest") {
-              setBitActiveLoteId(currentLote.id);
-              setBitCosechaForm({
-                loteId: currentLote.id,
-                bolsaId: scannedBag ? scannedBag.id : "",
-                codigo: scannedBag ? scannedBag.codigo : "",
-                flush: 1,
-                fecha: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-                pesoFresco: "",
-                calidad: 3,
-                observaciones: ""
-              });
-              setShowQrSheet(false);
-              setShowBitCosecha(true);
-              return;
-            }
-            if (a.action === "contamination") {
-              setDiagLoteId(currentLote.id);
-              const b = scannedBag || bitBolsas.find((x) => x.loteId === currentLote.id && x.estado !== "descartada");
-              setDiagBolsaId(b?.id || "");
-              setDiagImageBase64("");
-              setDiagResult(null);
-              setDiagError("");
-              setDiagNotes("");
-              setShowQrSheet(false);
-              setShowDiagModal(true);
-              return;
-            }
             setShowQrSheet(false);
             runBatchAction(a.action, currentLote, currentSheet);
           }
@@ -8656,64 +8719,7 @@ Click para ver análisis completo`
         a.action === "harvest" && /* @__PURE__ */ React.createElement(AppIcon, { name: "harvest", size: 15, color: "var(--paper-0)" }),
         a.action === "contamination" && /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
         a.label
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Reportar evento"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, "data-testid": "qr-reportar-evento" }, /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          "data-action": "evento-observacion",
-          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
-          onClick: () => setQrEventoObsAbierta((v) => !v)
-        },
-        "📝 Observación"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          "data-action": "evento-riego",
-          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
-          onClick: () => reportarEventoCultivo("riego", currentLote, scannedBag)
-        },
-        "💧 Riego"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          "data-action": "evento-contaminacion",
-          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
-          onClick: () => reportarEventoCultivo("contaminacion", currentLote, scannedBag)
-        },
-        "⚠️ Contaminación"
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          "data-action": "evento-cosecha_parcial",
-          style: { minHeight: 42, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600 },
-          onClick: () => reportarEventoCultivo("cosecha_parcial", currentLote, scannedBag)
-        },
-        "🧺 Cosecha parcial"
-      )), qrEventoObsAbierta && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement(
-        "textarea",
-        {
-          "data-testid": "qr-evento-observacion-nota",
-          className: "inv-input",
-          rows: 2,
-          placeholder: "Nota de campo (obligatoria)",
-          value: qrEventoObsNota,
-          onChange: (e) => setQrEventoObsNota(e.target.value),
-          style: { resize: "vertical", fontSize: 12 }
-        }
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          className: "inv-btn inv-btn-pri",
-          style: { minHeight: 40 },
-          disabled: !qrEventoObsNota.trim(),
-          onClick: () => reportarEventoCultivo("observacion", currentLote, scannedBag, qrEventoObsNota)
-        },
-        "Guardar observación"
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Siempre disponible"), /* @__PURE__ */ React.createElement(
+      )), renderQrCaptures(currentLote, scannedBag, currentSheet), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Siempre disponible"), /* @__PURE__ */ React.createElement(
         "button",
         {
           type: "button",
