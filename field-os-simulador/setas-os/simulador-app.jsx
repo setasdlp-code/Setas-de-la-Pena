@@ -4196,23 +4196,6 @@ const precioPonderado=(ingredienteId,lotes)=>{
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
 
-// Descuenta inventario FIFO — misma lógica que SetasInventario.consumirInventarioFIFO
-// en inventario.js (ver el comentario de arriba sobre por qué está duplicada).
-const consumirInventarioFIFOLocal=(lotes,rows)=>{
-  let updated=[...lotes];
-  for(const row of rows){
-    let remaining=row.krKg;
-    const lotesIng=updated.filter(l=>l.activo&&l.ingredienteId===row.id).sort((a,b)=>new Date(a.fechaIngreso)-new Date(b.fechaIngreso));
-    for(const lote of lotesIng){
-      if(remaining<=0.001) break;
-      const consume=Math.min(lote.cantidadKgDisponible,remaining);
-      updated=updated.map(l=>l.id===lote.id?{...l,cantidadKgDisponible:Math.max(0,Math.round((l.cantidadKgDisponible-consume)*1000)/1000)}:l);
-      remaining-=consume;
-    }
-  }
-  return updated;
-};
-
 const SEED_PROVEEDORES=[
   {id:'prov_paloquemao',nombre:'Plaza de Paloquemao',tipo:'plaza',municipio:'Bogotá'},
   {id:'prov_bavaria',nombre:'Bavaria Tocancipá',tipo:'industrial',municipio:'Tocancipá'},
@@ -6294,58 +6277,128 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // ── Ejecutar Lote: muestra modal de confirmación antes de descontar inventario ──
   const ejecutarLote=(rows,loteNum,fecha)=>{
     if(!rows||!rows.length) return;
-    const preview=rows.filter(x=>x.g).map(x=>{
-      const krKg=x.grR/1000;
-      const stock=invLotes.filter(l=>l.activo&&l.ingredienteId===x.g.id).reduce((s,l)=>s+l.cantidadKgDisponible,0);
-      return{id:x.g.id,name:x.g.name,krKg,stockActual:stock,unit:'kg',ok:stock>=krKg*0.999};
+    // Mismo insumo moisture-override que alimenta el useMemo de prodRows (línea
+    // ~6010) y la hoja imprimible (línea ~12519) — prodIngs no es una variable de
+    // ámbito de componente, así que se recalcula aquí con la misma expresión para
+    // que el plan de lanzamiento vea exactamente la misma humedad por insumo que
+    // ya se usó para construir `rows`.
+    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    // x.m (prodRows) es una fracción 0–0.92 (Math.min(0.92,Math.max(0,(g.moisture||0)/100))),
+    // pero buildLaunchPlan's moistureOverrides/clampMoisture espera un porcentaje
+    // (pct/100) como g.moisture — se multiplica ×100 para no dividir dos veces.
+    const moistureOverrides=Object.fromEntries(rows.filter(x=>x.g&&x.m!=null).map(x=>[x.g.id,x.m*100]));
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      recipe, bags:parseInt(prodBags)||1, kgPerBag:prodKg||1.5, moistureTarget:prodH||an?.moistureTarget||65,
+      ingredients:prodIngs, inventoryLots:invLotes, moistureOverrides,
+      // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
+      // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
+      // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
+      scaleG:prodScaleG||0,
+      bagUnit: bagType?.stockId ? { ingredientId:bagType.stockId, units:parseInt(prodBags)||0 } : null,
+      unitIngredientIds: UNIT_INGREDIENT_IDS,
     });
-    // La bolsa seleccionada en "Tipo de contenedor" también se descuenta del inventario
-    // (en unidades, no kg) — comparte el mismo modelo FIFO que el sustrato vía stockId.
-    const bt=BAG_TYPES.find(b=>b.id===prodBagType);
-    if(bt&&bt.stockId){
-      const needed=parseInt(prodBags)||0;
-      const stock=stockActual(bt.stockId,invLotes);
-      preview.push({id:bt.stockId,name:bt.name,krKg:needed,stockActual:stock,unit:'uds',ok:stock>=needed});
-    }
-    setLoteBatchConfirm({preview,loteNum,fecha});
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const preview=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,stockActual:stockActual(i.ingredientId,invLotes),unit:'kg',ok:!faltante(i.ingredientId)})),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,stockActual:stockActual(u.ingredientId,invLotes),unit:'uds',ok:!faltante(u.ingredientId)})),
+    ];
+    // Nueva sesión de "Ejecutar Lote": rearma la guarda de re-entrancia (Task 8).
+    ejecutarLoteInFlight.current=false;
+    setEjecutandoLote(false);
+    setLoteBatchConfirm({preview,plan,loteNum,fecha});
   };
-  const confirmarEjecucion=()=>{
-    if(!loteBatchConfirm) return;
-    const{preview,loteNum,fecha}=loteBatchConfirm;
-    const now=new Date().toISOString();
-    setInvLotes(prev=>{
-      const updated=consumirInventarioFIFOLocal(prev,preview);
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
-      return updated;
-    });
-    const ts=Date.now();
-    const newMovs=preview.map((row,i)=>({id:'mov_lote_'+ts+'_'+i,tipo:'consumo_lote',ingredienteId:row.id,kgMovidos:row.krKg,loteNum:loteNum||'—',fecha,nota:`Lote ${loteNum||'—'} · ${fecha}`,timestamp:now}));
-    saveMovimientos([...invMovimientos,...newMovs]);
-    setLoteBatchConfirm(null);
-    setLoteSyncErr('');
-    // localStorage ya descontó al instante (mismo patrón que saveR): la transacción de
-    // Firestore corre en segundo plano y es la que de verdad evita el doble descuento
-    // entre operadores/dispositivos concurrentes — un fallo de red no bloquea al operador,
-    // solo se avisa si no sincronizó.
-    if(window.SetasDB){
-      (async()=>{
-        try{
-          for(const row of preview){
-            await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+
+  // ── Guarda de re-entrancia contra doble clic — "Ejecutar Lote" (Task 8) ──
+  // Ref/estado propios, NO compartidos con launchInFlight/conGuardaLanzamiento
+  // (Task 7, "Lanzar Lote"): son dos flujos distintos, visibles a la vez en el
+  // mismo Formulador, con sus propios modales (loteBatchConfirm vs.
+  // prodLaunchForm/showProdLaunchModal) y sus propios puntos de reapertura. Si
+  // compartieran una sola bandera, abrir uno de los dos flujos (que rearma su
+  // guarda al abrirse, igual que openProdLauncher) podría liberar de golpe la
+  // guarda del otro flujo mientras éste sigue latched en caso 2 (consumo ya
+  // registrado, a la espera de que el operador abra una sesión nueva) —
+  // reintroduciendo el riesgo de doble descuento que la guarda existe para
+  // evitar. Mismo patrón que conGuardaLanzamiento, aplicado a su propio ref.
+  const ejecutarLoteInFlight=useRef(false);
+  const [ejecutandoLote,setEjecutandoLote]=useState(false);
+  const conGuardaEjecucion=fn=>(...args)=>{
+    if(ejecutarLoteInFlight.current) return;
+    ejecutarLoteInFlight.current=true;
+    setEjecutandoLote(true);
+    try{
+      return fn(...args);
+    }catch(e){
+      ejecutarLoteInFlight.current=false;
+      setEjecutandoLote(false);
+      console.error('Error en operación protegida por conGuardaEjecucion:',e);
+    }
+  };
+
+  const confirmarEjecucion=conGuardaEjecucion(()=>{
+    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    const{preview,plan,loteNum,fecha}=loteBatchConfirm;
+    let consumoRegistrado=false;
+    try{
+      const now=Date.now();
+      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now});
+      const registered=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,nota:`Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}`});
+      if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+      consumoRegistrado=true;
+
+      setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      window.SetasBitacoraDB?.guardarLote?.(lote);
+      window.SetasBitacoraDB?.guardarBolsas?.(bolsas);
+
+      setLoteBatchConfirm(null);
+      setLoteSyncErr('');
+      setEjecutandoLote(false);
+      // localStorage ya descontó al instante (mismo patrón que saveR): la transacción de
+      // Firestore corre en segundo plano y es la que de verdad evita el doble descuento
+      // entre operadores/dispositivos concurrentes — un fallo de red no bloquea al operador,
+      // solo se avisa si no sincronizó.
+      if(window.SetasDB){
+        (async()=>{
+          try{
+            await window.SetasDB.crearLoteProduccion({
+              codigo: lote.codigo,
+              especie: SPP[sKey]?.name || sKey,
+              camara: '—',
+              operador: '—',
+              receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
+            });
+          }catch(err){
+            setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
           }
-          await window.SetasDB.crearLoteProduccion({
-            codigo: loteNum || ('LOTE-'+ts),
-            especie: SPP[sKey]?.name || sKey,
-            camara: '—',
-            operador: '—',
-            receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
-          });
-        }catch(err){
-          setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
-        }
-      })();
+        })();
+      }
+    }catch(e){
+      console.error('Error al ejecutar lote:',e);
+      if(consumoRegistrado){
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente, por
+        // loteId) antes de que algo más fallara. Reintentar acuñaría un loteId
+        // nuevo y descontaría el inventario una segunda vez, así que la guarda
+        // NO se libera aquí — solo se reabre al volver a llamar ejecutarLote.
+        setLoteBatchConfirm(null);
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'Lote ejecutado con errores',
+          msg:`El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+        });
+      }else{
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
+        // la guarda y se deja el modal de confirmación abierto.
+        ejecutarLoteInFlight.current=false;
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'No se pudo ejecutar el lote',
+          msg:`Ocurrió un error antes de registrar el consumo de bodega: ${e?.message||'error desconocido'}. Intenta de nuevo.`
+        });
+      }
     }
-  };
+  });
   // ── Bitácora helpers ──
   // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
   // lote), Producción (Lanzar producción) y Formulador (N.º lote a imprimir/
@@ -7024,6 +7077,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           <div>
             <div className="panel">
+              {SetasInventoryConsumptionApi.failuresForBanner(invOps).length>0&&(
+                <div role="alert" className="inv-section" style={{borderColor:'var(--status-error)'}}>
+                  <strong>Consumos de bodega sin guardar en el servidor</strong>
+                  <ul>{SetasInventoryConsumptionApi.failuresForBanner(invOps).map(o=>(<li key={o.opId}>{o.codigo||o.loteId} · {o.attempts} intentos · {o.lastError}</li>))}</ul>
+                  <button className="btn" style={{minHeight:44}} onClick={()=>{saveInvOps(readInvOps().map(o=>o.status==='failed'?{...o,nextAttemptAt:0}:o));runInventorySync();}}>Reintentar ahora</button>
+                </div>
+              )}
               {/* STATS ROW — editorial */}
               <div className="inv-stat-row">
                 <div className="inv-stat">
@@ -9183,6 +9243,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
                               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              {SetasInventoryConsumptionApi.isPendingForLote(invOps,lote.id)&&<span className="chip" title="El consumo de bodega de este lote aún no se guardó en el servidor" style={{marginLeft:6}}>Pendiente de sincronizar inventario</span>}
                               <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
@@ -12817,8 +12878,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </table>
               {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
-                <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
+                <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
+                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
               </div>
           </AccessibleModal>
         )}
