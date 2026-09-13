@@ -143,5 +143,9 @@
     return best.map(function(row){ return row.map(function(v){ return v?1:0; }); });
   }
 
-  window.QRMini={ matrix:matrix };
+  var root = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this);
+  root.QRMini = { matrix: matrix };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { matrix: matrix };
+  }
 })();
