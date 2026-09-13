@@ -145,7 +145,17 @@ test('simulador-app.jsx y simulador-app.js integran el modal de triaje y estados
   // Integración de estado y modal
   assert.match(jsx, /data-testid="biosecurity-triage-modal"/);
   assert.match(jsx, /openContaminationTriage/);
-  assert.match(jsx, /cuarentena:\s*'quarantine'/);
+  // Antes se afirmaba la entrada `cuarentena: 'quarantine'` de una tabla local
+  // en simulador-app.jsx. Esa tabla se eliminó: divergía del servidor porque no
+  // tenía `activo`, y cada llamador improvisaba su respaldo. La traducción vive
+  // ahora en batch-sheet.js, que es la que aplica también la Cloud Function —
+  // así que se comprueba el comportamiento, no dónde está escrito.
+  {
+    const { normalizeLifecycleState } = require('./batch-sheet.js');
+    assert.equal(normalizeLifecycleState('cuarentena', 'inoculated'), 'quarantine');
+    assert.match(jsx, /loteLifecycleState/,
+      'el jsx debe resolver el estado con la regla compartida');
+  }
   assert.match(jsx, /quarantine:\s*'Cuarentena'/);
   assert.match(jsx, /🛡️ Triaje de Bioseguridad & Cuarentena/);
   assert.match(jsx, /showTriageModal/);

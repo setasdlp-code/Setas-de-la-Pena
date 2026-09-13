@@ -7488,8 +7488,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
   );
 
   const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
+  // El estado del lote se resuelve con la MISMA regla que aplica el servidor
+  // (functions/accept-field-event.js) y la ficha. Aquí hubo una tabla local sin
+  // `activo`, y cada llamador improvisaba su respaldo: 'incubation' en un sitio,
+  // 'planned' en otro, undefined en un tercero — mientras el servidor decía
+  // 'inoculated' para todo lote recién creado. La tabla compartida ya cubre
+  // `cuarentena`, así que el triaje de bioseguridad no pierde nada.
+  const loteLifecycleState=(lote)=>{
+    if(!lote) return 'inoculated';
+    if(lote.lifecycleState) return lote.lifecycleState;
+    const bs=typeof window!=='undefined'?window.SetasBatchSheet:null;
+    return bs&&bs.normalizeLifecycleState?bs.normalizeLifecycleState(lote.estado,'inoculated'):'inoculated';
+  };
   const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
-  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded',cuarentena:'quarantine'};
   const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
   const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
   const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
@@ -7512,7 +7523,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // solo objeto, y deriva de ahí las acciones válidas ahora. La UI no vuelve a
   // decidir qué acción cabe: pregunta a la ficha.
   const batchSheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
-  const operatorRole=(props.isAdmin===true||props.isAdmin==='true')?'direccion':'operario';
+  // El rol de autorización lo resuelve getFieldOperatorRole() desde
+  // usuarios/{uid}.rol de la sesión, que es contra lo que autoriza el servidor.
+  // props.isAdmin viene del selector de operario del encabezado y no coincide.
+  const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
+  useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
+  const operatorRole=fieldOperatorRole;
   const buildSheetFor=(lote)=>{
     if(!batchSheetApi||!lote) return null;
     const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
@@ -7668,7 +7684,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const activeSheet=sheet||buildSheetFor(lote);
       if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
       const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
+      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
       if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
         const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
         updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
@@ -7678,10 +7694,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
     if(action==='discard'){
-      const from=legacyLifecycle[lote.estado]||'quarantine';
+      const from=loteLifecycleState(lote);
       if(workflow&&workflow.canTransition(from,'discarded')){
         const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
-        updateBitLote(lote.id,{estado:'descartado',lifecycleState:'discarded',lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,'discarded');
       }
       return;
     }
@@ -7829,7 +7847,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&stats.contPct<20)||isQuarantine,
         dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
         title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-        why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+        why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`};
     });
     const queue=workflow?workflow.buildTodayQueue(source,now):source;
     const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
@@ -7857,11 +7875,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BatchDetailV2=({lote})=>{
     const stats=calcLoteStats(lote.id);
     const sheet=buildSheetFor(lote);
-    const state=sheet?sheet.state:(legacyLifecycle[lote.estado]||'planned');
+    const state=sheet?sheet.state:loteLifecycleState(lote);
     const isAdmin=props.isAdmin===true||props.isAdmin==='true';
     // Las acciones salen de la ficha (estado + permisos + bloqueos). Sin la ficha
     // se cae a la máquina de estados desnuda, nunca a un menú genérico.
-    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,isAdmin?'direccion':'operario').map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
+    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,operatorRole).map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
     const events=sheet
       ?sheet.timeline.map((e,i)=>({id:e.eventId||e.bagId||e.cosechaId||`${e.type}-${i}`,title:e.title,meta:[e.at,e.meta].filter(Boolean).join(' · '),kind:e.provenance}))
@@ -12851,7 +12869,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
           const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
           const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
-          const operatorRole = props.operatorRole || (isAdmin ? 'direccion' : 'produccion');
+          const operatorRole = props.operatorRole || fieldOperatorRole;
           const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
           const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
 
@@ -14605,7 +14623,7 @@ interval:
 
           const handleConfirmTriage = () => {
             if (!currentLote) return;
-            const currentLifecycle = legacyLifecycle[currentLote.estado] || 'incubation';
+            const currentLifecycle = loteLifecycleState(currentLote);
             const targetState = cw
               ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct)
               : (triageDecision === 'discard' || lossCalc.lossPct >= 50 ? 'discarded' : triageDecision === 'quarantine' || lossCalc.lossPct >= 20 ? 'quarantine' : currentLifecycle);
@@ -14664,12 +14682,17 @@ interval:
               ...(transitionEvt ? [transitionEvt] : [])
             ];
 
+            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
+            // y updateBitLote sincroniza después de pintar, así que un rechazo
+            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
             updateBitLote(currentLote.id, {
               estado: nextEstado,
-              lifecycleState: targetState,
               numBolsas: lossCalc.healthyBags,
               lifecycleEvents: updatedEvents
             });
+            if (targetState && targetState !== currentLifecycle) {
+              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+            }
 
             setShowTriageModal(false);
             setNoticeDlg({
@@ -15012,7 +15035,7 @@ interval:
             });
 
             if (workflow && currentLote) {
-              const fromState = legacyLifecycle[currentLote.estado] || 'incubation';
+              const fromState = loteLifecycleState(currentLote);
               const contBags = bolsasDelLote.filter(b => b.id !== currentBolsa.id && b.estado === 'contaminada').length + (nuevoEstado === 'contaminada' ? 1 : 0);
               const contPct = bolsasDelLote.length ? Math.round((contBags / bolsasDelLote.length) * 100) : 0;
               
@@ -15023,11 +15046,16 @@ interval:
                   to: 'discarded',
                   reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
                 });
+                // El descarte se encola como cualquier otra transición. Escribir
+                // lifecycleState aquí lo rechazaban las reglas, y como
+                // updateBitLote guarda primero en local y sincroniza después, el
+                // fallo aterrizaba en un aviso lateral: el lote se veía
+                // descartado en el teléfono y seguía activo en el servidor, donde
+                // otro operario lo encontraba disponible.
                 updateBitLote(currentLote.id, {
-                  estado: 'descartado',
-                  lifecycleState: 'discarded',
                   lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
                 });
+                enqueueFieldTransition(currentLote, fromState, 'discarded');
               }
             }
 
