@@ -1,16 +1,18 @@
 # Sources & inspiration · DS-2026
 
-Twelve references, prioritised by how directly each one shaped a decision in
-this system. Every URL was requested during authoring on 2026-09-04; the
-**Check** column records what the server actually returned.
+Twelve visual references, prioritised by how directly each one shaped a design
+decision. These groups measure visual influence; they are not the project's
+scientific evidence tiers and do not validate biological, operational or
+commercial claims. Every URL was requested during authoring on 2026-09-04; the
+**Check** column records only the access result.
 
 - `200` — fetched successfully.
-- `403` — the host exists and responded, but refused an automated request
-  (bot protection). The site is real; only the automated check was blocked.
+- `403` — automated access was refused. This result does not verify the page,
+  title or claim; revisit it manually before relying on the reference.
 
 ---
 
-## Tier 1 — shaped the system directly
+## Primary visual references
 
 ### 1. Henry G. Gilbert Nursery and Seed Trade Catalog Collection (USDA)
 `200` · https://archive.org/details/usda-nurseryandseedcatalog
@@ -48,7 +50,7 @@ spines drawn over farther ones, each filled with paper).
 
 ---
 
-## Tier 2 — packaging and identity
+## Supporting references — packaging and identity
 
 ### 5. Taller de Hierbas — Colombian herbal skincare
 `200` · https://tallerdehierbas.com
@@ -76,9 +78,9 @@ label block** and the amber/neutral discipline come from this lineage.
 ### 8. Luker Chocolate — Colombian single-origin
 `200` · https://lukerchocolate.com
 
-Origin storytelling with real production data (farm, altitude, harvest) on the
-package. Direct precedent for surfacing `LOTE 026 · HER-01 · 17 AGO 2026` and a
-traceability QR to a *consumer*, which most food packaging still hides.
+Origin storytelling with production data (farm, altitude, harvest) on the
+package. Visual precedent for surfacing a lot identifier and traceability QR to
+a consumer. It does not validate the example data used by this system.
 
 ### 9. Juan Valdez
 `200` · https://juanvaldez.com
@@ -89,7 +91,7 @@ warmth from paper stock and letterforms. Useful for knowing what not to copy.
 
 ---
 
-## Tier 3 — archives and cross-checks
+## Exploratory references — archives and cross-checks
 
 ### 10. Rijksmuseum Rijksstudio
 `200` · https://www.rijksmuseum.nl/en/rijksstudio

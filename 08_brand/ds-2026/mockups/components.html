@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Componentes interactivos · DS-2026</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="_shell.css">
+  <style>
+    .component-sheet { width:min(1120px,100%); margin:0 auto; background:var(--surface-page); border:var(--rule-hairline); padding:var(--space-5); }
+    .component-head { display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-3); padding-bottom:var(--space-3); border-bottom:var(--rule-heavy); }
+    .component-nav { display:flex; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-2) 0 var(--space-5); }
+    .component-section { display:grid; grid-template-columns:minmax(180px,3fr) minmax(0,9fr); gap:var(--space-4); padding:var(--space-4) 0; border-top:var(--rule-hairline); }
+    .component-demo { display:flex; flex-wrap:wrap; align-items:flex-start; gap:var(--space-2); }
+    .component-stack { width:min(520px,100%); display:grid; gap:var(--space-2); }
+    .component-meta { display:grid; gap:var(--space-half); }
+    fieldset { border:0; padding:0; margin:0; }
+    legend { font:var(--t-label); letter-spacing:var(--tracking-label); text-transform:uppercase; color:var(--text-metadata); margin-bottom:var(--space-1); }
+    @media (max-width:760px) {
+      body { padding:var(--space-2); }
+      .component-sheet { padding:var(--space-3); }
+      .component-head,.component-section { grid-template-columns:1fr; display:grid; }
+    }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <main class="component-sheet">
+    <header class="component-head">
+      <div>
+        <div class="t-label">Setas de la Peña · DS-2026 Core</div>
+        <h1 style="margin-top:var(--space-1);margin-bottom:0">Interacción y procedencia</h1>
+      </div>
+      <div class="t-data">V1.1 · 11 SEP 2026</div>
+    </header>
+
+    <nav class="component-nav" aria-label="Secciones del pliego">
+      <a href="#buttons">Botones</a><a href="#fields">Campos</a>
+      <a href="#segment">Audiencia</a><a href="#states">Estados</a>
+      <a href="#view-states">Respuesta del sistema</a>
+    </nav>
+
+    <section class="component-section" id="buttons">
+      <div class="component-meta"><span class="t-label">01 · Acción</span><h2>Botones</h2><p class="t-small">La jerarquía expresa la próxima acción válida.</p></div>
+      <div class="component-demo">
+        <button class="sdp-btn sdp-btn--primary" type="button">Registrar medición</button>
+        <button class="sdp-btn" type="button">Ver trazabilidad</button>
+        <button class="sdp-btn sdp-btn--subtle" type="button">Cancelar</button>
+        <button class="sdp-btn" type="button" aria-busy="true">Guardando</button>
+        <button class="sdp-btn" type="button" disabled>No disponible</button>
+      </div>
+    </section>
+
+    <section class="component-section" id="fields">
+      <div class="component-meta"><span class="t-label">02 · Entrada</span><h2>Campos</h2><p class="t-small">Etiqueta, control, ayuda y error forman una unidad.</p></div>
+      <div class="component-stack">
+        <label class="sdp-field">
+          <span class="sdp-field__label">Temperatura observada</span>
+          <input class="sdp-field__control" inputmode="decimal" value="18,4" aria-describedby="temperature-hint">
+          <span class="sdp-field__hint" id="temperature-hint">°C · medición manual</span>
+        </label>
+        <label class="sdp-field sdp-field--error">
+          <span class="sdp-field__label">Código de lote</span>
+          <input class="sdp-field__control" value="026" aria-invalid="true" aria-describedby="lot-error">
+          <span class="sdp-field__error" id="lot-error">Incluye especie y cepa, por ejemplo GAN-XX.</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="component-section" id="segment">
+      <div class="component-meta"><span class="t-label">03 · Contexto</span><h2>Audiencia</h2><p class="t-small">El contenido cambia; la identidad permanece.</p></div>
+      <fieldset>
+        <legend>Mostrar información para</legend>
+        <div class="sdp-segment">
+          <label class="sdp-segment__option"><input type="radio" name="audience" checked><span>Hogar</span></label>
+          <label class="sdp-segment__option"><input type="radio" name="audience"><span>Chef / HORECA</span></label>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="component-section" id="states">
+      <div class="component-meta"><span class="t-label">04 · Dos ejes</span><h2>Estado y procedencia</h2><p class="t-small">Qué ocurre y cómo lo sabemos nunca se confunden.</p></div>
+      <div class="component-stack">
+        <div class="component-demo" aria-label="Estados operativos">
+          <span class="sdp-state sdp-state--active">Activo</span>
+          <span class="sdp-state sdp-state--attention">Atención</span>
+          <span class="sdp-state sdp-state--blocked">Cuarentena</span>
+          <span class="sdp-state sdp-state--unavailable">No disponible</span>
+        </div>
+        <div class="component-demo" aria-label="Procedencia del dato">
+          <span class="sdp-provenance sdp-provenance--measured">Medido · 10:42</span>
+          <span class="sdp-provenance sdp-provenance--estimated">Estimado</span>
+          <span class="sdp-provenance sdp-provenance--simulated">Simulado</span>
+          <span class="sdp-provenance sdp-provenance--pending">Por validar</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="component-section" id="view-states">
+      <div class="component-meta"><span class="t-label">05 · Respuesta</span><h2>Estados de vista</h2><p class="t-small">Cada situación explica la siguiente acción.</p></div>
+      <div class="component-stack">
+        <div class="sdp-view-state" role="status"><h3 class="sdp-view-state__title">Sin lecturas todavía</h3><p class="sdp-view-state__body">Registra una medición o conecta el sensor de la cámara.</p><div><button class="sdp-btn" type="button">Registrar medición</button></div></div>
+        <div class="sdp-view-state sdp-view-state--error" role="alert"><h3 class="sdp-view-state__title">No pudimos guardar el registro</h3><p class="sdp-view-state__body">Conservamos los datos en este dispositivo. Intenta enviarlos de nuevo.</p><div><button class="sdp-btn sdp-btn--primary" type="button">Reintentar</button></div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

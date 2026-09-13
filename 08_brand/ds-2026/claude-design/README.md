@@ -53,7 +53,7 @@ Semantic aliases: `--surface-page`, `--surface-panel`, `--surface-recessed`,
 > top, or as the 4px leading rule of a banner. **Never as text.** When ochre
 > must be the text colour use `--warning-text`.
 
-**Type — nine roles, as classes or as `font:` shorthand tokens.**
+**Type — twelve core roles, as classes or as `font:` shorthand tokens.**
 
 `.t-display-01` `.t-display-02` `.t-heading-01` `.t-heading-02` `.t-heading-03`
 `.t-species` `.t-latin` `.t-body` `.t-small` `.t-data` `.t-label` `.t-micro`
@@ -99,7 +99,7 @@ draws U+2082 at full size, so an unwrapped `CO₂` in editorial prose reads as
 ## Rules that are not negotiable
 
 - **No shadows, no gradients, no glass.** Depth is a rule, never a blur.
-- **One accent per view.** Colour is classification or state, never decoration.
+- **One identity accent per composition.** Semantic status colours may coexist.
 - **Status is colour AND word** — never a colour alone; it must survive a
   photocopy and a colour-blind reader.
 - **Biological imagery is evidence**: frame + image + caption, or it does not ship.

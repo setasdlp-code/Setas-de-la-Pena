@@ -69,5 +69,13 @@
     "height": 900,
     "scale": 2,
     "fullPage": true
+  },
+  {
+    "name": "10-components",
+    "file": "mockups/components.html",
+    "width": 1280,
+    "height": 1100,
+    "scale": 2,
+    "fullPage": true
   }
 ]
