@@ -59,6 +59,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../post-harvest-engine.js",
   "../historical-calibration.js",
   "../species-targets.js",
+  "../recipe-version.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
   // Cuaderno de campo offline. setas-os-workflow.js llega después, en

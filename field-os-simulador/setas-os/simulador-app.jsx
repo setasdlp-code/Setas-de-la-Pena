@@ -1334,8 +1334,12 @@ if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; windo
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
-//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp.
-const MASS_BALANCE_TOL=0.5;
+//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp,
+//    definida una sola vez en recipe-version.js (declarado antes de usarse
+//    aquí; el resto de los puentes UMD vive más abajo, junto a los módulos
+//    que importan).
+const SetasRecipeVersionApi=(typeof SetasRecipeVersion!=='undefined'?SetasRecipeVersion:(typeof require!=='undefined'?require('./recipe-version.js'):null));
+const MASS_BALANCE_TOL=SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
 const massBalanceMsg=a=>{
   if(!a) return'';
@@ -10920,7 +10924,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         );})}
                       </div>
-                      {an&&<div className={`tbar ${an.tot>=99&&an.tot<=101?'ok':an.tot<95||an.tot>105?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
+                      {an&&<div className={`tbar ${isMassBalanced(an)?'ok':(an.tot<EB_PENALTY_BALANCE_BAND.min||an.tot>EB_PENALTY_BALANCE_BAND.max)?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
                       {normMode&&recipe.length>0&&(
                         <div className="norm-bar">
                           <span>⇌</span>
@@ -11314,7 +11318,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
                       {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</div>}

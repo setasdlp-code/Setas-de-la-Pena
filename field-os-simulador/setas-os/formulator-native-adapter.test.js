@@ -2,6 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
+require('./recipe-version.js');
 require('./formulator-api.js');
 
 // Prefer the real recipeDistance from perito-scenarios.js over a hand-rolled
@@ -68,12 +69,12 @@ test('applyRecipe delegates to the native adapter and skips DOM mutation', async
   }
 });
 
-test('unregistering the native adapter reverts adapterType to dom', () => {
+test('unregistering the native adapter reverts adapterType to null (no DOM fallback)', () => {
   const api = globalThis.SetasFormulatorAPI;
   const adapter = makeFakeAdapter([]);
   const unregister = api.registerNativeAdapter(adapter);
   unregister();
-  assert.equal(api.adapterType(), 'dom');
+  assert.equal(api.adapterType(), null);
 });
 
 // --- Final-review fixes: native applyRecipe success reporting + shared guards ---
@@ -189,4 +190,24 @@ test('applyRecipe rejects non-finite, non-positive, duplicate, or unbalanced rec
   } finally {
     unregister();
   }
+});
+
+// --- Task 3: no DOM fallback — without a native adapter, the API reports a
+// clear no-adapter result instead of touching the DOM. ---
+
+test('sin adaptador nativo: applyRecipe responde no_native_adapter y getState no toca el DOM', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const state = api.getState();
+  if (state.adapter !== null) return; // otro test dejó un adaptador registrado; este caso no aplica
+  assert.deepEqual(state.recipe, []);
+  assert.equal(state.batchWetKg, null);
+  const res = await api.applyRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40 }]);
+  assert.equal(res.ok, false);
+  assert.equal(res.code, 'no_native_adapter');
+});
+
+test('validateRecipe usa la tolerancia única de balance (±0.5)', () => {
+  const api = globalThis.SetasFormulatorAPI;
+  assert.equal(api.validateRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40.4 }]), null);
+  assert.match(api.validateRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40.6 }]), /±0\.5%/);
 });
