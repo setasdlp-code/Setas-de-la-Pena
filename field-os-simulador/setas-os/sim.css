@@ -3152,7 +3152,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items:center;
   gap:14px;
   margin:0 0 14px;
-  padding:10px 12px;
+  padding:10px 14px;
   border:1px solid var(--ink-800);
   border-left:4px solid var(--accent-olive);
   border-radius:var(--radius-sm);
@@ -3170,7 +3170,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   text-transform:uppercase;
 }
 .sim-root .form-species-identity > div{display:flex;flex-direction:column;min-width:0}
-.sim-root .form-species-identity strong{overflow:hidden;color:var(--paper-0);font:800 var(--text-base)/1.15 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-species-identity strong{overflow:hidden;color:var(--paper-0);font:800 var(--text-base)/1.15 var(--font-display);letter-spacing:-0.01em;text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-identity em{overflow:hidden;color:rgba(255,255,255,.68);font:italic var(--text-xs)/1.2 var(--font-display);text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-picker{display:grid;gap:var(--sp-3);min-width:0}
 .sim-root .form-species-picker select{
@@ -3182,12 +3182,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:rgba(255,255,255,.08);
   color:var(--paper-0);
   font:700 var(--text-xs)/1 var(--font-sans);
+  transition:border-color .15s ease;
+}
+.sim-root .form-species-picker select:focus-visible{
+  outline:2px solid var(--accent-olive);
+  outline-offset:2px;
 }
 .sim-root .form-species-targets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));min-width:0;border-left:1px solid rgba(255,255,255,.16)}
 .sim-root .form-species-targets > span{display:grid;gap:2px;min-width:0;padding:2px 10px;border-right:1px solid rgba(255,255,255,.16)}
 .sim-root .form-species-targets > span:last-child{border-right:0}
 .sim-root .form-species-targets small{color:rgba(255,255,255,.55);font:700 var(--text-micro)/1.2 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
-.sim-root .form-species-targets b{overflow:hidden;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-mono);text-overflow:ellipsis;white-space:nowrap}
+.sim-root .form-species-targets b{overflow:hidden;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-mono);font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
 .sim-root .form-species-mode.is-investigacion b{color:var(--color-investigacion)}
 
 /* Resumen de receta y evaluación en vivo. Permanece en el flujo para evitar
@@ -3208,10 +3213,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .live-dash-left{display:flex;align-items:center;gap:7px;min-width:160px}
 .sim-root .live-dash-species{color:var(--ink-900);font:800 var(--text-xs)/1 var(--font-display)}
 .sim-root .live-dash-metrics{display:flex;align-items:center;gap:6px;margin-left:auto}
-.sim-root .live-dash-pill{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-800);font:700 var(--text-xs)/1 var(--font-mono)}
+.sim-root .live-dash-pill{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-800);font:700 var(--text-xs)/1 var(--font-mono);font-variant-numeric:tabular-nums}
 .sim-root .live-dash-pill-label{color:var(--ink-500);font-size:var(--text-2xs)}
 .sim-root .live-dash-actions{display:flex;align-items:center;gap:5px}
-.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-3);min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer}
+.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-3);min-width:34px;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer;transition:background-color .15s ease,transform .1s ease}
+.sim-root .live-dash-btn:active{transform:translateY(1px) scale(0.99)}
 .sim-root .live-dash-secondary-nav,
 .sim-root .live-dash-limiter{display:none!important}
 .sim-root .live-dash-tray{padding:7px 10px;background:var(--paper-50);max-height:min(60vh,520px);overflow-y:auto}
