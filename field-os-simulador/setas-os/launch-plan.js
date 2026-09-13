@@ -92,7 +92,60 @@ function buildLaunchPlan({
   };
 }
 
-const api = { buildLaunchPlan, unidadDe, cantidadDisponible };
+// Construye el lote de Bitácora y sus bolsas a partir del plan de lanzamiento.
+// Puro: no toca localStorage ni Firestore — eso lo hace el componente.
+function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now }) {
+  const nb = Number(form.numBolsas) || 0;
+  const kb = Number(form.pesoHumedo) || 0;
+  const hm = Number(form.humedad) || 0;
+  const loteId = 'BIT_' + now;
+  const lote = {
+    id: loteId,
+    codigo: form.codigo,
+    especie: form.especie,
+    especieCientifico: form.especieCientifico,
+    cepa: form.cepa,
+    fechaMezcla: form.fechaMezcla,
+    fechaInoculacion: form.fechaInoculacion,
+    numBolsas: nb,
+    pesoHumedo: kb,
+    peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+    spawnPct: analysis?.dynSpawn || 8,
+    humedad: hm,
+    tratamiento: treatmentName || 'Pasteurización Térmica',
+    costoIngKg: analysis ? Math.round(analysis.cost) : 0,
+    operador: form.operador,
+    objetivo: 'Lanzamiento directo desde Formulador',
+    notas: form.notas,
+    estado: 'incubacion',
+    veredicto: '',
+    sala: form.sala,
+    ubicacion: form.sala,
+    ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
+    recipeRef: {
+      id: now,
+      name: recipeName || `Receta ${form.especie} (${form.codigo})`,
+      sKey,
+      recipe: recipe.map(r => ({ ...r })),
+      cn: analysis ? Number(analysis.cn).toFixed(1) : '—',
+      eb: analysis ? Number(analysis.eb).toFixed(0) : '—',
+      score: score || 0,
+      cost: analysis ? Math.round(analysis.cost) : 0,
+    },
+    createdAt: new Date(now).toISOString(),
+  };
+  const bolsas = Array.from({ length: nb }, (_, idx) => {
+    const i = idx + 1;
+    const nn = String(i).padStart(2, '0');
+    return {
+      id: 'BOLSA_' + now + '_' + i, loteId, codigo: `${form.codigo}-B${nn}`, num: i, estado: 'sana',
+      col25: null, col50: null, col100: null, pesoInicial: kb, fechaDescarte: null, motivoDescarte: '', observaciones: '', foto: null,
+    };
+  });
+  return { lote, bolsas };
+}
+
+const api = { buildLaunchPlan, buildLoteRecords, unidadDe, cantidadDisponible };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

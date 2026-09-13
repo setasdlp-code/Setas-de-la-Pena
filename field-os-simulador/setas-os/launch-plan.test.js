@@ -103,6 +103,18 @@ test('entradas inválidas fallan con mensaje claro', () => {
   assert.throws(() => LP.buildLaunchPlan({ recipe: [], bags: 1, kgPerBag: 1, moistureTarget: 100, ingredients: INGS }), /moistureTarget/);
 });
 
+test('buildLoteRecords: sin analysis ni treatmentName usa los valores por defecto', () => {
+  const form = { codigo: 'SDP-260913-OST-R02', especie: 'Orellana Gris', especieCientifico: 'Pleurotus ostreatus', cepa: '', fechaMezcla: '2026-09-13', fechaInoculacion: '2026-09-13', numBolsas: 2, pesoHumedo: 1.2, humedad: 60, sala: 'martha_02', operador: 'Op', notas: '' };
+  const plan = { allocations: [], shortfalls: [{ ingredientId: 'paja_trigo', needed: 1, available: 0, missing: 1, unidad: 'kg' }] };
+  const { lote, bolsas } = LP.buildLoteRecords({ form, plan, sKey: 'p_ostreatus_gris', now: 1_700_000_100_000 });
+  assert.equal(lote.spawnPct, 8);
+  assert.equal(lote.tratamiento, 'Pasteurización Térmica');
+  assert.equal(lote.costoIngKg, 0);
+  assert.equal(lote.recipeRef.cn, '—');
+  assert.deepEqual(lote.ingredientLots, []);
+  assert.equal(bolsas.length, 2);
+});
+
 test('unidadDe: explícita gana; si falta, ids de contenedores son ud', () => {
   assert.equal(LP.unidadDe({ ingredienteId: 'bolsa_pp_plana' }, ['bolsa_pp_plana']), 'ud');
   assert.equal(LP.unidadDe({ ingredienteId: 'bolsa_pp_plana', unidad: 'kg' }, ['bolsa_pp_plana']), 'kg');

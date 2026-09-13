@@ -1,7 +1,7 @@
 
 
 
-const {useState,useMemo,useEffect,useRef}=React;
+const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // --- Bio-Check & Lab Extraction storage helpers ---
 const BIO_CHECK_KEY = 'setas_os_bio_check';
@@ -1431,6 +1431,13 @@ const {
 //    igual que este bloque quede antes o después de que species-targets.js
 //    registre su global.
 const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
+
+// ── Plan de lanzamiento de lote y consumo de inventario — puente hacia
+//    launch-plan.js / inventory-consumption.js. BAG_TYPES ya está definido
+//    (línea ~1199), así que UNIT_INGREDIENT_IDS puede construirse aquí.
+const SetasLaunchPlanApi=(typeof SetasLaunchPlan!=='undefined'?SetasLaunchPlan:(typeof require!=='undefined'?require('./launch-plan.js'):null));
+const SetasInventoryConsumptionApi=(typeof SetasInventoryConsumption!=='undefined'?SetasInventoryConsumption:(typeof require!=='undefined'?require('./inventory-consumption.js'):null));
+const UNIT_INGREDIENT_IDS=BAG_TYPES.map(b=>b.stockId).filter(Boolean);
 
 // ── Calibración histórica — puente hacia historical-calibration.js ──
 // Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
@@ -6413,31 +6420,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const sp = effectiveSPP[sKey];
     const codigo = sugerirCodigoLote(sKey);
 
-    // Desglose de insumos a descontar
-    const insumos = (bd?.items || []).map(it => {
-      const g = INGS.find(i => i.name === it.name || i.id === it.id);
-      const id = g ? g.id : it.name;
-      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
-      const stockActual = invLotes.filter(l => l.activo && l.ingredienteId === id).reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      return {
-        id,
-        name: it.name,
-        krKg,
-        stockActual,
-        ok: stockActual >= krKg * 0.999
-      };
+    // Plan de lanzamiento — independiente del toggle "Calcular batch" (showBatch)
+    const nb=numBags||10, kb=kgBag||1.5;
+    const humedadLote=an?.moistureTarget??hObj??65;
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      recipe, bags:nb, kgPerBag:kb, moistureTarget:humedadLote, ingredients:effectiveINGS, inventoryLots:invLotes,
+      spawn: an?.dynSpawn ? { ingredientId:'spawn_grano', kg: nb*kb*(an.dynSpawn/100) } : null,
+      bagUnit: bagType?.stockId ? { ingredientId:bagType.stockId, units:nb } : null,
+      unitIngredientIds: UNIT_INGREDIENT_IDS,
     });
-
-    if (bd?.spawn && bd.spawn > 0) {
-      const spawnStock = invLotes.filter(l => l.activo && l.ingredienteId === 'spawn_grano').reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      insumos.push({
-        id: 'spawn_grano',
-        name: `Spawn / Micelio (${sp?.name || sKey})`,
-        krKg: bd.spawn,
-        stockActual: spawnStock,
-        ok: spawnStock >= bd.spawn * 0.999
-      });
-    }
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const insumos=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,unit:'kg',stockActual:stockActual(i.ingredientId,invLotes),ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,unit:'kg',stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,unit:'uds',stockActual:stockActual(u.ingredientId,invLotes),ok:!faltante(u.ingredientId)})),
+    ];
 
     setProdLaunchForm({
       codigo,
@@ -6448,11 +6446,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       fechaInoculacion: today,
       numBolsas: numBags || 10,
       pesoHumedo: kgBag || 1.5,
-      humedad: hObj || 67,
+      humedad: humedadLote,
       sala: selectedClimateRoom || 'martha_01',
       operador: 'Operario Granja Tenjo',
       notas: '',
       printQr: true,
+      plan,
       insumos
     });
     setShowProdLaunchModal(true);
@@ -6460,97 +6459,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const ejecutarLanzamientoProduccion = () => {
     if (!prodLaunchForm) return;
-    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
-    const nb = parseInt(numBolsas) || 1;
-    const kb = parseFloat(pesoHumedo) || 1.5;
-    const hm = parseFloat(humedad) || 67;
-    const now = new Date().toISOString();
-    const ts = Date.now();
-
-    // 1. Descontar Inventario en Bodega (FIFO)
-    const insumosADescontar = (insumos || []).filter(i => i.krKg > 0);
-    if (insumosADescontar.length > 0) {
-      setInvLotes(prev => {
-        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
-        try { localStorage.setItem('sdp_lotes', JSON.stringify(updated)); } catch(e) {}
-        return updated;
-      });
-      const newMovs = insumosADescontar.map((row, i) => ({
-        id: 'mov_lote_' + ts + '_' + i,
-        tipo: 'consumo_lote',
-        ingredienteId: row.id,
-        kgMovidos: row.krKg,
-        loteNum: codigo,
-        fecha: fechaInoculacion,
-        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
-        timestamp: now
-      }));
-      saveMovimientos([...invMovimientos, ...newMovs]);
-
-      if (window.SetasDB) {
-        (async () => {
-          try {
-            for (const row of insumosADescontar) {
-              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
-            }
-          } catch (e) {
-            console.warn('Error sincronizando descuento FIFO a Firestore:', e);
-          }
-        })();
-      }
-    }
-
-    // 2. Crear Lote y Bolsas en Bitácora
-    const lote = {
-      id: 'BIT_' + ts,
-      codigo,
-      especie,
-      especieCientifico,
-      cepa,
-      fechaMezcla,
-      fechaInoculacion,
-      numBolsas: nb,
-      pesoHumedo: kb,
-      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
-      spawnPct: an?.dynSpawn || 8,
-      humedad: hm,
-      tratamiento: tr?.name || 'Pasteurización Térmica',
-      costoIngKg: an ? Math.round(an.cost) : 0,
-      operador,
-      objetivo: 'Lanzamiento directo desde Formulador',
-      notas,
-      estado: 'incubacion',
-      veredicto: '',
-      sala,
-      ubicacion: sala,
-      recipeRef: {
-        id: ts,
-        name: saveName || `Receta ${especie} (${codigo})`,
-        sKey,
-        recipe: [...recipe],
-        cn: an ? an.cn.toFixed(1) : '—',
-        eb: an ? an.eb.toFixed(0) : '—',
-        score: opt ? opt.score : 0,
-        cost: an ? Math.round(an.cost) : 0
-      },
-      createdAt: now
-    };
-
-    const bolsas = Array.from({ length: nb }, (_, i) => ({
-      id: 'BOLSA_' + ts + '_' + i,
-      loteId: lote.id,
-      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, '0')}`,
-      num: i + 1,
-      estado: 'sana',
-      col25: null,
-      col50: null,
-      col100: null,
-      pesoInicial: kb,
-      fechaDescarte: null,
-      motivoDescarte: '',
-      observaciones: '',
-      foto: null
-    }));
+    const f = prodLaunchForm;
+    const now = Date.now();
+    const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+    registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
 
     setBitLotes(prev => {
       const upd = [lote, ...prev];
@@ -6578,7 +6490,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // 3. Cerrar modal y proceder
     setShowProdLaunchModal(false);
 
-    if (printQr) {
+    if (f.printQr) {
       setThermalLote(lote);
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope('all');
@@ -6590,7 +6502,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     setNoticeDlg({
       title: '🚀 Producción de Lote Lanzada',
-      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
+      msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
     });
   };
 
@@ -6744,6 +6656,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
   const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
   const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+
+  // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
+  // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
+  const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
+  const [invOps,setInvOps]=useState(readInvOps);
+  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  const runInventorySync=useCallback(async()=>{
+    if(!window.SetasDB?.guardarConsumoInventario) return;
+    const next=await SetasInventoryConsumptionApi.syncDue({queue:readInvOps(),now:Date.now(),persist:rec=>window.SetasDB.guardarConsumoInventario(rec)});
+    saveInvOps(next);
+  },[]);
+  const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
+    const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
+    const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
+    if(!added) return false;   // this lote was already discounted: never apply twice
+    const r=SetasInventoryConsumptionApi.applyLocal(invLotes,op,{fecha,nota});
+    saveLotes(r.lotes);
+    saveMovimientos([...invMovimientos,...r.movimientos]);
+    saveInvOps(queue);
+    runInventorySync();
+    return true;
+  };
+  useEffect(()=>{runInventorySync();const on=()=>runInventorySync();window.addEventListener('online',on);window.addEventListener('setas-db-ready',on);return()=>{window.removeEventListener('online',on);window.removeEventListener('setas-db-ready',on);};},[runInventorySync]);
 
   const agregarProveedor=()=>{
     const n=newProv.nombre.trim();if(!n||!newProv.municipio.trim()) return;
@@ -13564,19 +13499,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {showProdLaunchModal && prodLaunchForm && (() => {
           const f = prodLaunchForm;
-          const allInsumosOk = f.insumos.every(i => i.ok);
+          const allInsumosOk = f.insumos.length > 0 && f.insumos.every(i => i.ok);
           const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
 
           return (
             <AccessibleModal
               id="prod-launch-modal"
-              isOpen={showProdLaunchModal}
               onClose={() => setShowProdLaunchModal(false)}
-              title="🚀 Lanzador de Producción de Lote"
-              ariaLabel="Lanzador de Producción de Lote"
-              maxWidth="680px"
+              label="Lanzador de producción de lote"
+              dialogStyle={{width:680,maxWidth:'calc(100vw - 32px)'}}
             >
               <div className="prod-launch-modal" data-testid="prod-launch-modal">
+                <h2 className="inv-modal-title">🚀 Lanzador de Producción de Lote</h2>
                 {/* Resumen Superior */}
                 <div className="prod-launch-summary">
                   <div className="prod-launch-stat">
@@ -13608,6 +13542,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </span>
                   </div>
 
+                  {f.plan?.shortfalls?.length > 0 && (
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                      ⚠ Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
+                    </div>
+                  )}
+
                   <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
                     <table className="prod-launch-table">
                       <thead>
@@ -13622,9 +13562,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {f.insumos.map((ins, i) => (
                           <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
                             <td style={{fontWeight:600}}>{ins.name}</td>
-                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} kg</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} {ins.unit || 'kg'}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
-                              {ins.stockActual.toFixed(1)} kg
+                              {ins.stockActual.toFixed(1)} {ins.unit || 'kg'}
                             </td>
                             <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
                               {ins.ok ? '✓ OK' : '⚠ Escaso'}
