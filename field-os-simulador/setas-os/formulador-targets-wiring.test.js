@@ -7,7 +7,7 @@ globalThis.SetasRecipeVersion = require('./recipe-version.js');
 
 // DENSOS es un `const` local dentro de `analyze` (no de nivel superior) — no se
 // puede extraer con `extractConsts`, y `analyze` no lo necesita desde afuera.
-const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'diagnose']);
+const X = extractConsts(['SPP', 'INGS', 'DEFAULT_FRESH_PRICES', 'calcBatch', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'diagnose']);
 const T = globalThis.SetasSpeciesTargets;
 const FORMULA_A = [
   { id: 'aserrin_roble', p: 45 }, { id: 'salvado_trigo', p: 25 }, { id: 'cascarilla_soya', p: 15 },
@@ -33,4 +33,29 @@ test('diagnose cita la humedad objetivo resuelta, no un literal (D5)', () => {
   const msgs = X.diagnose(X.analyze(FORMULA_A, 'p_eryngii', X.INGS, spp), 'p_eryngii').sugs.map(m => m.tx);
   assert.ok(!msgs.some(t => /67–68%/.test(t)), 'literal 67–68% debe desaparecer');
   assert.ok(msgs.some(t => /humedad objetivo 65%/.test(t)));
+});
+
+// ── Regresión: calcBatch.freshPriceKg no debe colapsar a 0 cuando no hay
+// override de precio (D6). vegPrice en el Formulador ahora es `null` por
+// defecto — si esta guarda vuelve a tratar null/undefined como "$0 válido"
+// en vez de "sin override", la proyección de ingresos se rompe en silencio
+// para todo el mundo que no haya tecleado un precio manual. ──
+test('calcBatch.freshPriceKg cae al precio por defecto de la especie cuando customFreshPrice es null', () => {
+  const b = X.calcBatch(FORMULA_A, 6, 1.5, 65, 12000, X.INGS, 8, null, 85, 'p_eryngii', null);
+  assert.equal(b.freshPriceKg, X.DEFAULT_FRESH_PRICES.p_eryngii);
+});
+
+test('calcBatch.freshPriceKg cae al precio por defecto de la especie cuando customFreshPrice es undefined', () => {
+  const b = X.calcBatch(FORMULA_A, 6, 1.5, 65, 12000, X.INGS, 8, null, 85, 'p_eryngii', undefined);
+  assert.equal(b.freshPriceKg, X.DEFAULT_FRESH_PRICES.p_eryngii);
+});
+
+test('calcBatch.freshPriceKg respeta un override positivo explícito', () => {
+  const b = X.calcBatch(FORMULA_A, 6, 1.5, 65, 12000, X.INGS, 8, null, 85, 'p_eryngii', 30000);
+  assert.equal(b.freshPriceKg, 30000);
+});
+
+test('calcBatch.freshPriceKg con override explícito en 0 usa 0 (comportamiento actual de la guarda: 0 es un valor válido, no "sin override")', () => {
+  const b = X.calcBatch(FORMULA_A, 6, 1.5, 65, 12000, X.INGS, 8, null, 85, 'p_eryngii', 0);
+  assert.equal(b.freshPriceKg, 0);
 });
