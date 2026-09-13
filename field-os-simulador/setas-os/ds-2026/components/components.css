@@ -229,6 +229,51 @@
 .sdp-pack__sk { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: var(--space-half); }
 .sdp-pack__sv { font: var(--t-small); display: block; }
 
+/* Multi-species packaging (e.g., Dúo Silvestre: Orellana + Shiitake) */
+.sdp-pack--multi .sdp-pack__species-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  width: 100%;
+  border-top: var(--rule-hairline);
+  border-bottom: var(--rule-hairline);
+  padding: var(--space-2) 0;
+  margin: var(--space-1) 0;
+}
+.sdp-pack--multi .sdp-pack__species-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-half);
+}
+.sdp-pack--multi .sdp-pack__species-col:first-child {
+  border-right: var(--rule-hairline);
+  padding-right: var(--space-1);
+}
+.sdp-pack--multi .sdp-pack__species-col:last-child {
+  padding-left: var(--space-1);
+}
+.sdp-pack--multi .sdp-pack__species-name {
+  font: var(--t-species);
+  font-size: var(--size-heading-02);
+  line-height: var(--leading-tight);
+}
+.sdp-pack--multi .sdp-pack__species-latin {
+  font: var(--t-latin);
+  font-size: var(--size-small);
+  color: var(--text-metadata);
+}
+.sdp-pack--multi .sdp-pack__duo-badge {
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+  background: var(--surface-panel);
+  border: var(--rule-hairline);
+  padding: 2px var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
 /* ─────────────────────────────────────────────────────────────
    L · SOP DOCUMENT — procedure sheet. FIELD mode.
    ───────────────────────────────────────────────────────────── */
@@ -302,4 +347,29 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sdp-btn[aria-busy="true"]::before { animation: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   N · THERMAL PRINT SPECIFICATION (203 DPI / Phomemo M110)
+   1-bit monochrome fallback: eliminates gray dithering artifacts.
+   ───────────────────────────────────────────────────────────── */
+.sdp-thermal,
+[data-print="thermal"] {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  filter: contrast(400%) grayscale(100%);
+  text-rendering: geometricPrecision;
+}
+.sdp-thermal *,
+[data-print="thermal"] * {
+  border-color: #000000 !important;
+  color: #000000 !important;
+  box-shadow: none !important;
+}
+.sdp-thermal .sdp-lote__status-bar,
+[data-print="thermal"] .sdp-lote__status-bar {
+  background: #000000 !important;
 }

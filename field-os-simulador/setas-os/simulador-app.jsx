@@ -1432,6 +1432,7 @@ const {
   SPECIES_FLUSH_PROFILES,
   calcThermalDelayFactor,
   calculateLotYieldAndFlushes,
+  calculateRemainingFlushes,
   calculateSowingRequirement,
   sowingRecommendation: engineSowingRecommendation,
   matchWeeklyCoverage: engineMatchWeeklyCoverage,
@@ -1464,6 +1465,7 @@ const {
 // ── Fisiología Poscosecha y Cadena de Frío — puente hacia post-harvest-engine.js ──
 const {
   predictShelfLife: enginePredictShelfLife,
+  assessCondensationRiskOnUnpack: engineAssessCondensationRiskOnUnpack,
   calcPostHarvestRespiration: engineCalcPostHarvestRespiration,
   calcTranspirationLoss: engineCalcTranspirationLoss,
   SPECIES_POSTHARVEST_PROFILES,
@@ -5599,6 +5601,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [bitNuevoForm,setBitNuevoForm]=useState({});
   const [showBitCosecha,setShowBitCosecha]=useState(false);
   const [bitCosechaForm,setBitCosechaForm]=useState({});
+  const [showBatchSheetModal,setShowBatchSheetModal]=useState(false);
+  const [batchSheetModalLote,setBatchSheetModalLote]=useState(null);
   const [prodBagType,setProdBagType]=useState('bolsa_20x50'); // tipo de contenedor activo
   const [showFlush,setShowFlush]=useState(false);
   const [showCompChart,setShowCompChart]=useState(false);
@@ -7564,6 +7568,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setTriageNotes('');
     setShowTriageModal(true);
   };
+  const openBatchSheetModal=(loteOrId)=>{const l=typeof loteOrId==='string'?bitLotes.find(x=>x.id===loteOrId):loteOrId;if(l){setBatchSheetModalLote(l);setShowBatchSheetModal(true);}};
+  if(typeof window!=='undefined'){window.openBatchSheetModal=openBatchSheetModal;}
 
   // ── Ficha operativa canónica del lote ─────────────────────────────────────
   // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
@@ -8097,7 +8103,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
           {stats.flushes&&stats.flushes.length>0&&(
             <div style={{marginTop:12}}>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte por Oleada (Flushes)</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
                   <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
@@ -8116,6 +8122,106 @@ body{margin:0;padding:20px 24px;background:#fff;}
           )}
         </section>
       )}
+      {(() => {
+        const validHarvests = cosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        const maxFlush = cosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const ebVal = stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be;
+        const contamVal = stats ? (stats.contPct / 100) : (lote.contamRate ?? 0);
+        const flushesForecast = sheet?.flushForecast || (
+          typeof calculateRemainingFlushes === 'function'
+            ? calculateRemainingFlushes(lote, {
+                currentFlush: maxFlush,
+                lastFlushDate: lastHarvest?.fecha || null,
+                eb: ebVal,
+                contamRate: contamVal,
+              })
+            : (typeof calculateLotYieldAndFlushes === 'function'
+                ? calculateLotYieldAndFlushes(lote, {
+                    currentFlush: maxFlush,
+                    lastFlushDate: lastHarvest?.fecha || null,
+                    eb: ebVal,
+                    contamRate: contamVal,
+                  })
+                : null)
+        );
+        if (!flushesForecast) return null;
+        return (
+          <section className="os-finance-panel" data-testid="batch-harvest-forecast" style={{marginBottom:12}}>
+            <div className="os-finance-header">
+              <div>
+                <span className="os-finance-title">🍄 Pronóstico Dinámico de Cosechas & Oleadas</span>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
+                  Modelo cinético Arrhenius / Q10 · Especie: <b>{flushesForecast.speciesName}</b> · T° base: {flushesForecast.ambientTemp}°C (Factor térmico: {flushesForecast.thermalFactor.toFixed(2)}×)
+                </div>
+              </div>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:'var(--moss-200,#DCE1D1)',color:'var(--moss-700,#404D2E)'}}>
+                {flushesForecast.remainingFlushes.length} oleadas restantes · {flushesForecast.remainingExpectedKg.toFixed(2)} kg pendientes
+              </span>
+            </div>
+
+            <div className="os-finance-grid" style={{marginBottom:12}}>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Rendimiento Proyectado</span>
+                <span className="econ-metric-value">{flushesForecast.totalKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.expectedKgPerBag.toFixed(3)} kg/bolsa · EB {flushesForecast.eb}%</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Pendiente por Cosechar</span>
+                <span className="econ-metric-value">{flushesForecast.remainingExpectedKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.remainingFlushes.length} de {flushesForecast.flushes.length} oleadas</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Cinética Térmica</span>
+                <span className="econ-metric-value">{flushesForecast.thermalFactor.toFixed(2)}×</span>
+                <span className="econ-metric-sub">{flushesForecast.coldWarning ? '❄ Retraso por frío Tenjo' : flushesForecast.heatWarning ? '🔥 Estrés térmico' : 'Régimen óptimo'}</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Próxima Cosecha Recomendada</span>
+                <span className="econ-metric-value" style={{fontSize:14}}>
+                  {flushesForecast.remainingFlushes[0] ? flushesForecast.remainingFlushes[0].date : 'Ciclo cerrado'}
+                </span>
+                <span className="econ-metric-sub">
+                  {flushesForecast.remainingFlushes[0] ? `${flushesForecast.remainingFlushes[0].kg.toFixed(2)} kg en Flush ${flushesForecast.remainingFlushes[0].flush}` : 'Sin oleadas pendientes'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
+              <table className="prod-tbl" style={{marginBottom:0}}>
+                <thead>
+                  <tr>
+                    <th style={{textAlign:'left'}}>Oleada</th>
+                    <th style={{textAlign:'center'}}>Estado</th>
+                    <th style={{textAlign:'right'}}>Proyección (kg)</th>
+                    <th style={{textAlign:'right'}}>Aporte (%)</th>
+                    <th style={{textAlign:'right'}}>Fecha Estimada</th>
+                    <th style={{textAlign:'right'}}>Días Inoc.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flushesForecast.flushes.map((f) => (
+                    <tr key={f.flush} style={{background: f.isHarvested ? 'var(--paper-50)' : 'transparent', opacity: f.isHarvested ? 0.65 : 1}}>
+                      <td style={{fontFamily:'var(--font-mono)',fontWeight:700}}>Flush {f.flush} · <span style={{fontWeight:400,fontSize:'var(--text-xs)'}}>{f.label}</span></td>
+                      <td style={{textAlign:'center'}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',borderRadius:2,background: f.isHarvested ? 'var(--moss-100)' : 'var(--ochre-100)',color: f.isHarvested ? 'var(--moss-700)' : 'var(--ochre-700)',fontWeight:700}}>
+                          {f.isHarvested ? '✓ Cosechado' : '⏳ Proyectado'}
+                        </span>
+                      </td>
+                      <td className="num" style={{fontWeight:700}}>{f.kg.toFixed(2)} kg</td>
+                      <td className="num">{f.pctTotal.toFixed(1)}%</td>
+                      <td style={{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight: f.isHarvested ? 400 : 700, color: f.isHarvested ? 'var(--ink-400)' : 'var(--moss-700)'}}>
+                        {f.date}
+                      </td>
+                      <td className="num">{f.adjustedDays}d</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })()}
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -8136,6 +8242,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     </article>;
   };
+  const BatchSheetModal = ({ isOpen, onClose, lote }) => {
+    if (!isOpen || !lote) return null;
+    return (
+      <AccessibleModal
+        onClose={onClose}
+        label={`Ficha Canónica del Lote ${lote.codigo || lote.id}`}
+        dialogStyle={{ width: 'min(900px, 95vw)', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}>✕</button>
+        </div>
+        <BatchDetailV2 lote={lote} />
+      </AccessibleModal>
+    );
+  };
+  if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
     let cameras=[];
@@ -8147,6 +8269,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Obtener lotes activos alojados en esta sala
     const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
+    const activeSpeciesInRoom = Array.from(new Set(
+      lotesEnSala.map(l => l.especie || l.speciesKey || l.sKey).filter(Boolean)
+    ));
+    const coCultRoomOpt = activeSpeciesInRoom.length > 1
+      ? (typeof engineOptimizeChamberSetpoints === 'function'
+          ? engineOptimizeChamberSetpoints(activeSpeciesInRoom)
+          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+              ? SetasCoCultivation.optimizeChamberSetpoints(activeSpeciesInRoom)
+              : null))
+      : null;
 
     // Targets por sala desde la fuente única (ROOM_TARGET_BANDS): las mismas
     // bandas que evalúa el motor de umbrales del puente en vivo, para que el
@@ -8712,6 +8844,102 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
         </div>
+
+        {/* Asesor de Co-Cultivo Multiespecie en la Sala */}
+        {coCultRoomOpt && (
+          <section className="climate-live-alerts" data-testid="fruiting-cocultivation-advisor" aria-label="Asesor de Co-Cultivo Multiespecie">
+            <div
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-sm, 3px)',
+                background: 'var(--paper-0, #F7F4EC)',
+                border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-700, #A83232)'}`,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive, #5B6B44)' }}>
+                    🌿 Asesor de Co-Cultivo Multiespecie · Sala Compartida
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
+                    {activeSpeciesInRoom.join(' + ')} ({lotesEnSala.length} lotes activos en {room.name})
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      padding: '4px 10px',
+                      borderRadius: 2,
+                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-100, #FDF0DE)' : 'var(--coral-100, #FDE8E8)',
+                      color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700, #8A4B09)' : 'var(--coral-700, #A83232)',
+                      border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600, #617346)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-500, #E05252)'}`,
+                    }}
+                  >
+                    Compatibilidad Grupal: {coCultRoomOpt.groupScore}% · {coCultRoomOpt.verdict}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoCultSelectedSpecies(activeSpeciesInRoom);
+                      setShowCoCultivationModal(true);
+                    }}
+                    className="inv-btn inv-btn-sec"
+                    style={{ minHeight: 44, padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
+                  >
+                    Ver Matriz Completa →
+                  </button>
+                </div>
+              </div>
+
+              {/* Setpoints Minimax Pareto */}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
+                🎯 Setpoints Pareto Minimax Recomendados para Co-Existencia:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>T° Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.tempC}°C</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>HR Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.rhPct}%</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>CO₂ Límite</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.co2Ppm} ppm</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>VPD Óptimo</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.vpdKpa} kPa</div>
+                </div>
+              </div>
+
+              {/* Cuellos de Botella Liebig */}
+              {(coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                    ⚠ Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
+                  </div>
+                  {coCultRoomOpt.bottlenecks.map((b, idx) => (
+                    <div key={`bn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--coral-300)' }}>
+                      • {b}
+                    </div>
+                  ))}
+                  {coCultRoomOpt.penalties.map((p, idx) => (
+                    <div key={`pen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--ochre-300)' }}>
+                      • {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Alertas Activas (diagnóstico instantáneo).
             Cuando el motor de umbrales en vivo ya tiene alertas para esta sala,
@@ -12957,10 +13185,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:440}}>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, 95vw)'}}>
               <div className="inv-modal-title">Registrar cosecha</div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
                 <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
@@ -12969,6 +13197,76 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
+
+              {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
+              {(() => {
+                const harvestLote = bitLotes.find(l => l.id === (bitCosechaForm.loteId || bitActiveLoteId));
+                const harvestSpecies = harvestLote ? (harvestLote.especie || harvestLote.speciesKey) : 'p_ostreatus_gris';
+                const postHarvestShelfLife = typeof enginePredictShelfLife === 'function'
+                  ? enginePredictShelfLife(harvestSpecies, 4.0, 90.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.predictShelfLife === 'function'
+                      ? SetasPostHarvest.predictShelfLife(harvestSpecies, 4.0, 90.0)
+                      : null);
+                const postHarvestCondensation = typeof engineAssessCondensationRiskOnUnpack === 'function'
+                  ? engineAssessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.assessCondensationRiskOnUnpack === 'function'
+                      ? SetasPostHarvest.assessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                      : null);
+
+                if (!postHarvestShelfLife && !postHarvestCondensation) return null;
+
+                return (
+                  <div
+                    data-testid="harvest-postharvest-advisor"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm, 3px)',
+                      background: 'var(--paper-1, #EFEBE0)',
+                      border: '1px solid var(--border-hairline, #8C7F5B)',
+                      marginBottom: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
+                        ❄️ Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
+                      </span>
+                      {postHarvestShelfLife && (
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--moss-700)' }}>
+                          Vida útil: ~{postHarvestShelfLife.marketableShelfLifeDays || postHarvestShelfLife.marketableDays} días a 4°C
+                        </span>
+                      )}
+                    </div>
+
+                    {postHarvestShelfLife && (
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)', marginBottom: 6, lineHeight: 1.35 }}>
+                        <b>Factor limitante:</b> {postHarvestShelfLife.limitingFactor.replace(/_/g, ' ')} · Transpiración: {postHarvestShelfLife.transpiration.weightLossPctPerDay}%/día · VPD: {postHarvestShelfLife.transpiration.storageVpdKpa} kPa.
+                      </div>
+                    )}
+
+                    {postHarvestCondensation && (
+                      <div
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 2,
+                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100, #FDE8E8)' : 'var(--moss-100, #EAEFD9)',
+                          border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500, #E05252)' : 'var(--moss-600, #617346)'}`,
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700, #9B1C1C)' : 'var(--moss-800, #2E3A1F)',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                          <span>{postHarvestCondensation.badge}</span>
+                          <span>{postHarvestCondensation.verdict}</span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'inherit', lineHeight: 1.3 }}>
+                          {postHarvestCondensation.recommendation} (Pto. Rocío: {postHarvestCondensation.ambientDewPoint}°C · ΔT: {postHarvestCondensation.deltaT}°C)
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
@@ -13686,6 +13984,88 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     ))}
                   </div>
+                  {(() => {
+                    const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+                    const targetRoomBatches = bitLotes.filter(l => (l.sala === f.sala || l.ubicacion === f.sala || (!l.sala && f.sala === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+                    const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map(l => l.especie || l.speciesKey).filter(Boolean)));
+                    const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
+                    const coCultAssignOpt = assignedSpeciesList.length > 1
+                      ? (typeof engineOptimizeChamberSetpoints === 'function'
+                          ? engineOptimizeChamberSetpoints(assignedSpeciesList)
+                          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+                              ? SetasCoCultivation.optimizeChamberSetpoints(assignedSpeciesList)
+                              : null))
+                      : null;
+
+                    if (!coCultAssignOpt) return null;
+
+                    return (
+                      <div
+                        data-testid="room-assignment-cocultivation-advisor"
+                        style={{
+                          marginTop: 10,
+                          padding: '12px 14px',
+                          borderRadius: 'var(--radius-sm, 3px)',
+                          background: 'var(--paper-0, #F7F4EC)',
+                          border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : 'var(--ochre-500, #C97A2C)'}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                            🌿 Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 2,
+                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : 'var(--ochre-100, #FDF0DE)',
+                              color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : 'var(--ochre-700, #8A4B09)',
+                            }}
+                          >
+                            Compatibilidad: {coCultAssignOpt.groupScore}% · {coCultAssignOpt.verdict}
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-1)', marginBottom: 8, lineHeight: 1.35 }}>
+                          La sala <b>{targetRoom.name}</b> ya cuenta con lotes de <b>{targetRoomSpecies.join(', ')}</b>. Para asegurar la coexistencia fisiológica, se calculan los siguientes setpoints Minimax de compromiso:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6, marginBottom: 8 }}>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>T° Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.tempC}°C</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>HR Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.rhPct}%</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>CO₂ Límite</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.co2Ppm} ppm</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>VPD Óptimo</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.vpdKpa} kPa</strong>
+                          </div>
+                        </div>
+                        {(coCultAssignOpt.bottlenecks.length > 0 || coCultAssignOpt.penalties.length > 0) && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {coCultAssignOpt.bottlenecks.map((b, idx) => (
+                              <div key={`abn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                ⚠ Alerta Liebig: {b}
+                              </div>
+                            ))}
+                            {coCultAssignOpt.penalties.map((p, idx) => (
+                              <div key={`apen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                • {p}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Opciones Adicionales */}
@@ -15010,6 +15390,14 @@ interval:
             </AccessibleModal>
           );
         })()}
+
+        {showBatchSheetModal && batchSheetModalLote && (
+          <BatchSheetModal
+            isOpen={showBatchSheetModal}
+            onClose={() => { setShowBatchSheetModal(false); setBatchSheetModalLote(null); }}
+            lote={batchSheetModalLote}
+          />
+        )}
 
         {showDiagModal && (() => {
           const currentLote = bitLotes.find(l => l.id === diagLoteId) || bitLotes[0];
