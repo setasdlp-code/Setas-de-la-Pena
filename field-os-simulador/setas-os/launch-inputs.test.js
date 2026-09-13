@@ -47,3 +47,34 @@ test('launchSpawn: sin tasa de spawn no hay ítem', () => {
   assert.equal(X.launchSpawn(4, 1.5, 0), null);
   assert.equal(X.launchSpawn(4, 1.5, undefined), null);
 });
+
+// ── m2: el aviso de éxito no afirma que todo se descontó si hubo faltantes. ──
+const X2 = extractConsts(['launchDiscountSummary']);
+test('launchDiscountSummary: sin faltantes afirma el descuento completo', () => {
+  assert.equal(X2.launchDiscountSummary({ shortfalls: [] }), 'Las materias primas fueron descontadas de Bodega.');
+  assert.equal(X2.launchDiscountSummary(null), 'Las materias primas fueron descontadas de Bodega.');
+});
+test('launchDiscountSummary: con faltantes dice que se descontó lo disponible y lista lo que faltó', () => {
+  const plan = { shortfalls: [
+    { ingredientId: 'salvado_trigo', missing: 1.25, unidad: 'kg' },
+    { ingredientId: 'bolsa_pp_plana', missing: 3, unidad: 'ud' },
+  ] };
+  const ings = [{ id: 'salvado_trigo', name: 'Salvado de trigo' }];
+  assert.equal(X2.launchDiscountSummary(plan, ings),
+    'Se descontó lo disponible; faltaron: Salvado de trigo (1.25 kg), bolsa_pp_plana (3 ud).');
+});
+
+// ── m3: el borde del input "Humedad obj." se evalúa contra el rango resuelto. ──
+const X3 = extractConsts(['moistureInTargetRange']);
+test('moistureInTargetRange: usa min/max del objetivo resuelto cuando existen', () => {
+  const m = { min: 63, max: 68, ideal: 65 };
+  assert.equal(X3.moistureInTargetRange(65, m), true);
+  assert.equal(X3.moistureInTargetRange(63, m), true);
+  assert.equal(X3.moistureInTargetRange(62, m), false);
+  assert.equal(X3.moistureInTargetRange(70, m), false);   // antes (≥67) salía en verde
+});
+test('moistureInTargetRange: sin rango (heredado solo con ideal) conserva el umbral ≥67', () => {
+  assert.equal(X3.moistureInTargetRange(67, { ideal: 63, min: null, max: null }), true);
+  assert.equal(X3.moistureInTargetRange(65, { ideal: 63, min: null, max: null }), false);
+  assert.equal(X3.moistureInTargetRange(68, null), true);
+});

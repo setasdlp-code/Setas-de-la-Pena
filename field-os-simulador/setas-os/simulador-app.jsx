@@ -4181,12 +4181,15 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
 
 
 // ── v4: INVENTARIO helpers ──
-// Duplicados a propósito respecto a inventario.js (mismo patrón que MASS_BALANCE_TOL
-// en firebase/db.js): el bundler de este .dc.html (dc-runtime, ver support.js) ejecuta
-// este archivo dentro de un `new Function(...)` propio y no engancha de forma confiable
-// los globals de un <script src> añadido a mano, así que no puede depender en vivo de
-// inventario.js. inventario.js + inventario.test.js son la fuente de verdad probada;
-// si cambias la lógica aquí, cambia también inventario.js (y viceversa).
+// Lecturas de bodega (stock y precio ponderado) duplicadas a propósito respecto a
+// inventario.js (mismo patrón que MASS_BALANCE_TOL en firebase/db.js): el bundler de
+// este .dc.html (dc-runtime, ver support.js) ejecuta este archivo dentro de un
+// `new Function(...)` propio y no engancha de forma confiable los globals de un
+// <script src> añadido a mano. inventario.js + inventario.test.js solo prueban estas
+// dos lecturas — si cambias una, cambia la otra. No son la fuente de verdad del
+// consumo: el plan y la asignación FIFO viven en launch-plan.js y el descuento
+// idempotente por lote en inventory-consumption.js; la bodega de registro es
+// localStorage sdp_lotes.
 const stockActual=(ingredienteId,lotes)=>
   lotes.filter(l=>l.activo&&l.ingredienteId===ingredienteId)
        .reduce((s,l)=>s+(l.cantidadKgDisponible||0),0);
@@ -4405,6 +4408,17 @@ const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,
 //    tal cual se recibe: bolsas × kg/bolsa × tasa dinámica de spawn.
 const launchMoisture=({touched,manual,target})=>touched?manual:(target??manual??65);
 const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano',kg:bags*kgPerBag*(dynSpawn/100)}:null;
+// Resumen del descuento para el aviso de éxito (m2): con faltantes no se afirma
+// que todo salió de bodega — solo se descontó lo disponible.
+// Humedad dentro del objetivo (m3): rango resuelto de la especie cuando trae
+// min y max; si no (heredado solo con ideal), el umbral histórico ≥67%.
+const moistureInTargetRange=(h,m)=>(m?.min!=null&&m?.max!=null)?(h>=m.min&&h<=m.max):h>=67;
+const launchDiscountSummary=(plan,ings=[])=>{
+  const sf=plan?.shortfalls||[];
+  if(!sf.length) return 'Las materias primas fueron descontadas de Bodega.';
+  const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
+  return `Se descontó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
+};
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
   // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
@@ -6405,9 +6419,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setLoteBatchConfirm(null);
       setLoteSyncErr('');
       setEjecutandoLote(false);
-      // localStorage ya descontó al instante (mismo patrón que saveR): la transacción de
-      // Firestore corre en segundo plano y es la que de verdad evita el doble descuento
-      // entre operadores/dispositivos concurrentes — un fallo de red no bloquea al operador,
+      // El descuento de bodega ya quedó hecho arriba por registrarConsumo: aplicado al
+      // instante en localStorage (sdp_lotes) y encolado en sdp_inventory_ops, cuya
+      // identidad es el loteId — enqueue rechaza un segundo consumo del mismo lote y
+      // el servidor guarda inventory_consumptions/{loteId} append-only. Eso es lo que
+      // evita el doble descuento; aquí solo se crea en segundo plano el registro del
+      // lote de producción en Firestore — un fallo de red no bloquea al operador,
       // solo se avisa si no sincronizó.
       if(window.SetasDB){
         (async()=>{
@@ -6651,7 +6668,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
       setNoticeDlg({
         title: '🚀 Producción de Lote Lanzada',
-        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
       });
     } catch (e) {
       console.error('Error al lanzar producción de lote:', e);
@@ -10742,7 +10759,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
               <span className="form-flow-progress" aria-live="polite">
-                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=0.5?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
               </span>
             </div>
             <ol className="form-flow-grid form-flow-grid--5">
@@ -10787,21 +10804,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </li>
 
               {/* Paso 04: Balance */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
                 <span className="form-step-num">04</span>
                 <span className="form-step-label">Balance</span>
                 <div className="form-step-species-state">
                   <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
                   <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
                 </div>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'Completado':'Requiere atención'}
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
                 </span>
                 <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
               </li>
 
               {/* Paso 05: Revisión */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5&&(opt?.score||0)>=70)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
                 <span className="form-step-num">05</span>
                 <span className="form-step-label">Revisión</span>
                 <button
@@ -10891,7 +10908,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
               const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
-              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=0.5:false;
+              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=MASS_BALANCE_TOL:false;
               const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
 
               return(
@@ -11042,7 +11059,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                       {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
                       <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>0.5&&(
+                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
                           <div style={{display:'flex',gap:2,alignItems:'center'}}>
                             <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}>⚡ Auto-balancear 100%</button>
                             <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
@@ -11585,7 +11602,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
