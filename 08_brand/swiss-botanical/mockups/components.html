@@ -53,6 +53,19 @@
       padding: var(--sb-space-6);
       border-radius: var(--sb-radius-xs);
       margin-top: var(--sb-space-4);
+      transition: border-color var(--sb-duration-fast) var(--sb-ease-editorial);
+    }
+
+    .sb-demo-box--floating {
+      background-color: var(--sb-paper-0);
+      border: 1px solid var(--sb-line-hairline);
+      box-shadow: 0 4px 16px -4px rgba(26, 20, 16, 0.06);
+    }
+
+    .sb-demo-box--inset {
+      background-color: var(--sb-paper-2);
+      border: 1px solid var(--sb-line-hairline);
+      border-left: 3px solid var(--sb-accent-shiitake);
     }
 
     .sb-code-label {
@@ -168,11 +181,11 @@
       </div>
       <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Botones de Imprenta (.sb-btn)</h2>
       <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
-        Diseñados con desplazamiento físico táctil (<code>transform: translateY(1px)</code>) para simular el golpe mecánico de tipos de plomo. Incluyen soporte nativo para <code>:disabled</code> y enlaces inaccesibles mediante <code>[aria-disabled="true"]</code> conservando contraste superior a 4.0:1.
+        Diseñados con desplazamiento físico táctil (<code>transform: translateY(1px) scale(0.99)</code>) para simular el golpe mecánico de tipos de plomo. Incluyen soporte nativo para <code>:disabled</code> y enlaces inaccesibles mediante <code>[aria-disabled="true"]</code> conservando contraste superior a 4.0:1.
       </p>
 
       <!-- Variantes -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--floating">
         <span class="sb-code-label">Variantes Principales</span>
         <div class="sb-demo-row">
           <button type="button" class="sb-btn sb-btn--primary">Explorar ficha (.sb-btn--primary)</button>
@@ -193,7 +206,7 @@
       </div>
 
       <!-- Estados Inactivos (Disabled) -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--inset">
         <span class="sb-code-label">Estados Deshabilitados (Contraste 4.1:1 en fondo papel, sin opacidad degradada)</span>
         <div class="sb-demo-row">
           <button type="button" class="sb-btn sb-btn--primary" disabled aria-label="Acción no disponible en este momento">Botón nativo :disabled</button>
@@ -206,7 +219,7 @@
       </div>
 
       <!-- Verificación de Foco Visible -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--inset">
         <span class="sb-code-label">Gobernanza de Foco Accesible (:focus-visible)</span>
         <p style="font-size: var(--sb-text-xs); color: var(--sb-ink-1); margin-bottom: var(--sb-space-3);">
           Prueba de foco del sistema: presione la tecla <kbd style="background: var(--sb-paper-2); padding: 2px 6px; border: 1px solid var(--sb-line-hairline); border-radius: 2px; font-family: var(--sb-font-mono);">Tab</kbd> para comprobar el anillo <code>outline: 2px solid var(--sb-accent-shiitake); outline-offset: 3px;</code>.
@@ -223,17 +236,13 @@
     <!-- 02. BADGES & ESTATUS                                        -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <section id="badges" class="sb-section-block">
-      <div class="sb-section-eyebrow">
-        <span>02</span>
-        <span>Badges, Etiquetas Semánticas & Validación</span>
-      </div>
-      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Estados Canónicos y Especies</h2>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">02 · Estados Canónicos y Especies</h2>
       <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
         El sistema estandariza 5 estados operativos mediante <code>.sb-status--*</code> y reserva los badges de especie para nombres botánicos sencillos sin epítetos poéticos.
       </p>
 
       <!-- Los 5 Estados Canónicos -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--floating">
         <span class="sb-code-label">Los Cinco Estados Canónicos del Sistema (.sb-status--*)</span>
         <div class="sb-demo-row">
           <span class="sb-badge sb-status--verified">[Comprobado] (.sb-status--verified)</span>
@@ -274,16 +283,12 @@
     <!-- 03. SELECTOR HOGAR / CHEF                                   -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <section id="selector" class="sb-section-block">
-      <div class="sb-section-eyebrow">
-        <span>03</span>
-        <span>Selector Bimodal Accesible</span>
-      </div>
-      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Interruptor de Audiencia (.sb-segment-switch)</h2>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">03 · Interruptor de Audiencia (.sb-segment-switch)</h2>
       <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
         Permite alternar entre la experiencia orientada a cocina doméstica (Hogar) y la ficha técnica mayorista para restaurantes (Chef / HORECA). Implementa <code>role="group"</code>, botones con <code>aria-pressed</code> y retroalimentación mediante <code>aria-live="polite"</code>.
       </p>
 
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--floating">
         <!-- Control Accesible -->
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sb-space-4); margin-bottom: var(--sb-space-6);">
           <div>
@@ -366,7 +371,7 @@
             </p>
           </div>
           <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$24.000 / 500g</span>
+            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm); font-variant-numeric: tabular-nums;">$24.000 / 500g</span>
             <a href="product.html" class="sb-btn sb-btn--primary sb-btn--sm">Explorar ficha</a>
           </div>
         </div>
@@ -388,7 +393,7 @@
             </p>
           </div>
           <div style="border-top: 1px solid var(--sb-line-hairline); padding-top: var(--sb-space-3); margin-top: var(--sb-space-4); display: flex; justify-content: space-between; align-items: center;">
-            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm);">$28.000 / 350g</span>
+            <span class="sb-mono" style="font-weight: 600; font-size: var(--sb-text-sm); font-variant-numeric: tabular-nums;">$28.000 / 350g</span>
             <a href="product.html" class="sb-btn sb-btn--secondary sb-btn--sm">Consultar disponibilidad</a>
           </div>
         </div>
@@ -400,16 +405,12 @@
     <!-- 05. TABLAS TÉCNICAS                                         -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <section id="tablas" class="sb-section-block">
-      <div class="sb-section-eyebrow">
-        <span>05</span>
-        <span>Tablas Técnicas & Rendimiento</span>
-      </div>
-      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Especificaciones Profesionales de Cosecha</h2>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">05 · Especificaciones Profesionales de Cosecha</h2>
       <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
         Tablas con números tabulares monoespaciados (<code>font-feature-settings: 'tnum' 1</code>), líneas de separación milimétricas y alineación decimal de parámetros agronómicos y culinarios.
       </p>
 
-      <div class="sb-demo-box" style="overflow-x: auto;">
+      <div class="sb-demo-box sb-demo-box--floating" style="overflow-x: auto;">
         <span class="sb-code-label">Tabla de Calibres, Humedad y Merma por Cocción (HORECA)</span>
         <table class="sb-chef-specs-table" style="margin-top: var(--sb-space-3);">
           <thead>
@@ -464,17 +465,13 @@
     <!-- 06. CAJA EPISTÉMICA & GUÍA CULINARIA                       -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <section id="epistemica" class="sb-section-block">
-      <div class="sb-section-eyebrow">
-        <span>06</span>
-        <span>Caja Epistémica & Guía Demostrativa</span>
-      </div>
-      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">Separación de Evidencia e Interpretación</h2>
+      <h2 style="font-size: var(--sb-text-2xl); margin-bottom: var(--sb-space-2);">06 · Separación de Evidencia e Interpretación</h2>
       <p style="font-size: var(--sb-text-sm); color: var(--sb-ink-1); max-width: 70ch;">
         El componente <code>.sb-epistemic-box</code> desglosa cada afirmación con su estatus epistemológico real, mientras que <code>.sb-cooking-guide</code> provee la estructura modular de pasos de cocina advirtiendo su naturaleza demostrativa hasta contar con protocolos de laboratorio.
       </p>
 
       <!-- Caja Epistémica -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--floating">
         <span class="sb-code-label">Caja Epistémica (.sb-epistemic-box)</span>
         <div class="sb-epistemic-box" style="max-width: 620px;">
           <div class="sb-epistemic-item">
@@ -510,7 +507,7 @@
       </div>
 
       <!-- Guía Culinaria Demostrativa -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--inset">
         <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: var(--sb-space-2);">
           <span class="sb-code-label">Guía Culinaria Modular (.sb-cooking-guide)</span>
           <span class="sb-badge sb-status--development" style="font-size: 10px;">Estructura de Ejemplo · No Normativa</span>
@@ -548,7 +545,7 @@
       </div>
 
       <!-- Nota Sensorial Acotada -->
-      <div class="sb-demo-box">
+      <div class="sb-demo-box sb-demo-box--floating">
         <span class="sb-code-label">Nota Sensorial Acotada (.sb-sensory-note · Gaya Italic acotada a 3 líneas)</span>
         <div style="max-width: 480px; margin-top: var(--sb-space-2);">
           <div class="sb-sensory-note" style="font-size: var(--sb-text-lg);">
