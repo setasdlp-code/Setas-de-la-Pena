@@ -553,7 +553,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .ing-profile-row .k{ font-family:var(--font-body); font-weight:800; color:var(--ink-500); letter-spacing:.04em; white-space:nowrap; }
 .sim-root .ing-profile-bar{ height:4px; background:var(--paper-300); border-radius:2px; overflow:hidden; }
 .sim-root .ing-profile-bar-fill{ height:100%; border-radius:2px; }
-.sim-root .ing-profile-row .v{ font-family:var(--font-num); color:var(--ink-900); text-align:right; white-space:nowrap; }
+.sim-root .ing-profile-row .v{ font-family:var(--font-num); color:var(--ink-900); text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 .sim-root .ing-profile-row .unit{ font-family:var(--font-mono); font-size:11px; color:var(--ink-300); margin-left:3px; }
 
 /* ── ATTRIBUTE BARS ─────────────────────────────────────────────── */
@@ -1020,7 +1020,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    specificity, so it always wins on every shared property at every width.
    .dash-grid kept — its display:grid/margin-top aren't set by that block. */
 .sim-root .dash-kv .dk{ font-family:var(--font-body); font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-700); margin-bottom:3px; }
-.sim-root .dash-kv .dv{ font-family:var(--font-num); font-size:22px; color:var(--ink-900); line-height:1; }
+.sim-root .dash-kv .dv{ font-family:var(--font-num); font-size:22px; color:var(--ink-900); line-height:1; font-variant-numeric:tabular-nums; }
 
 /* ── INVERSE CALC ───────────────────────────────────────────────── */
 .sim-root .inv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
@@ -1593,7 +1593,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .opt-result:hover{background:var(--paper-100);}
 .sim-root .opt-result-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--paper-300);}
 .sim-root .opt-rank{font-family:var(--font-mono);font-size:16px;color:var(--ink-700);width:24px;flex-shrink:0;font-weight:700;}
-.sim-root .opt-score{font-family:var(--font-num);font-size:34px;line-height:1;color:var(--coral-700);}
+.sim-root .opt-score{font-family:var(--font-num);font-size:34px;line-height:1;color:var(--coral-700);font-variant-numeric:tabular-nums;}
 .sim-root .opt-score-lbl{font-family:var(--font-mono);font-size:11px;color:var(--ink-700);font-weight:700;}
 .sim-root .opt-pills{display:flex;flex-wrap:wrap;gap:4px;flex:1;}
 .sim-root .opt-pill{font-family:var(--font-mono);font-size:12px;padding:5px 10px;background:var(--paper-200);border:1px solid var(--ink-400);border-radius:var(--radius-sm);color:var(--ink-700);font-weight:600;}
@@ -1608,6 +1608,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-bottom:1.5px solid transparent; transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease);
 }
 .sim-root .chip:hover{ color:var(--ink-900); }
+.sim-root .chip:active{ transform:translateY(1px); }
 .sim-root .chip.on{ font-weight:800; color:var(--ink-900); border-bottom-color:var(--coral-500); }
 
 /* ── SEGMENTED — two/three-way mode switcher (Automática / Por objetivo, etc). ── */
@@ -1618,20 +1619,21 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:transparent; color:var(--ink-500); transition:background-color var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
 }
 .sim-root .seg:first-child{ border-left:none; }
+.sim-root .seg:active{ transform:translateY(1px) scale(0.99); }
 .sim-root .seg.on{ border-color:var(--coral-500); background:var(--paper-100); color:var(--coral-500); }
 .sim-root .opt-load{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--coral-500);color:var(--text-on-dark);border:none;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;}
 .sim-root .opt-load:hover{background:var(--coral-700);}
 .sim-root .opt-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-soft);border-top:none;}
 .sim-root .opt-met{background:var(--paper-100);padding:12px 10px;text-align:center;}
 .sim-root .opt-met-lbl{font-family:var(--font-body);font-weight:800;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-600);margin-bottom:5px;}
-.sim-root .opt-met-val{font-family:var(--font-num);font-size:22px;color:var(--ink-900);}
+.sim-root .opt-met-val{font-family:var(--font-num);font-size:22px;color:var(--ink-900);font-variant-numeric:tabular-nums;}
 
 .sim-root .spr-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--paper-300);}
 .sim-root .spr-row:last-child{border-bottom:none;}
 .sim-root .spr-rank{font-family:var(--font-mono);font-size:13px;color:var(--ink-700);width:18px;text-align:right;flex-shrink:0;font-weight:700;}
 .sim-root .spr-bar{width:90px;height:5px;background:var(--paper-300);border-radius:3px;overflow:hidden;flex-shrink:0;}
 .sim-root .spr-fill{height:100%;border-radius:3px;transition:width var(--duration-notice) var(--ease);}
-.sim-root .spr-score{font-family:var(--font-num);font-size:16px;font-weight:400;min-width:32px;text-align:right;}
+.sim-root .spr-score{font-family:var(--font-num);font-size:16px;font-weight:400;min-width:32px;text-align:right;font-variant-numeric:tabular-nums;}
 
 .sim-root .ing-item{position:relative;}
 
@@ -1726,7 +1728,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .prod-tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .sim-root .prod-tbl tr.tot td{border-top:1.5px solid var(--ink-900,#222);font-weight:700;border-bottom:none;}
 .sim-root .prod-step{display:flex;gap:11px;padding:7px 0;border-bottom:1px dotted var(--paper-300);}
-.sim-root .prod-step-n{font-family:var(--font-num);font-size:18px;font-weight:700;color:var(--coral-500,var(--color-brick));min-width:22px;line-height:1.2;}
+.sim-root .prod-step-n{font-family:var(--font-num);font-size:18px;font-weight:700;color:var(--coral-500,var(--color-brick));min-width:22px;line-height:1.2;font-variant-numeric:tabular-nums;}
 .sim-root .prod-step-t{font-size:14px;line-height:1.45;color:var(--ink-900);}
 
 .sim-root .treatment-section{}
@@ -1834,7 +1836,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .inv-month-group{border:1px solid var(--border-soft);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px;}
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 14px;background:var(--paper-200);color:inherit;border:0;font:inherit;text-align:left;cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
-.sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);}
+.sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);font-variant-numeric:tabular-nums;}
 .sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--sp-20);overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
 .sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--sp-16) var(--sp-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
@@ -5402,7 +5404,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    ========================================================================== */
 
 .sim-root .catalog-hdr-stats{display:flex;align-items:baseline;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--ink-500);white-space:nowrap;}
-.sim-root .catalog-hdr-stats b{font-family:var(--font-num);font-size:15px;font-weight:700;color:var(--ink-900);}
+.sim-root .catalog-hdr-stats b{font-family:var(--font-num);font-size:15px;font-weight:700;color:var(--ink-900);font-variant-numeric:tabular-nums;}
 
 /* Contador de recetas guardadas en la cabecera de cada tarjeta de especie */
 .sim-root .p-rec-badge{
@@ -5411,7 +5413,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:var(--accent-blue-grey);color:var(--paper-0);
   border:1px solid var(--accent-blue-grey);
 }
-.sim-root .p-rec-badge b{font-family:var(--font-num);font-weight:700;font-size:11px;line-height:20px;}
+.sim-root .p-rec-badge b{font-family:var(--font-num);font-weight:700;font-size:11px;line-height:20px;font-variant-numeric:tabular-nums;}
 .sim-root .p-rec-badge span{font-family:var(--font-body);font-weight:800;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;line-height:20px;}
 .sim-root .p-rec-badge.is-empty{background:transparent;color:var(--ink-400);border-color:var(--paper-300);}
 
