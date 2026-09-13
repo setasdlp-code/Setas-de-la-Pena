@@ -5372,7 +5372,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setShowQrSheet(false);
       setShowFieldActionModal(true);
       try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
-    } else if (resolved.reason === 'no_match') {
+    } else {
       setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };

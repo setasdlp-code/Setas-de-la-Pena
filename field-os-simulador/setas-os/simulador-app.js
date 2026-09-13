@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5439ba9b9fcde898da3cbacdde18e0856529ae2877f8668589f011c4b5c0fbc8
+// source-hash: 6ea3b2f0dfa0ebc5c856b446459332f60fc80566a5e9b7482d581c413d5649be
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3836,7 +3836,7 @@ function SimuladorShell(props) {
         if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
       } catch (e) {
       }
-    } else if (resolved.reason === "no_match") {
+    } else {
       setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };

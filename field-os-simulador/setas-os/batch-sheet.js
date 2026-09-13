@@ -225,7 +225,7 @@
         if (segments.length) candidate = safeDecode(segments[segments.length - 1]);
       }
     }
-    candidate = candidate.replace(/^(?:SDP-CERT-|CAN-)/i, '').trim();
+    candidate = candidate.replace(/^(?:setas:(?:lote|bag|bolsa):|SDP-CERT-|CAN-)/i, '').trim();
     if (!candidate) return miss('empty_payload');
 
     const norm = s => String(s == null ? '' : s).trim().toLowerCase();
