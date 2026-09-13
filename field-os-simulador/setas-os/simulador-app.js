@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7336831d9eeeaf332fd1269ada682a05d1482b73b714c1d88642d753e6a051c2
+// source-hash: 60c80cb7870bbf0a8114ca95c3c8ba4a07ff1b32270cb415abddb7a31a8b4276
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3722,8 +3722,10 @@ function SimuladorShell(props) {
       const video = videoRef.current;
       if (!video || video.readyState < 2 || !video.videoWidth) return;
       try {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        const MAX_DECODE_SIDE = 1280;
+        const scale = Math.min(1, MAX_DECODE_SIDE / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
@@ -3757,7 +3759,7 @@ function SimuladorShell(props) {
       }
       setIsCameraActive(true);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
