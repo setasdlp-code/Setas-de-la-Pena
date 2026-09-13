@@ -159,10 +159,15 @@ sanctioned inversion in the system; never invert onto an accent.
 
 ---
 
-## 9–10 · Packaging — `.sdp-pack--front` / `.sdp-pack--back`
+## 9–10 · Packaging — `.sdp-pack--front` / `.sdp-pack--back` / `.sdp-pack--multi`
 
-**Front** — 3-row grid, centred: brand + origin / plate / naming block + net
+**Front (Single Species)** — 3-row grid, centred: brand + origin / plate / naming block + net
 weight. Species at **Gaya Bold 36px**, binomial at **Gaya Italic 18px**.
+
+**Front (Multi-Species / Co-pack)** — `.sdp-pack--multi` introduces a 2-column species grid
+(`.sdp-pack__species-grid`) separating companion species (e.g. *Orellana Rosa* + *Shiitake*)
+with hairline dividers, common name at **Gaya Bold 24px**, binomial at **Gaya Italic 14px**,
+and a centered `.sdp-pack__duo-badge` ("SELECCIÓN CULINARIA") above the co-pack title (*Dúo Silvestre*).
 
 **Back** — **flex column** so the traceability block pushes to the foot no
 matter how long the copy runs. Sections are hairline-topped `__sect` blocks:
@@ -225,3 +230,18 @@ must never be collapsed into a single badge.
 Loading, empty and error states explain the situation and the next valid action.
 Dynamic messages use `role="status"` or `aria-live="polite"`; errors that need
 immediate attention use `role="alert"`.
+
+## 17 · Thermal print specification — `.sdp-thermal` / `[data-print="thermal"]`
+
+The field label output: 203 DPI (8 dots/mm) 1-bit monochrome thermal printing (Phomemo M110).
+
+```
+[data-print="thermal"]        background: #FFFFFF, color: #000000
+├── all borders               1px or 2px solid #000000 (no gray dithering)
+├── all text & metadata       #000000 (ink, muted ink, rules all collapse to pure black)
+└── status bars               solid #000000 fill
+```
+
+**Rules.** On 1-bit thermal printers, `#888888` mineral hairlines dither into broken,
+jagged artifacts. When printing in thermal mode, `--rule`, `--border-hairline`, and all
+metadata text strictly fall back to `#000000` on `#FFFFFF` with `filter: contrast(400%) grayscale(100%)`.
