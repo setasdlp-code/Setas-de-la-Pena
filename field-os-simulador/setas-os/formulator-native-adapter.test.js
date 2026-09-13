@@ -27,6 +27,21 @@ const makeFakeAdapter = (initial = []) => {
   };
 };
 
+// --- Task 3: no DOM fallback — without a native adapter, the API reports a
+// clear no-adapter result instead of touching the DOM. Runs first, before any
+// test below registers an adapter, so the no-adapter precondition holds. ---
+
+test('sin adaptador nativo: applyRecipe responde no_native_adapter y getState no toca el DOM', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  const state = api.getState();
+  assert.equal(state.adapter, null);
+  assert.deepEqual(state.recipe, []);
+  assert.equal(state.batchWetKg, null);
+  const res = await api.applyRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40 }]);
+  assert.equal(res.ok, false);
+  assert.equal(res.code, 'no_native_adapter');
+});
+
 test('registerNativeAdapter switches adapterType to native', () => {
   const api = globalThis.SetasFormulatorAPI;
   const adapter = makeFakeAdapter([{ id: 'paja_trigo', p: 60 }]);
@@ -190,20 +205,6 @@ test('applyRecipe rejects non-finite, non-positive, duplicate, or unbalanced rec
   } finally {
     unregister();
   }
-});
-
-// --- Task 3: no DOM fallback — without a native adapter, the API reports a
-// clear no-adapter result instead of touching the DOM. ---
-
-test('sin adaptador nativo: applyRecipe responde no_native_adapter y getState no toca el DOM', async () => {
-  const api = globalThis.SetasFormulatorAPI;
-  const state = api.getState();
-  if (state.adapter !== null) return; // otro test dejó un adaptador registrado; este caso no aplica
-  assert.deepEqual(state.recipe, []);
-  assert.equal(state.batchWetKg, null);
-  const res = await api.applyRecipe([{ id: 'a', p: 60 }, { id: 'b', p: 40 }]);
-  assert.equal(res.ok, false);
-  assert.equal(res.code, 'no_native_adapter');
 });
 
 test('validateRecipe usa la tolerancia única de balance (±0.5)', () => {
