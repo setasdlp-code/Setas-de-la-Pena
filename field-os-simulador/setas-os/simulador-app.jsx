@@ -4381,6 +4381,12 @@ const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,
   }
   return cur;
 };
+// ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
+//    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
+//    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
+//    tal cual se recibe: bolsas × kg/bolsa × tasa dinámica de spawn.
+const launchMoisture=({touched,manual,target})=>touched?manual:(target??manual??65);
+const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano',kg:bags*kgPerBag*(dynSpawn/100)}:null;
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
   // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
@@ -6294,6 +6300,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // ── Ejecutar Lote: muestra modal de confirmación antes de descontar inventario ──
   const ejecutarLote=(rows,loteNum,fecha)=>{
     if(!rows||!rows.length) return;
+    // Misma compuerta que "Lanzar Lote" (openProdLauncher): receta balanceada y
+    // especie elegida explícitamente antes de descontar bodega (I5c).
+    if(!readyForProduction){
+      setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
+      return;
+    }
     // Mismo insumo moisture-override que alimenta el useMemo de prodRows (línea
     // ~6010) y la hoja imprimible (línea ~12519) — prodIngs no es una variable de
     // ámbito de componente, así que se recalcula aquí con la misma expresión para
@@ -6308,6 +6320,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const plan=SetasLaunchPlanApi.buildLaunchPlan({
       recipe, bags:parseInt(prodBags)||1, kgPerBag:prodKg||1.5, moistureTarget:prodH||an?.moistureTarget||65,
       ingredients:prodIngs, inventoryLots:invLotes, moistureOverrides,
+      // Mismo ítem de spawn que "Lanzar Lote" (I5a): el grano también sale de bodega.
+      spawn:launchSpawn(parseInt(prodBags)||1,prodKg||1.5,an?.dynSpawn),
       // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
       // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
       // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
@@ -6318,6 +6332,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
     const preview=[
       ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,stockActual:stockActual(i.ingredientId,invLotes),unit:'kg',ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),unit:'kg',ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
       ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,stockActual:stockActual(u.ingredientId,invLotes),unit:'uds',ok:!faltante(u.ingredientId)})),
     ];
     // Nueva sesión de "Ejecutar Lote": rearma la guarda de re-entrancia (Task 8).
@@ -6364,6 +6379,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
       consumoRegistrado=true;
 
+      // Al entrar el lote en bitLotes, el N.º de lote del Formulador pasa a la
+      // siguiente sugerencia (I5b) — un segundo "Ejecutar" no reusa el código.
+      refrescarCodigoTrasEjecutar.current=true;
       setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
       setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
       if (window.SetasBitacoraDB) {
@@ -6445,6 +6463,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
   useEffect(()=>{
     if(!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
   },[sKey]);
+  // Tras un "Ejecutar Lote" exitoso: nueva sugerencia con el mismo generador,
+  // calculada cuando bitLotes ya incluye el lote recién creado.
+  const refrescarCodigoTrasEjecutar=useRef(false);
+  useEffect(()=>{
+    if(!refrescarCodigoTrasEjecutar.current) return;
+    refrescarCodigoTrasEjecutar.current=false;
+    if(sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[bitLotes]);
   const buildBitNuevoForm=()=>{
     const sp=effectiveSPP[sKey];const tr=an?calcTreatment(an, sKey, effectiveSPP):null;
     const today=new Date().toISOString().split('T')[0];
@@ -6500,11 +6526,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Plan de lanzamiento — independiente del toggle "Calcular batch" (showBatch)
     const nb=numBags||10, kb=kgBag||1.5;
-    const humedadLote=an?.moistureTarget??hObj??65;
+    const humedadLote=launchMoisture({touched:moistureTouched.current.hObj,manual:hObj,target:an?.moistureTarget});
     const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
     const plan=SetasLaunchPlanApi.buildLaunchPlan({
       recipe, bags:nb, kgPerBag:kb, moistureTarget:humedadLote, ingredients:effectiveINGS, inventoryLots:invLotes,
-      spawn: an?.dynSpawn ? { ingredientId:'spawn_grano', kg: nb*kb*(an.dynSpawn/100) } : null,
+      spawn: launchSpawn(nb,kb,an?.dynSpawn),
       bagUnit: bagType?.stockId ? { ingredientId:bagType.stockId, units:nb } : null,
       unitIngredientIds: UNIT_INGREDIENT_IDS,
     });
@@ -12611,7 +12637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
+                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
                   </div>
                 </div>

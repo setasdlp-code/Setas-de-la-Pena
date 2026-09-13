@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 86b972520dcf3ca7fafe53d42b1e8ee59c9c18434311e4aefea07bc8e2fe0664
+// source-hash: 758d4994755a1910359d61b7ff2f9e384cd6fa73ac70fd9155a969e84ce117cb
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3004,6 +3004,8 @@ const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, l
   }
   return cur;
 };
+const launchMoisture = ({ touched, manual, target }) => touched ? manual : target ?? manual ?? 65;
+const launchSpawn = (bags, kgPerBag, dynSpawn) => dynSpawn ? { ingredientId: "spawn_grano", kg: bags * kgPerBag * (dynSpawn / 100) } : null;
 const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
   const an = candidate?.evaluation?.analysis;
   const sp = an?.sp || SPP[targetKey];
@@ -4780,6 +4782,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const exportPDF = () => openPrintWindow("pdf");
   const ejecutarLote = (rows, loteNum, fecha) => {
     if (!rows || !rows.length) return;
+    if (!readyForProduction) {
+      setNoticeDlg({ title: "Receta no lista", msg: productionBlockMsg || "Balancea la receta al 100% antes de lanzar producción." });
+      return;
+    }
     const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
     const bagType = BAG_TYPES.find((b) => b.id === prodBagType);
     const moistureOverrides = Object.fromEntries(rows.filter((x) => x.g && x.m != null).map((x) => [x.g.id, x.m * 100]));
@@ -4791,6 +4797,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       ingredients: prodIngs,
       inventoryLots: invLotes,
       moistureOverrides,
+      // Mismo ítem de spawn que "Lanzar Lote" (I5a): el grano también sale de bodega.
+      spawn: launchSpawn(parseInt(prodBags) || 1, prodKg || 1.5, an?.dynSpawn),
       // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
       // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
       // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
@@ -4801,6 +4809,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const faltante = (id) => plan.shortfalls.find((s) => s.ingredientId === id);
     const preview = [
       ...plan.items.map((i) => ({ id: i.ingredientId, name: i.name, krKg: i.asReceivedKg, stockActual: stockActual(i.ingredientId, invLotes), unit: "kg", ok: !faltante(i.ingredientId) })),
+      ...plan.spawnItem ? [{ id: plan.spawnItem.ingredientId, name: "Spawn (grano)", krKg: plan.spawnItem.asReceivedKg, stockActual: stockActual(plan.spawnItem.ingredientId, invLotes), unit: "kg", ok: !faltante(plan.spawnItem.ingredientId) }] : [],
       ...plan.unitItems.map((u) => ({ id: u.ingredientId, name: bagType?.name || u.ingredientId, krKg: u.units, stockActual: stockActual(u.ingredientId, invLotes), unit: "uds", ok: !faltante(u.ingredientId) }))
     ];
     ejecutarLoteInFlight.current = false;
@@ -4840,6 +4849,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return;
       }
       consumoRegistrado = true;
+      refrescarCodigoTrasEjecutar.current = true;
       setBitLotes((prev) => {
         const upd = [lote, ...prev];
         try {
@@ -4916,6 +4926,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   useEffect(() => {
     if (!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
   }, [sKey]);
+  const refrescarCodigoTrasEjecutar = useRef(false);
+  useEffect(() => {
+    if (!refrescarCodigoTrasEjecutar.current) return;
+    refrescarCodigoTrasEjecutar.current = false;
+    if (sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  }, [bitLotes]);
   const buildBitNuevoForm = () => {
     const sp2 = effectiveSPP[sKey];
     const tr2 = an ? calcTreatment(an, sKey, effectiveSPP) : null;
@@ -4980,7 +4996,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const sp2 = effectiveSPP[sKey];
     const codigo = sugerirCodigoLote(sKey);
     const nb = numBags || 10, kb = kgBag || 1.5;
-    const humedadLote = an?.moistureTarget ?? hObj ?? 65;
+    const humedadLote = launchMoisture({ touched: moistureTouched.current.hObj, manual: hObj, target: an?.moistureTarget });
     const bagType = BAG_TYPES.find((b) => b.id === prodBagType);
     const plan = SetasLaunchPlanApi.buildLaunchPlan({
       recipe,
@@ -4989,7 +5005,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       moistureTarget: humedadLote,
       ingredients: effectiveINGS,
       inventoryLots: invLotes,
-      spawn: an?.dynSpawn ? { ingredientId: "spawn_grano", kg: nb * kb * (an.dynSpawn / 100) } : null,
+      spawn: launchSpawn(nb, kb, an?.dynSpawn),
       bagUnit: bagType?.stockId ? { ingredientId: bagType.stockId, units: nb } : null,
       unitIngredientIds: UNIT_INGREDIENT_IDS
     });
@@ -8324,7 +8340,7 @@ Click para ver análisis completo`
     setProdH(v === "" ? "" : parseInt(v) || "");
   }, onBlur: () => {
     if (prodH === "" || isNaN(prodH)) setProdH(67);
-  }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => prodRows && ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !prodRows, title: prodRows ? "Descontar insumos y bolsas del inventario (FIFO)" : !balanced ? balMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows ? "var(--moss-700)" : "var(--paper-300)", color: prodRows ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: prodRows ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, "⚡ Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9 }, title: loteSyncErr }, "⚠ sin sincronizar"))))), recipe.length > 0 && an && balanced && (() => {
+  }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => prodRows && ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !prodRows || !readyForProduction, title: prodRows && readyForProduction ? "Descontar insumos y bolsas del inventario (FIFO)" : !balanced ? balMsg : !hasPickedSpecies ? productionBlockMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows && readyForProduction ? "var(--moss-700)" : "var(--paper-300)", color: prodRows && readyForProduction ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: prodRows && readyForProduction ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, "⚡ Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9 }, title: loteSyncErr }, "⚠ sin sincronizar"))))), recipe.length > 0 && an && balanced && (() => {
     const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
     const ptr = calcTreatment(an, sKey, effectiveSPP);
     const pb = calcBatch(recipe, prodBags || 1, prodKg || 1.5, prodH || 67, spawnCost, prodIngs, an?.dynSpawn, ptr, an?.eb, sKey);
