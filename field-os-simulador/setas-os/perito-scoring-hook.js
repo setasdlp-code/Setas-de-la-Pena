@@ -1,4 +1,5 @@
 'use strict';
+import './perito-readiness.js';
 import './perito-ui-bridge.js';
 import './perito-scenarios-bridge.js';
 

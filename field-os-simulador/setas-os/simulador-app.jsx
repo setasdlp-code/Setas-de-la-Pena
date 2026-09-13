@@ -2011,9 +2011,9 @@ const SpeciesRecommender=({recipe})=>{
 
 // ── PERITO: componente estable a nivel módulo (no redefinido en cada render) ──
 const PERITO_STATUS={
-  excellent:{label:'Apta',veredicto:'Apta',accion:'Producir normalmente.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
-  good:{label:'Apta con ajustes',veredicto:'Apta con ajustes',accion:'Aplicar las mejoras del Perito antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
-  needs_work:{label:'Experimental',veredicto:'Experimental',accion:'Máximo 3–5 bolsas de prueba. Registrar colonización al día 7, 14 y 21.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
+  excellent:{label:'Ajuste favorable',veredicto:'Ajuste favorable del modelo',accion:'Revisar preparación y aprobación humana antes de producir.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
+  good:{label:'Revisar ajustes',veredicto:'Modelo con ajustes pendientes',accion:'Revisar recomendaciones, existencias y proceso antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
+  needs_work:{label:'Requiere validación',veredicto:'Requiere validación',accion:'Definir una prueba y su seguimiento con el responsable antes de escalar.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
@@ -5600,6 +5600,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invProveedores,setInvProveedores]=useState([]);
   const [invCompras,setInvCompras]=useState([]);
   const [invLotes,setInvLotes]=useState([]);
+  const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
   const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
@@ -5790,6 +5791,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(l) setInvLotes(JSON.parse(l));
         if(m) setInvMovimientos(JSON.parse(m));
       }
+      setPeritoInventoryLoaded(true);
     }catch(e){}
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
@@ -6080,6 +6082,44 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,undefined,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,usageCounts]);
+  // One committed React snapshot for the presentation bridge. Batch size,
+  // locks, inventory and evidence changes invalidate it even without a recipe edit.
+  const peritoRevisionRef=React.useRef(0);
+  useEffect(()=>{
+    const input={
+      inputRevision:++peritoRevisionRef.current,
+      species:{key:sKey,name:sp?.name||sKey,confirmed:hasPickedSpecies},
+      recipe:recipe.map(r=>({id:r.id,p:Number(r.p)})),
+      lockedIds:[...lockedIds],
+      batch:{wetKg:Number(numBags)*Number(kgBag),targetMoisturePct:Number(hObj)},
+      inventory:{available:peritoInventoryLoaded,stockKgById:{...stockMap},source:'Bodega activa'},
+      ingredients:effectiveINGS.map(g=>({id:g.id,name:g.name})),
+      ingredientMoistureById:Object.fromEntries(effectiveINGS.map(g=>[g.id,g.moisture??null])),
+      processCapabilities:null,approval:null,
+      treatment:tr,an,
+      historicalEvidence:{trials:saved,lotes:bitLotes,harvests:bitCosechas},
+    };
+    globalThis.__setasPeritoInput=input;
+    window.dispatchEvent(new CustomEvent('setas-perito-input',{detail:input}));
+  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded]);
+  useEffect(()=>{
+    const navigate=event=>{
+      const action=event.detail?.action;
+      if(action==='inventory'){goTab('inventario');return;}
+      if(action==='history'){goTab('catalogo');return;}
+      if(action==='recipe'){focusActiveRecipe();return;}
+      if(action==='species'){focusFormTop();requestAnimationFrame(()=>document.getElementById('form-species-context-select')?.focus());return;}
+      if(action==='batch') setShowBatch(true);
+      const id={batch:'bl-batch',process:'bl-tratamiento',recommendations:'perito-recommendations'}[action];
+      if(id) requestAnimationFrame(()=>{
+        const target=document.getElementById(id);
+        target?.scrollIntoView({behavior:'smooth',block:'start'});
+        if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
+      });
+    };
+    window.addEventListener('setas-perito-navigate',navigate);
+    return()=>window.removeEventListener('setas-perito-navigate',navigate);
+  });
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
@@ -11315,7 +11355,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
                         {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
                       {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</div>}
                       {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</div>}
                       {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</details>}
