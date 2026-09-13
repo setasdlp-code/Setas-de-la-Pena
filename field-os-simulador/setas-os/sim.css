@@ -6130,3 +6130,118 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── Bioseguridad & Triaje de Contaminaciones (FOS Architecture v2) ────────── */
+.sim-root .biosecurity-triage-modal {
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--paper-0, #F7F4EC);
+  border: 1px solid var(--border-medium, #4A4433);
+  border-radius: var(--radius-md, 4px);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sim-root .triage-pathogen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.sim-root .triage-pathogen-card {
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 3px);
+  padding: 10px;
+  background: var(--paper-1, #EFEADF);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-root .triage-pathogen-card:hover {
+  background: var(--paper-0, #F7F4EC);
+  border-color: var(--ink-2, #5C5441);
+}
+
+.sim-root .triage-pathogen-card.is-selected {
+  border-color: var(--accent-terracotta, #B24C27);
+  background: #F9EFE9;
+  box-shadow: 0 0 0 1px var(--accent-terracotta, #B24C27);
+}
+
+.sim-root .triage-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  background: var(--paper-1, #EFEADF);
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 3px);
+  padding: 12px;
+}
+
+.sim-root .triage-impact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sim-root .triage-impact-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-2, #5C5441);
+}
+
+.sim-root .triage-impact-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-0, #1A1410);
+}
+
+.sim-root .triage-protocol-banner {
+  border-left: 3px solid var(--accent-terracotta, #B24C27);
+  background: #FDF6F2;
+  padding: 12px 14px;
+  border-radius: 0 var(--radius-sm, 3px) var(--radius-sm, 3px) 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-0, #1A1410);
+}
+
+.sim-root .triage-protocol-list {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+
+.sim-root .triage-protocol-list li {
+  margin-bottom: 4px;
+}
+
+.sim-root .triage-decision-option {
+  border: 1px solid var(--border-hairline, #8C7F5B);
+  border-radius: var(--radius-sm, 3px);
+  padding: 10px 12px;
+  background: var(--paper-0, #F7F4EC);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--ink-0, #1A1410);
+}
+
+.sim-root .triage-decision-option.is-selected {
+  border-color: var(--moss-800, #2E3B2F);
+  background: #F2F5F2;
+  font-weight: 600;
+}

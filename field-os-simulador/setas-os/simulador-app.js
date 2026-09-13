@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6bf7a20302aeb802757ebf3167a9c4c8aa800c5f16e4fc7a948cbbaf71729102
+// source-hash: 74f4ae669142cf33e76e0ab253ea630c4a8c0d7a546471cce642e9c23719add8
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1559,10 +1559,25 @@ const peritoCorreccionMinima = (opt) => {
   if (!first) return null;
   return first.action.replace(/<[^>]+>/g, "");
 };
-const PeritoItem = React.memo(({ item, onApply, baseScore }) => {
+const describePeritoChanges = (recipe, apply, lockedIds, ingredients) => {
+  if (!apply) return [];
+  const next = applyOptToRecipe(recipe, apply, lockedIds, ingredients);
+  const before = new Map(recipe.map((r) => [r.id, Number(r.p) || 0]));
+  const after = new Map(next.map((r) => [r.id, Number(r.p) || 0]));
+  return [.../* @__PURE__ */ new Set([...before.keys(), ...after.keys()])].map((id) => ({
+    id,
+    name: ingredients.find((g) => g.id === id)?.name || id,
+    before: before.get(id) || 0,
+    after: after.get(id) || 0
+  })).filter((row) => Math.abs(row.after - row.before) > 1e-6);
+};
+const PeritoChangePreview = ({ changes }) => /* @__PURE__ */ React.createElement("details", { style: { marginTop: 6, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("summary", { style: { cursor: "pointer", fontWeight: 700 } }, "Ver cambios de la receta (", changes.length, ")"), /* @__PURE__ */ React.createElement("p", { style: { margin: "5px 0", color: "var(--ink-600)" } }, "Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo."), /* @__PURE__ */ React.createElement("ul", { style: { margin: 0, paddingLeft: 18 } }, changes.map((row) => /* @__PURE__ */ React.createElement("li", { key: row.id, style: { overflowWrap: "anywhere" } }, row.name, ": ", Number(row.before.toFixed(2)), "% → ", Number(row.after.toFixed(2)), "%"))), !changes.length && /* @__PURE__ */ React.createElement("p", null, "Esta propuesta no cambia la receta con los bloqueos actuales."));
+const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients }) => {
+  const changes = describePeritoChanges(recipe, item.apply, lockedIds, ingredients);
+  const comboChanges = describePeritoChanges(recipe, item.comboApply, lockedIds, ingredients);
   const hasPrediction = item.predictedScore != null && baseScore != null;
   const scoreDelta = hasPrediction ? Math.round(item.predictedScore - baseScore) : null;
-  return /* @__PURE__ */ React.createElement("div", { className: `perito-item pi-${item.priority}` }, /* @__PURE__ */ React.createElement("div", { className: "pi-icon-col" }, /* @__PURE__ */ React.createElement("span", { className: "pi-icon" }, item.icon)), /* @__PURE__ */ React.createElement("div", { className: "pi-body" }, /* @__PURE__ */ React.createElement("div", { className: "pi-head" }, /* @__PURE__ */ React.createElement("span", { className: "pi-label" }, item.label), item.capped && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#8C4020", background: "rgba(200,112,64,.12)", border: "1px solid rgba(200,112,64,.3)", borderRadius: 3, padding: "1px 6px" } }, "tope alcanzado"), item.notInStock && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#7A5A10", background: "rgba(160,120,40,.12)", border: "1px solid rgba(160,120,40,.3)", borderRadius: 3, padding: "1px 6px" } }, "🛒 no en bodega — a comprar"), item.delta && /* @__PURE__ */ React.createElement("span", { className: "pi-delta" }, item.delta)), item.repeatedApply && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginBottom: 2 } }, "↻ Ya aplicaste esto ", item.repeatedApply, "x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”."), /* @__PURE__ */ React.createElement("div", { className: "pi-action", dangerouslySetInnerHTML: { __html: item.action } }), /* @__PURE__ */ React.createElement("div", { className: "pi-effect" }, item.effect), item.evidence && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Evidencia:"), " ", item.evidence.type === "heuristic-model" ? "heurística de composición" : "sin fuente específica", " · confianza ", item.evidence.confidence === "low" ? "baja" : item.evidence.confidence || "baja", " · ", item.evidence.note), item.why && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3, opacity: 0.85 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Por qué:"), " ", item.why), item.riskIfIgnored && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: scoreDelta > 0 ? "var(--accent-olive)" : "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "Score si se aplica: ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? "+" : "", scoreDelta, ")"), item.sideEffect && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "⚠ ", item.sideEffect), item.comboApply && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, padding: "6px 8px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, item.comboLabel), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)" } }, "Score si se aplica junto: ", Math.round(item.comboPredictedScore), "/100"), /* @__PURE__ */ React.createElement("button", { onClick: () => onApply(item.comboApply, item.icon), className: "pi-apply", style: { marginTop: 4 } }, "Aplicar corrección combinada"))), /* @__PURE__ */ React.createElement("div", { className: "pi-actions" }, item.apply ? /* @__PURE__ */ React.createElement("button", { onClick: () => onApply(item.apply, item.icon), className: "pi-apply" }, "Aplicar") : /* @__PURE__ */ React.createElement("div", { className: "pi-spacer" })));
+  return /* @__PURE__ */ React.createElement("div", { className: `perito-item pi-${item.priority}` }, /* @__PURE__ */ React.createElement("div", { className: "pi-icon-col" }, /* @__PURE__ */ React.createElement("span", { className: "pi-icon" }, item.icon)), /* @__PURE__ */ React.createElement("div", { className: "pi-body" }, /* @__PURE__ */ React.createElement("div", { className: "pi-head" }, /* @__PURE__ */ React.createElement("span", { className: "pi-label" }, item.label), item.capped && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#8C4020", background: "rgba(200,112,64,.12)", border: "1px solid rgba(200,112,64,.3)", borderRadius: 3, padding: "1px 6px" } }, "tope alcanzado"), item.notInStock && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#7A5A10", background: "rgba(160,120,40,.12)", border: "1px solid rgba(160,120,40,.3)", borderRadius: 3, padding: "1px 6px" } }, "🛒 no en bodega — a comprar"), item.delta && /* @__PURE__ */ React.createElement("span", { className: "pi-delta" }, item.delta)), item.repeatedApply && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginBottom: 2 } }, "↻ Ya aplicaste esto ", item.repeatedApply, "x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”."), /* @__PURE__ */ React.createElement("div", { className: "pi-action", dangerouslySetInnerHTML: { __html: item.action } }), /* @__PURE__ */ React.createElement("div", { className: "pi-effect" }, item.effect), item.evidence && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Evidencia:"), " ", item.evidence.type === "heuristic-model" ? "heurística de composición" : "sin fuente específica", " · confianza ", item.evidence.confidence === "low" ? "baja" : item.evidence.confidence || "baja", " · ", item.evidence.note), item.why && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3, opacity: 0.85 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Por qué:"), " ", item.why), item.riskIfIgnored && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: scoreDelta > 0 ? "var(--accent-olive)" : "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "Índice estimado: ", Math.round(baseScore), "/100 → ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? "+" : "", scoreDelta, ")"), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Comparación del modelo; no garantiza rendimiento en producción."), item.apply && /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes }), item.sideEffect && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "⚠ ", item.sideEffect), item.comboApply && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, padding: "6px 8px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, item.comboLabel), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)" } }, "Índice estimado con ambos cambios: ", Math.round(item.comboPredictedScore), "/100"), /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes: comboChanges }), /* @__PURE__ */ React.createElement("button", { disabled: !comboChanges.length, "aria-label": `Aplicar corrección combinada: ${item.label}`, onClick: () => onApply(item.comboApply, item.icon), className: "pi-apply", style: { marginTop: 4 } }, "Aplicar corrección combinada"))), /* @__PURE__ */ React.createElement("div", { className: "pi-actions" }, item.apply ? /* @__PURE__ */ React.createElement("button", { disabled: !changes.length, "aria-label": `Aplicar ajuste: ${item.label}`, onClick: () => onApply(item.apply, item.icon), className: "pi-apply" }, "Aplicar ajuste") : /* @__PURE__ */ React.createElement("div", { className: "pi-spacer" })));
 });
 const useDialogA11y = (onClose) => {
   const dialogRef = React.useRef(null);
@@ -3846,6 +3861,14 @@ function SimuladorShell(props) {
   const [diagResult, setDiagResult] = useState(null);
   const [diagNotes, setDiagNotes] = useState("");
   const [diagError, setDiagError] = useState("");
+  const [showDiagNotes, setShowDiagNotes] = useState("");
+  const [showTriageModal, setShowTriageModal] = useState(false);
+  const [triageLoteId, setTriageLoteId] = useState("");
+  const [triagePathogenKey, setTriagePathogenKey] = useState("trichoderma");
+  const [triageAffectedBags, setTriageAffectedBags] = useState(1);
+  const [triageLocation, setTriageLocation] = useState("");
+  const [triageDecision, setTriageDecision] = useState("isolate_bags");
+  const [triageNotes, setTriageNotes] = useState("");
   const [showAIFormModal, setShowAIFormModal] = useState(false);
   const [aiFormGoal, setAiFormGoal] = useState("");
   const [aiFormLoading, setAiFormLoading] = useState(false);
@@ -4100,14 +4123,14 @@ function SimuladorShell(props) {
     }
   });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showAIFormModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
+    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showTriageModal || showAIFormModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showAIFormModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
+  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showTriageModal, showAIFormModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -5810,13 +5833,25 @@ BATCH (${numBags}×${kgBag} kg):
     const bs = typeof window !== "undefined" ? window.SetasBatchSheet : null;
     return bs && bs.normalizeLifecycleState ? bs.normalizeLifecycleState(lote.estado, "inoculated") : "inoculated";
   };
-  const lifecycleLabel = { incubation: "Incubación", fruiting: "Fructificación", closed: "Cerrado", discarded: "Descartado" };
-  const lifecycleColor = { incubation: "var(--status-info)", fruiting: "var(--status-active)", closed: "var(--status-archived)", discarded: "var(--status-error)" };
-  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close: "Cerrar lote" };
+  const contaminationWorkflow = typeof window !== "undefined" ? window.SetasContaminationWorkflow : null;
+  const lifecycleLabel = { incubation: "Incubación", fruiting: "Fructificación", closed: "Cerrado", discarded: "Descartado", quarantine: "Cuarentena" };
+  const lifecycleColor = { incubation: "var(--status-info)", fruiting: "var(--status-active)", closed: "var(--status-archived)", discarded: "var(--status-error)", quarantine: "var(--accent-terracotta, #B24C27)" };
+  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close: "Cerrar lote", discard: "Descartar lote" };
   const openBatchDetail = (id) => {
     setBitActiveLoteId(id);
     goTab("bitacora");
     goBitTab("bit_ficha", true);
+  };
+  const openContaminationTriage = (loteId) => {
+    const l = bitLotes.find((x) => x.id === loteId) || bitLotes[0];
+    if (!l) return;
+    setTriageLoteId(l.id);
+    setTriagePathogenKey("trichoderma");
+    setTriageAffectedBags(1);
+    setTriageLocation(l.sala || l.ubicacion || "Sala 1");
+    setTriageDecision("isolate_bags");
+    setTriageNotes("");
+    setShowTriageModal(true);
   };
   const batchSheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
   const [fieldOperatorRole, setFieldOperatorRole] = useState("operario");
@@ -5976,6 +6011,15 @@ BATCH (${numBags}×${kgBag} kg):
       updateBitLote(lote.id, { estado: "completado" });
       return;
     }
+    if (action === "discard") {
+      const from = loteLifecycleState(lote);
+      if (workflow && workflow.canTransition(from, "discarded")) {
+        const event = workflow.transitionEvent({ batchId: lote.id, from, to: "discarded", operatorId: lote.operador || "operador-local", reason: "Descarte manual de lote" });
+        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
+        enqueueFieldTransition(lote, from, "discarded");
+      }
+      return;
+    }
     if (action === "move") {
       setSelectedClimateRoom(lote.sala || lote.ubicacion || selectedClimateRoom);
       goTab("control");
@@ -5986,14 +6030,7 @@ BATCH (${numBags}×${kgBag} kg):
       return;
     }
     if (action === "contamination") {
-      setDiagLoteId(lote.id);
-      const b = bitBolsas.find((x) => x.loteId === lote.id && x.estado !== "descartada");
-      setDiagBolsaId(b?.id || "");
-      setDiagImageBase64("");
-      setDiagResult(null);
-      setDiagError("");
-      setDiagNotes("");
-      setShowDiagModal(true);
+      openContaminationTriage(lote.id);
       return;
     }
     setNoticeDlg({ title: actionLabel[action] || "Acción de lote", msg: "Esta captura conserva el flujo operativo existente del lote." });
@@ -6053,17 +6090,18 @@ BATCH (${numBags}×${kgBag} kg):
     const now = Date.now();
     const source = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado)).map((lote, index) => {
       const stats = calcLoteStats(lote.id);
-      const contaminated = stats && stats.contPct > 0;
+      const isQuarantine = lote.estado === "cuarentena" || lote.lifecycleState === "quarantine";
+      const contaminated = stats && stats.contPct > 0 || isQuarantine;
       const inoculated = Date.parse(lote.fechaInoculacion || "");
       const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((now - inoculated) / 864e5)) : 0;
       return {
         id: lote.id,
         lote,
-        severity: stats && stats.contPct >= 20 ? "critical" : void 0,
-        blocked: contaminated && stats.contPct < 20,
+        severity: stats && stats.contPct >= 20 || isQuarantine ? "critical" : void 0,
+        blocked: contaminated && stats.contPct < 20 || isQuarantine,
         dueAt: !contaminated && age >= 14 ? new Date(now - (index + 1) * 36e5).toISOString() : new Date(now + (index + 1) * 36e5).toISOString(),
-        title: contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
-        why: `${lote.especie || "Lote"} · ${lifecycleLabel[loteLifecycleState(lote)] || lote.estado} · día ${age}`
+        title: isQuarantine ? "Lote en Cuarentena · Revisión Fitosanitaria" : contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
+        why: isQuarantine ? `Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}` : `${lote.especie || "Lote"} · ${lifecycleLabel[loteLifecycleState(lote)] || lote.estado} · día ${age}`
       };
     });
     const queue = workflow ? workflow.buildTodayQueue(source, now) : source;
@@ -7730,7 +7768,7 @@ Click para ver análisis completo`
       { l: "EB estimada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb?.toFixed(0) || "—"}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
       { l: "Costo / kg Seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
       { l: "Costo / kg Hongo", v: an.eb > 0 ? `$${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")}` : "—", ok: (an.cost || 0) / (an.eb / 100) < 1600, w: (an.cost || 0) / (an.eb / 100) < 3200 }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), (an.tot < 97 || an.tot > 103) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, "⚠ Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", null, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "✦ Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
+    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), (an.tot < 97 || an.tot > 103) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, "⚠ Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", null, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "✦ Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
   })(), /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats }), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta-summary" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-900)", lineHeight: 1 } }, "Puntaje y lote"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", recipe.length, ")"))), an && an.sp && opt?.score > 0 && (() => {
     const sc = opt.score;
     const col = sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)";
@@ -8635,6 +8673,18 @@ Click para ver análisis completo`
         "button",
         {
           type: "button",
+          style: { minHeight: 44, cursor: "pointer", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", border: "1px solid var(--accent-terracotta,#A85C32)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
+          onClick: () => {
+            setShowQrSheet(false);
+            openContaminationTriage(currentLote.id);
+          }
+        },
+        /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 14, color: "var(--accent-terracotta)" }),
+        " Reportar Contaminación / Merma"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
           style: { minHeight: 44, cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--ink-0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
           onClick: () => {
             setThermalLote(currentLote);
@@ -9328,6 +9378,248 @@ interval:
         marginBottom: 16
       } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700 } }, slResult.statusBadge, " Vida Útil Comercial Estimada: ", /* @__PURE__ */ React.createElement("strong", null, slResult.marketableShelfLifeDays, " días")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, marginTop: 2 } }, "Factor limitante: ", /* @__PURE__ */ React.createElement("strong", null, slResult.limitingFactor.replace(/_/g, " ")))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 11 } }, /* @__PURE__ */ React.createElement("div", null, "Transpiración: ", slResult.transpiration.weightLossPctPerDay, "% peso/día"), /* @__PURE__ */ React.createElement("div", null, "VPD almacén: ", slResult.transpiration.storageVpdKpa, " kPa")))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-0)", marginBottom: 6 } }, "📊 Vida Útil según Régimen Térmico:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10, background: "var(--moss-100)", borderColor: "var(--moss-600)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--moss-800)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, "Cuarto Frío (4°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 20, fontWeight: 700, color: "var(--moss-800)" } }, slResult.scenariosComparison.cuartoFrio_4C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--moss-800)" } }, "Baseline de cadena ideal")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", fontFamily: "var(--font-mono)" } }, "Nevera (10°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 20, fontWeight: 700, color: "var(--ink-0)" } }, slResult.scenariosComparison.neveraDomestica_10C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--ink-2)" } }, "Refrigeración doméstica")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card", style: { padding: 10, background: "var(--accent-terracotta-dim)", borderColor: "var(--accent-terracotta)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--accent-rust)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, "Ambiente Sabana (18°C)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 20, fontWeight: 700, color: "var(--accent-rust)" } }, slResult.scenariosComparison.ambienteSabana_18C, " días"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--accent-rust)" } }, "Pérdida: -", slResult.scenariosComparison.lossRatioAmbienteVsFrio, "% vida")))), resp && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-2)", border: "1px solid var(--line-0)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)", marginBottom: 4 } }, "⚡ Fisiología Respiratoria & Carga Térmica (Lote ", postHarvestBatchKg, " kg):"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5, flexWrap: "wrap", gap: 10 } }, /* @__PURE__ */ React.createElement("span", null, "Tasa respiratoria: ", /* @__PURE__ */ React.createElement("strong", null, resp.respirationMgKgH, " mg CO₂/kg·h"), " (", resp.accelerationFactor, "x vs 4°C)"), /* @__PURE__ */ React.createElement("span", null, "Calor vital emitido: ", /* @__PURE__ */ React.createElement("strong", null, resp.totalVitalHeatWatts, " Watts"), " (", resp.vitalHeatWattsPerKg, " W/kg)"))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "#1D4ED8", marginBottom: 4 } }, "📦 Especificación Técnica de Empaque en Atmósfera Modificada (MAP):"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--ink-1)", lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("strong", null, "Material:"), " ", slResult.packagingRecommendation.type, " · ", /* @__PURE__ */ React.createElement("strong", null, "OTR Objetivo:"), " ", slResult.packagingRecommendation.targetOtr, " · ", /* @__PURE__ */ React.createElement("strong", null, "Aditivo:"), " Anti-fog obligatorio.", /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, color: "var(--ink-2)", fontSize: 11 } }, slResult.packagingRecommendation.guidance)))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-hairline)", paddingTop: 14 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowPostHarvestModal(false), className: "inv-btn inv-btn-pri", style: { minHeight: 38, padding: "6px 16px" } }, "Cerrar Poscosecha"))
+    );
+  })(), showTriageModal && (() => {
+    const currentLote = bitLotes.find((l) => l.id === triageLoteId) || bitLotes[0];
+    const cw = typeof window !== "undefined" ? window.SetasContaminationWorkflow : null;
+    const pathogens = cw?.PATHOGENS_CATALOG || {
+      trichoderma: { id: "trichoderma", commonName: "Moho Verde", scientific: "Trichoderma spp.", dangerLevel: "critical", biosecurityProtocol: ["Apagar ventilación forzada FAE inmediatamente.", "Pulverizar alcohol al 70% o solución clorada suavemente.", "Embolsar herméticamente antes de mover."] },
+      neurospora: { id: "neurospora", commonName: "Moho Naranja del Pan", scientific: "Neurospora sitophila", dangerLevel: "critical", biosecurityProtocol: ["Aislamiento inmediato. No abrir ni apretar la bolsa.", "Esterilizar o incinerar el material descartado."] },
+      cobweb: { id: "cobweb", commonName: "Moho Telaraña", scientific: "Dactylium dendroides", dangerLevel: "high", biosecurityProtocol: ["Cubrir con sal marina fina (salting) antes de retirar.", "Reducir HR a 82-84% y ventilar suavemente."] },
+      bacillus: { id: "bacillus", commonName: "Grano Húmedo / Bacteriosis", scientific: "Bacillus subtilis", dangerLevel: "medium", biosecurityProtocol: ["Descartar bolsas afectadas.", "Revisar F₀ de esterilización y remojo previo de 12 horas."] },
+      mycogone: { id: "mycogone", commonName: "Burbuja Húmeda", scientific: "Mycogone perniciosa", dangerLevel: "high", biosecurityProtocol: ["Cubrir con alcohol al 70% o yodo al 1%.", "Retirar en bolsa sellada."] }
+    };
+    const selectedPathogen = pathogens[triagePathogenKey] || pathogens.trichoderma;
+    const totalBags = currentLote ? Number(currentLote.numBolsas) || 12 : 12;
+    const lossCalc = cw ? cw.calculateContaminationLoss({ batch: currentLote, affectedBags: triageAffectedBags, totalBags }) : {
+      totalBags,
+      affectedBags: triageAffectedBags,
+      healthyBags: Math.max(0, totalBags - triageAffectedBags),
+      lossPct: Math.round(triageAffectedBags / totalBags * 100),
+      lossCostCop: triageAffectedBags * (currentLote?.costoBolsa || (currentLote?.costoIngKg ? Math.round(currentLote.costoIngKg * (currentLote.pesoHumedo || 2)) : 3500)),
+      suggestedAction: triageAffectedBags / totalBags >= 0.5 ? "discard" : triageAffectedBags / totalBags >= 0.2 ? "quarantine" : "isolate_bags",
+      severity: triageAffectedBags / totalBags >= 0.2 ? "critical" : "warning"
+    };
+    const handleConfirmTriage = () => {
+      if (!currentLote) return;
+      const currentLifecycle = loteLifecycleState(currentLote);
+      const targetState = cw ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct) : triageDecision === "discard" || lossCalc.lossPct >= 50 ? "discarded" : triageDecision === "quarantine" || lossCalc.lossPct >= 20 ? "quarantine" : currentLifecycle;
+      const contamEvent = cw ? cw.buildContaminationEvent({
+        batchId: currentLote.id,
+        pathogenKey: triagePathogenKey,
+        affectedBags: triageAffectedBags,
+        totalBags,
+        location: triageLocation || currentLote.sala || "Sala 1",
+        decision: triageDecision,
+        operatorId: currentLote.operador || "operador-local",
+        notes: triageNotes,
+        lossCostCop: lossCalc.lossCostCop
+      }) : {
+        type: "contamination_incident",
+        batchId: currentLote.id,
+        pathogenId: triagePathogenKey,
+        pathogenName: selectedPathogen.commonName,
+        affectedBags: triageAffectedBags,
+        totalBags,
+        lossPct: lossCalc.lossPct,
+        lossCostCop: lossCalc.lossCostCop,
+        location: triageLocation,
+        decision: triageDecision,
+        operatorId: currentLote.operador || "operador-local",
+        at: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      let transitionEvt = null;
+      if (targetState !== currentLifecycle && workflow && workflow.canTransition(currentLifecycle, targetState)) {
+        transitionEvt = workflow.transitionEvent({
+          batchId: currentLote.id,
+          from: currentLifecycle,
+          to: targetState,
+          operatorId: currentLote.operador || "operador-local",
+          reason: `Contaminación por ${selectedPathogen.commonName} (${lossCalc.lossPct}% afectación, decisión: ${triageDecision})`
+        });
+      }
+      const loteBags = bitBolsas.filter((b) => b.loteId === currentLote.id && b.estado !== "descartada");
+      const bagsToMark = loteBags.slice(0, triageAffectedBags);
+      bagsToMark.forEach((b) => {
+        updateBitBolsa(b.id, {
+          estado: triageDecision === "discard" ? "descartada" : "contaminada",
+          obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
+        });
+      });
+      const nextEstado = targetState === "quarantine" ? "cuarentena" : targetState === "discarded" ? "descartado" : currentLote.estado;
+      const updatedEvents = [
+        ...currentLote.lifecycleEvents || [],
+        contamEvent,
+        ...transitionEvt ? [transitionEvt] : []
+      ];
+      updateBitLote(currentLote.id, {
+        estado: nextEstado,
+        numBolsas: lossCalc.healthyBags,
+        lifecycleEvents: updatedEvents
+      });
+      if (targetState && targetState !== currentLifecycle) {
+        enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+      }
+      setShowTriageModal(false);
+      setNoticeDlg({
+        title: "🛡️ Bioseguridad Aplicada",
+        msg: `Lote ${currentLote.codigo}: ${triageAffectedBags} bolsas retiradas. Merma: ${lossCalc.lossPct}%. Pérdida estimada: $${lossCalc.lossCostCop.toLocaleString("es-CO")} COP. Nuevo estado: ${targetState.toUpperCase()}.`
+      });
+    };
+    return /* @__PURE__ */ React.createElement(
+      AccessibleModal,
+      {
+        label: "Triaje de Bioseguridad y Contaminación",
+        onClose: () => setShowTriageModal(false)
+      },
+      /* @__PURE__ */ React.createElement("div", { className: "biosecurity-triage-modal", "data-testid": "biosecurity-triage-modal", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-terracotta)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Gestión Fitosanitaria · Tenjo 2.587 msnm"), /* @__PURE__ */ React.createElement("h2", { style: { margin: "2px 0 0", fontFamily: "var(--font-display)", fontSize: 18, color: "var(--ink-0)" } }, "🛡️ Triaje de Bioseguridad & Cuarentena")), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          style: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--ink-2)" },
+          onClick: () => setShowTriageModal(false),
+          "aria-label": "Cerrar triaje de bioseguridad"
+        },
+        "×"
+      )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 3 } }, "Lote Afectado"), /* @__PURE__ */ React.createElement(
+        "select",
+        {
+          style: { width: "100%", padding: "7px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+          value: currentLote?.id || "",
+          onChange: (e) => {
+            setTriageLoteId(e.target.value);
+            setTriageAffectedBags(1);
+          }
+        },
+        bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado)).map((l) => /* @__PURE__ */ React.createElement("option", { key: l.id, value: l.id }, l.codigo, " — ", l.especie, " (", l.numBolsas, " bolsas)"))
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 3 } }, "Ubicación / Sala"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "text",
+          style: { width: "100%", padding: "6px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+          value: triageLocation,
+          onChange: (e) => setTriageLocation(e.target.value),
+          placeholder: "Ej: Estantería B · Nivel 2"
+        }
+      ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 6 } }, "Patógeno Sospechoso / Diagnóstico"), /* @__PURE__ */ React.createElement("div", { className: "triage-pathogen-grid" }, Object.values(pathogens).map((p) => {
+        const isSelected = triagePathogenKey === p.id;
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: p.id,
+            type: "button",
+            className: `triage-pathogen-card ${isSelected ? "is-selected" : ""}`,
+            onClick: () => setTriagePathogenKey(p.id)
+          },
+          /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)" } }, p.commonName), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontFamily: "var(--font-mono)", padding: "1px 4px", borderRadius: 2, background: p.dangerLevel === "critical" ? "var(--accent-terracotta-dim)" : "#FEF3C7", color: p.dangerLevel === "critical" ? "var(--accent-terracotta)" : "#B45309" } }, p.dangerLevel === "critical" ? "Crítico" : p.dangerLevel === "high" ? "Alto" : "Medio")),
+          /* @__PURE__ */ React.createElement("div", { style: { fontStyle: "italic", fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)" } }, p.scientific)
+        );
+      }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", padding: "10px 14px" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)" } }, "Bolsas con Síntomas Visibles"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--ink-2)" } }, "Total de bolsas en el lote: ", totalBags)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { minWidth: 32, minHeight: 32, padding: 0 },
+          onClick: () => setTriageAffectedBags((prev) => Math.max(1, prev - 1))
+        },
+        "-"
+      ), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          min: "1",
+          max: totalBags,
+          style: { width: 44, textAlign: "center", padding: "5px 2px", fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+          value: triageAffectedBags,
+          onChange: (e) => {
+            const val = parseInt(e.target.value, 10);
+            if (!isNaN(val)) setTriageAffectedBags(Math.max(1, Math.min(totalBags, val)));
+          }
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { minWidth: 32, minHeight: 32, padding: 0 },
+          onClick: () => setTriageAffectedBags((prev) => Math.min(totalBags, prev + 1))
+        },
+        "+"
+      ))), /* @__PURE__ */ React.createElement("div", { className: "triage-impact-grid" }, /* @__PURE__ */ React.createElement("div", { className: "triage-impact-item" }, /* @__PURE__ */ React.createElement("span", { className: "triage-impact-label" }, "Merma Lote"), /* @__PURE__ */ React.createElement("span", { className: "triage-impact-val", style: { color: lossCalc.lossPct >= 20 ? "var(--accent-terracotta)" : "inherit" } }, lossCalc.lossPct, "%")), /* @__PURE__ */ React.createElement("div", { className: "triage-impact-item" }, /* @__PURE__ */ React.createElement("span", { className: "triage-impact-label" }, "Pérdida ($ COP)"), /* @__PURE__ */ React.createElement("span", { className: "triage-impact-val", style: { color: "var(--accent-terracotta)" } }, "$", lossCalc.lossCostCop.toLocaleString("es-CO"))), /* @__PURE__ */ React.createElement("div", { className: "triage-impact-item" }, /* @__PURE__ */ React.createElement("span", { className: "triage-impact-label" }, "Bolsas Sanas"), /* @__PURE__ */ React.createElement("span", { className: "triage-impact-val", style: { color: "var(--moss-800)" } }, lossCalc.healthyBags, " / ", totalBags))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 6 } }, "Decisión Operativa & Destino del Lote"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { className: `triage-decision-option ${triageDecision === "isolate_bags" ? "is-selected" : ""}` }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "radio",
+          name: "triageDecision",
+          value: "isolate_bags",
+          checked: triageDecision === "isolate_bags",
+          onChange: () => setTriageDecision("isolate_bags")
+        }
+      ), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", null, "Extracción Quirúrgica:"), " Descartar las ", triageAffectedBags, " bolsas y mantener el resto del lote en ", currentLote?.estado || "producción", ".")), /* @__PURE__ */ React.createElement("label", { className: `triage-decision-option ${triageDecision === "quarantine" ? "is-selected" : ""}` }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "radio",
+          name: "triageDecision",
+          value: "quarantine",
+          checked: triageDecision === "quarantine",
+          onChange: () => setTriageDecision("quarantine")
+        }
+      ), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", null, "Traslado a Cuarentena:"), " Mover el lote completo a Sala de Cuarentena (cambio formal a ", /* @__PURE__ */ React.createElement("code", null, "quarantine"), ").")), /* @__PURE__ */ React.createElement("label", { className: `triage-decision-option ${triageDecision === "discard" ? "is-selected" : ""}` }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "radio",
+          name: "triageDecision",
+          value: "discard",
+          checked: triageDecision === "discard",
+          onChange: () => setTriageDecision("discard")
+        }
+      ), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", null, "Descarte Total:"), " Pérdida irreparable del lote (cambio formal a ", /* @__PURE__ */ React.createElement("code", null, "discarded"), ").")))), /* @__PURE__ */ React.createElement("div", { className: "triage-protocol-banner" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700, display: "flex", alignItems: "center", gap: 6 } }, "🚨 Protocolo Inmediato de Bioseguridad: ", selectedPathogen.commonName), /* @__PURE__ */ React.createElement("ul", { className: "triage-protocol-list" }, selectedPathogen.biosecurityProtocol.map((step, idx) => /* @__PURE__ */ React.createElement("li", { key: idx }, step)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 3 } }, "Observaciones de Campo"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "text",
+          style: { width: "100%", padding: "6px 8px", fontFamily: "var(--font-sans)", fontSize: 12, border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)" },
+          value: triageNotes,
+          onChange: (e) => setTriageNotes(e.target.value),
+          placeholder: "Detalles sobre olor, avance de la mancha o causa probable..."
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-hairline)", paddingTop: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          style: { fontSize: 11, display: "flex", alignItems: "center", gap: 6 },
+          onClick: () => {
+            if (currentLote) {
+              setDiagLoteId(currentLote.id);
+              const b = bitBolsas.find((x) => x.loteId === currentLote.id && x.estado !== "descartada");
+              setDiagBolsaId(b?.id || "");
+              setDiagImageBase64("");
+              setDiagResult(null);
+              setDiagError("");
+              setDiagNotes("");
+              setShowTriageModal(false);
+              setShowDiagModal(true);
+            }
+          }
+        },
+        "📷 Diagnosticar con Cámara IA Gemini"
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec",
+          onClick: () => setShowTriageModal(false)
+        },
+        "Cancelar"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-pri",
+          style: { background: "var(--accent-terracotta, #B24C27)", borderColor: "var(--accent-terracotta, #B24C27)" },
+          onClick: handleConfirmTriage
+        },
+        "🛡️ Confirmar & Aplicar Bioseguridad"
+      ))))
     );
   })(), showDiagModal && (() => {
     const currentLote = bitLotes.find((l) => l.id === diagLoteId) || bitLotes[0];
