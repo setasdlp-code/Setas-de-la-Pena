@@ -1026,7 +1026,7 @@ const SPP={
   p_ostreatus_gris:{name:'Orellana Gris',scientific:'Pleurotus ostreatus',cn_optimal:{min:25,max:50,ideal:35},n_optimal:{min:0.8,max:2.0,ideal:1.4},ph_optimal:{min:6.0,max:7.5},moisture:{ideal:65},eb_baseline:90,eb_optimal:130,supplementation_max:20,spawn_rate:8,notes:'La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.',temp_fruit:'12–22°C'},
   p_ostreatus_blanco:{name:'Orellana Blanca',scientific:'Pleurotus florida',cn_optimal:{min:25,max:45,ideal:30},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:6.0,max:7.0},moisture:{ideal:65},eb_baseline:80,eb_optimal:120,supplementation_max:18,spawn_rate:8,notes:'Tallos blancos premium.',temp_fruit:'14–20°C'},
   p_djamor_rosa:{name:'Orellana Rosa',scientific:'Pleurotus djamor',cn_optimal:{min:30,max:50,ideal:40},n_optimal:{min:0.8,max:1.8,ideal:1.2},ph_optimal:{min:5.5,max:6.5},moisture:{ideal:67},eb_baseline:70,eb_optimal:110,supplementation_max:15,spawn_rate:7,notes:'TERMÓFILA. Aborta primordios bajo 15°C.',temp_fruit:'20–28°C'},
-  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N alto 40–65 (literatura Kim 2011). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
+  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N 25–40 en bolsa suplementada esterilizada (Li 2024). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
   shiitake:{name:'Shiitake',scientific:'Lentinula edodes',cn_optimal:{min:35,max:70,ideal:50},n_optimal:{min:0.6,max:1.2,ideal:0.9},ph_optimal:{min:5.0,max:6.0},moisture:{ideal:60},eb_baseline:50,eb_optimal:100,supplementation_max:20,spawn_rate:5,notes:'Ciclo largo 90–120 d. REQUIERE ESTERILIZACIÓN.',temp_fruit:'12–18°C'},
   lions_mane:{name:'Melena de León',scientific:'Hericium erinaceus',cn_optimal:{min:25,max:48,ideal:33},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:5.0,max:6.5},moisture:{ideal:65},eb_baseline:50,eb_optimal:160,supplementation_max:25,spawn_rate:5,notes:'MEDICINAL premium. Master Mix (madera dura + cascarilla de soya 50:50) = sustrato óptimo, EB 150–180%. Evitar eucalipto.',temp_fruit:'15–20°C'},
   reishi:{name:'Reishi',scientific:'Ganoderma lucidum',cn_optimal:{min:35,max:65,ideal:50},n_optimal:{min:0.7,max:1.2,ideal:0.9},ph_optimal:{min:4.5,max:6.0},moisture:{ideal:60},eb_baseline:30,eb_optimal:60,supplementation_max:15,spawn_rate:5,notes:'MEDICINAL. Ciclo 4–6 meses.',temp_fruit:'20–26°C'},
@@ -1328,7 +1328,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
@@ -1385,7 +1385,7 @@ const diagnose=(a,sKey)=>{
   // CRA
   const craLbl=avgCra>=4?'Alta — reduce agua de hidratación ~10%':avgCra<=2?'Baja — hidratar bien, revisar punto de campo':null;
   if(craLbl) s.push({t:'warning',i:'',tx:`CRA ${avgCra.toFixed(1)}/5 — ${craLbl}`});
-  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo 67–68%. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
+  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal??'—'}%${sp?.targets?.moisture?.source==='legacy_unverified'?' (valor heredado sin verificar)':''}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
   if(incompat.length) s.push({t:'warning',i:'!',tx:`No ideales para ${sp?.name}: ${incompat.join(', ')}.`});
   // Transparencia del modelo: qué factores penalizan la EB y cuánto
   if(a.ebMods){
@@ -1424,6 +1424,13 @@ const {
 } = (typeof SetasRecipeOptimizer !== 'undefined'
   ? SetasRecipeOptimizer
   : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
+
+// ── Objetivos de formulación sourced por especie × sustrato — puente hacia
+//    species-targets.js. Solo se lee dentro del componente (effectiveSPP), en
+//    tiempo de render — no en la inicialización de este módulo — así que da
+//    igual que este bloque quede antes o después de que species-targets.js
+//    registre su global.
+const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
 
 // ── Calibración histórica — puente hacia historical-calibration.js ──
 // Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
@@ -1543,7 +1550,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
   const ebRate=Math.max(0,(eb!=null?Number(eb):85)/100);
   const projectedFreshKgPerBag=dryPerBag*ebRate;
   const projectedFreshKgTotal=dry*ebRate;
-  const freshPriceKg=(Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
+  const freshPriceKg=(customFreshPrice!=null&&Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
   const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
   const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
   const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
@@ -5037,8 +5044,8 @@ function SimuladorShell(props){
   const [schKey,setSchKey]=useState('p_ostreatus_gris');
   const [normMode,setNormMode]=useState(false);
   const [coFormMode,setCoFormMode]=useState(false);
-  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
-  const [vegPrice,setVegPrice]=useState(12000);
+  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosa:40});
+  const [vegPrice,setVegPrice]=useState(null);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
   const [invBase,setInvBase]=useState('');
@@ -5822,7 +5829,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
-    const trSave=an?calcTreatment(an, sKey, SPP):null;
+    const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
@@ -5917,7 +5924,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }});
   };
 
-  const sp=SPP[sKey];
   const effectiveINGS=useMemo(()=>INGS.map(ing=>{
     const invPr=precioPonderado(ing.id,invLotes);
     if(invPr!==null) return{...ing,cost:Math.round(invPr)};
@@ -5953,11 +5959,24 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // teórico en vez de mezclarse con las filas de demo del shell.
   const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
-  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const effectiveSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,recipe,effectiveINGS),[sKey,recipe,effectiveINGS]);
+  // Especie activa con targets resueltos (D5/D8) — todo el render de este
+  // componente lee `sp` de aquí, no del catálogo legado SPP[sKey].
+  const sp=effectiveSPP[sKey];
+  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS,effectiveSPP),[recipe,sKey,effectiveINGS,effectiveSPP]);
+  // Los inputs de humedad del batch siguen el objetivo resuelto (D5) al cambiar
+  // de especie o de clase de sustrato, salvo que el operador ya los haya editado
+  // a mano — en cuyo caso su valor manual no se pisa.
+  const moistureTouched=useRef({hObj:false,prodH:false});
+  useEffect(()=>{
+    const t=an?.moistureTarget; if(t==null) return;
+    if(!moistureTouched.current.hObj) setHObj(t);
+    if(!moistureTouched.current.prodH) setProdH(t);
+  },[sKey,an?.targets?.resolvedClass,an?.moistureTarget]);
   const coAnalysis=useMemo(()=>{
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,SPP);
-  },[coFormMode,recipe,coSpecConfig,effectiveINGS]);
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,effectiveSPP);
+  },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
   const readyForProduction=balanced&&hasPickedSpecies;
@@ -5976,8 +5995,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return r.ranked?.[0]?.evaluation?.analysis||null;
   }catch(e){return null;}},[sKey,invLotes,optimizerINGS]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
-  const tr=useMemo(()=>calcTreatment(an, sKey, SPP),[an,sKey]);
-  const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn]);
+  const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
+  const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
   // ── Ficha: rows precalculados para botón Ejecutar Lote ──
   const prodRows=useMemo(()=>{
     if(!recipe.length||!balanced) return null;
@@ -6342,7 +6361,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
   },[sKey]);
   const buildBitNuevoForm=()=>{
-    const sp=SPP[sKey];const tr=an?calcTreatment(an, sKey, SPP):null;
+    const sp=effectiveSPP[sKey];const tr=an?calcTreatment(an, sKey, effectiveSPP):null;
     const today=new Date().toISOString().split('T')[0];
     const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
@@ -6391,7 +6410,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     const today = new Date().toISOString().split('T')[0];
-    const sp = SPP[sKey];
+    const sp = effectiveSPP[sKey];
     const codigo = sugerirCodigoLote(sKey);
 
     // Desglose de insumos a descontar
@@ -6973,7 +6992,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR=()=>{
     if(!recipe.length) return;
-    const t=calcTreatment(an, sKey, SPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
+    const t=calcTreatment(an, sKey, effectiveSPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
     let txt=`SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r=>{const g=INGS.find(i=>i.id===r.id);if(g) txt+=`  ${g.name.padEnd(32)}${r.p}%\n`;});
     if(an) txt+=`\nANÁLISIS:\n  C:N ${an.cn.toFixed(1)}:1  ·  N ${an.avgN.toFixed(2)}%  ·  EB ${an.eb.toFixed(0)}%  ·  $${Math.round(an.cost)}/kg\n`;
@@ -10539,9 +10558,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="os-provenance-line">Calculado</span>
               </div>
               <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad</span>
-                <span className="form-summary-v">{an?.h!=null?`${an.h.toFixed(1)}%`:'—'}</span>
-                <span className="os-provenance-line">Calculado</span>
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line">{an?.targets?.moisture?.source==='legacy_unverified'?'Objetivo heredado':'Objetivo con fuente'}{bd?` · agua a añadir ${bd.agua.toFixed(1)} kg`:''}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>
@@ -10551,7 +10570,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
                 <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line">Inventario</span>
+                <span className="os-provenance-line">COP / kg seco</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
@@ -11241,7 +11260,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -11300,7 +11319,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
                         </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
@@ -11417,9 +11436,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
@@ -11460,9 +11479,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.cost/bd.wet).toLocaleString()}</div>
                         </div>
                       </div>
-                      {vegPrice>0&&an&&an.eb>0&&(()=>{
+                      {bd.freshPriceKg>0&&an&&an.eb>0&&(()=>{
                         const yieldKg=bd.dry*(an.eb/100);
-                        const revenue=yieldKg*vegPrice;
+                        const revenue=yieldKg*bd.freshPriceKg;
                         const margin=revenue-bd.totalCost;
                         const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
                         const positive=margin>=0;
@@ -11481,7 +11500,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               ))}
                             </div>
-                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
+                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${bd.freshPriceKg.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
                           </div>
                         );
                       })()}
@@ -12455,7 +12474,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.prodH=true;const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                       <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
@@ -12485,7 +12504,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {recipe.length>0&&an&&balanced&&(()=>{
               // Override de humedad por insumo: usa el valor real medido del lote del día
               const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-              const ptr=calcTreatment(an, sKey, SPP);
+              const ptr=calcTreatment(an, sKey, effectiveSPP);
               const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
               const psch=calcSchedule(sKey,prodDate,an?.eb);
               const spn=an?.dynSpawn||ptr?.spawn||8;
