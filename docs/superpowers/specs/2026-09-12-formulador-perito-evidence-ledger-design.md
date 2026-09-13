@@ -33,6 +33,8 @@ Confirmed defects (line numbers refer to `simulador-app.jsx` unless noted):
 | D15 | "Ejecutar Lote" (Hoja de producción) discounts inventory but creates no Bitácora lote, leaving an evidence gap. | 6249–6285 |
 | D16 | "+ Crear prueba" saves without the balance and species gate, in the same shape as an approved recipe (violates UX v2 §9.3). | 11175 |
 | D17 | The `formulator-api.js` DOM fallback targets `input[type="range"][aria-label^="Porcentaje de "]`, which no longer exists. | `formulator-api.js:100–168` |
+| D18 | `analyze()` applies ingredient moisture twice when weighting C:N and N. Recipe percentages are already dry basis (UI: "Porcentaje en base seca", "Cierra la materia seca exactamente al 100%"), yet C:N/N weight each row by `p × (1 − moisture)`, which under-weights wet inputs. The KB's *P. eryngii* Formula B computes C:N 26.0 / N 1.73% on a dry basis, but the app shows 34.5 / 1.30%. The same code exists in `recipe-optimizer.js` `analyze()`. | `const dryFrac=` in `analyze`; `recipe-optimizer.js:28–29` |
+| D19 | The app never writes `inventario_lotes` to Firestore; inventory lots live only in localStorage `sdp_lotes`. `descontarInventarioFIFO` therefore finds no documents and throws "Inventario insuficiente" on every launch: caught as `console.warn` in "Lanzar Lote", shown as a sync error in "Ejecutar Lote". | `firebase/db.js:62–93`; no writers anywhere in the app |
 
 The consumer side of the evidence loop already exists and waits for data the Formulador never writes. `cycle-evidence.js:122` filters on `recipeSnapshot.versionId`, and `production-learning-bridge.js:78–79` reads `lote.recipeSnapshot` and `lote.ingredientLots`. This spec makes the producer side fulfil those existing contracts.
 
@@ -127,7 +129,7 @@ CI      → perito corpus (read-only, runtime) → perito-regression-report gate
   treatmentClass: 'sterilized',              // 'pasteurized' | 'sterilized' | 'any'
   basis: 'mix_dry_excl_additives',           // the quantity analyze() computes
   cn:       { min: 25, max: 40, ideal: 28, source: 'literature', citations: ['li2024'], tier: 'medium' },
-  nPct:     { min: 1.3, max: 1.8, ideal: 1.7, source: 'literature', citations: ['li2024'], tier: 'medium' },
+  nPct:     { min: 1.2, max: 1.8, ideal: 1.7, source: 'literature', citations: ['li2024'], tier: 'medium' },   // min 1.2 admits KB Formula A (1.28%)
   ph:       { min: 5.5, max: 7.0, source: 'legacy_unverified', citations: [], tier: 'unverified' },
   moisture: { ideal: 65, min: 63, max: 68, source: 'literature', citations: ['bellettini2019','li2024'], tier: 'medium' },
   supplementationMaxPct: { value: 55, source: 'literature', citations: ['li2024'], tier: 'medium' },
@@ -152,6 +154,10 @@ CI      → perito corpus (read-only, runtime) → perito-regression-report gate
   - Every other value is carried over from today's `SPP` as `legacy_unverified`.
   - `SPP` in the JSX keeps its non-target fields (name, notes, spawn rate, difficulty); target fields are read only through `resolveTargets`.
 - **Consumers switched:** `analyze()`, `diagnose()`, `calcTreatment`, `calcBatch`, `recipe-optimizer.js` and `scoring.js`. The Trichoderma threshold (N > 1.15 × max without autoclave) now uses the resolved `nPct.max`.
+- **SP1 implementation rulings:**
+  - Legacy values are not duplicated. `resolveTargets` derives every field without a sourced record from the existing `SPP` entry, labelled `legacy_unverified`. The `SPP` literal stays in the JSX, because `perito-regression-report.js` extracts it from the built file.
+  - About 60 call sites read the `SPP` shape, so targets reach them through `applyToSpp(spp, speciesId, recipe, ings)`, which returns an SPP-shaped copy. `analyze()` gains a fourth `spp = SPP` parameter, matching `recipe-optimizer.js`.
+  - All SP1 records use `treatmentClass: 'any'`. The treatment dimension becomes active in SP3, once the treatment is confirmed at launch.
 
 ### 6.2 `launch-plan.js`
 
@@ -182,17 +188,10 @@ buildLaunchPlan({
 ### 6.3 `inventory-consumption.js`
 
 - **Operation.** `{ opId: loteId, loteId, allocations, unitAllocations, createdAt, status: 'pending' | 'synced' | 'failed', attempts, lastError }`.
-- **Local apply.** Allocations are applied to `sdp_lotes` immediately, movements are written to `sdp_movimientos`, and the op is stored in `sdp_inventory_ops` with status `pending`.
-- **Server apply.** `SetasDB.aplicarConsumo(op)` runs **one** Firestore transaction that:
-  1. reads `inventory_consumptions/{loteId}`, and exits as a no-op if it already exists;
-  2. reads every affected `inventario_lotes` doc;
-  3. validates availability;
-  4. writes all decrements plus the consumption doc.
-
-  This replaces the per-ingredient `descontarInventarioFIFO` calls.
-- **Lot identity.** The implementation plan must verify whether local lot ids equal Firestore doc ids.
-  - If they do, the server applies the same allocations by id.
-  - If they do not, the server recomputes FIFO per ingredient with the shared ordering key, returns the applied allocations, and the client replaces its local allocations with the server's on sync.
+- **Local apply.** Allocations are applied to `sdp_lotes` immediately, movements are written to `sdp_movimientos`, and the op is stored in `sdp_inventory_ops` with status `pending`. Applying locally happens only when the op is newly enqueued, so a lote is never discounted twice.
+- **Inventory of record (D19 ruling).** No server mirror of inventory lots exists, so localStorage `sdp_lotes` remains the inventory ledger of record in SP1. The always-failing per-ingredient `descontarInventarioFIFO` calls and the function itself are removed.
+- **Server record.** `SetasDB.guardarConsumoInventario(record)` persists the consumption as an append-only record at `inventory_consumptions/{loteId}`, in one transaction that exits as a no-op if the document already exists. It carries allocations and shortfalls only. It does not decrement any server-side lot.
+- **Out of scope.** A Firestore mirror of inventory lots and multi-device inventory convergence are a separate future project. When that mirror exists, the consumption records are its replay log.
 - **Retry.** Retries happen on app load, on `online`, and after each successful write, with exponential backoff capped at 1 h. Deterministic ids make retries safe (ADR-0005).
 - **Failure is visible.** Bitácora shows a "Pendiente de sincronizar inventario" badge on the lote. After 3 failures, Bodega shows a banner listing failed ops with the error. An "insuficiente en servidor" error is surfaced, never swallowed.
 
@@ -410,7 +409,7 @@ Bitácora lote detail shows a "Vigilancia reforzada" section when `monitoring` i
     - any status `→ archivada` by `isDireccionOrAdmin()` with `archived.reason is string`.
   - **delete:** `false`.
 - **`recipe_version_links/{loteId}`:** read signed-in; create signed-in with `method == 'inferred_exact'`; no update or delete.
-- **`inventory_consumptions/{loteId}`:** read signed-in; create signed-in; no update or delete. Transactional validation of lot decrements stays client-side in the transaction, as today.
+- **`inventory_consumptions/{loteId}`:** read signed-in; create signed-in with `opId == loteId` and `allocations is list`; no update or delete. These are append-only records; no server lot decrement exists (D19).
 - **`bitacora_lotes` and `lotes_produccion`:** `recipeSnapshot` (SP2) and `peritoVerdictAtLaunch` (SP3), once present, are immutable on update (same pattern as the existing `recetaSnapshot` rule). The implementation plan verifies whether `bitacora_lotes` already has a match block and adds one if absent, without loosening any existing permission.
 - **Note on `masaBalanceada`.** The rule sums only the first 8 ingredients (`getPct(…, 0..7)`). The implementation plan must check the maximum ingredient count the Formulador allows. If it can exceed 8, either extend the function or add `ingredients.size() <= N` with a matching UI limit. Recipes above the limit must not silently pass or silently fail.
 - Rules tests are added under `test/firestore.rules.test.js` for every transition and immutability case.
@@ -435,7 +434,7 @@ All new module tests are behavioural `node:test` tests with pure inputs and outp
 - **`species-targets.test.js`:**
   - resolution order and the `fallback` flag;
   - classification of representative recipes;
-  - the KB validated-formulation test: the *P. eryngii* Formula A (C:N ≈ 36.9) and Formula B (≈ 26.0) from `pleurotus_eryngii.md`, run through `analyze()`, fall inside the resolved targets for their class. Every future KB validated formulation is added to this fixture.
+  - the KB validated-formulation test: after the D18 fix, the *P. eryngii* Formula A with `aserrin_roble` (C:N ≈ 36.9, N ≈ 1.28%) and Formula B (C:N ≈ 26.0, N ≈ 1.73%) from `pleurotus_eryngii.md`, run through `analyze()`, fall inside the resolved targets for their class. Every future KB validated formulation is added to this fixture. The catalog lists `afrecho_cerveceria` at 75% moisture while the KB formula specifies it dried; on a dry basis that difference does not change C:N or N, only as-received weighing.
 - **`recipe-version.test.js`:**
   - canonicalization and id determinism; no collisions on a generated corpus;
   - every lifecycle transition, allowed and denied;
@@ -474,7 +473,7 @@ Each sub-project gets its own implementation plan, branch, PR, and review. Each 
 
 | SP | Contains | Depends on | Done when |
 |---|---|---|---|
-| SP1 | §6 (targets, launch plan, consumption op, D5–D7, D12, D15, D17) and §13 KB corrections | none | Goals 1–2 verified |
+| SP1 | §6 (targets, launch plan, consumption op, D5–D7, D12, D15, D17, D18, D19) and §13 KB corrections (KB edits need explicit user authorization per `knowledge_base/AGENTS.md:34`) | none | Goals 1–2 verified |
 | SP2 | §7 (recipe versions, lifecycle, storage, legacy migration, lote lineage) and §10 rules for `recipe_versions`, links, and `recipeSnapshot` immutability | SP1 (`launch-plan` allocations feed `ingredientLots`) | Goal 3 verified |
 | SP3 | §8 (verdict, mitigations, launch dialog, lote snapshot, bridge deletion) and §10 `peritoVerdictAtLaunch` immutability | SP1 (targets), SP2 (`versionId`) | Goals 4–5 verified |
 | SP4 | §9 (recipe evidence, corpus, CI gate) | SP2 (lineage), SP3 (`peritoVerdictAtLaunch`) | Goals 6–7 verified |
