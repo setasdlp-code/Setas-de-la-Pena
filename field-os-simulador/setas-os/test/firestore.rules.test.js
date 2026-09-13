@@ -272,3 +272,41 @@ describe('firestore.rules · eventos_cultivo', function () {
     await assertSucceeds(getDoc(doc(otro.firestore(), 'eventos_cultivo/EVC_1')));
   });
 });
+
+describe('firestore.rules · inventory_consumptions', function () {
+  this.timeout(20000);
+  let testEnv;
+  before(async () => {
+    testEnv = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: { rules: fs.readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8080 },
+    });
+  });
+  after(async () => { await testEnv.cleanup(); });
+  beforeEach(async () => { await testEnv.clearFirestore(); });
+
+  const rec = { schema: 'setas.inventory-consumption.v1', opId: 'BIT_1', loteId: 'BIT_1', codigo: 'C', allocations: [], shortfalls: [], createdAt: 1 };
+
+  it('un usuario autenticado crea el registro con opId == id del documento', async () => {
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertSucceeds(setDoc(doc(db, 'inventory_consumptions/BIT_1'), rec));
+  });
+  it('rechaza opId distinto al id del documento', async () => {
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertFails(setDoc(doc(db, 'inventory_consumptions/OTRO'), rec));
+  });
+  it('rechaza loteId distinto al id del documento (identidad del consumo = loteId)', async () => {
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertFails(setDoc(doc(db, 'inventory_consumptions/BIT_1'), { ...rec, loteId: 'BIT_2' }));
+  });
+  it('rechaza sin autenticación', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(setDoc(doc(db, 'inventory_consumptions/BIT_1'), rec));
+  });
+  it('no permite actualizar ni borrar un registro existente', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), 'inventory_consumptions/BIT_1'), rec); });
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertFails(setDoc(doc(db, 'inventory_consumptions/BIT_1'), { ...rec, codigo: 'X' }));
+    await assertFails(deleteDoc(doc(db, 'inventory_consumptions/BIT_1')));
+  });
+});

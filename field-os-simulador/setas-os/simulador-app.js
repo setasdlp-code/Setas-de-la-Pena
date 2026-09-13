@@ -1,7 +1,7 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6ea3b2f0dfa0ebc5c856b446459332f60fc80566a5e9b7482d581c413d5649be
-const { useState, useMemo, useEffect, useRef } = React;
+// source-hash: bc7d2537fd3bf78635029f644c4be91a2041ac4d9040cda3654a2af9f9adefc7
+const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
 function loadBioCheck() {
@@ -768,7 +768,7 @@ const SPP = {
   p_ostreatus_gris: { name: "Orellana Gris", scientific: "Pleurotus ostreatus", cn_optimal: { min: 25, max: 50, ideal: 35 }, n_optimal: { min: 0.8, max: 2, ideal: 1.4 }, ph_optimal: { min: 6, max: 7.5 }, moisture: { ideal: 65 }, eb_baseline: 90, eb_optimal: 130, supplementation_max: 20, spawn_rate: 8, notes: "La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.", temp_fruit: "12–22°C" },
   p_ostreatus_blanco: { name: "Orellana Blanca", scientific: "Pleurotus florida", cn_optimal: { min: 25, max: 45, ideal: 30 }, n_optimal: { min: 1, max: 2, ideal: 1.5 }, ph_optimal: { min: 6, max: 7 }, moisture: { ideal: 65 }, eb_baseline: 80, eb_optimal: 120, supplementation_max: 18, spawn_rate: 8, notes: "Tallos blancos premium.", temp_fruit: "14–20°C" },
   p_djamor_rosa: { name: "Orellana Rosa", scientific: "Pleurotus djamor", cn_optimal: { min: 30, max: 50, ideal: 40 }, n_optimal: { min: 0.8, max: 1.8, ideal: 1.2 }, ph_optimal: { min: 5.5, max: 6.5 }, moisture: { ideal: 67 }, eb_baseline: 70, eb_optimal: 110, supplementation_max: 15, spawn_rate: 7, notes: "TERMÓFILA. Aborta primordios bajo 15°C.", temp_fruit: "20–28°C" },
-  p_eryngii: { name: "Seta de Cardo", scientific: "Pleurotus eryngii", cn_optimal: { min: 40, max: 65, ideal: 50 }, n_optimal: { min: 0.8, max: 1.6, ideal: 1.2 }, ph_optimal: { min: 5.5, max: 7 }, moisture: { ideal: 63 }, eb_baseline: 60, eb_optimal: 90, supplementation_max: 25, spawn_rate: 5, notes: "PREMIUM. Requiere esterilización. C:N alto 40–65 (literatura Kim 2011). Precio 2–3× orellana.", temp_fruit: "12–18°C" },
+  p_eryngii: { name: "Seta de Cardo", scientific: "Pleurotus eryngii", cn_optimal: { min: 40, max: 65, ideal: 50 }, n_optimal: { min: 0.8, max: 1.6, ideal: 1.2 }, ph_optimal: { min: 5.5, max: 7 }, moisture: { ideal: 63 }, eb_baseline: 60, eb_optimal: 90, supplementation_max: 25, spawn_rate: 5, notes: "PREMIUM. Requiere esterilización. C:N 25–40 en bolsa suplementada esterilizada (Li 2024). Precio 2–3× orellana.", temp_fruit: "12–18°C" },
   shiitake: { name: "Shiitake", scientific: "Lentinula edodes", cn_optimal: { min: 35, max: 70, ideal: 50 }, n_optimal: { min: 0.6, max: 1.2, ideal: 0.9 }, ph_optimal: { min: 5, max: 6 }, moisture: { ideal: 60 }, eb_baseline: 50, eb_optimal: 100, supplementation_max: 20, spawn_rate: 5, notes: "Ciclo largo 90–120 d. REQUIERE ESTERILIZACIÓN.", temp_fruit: "12–18°C" },
   lions_mane: { name: "Melena de León", scientific: "Hericium erinaceus", cn_optimal: { min: 25, max: 48, ideal: 33 }, n_optimal: { min: 1, max: 2, ideal: 1.5 }, ph_optimal: { min: 5, max: 6.5 }, moisture: { ideal: 65 }, eb_baseline: 50, eb_optimal: 160, supplementation_max: 25, spawn_rate: 5, notes: "MEDICINAL premium. Master Mix (madera dura + cascarilla de soya 50:50) = sustrato óptimo, EB 150–180%. Evitar eucalipto.", temp_fruit: "15–20°C" },
   reishi: { name: "Reishi", scientific: "Ganoderma lucidum", cn_optimal: { min: 35, max: 65, ideal: 50 }, n_optimal: { min: 0.7, max: 1.2, ideal: 0.9 }, ph_optimal: { min: 4.5, max: 6 }, moisture: { ideal: 60 }, eb_baseline: 30, eb_optimal: 60, supplementation_max: 15, spawn_rate: 5, notes: "MEDICINAL. Ciclo 4–6 meses.", temp_fruit: "20–26°C" },
@@ -987,7 +987,8 @@ const SppSvg = ({ sKey, c }) => {
   };
   return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 70 90", width: "66", height: "79", style: { display: "block", overflow: "visible" } }, m[sKey] || m.p_ostreatus_gris);
 };
-const analyze = (recipe, sKey, ings = INGS) => {
+const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
+const analyze = (recipe, sKey, ings = INGS, spp = SPP) => {
   if (!recipe.length) return null;
   const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
   if (!tot) return null;
@@ -998,11 +999,10 @@ const analyze = (recipe, sKey, ings = INGS) => {
     if (!g) return;
     const p = parseFloat(r.p) || 0;
     const esAditivoSeco = g.role === "aditivo_ph" || g.role === "aditivo_estructura";
-    const dryFrac = p * (1 - Math.min(0.92, Math.max(0, (g.moisture || 0) / 100)));
     if (g.cn > 0 && !esAditivoSeco) {
-      wC += g.c * dryFrac;
-      wN += g.n * dryFrac;
-      nP += dryFrac;
+      wC += g.c * p;
+      wN += g.n * p;
+      nP += p;
     }
     wPh += g.ph * p;
     wDig += g.dig * p;
@@ -1025,9 +1025,11 @@ const analyze = (recipe, sKey, ings = INGS) => {
   const suppEffectiveP = suppP + suppMedP * 0.6;
   const cost = recipe.reduce((s, r) => {
     const g = ings.find((i) => i.id === r.id);
-    return g ? s + g.cost * (parseFloat(r.p) || 0) / 100 : s;
+    if (!g) return s;
+    const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
+    return s + g.cost / (1 - m) * (parseFloat(r.p) || 0) / 100;
   }, 0);
-  const sp = SPP[sKey];
+  const sp = spp[sKey];
   let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
   if (sp) {
     const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - sp.cn_optimal.ideal) / ((sp.cn_optimal.max - sp.cn_optimal.min) / 2), 1.5));
@@ -1042,7 +1044,7 @@ const analyze = (recipe, sKey, ings = INGS) => {
       eb *= 0.8;
     } else if (needsAutoclave) eb *= 0.85;
     if (incompat.length) eb *= 0.9;
-    if (tot < 95 || tot > 105) eb *= 0.95;
+    if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
     var phF = 1;
     if (sp.ph_optimal) {
       if (avgPh < sp.ph_optimal.min) phF = Math.max(0.7, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
@@ -1070,7 +1072,7 @@ const analyze = (recipe, sKey, ings = INGS) => {
   }
   const eucPct = recipe.reduce((s, r) => r.id === "aserrin_eucalipto" ? s + (parseFloat(r.p) || 0) : s, 0);
   const pescPct = recipe.reduce((s, r) => r.id === "harina_pescado" ? s + (parseFloat(r.p) || 0) : s, 0);
-  return { tot, avgN, cn, cost, eb, suppP, suppMedP, suppTotalP, suppEffectiveP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct, ebLow: typeof ebLow !== "undefined" ? ebLow : Math.round(eb), ebHigh: typeof ebHigh !== "undefined" ? ebHigh : Math.round(eb), ebIndex: typeof ebIndex !== "undefined" ? ebIndex : 0, ebMods: typeof ebMods !== "undefined" ? ebMods : null };
+  return { tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, suppMedP, suppTotalP, suppEffectiveP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct, ebLow: typeof ebLow !== "undefined" ? ebLow : Math.round(eb), ebHigh: typeof ebHigh !== "undefined" ? ebHigh : Math.round(eb), ebIndex: typeof ebIndex !== "undefined" ? ebIndex : 0, ebMods: typeof ebMods !== "undefined" ? ebMods : null };
 };
 if (typeof window !== "undefined") {
   window.INGS = INGS;
@@ -1082,7 +1084,8 @@ if (typeof globalThis !== "undefined") {
   globalThis.SPP = SPP;
   globalThis.analyze = analyze;
 }
-const MASS_BALANCE_TOL = 0.5;
+const SetasRecipeVersionApi = typeof SetasRecipeVersion !== "undefined" ? SetasRecipeVersion : typeof require !== "undefined" ? require("./recipe-version.js") : null;
+const MASS_BALANCE_TOL = SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced = (a) => !!a && Math.abs(a.tot - 100) <= MASS_BALANCE_TOL;
 const massBalanceMsg = (a) => {
   if (!a) return "";
@@ -1124,7 +1127,9 @@ const diagnose = (a, sKey) => {
   s.push({ t: avgDig >= 8 ? "success" : avgDig >= 5 ? "warning" : "warning", i: "", tx: `Digestibilidad ${avgDig.toFixed(1)}/10 — ${digLbl}` });
   const craLbl = avgCra >= 4 ? "Alta — reduce agua de hidratación ~10%" : avgCra <= 2 ? "Baja — hidratar bien, revisar punto de campo" : null;
   if (craLbl) s.push({ t: "warning", i: "", tx: `CRA ${avgCra.toFixed(1)}/5 — ${craLbl}` });
-  s.push({ t: "success", i: "△", tx: `Tenjo 2.580 msnm: humedad objetivo 67–68%. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.` });
+  const moistLbl = SetasSpeciesTargetsApi?.targetSourceLabel(sp?.targets, "moisture");
+  const moistNote = moistLbl === "Objetivo heredado" ? " (valor heredado sin verificar)" : moistLbl === "Objetivo genérico" ? " (objetivo genérico)" : "";
+  s.push({ t: "success", i: "△", tx: `Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal ?? "—"}%${moistNote}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.` });
   if (incompat.length) s.push({ t: "warning", i: "!", tx: `No ideales para ${sp?.name}: ${incompat.join(", ")}.` });
   if (a.ebMods) {
     const m = a.ebMods, pen = [];
@@ -1158,6 +1163,10 @@ const {
   calcTreatment,
   OPT_PROFILES
 } = typeof SetasRecipeOptimizer !== "undefined" ? SetasRecipeOptimizer : typeof require !== "undefined" ? require("./recipe-optimizer.js") : {};
+const SetasSpeciesTargetsApi = typeof SetasSpeciesTargets !== "undefined" ? SetasSpeciesTargets : typeof require !== "undefined" ? require("./species-targets.js") : null;
+const SetasLaunchPlanApi = typeof SetasLaunchPlan !== "undefined" ? SetasLaunchPlan : typeof require !== "undefined" ? require("./launch-plan.js") : null;
+const SetasInventoryConsumptionApi = typeof SetasInventoryConsumption !== "undefined" ? SetasInventoryConsumption : typeof require !== "undefined" ? require("./inventory-consumption.js") : null;
+const UNIT_INGREDIENT_IDS = BAG_TYPES.map((b) => b.stockId).filter(Boolean);
 const { bitacoraEBRows, historicalEB } = typeof SetasHistoricalCalibration !== "undefined" ? SetasHistoricalCalibration : typeof require !== "undefined" ? require("./historical-calibration.js") : {};
 const {
   SPECIES_FLUSH_PROFILES,
@@ -1245,7 +1254,7 @@ const calcBatch = (recipe, n, kg, hObj = 67, spawnCostKg = 12e3, ings = INGS, dy
   const ebRate = Math.max(0, (eb != null ? Number(eb) : 85) / 100);
   const projectedFreshKgPerBag = dryPerBag * ebRate;
   const projectedFreshKgTotal = dry * ebRate;
-  const freshPriceKg = Number.isFinite(Number(customFreshPrice)) && Number(customFreshPrice) >= 0 ? Number(customFreshPrice) : DEFAULT_FRESH_PRICES[sKey] ?? 22e3;
+  const freshPriceKg = customFreshPrice != null && Number.isFinite(Number(customFreshPrice)) && Number(customFreshPrice) >= 0 ? Number(customFreshPrice) : DEFAULT_FRESH_PRICES[sKey] ?? 22e3;
   const projectedRevenuePerBag = projectedFreshKgPerBag * freshPriceKg;
   const projectedGrossMarginPerBag = projectedRevenuePerBag - costPerBag;
   const projectedMarginPct = projectedRevenuePerBag > 0 ? projectedGrossMarginPerBag / projectedRevenuePerBag * 100 : 0;
@@ -2811,19 +2820,18 @@ const precioPonderado = (ingredienteId, lotes) => {
   if (!totalKg) return null;
   return active.reduce((s, l) => s + l.precioPorKgCOP * l.cantidadKgDisponible, 0) / totalKg;
 };
-const consumirInventarioFIFOLocal = (lotes, rows) => {
-  let updated = [...lotes];
-  for (const row of rows) {
-    let remaining = row.krKg;
-    const lotesIng = updated.filter((l) => l.activo && l.ingredienteId === row.id).sort((a, b) => new Date(a.fechaIngreso) - new Date(b.fechaIngreso));
-    for (const lote of lotesIng) {
-      if (remaining <= 1e-3) break;
-      const consume = Math.min(lote.cantidadKgDisponible, remaining);
-      updated = updated.map((l) => l.id === lote.id ? { ...l, cantidadKgDisponible: Math.max(0, Math.round((l.cantidadKgDisponible - consume) * 1e3) / 1e3) } : l);
-      remaining -= consume;
-    }
-  }
-  return updated;
+const realCostPerKgSeco = (recipe, invLotes, ings) => {
+  if (!recipe || !recipe.length) return null;
+  let known = false;
+  const total = recipe.reduce((s, r) => {
+    const pp = precioPonderado(r.id, invLotes || []);
+    const g = (ings || []).find((i) => i.id === r.id);
+    if (pp != null) known = true;
+    const price = pp != null ? pp : g ? g.cost : 0;
+    const m = Math.min(0.92, Math.max(0, (Number(g?.moisture) || 0) / 100));
+    return s + price / (1 - m) * (parseFloat(r.p) || 0) / 100;
+  }, 0);
+  return known ? Math.round(total) : null;
 };
 const SEED_PROVEEDORES = [
   { id: "prov_paloquemao", nombre: "Plaza de Paloquemao", tipo: "plaza", municipio: "Bogotá" },
@@ -2937,11 +2945,14 @@ const runHybridRecipeSearch = ({
   useStock = false,
   profileKey = "produccion",
   stockMap = {},
-  lockedIds = []
+  lockedIds = [],
+  // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
+  // spp explícito se conserva el catálogo heredado para los llamadores viejos.
+  spp = SPP
 }) => {
   const engine = globalThis.SetasPeritoScenarios;
   if (!engine?.searchScenarios) throw new Error("SetasPeritoScenarios no disponible");
-  const target = SPP[targetKey];
+  const target = spp[targetKey];
   if (!target) return { ranked: [], pareto: [], recommended: [], noStock: false, diagnostics: { error: "Especie no encontrada" } };
   const stockIds = /* @__PURE__ */ new Set([
     ...Object.keys(stockMap || {}).filter((k) => Number(stockMap[k]) > 0),
@@ -2950,9 +2961,9 @@ const runHybridRecipeSearch = ({
   const compatible = (ingredients || []).filter(
     (g) => (!useStock || stockIds.has(g.id)) && (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients);
+  const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients, spp);
   const scoreAdapter = (analysis, ctx) => {
-    const treatment = calcTreatment(analysis, targetKey, SPP);
+    const treatment = calcTreatment(analysis, targetKey, spp);
     return scoreAn(analysis, {
       treatment,
       recipe: ctx.recipe,
@@ -2961,10 +2972,10 @@ const runHybridRecipeSearch = ({
   };
   return engine.searchScenarios({
     recipe,
-    context: { sKey: targetKey, spp: SPP, stockIds },
+    context: { sKey: targetKey, spp, stockIds },
     searchMode: "hybrid",
     targetKey,
-    spp: SPP,
+    spp,
     ingredients: compatible,
     analyze: analyzeAdapter,
     score: scoreAdapter,
@@ -2983,9 +2994,47 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || [])
   });
 };
+const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+  let cur = recipe;
+  let bestScore = -1;
+  for (let i = 0; i < maxIter; i++) {
+    const a = analyze(cur, sKey, ings, spp);
+    if (!a) break;
+    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, spp, usageCounts);
+    if (o.score <= bestScore) break;
+    bestScore = o.score;
+    const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
+    if (!candidates.length) break;
+    let bestCandScore = -1, bestCandidate = null, bestO2 = null;
+    for (const cand of candidates) {
+      const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
+      const tryA = analyze(tryRec, sKey, ings, spp);
+      if (!tryA) continue;
+      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, spp, usageCounts);
+      if (tryO.score > bestCandScore) {
+        bestCandScore = tryO.score;
+        bestCandidate = tryRec;
+        bestO2 = tryO;
+      }
+    }
+    if (!bestCandidate) break;
+    if (bestO2.score <= o.score) break;
+    cur = bestCandidate;
+  }
+  return cur;
+};
+const launchMoisture = ({ touched, manual, target }) => touched ? manual : target ?? manual ?? 65;
+const launchSpawn = (bags, kgPerBag, dynSpawn) => dynSpawn ? { ingredientId: "spawn_grano", kg: bags * kgPerBag * (dynSpawn / 100) } : null;
+const moistureInTargetRange = (h, m) => m?.min != null && m?.max != null ? h >= m.min && h <= m.max : h >= 67;
+const launchDiscountSummary = (plan, ings = []) => {
+  const sf = plan?.shortfalls || [];
+  if (!sf.length) return "Las materias primas fueron descontadas de Bodega.";
+  const nameOf = (id) => (ings || []).find((g) => g.id === id)?.name || id;
+  return `Se descontó lo disponible; faltaron: ${sf.map((x) => `${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(", ")}.`;
+};
 const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
   const an = candidate?.evaluation?.analysis;
-  const sp = SPP[targetKey];
+  const sp = an?.sp || SPP[targetKey];
   const profile = OPT_PROFILES[profileKey] || OPT_PROFILES.produccion;
   const speciesSupp = Number(sp?.supplementation_max) || 20;
   const suppLimit = profile.maxSupp != null ? Math.min(speciesSupp, profile.maxSupp) : speciesSupp;
@@ -3005,7 +3054,7 @@ const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profile
     scenario: candidate
   };
 };
-const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, profileKey) => {
+const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, profileKey, spp = SPP) => {
   const stockIds = new Set((invLotes || []).filter((l) => l?.activo && Number(l.cantidadKgDisponible) > 0).map((l) => l.ingredienteId));
   const pool = useStock ? (ingredients || []).filter((g) => stockIds.has(g.id)) : (ingredients || []).filter((g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey));
   const compatible = (g) => !Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey);
@@ -3020,7 +3069,7 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
     aers: aers.length,
     tried: Number(out?.explored) || 0,
     resultsRaw: Number(out?.diagnostics?.allowedCount ?? out?.ranked?.length ?? 0),
-    suppLimit: Number(out?.profile?.maxSupp ?? SPP[targetKey]?.supplementation_max ?? 20),
+    suppLimit: Number(out?.profile?.maxSupp ?? spp[targetKey]?.supplementation_max ?? 20),
     profileKey,
     targetKey,
     baseNames: bases.map((g) => g.name),
@@ -3568,8 +3617,8 @@ function SimuladorShell(props) {
   const [schKey, setSchKey] = useState("p_ostreatus_gris");
   const [normMode, setNormMode] = useState(false);
   const [coFormMode, setCoFormMode] = useState(false);
-  const [coSpecConfig, setCoSpecConfig] = useState({ p_ostreatus_gris: 60, p_djamor_rosada: 40 });
-  const [vegPrice, setVegPrice] = useState(12e3);
+  const [coSpecConfig, setCoSpecConfig] = useState({ p_ostreatus_gris: 60, p_djamor_rosa: 40 });
+  const [vegPrice, setVegPrice] = useState(null);
   const [priceOverrides, setPriceOverrides] = useState({});
   const [showPrices, setShowPrices] = useState(false);
   const [invBase, setInvBase] = useState("");
@@ -4335,7 +4384,7 @@ function SimuladorShell(props) {
   const saveR = () => {
     const nm = saveName.trim();
     if (!nm || !recipe.length || !balanced || !hasPickedSpecies) return;
-    const trSave = an ? calcTreatment(an, sKey, SPP) : null;
+    const trSave = an ? calcTreatment(an, sKey, effectiveSPP) : null;
     const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an ? an.eb.toFixed(0) : "—", cn: an ? an.cn.toFixed(1) : "—", score: opt.score, cost: an ? Math.round(an.cost) : 0, treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
     const u = [e, ...saved];
     setSaved(u);
@@ -4455,7 +4504,6 @@ function SimuladorShell(props) {
       }
     } });
   };
-  const sp = SPP[sKey];
   const effectiveINGS = useMemo(() => INGS.map((ing) => {
     const invPr = precioPonderado(ing.id, invLotes);
     if (invPr !== null) return { ...ing, cost: Math.round(invPr) };
@@ -4487,11 +4535,21 @@ function SimuladorShell(props) {
   };
   const histRows = useMemo(() => bitacoraEBRows(bitLotes, bitCosechas), [bitLotes, bitCosechas]);
   const histStats = useMemo(() => historicalEB(sKey, histRows, recipe), [sKey, histRows, recipe]);
-  const an = useMemo(() => analyze(recipe, sKey, effectiveINGS), [recipe, sKey, effectiveINGS]);
+  const effectiveSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, recipe, effectiveINGS), [sKey, recipe, effectiveINGS]);
+  const searchSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], optimizerINGS), [sKey, optimizerINGS]);
+  const sp = effectiveSPP[sKey];
+  const an = useMemo(() => analyze(recipe, sKey, effectiveINGS, effectiveSPP), [recipe, sKey, effectiveINGS, effectiveSPP]);
+  const moistureTouched = useRef({ hObj: false, prodH: false });
+  useEffect(() => {
+    const t = an?.moistureTarget;
+    if (t == null) return;
+    if (!moistureTouched.current.hObj) setHObj(t);
+    if (!moistureTouched.current.prodH) setProdH(t);
+  }, [sKey, an?.targets?.resolvedClass, an?.moistureTarget]);
   const coAnalysis = useMemo(() => {
     if (!coFormMode || !recipe.length || !window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe, coSpecConfig, effectiveINGS, SPP);
-  }, [coFormMode, recipe, coSpecConfig, effectiveINGS]);
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe, coSpecConfig, effectiveINGS, effectiveSPP);
+  }, [coFormMode, recipe, coSpecConfig, effectiveINGS, effectiveSPP]);
   const balanced = isMassBalanced(an);
   const balMsg = balanced ? "" : massBalanceMsg(an);
   const readyForProduction = balanced && hasPickedSpecies;
@@ -4506,16 +4564,17 @@ function SimuladorShell(props) {
         ingredients: optimizerINGS,
         useStock: false,
         profileKey: "produccion",
-        stockMap: {}
+        stockMap: {},
+        spp: searchSPP
       });
       return r.ranked?.[0]?.evaluation?.analysis || null;
     } catch (e) {
       return null;
     }
-  }, [sKey, invLotes, optimizerINGS]);
+  }, [sKey, invLotes, optimizerINGS, searchSPP]);
   const dg = useMemo(() => diagnose(an, sKey), [an, sKey]);
-  const tr = useMemo(() => calcTreatment(an, sKey, SPP), [an, sKey]);
-  const bd = useMemo(() => showBatch ? calcBatch(recipe, numBags, kgBag, hObj, spawnCost, effectiveINGS, an?.dynSpawn) : null, [recipe, numBags, kgBag, showBatch, hObj, spawnCost, effectiveINGS, an?.dynSpawn]);
+  const tr = useMemo(() => calcTreatment(an, sKey, effectiveSPP), [an, sKey, effectiveSPP]);
+  const bd = useMemo(() => showBatch ? calcBatch(recipe, numBags, kgBag, hObj, spawnCost, effectiveINGS, an?.dynSpawn, tr, an?.eb, sKey, vegPrice) : null, [recipe, numBags, kgBag, showBatch, hObj, spawnCost, effectiveINGS, an?.dynSpawn, tr, an?.eb, sKey, vegPrice]);
   const prodRows = useMemo(() => {
     if (!recipe.length || !balanced) return null;
     const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
@@ -4565,7 +4624,8 @@ function SimuladorShell(props) {
         useStock: true,
         stockMap,
         ingredients: INGS,
-        profileKey: optProfile || "produccion"
+        profileKey: optProfile || "produccion",
+        spp: SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], INGS)
       });
       let cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0] || r.pareto && r.pareto[0] || (r.best?.recipe?.length ? r.best : null);
       if (!cand || !cand.recipe || !cand.recipe.length) {
@@ -4620,7 +4680,7 @@ function SimuladorShell(props) {
   React.useEffect(() => {
     setUsageCounts({});
   }, [sKey]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, void 0, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, usageCounts]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts]);
   const peritoRevisionRef = React.useRef(0);
   useEffect(() => {
     const input = {
@@ -4675,18 +4735,7 @@ function SimuladorShell(props) {
     window.addEventListener("setas-perito-navigate", navigate);
     return () => window.removeEventListener("setas-perito-navigate", navigate);
   });
-  const realCostPerKg = useMemo(() => {
-    if (!recipe.length) return null;
-    let known = false;
-    const total = recipe.reduce((s, r) => {
-      const pp = precioPonderado(r.id, invLotes);
-      const g = effectiveINGS.find((i) => i.id === r.id);
-      if (pp != null) known = true;
-      const price = pp != null ? pp : g ? g.cost : 0;
-      return s + price * (parseFloat(r.p) || 0) / 100;
-    }, 0);
-    return known ? Math.round(total) : null;
-  }, [recipe, invLotes, effectiveINGS]);
+  const realCostPerKg = useMemo(() => realCostPerKgSeco(recipe, invLotes, effectiveINGS), [recipe, invLotes, effectiveINGS]);
   const recipeSimilarity = (recA, recB) => {
     const a = new Set(recA.map((r) => r.id)), b = new Set(recB.map((r) => r.id));
     const inter = [...a].filter((x) => b.has(x)).length;
@@ -4745,38 +4794,7 @@ function SimuladorShell(props) {
     setRecipeHistory((h) => h.slice(0, -1));
   };
   const autoImprove = () => {
-    let cur = recipe;
-    let bestScore = -1;
-    for (let i = 0; i < 6; i++) {
-      const a = analyze(cur, sKey, effectiveINGS);
-      if (!a) break;
-      const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), optUseStock, void 0, void 0, usageCounts);
-      if (o.score <= bestScore) break;
-      bestScore = o.score;
-      const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
-      if (!candidates.length) break;
-      let bestCandScore = -1, bestCandidate = null, bestA2 = null, bestO2 = null;
-      for (const cand of candidates) {
-        const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
-        const tryA = analyze(tryRec, sKey, effectiveINGS);
-        if (!tryA) continue;
-        const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), optUseStock, void 0, void 0, usageCounts);
-        if (tryO.score > bestCandScore) {
-          bestCandScore = tryO.score;
-          bestCandidate = tryRec;
-          bestA2 = tryA;
-          bestO2 = tryO;
-        }
-      }
-      if (!bestCandidate) break;
-      const candidate = bestCandidate;
-      const a2 = bestA2;
-      if (!a2) break;
-      const o2 = bestO2;
-      if (o2.score <= o.score) break;
-      cur = candidate;
-    }
-    setRecipe(cur);
+    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
   };
   const openPrintWindow = (mode2) => {
     const el = document.querySelector(".prod-sheet");
@@ -4843,55 +4861,139 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const exportPDF = () => openPrintWindow("pdf");
   const ejecutarLote = (rows, loteNum, fecha) => {
     if (!rows || !rows.length) return;
-    const preview = rows.filter((x) => x.g).map((x) => {
-      const krKg = x.grR / 1e3;
-      const stock = invLotes.filter((l) => l.activo && l.ingredienteId === x.g.id).reduce((s, l) => s + l.cantidadKgDisponible, 0);
-      return { id: x.g.id, name: x.g.name, krKg, stockActual: stock, unit: "kg", ok: stock >= krKg * 0.999 };
-    });
-    const bt = BAG_TYPES.find((b) => b.id === prodBagType);
-    if (bt && bt.stockId) {
-      const needed = parseInt(prodBags) || 0;
-      const stock = stockActual(bt.stockId, invLotes);
-      preview.push({ id: bt.stockId, name: bt.name, krKg: needed, stockActual: stock, unit: "uds", ok: stock >= needed });
+    if (!readyForProduction) {
+      setNoticeDlg({ title: "Receta no lista", msg: productionBlockMsg || "Balancea la receta al 100% antes de lanzar producción." });
+      return;
     }
-    setLoteBatchConfirm({ preview, loteNum, fecha });
+    const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
+    const bagType = BAG_TYPES.find((b) => b.id === prodBagType);
+    const moistureOverrides = Object.fromEntries(rows.filter((x) => x.g && x.m != null).map((x) => [x.g.id, x.m * 100]));
+    const plan = SetasLaunchPlanApi.buildLaunchPlan({
+      recipe,
+      bags: parseInt(prodBags) || 1,
+      kgPerBag: prodKg || 1.5,
+      moistureTarget: prodH || an?.moistureTarget || 65,
+      ingredients: prodIngs,
+      inventoryLots: invLotes,
+      moistureOverrides,
+      // Mismo ítem de spawn que "Lanzar Lote" (I5a): el grano también sale de bodega.
+      spawn: launchSpawn(parseInt(prodBags) || 1, prodKg || 1.5, an?.dynSpawn),
+      // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
+      // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
+      // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
+      scaleG: prodScaleG || 0,
+      bagUnit: bagType?.stockId ? { ingredientId: bagType.stockId, units: parseInt(prodBags) || 0 } : null,
+      unitIngredientIds: UNIT_INGREDIENT_IDS
+    });
+    const faltante = (id) => plan.shortfalls.find((s) => s.ingredientId === id);
+    const preview = [
+      ...plan.items.map((i) => ({ id: i.ingredientId, name: i.name, krKg: i.asReceivedKg, stockActual: stockActual(i.ingredientId, invLotes), unit: "kg", ok: !faltante(i.ingredientId) })),
+      ...plan.spawnItem ? [{ id: plan.spawnItem.ingredientId, name: "Spawn (grano)", krKg: plan.spawnItem.asReceivedKg, stockActual: stockActual(plan.spawnItem.ingredientId, invLotes), unit: "kg", ok: !faltante(plan.spawnItem.ingredientId) }] : [],
+      ...plan.unitItems.map((u) => ({ id: u.ingredientId, name: bagType?.name || u.ingredientId, krKg: u.units, stockActual: stockActual(u.ingredientId, invLotes), unit: "uds", ok: !faltante(u.ingredientId) }))
+    ];
+    ejecutarLoteInFlight.current = false;
+    setEjecutandoLote(false);
+    setLoteBatchConfirm({ preview, plan, loteNum, fecha });
   };
-  const confirmarEjecucion = () => {
-    if (!loteBatchConfirm) return;
-    const { preview, loteNum, fecha } = loteBatchConfirm;
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    setInvLotes((prev) => {
-      const updated = consumirInventarioFIFOLocal(prev, preview);
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(updated));
-      } catch (e) {
+  const ejecutarLoteInFlight = useRef(false);
+  const [ejecutandoLote, setEjecutandoLote] = useState(false);
+  const conGuardaEjecucion = (fn) => (...args) => {
+    if (ejecutarLoteInFlight.current) return;
+    ejecutarLoteInFlight.current = true;
+    setEjecutandoLote(true);
+    try {
+      return fn(...args);
+    } catch (e) {
+      ejecutarLoteInFlight.current = false;
+      setEjecutandoLote(false);
+      console.error("Error en operación protegida por conGuardaEjecucion:", e);
+    }
+  };
+  const confirmarEjecucion = conGuardaEjecucion(() => {
+    if (!loteBatchConfirm) {
+      ejecutarLoteInFlight.current = false;
+      setEjecutandoLote(false);
+      return;
+    }
+    const { preview, plan, loteNum, fecha } = loteBatchConfirm;
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const form = { codigo: loteNum, especie: SPP[sKey]?.name || sKey, especieCientifico: SPP[sKey]?.scientific || "", cepa: "", fechaMezcla: fecha, fechaInoculacion: fecha, numBolsas: parseInt(prodBags) || 1, pesoHumedo: prodKg || 1.5, humedad: prodH || an?.moistureTarget || 65, sala: selectedClimateRoom || "martha_01", operador: "Operario Granja Tenjo", notas: "Hoja de producción" };
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form, plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan, fecha, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}` });
+      if (!registered) {
+        ejecutarLoteInFlight.current = false;
+        setEjecutandoLote(false);
+        return;
       }
-      return updated;
-    });
-    const ts = Date.now();
-    const newMovs = preview.map((row, i) => ({ id: "mov_lote_" + ts + "_" + i, tipo: "consumo_lote", ingredienteId: row.id, kgMovidos: row.krKg, loteNum: loteNum || "—", fecha, nota: `Lote ${loteNum || "—"} · ${fecha}`, timestamp: now }));
-    saveMovimientos([...invMovimientos, ...newMovs]);
-    setLoteBatchConfirm(null);
-    setLoteSyncErr("");
-    if (window.SetasDB) {
-      (async () => {
+      consumoRegistrado = true;
+      refrescarCodigoTrasEjecutar.current = true;
+      setBitLotes((prev) => {
+        const upd = [lote, ...prev];
         try {
-          for (const row of preview) {
-            await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
-          }
-          await window.SetasDB.crearLoteProduccion({
-            codigo: loteNum || "LOTE-" + ts,
-            especie: SPP[sKey]?.name || sKey,
-            camara: "—",
-            operador: "—",
-            receta: { ingredientes: recipe.map((r) => ({ id: r.id, pct: parseFloat(r.p) || 0 })) }
-          });
-        } catch (err) {
-          setLoteSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+          localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
+        } catch (e) {
+          bitQuotaWarn();
         }
-      })();
+        return upd;
+      });
+      setBitBolsas((prev) => {
+        const upd = [...prev, ...bolsas];
+        try {
+          localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+        } catch (e) {
+          bitQuotaWarn();
+        }
+        return upd;
+      });
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          } catch (e) {
+            console.warn("Error respaldando lote en Firestore:", e);
+          }
+        })();
+      }
+      setLoteBatchConfirm(null);
+      setLoteSyncErr("");
+      setEjecutandoLote(false);
+      if (window.SetasDB) {
+        (async () => {
+          try {
+            await window.SetasDB.crearLoteProduccion({
+              codigo: lote.codigo,
+              especie: SPP[sKey]?.name || sKey,
+              camara: "—",
+              operador: "—",
+              receta: { ingredientes: recipe.map((r) => ({ id: r.id, pct: parseFloat(r.p) || 0 })) }
+            });
+          } catch (err) {
+            setLoteSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+          }
+        })();
+      }
+    } catch (e) {
+      console.error("Error al ejecutar lote:", e);
+      if (consumoRegistrado) {
+        setLoteBatchConfirm(null);
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title: "Lote ejecutado con errores",
+          msg: `El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+        });
+      } else {
+        ejecutarLoteInFlight.current = false;
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title: "No se pudo ejecutar el lote",
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
+        });
+      }
     }
-  };
+  });
   const SPP_CODE2 = { p_ostreatus_gris: "OST", p_ostreatus_blanco: "OBL", p_djamor_rosa: "ROS", p_eryngii: "ERY", shiitake: "SHI", lions_mane: "MEL", reishi: "REI", enoki: "ENO", nameko: "NAM" };
   const sugerirCodigoLote = (key) => {
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
@@ -4903,9 +5005,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
   useEffect(() => {
     if (!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
   }, [sKey]);
+  const refrescarCodigoTrasEjecutar = useRef(false);
+  useEffect(() => {
+    if (!refrescarCodigoTrasEjecutar.current) return;
+    refrescarCodigoTrasEjecutar.current = false;
+    if (sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  }, [bitLotes]);
   const buildBitNuevoForm = () => {
-    const sp2 = SPP[sKey];
-    const tr2 = an ? calcTreatment(an, sKey, SPP) : null;
+    const sp2 = effectiveSPP[sKey];
+    const tr2 = an ? calcTreatment(an, sKey, effectiveSPP) : null;
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
     const nb = prodBags || 6;
     const kb = prodKg || 1.5;
@@ -4964,31 +5072,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    const sp2 = SPP[sKey];
+    const sp2 = effectiveSPP[sKey];
     const codigo = sugerirCodigoLote(sKey);
-    const insumos = (bd?.items || []).map((it) => {
-      const g = INGS.find((i) => i.name === it.name || i.id === it.id);
-      const id = g ? g.id : it.name;
-      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
-      const stockActual2 = invLotes.filter((l) => l.activo && l.ingredienteId === id).reduce((s, l) => s + l.cantidadKgDisponible, 0);
-      return {
-        id,
-        name: it.name,
-        krKg,
-        stockActual: stockActual2,
-        ok: stockActual2 >= krKg * 0.999
-      };
+    const nb = numBags || 10, kb = kgBag || 1.5;
+    const humedadLote = launchMoisture({ touched: moistureTouched.current.hObj, manual: hObj, target: an?.moistureTarget });
+    const bagType = BAG_TYPES.find((b) => b.id === prodBagType);
+    const plan = SetasLaunchPlanApi.buildLaunchPlan({
+      recipe,
+      bags: nb,
+      kgPerBag: kb,
+      moistureTarget: humedadLote,
+      ingredients: effectiveINGS,
+      inventoryLots: invLotes,
+      spawn: launchSpawn(nb, kb, an?.dynSpawn),
+      bagUnit: bagType?.stockId ? { ingredientId: bagType.stockId, units: nb } : null,
+      unitIngredientIds: UNIT_INGREDIENT_IDS
     });
-    if (bd?.spawn && bd.spawn > 0) {
-      const spawnStock = invLotes.filter((l) => l.activo && l.ingredienteId === "spawn_grano").reduce((s, l) => s + l.cantidadKgDisponible, 0);
-      insumos.push({
-        id: "spawn_grano",
-        name: `Spawn / Micelio (${sp2?.name || sKey})`,
-        krKg: bd.spawn,
-        stockActual: spawnStock,
-        ok: spawnStock >= bd.spawn * 0.999
-      });
-    }
+    const faltante = (id) => plan.shortfalls.find((s) => s.ingredientId === id);
+    const insumos = [
+      ...plan.items.map((i) => ({ id: i.ingredientId, name: i.name, krKg: i.asReceivedKg, unit: "kg", stockActual: stockActual(i.ingredientId, invLotes), ok: !faltante(i.ingredientId) })),
+      ...plan.spawnItem ? [{ id: plan.spawnItem.ingredientId, name: "Spawn (grano)", krKg: plan.spawnItem.asReceivedKg, unit: "kg", stockActual: stockActual(plan.spawnItem.ingredientId, invLotes), ok: !faltante(plan.spawnItem.ingredientId) }] : [],
+      ...plan.unitItems.map((u) => ({ id: u.ingredientId, name: bagType?.name || u.ingredientId, krKg: u.units, unit: "uds", stockActual: stockActual(u.ingredientId, invLotes), ok: !faltante(u.ingredientId) }))
+    ];
     setProdLaunchForm({
       codigo,
       especie: sp2?.name || "",
@@ -4998,149 +5103,112 @@ body{margin:0;padding:20px 24px;background:#fff;}
       fechaInoculacion: today,
       numBolsas: numBags || 10,
       pesoHumedo: kgBag || 1.5,
-      humedad: hObj || 67,
+      humedad: humedadLote,
       sala: selectedClimateRoom || "martha_01",
       operador: "Operario Granja Tenjo",
       notas: "",
       printQr: true,
+      plan,
       insumos
     });
+    launchInFlight.current = false;
+    setLaunching(false);
     setShowProdLaunchModal(true);
   };
-  const ejecutarLanzamientoProduccion = () => {
-    if (!prodLaunchForm) return;
-    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
-    const nb = parseInt(numBolsas) || 1;
-    const kb = parseFloat(pesoHumedo) || 1.5;
-    const hm = parseFloat(humedad) || 67;
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const ts = Date.now();
-    const insumosADescontar = (insumos || []).filter((i) => i.krKg > 0);
-    if (insumosADescontar.length > 0) {
-      setInvLotes((prev) => {
-        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
+  const launchInFlight = useRef(false);
+  const [launching, setLaunching] = useState(false);
+  const conGuardaLanzamiento = (fn) => (...args) => {
+    if (launchInFlight.current) return;
+    launchInFlight.current = true;
+    setLaunching(true);
+    try {
+      return fn(...args);
+    } catch (e) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      console.error("Error en operación protegida por conGuardaLanzamiento:", e);
+    }
+  };
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      return;
+    }
+    const f = prodLaunchForm;
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      if (!registered) {
+        launchInFlight.current = false;
+        setLaunching(false);
+        return;
+      }
+      consumoRegistrado = true;
+      setBitLotes((prev) => {
+        const upd = [lote, ...prev];
         try {
-          localStorage.setItem("sdp_lotes", JSON.stringify(updated));
+          localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
         } catch (e) {
+          bitQuotaWarn();
         }
-        return updated;
+        return upd;
       });
-      const newMovs = insumosADescontar.map((row, i) => ({
-        id: "mov_lote_" + ts + "_" + i,
-        tipo: "consumo_lote",
-        ingredienteId: row.id,
-        kgMovidos: row.krKg,
-        loteNum: codigo,
-        fecha: fechaInoculacion,
-        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
-        timestamp: now
-      }));
-      saveMovimientos([...invMovimientos, ...newMovs]);
-      if (window.SetasDB) {
+      setBitBolsas((prev) => {
+        const upd = [...prev, ...bolsas];
+        try {
+          localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+        } catch (e) {
+          bitQuotaWarn();
+        }
+        return upd;
+      });
+      if (window.SetasBitacoraDB) {
         (async () => {
           try {
-            for (const row of insumosADescontar) {
-              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
-            }
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
           } catch (e) {
-            console.warn("Error sincronizando descuento FIFO a Firestore:", e);
+            console.warn("Error respaldando lote en Firestore:", e);
           }
         })();
       }
-    }
-    const lote = {
-      id: "BIT_" + ts,
-      codigo,
-      especie,
-      especieCientifico,
-      cepa,
-      fechaMezcla,
-      fechaInoculacion,
-      numBolsas: nb,
-      pesoHumedo: kb,
-      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
-      spawnPct: an?.dynSpawn || 8,
-      humedad: hm,
-      tratamiento: tr?.name || "Pasteurización Térmica",
-      costoIngKg: an ? Math.round(an.cost) : 0,
-      operador,
-      objetivo: "Lanzamiento directo desde Formulador",
-      notas,
-      estado: "incubacion",
-      veredicto: "",
-      sala,
-      ubicacion: sala,
-      recipeRef: {
-        id: ts,
-        name: saveName || `Receta ${especie} (${codigo})`,
-        sKey,
-        recipe: [...recipe],
-        cn: an ? an.cn.toFixed(1) : "—",
-        eb: an ? an.eb.toFixed(0) : "—",
-        score: opt ? opt.score : 0,
-        cost: an ? Math.round(an.cost) : 0
-      },
-      createdAt: now
-    };
-    const bolsas = Array.from({ length: nb }, (_, i) => ({
-      id: "BOLSA_" + ts + "_" + i,
-      loteId: lote.id,
-      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, "0")}`,
-      num: i + 1,
-      estado: "sana",
-      col25: null,
-      col50: null,
-      col100: null,
-      pesoInicial: kb,
-      fechaDescarte: null,
-      motivoDescarte: "",
-      observaciones: "",
-      foto: null
-    }));
-    setBitLotes((prev) => {
-      const upd = [lote, ...prev];
-      try {
-        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-      } catch (e) {
-        bitQuotaWarn();
+      window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
+      setShowProdLaunchModal(false);
+      if (f.printQr) {
+        setThermalLote(lote);
+        setThermalBagEnd(lote.numBolsas || 12);
+        setThermalScope("all");
+        setShowThermalModal(true);
+      } else {
+        setBitActiveLoteId(lote.id);
+        goTab("bitacora");
       }
-      return upd;
-    });
-    setBitBolsas((prev) => {
-      const upd = [...prev, ...bolsas];
-      try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-      } catch (e) {
-        bitQuotaWarn();
+      setNoticeDlg({
+        title: "🚀 Producción de Lote Lanzada",
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+      });
+    } catch (e) {
+      console.error("Error al lanzar producción de lote:", e);
+      if (consumoRegistrado) {
+        setShowProdLaunchModal(false);
+        setLaunching(false);
+        setNoticeDlg({
+          title: "Lote lanzado con errores",
+          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+        });
+      } else {
+        launchInFlight.current = false;
+        setLaunching(false);
+        setNoticeDlg({
+          title: "No se pudo lanzar el lote",
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
+        });
       }
-      return upd;
-    });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
-        } catch (e) {
-          console.warn("Error respaldando lote en Firestore:", e);
-        }
-      })();
     }
-    window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
-    setShowProdLaunchModal(false);
-    if (printQr) {
-      setThermalLote(lote);
-      setThermalBagEnd(lote.numBolsas || 12);
-      setThermalScope("all");
-      setShowThermalModal(true);
-    } else {
-      setBitActiveLoteId(lote.id);
-      goTab("bitacora");
-    }
-    setNoticeDlg({
-      title: "🚀 Producción de Lote Lanzada",
-      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
-    });
-  };
+  });
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
   const crearBitLote = (form) => {
     const lote = { ...form, id: "BIT_" + Date.now(), createdAt: (/* @__PURE__ */ new Date()).toISOString() };
@@ -5357,7 +5425,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
         ingredients: optimizerINGS,
         useStock: false,
         profileKey: "produccion",
-        stockMap: {}
+        stockMap: {},
+        spp: searchSPP
       });
       if (r.ranked?.length) {
         setRecipe(r.ranked[0].recipe);
@@ -5414,6 +5483,78 @@ body{margin:0;padding:20px 24px;background:#fff;}
     } catch (e) {
     }
   };
+  const readInvOps = () => {
+    try {
+      return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY) || "[]");
+    } catch (e) {
+      return [];
+    }
+  };
+  const [invOps, setInvOps] = useState(readInvOps);
+  const saveInvOps = (q) => {
+    setInvOps(q);
+    try {
+      localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY, JSON.stringify(q));
+    } catch (e) {
+    }
+  };
+  const invSyncRef = useRef({ inFlight: null, again: false });
+  const runInventorySync = useCallback(() => {
+    const st = invSyncRef.current;
+    if (st.inFlight) {
+      st.again = true;
+      return st.inFlight;
+    }
+    if (!window.SetasDB?.guardarConsumoInventario) return Promise.resolve();
+    st.inFlight = (async () => {
+      try {
+        const synced = await SetasInventoryConsumptionApi.syncDue({ queue: readInvOps(), now: Date.now(), persist: (rec) => window.SetasDB.guardarConsumoInventario(rec) });
+        saveInvOps(SetasInventoryConsumptionApi.mergeSyncResults(readInvOps(), synced));
+      } finally {
+        st.inFlight = null;
+        if (st.again) {
+          st.again = false;
+          runInventorySync();
+        }
+      }
+    })();
+    return st.inFlight;
+  }, []);
+  const registrarConsumo = ({ loteId, codigo, plan, fecha, nota }) => {
+    const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
+    const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
+    if (!added) return false;
+    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
+    setInvLotes((prev) => {
+      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
+      try {
+        localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+      } catch (e) {
+      }
+      return r.lotes;
+    });
+    setInvMovimientos((prev) => {
+      const upd = [...prev, ...movimientos];
+      try {
+        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+    saveInvOps(queue);
+    runInventorySync();
+    return true;
+  };
+  useEffect(() => {
+    runInventorySync();
+    const on = () => runInventorySync();
+    window.addEventListener("online", on);
+    window.addEventListener("setas-db-ready", on);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("setas-db-ready", on);
+    };
+  }, [runInventorySync]);
   const agregarProveedor = () => {
     const n = newProv.nombre.trim();
     if (!n || !newProv.municipio.trim()) return;
@@ -5703,7 +5844,7 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
   };
   const exportR = () => {
     if (!recipe.length) return;
-    const t = calcTreatment(an, sKey, SPP);
+    const t = calcTreatment(an, sKey, effectiveSPP);
     const batch = calcBatch(recipe, numBags, kgBag, 67, 12e3, INGS, an?.dynSpawn);
     let txt = `SETAS DE LA PEÑA — FICHA DE RECETA
 Valle de Tenjo · ${(/* @__PURE__ */ new Date()).toLocaleDateString("es-CO")}
@@ -5748,7 +5889,10 @@ BATCH (${numBags}×${kgBag} kg):
     const bc = an2 === bn2 ? "" : hb ? bn2 > an2 ? "better" : "worse" : bn2 < an2 ? "better" : "worse";
     return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: `cval ${ac}` }, av), /* @__PURE__ */ React.createElement("span", { className: `cval ${bc}` }, bv));
   };
-  const BodegaSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
+  const BodegaSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel" }, SetasInventoryConsumptionApi.failuresForBanner(invOps).length > 0 && /* @__PURE__ */ React.createElement("div", { role: "alert", className: "inv-section", style: { borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("strong", null, "Consumos de bodega sin guardar en el servidor"), /* @__PURE__ */ React.createElement("ul", null, SetasInventoryConsumptionApi.failuresForBanner(invOps).map((o) => /* @__PURE__ */ React.createElement("li", { key: o.opId }, o.codigo || o.loteId, " · ", o.attempts, " intentos · ", o.lastError))), /* @__PURE__ */ React.createElement("button", { className: "btn", style: { minHeight: 44 }, onClick: () => {
+    saveInvOps(readInvOps().map((o) => o.status === "failed" ? { ...o, nextAttemptAt: 0 } : o));
+    runInventorySync();
+  } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
     const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
     const aggregatedStock = {};
     invLotes.filter((l) => l.activo).forEach((l) => {
@@ -7054,7 +7198,7 @@ BATCH (${numBags}×${kgBag} kg):
           e.currentTarget.style.transform = "";
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", borderBottom: "1px solid var(--paper-300)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, lote.codigo), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-md)", color: "var(--ink-900)", lineHeight: 1.2 } }, lote.especie || "—"), lote.especieCientifico && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: "var(--text-sm)", color: "var(--ink-600)", marginTop: 1 } }, lote.especieCientifico)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 7px", borderRadius: 0, background: EC[lote.estado] || "var(--ink-400)", color: "var(--paper-0)", textTransform: "uppercase", letterSpacing: "var(--tracking-label)" } }, lote.estado), score !== null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-700)", lineHeight: 1 } }, score, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "/100")))),
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", borderBottom: "1px solid var(--paper-300)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, lote.codigo), SetasInventoryConsumptionApi.isPendingForLote(invOps, lote.id) && /* @__PURE__ */ React.createElement("span", { className: "chip", title: "El consumo de bodega de este lote aún no se guardó en el servidor", style: { marginLeft: 6 } }, "Pendiente de sincronizar inventario"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-md)", color: "var(--ink-900)", lineHeight: 1.2 } }, lote.especie || "—"), lote.especieCientifico && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: "var(--text-sm)", color: "var(--ink-600)", marginTop: 1 } }, lote.especieCientifico)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 7px", borderRadius: 0, background: EC[lote.estado] || "var(--ink-400)", color: "var(--paper-0)", textTransform: "uppercase", letterSpacing: "var(--tracking-label)" } }, lote.estado), score !== null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-700)", lineHeight: 1 } }, score, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "/100")))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, background: "var(--paper-300)" } }, [["Sanas", stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"], ["BE", stats?.be != null ? stats.be.toFixed(0) + "%" : "—"], ["Cosecha", stats?.totalFresco ? stats.totalFresco.toFixed(2) + " kg" : "—"]].map(([lb, v]) => /* @__PURE__ */ React.createElement("div", { key: lb, style: { background: "var(--paper-50)", padding: "8px 4px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 2 } }, lb), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", color: "var(--ink-900)" } }, v)))),
       /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--paper-100)", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, lote.fechaInoculacion), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, lote.veredicto ? /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 7px", borderRadius: 0, background: "var(--moss-200)", color: "var(--moss-700)", fontWeight: 700 } }, lote.veredicto) : /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)" } }, "sin veredicto"), /* @__PURE__ */ React.createElement(
         "button",
@@ -7620,12 +7764,12 @@ BATCH (${numBags}×${kgBag} kg):
     },
     formNextState === "species" ? /* @__PURE__ */ React.createElement(IconTarget, { size: 15, color: "currentColor" }) : formNextState === "balance" ? /* @__PURE__ */ React.createElement(IconBolt, { size: 15, color: "currentColor" }) : /* @__PURE__ */ React.createElement(IconBox, { size: 15, color: "currentColor" }),
     /* @__PURE__ */ React.createElement("span", null, formNextLabel)
-  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, "✓ Receta cargada en Mesa de Mezcla"), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "form-summary-strip", "aria-label": "Resumen de receta activa" }, /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, hasPickedSpecies ? sp?.name || "—" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Manual")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, globalMode === "produccion" ? "Producción" : "Investigación"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Modo activo")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Peso total"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0%"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cn != null ? `${an.cn.toFixed(1)}:1` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.h != null ? `${an.h.toFixed(1)}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "BE estimada"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.eb != null ? `${Math.round(blendEBWithHistory(an, histStats))}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Hipótesis")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Costo/kg"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cost != null ? `$${Math.round(an.cost).toLocaleString("es-CO")}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Inventario")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Revisión"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v", style: { fontSize: "var(--text-xs)" } }, "Perito ", Math.round(opt?.score || 0), "/100"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Perito · Requiere revisión"))), /* @__PURE__ */ React.createElement("section", { className: `form-flow${recipe.length > 0 ? " has-recipe" : ""}`, "aria-label": "Recorrido de formulación en 5 pasos" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Recorrido metodológico"), /* @__PURE__ */ React.createElement("h2", null, "Especie → Origen → Ingredientes → Validar y guardar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-600)", marginTop: 2, letterSpacing: "var(--tracking-label)", textTransform: "uppercase" } }, "01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, hasPickedSpecies ? recipe.length > 0 ? Math.abs((an?.tot || 0) - 100) <= 0.5 ? "Paso 5: Listo para validar" : "Paso 4: Balance en curso" : "Paso 3: Agregar insumos" : "Paso 1: Seleccionar especie")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid form-flow-grid--5" }, /* @__PURE__ */ React.createElement("li", { className: `form-step ${hasPickedSpecies ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp?.name || "Pendiente" : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, "✓ Receta cargada en Mesa de Mezcla"), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "form-summary-strip", "aria-label": "Resumen de receta activa" }, /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, hasPickedSpecies ? sp?.name || "—" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Manual")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, globalMode === "produccion" ? "Producción" : "Investigación"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Modo activo")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Peso total"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0%"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cn != null ? `${an.cn.toFixed(1)}:1` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Humedad objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.moistureTarget != null ? `${an.moistureTarget}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, [SetasSpeciesTargetsApi.targetSourceLabel(an?.targets, "moisture"), bd ? `agua a añadir ${bd.agua.toFixed(1)} kg` : null].filter(Boolean).join(" · "))), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "BE estimada"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.eb != null ? `${Math.round(blendEBWithHistory(an, histStats))}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Hipótesis")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Costo/kg"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cost != null ? `$${Math.round(an.cost).toLocaleString("es-CO")}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "COP / kg seco")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Revisión"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v", style: { fontSize: "var(--text-xs)" } }, "Perito ", Math.round(opt?.score || 0), "/100"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Perito · Requiere revisión"))), /* @__PURE__ */ React.createElement("section", { className: `form-flow${recipe.length > 0 ? " has-recipe" : ""}`, "aria-label": "Recorrido de formulación en 5 pasos" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Recorrido metodológico"), /* @__PURE__ */ React.createElement("h2", null, "Especie → Origen → Ingredientes → Validar y guardar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-600)", marginTop: 2, letterSpacing: "var(--tracking-label)", textTransform: "uppercase" } }, "01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, hasPickedSpecies ? recipe.length > 0 ? Math.abs((an?.tot || 0) - 100) <= MASS_BALANCE_TOL ? "Paso 5: Listo para validar" : "Paso 4: Balance en curso" : "Paso 3: Agregar insumos" : "Paso 1: Seleccionar especie")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid form-flow-grid--5" }, /* @__PURE__ */ React.createElement("li", { className: `form-step ${hasPickedSpecies ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp?.name || "Pendiente" : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
     document.querySelector(".form-species-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => document.getElementById("form-species-context-select")?.focus(), 250);
-  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${hasPickedSpecies ? "is-completado" : "is-activo"}` }, hasPickedSpecies ? "Completado" : "Activo"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define rangos C:N, pH y EB biológica.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Objetivo"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")), /* @__PURE__ */ React.createElement("span", { className: "form-step-state-badge is-completado" }, "Completado"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Stock físico de Bodega Tenjo." : "Paleta exploratoria de investigación.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${recipe.length > 0 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: focusIngredientCatalog }, "Manual"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Generador")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length > 0 ? "is-completado" : hasPickedSpecies ? "is-activo" : "is-pendiente"}` }, recipe.length > 0 ? `${recipe.length} insumos` : hasPickedSpecies ? "Activo" : "Pendiente"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega sustratos, suplementos y correctores.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= 0.5 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Balance"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0.0%"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${hasPickedSpecies ? "is-completado" : "is-activo"}` }, hasPickedSpecies ? "Completado" : "Activo"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define rangos C:N, pH y EB biológica.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Objetivo"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")), /* @__PURE__ */ React.createElement("span", { className: "form-step-state-badge is-completado" }, "Completado"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Stock físico de Bodega Tenjo." : "Paleta exploratoria de investigación.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${recipe.length > 0 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: focusIngredientCatalog }, "Manual"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Generador")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length > 0 ? "is-completado" : hasPickedSpecies ? "is-activo" : "is-pendiente"}` }, recipe.length > 0 ? `${recipe.length} insumos` : hasPickedSpecies ? "Activo" : "Pendiente"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega sustratos, suplementos y correctores.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Balance"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0.0%"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
     if (autoBalance) autoBalance();
-  } }, "Cerrar 100%")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= 0.5 ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= 0.5 ? "Completado" : "Requiere atención"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Cierra la materia seca exactamente al 100%.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= 0.5 && (opt?.score || 0) >= 70 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "05"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Revisión"), /* @__PURE__ */ React.createElement(
+  } }, "Cerrar 100%")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "Completado" : "Requiere atención"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Cierra la materia seca exactamente al 100%.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL && (opt?.score || 0) >= 70 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "05"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Revisión"), /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",
@@ -7646,7 +7790,7 @@ BATCH (${numBags}×${kgBag} kg):
     const ebOk = ebVal >= ebOpt;
     const ebMid = ebVal >= ebBase;
     const ebColor = ebOk ? "var(--moss-700,#2E3B2F)" : ebMid ? "#976E1A" : "#A8432A";
-    const totOk = an && an.tot != null ? Math.abs(an.tot - 100) <= 0.5 : false;
+    const totOk = an && an.tot != null ? Math.abs(an.tot - 100) <= MASS_BALANCE_TOL : false;
     const totColor = totOk ? "var(--moss-700,#2E3B2F)" : "#A8432A";
     return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Ingredientes y evaluación de la receta activa" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "evaluación en vivo")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-metrics" }, /* @__PURE__ */ React.createElement(
       "button",
@@ -7749,7 +7893,7 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement(IconComp, { size: 10, color: "var(--ink-600)" }),
         /* @__PURE__ */ React.createElement("span", null, s.l)
       );
-    })), /* @__PURE__ */ React.createElement("div", { className: `offline-status-chip ${isOnline ? "is-online" : "is-offline"}`, style: { fontSize: "10px", padding: "2px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "offline-status-dot" }), /* @__PURE__ */ React.createElement("span", null, isOnline ? "En línea" : "Sin conexión"))), limiter && /* @__PURE__ */ React.createElement("div", { className: "live-dash-limiter", style: { marginBottom: 6, padding: "3px 8px", background: sm2.bg || "var(--paper-100)", borderRadius: 2, fontSize: "11px", fontFamily: "var(--font-mono)", color: sm2.txt, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 11, color: sm2.txt }), /* @__PURE__ */ React.createElement("span", null, limiter)), /* @__PURE__ */ React.createElement("button", { onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { background: "none", border: "none", color: sm2.txt, fontWeight: 700, fontSize: "10px", cursor: "pointer", textDecoration: "underline" } }, "Ver dictamen")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", marginBottom: 8 } }, an && Math.abs(an.tot - 100) > 0.5 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog mass-balance-action", onClick: () => autoBalance(balanceMode) }, "⚡ Auto-balancear 100%"), /* @__PURE__ */ React.createElement("select", { name: "balanceStrategy", "aria-label": "Estrategia de balanceo", className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value), title: "Estrategia de balanceo" }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último"))), /* @__PURE__ */ React.createElement("button", { className: `tog${normMode ? " on" : ""}`, "aria-pressed": normMode, onClick: () => setNormMode(!normMode), title: "Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)" }, "Auto-ajustar"), /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
+    })), /* @__PURE__ */ React.createElement("div", { className: `offline-status-chip ${isOnline ? "is-online" : "is-offline"}`, style: { fontSize: "10px", padding: "2px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "offline-status-dot" }), /* @__PURE__ */ React.createElement("span", null, isOnline ? "En línea" : "Sin conexión"))), limiter && /* @__PURE__ */ React.createElement("div", { className: "live-dash-limiter", style: { marginBottom: 6, padding: "3px 8px", background: sm2.bg || "var(--paper-100)", borderRadius: 2, fontSize: "11px", fontFamily: "var(--font-mono)", color: sm2.txt, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 11, color: sm2.txt }), /* @__PURE__ */ React.createElement("span", null, limiter)), /* @__PURE__ */ React.createElement("button", { onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { background: "none", border: "none", color: sm2.txt, fontWeight: 700, fontSize: "10px", cursor: "pointer", textDecoration: "underline" } }, "Ver dictamen")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", marginBottom: 8 } }, an && Math.abs(an.tot - 100) > MASS_BALANCE_TOL && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog mass-balance-action", onClick: () => autoBalance(balanceMode) }, "⚡ Auto-balancear 100%"), /* @__PURE__ */ React.createElement("select", { name: "balanceStrategy", "aria-label": "Estrategia de balanceo", className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value), title: "Estrategia de balanceo" }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último"))), /* @__PURE__ */ React.createElement("button", { className: `tog${normMode ? " on" : ""}`, "aria-pressed": normMode, onClick: () => setNormMode(!normMode), title: "Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)" }, "Auto-ajustar"), /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
       setRecipe([]);
       setLockedIds([]);
     } }) }, "Limpiar")), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--paper-300)" } }, recipe.map((r) => {
@@ -7770,7 +7914,7 @@ Click para ver análisis completo`
         remI(r.id);
         setLockedIds((l) => l.filter((x) => x !== r.id));
       }, "aria-label": `Quitar ${g?.name || "ingrediente"} de la receta`, style: { flexShrink: 0 } }, "✕"));
-    })), an && /* @__PURE__ */ React.createElement("div", { className: `tbar ${an.tot >= 99 && an.tot <= 101 ? "ok" : an.tot < 95 || an.tot > 105 ? "err" : "warn"}` }, /* @__PURE__ */ React.createElement("span", null, "Total"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, an.tot.toFixed(1), "% / 100%")), normMode && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "norm-bar" }, /* @__PURE__ */ React.createElement("span", null, "⇌"), /* @__PURE__ */ React.createElement("span", null, "Auto-ajustar activo — al cambiar un %, los demás se reescalan proporcionalmente"), lockedIds.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "auto", opacity: 0.8 } }, "● ", lockedIds.length, " fijado", lockedIds.length !== 1 ? "s" : ""))));
+    })), an && /* @__PURE__ */ React.createElement("div", { className: `tbar ${isMassBalanced(an) ? "ok" : an.tot < EB_PENALTY_BALANCE_BAND.min || an.tot > EB_PENALTY_BALANCE_BAND.max ? "err" : "warn"}` }, /* @__PURE__ */ React.createElement("span", null, "Total"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, an.tot.toFixed(1), "% / 100%")), normMode && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "norm-bar" }, /* @__PURE__ */ React.createElement("span", null, "⇌"), /* @__PURE__ */ React.createElement("span", null, "Auto-ajustar activo — al cambiar un %, los demás se reescalan proporcionalmente"), lockedIds.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "auto", opacity: 0.8 } }, "● ", lockedIds.length, " fijado", lockedIds.length !== 1 ? "s" : ""))));
   })()), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Puntaje, gauges y lote"), /* @__PURE__ */ React.createElement("p", null, "Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("input", { name: "ingredientSearch", type: "search", className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", style: { marginBottom: 0, flex: "1 1 auto", minWidth: "200px" }, placeholder: "Buscar ingrediente o etiqueta…", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setPriceOverrides({});
     try {
@@ -7989,7 +8133,7 @@ Click para ver análisis completo`
       setAiFormError("");
     }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "🤖"), " Asistente IA (Gemini)"), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "✦"), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, formNextLabel), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setPromptDlg({ title: "Nueva prueba experimental", label: "Nombre de la prueba", placeholder: "ej. Ostra gris — ajuste C:N lote 12", confirmLabel: "Guardar prueba", onSubmit: (nm) => {
-        const trSave = calcTreatment(an, sKey, SPP);
+        const trSave = calcTreatment(an, sKey, effectiveSPP);
         const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an.eb.toFixed(0), cn: an.cn.toFixed(1), score: opt.score, cost: Math.round(an.cost), treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
         const u = [e, ...saved];
         setSaved(u);
@@ -8011,7 +8155,7 @@ Click para ver análisis completo`
       { l: "EB estimada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb?.toFixed(0) || "—"}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
       { l: "Costo / kg Seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
       { l: "Costo / kg Hongo", v: an.eb > 0 ? `$${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")}` : "—", ok: (an.cost || 0) / (an.eb / 100) < 1600, w: (an.cost || 0) / (an.eb / 100) < 3200 }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), (an.tot < 97 || an.tot > 103) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, "⚠ Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "✦ Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
+    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg seco"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg seco"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), !isMassBalanced(an) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, "⚠ Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "✦ Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
   })(), /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats }), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta-summary" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-900)", lineHeight: 1 } }, "Puntaje y lote"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", recipe.length, ")"))), an && an.sp && opt?.score > 0 && (() => {
     const sc = opt.score;
     const col = sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)";
@@ -8029,9 +8173,12 @@ Click para ver análisis completo`
     const maxPct = m.max / m.scale * 100;
     const barColor = inRange ? "var(--moss-500)" : m.val < m.min ? "var(--coral-500)" : "#d4a04a";
     return /* @__PURE__ */ React.createElement("div", { key: m.label, style: { background: "var(--paper-100)", border: "1px solid var(--border-soft)", padding: "8px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-700)", fontWeight: 700 } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", color: barColor, fontWeight: 600 } }, m.fmt(m.val))), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 6, background: "#e0dbd3", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${minPct}%`, width: `${maxPct - minPct}%`, height: "100%", background: "rgba(77,98,53,.2)", borderRadius: 3 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${idealPct}%`, width: 2, height: "160%", top: "-30%", background: "rgba(77,98,53,.5)", borderRadius: 1 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, width: `${pct}%`, height: "100%", background: barColor, borderRadius: 3, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, /* @__PURE__ */ React.createElement("span", null, m.fmt(m.min)), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.7 } }, "↑", m.fmt(m.ideal)), /* @__PURE__ */ React.createElement("span", null, m.fmt(m.max))));
-  })), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bwrap", id: "bl-batch" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 13 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Batch"), /* @__PURE__ */ React.createElement("button", { className: `tog${showBatch ? " on" : ""}`, "aria-pressed": showBatch, onClick: () => setShowBatch(!showBatch) }, showBatch ? "Ocultar" : "Calcular")), /* @__PURE__ */ React.createElement("div", { className: "bgrid", style: { gridTemplateColumns: "1fr 1fr 1fr 1fr" } }, /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-numbags" }, "Nº bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bf-numbags", type: "number", min: "1", max: "500", inputMode: "numeric", required: true, value: numBags, onChange: (e) => setNumBags(parseInt(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-kgbag" }, "kg / bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bf-kgbag", type: "number", min: ".5", max: "5", step: ".1", inputMode: "decimal", required: true, value: kgBag, onChange: (e) => setKgBag(parseFloat(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-hobj" }, "Humedad obj. % △"), /* @__PURE__ */ React.createElement("input", { id: "bf-hobj", type: "number", min: "55", max: "80", inputMode: "numeric", required: true, value: hObj, onChange: (e) => setHObj(parseInt(e.target.value) || 67), style: { borderColor: hObj >= 67 ? "var(--moss-500)" : "var(--coral-500)" } })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-spawncost" }, "Costo spawn ($/kg)"), /* @__PURE__ */ React.createElement("input", { id: "bf-spawncost", type: "number", min: "0", step: "1000", inputMode: "numeric", required: true, value: spawnCost, onChange: (e) => setSpawnCost(parseInt(e.target.value) || 0) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-vegprice" }, "Precio venta ($/kg )"), /* @__PURE__ */ React.createElement("input", { id: "bf-vegprice", type: "number", min: "0", step: "1000", inputMode: "numeric", required: true, value: vegPrice, onChange: (e) => setVegPrice(parseInt(e.target.value) || 0) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-total" }, "Total"), /* @__PURE__ */ React.createElement("input", { id: "bf-total", readOnly: true, value: `${(numBags * kgBag).toFixed(1)} kg`, style: { fontWeight: 700, color: "var(--coral-500)" } }))), showBatch && bd && /* @__PURE__ */ React.createElement("div", null, bd.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "brow" }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, it.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 11, alignItems: "center" } }, it.cost > 0 && /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(it.cost).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq" }, it.unit)))), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "2px solid var(--border-soft)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn", style: { color: "#2A5078", fontWeight: 600 } }, " Agua a agregar (obj. ", bd.hObj, "%)"), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F2FA", border: "1px solid #9AC0D8", color: "#2A5078" } }, bd.agua.toFixed(2), " L")), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "1px solid var(--paper-300)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, " Spawn (", an?.dynSpawn || 8, "% · ", bd.spawn.toFixed(2), " kg)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F5E8", border: "1px solid #7AB87A", color: "#2A5A2A" } }, bd.spawn.toFixed(2), " kg"))), /* @__PURE__ */ React.createElement("div", { className: "btots", style: { gridTemplateColumns: "repeat(4,1fr)" } }, /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, bd.wet.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Sustrato")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.cost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Insumos")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Spawn")), /* @__PURE__ */ React.createElement("div", { className: "btot", style: { background: "var(--coral-500)" } }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.totalCost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Total COP"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo por bolsa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.costPerBag).toLocaleString())), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo / kg sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.cost / bd.wet).toLocaleString()))), vegPrice > 0 && an && an.eb > 0 && (() => {
+  })), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bwrap", id: "bl-batch" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 13 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Batch"), /* @__PURE__ */ React.createElement("button", { className: `tog${showBatch ? " on" : ""}`, "aria-pressed": showBatch, onClick: () => setShowBatch(!showBatch) }, showBatch ? "Ocultar" : "Calcular")), /* @__PURE__ */ React.createElement("div", { className: "bgrid", style: { gridTemplateColumns: "1fr 1fr 1fr 1fr" } }, /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-numbags" }, "Nº bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bf-numbags", type: "number", min: "1", max: "500", inputMode: "numeric", required: true, value: numBags, onChange: (e) => setNumBags(parseInt(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-kgbag" }, "kg / bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bf-kgbag", type: "number", min: ".5", max: "5", step: ".1", inputMode: "decimal", required: true, value: kgBag, onChange: (e) => setKgBag(parseFloat(e.target.value) || 1) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-hobj" }, "Humedad obj. % △"), /* @__PURE__ */ React.createElement("input", { id: "bf-hobj", type: "number", min: "55", max: "80", inputMode: "numeric", required: true, value: hObj, onChange: (e) => {
+    moistureTouched.current.hObj = true;
+    setHObj(parseInt(e.target.value) || 67);
+  }, style: { borderColor: moistureInTargetRange(hObj, an?.targets?.moisture) ? "var(--moss-500)" : "var(--coral-500)" } })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-spawncost" }, "Costo spawn ($/kg)"), /* @__PURE__ */ React.createElement("input", { id: "bf-spawncost", type: "number", min: "0", step: "1000", inputMode: "numeric", required: true, value: spawnCost, onChange: (e) => setSpawnCost(parseInt(e.target.value) || 0) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-vegprice" }, "Precio venta ($/kg )"), /* @__PURE__ */ React.createElement("input", { id: "bf-vegprice", type: "number", min: "0", step: "1000", inputMode: "numeric", required: true, value: vegPrice ?? "", placeholder: String(DEFAULT_FRESH_PRICES[sKey] || 22e3), onChange: (e) => setVegPrice(e.target.value === "" ? null : Number(e.target.value)) })), /* @__PURE__ */ React.createElement("div", { className: "bf" }, /* @__PURE__ */ React.createElement("label", { htmlFor: "bf-total" }, "Total"), /* @__PURE__ */ React.createElement("input", { id: "bf-total", readOnly: true, value: `${(numBags * kgBag).toFixed(1)} kg`, style: { fontWeight: 700, color: "var(--coral-500)" } }))), showBatch && bd && /* @__PURE__ */ React.createElement("div", null, bd.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "brow" }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, it.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 11, alignItems: "center" } }, it.cost > 0 && /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(it.cost).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq" }, it.unit)))), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "2px solid var(--border-soft)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn", style: { color: "#2A5078", fontWeight: 600 } }, " Agua a agregar (obj. ", bd.hObj, "%)"), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F2FA", border: "1px solid #9AC0D8", color: "#2A5078" } }, bd.agua.toFixed(2), " L")), /* @__PURE__ */ React.createElement("div", { className: "brow", style: { borderTop: "1px solid var(--paper-300)", marginTop: 4, paddingTop: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "bn" }, " Spawn (", an?.dynSpawn || 8, "% · ", bd.spawn.toFixed(2), " kg)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "bc" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("span", { className: "bq", style: { background: "#E8F5E8", border: "1px solid #7AB87A", color: "#2A5A2A" } }, bd.spawn.toFixed(2), " kg"))), /* @__PURE__ */ React.createElement("div", { className: "btots", style: { gridTemplateColumns: "repeat(4,1fr)" } }, /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, bd.wet.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Sustrato")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.cost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Insumos")), /* @__PURE__ */ React.createElement("div", { className: "btot" }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.spawnCostTotal).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Spawn")), /* @__PURE__ */ React.createElement("div", { className: "btot", style: { background: "var(--coral-500)" } }, /* @__PURE__ */ React.createElement("div", { className: "bv" }, "$", Math.round(bd.totalCost).toLocaleString()), /* @__PURE__ */ React.createElement("div", { className: "bl" }, "Total COP"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo por bolsa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.costPerBag).toLocaleString())), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 12px", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-500)", marginBottom: 3 } }, "Costo / kg sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 600, color: "var(--coral-500)" } }, "$", Math.round(bd.cost / bd.wet).toLocaleString()))), bd.freshPriceKg > 0 && an && an.eb > 0 && (() => {
     const yieldKg = bd.dry * (an.eb / 100);
-    const revenue = yieldKg * vegPrice;
+    const revenue = yieldKg * bd.freshPriceKg;
     const margin = revenue - bd.totalCost;
     const marginPct = revenue > 0 ? (margin / revenue * 100).toFixed(1) : 0;
     const positive = margin >= 0;
@@ -8039,7 +8186,7 @@ Click para ver análisis completo`
       { l: "Cosecha est.", v: `${yieldKg.toFixed(1)} kg` },
       { l: "Ingresos brutos", v: `$${Math.round(revenue).toLocaleString()}` },
       { l: `Margen ${marginPct}%`, v: `$${Math.round(margin).toLocaleString()}`, bold: true, good: positive }
-    ].map((cell, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, cell.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: cell.bold ? cell.good ? "var(--moss-500)" : "var(--coral-500)" : "var(--ink-900)" } }, cell.v)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, "Precio venta $", vegPrice.toLocaleString(), "/kg · Costo total $", Math.round(bd.totalCost).toLocaleString(), " COP · Sin contar labor ni servicios · EB sobre materia seca ($", bd.dry.toFixed(1), " kg de $", bd.wet.toFixed(1), " kg húmedos)."));
+    ].map((cell, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, cell.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: cell.bold ? cell.good ? "var(--moss-500)" : "var(--coral-500)" : "var(--ink-900)" } }, cell.v)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, "Precio venta $", bd.freshPriceKg.toLocaleString(), "/kg · Costo total $", Math.round(bd.totalCost).toLocaleString(), " COP · Sin contar labor ni servicios · EB sobre materia seca ($", bd.dry.toFixed(1), " kg de $", bd.wet.toFixed(1), " kg húmedos)."));
   })(), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border-soft)", display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -8141,6 +8288,7 @@ Click para ver análisis completo`
           let noStock = false;
           let _diag = null;
           const byProfile = {};
+          const optTargetSPP = SetasSpeciesTargetsApi.applyToSpp(SPP, optTarget, lockedIds.length ? recipe : [], optimizerINGS);
           Object.keys(OPT_PROFILES).forEach((pk) => {
             try {
               const out = runHybridRecipeSearch({
@@ -8152,13 +8300,14 @@ Click para ver análisis completo`
                 useStock: optUseStock,
                 profileKey: pk,
                 stockMap,
-                lockedIds
+                lockedIds,
+                spp: optTargetSPP
               });
               noStock = noStock || !!out.noStock;
               byProfile[pk] = (out.ranked || []).slice(0, 12).map(
                 (c) => hybridOptimizerRow(c, optTarget, optimizerINGS, stockMap, pk)
               );
-              const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk);
+              const diag = hybridOptimizerDiag(out, optTarget, optimizerINGS, optUseStock, invLotes, pk, optTargetSPP);
               const stockCount = diag.stockIds;
               byProfile[`_diag_${pk}`] = { stockCount, diag };
               byProfile[`_evidence_${pk}`] = out.historicalEvidence || null;
@@ -8220,7 +8369,7 @@ Click para ver análisis completo`
       setLockedIds(lockedIds.filter((id) => r.recipe.some((item) => item.id === id)));
       goTab("produccion");
     } }, "Producir"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
-      const tOpt = calcTreatment(r.an, optTarget, SPP);
+      const tOpt = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
       const totalCost = Math.round(r.an.cost) + eCost;
       return [
@@ -8234,7 +8383,7 @@ Click para ver análisis completo`
         }
       ];
     })().map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "opt-met" }, /* @__PURE__ */ React.createElement("div", { className: "opt-met-lbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "opt-met-val", style: { fontSize: m.v && m.v.length > 6 ? 14 : 18 } }, m.v), m.sub && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", lineHeight: 1.3, marginTop: 1 } }, m.sub)))), r.agronomicInsights?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, padding: "7px 10px", borderLeft: "3px solid var(--moss-500,var(--accent-olive))", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, /* @__PURE__ */ React.createElement("b", null, "Lectura agronómica · ", r.evidenceClassification?.label || "Tier 3 · hipótesis/modelo", ":"), " ", r.agronomicInsights.slice(0, 2).map((x) => x.message).join(" ")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, background: "var(--paper-100)", borderTop: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "7px 10px", borderRight: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Riesgo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: r.riskScore >= 80 ? "var(--accent-olive)" : r.riskScore >= 55 ? "var(--ochre-500,#A07828)" : "#C53030" } }, r.riskScore ?? "—", "/100")), r.maxKgWet != null && /* @__PURE__ */ React.createElement("div", { style: { flex: 2, padding: "7px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-600)", marginBottom: 2 } }, "Bodega produce"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--slate-700,var(--accent-blue-grey))" } }, r.maxKgWet > 0 ? `hasta ${r.maxKgWet} kg húmedos` : "stock insuficiente"))), r.an.cost > 0 && (() => {
-      const tOpt2 = calcTreatment(r.an, optTarget, SPP);
+      const tOpt2 = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       const eCost2 = tOpt2?.energy?.cop_per_kg_seco || 0;
       const bags = [
         { nom: "Bolsa 20×50", kgH: 1.8 },
@@ -8248,7 +8397,7 @@ Click para ver análisis completo`
         return /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "5px 8px", borderRight: "1px solid var(--border-soft)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginBottom: 2, letterSpacing: "var(--tracking-label)", fontWeight: 600 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--coral-700)", fontWeight: 700 } }, "$", costBolsa.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, "COP / bolsa"));
       }));
     })(), (() => {
-      const t = calcTreatment(r.an, optTarget, SPP);
+      const t = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       if (!t) return null;
       const tc = t.col === "autoclave" ? { bg: "#FCEEE9", br: "#E8B4A0", fg: "#B5451F", lbl: "Autoclave 121°C / 18.5–19 PSI" } : t.col === "thermal" ? { bg: "var(--status-attention-bg)", br: "var(--status-attention)", fg: "var(--status-attention-text)", lbl: "Pasteurización 65–75°C núcleo" } : { bg: "#EEF3EA", br: "#90A870", fg: "#3D5520", icon: "❄", lbl: "CWLP — Cal en Frío pH≥12" };
       return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 14px", background: tc.bg, borderTop: `1px solid ${tc.br}` } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, fontWeight: 700 } }, tc.icon, " ", tc.lbl, " · ", t.time.split("(")[0].trim()), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: tc.fg, opacity: 0.8 } }, "Spawn ", t.spawn, "%"));
@@ -8438,13 +8587,14 @@ Click para ver análisis completo`
   }, onBlur: () => {
     if (prodKg === "" || isNaN(prodKg)) setProdKg(1.5);
   }, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-h", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Humedad % · Inóculo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("input", { id: "prod-h", type: "number", min: "55", max: "75", step: "1", value: prodH, onChange: (e) => {
+    moistureTouched.current.prodH = true;
     const v = e.target.value;
     setProdH(v === "" ? "" : parseInt(v) || "");
   }, onBlur: () => {
     if (prodH === "" || isNaN(prodH)) setProdH(67);
-  }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => prodRows && ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !prodRows, title: prodRows ? "Descontar insumos y bolsas del inventario (FIFO)" : !balanced ? balMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows ? "var(--moss-700)" : "var(--paper-300)", color: prodRows ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: prodRows ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, "⚡ Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9 }, title: loteSyncErr }, "⚠ sin sincronizar"))))), recipe.length > 0 && an && balanced && (() => {
+  }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => prodRows && ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !prodRows || !readyForProduction, title: prodRows && readyForProduction ? "Descontar insumos y bolsas del inventario (FIFO)" : !balanced ? balMsg : !hasPickedSpecies ? productionBlockMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows && readyForProduction ? "var(--moss-700)" : "var(--paper-300)", color: prodRows && readyForProduction ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: prodRows && readyForProduction ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, "⚡ Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9 }, title: loteSyncErr }, "⚠ sin sincronizar"))))), recipe.length > 0 && an && balanced && (() => {
     const prodIngs = effectiveINGS.map((g) => prodMoist[g.id] != null ? { ...g, moisture: prodMoist[g.id] } : g);
-    const ptr = calcTreatment(an, sKey, SPP);
+    const ptr = calcTreatment(an, sKey, effectiveSPP);
     const pb = calcBatch(recipe, prodBags || 1, prodKg || 1.5, prodH || 67, spawnCost, prodIngs, an?.dynSpawn, ptr, an?.eb, sKey);
     const psch = calcSchedule(sKey, prodDate, an?.eb);
     const spn = an?.dynSpawn || ptr?.spawn || 8;
@@ -8533,7 +8683,7 @@ Click para ver análisis completo`
       [`Spawn (${spn}%)`, `${pb.spawn.toFixed(2)} kg`, "micelio en grano · 8% del húmedo"],
       ["Sustrato húmedo final", `${pb.wet.toFixed(1)} kg`, `${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`]
     ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { border: "1px solid var(--paper-300)", padding: "10px 12px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3, fontWeight: 700 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: "var(--ink-900,#222)" } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1, fontWeight: 500 } }, s)))), ptr && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-2", style: { border: "1px solid var(--paper-300)", padding: "10px 14px", marginBottom: 18, background: "var(--paper-50)", scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "2"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Tratamiento — ", ptr.name)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ptr.temp, " · ", ptr.time, " · Spawn ", ptr.spawn, "%"), ptr.reasons?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 4 } }, ptr.reasons.join(" · "))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-3", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "3"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Procedimiento")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, steps.map((t, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "prod-step", style: { opacity: checkedSteps["step_" + i] ? 0.4 : 1, transition: "opacity .2s" } }, /* @__PURE__ */ React.createElement("input", { name: `procedureStep-${i}`, type: "checkbox", "aria-label": `Paso ${i + 1} completado: ${t}`, checked: !!checkedSteps["step_" + i], onChange: (e) => setCheckedSteps((prev) => ({ ...prev, ["step_" + i]: e.target.checked })), style: { accentColor: "var(--coral-500)", width: 14, height: 14, cursor: "pointer", flexShrink: 0, marginTop: 3 } }), /* @__PURE__ */ React.createElement("div", { className: "prod-step-n" }, i + 1), /* @__PURE__ */ React.createElement("div", { className: "prod-step-t", style: { textDecoration: checkedSteps["step_" + i] ? "line-through" : "none" } }, t)))), fechas.length > 0 && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-4", style: { scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "4"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Fechas clave"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "estimadas · EB ", an.eb.toFixed(0), "%"))), /* @__PURE__ */ React.createElement("div", { className: "ps-fechas-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "ps-fechas", style: { display: "grid", gridTemplateColumns: `repeat(${fechas.length},1fr)`, gap: 1, background: "var(--paper-300)", border: "1px solid var(--paper-300)" } }, fechas.map(([l, v]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-0)", padding: "8px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900,#222)" } }, v)))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, paddingTop: 14, borderTop: "2px solid var(--ink-900)" } }, /* @__PURE__ */ React.createElement("div", { className: "ps-sig", style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 18 } }, [["Operario"], ["Hora inicio"], ["Verificado por"]].map(([l]) => /* @__PURE__ */ React.createElement("div", { key: l }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, l), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--ink-600)", height: 26 } })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, "Observaciones del lote"), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22, marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22 } })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)", textAlign: "right", letterSpacing: "var(--tracking-label)" } }, "Setas de la Pe\\u00f1a · Tenjo 2.600 msnm · simulador v9.1"))));
-  })()), tab === "inventario" && BodegaSection(), tab === "clima" && /* @__PURE__ */ React.createElement(ClimateDashboardSection, null), tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Ejecutar lote", dialogStyle: { width: 520, maxWidth: "calc(100vw - 32px)" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "⚡ Ejecutar lote — confirmar descuento de inventario"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo)."), /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? "✓" : "⚠"))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12 } }, "⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", paddingTop: 4 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, className: "inv-btn inv-btn-pri" }, "Confirmar y descontar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas || 6, onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: parseInt(e.target.value) || 1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", name: "wetKgPerBag", type: "number", className: "inv-input", min: 0.1, step: 0.1, value: bitNuevoForm.pesoHumedo || 1.5, onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: parseFloat(e.target.value) || 0.1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", name: "spawnPercent", type: "number", className: "inv-input", min: 1, max: 30, value: bitNuevoForm.spawnPct || 8, onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: parseFloat(e.target.value) || 8 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad %"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", name: "moisturePercent", type: "number", className: "inv-input", min: 55, max: 80, value: bitNuevoForm.humedad || 67, onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: parseInt(e.target.value) || 67 })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco (kg)"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco || "", placeholder: "Calculado automáticamente…", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: parseFloat(e.target.value) || 0 })) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  })()), tab === "inventario" && BodegaSection(), tab === "clima" && /* @__PURE__ */ React.createElement(ClimateDashboardSection, null), tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Ejecutar lote", dialogStyle: { width: 520, maxWidth: "calc(100vw - 32px)" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "⚡ Ejecutar lote — confirmar descuento de inventario"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo)."), /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? "✓" : "⚠"))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12 } }, "⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", paddingTop: 4 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), disabled: ejecutandoLote, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, disabled: ejecutandoLote, className: "inv-btn inv-btn-pri" }, ejecutandoLote ? "Descontando…" : "Confirmar y descontar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas || 6, onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: parseInt(e.target.value) || 1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", name: "wetKgPerBag", type: "number", className: "inv-input", min: 0.1, step: 0.1, value: bitNuevoForm.pesoHumedo || 1.5, onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: parseFloat(e.target.value) || 0.1 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", name: "spawnPercent", type: "number", className: "inv-input", min: 1, max: 30, value: bitNuevoForm.spawnPct || 8, onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: parseFloat(e.target.value) || 8 })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad %"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", name: "moisturePercent", type: "number", className: "inv-input", min: 55, max: 80, value: bitNuevoForm.humedad || 67, onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: parseInt(e.target.value) || 67 })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco (kg)"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco || "", placeholder: "Calculado automáticamente…", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: parseFloat(e.target.value) || 0 })) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     if (!bitNuevoForm.codigo?.trim() || !bitNuevoForm.especie?.trim()) {
       setNoticeDlg({ msg: "Completa código y especie." });
       return;
@@ -9083,19 +9233,17 @@ Click para ver análisis completo`
     );
   })(), showProdLaunchModal && prodLaunchForm && (() => {
     const f = prodLaunchForm;
-    const allInsumosOk = f.insumos.every((i) => i.ok);
+    const allInsumosOk = f.insumos.length > 0 && f.insumos.every((i) => i.ok);
     const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
     return /* @__PURE__ */ React.createElement(
       AccessibleModal,
       {
         id: "prod-launch-modal",
-        isOpen: showProdLaunchModal,
         onClose: () => setShowProdLaunchModal(false),
-        title: "🚀 Lanzador de Producción de Lote",
-        ariaLabel: "Lanzador de Producción de Lote",
-        maxWidth: "680px"
+        label: "Lanzador de producción de lote",
+        dialogStyle: { width: 680, maxWidth: "calc(100vw - 32px)" }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "prod-launch-modal", "data-testid": "prod-launch-modal" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-summary" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Lote"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontFamily: "var(--font-mono)", fontSize: 14 } }, f.codigo)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontSize: 14 } }, f.especie)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Tamaño"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.numBolsas, " bolsas (", (f.numBolsas * f.pesoHumedo).toFixed(1), " kg)")), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.humedad, "%"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)" } }, "📦 Insumos a Descontar de Bodega"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: allInsumosOk ? "var(--moss-700)" : "var(--coral-500)" } }, allInsumosOk ? "● Stock suficiente para todo el batch" : "⚠ Algunos insumos requieren compra")), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("table", { className: "prod-launch-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Requerido"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Stock Actual"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center" } }, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, f.insumos.map((ins, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { background: ins.ok ? "transparent" : "#FFF5F5" } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 600 } }, ins.name), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)" } }, ins.krKg.toFixed(2), " kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)", color: ins.ok ? "var(--ink-1)" : "var(--coral-500)" } }, ins.stockActual.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: ins.ok ? "var(--moss-700)" : "var(--coral-500)" } }, ins.ok ? "✓ OK" : "⚠ Escaso"))))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-launch-sala", style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)", display: "block", marginBottom: 6 } }, "🌱 Sala / Carpa de Destino"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { className: "prod-launch-modal", "data-testid": "prod-launch-modal" }, /* @__PURE__ */ React.createElement("h2", { className: "inv-modal-title" }, "🚀 Lanzador de Producción de Lote"), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-summary" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Lote"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontFamily: "var(--font-mono)", fontSize: 14 } }, f.codigo)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontSize: 14 } }, f.especie)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Tamaño"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.numBolsas, " bolsas (", (f.numBolsas * f.pesoHumedo).toFixed(1), " kg)")), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.humedad, "%"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)" } }, "📦 Insumos a Descontar de Bodega"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: allInsumosOk ? "var(--moss-700)" : "var(--coral-500)" } }, allInsumosOk ? "● Stock suficiente para todo el batch" : "⚠ Algunos insumos requieren compra")), f.plan?.shortfalls?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--coral-500)", background: "#FFF5F5", border: "1px solid var(--coral-200)", borderRadius: "var(--radius-sm)", padding: "8px 10px", marginBottom: 8 } }, "⚠ Faltan insumos en bodega: ", f.plan.shortfalls.map((s) => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(", "), ". Se descontará lo disponible."), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("table", { className: "prod-launch-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Requerido"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Stock Actual"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center" } }, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, f.insumos.map((ins, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { background: ins.ok ? "transparent" : "#FFF5F5" } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 600 } }, ins.name), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)" } }, ins.krKg.toFixed(2), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)", color: ins.ok ? "var(--ink-1)" : "var(--coral-500)" } }, ins.stockActual.toFixed(1), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: ins.ok ? "var(--moss-700)" : "var(--coral-500)" } }, ins.ok ? "✓ OK" : "⚠ Escaso"))))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-launch-sala", style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)", display: "block", marginBottom: 6 } }, "🌱 Sala / Carpa de Destino"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement(
         "button",
         {
           key: r.id,
@@ -9175,10 +9323,11 @@ Click para ver análisis completo`
         {
           type: "button",
           onClick: ejecutarLanzamientoProduccion,
+          disabled: launching,
           className: "btn-launch-prod",
           style: { minHeight: 44, padding: "8px 20px" }
         },
-        "🚀 Confirmar y Lanzar Producción"
+        launching ? "Lanzando…" : "🚀 Confirmar y Lanzar Producción"
       )))
     );
   })(), showTastingModal && (() => {
