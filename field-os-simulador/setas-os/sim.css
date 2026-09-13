@@ -4219,6 +4219,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     -webkit-font-smoothing: antialiased !important;
     text-rendering: geometricPrecision !important;
   }
+  .thermal-card-print * {
+    color: #000000 !important;
+    border-color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
   .thermal-card-print.thermal-card-40x30 {
     width: 40mm !important;
     height: 30mm !important;

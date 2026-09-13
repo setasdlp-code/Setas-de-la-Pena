@@ -27,6 +27,7 @@
   // está garantizado. Un require() de Node sí es estable.
   const workflowRef = () => (isNode ? require('./setas-os-workflow.js') : (glob && glob.SetasOSWorkflow) || null);
   const bitacoraRef = () => (isNode ? require('./bitacora-model.js') : (glob && glob.SetasBitacora) || null);
+  const flushForecastRef = () => (isNode ? require('./flush-forecast-engine.js') : (glob && glob.SetasFlushForecast) || null);
 
   const DAY_MS = 86400000;
 
@@ -462,6 +463,26 @@
         contaminationPct: stats.contPct,
         colonizationDays: stats.diasCol,
       } : null,
+      flushForecast: (() => {
+        const flushEngine = flushForecastRef();
+        if (!flushEngine || typeof (flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes) !== 'function') {
+          return null;
+        }
+        const calcFn = flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes;
+        const maxHarvestedFlush = loteCosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const validHarvests = loteCosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        try {
+          return calcFn(lote, {
+            currentFlush: maxHarvestedFlush,
+            lastFlushDate: lastHarvest ? lastHarvest.fecha : null,
+            eb: stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be,
+            contamRate: stats ? (stats.contPct / 100) : (lote.contamRate ?? 0),
+          });
+        } catch (err) {
+          return null;
+        }
+      })(),
       anomalies,
       blocks,
       photos,
