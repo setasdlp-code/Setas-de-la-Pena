@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 60c80cb7870bbf0a8114ca95c3c8ba4a07ff1b32270cb415abddb7a31a8b4276
+// source-hash: 6bf7a20302aeb802757ebf3167a9c4c8aa800c5f16e4fc7a948cbbaf71729102
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -5804,7 +5804,12 @@ BATCH (${numBags}×${kgBag} kg):
     });
   })()), invTab === "proveedores" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setShowProvModal(true) }, "＋ Agregar proveedor")), invProveedores.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 24, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "Sin proveedores. Agrega el primero.") : /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, invProveedores.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "prov-row" }, /* @__PURE__ */ React.createElement("span", { className: "prov-tipo-chip" }, p.tipo), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "prov-name" }, p.nombre), /* @__PURE__ */ React.createElement("div", { className: "prov-muni" }, p.municipio)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => requireAdmin(eliminarProveedor)(p.id), "aria-label": `Eliminar proveedor ${p.nombre}` }, "✕")))))), showProvModal && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowProvModal(false), label: "Nuevo proveedor" }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nuevo Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-name" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { id: "provider-name", name: "providerName", autoComplete: "organization", className: "inv-input", value: newProv.nombre, onChange: (e) => setNewProv((p) => ({ ...p, nombre: e.target.value })), placeholder: "Ej. Distribuidora Agro Sabana" })), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-type" }, "Tipo"), /* @__PURE__ */ React.createElement("select", { id: "provider-type", name: "providerType", className: "inv-input", value: newProv.tipo, onChange: (e) => setNewProv((p) => ({ ...p, tipo: e.target.value })) }, [["plaza", "Plaza de mercado"], ["industrial", "Industrial"], ["artesanal", "Artesanal"], ["directo", "Directo / Finca"], ["otro", "Otro"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-city" }, "Municipio"), /* @__PURE__ */ React.createElement("input", { id: "provider-city", name: "providerCity", autoComplete: "address-level2", className: "inv-input", value: newProv.municipio, onChange: (e) => setNewProv((p) => ({ ...p, municipio: e.target.value })), placeholder: "Ej. Tenjo" }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => setShowProvModal(false) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: agregarProveedor }, "Guardar proveedor"))));
   const workflow = typeof window !== "undefined" ? window.SetasOSWorkflow : null;
-  const legacyLifecycle = { incubacion: "incubation", fructificacion: "fruiting", completado: "closed", descartado: "discarded" };
+  const loteLifecycleState = (lote) => {
+    if (!lote) return "inoculated";
+    if (lote.lifecycleState) return lote.lifecycleState;
+    const bs = typeof window !== "undefined" ? window.SetasBatchSheet : null;
+    return bs && bs.normalizeLifecycleState ? bs.normalizeLifecycleState(lote.estado, "inoculated") : "inoculated";
+  };
   const lifecycleLabel = { incubation: "Incubación", fruiting: "Fructificación", closed: "Cerrado", discarded: "Descartado" };
   const lifecycleColor = { incubation: "var(--status-info)", fruiting: "var(--status-active)", closed: "var(--status-archived)", discarded: "var(--status-error)" };
   const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close: "Cerrar lote" };
@@ -5814,7 +5819,18 @@ BATCH (${numBags}×${kgBag} kg):
     goBitTab("bit_ficha", true);
   };
   const batchSheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
-  const operatorRole = props.isAdmin === true || props.isAdmin === "true" ? "direccion" : "operario";
+  const [fieldOperatorRole, setFieldOperatorRole] = useState("operario");
+  useEffect(() => {
+    let vivo = true;
+    getFieldOperatorRole().then((r) => {
+      if (vivo) setFieldOperatorRole(r);
+    }).catch(() => {
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  const operatorRole = fieldOperatorRole;
   const buildSheetFor = (lote) => {
     if (!batchSheetApi || !lote) return null;
     const room = ROOMS_CONFIG[lote.sala || lote.ubicacion || ""] || null;
@@ -5947,8 +5963,8 @@ BATCH (${numBags}×${kgBag} kg):
       const activeSheet = sheet || buildSheetFor(lote);
       if (activeSheet && commitSheetAction(activeSheet, lote, "advance_stage")) return;
       const next = lote.estado === "incubacion" ? "fructificacion" : lote.estado;
-      const from = legacyLifecycle[lote.estado];
-      const to = legacyLifecycle[next];
+      const from = loteLifecycleState(lote);
+      const to = loteLifecycleState({ estado: next });
       if (next !== lote.estado && workflow && workflow.canTransition(from, to)) {
         const event = workflow.transitionEvent({ batchId: lote.id, from, to, operatorId: lote.operador || "operador-local" });
         updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
@@ -6047,7 +6063,7 @@ BATCH (${numBags}×${kgBag} kg):
         blocked: contaminated && stats.contPct < 20,
         dueAt: !contaminated && age >= 14 ? new Date(now - (index + 1) * 36e5).toISOString() : new Date(now + (index + 1) * 36e5).toISOString(),
         title: contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
-        why: `${lote.especie || "Lote"} · ${lifecycleLabel[legacyLifecycle[lote.estado]] || lote.estado} · día ${age}`
+        why: `${lote.especie || "Lote"} · ${lifecycleLabel[loteLifecycleState(lote)] || lote.estado} · día ${age}`
       };
     });
     const queue = workflow ? workflow.buildTodayQueue(source, now) : source;
@@ -6065,9 +6081,9 @@ BATCH (${numBags}×${kgBag} kg):
   const BatchDetailV2 = ({ lote }) => {
     const stats = calcLoteStats(lote.id);
     const sheet = buildSheetFor(lote);
-    const state = sheet ? sheet.state : legacyLifecycle[lote.estado] || "planned";
+    const state = sheet ? sheet.state : loteLifecycleState(lote);
     const isAdmin = props.isAdmin === true || props.isAdmin === "true";
-    const actions = sheet ? sheet.actions : workflow ? workflow.validActions(state, isAdmin ? "direccion" : "operario").map((a) => ({ action: a, label: actionLabel[a] || a, blockedBy: null })) : [];
+    const actions = sheet ? sheet.actions : workflow ? workflow.validActions(state, operatorRole).map((a) => ({ action: a, label: actionLabel[a] || a, blockedBy: null })) : [];
     const bolsas = bitBolsas.filter((b) => b.loteId === lote.id);
     const cosechas = bitCosechas.filter((c) => c.loteId === lote.id);
     const events = sheet ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, title: e.title, meta: [e.at, e.meta].filter(Boolean).join(" · "), kind: e.provenance })) : [...cosechas.map((c) => ({ id: c.id, title: `Cosecha · flush ${c.flush}`, meta: `${c.fecha} · ${c.pesoFresco} g`, kind: "measured" })), ...bolsas.filter((b) => b.col100).map((b) => ({ id: b.id, title: `Colonización completa · ${b.codigo}`, meta: b.col100, kind: "manual" }))];
@@ -8286,7 +8302,7 @@ Click para ver análisis completo`
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     const isAdmin = props.isAdmin === true || props.isAdmin === "true";
-    const operatorRole2 = props.operatorRole || (isAdmin ? "direccion" : "produccion");
+    const operatorRole2 = props.operatorRole || fieldOperatorRole;
     const operatorId = props.operatorKey || typeof window !== "undefined" && window.__setasOperatorKey || "operario_local";
     const accountId = props.accountId || typeof window !== "undefined" && window.__setasAccountId || typeof window !== "undefined" && window.firebaseAuth?.currentUser?.uid || "setas_default_account";
     return /* @__PURE__ */ React.createElement(
@@ -9381,7 +9397,7 @@ interval:
         obs: obsFinal
       });
       if (workflow && currentLote) {
-        const fromState = legacyLifecycle[currentLote.estado] || "incubation";
+        const fromState = loteLifecycleState(currentLote);
         const contBags = bolsasDelLote.filter((b) => b.id !== currentBolsa.id && b.estado === "contaminada").length + (nuevoEstado === "contaminada" ? 1 : 0);
         const contPct = bolsasDelLote.length ? Math.round(contBags / bolsasDelLote.length * 100) : 0;
         if (contPct >= 50 && fromState !== "discarded") {
@@ -9392,10 +9408,9 @@ interval:
             reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
           });
           updateBitLote(currentLote.id, {
-            estado: "descartado",
-            lifecycleState: "discarded",
             lifecycleEvents: [...currentLote.lifecycleEvents || [], evt]
           });
+          enqueueFieldTransition(currentLote, fromState, "discarded");
         }
       }
       setShowDiagModal(false);
