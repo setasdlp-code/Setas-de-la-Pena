@@ -5383,6 +5383,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [diagResult,setDiagResult]=useState(null);
   const [diagNotes,setDiagNotes]=useState('');
   const [diagError,setDiagError]=useState('');
+  const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [showTriageModal,setShowTriageModal]=useState(false);
+  const [triageLoteId,setTriageLoteId]=useState('');
+  const [triagePathogenKey,setTriagePathogenKey]=useState('trichoderma');
+  const [triageAffectedBags,setTriageAffectedBags]=useState(1);
+  const [triageLocation,setTriageLocation]=useState('');
+  const [triageDecision,setTriageDecision]=useState('isolate_bags');
+  const [triageNotes,setTriageNotes]=useState('');
   const [showAIFormModal,setShowAIFormModal]=useState(false);
   const [aiFormGoal,setAiFormGoal]=useState('');
   const [aiFormLoading,setAiFormLoading]=useState(false);
@@ -5632,12 +5640,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -7456,11 +7464,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
   );
 
   const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
-  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded'};
-  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado'};
-  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
-  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
+  const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
+  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded',cuarentena:'quarantine'};
+  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
+  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
+  const openContaminationTriage=(loteId)=>{
+    const l=bitLotes.find(x=>x.id===loteId)||bitLotes[0];
+    if(!l) return;
+    setTriageLoteId(l.id);
+    setTriagePathogenKey('trichoderma');
+    setTriageAffectedBags(1);
+    setTriageLocation(l.sala||l.ubicacion||'Sala 1');
+    setTriageDecision('isolate_bags');
+    setTriageNotes('');
+    setShowTriageModal(true);
+  };
 
   // ── Ficha operativa canónica del lote ─────────────────────────────────────
   // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
@@ -7633,19 +7653,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    if(action==='discard'){
+      const from=legacyLifecycle[lote.estado]||'quarantine';
+      if(workflow&&workflow.canTransition(from,'discarded')){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
+        updateBitLote(lote.id,{estado:'descartado',lifecycleState:'discarded',lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+      }
+      return;
+    }
     if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
     // Inspección, colonización y evidencia fotográfica se capturan sobre la
     // bolsa, que es donde viven el %, la fecha y la foto.
     if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
     if(action==='contamination'){
-      setDiagLoteId(lote.id);
-      const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
-      setDiagBolsaId(b?.id||'');
-      setDiagImageBase64('');
-      setDiagResult(null);
-      setDiagError('');
-      setDiagNotes('');
-      setShowDiagModal(true);
+      openContaminationTriage(lote.id);
       return;
     }
     setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
@@ -7777,13 +7798,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const now=Date.now();
     const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
       const stats=calcLoteStats(lote.id);
-      const contaminated=stats&&stats.contPct>0;
+      const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
+      const contaminated=(stats&&stats.contPct>0)||isQuarantine;
       const inoculated=Date.parse(lote.fechaInoculacion||'');
       const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
-      return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+      return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&stats.contPct<20)||isQuarantine,
         dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
-        title:contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-        why:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+        title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
+        why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
     });
     const queue=workflow?workflow.buildTodayQueue(source,now):source;
     const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
@@ -13170,6 +13192,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setShowQrSheet(false);
+                          openContaminationTriage(currentLote.id);
+                        }}
+                      >
+                        <AppIcon name="alert" size={14} color="var(--accent-terracotta)" /> Reportar Contaminación / Merma
+                      </button>
+                      <button
+                        type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setThermalLote(currentLote);
@@ -14517,6 +14549,367 @@ interval:
                 <button type="button" onClick={() => setShowPostHarvestModal(false)} className="inv-btn inv-btn-pri" style={{ minHeight: 38, padding: '6px 16px' }}>
                   Cerrar Poscosecha
                 </button>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {showTriageModal && (() => {
+          const currentLote = bitLotes.find(l => l.id === triageLoteId) || bitLotes[0];
+          const cw = typeof window !== 'undefined' ? window.SetasContaminationWorkflow : null;
+          const pathogens = cw?.PATHOGENS_CATALOG || {
+            trichoderma: { id: 'trichoderma', commonName: 'Moho Verde', scientific: 'Trichoderma spp.', dangerLevel: 'critical', biosecurityProtocol: ['Apagar ventilación forzada FAE inmediatamente.', 'Pulverizar alcohol al 70% o solución clorada suavemente.', 'Embolsar herméticamente antes de mover.'] },
+            neurospora: { id: 'neurospora', commonName: 'Moho Naranja del Pan', scientific: 'Neurospora sitophila', dangerLevel: 'critical', biosecurityProtocol: ['Aislamiento inmediato. No abrir ni apretar la bolsa.', 'Esterilizar o incinerar el material descartado.'] },
+            cobweb: { id: 'cobweb', commonName: 'Moho Telaraña', scientific: 'Dactylium dendroides', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con sal marina fina (salting) antes de retirar.', 'Reducir HR a 82-84% y ventilar suavemente.'] },
+            bacillus: { id: 'bacillus', commonName: 'Grano Húmedo / Bacteriosis', scientific: 'Bacillus subtilis', dangerLevel: 'medium', biosecurityProtocol: ['Descartar bolsas afectadas.', 'Revisar F₀ de esterilización y remojo previo de 12 horas.'] },
+            mycogone: { id: 'mycogone', commonName: 'Burbuja Húmeda', scientific: 'Mycogone perniciosa', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con alcohol al 70% o yodo al 1%.', 'Retirar en bolsa sellada.'] }
+          };
+
+          const selectedPathogen = pathogens[triagePathogenKey] || pathogens.trichoderma;
+          const totalBags = currentLote ? (Number(currentLote.numBolsas) || 12) : 12;
+          const lossCalc = cw
+            ? cw.calculateContaminationLoss({ batch: currentLote, affectedBags: triageAffectedBags, totalBags })
+            : {
+                totalBags,
+                affectedBags: triageAffectedBags,
+                healthyBags: Math.max(0, totalBags - triageAffectedBags),
+                lossPct: Math.round((triageAffectedBags / totalBags) * 100),
+                lossCostCop: triageAffectedBags * (currentLote?.costoBolsa || (currentLote?.costoIngKg ? Math.round(currentLote.costoIngKg * (currentLote.pesoHumedo || 2)) : 3500)),
+                suggestedAction: triageAffectedBags / totalBags >= 0.5 ? 'discard' : triageAffectedBags / totalBags >= 0.2 ? 'quarantine' : 'isolate_bags',
+                severity: triageAffectedBags / totalBags >= 0.2 ? 'critical' : 'warning'
+              };
+
+          const handleConfirmTriage = () => {
+            if (!currentLote) return;
+            const currentLifecycle = legacyLifecycle[currentLote.estado] || 'incubation';
+            const targetState = cw
+              ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct)
+              : (triageDecision === 'discard' || lossCalc.lossPct >= 50 ? 'discarded' : triageDecision === 'quarantine' || lossCalc.lossPct >= 20 ? 'quarantine' : currentLifecycle);
+
+            const contamEvent = cw
+              ? cw.buildContaminationEvent({
+                  batchId: currentLote.id,
+                  pathogenKey: triagePathogenKey,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  location: triageLocation || currentLote.sala || 'Sala 1',
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  notes: triageNotes,
+                  lossCostCop: lossCalc.lossCostCop
+                })
+              : {
+                  type: 'contamination_incident',
+                  batchId: currentLote.id,
+                  pathogenId: triagePathogenKey,
+                  pathogenName: selectedPathogen.commonName,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  lossPct: lossCalc.lossPct,
+                  lossCostCop: lossCalc.lossCostCop,
+                  location: triageLocation,
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  at: new Date().toISOString()
+                };
+
+            let transitionEvt = null;
+            if (targetState !== currentLifecycle && workflow && workflow.canTransition(currentLifecycle, targetState)) {
+              transitionEvt = workflow.transitionEvent({
+                batchId: currentLote.id,
+                from: currentLifecycle,
+                to: targetState,
+                operatorId: currentLote.operador || 'operador-local',
+                reason: `Contaminación por ${selectedPathogen.commonName} (${lossCalc.lossPct}% afectación, decisión: ${triageDecision})`
+              });
+            }
+
+            const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada');
+            const bagsToMark = loteBags.slice(0, triageAffectedBags);
+            bagsToMark.forEach(b => {
+              updateBitBolsa(b.id, {
+                estado: triageDecision === 'discard' ? 'descartada' : 'contaminada',
+                obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
+              });
+            });
+
+            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
+            const updatedEvents = [
+              ...(currentLote.lifecycleEvents || []),
+              contamEvent,
+              ...(transitionEvt ? [transitionEvt] : [])
+            ];
+
+            updateBitLote(currentLote.id, {
+              estado: nextEstado,
+              lifecycleState: targetState,
+              numBolsas: lossCalc.healthyBags,
+              lifecycleEvents: updatedEvents
+            });
+
+            setShowTriageModal(false);
+            setNoticeDlg({
+              title: '🛡️ Bioseguridad Aplicada',
+              msg: `Lote ${currentLote.codigo}: ${triageAffectedBags} bolsas retiradas. Merma: ${lossCalc.lossPct}%. Pérdida estimada: $${lossCalc.lossCostCop.toLocaleString('es-CO')} COP. Nuevo estado: ${targetState.toUpperCase()}.`
+            });
+          };
+
+          return (
+            <AccessibleModal
+              label="Triaje de Bioseguridad y Contaminación"
+              onClose={() => setShowTriageModal(false)}
+            >
+              <div className="biosecurity-triage-modal" data-testid="biosecurity-triage-modal" onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Gestión Fitosanitaria · Tenjo 2.587 msnm
+                    </div>
+                    <h2 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-0)' }}>
+                      🛡️ Triaje de Bioseguridad & Cuarentena
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--ink-2)' }}
+                    onClick={() => setShowTriageModal(false)}
+                    aria-label="Cerrar triaje de bioseguridad"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Lote Afectado
+                    </label>
+                    <select
+                      style={{ width: '100%', padding: '7px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={currentLote?.id || ''}
+                      onChange={e => {
+                        setTriageLoteId(e.target.value);
+                        setTriageAffectedBags(1);
+                      }}
+                    >
+                      {bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado)).map(l => (
+                        <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.numBolsas} bolsas)</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Ubicación / Sala
+                    </label>
+                    <input
+                      type="text"
+                      style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageLocation}
+                      onChange={e => setTriageLocation(e.target.value)}
+                      placeholder="Ej: Estantería B · Nivel 2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Patógeno Sospechoso / Diagnóstico
+                  </label>
+                  <div className="triage-pathogen-grid">
+                    {Object.values(pathogens).map(p => {
+                      const isSelected = triagePathogenKey === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={`triage-pathogen-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setTriagePathogenKey(p.id)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                              {p.commonName}
+                            </span>
+                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : '#FEF3C7', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : '#B45309' }}>
+                              {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
+                            </span>
+                          </div>
+                          <div style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)' }}>
+                            {p.scientific}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                      Bolsas con Síntomas Visibles
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>
+                      Total de bolsas en el lote: {totalBags}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.max(1, prev - 1))}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalBags}
+                      style={{ width: 44, textAlign: 'center', padding: '5px 2px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageAffectedBags}
+                      onChange={e => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) setTriageAffectedBags(Math.max(1, Math.min(totalBags, val)));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.min(totalBags, prev + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="triage-impact-grid">
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Merma Lote</span>
+                    <span className="triage-impact-val" style={{ color: lossCalc.lossPct >= 20 ? 'var(--accent-terracotta)' : 'inherit' }}>
+                      {lossCalc.lossPct}%
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Pérdida ($ COP)</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--accent-terracotta)' }}>
+                      ${lossCalc.lossCostCop.toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Bolsas Sanas</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--moss-800)' }}>
+                      {lossCalc.healthyBags} / {totalBags}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Decisión Operativa & Destino del Lote
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label className={`triage-decision-option ${triageDecision === 'isolate_bags' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="isolate_bags"
+                        checked={triageDecision === 'isolate_bags'}
+                        onChange={() => setTriageDecision('isolate_bags')}
+                      />
+                      <span>
+                        <strong>Extracción Quirúrgica:</strong> Descartar las {triageAffectedBags} bolsas y mantener el resto del lote en {currentLote?.estado || 'producción'}.
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'quarantine' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="quarantine"
+                        checked={triageDecision === 'quarantine'}
+                        onChange={() => setTriageDecision('quarantine')}
+                      />
+                      <span>
+                        <strong>Traslado a Cuarentena:</strong> Mover el lote completo a Sala de Cuarentena (cambio formal a <code>quarantine</code>).
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'discard' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="discard"
+                        checked={triageDecision === 'discard'}
+                        onChange={() => setTriageDecision('discard')}
+                      />
+                      <span>
+                        <strong>Descarte Total:</strong> Pérdida irreparable del lote (cambio formal a <code>discarded</code>).
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="triage-protocol-banner">
+                  <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    🚨 Protocolo Inmediato de Bioseguridad: {selectedPathogen.commonName}
+                  </div>
+                  <ul className="triage-protocol-list">
+                    {selectedPathogen.biosecurityProtocol.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                    Observaciones de Campo
+                  </label>
+                  <input
+                    type="text"
+                    style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                    value={triageNotes}
+                    onChange={e => setTriageNotes(e.target.value)}
+                    placeholder="Detalles sobre olor, avance de la mancha o causa probable..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="inv-btn inv-btn-sec"
+                    style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => {
+                      if (currentLote) {
+                        setDiagLoteId(currentLote.id);
+                        const b = bitBolsas.find(x => x.loteId === currentLote.id && x.estado !== 'descartada');
+                        setDiagBolsaId(b?.id || '');
+                        setDiagImageBase64('');
+                        setDiagResult(null);
+                        setDiagError('');
+                        setDiagNotes('');
+                        setShowTriageModal(false);
+                        setShowDiagModal(true);
+                      }
+                    }}
+                  >
+                    📷 Diagnosticar con Cámara IA Gemini
+                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      onClick={() => setShowTriageModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-pri"
+                      style={{ background: 'var(--accent-terracotta, #B24C27)', borderColor: 'var(--accent-terracotta, #B24C27)' }}
+                      onClick={handleConfirmTriage}
+                    >
+                      🛡️ Confirmar & Aplicar Bioseguridad
+                    </button>
+                  </div>
+                </div>
               </div>
             </AccessibleModal>
           );
