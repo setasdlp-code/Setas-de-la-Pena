@@ -6474,57 +6474,100 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if (launchInFlight.current) return;
     launchInFlight.current = true;
     setLaunching(true);
-    return fn(...args);
+    try {
+      return fn(...args);
+    } catch (e) {
+      // Red de seguridad genérica (Task 7/8): si la función envuelta deja
+      // escapar un error sin manejarlo ella misma, por defecto se libera
+      // la guarda — equivale al caso 1 (nada se alcanzó a registrar). Una
+      // operación que SÍ necesita mantener la guarda cerrada tras un
+      // registro parcial (caso 2) debe atrapar su propio error y decidirlo
+      // explícitamente, como hace ejecutarLanzamientoProduccion abajo — en
+      // ese caso este catch nunca se alcanza porque el error ya fue
+      // absorbido adentro.
+      launchInFlight.current = false;
+      setLaunching(false);
+      console.error('Error en operación protegida por conGuardaLanzamiento:', e);
+    }
   };
 
   const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
     if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
     const f = prodLaunchForm;
-    const now = Date.now();
-    const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-    const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
-    if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
+      consumoRegistrado = true;
 
-    setBitLotes(prev => {
-      const upd = [lote, ...prev];
-      try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
-    setBitBolsas(prev => {
-      const upd = [...prev, ...bolsas];
-      try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
+      setBitLotes(prev => {
+        const upd = [lote, ...prev];
+        try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
+      });
+      setBitBolsas(prev => {
+        const upd = [...prev, ...bolsas];
+        try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
+      });
 
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
-        } catch (e) {
-          console.warn('Error respaldando lote en Firestore:', e);
-        }
-      })();
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          } catch (e) {
+            console.warn('Error respaldando lote en Firestore:', e);
+          }
+        })();
+      }
+      window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
+
+      // 3. Cerrar modal y proceder
+      setShowProdLaunchModal(false);
+
+      if (f.printQr) {
+        setThermalLote(lote);
+        setThermalBagEnd(lote.numBolsas || 12);
+        setThermalScope('all');
+        setShowThermalModal(true);
+      } else {
+        setBitActiveLoteId(lote.id);
+        goTab('bitacora');
+      }
+
+      setNoticeDlg({
+        title: '🚀 Producción de Lote Lanzada',
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+      });
+    } catch (e) {
+      console.error('Error al lanzar producción de lote:', e);
+      if (consumoRegistrado) {
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente,
+        // por loteId) antes de que algo más fallara. Reintentar acuñaría
+        // un loteId nuevo y descontaría el inventario una segunda vez, así
+        // que la guarda NO se libera aquí — solo se reabre al abrir un
+        // nuevo lanzamiento (openProdLauncher). Se cierra el modal porque
+        // no hay nada seguro que reintentar desde él.
+        setShowProdLaunchModal(false);
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'Lote lanzado con errores',
+          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+        });
+      } else {
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se
+        // libera la guarda y se deja el modal de lanzamiento abierto.
+        launchInFlight.current = false;
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'No se pudo lanzar el lote',
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || 'error desconocido'}. Intenta de nuevo.`
+        });
+      }
     }
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
-
-    // 3. Cerrar modal y proceder
-    setShowProdLaunchModal(false);
-
-    if (f.printQr) {
-      setThermalLote(lote);
-      setThermalBagEnd(lote.numBolsas || 12);
-      setThermalScope('all');
-      setShowThermalModal(true);
-    } else {
-      setBitActiveLoteId(lote.id);
-      goTab('bitacora');
-    }
-
-    setNoticeDlg({
-      title: '🚀 Producción de Lote Lanzada',
-      msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
-    });
   });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
